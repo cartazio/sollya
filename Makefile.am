@@ -58,6 +58,8 @@ remez.c \
 remez.h \
 taylor.c \
 taylor.h \
+taylorform.c \
+taylorform.h \
 worstcase.c \
 worstcase.h \
 xml.c \
@@ -107,6 +109,8 @@ fpminimax.cpp \
 fpminimax.h \
 remez.c \
 remez.h \
+taylorform.c \
+taylorform.h \
 taylor.c \
 taylor.h \
 worstcase.c \
