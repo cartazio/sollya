@@ -176,6 +176,7 @@ SIMPLIFYSAFE2   "simplifysafe"
 SIMPLIFYSAFE    ({SIMPLIFYSAFE1}|{SIMPLIFYSAFE2})
 
 TAYLOR          "taylor"
+TAYLORFORM      "taylorform"
 
 FINDZEROS       "findzeros"
 FPFINDZEROS     "fpfindzeros"
@@ -685,7 +686,8 @@ NOP             "nop"
 {HORNER}          			    { newTokenLexed(); return HORNERTOKEN; }          					       
 {EXPAND}          			    { newTokenLexed(); return EXPANDTOKEN; }          					       
 {SIMPLIFYSAFE}				    { newTokenLexed(); return SIMPLIFYSAFETOKEN; }				      	       
-{TAYLOR}         			    { newTokenLexed(); return TAYLORTOKEN; }         					       
+{TAYLOR}         			    { newTokenLexed(); return TAYLORTOKEN; }
+{TAYLORFORM}         			    { newTokenLexed(); return TAYLORFORMTOKEN; }         					       
 {DEGREE}          			    { newTokenLexed(); return DEGREETOKEN; }          					       
 {NUMERATOR}       			    { newTokenLexed(); return NUMERATORTOKEN; }       					       
 {DENOMINATOR}     			    { newTokenLexed(); return DENOMINATORTOKEN; }     					       

@@ -246,6 +246,7 @@ knowledge of the CeCILL-C license and that you accept its terms.
 #define RATIONALMODEASSIGN 239
 #define RATIONALMODESTILLASSIGN 240
 #define RATIONALMODEDEREF 241
+#define TAYLORFORM 242
 
 int executeCommand(node *);
 
@@ -383,6 +384,7 @@ node *makeHorner(node *thing);
 node *makeCanonicalThing(node *thing);
 node *makeExpand(node *thing);
 node *makeTaylor(node *thing1, node *thing2, node *thing3);
+node *makeTaylorform(chain *thinglist);
 node *makeDegree(node *thing);
 node *makeNumerator(node *thing);
 node *makeDenominator(node *thing);

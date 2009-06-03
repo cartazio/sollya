@@ -751,6 +751,9 @@ node *copyThing(node *tree) {
   case TAYLOR:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 			 	
+  case TAYLORFORM:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
+    break; 			 	
   case DEGREE:
     copy->child1 = copyThing(tree->child1);
     break; 			 	
@@ -1459,6 +1462,9 @@ char *getTimingStringForThing(node *tree) {
     break; 			 	
   case TAYLOR:
     constString = "taylor";
+    break; 			 	
+  case TAYLORFORM:
+    constString = "taylorform";
     break; 			 	
   case DEGREE:
     constString = "getting the degree";
@@ -3833,6 +3839,16 @@ char *sRawPrintThing(node *tree) {
     break; 			 	
   case TAYLOR:
     res = newString("taylor(");
+    curr = tree->arguments;
+    while (curr != NULL) {
+      res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
+      if (curr->next != NULL) res = concatAndFree(res, newString(", ")); 
+      curr = curr->next;
+    }
+    res = concatAndFree(res, newString(")"));
+    break; 			 	
+  case TAYLORFORM:
+    res = newString("taylorform(");
     curr = tree->arguments;
     while (curr != NULL) {
       res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
@@ -8253,6 +8269,17 @@ node *makeTaylor(node *thing1, node *thing2, node *thing3) {
 
 }
 
+node *makeTaylorform(chain *thinglist) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = TAYLORFORM;
+  res->arguments = thinglist;
+
+  return res;
+
+}
+
 node *makeDegree(node *thing) {
   node *res;
 
@@ -9579,6 +9606,10 @@ void freeThing(node *tree) {
     freeChain(tree->arguments, freeThingOnVoid);
     free(tree);
     break; 			 	
+  case TAYLORFORM:
+    freeChain(tree->arguments, freeThingOnVoid);
+    free(tree);
+    break; 			 	
   case DEGREE:
     freeThing(tree->child1);
     free(tree);
@@ -10345,6 +10376,9 @@ int isEqualThing(node *tree, node *tree2) {
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break; 			 	
   case TAYLOR:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
+    break; 			 	
+  case TAYLORFORM:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
     break; 			 	
   case DEGREE:
@@ -11448,7 +11482,7 @@ node *evaluateThingInner(node *tree) {
   char *tempString, *tempString2, *timingString, *tempString3, *tempString4, *tempString5;
   char *str1, *str2, *str3;
   mpfr_t a, b, c, d;
-  chain *tempChain, *curr, *newChain, *tempChain2, *tempChain3;
+  chain *tempChain, *curr, *newChain, *tempChain2, *tempChain3, *curr2, *tempChain4;
   rangetype yrange, xrange, yrange2;
   node *firstArg, *secondArg, *thirdArg, *fourthArg, *fifthArg, *sixthArg, *seventhArg, *eighthArg;
   rangetype *rangeTempPtr;
@@ -11458,6 +11492,7 @@ node *evaluateThingInner(node *tree) {
   mp_prec_t pTemp, pTemp2;
   int undoVariableTrick;
   mpfi_t tempIA, tempIB, tempIC;
+  mpfi_t *tmpInterv1, *tmpInterv2;
 
   if (tree == NULL) return NULL;
 
@@ -14343,6 +14378,133 @@ node *evaluateThingInner(node *tree) {
 	  freeThing(copy);
 	  copy = tempNode2;
 	  if (timingString != NULL) popTimeCounter(timingString);
+	} 
+	mpfr_clear(a);
+      }
+    }
+    break; 			 	
+  case TAYLORFORM:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateThingInnerOnVoid);
+    curr = copy->arguments;
+    if (isPureTree((node *) (curr->value))) {
+      curr = curr->next;
+      if (isPureTree((node *) (curr->value)) &&
+	  evaluateThingToInteger(&resA,(node *) (curr->value),NULL)) {
+	curr = curr->next;
+	mpfr_init2(a,tools_precision);
+	if (isPureTree((node *) (curr->value)) &&
+	    evaluateThingToConstant(a,(node *) (curr->value),NULL)) {
+          curr = curr->next;
+          tmpInterv1 = NULL;
+          intptr = NULL;
+          resB = 1;
+          if (curr != NULL) { 
+            if (isRange((node *) (curr->value))) {
+              mpfr_init2(b,tools_precision);
+              mpfr_init2(c,tools_precision);
+              if (evaluateThingToRange(b,c,(node *) (curr->value))) {
+                pTemp = mpfr_get_prec(b);
+                pTemp2 = mpfr_get_prec(c);
+                if (pTemp2 > pTemp) pTemp = pTemp2;
+                mpfi_init2(tempIA,pTemp);
+                mpfi_interv_fr(tempIA,b,c);
+                tmpInterv1 = &tempIA;
+              } else {
+                resB = 0;
+              }
+              mpfr_clear(b);
+              mpfr_clear(c);
+              curr = curr->next;
+              if (curr != NULL) {
+                if (isExternalPlotMode((node *) (curr->value)) ||
+                    isDefault((node *) (curr->value))) {
+                  resC = ABSOLUTE;
+                  if (evaluateThingToExternalPlotMode(&resD, 
+                                                      (node *) (curr->value), 
+                                                      &resC)) {
+                    intptr = &resD;
+                  } else {
+                    resB = 0;
+                  }
+                } else {
+                  resB = 0;
+                }
+              }
+            } else {
+              if (isExternalPlotMode((node *) (curr->value)) ||
+                  isDefault((node *) (curr->value))) {
+                resC = ABSOLUTE;
+                if (evaluateThingToExternalPlotMode(&resD, 
+                                                    (node *) (curr->value), 
+                                                    &resC)) {
+                  intptr = &resD;
+                } else {
+                  resB = 0;
+                }
+              } else {
+                resB = 0;
+              }
+            }
+          }
+
+          if (resB) {
+            curr = copy->arguments;
+            if (timingString != NULL) pushTimeCounter();
+            tempNode2 = NULL;
+            tempChain2 = NULL;
+            tmpInterv2 = NULL;
+            if (intptr != NULL) 
+              resC = *intptr;
+            else
+              resC = ABSOLUTE;
+            taylorform(&tempNode2, &tempChain2, &tmpInterv2,
+                       (node *) (curr->value), resA, a,
+                       tmpInterv1, resC);
+            if (timingString != NULL) popTimeCounter(timingString);
+            if (tempNode2 != NULL) {
+              tempChain3 = NULL;
+              curr2 = tempChain2;
+              while (curr2 != NULL) {
+                pTemp = mpfi_get_prec(*((mpfi_t *) (curr->value)));
+                mpfr_init2(b,pTemp);
+                mpfr_init2(c,pTemp);
+                mpfi_get_left(b,*((mpfi_t *) (curr->value)));
+                mpfi_get_right(c,*((mpfi_t *) (curr->value)));
+                tempChain3 = addElement(tempChain3,makeRange(makeConstant(b),
+                                                             makeConstant(c)));
+                mpfr_clear(b);
+                mpfr_clear(c);
+                curr2 = curr2->next;
+              }
+              tempChain4 = copyChain(tempChain3,copyThingOnVoid);
+              freeChain(tempChain3,freeThingOnVoid);
+              tempChain3 = addElement(addElement(NULL,tempNode2),tempChain4);
+              if (tmpInterv2 != NULL) {
+                pTemp = mpfi_get_prec(*tmpInterv2);
+                mpfr_init2(b,pTemp);
+                mpfr_init2(c,pTemp);
+                mpfi_get_left(b,*tmpInterv2);
+                mpfi_get_right(c,*tmpInterv2);
+                tempChain3 = addElement(tempChain3,makeRange(makeConstant(b),
+                                                             makeConstant(c)));
+                mpfr_clear(b);
+                mpfr_clear(c);
+              }
+              tempChain4 = copyChain(tempChain3,copyThingOnVoid);
+              freeChain(tempChain3,freeThingOnVoid);
+              tempNode = makeList(tempChain4);
+              freeThing(copy);
+              copy = tempNode;
+            }
+            if (tempChain2 != NULL) {
+              freeChain(tempChain2, freeMpfiPtr);
+            }
+            if (tmpInterv2 != NULL) {
+              mpfi_clear(*tmpInterv2);
+              free(tmpInterv2);
+            }
+          }
+          if (tmpInterv1 != NULL) mpfi_clear(*tmpInterv1);
 	} 
 	mpfr_clear(a);
       }

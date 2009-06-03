@@ -232,6 +232,7 @@ extern FILE *internyyget_in(void *scanner);
 %token  EXPANDTOKEN;            					       
 %token  SIMPLIFYSAFETOKEN;  						       
 %token  TAYLORTOKEN;           					       
+%token  TAYLORFORMTOKEN;
 %token  DEGREETOKEN;            					       
 %token  NUMERATORTOKEN;         					       
 %token  DENOMINATORTOKEN;       					       
@@ -1343,6 +1344,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | TAYLORTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thing RPARTOKEN
                           {
 			    $$ = makeTaylor($3, $5, $7);
+			  }           					       
+                      | TAYLORFORMTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thinglist RPARTOKEN
+                          {
+                            $$ = makeTaylorform(addElement(addElement($7, $5), $3));
 			  }           					       
                       | DEGREETOKEN LPARTOKEN thing RPARTOKEN
                           {

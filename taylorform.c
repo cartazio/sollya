@@ -48,8 +48,33 @@ knowledge of the CeCILL-C license and that you accept its terms.
 
 
 #include "taylorform.h"
+#include "external.h"
+#include <stdio.h>
 
 void taylorform(node **T, chain **errors, mpfi_t **delta,
 		node *f, int n,	mpfr_t x0, mpfi_t *d, int mode) {
+
+  printf("taylorform: f  = ");
+  printTree(f);
+  printf("\n");
+  printf("taylorform: n  = %d\n",n);
+  printf("taylorform: x0 = ");
+  printMpfr(x0);
+  if (d != NULL) {
+    printf("taylorform: d  = ");
+    printInterval(d);
+    printf("\n");
+  } else {
+    printf("taylorform: no domain d given\n");
+  }
+  if (mode == ABSOLUTE) {
+    printf("taylorform: absolute mode\n");
+  } else {
+    if (mode == RELATIVE) {
+      printf("taylorform: relative mode\n");
+    } else {
+      printf("taylorform: mode %d\n",mode);
+    }
+  }
 
 }
