@@ -1453,16 +1453,16 @@ void  multiplication_TM(tModel *t,tModel *c1, tModel *c2){
   
   mpfi_init2(pow,getToolPrecision());
   mpfi_set_ui(pow,n);
-  printf("ajunge aici");
-  printInterval(temp2);
-  printInterval(pow);
+  //printf("ajunge aici");
+  //printInterval(temp2);
+  //printInterval(pow);
   mpfi_pow(temp2,temp2,pow);
-  printInterval(temp2);
+  //printInterval(temp2);
   mpfi_mul(temp1,temp2,temp1);
   
   
   
-  printf("compute in temp2 delta2*B(T1)");
+  //printf("compute in temp2 delta2*B(T1)");
   mpfi_mul(temp2, c1->poly_bound, c2->rem_bound);
   
   mpfi_add(tt->rem_bound,temp1,temp2);
@@ -1516,7 +1516,7 @@ void addition_TM(tModel *t,tModel *child1_tm, tModel *child2_tm){
   int n;
   tModel *tt;
   n=t->n;
-  printf("in addition tm");
+  //printf("in addition tm");
   tt=createEmptytModel(n,t->x0,t->x);
   for(i=0;i<n;i++)  mpfi_add(tt->poly_array[i], child1_tm->poly_array[i],child2_tm->poly_array[i]);
   mpfi_add(tt->rem_bound,child1_tm->rem_bound,child2_tm->rem_bound);
@@ -1540,8 +1540,6 @@ void base_TM(tModel *t,int nodeType, int n, mpfr_t x0, mpfi_t x0Interv, mpfi_t x
   
   for(i=0;i<=n;i++){
     mpfi_init2(nDeriv[i], getToolPrecision());
-    
-    
   }
   
   tt=createEmptytModel(n,x0,x);
@@ -1550,14 +1548,16 @@ void base_TM(tModel *t,int nodeType, int n, mpfr_t x0, mpfi_t x0Interv, mpfi_t x
   polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,t->x0,t->x);   
   
   baseFunction_diff(nDeriv,nodeType,x,n);
-  
+  //printInterval(x);
   for(i=1;i<=n;i++){
   mpfi_mul_ui(fact,fact,i);
   }
-  mpfi_div(*nDeriv,*nDeriv,fact);
-  
   mpfi_set(tt->rem_bound,nDeriv[n]);
+  mpfi_div(tt->rem_bound,tt->rem_bound,fact);
   
+  
+  printf("basefunction interval:");
+  printInterval(tt->rem_bound);
   copytModel(t,tt);
   cleartModel(tt);
 }
@@ -1973,19 +1973,21 @@ void taylor_model(tModel *t, node *f, int n, mpfr_t x0, mpfi_t x) {
     //call taylor_model on the child
     taylor_model(child1_tm, f->child1,n,x0,x);
     //compute tm for the basic case
-    mpfi_t fx0,rangef,x0Int;
+    mpfi_t fx0,rangef,x0Int,pow;
     mpfr_t fx0Mid;
     
     mpfi_init2(fx0,getToolPrecision());
     mpfi_init2(rangef, getToolPrecision());
     mpfi_init2(x0Int, getToolPrecision());
+    mpfi_init2(pow, getToolPrecision());
+    mpfi_set_ui(pow,n);
     mpfi_set_fr(x0Int, x0);
     mpfr_init2(fx0Mid, getToolPrecision());
-    mpfi_mid(fx0Mid,fx0);
-    evaluateMpfiFunction(fx0,f->child1,x0Int,getToolPrecision());
     
+    evaluateMpfiFunction(fx0,f->child1,x0Int,getToolPrecision());
+    mpfi_mid(fx0Mid,fx0);
     mpfi_sub_fr(rangef, x,x0);
-    mpfi_pow(rangef,rangef,n);
+    mpfi_pow(rangef,rangef,pow);
     mpfi_mul(rangef,rangef,child1_tm->rem_bound);
     mpfi_add(rangef,rangef, child1_tm->poly_bound);
     base_TM(child2_tm,f->nodeType,n,fx0Mid,fx0, rangef);
