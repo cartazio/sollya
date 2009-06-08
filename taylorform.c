@@ -1545,13 +1545,16 @@ void base_TM(tModel *t,int nodeType, int n, mpfr_t x0, mpfi_t x0Interv, mpfi_t x
   tt=createEmptytModel(n,x0,x);
   
   baseFunction_diff( tt->poly_array,nodeType,x0Interv, n-1);
+  
   polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,t->x0,t->x);   
   
   baseFunction_diff(nDeriv,nodeType,x,n);
   //printInterval(x);
-  for(i=1;i<=n;i++){
+  for(i=1;i<n;i++){
   mpfi_mul_ui(fact,fact,i);
+  mpfi_div(tt->poly_array[i],tt->poly_array[i],fact);
   }
+  mpfi_mul_ui(fact,fact,n);
   mpfi_set(tt->rem_bound,nDeriv[n]);
   mpfi_div(tt->rem_bound,tt->rem_bound,fact);
   
@@ -1619,13 +1622,20 @@ void composition_TM(tModel *t,tModel *g, tModel *f){
   ctMultiplication_TM(tinterm,partial_tmul,g->poly_array[i]);
   addition_TM(tt,tt,tinterm);
   multiplication_TM(partial_tmul,partial_tmul,tmul);
+  printtModel(partial_tmul);
   }
   
   //in tt we have now the good polynomial;
   //we have to compute the bounds.
   //(y-y0)^n
-  multiplication_TM(partial_tmul,partial_tmul,tmul);
+  
+ 
+ 
+
+  printtModel(tmul);  
+  printInterval(partial_tmul->rem_bound);
   mpfi_mul(tt->rem_bound,partial_tmul->rem_bound,g->rem_bound);
+ 
   polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
   copytModel(t,tt);
   cleartModel(tt);
