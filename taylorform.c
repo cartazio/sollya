@@ -2648,7 +2648,16 @@ chain *constructChain(mpfi_t *err, int n){
   }
   return l;
 }
-
+void printMpfiChain(chain *c) {
+  chain *curr=c;
+  printf("[");
+  while(curr!=NULL) {
+    printInterval( *(mpfi_t *)(curr->value));
+    curr=curr->next;
+  }
+  printf("]\n");
+  return;
+}
 
 
 void taylorform(node **T, chain **errors, mpfi_t **delta,
@@ -2684,6 +2693,8 @@ int i;
 node *z;
 chain *err;
 mpfi_t *rest;
+mpfi_t temp;
+mpfi_t pow;
 
 mpfi_init2(x0Int,getToolPrecision());
 mpfi_set_fr(x0Int,x0);
@@ -2712,12 +2723,24 @@ rest= (mpfi_t*)safeMalloc(sizeof(mpfi_t));
 
 //create errors;
 err=constructChain(coeffsErrors,t->n-1);
-//errors=&err;
-//delta=&rest;
- *errors = err;
- mpfi_set(*rest, t->rem_bound);
- *delta = rest;
 
+printMpfiChain(err);
+ *errors = err;
+if (mode == ABSOLUTE) {
+    mpfi_init2(pow, getToolPrecision());
+    mpfi_set_si(pow, t->n);
+    mpfi_init2(temp,getToolPrecision());
+    mpfi_sub(temp, t->x, t->x0);
+    mpfi_pow(temp, temp,pow);
+    mpfi_mul(*rest,temp, t->rem_bound);
+    } else {
+  
+    mpfi_set(*rest,t->rem_bound);
+    
+    }
+  
+*delta=rest;
+    
 for(i=0;i<n;i++){
 mpfr_clear(coeffsMpfr[i]);
 }
