@@ -14465,20 +14465,20 @@ node *evaluateThingInner(node *tree) {
               tempChain3 = NULL;
               curr2 = tempChain2;
               while (curr2 != NULL) {
-                pTemp = mpfi_get_prec(*((mpfi_t *) (curr->value)));
+                pTemp = mpfi_get_prec(*((mpfi_t *) (curr2->value)));
                 mpfr_init2(b,pTemp);
                 mpfr_init2(c,pTemp);
-                mpfi_get_left(b,*((mpfi_t *) (curr->value)));
-                mpfi_get_right(c,*((mpfi_t *) (curr->value)));
+                mpfi_get_left(b,*((mpfi_t *) (curr2->value)));
+                mpfi_get_right(c,*((mpfi_t *) (curr2->value)));
                 tempChain3 = addElement(tempChain3,makeRange(makeConstant(b),
                                                              makeConstant(c)));
                 mpfr_clear(b);
                 mpfr_clear(c);
                 curr2 = curr2->next;
               }
-              tempChain4 = copyChain(tempChain3,copyThingOnVoid);
+	      tempChain4 = copyChain(tempChain3,copyThingOnVoid);
               freeChain(tempChain3,freeThingOnVoid);
-              tempChain3 = addElement(addElement(NULL,tempNode2),tempChain4);
+              tempChain3 = addElement(addElement(NULL,tempNode2),makeList(tempChain4));
               if (tmpInterv2 != NULL) {
                 pTemp = mpfi_get_prec(*tmpInterv2);
                 mpfr_init2(b,pTemp);

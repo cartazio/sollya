@@ -2635,18 +2635,18 @@ node *constructPoly(mpfr_t *coeff, int n, mpfr_t x0) {
   return poly;
 }
 chain *constructChain(mpfi_t *err, int n){
-chain *l;
-mpfi_t *elem;
-int i;
-
-l = NULL;
-for(i=n;i>=0;i--){
- elem= (mpfi_t*)safeMalloc(sizeof(mpfi_t));
- mpfi_init2(*elem,getToolPrecision());
- mpfi_set(*elem,err[i]);
- l=addElement(l, elem);
-}
-return l;
+  chain *l;
+  mpfi_t *elem;
+  int i;
+  
+  l = NULL;
+  for(i=n;i>=0;i--){
+    elem= (mpfi_t*)safeMalloc(sizeof(mpfi_t));
+    mpfi_init2(*elem,getToolPrecision());
+    mpfi_set(*elem,err[i]);
+    l=addElement(l, elem);
+  }
+  return l;
 }
 
 
@@ -2700,21 +2700,23 @@ coeffsErrors= (mpfi_t *)safeMalloc((n)*sizeof(mpfi_t));
 rest= (mpfi_t*)safeMalloc(sizeof(mpfi_t));
  mpfi_init2(*rest,getToolPrecision());
 
-for(i=0;i<n;i++){
-mpfi_init2(coeffsErrors[i],getToolPrecision());
-mpfr_init2(coeffsMpfr[i],getToolPrecision());
-}
-//mpfr_get_poly(mpfr_t *rc, mpfi_t *errors, mpfi_t rest, int n, mpfi_t *gc, mpfi_t x0, mpfi_t x)
-mpfr_get_poly(coeffsMpfr, coeffsErrors, *rest, t->n -1,t->poly_array, t->x0,t->x);
-
-//create T; 
-z=constructPoly(coeffsMpfr, t->n-1, x0);
-T=&z;
+ for(i=0;i<n;i++){
+   mpfi_init2(coeffsErrors[i],getToolPrecision());
+   mpfr_init2(coeffsMpfr[i],getToolPrecision());
+ }
+ //mpfr_get_poly(mpfr_t *rc, mpfi_t *errors, mpfi_t rest, int n, mpfi_t *gc, mpfi_t x0, mpfi_t x)
+ mpfr_get_poly(coeffsMpfr, coeffsErrors, *rest, t->n -1,t->poly_array, t->x0,t->x);
+ 
+ //create T; 
+ *T=constructPoly(coeffsMpfr, t->n-1, x0);
 
 //create errors;
 err=constructChain(coeffsErrors,t->n-1);
-errors=&err;
-delta=&rest;
+//errors=&err;
+//delta=&rest;
+ *errors = err;
+ mpfi_set(*rest, t->rem_bound);
+ *delta = rest;
 
 for(i=0;i<n;i++){
 mpfr_clear(coeffsMpfr[i]);
