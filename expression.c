@@ -7,8 +7,8 @@ UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
 
 Contributors Ch. Lauter, S. Chevillard, N. Jourdan
 
-christoph.lauter@ens-lyon.fr
-sylvain.chevillard@ens-lyon.fr
+christoph.lauter@ens-lyon.org
+sylvain.chevillard@ens-lyon.org
 nicolas.jourdan@ens-lyon.fr
 
 This software is a computer program whose purpose is to provide an
@@ -56,7 +56,6 @@ knowledge of the CeCILL-C license and that you accept its terms.
 #include <errno.h>
 #include "general.h"
 #include "double.h"
-#include "miniparser.h"
 #include "chain.h"
 
 #define MAXDIFFSIMPLSIZE 100
@@ -235,6 +234,10 @@ void free_memory(node *tree) {
     free_memory(tree->child1);
     free(tree);
     break;
+  case SINGLE:
+    free_memory(tree->child1);
+    free(tree);
+    break;
   case DOUBLEDOUBLE:
     free_memory(tree->child1);
     free(tree);
@@ -373,6 +376,9 @@ void fprintHeadFunction(FILE *fd,node *tree, char *x, char *y) {
     break;
   case DOUBLE:
     fprintf(fd,"double(%s)",x);
+    break;
+  case SINGLE:
+    fprintf(fd,"single(%s)",x);
     break;
   case DOUBLEDOUBLE:
     fprintf(fd,"doubledouble(%s)",x);
@@ -1227,6 +1233,11 @@ void fprintTreeWithPrintMode(FILE *fd, node *tree) {
     fprintTreeWithPrintMode(fd,tree->child1);
     fprintf(fd,")");
     break;
+  case SINGLE:
+    fprintf(fd,"single(");
+    fprintTreeWithPrintMode(fd,tree->child1);
+    fprintf(fd,")");
+    break;
   case DOUBLEDOUBLE:
     fprintf(fd,"doubledouble(");
     fprintTreeWithPrintMode(fd,tree->child1);
@@ -1611,6 +1622,11 @@ void printTree(node *tree) {
     printTree(tree->child1);
     printf(")");
     break;
+  case SINGLE:
+    printf("single(");
+    printTree(tree->child1);
+    printf(")");
+    break;
   case DOUBLEDOUBLE:
     printf("doubledouble(");
     printTree(tree->child1);
@@ -1883,6 +1899,11 @@ char *sprintTree(node *tree) {
     buffer = (char *) safeCalloc(strlen(buffer1) + 10, sizeof(char));
     sprintf(buffer,"double(%s)",buffer1);
     break;
+  case SINGLE:
+    buffer1 = sprintTree(tree->child1);
+    buffer = (char *) safeCalloc(strlen(buffer1) + 10, sizeof(char));
+    sprintf(buffer,"single(%s)",buffer1);
+    break;
   case DOUBLEDOUBLE:
     buffer1 = sprintTree(tree->child1);
     buffer = (char *) safeCalloc(strlen(buffer1) + 16, sizeof(char));
@@ -2136,6 +2157,11 @@ void fprintTree(FILE *fd, node *tree) {
     fprintTree(fd,tree->child1);
     fprintf(fd,")");
     break;
+  case SINGLE:
+    fprintf(fd,"single(");
+    fprintTree(fd,tree->child1);
+    fprintf(fd,")");
+    break;
   case DOUBLEDOUBLE:
     fprintf(fd,"doubledouble(");
     fprintTree(fd,tree->child1);
@@ -2356,6 +2382,11 @@ node* copyTree(node *tree) {
   case DOUBLE:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = DOUBLE;
+    copy->child1 = copyTree(tree->child1);
+    break;
+  case SINGLE:
+    copy = (node*) safeMalloc(sizeof(node));
+    copy->nodeType = SINGLE;
     copy->child1 = copyTree(tree->child1);
     break;
   case DOUBLEDOUBLE:
@@ -3817,6 +3848,64 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
       }
     }
     break;
+  case SINGLE:
+    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
+    simplified = (node*) safeMalloc(sizeof(node));
+    if (simplChild1->nodeType == CONSTANT) {
+      simplified->nodeType = CONSTANT;
+      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+      mpfr_init2(*value,tools_precision);
+      simplified->value = value;
+      mpfr_round_to_single(*value, *(simplChild1->value)); 
+      if (!mpfr_number_p(*value)) {
+	simplified->nodeType = SINGLE;
+	simplified->child1 = simplChild1;
+	mpfr_clear(*value);
+	free(value);
+      } else {
+	free_memory(simplChild1);
+      }
+    } else {     
+      if (isConstant(simplChild1)) {
+        xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+        xrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+        yrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+        yrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+        mpfr_init2(*(yrange.a),4* tools_precision);
+        mpfr_init2(*(yrange.b),4 * tools_precision);
+        mpfr_init2(*(xrange.a),tools_precision);
+        mpfr_init2(*(xrange.b),tools_precision);
+        mpfr_set_ui(*(xrange.a),1,GMP_RNDD);
+        mpfr_set_ui(*(xrange.b),1,GMP_RNDU);
+        evaluateRangeFunction(yrange, simplChild1, xrange, 8 * tools_precision);
+        mpfr_round_to_single(*(xrange.a),*(yrange.a));
+        mpfr_round_to_single(*(xrange.b),*(yrange.b));
+        if (mpfr_number_p(*(xrange.a)) && 
+            mpfr_number_p(*(xrange.b)) &&
+            (mpfr_cmp(*(xrange.a),*(xrange.b)) == 0)) {
+          simplified->nodeType = CONSTANT;
+          value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+          mpfr_init2(*value,tools_precision);
+          simplified->value = value;
+          mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
+        } else {
+          simplified->nodeType = SINGLE;
+          simplified->child1 = simplChild1;
+        }
+        mpfr_clear(*(xrange.a));
+        mpfr_clear(*(xrange.b));
+        mpfr_clear(*(yrange.a));
+        mpfr_clear(*(yrange.b));
+        free(xrange.a);
+        free(xrange.b);
+        free(yrange.a);
+        free(yrange.b);
+      } else {
+        simplified->nodeType = SINGLE;
+        simplified->child1 = simplChild1;
+      }
+    }
+    break;
   case DOUBLEDOUBLE:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
@@ -4901,6 +4990,17 @@ node* differentiateUnsimplified(node *tree) {
 	temp_node->value = mpfr_temp;
 	derivative = temp_node;
 	break;
+      case SINGLE:
+	printMessage(1,
+		     "Warning: the single rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
+	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+	mpfr_init2(*mpfr_temp,tools_precision);
+	mpfr_set_d(*mpfr_temp,0.0,GMP_RNDN);
+	temp_node = (node*) safeMalloc(sizeof(node));
+	temp_node->nodeType = CONSTANT;
+	temp_node->value = mpfr_temp;
+	derivative = temp_node;
+	break;
       case DOUBLEDOUBLE:
 	printMessage(1,
 		     "Warning: the double-double rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
@@ -5295,6 +5395,11 @@ int evaluateConstantExpression(mpfr_t result, node *tree, mp_prec_t prec) {
     isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
     if (!isConstant) break;
     mpfr_round_to_double(result, stack1);
+    break;
+  case SINGLE:
+    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
+    if (!isConstant) break;
+    mpfr_round_to_single(result, stack1);
     break;
   case DOUBLEDOUBLE:
     isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
@@ -5832,6 +5937,21 @@ node* simplifyTreeInner(node *tree) {
       free_memory(simplChild1);
     } else {
       simplified->nodeType = DOUBLE;
+      simplified->child1 = simplChild1;
+    }
+    break;
+  case SINGLE:
+    simplChild1 = simplifyTreeInner(tree->child1);
+    simplified = (node*) safeMalloc(sizeof(node));
+    if (simplChild1->nodeType == CONSTANT) {
+      simplified->nodeType = CONSTANT;
+      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+      mpfr_init2(*value,tools_precision);
+      simplified->value = value;
+      mpfr_round_to_single(*value, *(simplChild1->value));
+      free_memory(simplChild1);
+    } else {
+      simplified->nodeType = SINGLE;
       simplified->child1 = simplChild1;
     }
     break;
@@ -6453,6 +6573,21 @@ node* simplifyAllButDivisionInner(node *tree) {
       simplified->child1 = simplChild1;
     }
     break;
+  case SINGLE:
+    simplChild1 = simplifyAllButDivisionInner(tree->child1);
+    simplified = (node*) safeMalloc(sizeof(node));
+    if (simplChild1->nodeType == CONSTANT) {
+      simplified->nodeType = CONSTANT;
+      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+      mpfr_init2(*value,tools_precision);
+      simplified->value = value;
+      mpfr_round_to_single(*value, *(simplChild1->value));
+      free_memory(simplChild1);
+    } else {
+      simplified->nodeType = SINGLE;
+      simplified->child1 = simplChild1;
+    }
+    break;
   case DOUBLEDOUBLE:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
@@ -6759,6 +6894,10 @@ void evaluate(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
     evaluate(stack1, tree->child1, x, prec);
     mpfr_round_to_double(result, stack1);
     break;
+  case SINGLE:
+    evaluate(stack1, tree->child1, x, prec);
+    mpfr_round_to_single(result, stack1);
+    break;
   case DOUBLEDOUBLE:
     evaluate(stack1, tree->child1, x, prec);
     mpfr_round_to_doubledouble(result, stack1);
@@ -6894,6 +7033,9 @@ int arity(node *tree) {
     return 1;
     break;
   case DOUBLE:
+    return 1;
+    break;
+  case SINGLE:
     return 1;
     break;
   case DOUBLEDOUBLE:
@@ -7068,6 +7210,9 @@ int isPolynomial(node *tree) {
     res = 0;
     break;
   case DOUBLE:
+    res = 0;
+    break;
+  case SINGLE:
     res = 0;
     break;
   case DOUBLEDOUBLE:
@@ -7724,6 +7869,11 @@ node* expandDivision(node *tree) {
     copy->nodeType = DOUBLE;
     copy->child1 = expandDivision(tree->child1);
     break;
+  case SINGLE:
+    copy = (node*) safeMalloc(sizeof(node));
+    copy->nodeType = SINGLE;
+    copy->child1 = expandDivision(tree->child1);
+    break;
   case DOUBLEDOUBLE:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = DOUBLEDOUBLE;
@@ -8288,6 +8438,11 @@ node* expandUnsimplified(node *tree) {
     copy->nodeType = DOUBLE;
     copy->child1 = expand(tree->child1);
     break;
+  case SINGLE:
+    copy = (node*) safeMalloc(sizeof(node));
+    copy->nodeType = SINGLE;
+    copy->child1 = expand(tree->child1);
+    break;
   case DOUBLEDOUBLE:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = DOUBLEDOUBLE;
@@ -8445,6 +8600,9 @@ int isConstant(node *tree) {
     return isConstant(tree->child1);
     break;
   case DOUBLE:
+    return isConstant(tree->child1);
+    break;
+  case SINGLE:
     return isConstant(tree->child1);
     break;
   case DOUBLEDOUBLE:
@@ -8899,24 +9057,56 @@ void getCoefficients(int *degree, node ***coefficients, node *poly) {
     mpfr_init2(y,8 * sizeof(int) + 10);
     mpfr_set_si(y,k,GMP_RNDN);
     if ((mpfr_cmp(y,*(poly->child2->value)) == 0) &&
-	(k > 0) && 
-	((mpd = getMaxPowerDivider(poly->child1)) > 0)) {
-      temp = dividePolynomialByPowerOfVariableUnsafe(poly->child1, mpd);
-      temp2 = (node *) safeMalloc(sizeof(node));
-      temp2->nodeType = POW;
-      temp2->child1 = temp;
-      temp2->child2 = copyTree(poly->child2);
-      getCoefficients(&degree1, &coefficients1, temp2);
-      free_memory(temp2);
-      for (i=0;i<=degree1;i++) 
-	(*coefficients)[i + k * mpd] = coefficients1[i];
-      free(coefficients1);    
-      mpfr_clear(y);
-      return;
-    }
+	(k > 0)) {
+      if ((mpd = getMaxPowerDivider(poly->child1)) > 0) {
+        temp = dividePolynomialByPowerOfVariableUnsafe(poly->child1, mpd);
+        temp2 = (node *) safeMalloc(sizeof(node));
+        temp2->nodeType = POW;
+        temp2->child1 = temp;
+        temp2->child2 = copyTree(poly->child2);
+        getCoefficients(&degree1, &coefficients1, temp2);
+        free_memory(temp2);
+        for (i=0;i<=degree1;i++) 
+          (*coefficients)[i + k * mpd] = coefficients1[i];
+        free(coefficients1);    
+        mpfr_clear(y);
+        return;
+      }
+
+      if (k == 2) {
+        getCoefficients(&degree1, &coefficients1, poly->child1);
+        getCoefficients(&degree2, &coefficients2, poly->child1);
+        for (i=0;i<=degree1;i++) {
+          for (k=0;k<=degree2;k++) {
+            if ((coefficients1[i] != NULL) && (coefficients2[k] != NULL)) {
+              j = i + k;
+              temp = (node *) safeMalloc(sizeof(node));
+              temp->nodeType = MUL;
+              temp->child1 = copyTree(coefficients1[i]);
+              temp->child2 = copyTree(coefficients2[k]);
+              if ((*coefficients)[j] == NULL) {
+                (*coefficients)[j] = temp;
+              } else {
+                temp2 = (node *) safeMalloc(sizeof(node));
+                temp2->nodeType = ADD;
+                temp2->child1 = (*coefficients)[j];
+                temp2->child2 = temp;
+                (*coefficients)[j] = temp2;
+              }
+            }
+          }
+        }
+        for (i=0;i<=degree1;i++) free_memory(coefficients1[i]);
+        for (i=0;i<=degree2;i++) free_memory(coefficients2[i]);
+        free(coefficients1);
+        free(coefficients2);
+        mpfr_clear(y);
+        return;
+      }
+
+    } 
     mpfr_clear(y);
   }
-
 
   temp = simplifyTreeErrorfree(poly);
   temp2 = expandPowerInPolynomialUnsafe(temp);
@@ -9304,6 +9494,11 @@ node* hornerUnsimplified(node *tree) {
     copy->nodeType = DOUBLE;
     copy->child1 = horner(tree->child1);
     break;
+  case SINGLE:
+    copy = (node*) safeMalloc(sizeof(node));
+    copy->nodeType = SINGLE;
+    copy->child1 = horner(tree->child1);
+    break;
   case DOUBLEDOUBLE:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = DOUBLEDOUBLE;
@@ -9575,7 +9770,6 @@ node *differentiatePolynomialUnsafe(node *tree) {
     mpfr_set_d(*value,0.0,GMP_RNDN);
     copy->value = value;
   } else {
-       
     getCoefficients(&degree,&monomials,tree);
  
     if (monomials[degree] == NULL) {
@@ -9883,6 +10077,11 @@ node *substitute(node* tree, node *t) {
     copy->nodeType = DOUBLE;
     copy->child1 = substitute(tree->child1,t);
     break;
+  case SINGLE:
+    copy = (node*) safeMalloc(sizeof(node));
+    copy->nodeType = SINGLE;
+    copy->child1 = substitute(tree->child1,t);
+    break;
   case DOUBLEDOUBLE:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = DOUBLEDOUBLE;
@@ -10171,6 +10370,9 @@ int treeSize(node *tree) {
     return treeSize(tree->child1) + 1;
     break;
   case DOUBLE:
+    return treeSize(tree->child1) + 1;
+    break;
+  case SINGLE:
     return treeSize(tree->child1) + 1;
     break;
   case DOUBLEDOUBLE:
@@ -10633,6 +10835,11 @@ node *makeCanonical(node *tree, mp_prec_t prec) {
     copy->nodeType = DOUBLE;
     copy->child1 = makeCanonical(tree->child1,prec);
     break;
+  case SINGLE:
+    copy = (node*) safeMalloc(sizeof(node));
+    copy->nodeType = SINGLE;
+    copy->child1 = makeCanonical(tree->child1,prec);
+    break;
   case DOUBLEDOUBLE:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = DOUBLEDOUBLE;
@@ -10816,6 +11023,10 @@ node *makeDouble(node *op1) {
   return makeUnary(op1,DOUBLE);
 }
 
+node *makeSingle(node *op1) {
+  return makeUnary(op1,SINGLE);
+}
+
 node *makeDoubledouble(node *op1) {
   return makeUnary(op1,DOUBLEDOUBLE);
 }
@@ -10883,21 +11094,6 @@ node *makeAcosh(node *op1) {
 
 node *makeAtanh(node *op1) {
   return makeUnary(op1,ATANH);
-}
-
-
-node *parseString(char *str) {
-  node *result;
-
-  startBuffer(str);
-  if (!miniyyparse()) {
-    result = minitree;
-  } else {
-    result = NULL;
-  }
-  endBuffer();
-
-  return result;
 }
 
 

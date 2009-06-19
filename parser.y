@@ -7,8 +7,8 @@ UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
 
 Contributors Ch. Lauter, S. Chevillard, N. Jourdan
 
-christoph.lauter@ens-lyon.fr
-sylvain.chevillard@ens-lyon.fr
+christoph.lauter@ens-lyon.org
+sylvain.chevillard@ens-lyon.org
 nicolas.jourdan@ens-lyon.fr
 
 This software is a computer program whose purpose is to provide an
@@ -167,7 +167,8 @@ void yyerror(char *message) {
 %token  ERFCTOKEN;              					       
 %token  LOG1PTOKEN;             					       
 %token  EXPM1TOKEN;             					       
-%token  DOUBLETOKEN;            					       
+%token  DOUBLETOKEN;
+%token  SINGLETOKEN;            					       
 %token  DOUBLEDOUBLETOKEN;  						       
 %token  TRIPLEDOUBLETOKEN;      					       
 %token  DOUBLEEXTENDEDTOKEN;    					       
@@ -1154,6 +1155,10 @@ basicthing:             ONTOKEN
                           {
 			    $$ = makeDoubleSymbol();
 			  }
+                      | SINGLETOKEN             					       
+                          {
+			    $$ = makeSingleSymbol();
+			  }
                       | DOUBLEEXTENDEDTOKEN             					       
                           {
 			    $$ = makeDoubleextendedSymbol();
@@ -1623,7 +1628,11 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | DOUBLETOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeDouble($3);
-			  }            					       
+			  }
+                      | SINGLETOKEN LPARTOKEN thing RPARTOKEN
+                          {
+			    $$ = makeSingle($3);
+			  }                    					       
                       | DOUBLEDOUBLETOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeDoubledouble($3);
@@ -2272,6 +2281,14 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_DOUBLE_TEXT);
 #else
 			    outputMode(); printf("Double precision rounding operator.\n");
+#endif
+                          }                 					                       					       
+                      | SINGLETOKEN
+                          {
+#ifdef HELP_SINGLE_TEXT
+			    outputMode(); printf(HELP_SINGLE_TEXT);
+#else
+			    outputMode(); printf("Single precision rounding operator.\n");
 #endif
                           }                 					                       					       
                       | DOUBLEDOUBLETOKEN

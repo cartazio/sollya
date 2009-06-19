@@ -7,8 +7,8 @@ UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
 
 Contributors Ch. Lauter, S. Chevillard, N. Jourdan
 
-christoph.lauter@ens-lyon.fr
-sylvain.chevillard@ens-lyon.fr
+christoph.lauter@ens-lyon.org
+sylvain.chevillard@ens-lyon.org
 nicolas.jourdan@ens-lyon.fr
 
 This software is a computer program whose purpose is to provide an
@@ -150,18 +150,21 @@ INFNORM         "infnorm"
 DIAM            "diam"
 
 DOUBLELONG       "double"
+SINGLELONG       "single"
 DOUBLEDOUBLELONG "doubledouble"
 TRIPLEDOUBLELONG "tripledouble"
 DOUBLEEXTENDEDLONG "doubleextended"
 
 
 DOUBLESHORT      "D"
+SINGLESHORT      "SG"
 DOUBLEDOUBLESHORT "DD"
 TRIPLEDOUBLESHORT "TD"
 DOUBLEEXTENDEDSHORT "DE"
 
 
 DOUBLE          ({DOUBLELONG}|{DOUBLESHORT})
+SINGLE          ({SINGLELONG}|{SINGLESHORT})
 DOUBLEDOUBLE    ({DOUBLEDOUBLELONG}|{DOUBLEDOUBLESHORT})
 TRIPLEDOUBLE    ({TRIPLEDOUBLELONG}|{TRIPLEDOUBLESHORT})
 DOUBLEEXTENDED  ({DOUBLEEXTENDEDLONG}|{DOUBLEEXTENDEDSHORT})
@@ -605,6 +608,7 @@ NOP             "nop"
 {LOG1P}           			    { newTokenLexed(); return LOG1PTOKEN; }           					       
 {EXPM1}           			    { newTokenLexed(); return EXPM1TOKEN; }           					       
 {DOUBLE}          			    { newTokenLexed(); return DOUBLETOKEN; }          					       
+{SINGLE}          			    { newTokenLexed(); return SINGLETOKEN; }          					       
 {DOUBLEDOUBLE}				    { newTokenLexed(); return DOUBLEDOUBLETOKEN; }				      	       
 {TRIPLEDOUBLE}    			    { newTokenLexed(); return TRIPLEDOUBLETOKEN; }    					       
 {DOUBLEEXTENDED}  			    { newTokenLexed(); return DOUBLEEXTENDEDTOKEN; }  					       

@@ -7,8 +7,8 @@ UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
 
 Contributors Ch. Lauter, S. Chevillard, N. Jourdan
 
-christoph.lauter@ens-lyon.fr
-sylvain.chevillard@ens-lyon.fr
+christoph.lauter@ens-lyon.org
+sylvain.chevillard@ens-lyon.org
 nicolas.jourdan@ens-lyon.fr
 
 This software is a computer program whose purpose is to provide an
@@ -54,6 +54,10 @@ knowledge of the CeCILL-C license and that you accept its terms.
 #include <stdio.h>
 #include "general.h"
 #include "expression.h"
+
+extern int miniyyparse();
+extern void startBuffer(char *str);
+extern void endBuffer(void);
 
 #define COMMANDLIST 50			
 #define WHILE 51				
@@ -246,7 +250,8 @@ knowledge of the CeCILL-C license and that you accept its terms.
 #define RATIONALMODEASSIGN 239
 #define RATIONALMODESTILLASSIGN 240
 #define RATIONALMODEDEREF 241
-#define TAYLORFORM 242
+#define SINGLESYMBOL 242
+#define TAYLORFORM 243
 
 int executeCommand(node *);
 
@@ -354,6 +359,7 @@ node *makeFixed();
 node *makeFloating();
 node *makeError();
 node *makeDoubleSymbol();
+node *makeSingleSymbol();
 node *makeDoubleDoubleSymbol();
 node *makeTripleDoubleSymbol();
 node *makeString(char *string);
@@ -447,5 +453,7 @@ node *makeUnit();
 node *makeVariableDeclaration(chain *stringlist);
 node *makeProc(chain *stringlist, node *body, node *returnVal);
 node *makeApply(node *thing, chain *thinglist);
+
+node *parseString(char *str); 
 
 #endif /* ifdef EXECUTE_H*/

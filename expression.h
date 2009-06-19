@@ -7,8 +7,8 @@ UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
 
 Contributors Ch. Lauter, S. Chevillard, N. Jourdan
 
-christoph.lauter@ens-lyon.fr
-sylvain.chevillard@ens-lyon.fr
+christoph.lauter@ens-lyon.org
+sylvain.chevillard@ens-lyon.org
 nicolas.jourdan@ens-lyon.fr
 
 This software is a computer program whose purpose is to provide an
@@ -55,9 +55,6 @@ knowledge of the CeCILL-C license and that you accept its terms.
 #include "chain.h"
 #include "library.h"
 
-extern int miniyyparse();
-extern void startBuffer(char *str);
-extern void endBuffer(void);
 
 #define VARIABLE 0
 #define CONSTANT 1
@@ -98,7 +95,7 @@ extern void endBuffer(void);
 #define CEIL 36
 #define FLOOR 37
 #define PI_CONST 38
-
+#define SINGLE 39
 
 typedef struct nodeStruct node;
 
@@ -203,6 +200,7 @@ node *makePow(node *op1, node *op2);
 node *makeNeg(node *op1);
 node *makeAbs(node *op1);
 node *makeDouble(node *op1);
+node *makeSingle(node *op1);
 node *makeDoubledouble(node *op1);
 node *makeTripledouble(node *op1);
 node *makeErf(node *op1);
@@ -220,7 +218,7 @@ node *makeAsinh(node *op1);
 node *makeAcosh(node *op1);
 node *makeAtanh(node *op1);
 
-node *parseString(char *str); 
+
 
 
 #endif /* ifdef EXPRESSION_H*/
