@@ -53,6 +53,6 @@ knowledge of the CeCILL-C license and that you accept its terms.
 #include "chain.h"
 
 void taylorform(node **T, chain **errors, mpfi_t **delta,
-		node *f, int n, mpfr_t x0, mpfi_t *d, int mode);
+		node *f, int n, mpfi_t *x0, mpfi_t *d, int mode);
 
 #endif /* TAYLORFORM_H */

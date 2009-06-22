@@ -11690,7 +11690,9 @@ node *evaluateThingInner(node *tree) {
   int undoVariableTrick;
   mpfi_t tempIA, tempIB, tempIC;
   mpfi_t *tmpInterv1, *tmpInterv2;
-
+  mpfi_t *tmpInterv11;
+  mpfr_t bb,cc;
+  mpfi_t tempIA2;
   if (tree == NULL) return NULL;
 
   timingString = NULL;
@@ -14612,9 +14614,30 @@ node *evaluateThingInner(node *tree) {
       if (isPureTree((node *) (curr->value)) &&
 	  evaluateThingToInteger(&resA,(node *) (curr->value),NULL)) {
 	curr = curr->next;
-	mpfr_init2(a,tools_precision);
-	if (isPureTree((node *) (curr->value)) &&
-	    evaluateThingToConstant(a,(node *) (curr->value),NULL)) {
+	//mpfr_init2(a,tools_precision);
+	//if (isPureTree((node *) (curr->value)) &&
+	//evaluateThingToConstant(a,(node *) (curr->value),NULL)) {
+	tmpInterv11 = NULL;
+          intptr = NULL;
+          resB = 1;
+          if (curr != NULL) { 
+            if (isRange((node *) (curr->value))) {
+              mpfr_init2(bb,tools_precision);
+              mpfr_init2(cc,tools_precision);
+              if (evaluateThingToRange(bb,cc,(node *) (curr->value))) {
+                pTemp = mpfr_get_prec(bb);
+                pTemp2 = mpfr_get_prec(cc);
+                if (pTemp2 > pTemp) pTemp = pTemp2;
+                mpfi_init2(tempIA2,pTemp);
+                mpfi_interv_fr(tempIA2,bb,cc);
+                tmpInterv11 = &tempIA2;
+              } else { 
+                resB = 0;
+              }
+              mpfr_clear(bb);
+              mpfr_clear(cc); 
+	 
+	 
           curr = curr->next;
           tmpInterv1 = NULL;
           intptr = NULL;
@@ -14679,7 +14702,7 @@ node *evaluateThingInner(node *tree) {
             else
               resC = ABSOLUTE;
             taylorform(&tempNode2, &tempChain2, &tmpInterv2,
-                       (node *) (curr->value), resA, a,
+                       (node *) (curr->value), resA, tmpInterv11,
                        tmpInterv1, resC);
             if (timingString != NULL) popTimeCounter(timingString);
             if (tempNode2 != NULL) {
@@ -14726,9 +14749,11 @@ node *evaluateThingInner(node *tree) {
             }
           }
           if (tmpInterv1 != NULL) mpfi_clear(*tmpInterv1);
-	} 
-	mpfr_clear(a);
+	//} 
+//	mpfr_clear(a);
       }
+      }
+    }
     }
     break; 			 	
   case DEGREE:

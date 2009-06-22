@@ -2614,7 +2614,7 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
   return;
 }
 
-node *constructPoly(mpfr_t *coeff, int n, mpfr_t x0) {
+node *constructPoly(mpfr_t *coeff, int n, mpfi_t x0) {
   int i=1;
   chain *curr;
   node *temp1;
@@ -2700,14 +2700,14 @@ void printMpfiChain(chain *c) {
 
 
 void taylorform(node **T, chain **errors, mpfi_t **delta,
-		node *f, int n,	mpfr_t x0, mpfi_t *d, int mode) {
+		node *f, int n,	mpfi_t *x0, mpfi_t *d, int mode) {
 
   printf("taylorform: f  = ");
   printTree(f);
   printf("\n");
   printf("taylorform: n  = %d\n",n);
   printf("taylorform: x0 = ");
-  printMpfr(x0);
+  printInterval(x0);
   if (d != NULL) {
     printf("taylorform: d  = ");
     printInterval(d);
@@ -2736,13 +2736,13 @@ mpfi_t temp;
 mpfi_t pow;
 
 mpfi_init2(x0Int,getToolPrecision());
-mpfi_set_fr(x0Int,x0);
+mpfi_set(x0Int,*x0);
 t=createEmptytModel(n,x0Int,*d);
 //printf("we have created an emptytm");  
 
 taylor_model(t,f,n,x0Int,*d);
 
-printtModel(t);
+//printtModel(t);
 
 coeffsMpfr= (mpfr_t *)safeMalloc((n)*sizeof(mpfr_t));
 coeffsErrors= (mpfi_t *)safeMalloc((n)*sizeof(mpfi_t));
@@ -2758,12 +2758,12 @@ mpfi_init2(*rest,getToolPrecision());
  mpfr_get_poly(coeffsMpfr, coeffsErrors, *rest, t->n -1,t->poly_array, t->x0,t->x);
  
  //create T; 
- *T=constructPoly(coeffsMpfr, t->n-1, x0);
+ *T=constructPoly(coeffsMpfr, t->n-1, t->x0);
 
 //create errors;
 err=constructChain(coeffsErrors,t->n-1);
 
-printMpfiChain(err);
+//printMpfiChain(err);
  *errors = err;
 if (mode == ABSOLUTE) {
     mpfi_init2(pow, getToolPrecision());
