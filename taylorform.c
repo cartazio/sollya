@@ -352,6 +352,9 @@ void tan_diff(mpfi_t *res, mpfi_t x, int n) {
   mpfi_clear(partialSum);
   mpfi_clear(s1);
   mpfi_clear(pow);
+  mpfi_clear(u);
+  free(coeffs_array);
+  free(powers_array);
   
   return;
 }
@@ -446,6 +449,9 @@ void tanh_diff(mpfi_t *res, mpfi_t x, int n) {
   mpfi_clear(partialSum);
   mpfi_clear(s1);
   mpfi_clear(pow);
+  mpfi_clear(u);
+  free(coeffs_array);
+  free(powers_array);
   return;
 }
 
@@ -572,6 +578,9 @@ void atan_diff(mpfi_t *res, mpfi_t x, int n) {
   mpfi_clear(pow);
   mpfi_clear(a1);
   mpfi_clear(nominator);
+  mpfi_clear(u);
+  free(coeffs_array);
+  free(powers_array);
   return;
 }
 
@@ -697,6 +706,9 @@ void atanh_diff(mpfi_t *res, mpfi_t x, int n) {
   mpfi_clear(pow);
   mpfi_clear(a1);
   mpfi_clear(nominator);
+  mpfi_clear(u);
+  free(coeffs_array);
+  free(powers_array);
   return;
 }
 
@@ -831,6 +843,9 @@ void asin_diff(mpfi_t *res, mpfi_t x, int n) {
   mpfi_clear(pow);
   mpfi_clear(a1);
   mpfi_clear(nominator);
+  mpfi_clear(u);
+  free(coeffs_array);
+  free(powers_array);
   return;
 }
 
@@ -973,6 +988,9 @@ void asinh_diff(mpfi_t *res, mpfi_t x, int n) {
   mpfi_clear(pow);
   mpfi_clear(a1);
   mpfi_clear(nominator);
+  mpfi_clear(u);
+  free(coeffs_array);
+  free(powers_array);
   return;
 }
 
@@ -1103,6 +1121,9 @@ void acosh_diff(mpfi_t *res, mpfi_t x, int n) {
   mpfi_clear(pow);
   mpfi_clear(a1);
   mpfi_clear(nominator);
+  mpfi_clear(u);
+  free(coeffs_array);
+  free(powers_array);
   return;
 }
 
@@ -1782,6 +1803,10 @@ void  varInv_TM(tModel *t,mpfi_t x0, mpfi_t x, int n){
     cleartModel(tt);
     mpfr_clear(minusOne);    
     mpfi_clear(fact);
+    for(i=0;i<=n;i++){
+      mpfi_clear(nDeriv[i]);
+    }
+    free(nDeriv); 
 
 }
 
@@ -1818,6 +1843,10 @@ void  ctPowerVar_TM(tModel *t,mpfi_t x0, mpfi_t x, int n, mpfr_t p){
     copytModel(t,tt);
     cleartModel(tt);
     mpfi_clear(fact);
+    for(i=0;i<=n;i++){
+      mpfi_clear(nDeriv[i]);
+    }
+    free(nDeriv); 
 
 }
 
@@ -1853,6 +1882,10 @@ void  varCtPower_TM(tModel *t,mpfi_t x0, mpfi_t x, int n, mpfr_t p){
     copytModel(t,tt);
     cleartModel(tt);
     mpfi_clear(fact);
+    for(i=0;i<=n;i++){
+      mpfi_clear(nDeriv[i]);
+    }
+    free(nDeriv); 
 }
 
 /*This function computes an interval bound
@@ -2413,6 +2446,8 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
          mpfi_set_fr(temp2, *(simplifiedChild2->value));
          mpfi_pow(temp1,temp1,temp2);
          consttModel(tt,temp1);
+         copytModel(t,tt);
+         cleartModel(tt);
          mpfi_clear(temp1);
          mpfi_clear(temp2);
       }
@@ -2548,6 +2583,9 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
         cleartModel(child2_tm);
         cleartModel(child1_tm);
         cleartModel(ttt);
+        cleartModel(expx_tm);
+        cleartModel(logx_tm);
+        cleartModel(logf_tm);
         
         copytModel(t,tt);
         cleartModel(tt);
@@ -2555,6 +2593,7 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
         mpfi_clear(powx);
         mpfi_clear(fx0);   
         mpfi_clear(gx0); 
+        
     }
     free_memory(simplifiedChild2);
     free_memory(simplifiedChild1);
@@ -2709,7 +2748,7 @@ coeffsMpfr= (mpfr_t *)safeMalloc((n)*sizeof(mpfr_t));
 coeffsErrors= (mpfi_t *)safeMalloc((n)*sizeof(mpfi_t));
 
 rest= (mpfi_t*)safeMalloc(sizeof(mpfi_t));
- mpfi_init2(*rest,getToolPrecision());
+mpfi_init2(*rest,getToolPrecision());
 
  for(i=0;i<n;i++){
    mpfi_init2(coeffsErrors[i],getToolPrecision());
@@ -2733,6 +2772,8 @@ if (mode == ABSOLUTE) {
     mpfi_sub(temp, t->x, t->x0);
     mpfi_pow(temp, temp,pow);
     mpfi_mul(*rest,temp, t->rem_bound);
+    mpfi_clear(pow);
+    mpfi_clear(temp);
     } else {
   
     mpfi_set(*rest,t->rem_bound);
@@ -2742,10 +2783,10 @@ if (mode == ABSOLUTE) {
 *delta=rest;
     
 for(i=0;i<n;i++){
-mpfr_clear(coeffsMpfr[i]);
+  mpfr_clear(coeffsMpfr[i]);
 }
 free(coeffsMpfr);
 mpfi_clear(x0Int);
-
+cleartModel(t);
 
 }
