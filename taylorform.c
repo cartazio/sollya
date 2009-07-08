@@ -1239,10 +1239,11 @@ mpfi_t x;
 mpfi_t x0;
 
 } tModel;
-void ctMultiplication_TM(tModel*d,tModel*s, mpfi_t c);
-void ctDivision_TM(tModel*d,tModel*s, mpfi_t c);
+void ctMultiplication_TM(tModel*d,tModel*s, mpfi_t c,int mode);
+void ctDivision_TM(tModel*d,tModel*s, mpfi_t c,int mode);
 void polynomialBoundHorner(mpfi_t *bound,int n,mpfi_t *coeffs,mpfi_t x0,mpfi_t x);
 void polynomialBoundSharp(mpfi_t *bound,int n,mpfi_t *coeffs,mpfi_t x0Int,mpfi_t x);
+void polynomialBoundSharp(mpfi_t *bound,int n,mpfi_t *coeffs,mpfi_t x0,mpfi_t x);
   
 /*This function creates an empty taylor model
 */
@@ -1526,7 +1527,7 @@ Parameters:
 /*This function computes the tm for multiplication of two 
 given tm's 
 */
-void  multiplication_TM(tModel *t,tModel *c1, tModel *c2){
+void  multiplication_TM(tModel *t,tModel *c1, tModel *c2,int mode){
   //we will multiply two taylor models of order n; and obtain a new taylor model of order n;
   int n,i,j;
   mpfi_t *r;
@@ -1538,68 +1539,128 @@ void  multiplication_TM(tModel *t,tModel *c1, tModel *c2){
   
   //aux tm for doing the multiplications
   tt=createEmptytModel(n,t->x0, t->x);
-  
-  r= (mpfi_t *)safeMalloc((n)*sizeof(mpfi_t));
-  
   for(i=0;i<=n-1;i++){
-    mpfi_init2(r[i], getToolPrecision());
-    mpfi_set_ui(r[i],0);
-    mpfi_set_ui(tt->poly_array[i],0);
+   mpfi_set_ui(tt->poly_array[i],0);
   }
   
   mpfi_init2(temp1, getToolPrecision());
   mpfi_init2(temp2, getToolPrecision());
-  
- /*We are multiplying taylor models, considering the relative error
- We are given:  (T1,delta1*(x-x0)^n
-                (T2,delta2*(x-x0)^n
-               
- The product is:(T1*T2|[0...n-1], {delta1*B(T2)+delta2*B(T1)+delta1*delta2*B((x-x0)^n)+B(T1*T2|[n...2*n-2])}  *(x-x0)^n */
- 
-  /*compute in temp1 delta1*delta2*B((x-x0)^n)*/
-  mpfi_mul(temp1, c1->rem_bound, c2->rem_bound);
-  mpfi_sub(temp2,t->x,t->x0);
-  
   mpfi_init2(pow,getToolPrecision());
-  mpfi_set_ui(pow,n);
   
-  mpfi_pow(temp2,temp2,pow);
+  if (mode==1) {/*relative errror*/
   
-  mpfi_mul(temp1,temp2,temp1);
-  //printf("compute in temp2 delta2*B(T1)");
-  mpfi_mul(temp2, c1->poly_bound, c2->rem_bound);
-  
-  mpfi_add(tt->rem_bound,temp1,temp2);
-  
-  /*compute in temp1 delta1*B(T2)*/
-  mpfi_mul(temp1, c1->rem_bound, c2->poly_bound);
-  mpfi_add(tt->rem_bound, tt->rem_bound, temp1);
-  
-  /*compute the product of the two polynomials*/
-  for(i=0; i<n;i++)
-    for (j=0;j<n;j++){
-      mpfi_mul(temp1,c1->poly_array[i], c2->poly_array[j]);
-      if ((i+j)<n )
-        mpfi_add(tt->poly_array[i+j],tt->poly_array[i+j],temp1);
-      else
-        mpfi_add(r[i+j-n],r[i+j-n],temp1);
-    }
-   /*compute bound for polynomial T1*T2|[n...2*n-2] scaled by (x-x0)^n*/
-   polynomialBoundSharp(&temp1, n-2,r,t->x0,t->x);
+    /*We are multiplying taylor models, considering the relative error
+    We are given:  (T1,delta1*(x-x0)^n
+                   (T2,delta2*(x-x0)^n
+               
+    The product is:(T1*T2|[0...n-1], {delta1*B(T2)+delta2*B(T1)+delta1*delta2*B((x-x0)^n)+B(T1*T2|[n...2*n-2])}  *(x-x0)^n */
+ 
+   /*compute in temp1 delta1*delta2*B((x-x0)^n)*/
    
-   /*we add temp1 in the bound for the remainder*/
-   mpfi_add(tt->rem_bound,tt->rem_bound,temp1);
    
-  /*we compute the new polynomial bound for the new model*/
-  polynomialBoundSharp(&temp1, n-1,tt->poly_array,t->x0,t->x);   
-  mpfi_set(tt->poly_bound,temp1);
   
+   
+   mpfi_mul(temp1, c1->rem_bound, c2->rem_bound);
+   mpfi_sub(temp2,t->x,t->x0);
+  
+   
+   mpfi_set_ui(pow,n);
+  
+   mpfi_pow(temp2,temp2,pow);
+  
+   mpfi_mul(temp1,temp2,temp1);
+   //printf("compute in temp2 delta2*B(T1)");
+   mpfi_mul(temp2, c1->poly_bound, c2->rem_bound);
+  
+   mpfi_add(tt->rem_bound,temp1,temp2);
+  
+   /*compute in temp1 delta1*B(T2)*/
+   mpfi_mul(temp1, c1->rem_bound, c2->poly_bound);
+   mpfi_add(tt->rem_bound, tt->rem_bound, temp1);
+  
+   /*compute the product of the two polynomials*/
+   
+   r= (mpfi_t *)safeMalloc((n)*sizeof(mpfi_t));
+   for(i=0;i<=n-1;i++){
+    mpfi_init2(r[i],getToolPrecision());
+    mpfi_set_ui(r[i],0);
+   }
+   
+   for(i=0; i<n;i++)
+     for (j=0;j<n;j++){
+       mpfi_mul(temp1,c1->poly_array[i], c2->poly_array[j]);
+       if ((i+j)<n )
+         mpfi_add(tt->poly_array[i+j],tt->poly_array[i+j],temp1);
+       else
+         mpfi_add(r[i+j-n],r[i+j-n],temp1);
+     }
+    /*compute bound for polynomial T1*T2|[n...2*n-2] scaled by (x-x0)^n*/
+    polynomialBoundSharp(&temp1, n-2,r,t->x0,t->x);
+   
+    /*we add temp1 in the bound for the remainder*/
+    mpfi_add(tt->rem_bound,tt->rem_bound,temp1);
+   
+    /*we compute the new polynomial bound for the new model*/
+    polynomialBoundSharp(&temp1, n-1,tt->poly_array,t->x0,t->x);   
+    mpfi_set(tt->poly_bound,temp1);
+     
+    for(i=0;i<n-1;i++)
+      mpfi_clear(r[i]);
+    free(r); 
+  }
+  else{
+  /*absolute error*/
+  /*We are multiplying taylor models, considering the absolute error
+    We are given:  (T1,delta1)
+                   (T2,delta2)
+               
+    The product is:(T1*T2|[0...n-1], {delta1*B(T2)+delta2*B(T1)+delta1*delta2+B(T1*T2|[n...2*n-2])}*/
+ 
+   /*compute in temp1 delta1*delta2*/
+   mpfi_mul(temp1, c1->rem_bound, c2->rem_bound);
+   //printf("compute in temp2 delta2*B(T1)");
+   mpfi_mul(temp2, c1->poly_bound, c2->rem_bound);
+  
+   mpfi_add(tt->rem_bound,temp1,temp2);
+  
+   /*compute in temp1 delta1*B(T2)*/
+   mpfi_mul(temp1, c1->rem_bound, c2->poly_bound);
+   mpfi_add(tt->rem_bound, tt->rem_bound, temp1);
+  
+   /*compute the product of the two polynomials*/
+   
+   r= (mpfi_t *)safeMalloc((2*n-1)*sizeof(mpfi_t));
+   for(i=0;i<=2*n-2;i++){
+    mpfi_init2(r[i],getToolPrecision());
+    mpfi_set_ui(r[i],0);
+   }
+   
+   for(i=0; i<n;i++)
+     for (j=0;j<n;j++){
+       mpfi_mul(temp1,c1->poly_array[i], c2->poly_array[j]);
+       if ((i+j)<n )
+         mpfi_add(tt->poly_array[i+j],tt->poly_array[i+j],temp1);
+       else
+         mpfi_add(r[i+j],r[i+j],temp1);
+     }
+    /*compute bound for polynomial T1*T2|[n...2*n-2] scaled by (x-x0)^n*/
+    polynomialBoundSharp(&temp1, 2*n-2,r,t->x0,t->x);
+   
+    /*we add temp1 in the bound for the remainder*/
+    mpfi_add(tt->rem_bound,tt->rem_bound,temp1);
+   
+    /*we compute the new polynomial bound for the new model*/
+    polynomialBoundSharp(&temp1, n-1,tt->poly_array,t->x0,t->x);   
+    mpfi_set(tt->poly_bound,temp1);
+    for(i=0;i<2*n-1;i++)
+      mpfi_clear(r[i]);
+    free(r); 
+  }
+    
   mpfi_clear(temp1);
   mpfi_clear(temp2);
   mpfi_clear(pow);
-  for(i=0;i<n-1;i++)
-    mpfi_clear(r[i]);
-  free(r); 
+ 
   
   /*set the result*/
   copytModel(t,tt);
@@ -1612,8 +1673,11 @@ void  multiplication_TM(tModel *t,tModel *c1, tModel *c2){
 
 /*This function computes the tm for addition of two 
 given tm's 
+The addition of two taylor models is the same, regardless the mode, 
+absolute or relative - I put the parameter just to have some coherence
+with the other functions
 */
-void addition_TM(tModel *t,tModel *child1_tm, tModel *child2_tm){
+void addition_TM(tModel *t,tModel *child1_tm, tModel *child2_tm, int mode){
   int i;
   int n;
   tModel *tt;
@@ -1629,24 +1693,290 @@ void addition_TM(tModel *t,tModel *child1_tm, tModel *child2_tm){
   cleartModel(tt);
 }
 
+
+/*This function computes a taylor remainder for a basic function as an interval, knowing
+it is monotone, the function is given by nodeType, the coeffs of the series
+expansion are given as an array of mpfi's, developed over x, in x0. 
+*/
+void computeMonotoneRemaider(mpfi_t *bound, int nodeType, int n, mpfi_t *poly_array, mpfi_t x0, mpfi_t x){
+  mpfi_t bound1, bound2,xinf,xsup;
+  mpfi_t boundf1, boundf2;
+  mpfr_t xinfFr, xsupFr;
+  
+  mpfr_init2(xinfFr, getToolPrecision());
+  mpfr_init2(xsupFr, getToolPrecision());
+  mpfi_init2(bound1, getToolPrecision());
+  mpfi_init2(bound2, getToolPrecision());  
+  mpfi_init2(xinf, getToolPrecision());
+  mpfi_init2(xsup, getToolPrecision());
+  
+  mpfi_init2(boundf1, getToolPrecision());
+  mpfi_init2(boundf2, getToolPrecision()); 
+  
+  mpfi_get_left(xinfFr,x);
+  mpfi_get_right(xsupFr,x); 
+  mpfi_set_fr(xinf, xinfFr);
+  mpfi_set_fr(xsup, xsupFr);  
+  
+   
+  polynomialBoundSharp(&bound1,n-1,poly_array,x0,xinf);
+  baseFunction_diff(&boundf1,nodeType,xinf,0);
+  
+  mpfi_sub(bound1,bound1,boundf1);
+  
+  
+  polynomialBoundSharp(&bound2,n-1,poly_array,x0,xsup);
+  baseFunction_diff(&boundf2,nodeType,xsup,0);
+  mpfi_sub(bound2,bound2,boundf2);
+ 
+  /*in the case when n is even, the remainder is 
+  bounded by the values it takes on the two extremas of the interval*/
+  
+  mpfi_union(*bound,bound1,bound2);
+  
+  /*in the case when n is odd, the remainder is 
+  in the convex hull determined by the two extremas and the value in x0 (which is 0, theoretically,
+  but since x0 is a small interval...*/
+  
+  if ((n%2)!=0){
+    polynomialBoundSharp(&bound2,n-1,poly_array,x0,x0);
+    baseFunction_diff(&boundf2,nodeType,x0,0);
+    mpfi_sub(bound2,bound2,boundf2);
+    mpfi_union(*bound,*bound,bound2);
+  }
+  
+  //printInterval(*bound);
+  mpfr_clear(xinfFr);
+  mpfr_clear(xsupFr);
+  
+  mpfi_clear(bound1);
+  mpfi_clear(bound2);
+    
+  mpfi_clear(xinf);
+  mpfi_clear(xsup);
+  
+  mpfi_clear(boundf1);
+  mpfi_clear(boundf2);
+}
+
+/*This function computes a taylor remainder for 1/x as an interval, knowing
+it is monotone, the function is given by nodeType, the coeffs of the series
+expansion are given as an array of mpfi's, developed over x, in x0. 
+*/
+void computeMonotoneRemaiderVarInv(mpfi_t *bound, int n, mpfi_t *poly_array, mpfi_t x0, mpfi_t x){
+  mpfi_t bound1, bound2,xinf,xsup;
+  mpfi_t boundf1, boundf2;
+  mpfr_t xinfFr, xsupFr;
+  
+  mpfr_init2(xinfFr, getToolPrecision());
+  mpfr_init2(xsupFr, getToolPrecision());
+  mpfi_init2(bound1, getToolPrecision());
+  mpfi_init2(bound2, getToolPrecision());  
+  mpfi_init2(xinf, getToolPrecision());
+  mpfi_init2(xsup, getToolPrecision());
+  
+  mpfi_init2(boundf1, getToolPrecision());
+  mpfi_init2(boundf2, getToolPrecision()); 
+  
+  mpfi_get_left(xinfFr,x);
+  mpfi_get_right(xsupFr,x); 
+  mpfi_set_fr(xinf, xinfFr);
+  mpfi_set_fr(xsup, xsupFr);  
+  
+   
+  polynomialBoundSharp(&bound1,n-1,poly_array,x0,xinf);
+  mpfi_ui_div(boundf1,1,xinf);
+  
+  mpfi_sub(bound1,bound1,boundf1);
+  
+  
+  polynomialBoundSharp(&bound2,n-1,poly_array,x0,xsup);
+  mpfi_ui_div(boundf1,1,xsup);
+  mpfi_sub(bound2,bound2,boundf2);
+ 
+  /*in the case when n is even, the remainder is 
+  bounded by the values it takes on the two extremas of the interval*/
+  
+  mpfi_union(*bound,bound1,bound2);
+  
+  /*in the case when n is odd, the remainder is 
+  in the convex hull determined by the two extremas and the value in x0 (which is 0, theoretically,
+  but since x0 is a small interval...*/
+  
+  if ((n%2)!=0){
+    polynomialBoundSharp(&bound2,n-1,poly_array,x0,x0);
+    mpfi_ui_div(boundf2,1,x0);
+    mpfi_sub(bound2,bound2,boundf2);
+    mpfi_union(*bound,*bound,bound2);
+  }
+  
+  //printInterval(*bound);
+  mpfr_clear(xinfFr);
+  mpfr_clear(xsupFr);
+  
+  mpfi_clear(bound1);
+  mpfi_clear(bound2);
+    
+  mpfi_clear(xinf);
+  mpfi_clear(xsup);
+  
+  mpfi_clear(boundf1);
+  mpfi_clear(boundf2);
+}
+
+/*This function computes a taylor remainder for x^p as an interval, knowing
+it is monotone, the function is given by nodeType, the coeffs of the series
+expansion are given as an array of mpfi's, developed over x, in x0. 
+*/
+void computeMonotoneRemaiderCtPowerVar(mpfi_t *bound, int n, mpfr_t p, mpfi_t *poly_array, mpfi_t x0, mpfi_t x){
+  mpfi_t bound1, bound2,xinf,xsup;
+  mpfi_t boundf1, boundf2;
+  mpfr_t xinfFr, xsupFr;
+  mpfi_t pow;
+  
+  mpfr_init2(xinfFr, getToolPrecision());
+  mpfr_init2(xsupFr, getToolPrecision());
+  mpfi_init2(bound1, getToolPrecision());
+  mpfi_init2(bound2, getToolPrecision());  
+  mpfi_init2(xinf, getToolPrecision());
+  mpfi_init2(xsup, getToolPrecision());
+  
+  mpfi_init2(boundf1, getToolPrecision());
+  mpfi_init2(boundf2, getToolPrecision()); 
+  
+  mpfi_init2(pow, getToolPrecision()); 
+  mpfi_set_fr(pow,p);
+  
+  mpfi_get_left(xinfFr,x);
+  mpfi_get_right(xsupFr,x); 
+  mpfi_set_fr(xinf, xinfFr);
+  mpfi_set_fr(xsup, xsupFr);  
+  
+   
+  polynomialBoundSharp(&bound1,n-1,poly_array,x0,xinf);
+  mpfi_pow(boundf1,xinf,pow);
+  
+  mpfi_sub(bound1,bound1,boundf1);
+  
+  
+  polynomialBoundSharp(&bound2,n-1,poly_array,x0,xsup);
+  mpfi_pow(boundf1,xsup,pow);
+  mpfi_sub(bound2,bound2,boundf2);
+ 
+  /*in the case when n is even, the remainder is 
+  bounded by the values it takes on the two extremas of the interval*/
+  
+  mpfi_union(*bound,bound1,bound2);
+  
+  /*in the case when n is odd, the remainder is 
+  in the convex hull determined by the two extremas and the value in x0 (which is 0, theoretically,
+  but since x0 is a small interval...*/
+  
+  if ((n%2)!=0){
+    polynomialBoundSharp(&bound2,n-1,poly_array,x0,x0);
+    mpfi_pow(boundf2,x0,pow);
+    mpfi_sub(bound2,bound2,boundf2);
+    mpfi_union(*bound,*bound,bound2);
+  }
+  
+  //printInterval(*bound);
+  mpfr_clear(xinfFr);
+  mpfr_clear(xsupFr);
+  
+  mpfi_clear(bound1);
+  mpfi_clear(bound2);
+    
+  mpfi_clear(xinf);
+  mpfi_clear(xsup);
+  
+  mpfi_clear(boundf1);
+  mpfi_clear(boundf2);
+  mpfi_clear(pow);
+}
+
+/*This function computes a taylor remainder for p^x as an interval, knowing
+it is monotone, the function is given by nodeType, the coeffs of the series
+expansion are given as an array of mpfi's, developed over x, in x0. 
+*/
+void computeMonotoneRemaiderVarCtPower(mpfi_t *bound, int n, mpfr_t p, mpfi_t *poly_array, mpfi_t x0, mpfi_t x){
+  mpfi_t bound1, bound2,xinf,xsup;
+  mpfi_t boundf1, boundf2;
+  mpfr_t xinfFr, xsupFr;
+  mpfi_t pow;
+  
+  mpfr_init2(xinfFr, getToolPrecision());
+  mpfr_init2(xsupFr, getToolPrecision());
+  mpfi_init2(bound1, getToolPrecision());
+  mpfi_init2(bound2, getToolPrecision());  
+  mpfi_init2(xinf, getToolPrecision());
+  mpfi_init2(xsup, getToolPrecision());
+  
+  mpfi_init2(boundf1, getToolPrecision());
+  mpfi_init2(boundf2, getToolPrecision()); 
+  
+  mpfi_init2(pow, getToolPrecision()); 
+  mpfi_set_fr(pow,p);
+  
+  mpfi_get_left(xinfFr,x);
+  mpfi_get_right(xsupFr,x); 
+  mpfi_set_fr(xinf, xinfFr);
+  mpfi_set_fr(xsup, xsupFr);  
+  
+   
+  polynomialBoundSharp(&bound1,n-1,poly_array,x0,xinf);
+  mpfi_pow(boundf1,pow,xinf);
+  
+  mpfi_sub(bound1,bound1,boundf1);
+  
+  
+  polynomialBoundSharp(&bound2,n-1,poly_array,x0,xsup);
+  mpfi_pow(boundf1,pow,xsup);
+  mpfi_sub(bound2,bound2,boundf2);
+ 
+  /*in the case when n is even, the remainder is 
+  bounded by the values it takes on the two extremas of the interval*/
+  
+  mpfi_union(*bound,bound1,bound2);
+  
+  /*in the case when n is odd, the remainder is 
+  in the convex hull determined by the two extremas and the value in x0 (which is 0, theoretically,
+  but since x0 is a small interval...*/
+  
+  if ((n%2)!=0){
+    polynomialBoundSharp(&bound2,n-1,poly_array,x0,x0);
+    mpfi_pow(boundf2,pow,x0);
+    mpfi_sub(bound2,bound2,boundf2);
+    mpfi_union(*bound,*bound,bound2);
+  }
+  
+  //printInterval(*bound);
+  mpfr_clear(xinfFr);
+  mpfr_clear(xsupFr);
+  
+  mpfi_clear(bound1);
+  mpfi_clear(bound2);
+    
+  mpfi_clear(xinf);
+  mpfi_clear(xsup);
+  
+  mpfi_clear(boundf1);
+  mpfi_clear(boundf2);
+  mpfi_clear(pow);
+}
+
+
+
 /*This function computes a taylor model
 for a base function*/
-void base_TM(tModel *t,int nodeType, int n, mpfi_t x0, mpfi_t x){
+void base_TM(tModel *t,int nodeType, int n, mpfi_t x0, mpfi_t x, int mode){
   int i;
   tModel *tt;
-  mpfi_t *nDeriv;
-  mpfi_t fact;
+  mpfi_t *nDeriv, *nDeriv2;
+  mpfi_t fact, temp,pow;
   
   tt=createEmptytModel(n,x0,x);
   /*Use AD for the base functions to compute the coeffs*/
   baseFunction_diff( tt->poly_array,nodeType,x0, n-1);
-    
-  /*Use AD for the base functions to compute the nth derivative*/
-  nDeriv= (mpfi_t *)safeMalloc((n+1)*sizeof(mpfi_t));
-  for(i=0;i<=n;i++){
-    mpfi_init2(nDeriv[i], getToolPrecision());
-  }
-  baseFunction_diff(nDeriv,nodeType,x,n);
   
   /*we have to divide each coeff by i!*/
   mpfi_init2(fact,getToolPrecision());
@@ -1656,21 +1986,56 @@ void base_TM(tModel *t,int nodeType, int n, mpfi_t x0, mpfi_t x){
   mpfi_mul_ui(fact,fact,i);
   mpfi_div(tt->poly_array[i],tt->poly_array[i],fact);
   }
-  /*we have to divide the remainder by n!*/
-  mpfi_mul_ui(fact,fact,n);
-  mpfi_set(tt->rem_bound,nDeriv[n]);
-  mpfi_div(tt->rem_bound,tt->rem_bound,fact);
   
-  /*bound the polynomial obtained*/
-  polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,t->x0,t->x);   
+  
+  /*Use AD for the base functions to bound derivatives up to n+1th derivative*/
+  nDeriv= (mpfi_t *)safeMalloc((n+2)*sizeof(mpfi_t));
+    for(i=0;i<=n+1;i++){
+      mpfi_init2(nDeriv[i], getToolPrecision());
+    }
+  baseFunction_diff(nDeriv,nodeType,x,n+1);
+  
+   
+  /*Use Zumkeller technique to improve the bound in the absolute case,
+  when the (n+1)th derivative has constant sign*/
+  if((mode!=1)&&((mpfi_is_nonpos(nDeriv[n+1])>0)||(mpfi_is_nonneg(nDeriv[n+1])>0))){ 
+    //printf("we reached the zumkeler technique");
+    computeMonotoneRemaider(&tt->rem_bound,nodeType, n, tt->poly_array, x0,x);
+  }
+  else{
+    /*just keep the bound obtained using AD*/    
+    /*we have to divide the remainder by n!*/
+    mpfi_mul_ui(fact,fact,n);
+    mpfi_set(tt->rem_bound,nDeriv[n]);
+    mpfi_div(tt->rem_bound,tt->rem_bound,fact);
+  
+    /*if we are in the case of the absolute error,
+    we have to multiply by (x-x0)^n*/
+    
+    if (mode!=1){
+    
+    mpfi_init2(pow,getToolPrecision());
+    mpfi_set_ui(pow,n);
+    mpfi_init2(temp,getToolPrecision());
+    mpfi_sub(temp,x,x0);
+    mpfi_pow(temp,temp,pow);
+    //printInterval(temp);
+    mpfi_mul(tt->rem_bound,tt->rem_bound,temp);
+    //printInterval(tt->rem_bound);
+    mpfi_clear(pow);
+    mpfi_clear(temp);
+    }
+  }
+    /*bound the polynomial obtained*/
+    polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,t->x0,t->x);   
  
-  /*printf("basefunction interval:");
-  printInterval(tt->rem_bound);*/
+    /*printf("basefunction interval:");
+    printInterval(tt->rem_bound);*/
   
-  copytModel(t,tt);
-  cleartModel(tt);
+    copytModel(t,tt);
+    cleartModel(tt);
   
-  for(i=0;i<=n;i++){
+  for(i=0;i<=n+1;i++){
     mpfi_clear(nDeriv[i]);
   }
   mpfi_clear(fact);
@@ -1686,7 +2051,7 @@ We obtain a taylor model for g(f(x)) in x0 over x.
 Note: this is just like in the proofs, but it is easier to create the tm for g 
 outside this function, such that a parameter of type NodeType is not needed here
 */
-void composition_TM(tModel *t,tModel *g, tModel *f){
+void composition_TM(tModel *t,tModel *g, tModel *f, int mode){
   int i;
   int n;
   tModel *tt, *partial_tmul,*tinterm,*tmul ;
@@ -1710,19 +2075,28 @@ void composition_TM(tModel *t,tModel *g, tModel *f){
   
   
   for (i=1;i<n;i++){
-  ctMultiplication_TM(tinterm,partial_tmul,g->poly_array[i]);
-  addition_TM(tt,tt,tinterm);
-  multiplication_TM(partial_tmul,partial_tmul,tmul);
+  ctMultiplication_TM(tinterm,partial_tmul,g->poly_array[i],mode);
+  addition_TM(tt,tt,tinterm,mode);
+  multiplication_TM(partial_tmul,partial_tmul,tmul,mode);
   }
   
   //in tt we have now the good polynomial;
   //we have to compute the bounds.
+  //printtModel(g);
+  //printtModel(partial_tmul);
+  //printtModel(tt);
    
   mpfi_mul(partial_tmul->rem_bound,partial_tmul->rem_bound,g->rem_bound);
-  mpfi_add(tt->rem_bound,tt->rem_bound,partial_tmul->rem_bound);
+  if (mode==1){
+    mpfi_add(tt->rem_bound,tt->rem_bound,partial_tmul->rem_bound);
+  }
+  else{
+    mpfi_set(tt->rem_bound,g->rem_bound);
+  
+  }
   polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
   copytModel(t,tt);
-  
+  //printtModel(tt);
   cleartModel(tt);
   cleartModel(partial_tmul);
   cleartModel(tmul);
@@ -1733,7 +2107,7 @@ void composition_TM(tModel *t,tModel *g, tModel *f){
 /*This function computes the tm for division
 with a ct term of a given tm
 */
-void ctDivision_TM(tModel*d,tModel*s, mpfi_t c){
+void ctDivision_TM(tModel*d,tModel*s, mpfi_t c,int mode){
   int i;
   int n;
   tModel *tt;
@@ -1751,7 +2125,7 @@ void ctDivision_TM(tModel*d,tModel*s, mpfi_t c){
 /*This function computes the tm for multiplication
 with a ct term of a given tm
 */
-void ctMultiplication_TM(tModel*d,tModel*s, mpfi_t c){
+void ctMultiplication_TM(tModel*d,tModel*s, mpfi_t c,int mode){
   int i;
   int n;
   n=s->n;
@@ -1768,13 +2142,13 @@ void ctMultiplication_TM(tModel*d,tModel*s, mpfi_t c){
 
 
 /*this function computes the taylor model for 1/x*/
-void  varInv_TM(tModel *t,mpfi_t x0, mpfi_t x, int n){
+void  varInv_TM(tModel *t,mpfi_t x0, mpfi_t x, int n,int mode){
     tModel *tt;
     mpfi_t *nDeriv;
     int i;
         
     mpfr_t minusOne;
-    mpfi_t fact;    
+    mpfi_t fact,temp,pow;    
     
     tt=createEmptytModel(n,x0,x); 
     mpfr_init2(minusOne, getToolPrecision());
@@ -1782,28 +2156,52 @@ void  varInv_TM(tModel *t,mpfi_t x0, mpfi_t x, int n){
 
     constantPower_diff(tt->poly_array,minusOne, x0, n-1);
     
-    nDeriv= (mpfi_t *)safeMalloc((n+1)*sizeof(mpfi_t));
-    for(i=0;i<=n;i++){
-      mpfi_init2(nDeriv[i], getToolPrecision());
-    }
-    constantPower_diff(nDeriv,minusOne, x, n);
     mpfi_init2(fact, getToolPrecision());
     mpfi_set_ui(fact,1);
     for(i=1;i<n;i++){
       mpfi_mul_ui(fact,fact,i);
       mpfi_div(tt->poly_array[i],tt->poly_array[i],fact);
     }
+    
+    
+    nDeriv= (mpfi_t *)safeMalloc((n+2)*sizeof(mpfi_t));
+    for(i=0;i<=n+1;i++){
+      mpfi_init2(nDeriv[i], getToolPrecision());
+    }
+    constantPower_diff(nDeriv,minusOne, x, n+1);
+    
+    /*Use Zumkeller technique to improve the bound in the absolute case,
+   when the (n+1)th derivative has constant sign*/
+   if((mode!=1)&&((mpfi_is_nonpos(nDeriv[n+1])>0)||(mpfi_is_nonneg(nDeriv[n+1])>0))){ 
+    //printf("we reached the zumkeler technique");
+   computeMonotoneRemaiderVarInv(&tt->rem_bound, n, tt->poly_array, x0,x);
+  }
+  else{
+    
     mpfi_mul_ui(fact,fact,n);
     mpfi_set(tt->rem_bound,nDeriv[n]);
     mpfi_div(tt->rem_bound,tt->rem_bound,fact);
+    /*if we are in the case of the absolute error,
+     we also have to multiply by (x-x0)^n*/
+    if (mode!=1){
+      /*absolute error*/
+      mpfi_init2(pow,getToolPrecision());
+      mpfi_set_ui(pow,n);
+      mpfi_sub(temp,x,x0);
+      mpfi_pow(temp,temp,pow);
+      mpfi_mul(tt->rem_bound,tt->rem_bound,temp);
+      mpfi_clear(pow);
+      mpfi_clear(temp);
+    }
     
+ } 
     polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
    
     copytModel(t,tt);
     cleartModel(tt);
     mpfr_clear(minusOne);    
     mpfi_clear(fact);
-    for(i=0;i<=n;i++){
+    for(i=0;i<=n+1;i++){
       mpfi_clear(nDeriv[i]);
     }
     free(nDeriv); 
@@ -1812,38 +2210,59 @@ void  varInv_TM(tModel *t,mpfi_t x0, mpfi_t x, int n){
 
 
 /*this function computes the taylor model for x^p*/
-void  ctPowerVar_TM(tModel *t,mpfi_t x0, mpfi_t x, int n, mpfr_t p){
+void  ctPowerVar_TM(tModel *t,mpfi_t x0, mpfi_t x, int n, mpfr_t p,int mode){
     tModel *tt;
     mpfi_t *nDeriv;
     int i;
-    mpfi_t fact;
+    mpfi_t fact,pow,temp;
     
     tt=createEmptytModel(n,x0,x); 
        
     constantPower_diff(tt->poly_array,p, x0, n-1);
-    
-    nDeriv= (mpfi_t *)safeMalloc((n+1)*sizeof(mpfi_t));
-    for(i=0;i<=n;i++){
-      mpfi_init2(nDeriv[i], getToolPrecision());
-    }
-    constantPower_diff(nDeriv,p, x, n);
-    
     mpfi_init2(fact, getToolPrecision());
     mpfi_set_ui(fact,1);
     for(i=1;i<n;i++){
       mpfi_mul_ui(fact,fact,i);
       mpfi_div(tt->poly_array[i],tt->poly_array[i],fact);
     }
+    
+    nDeriv= (mpfi_t *)safeMalloc((n+2)*sizeof(mpfi_t));
+    for(i=0;i<=n+1;i++){
+      mpfi_init2(nDeriv[i], getToolPrecision());
+    }
+    constantPower_diff(nDeriv,p, x, n+1);
+    /*Use Zumkeller technique to improve the bound in the absolute case,
+    when the (n+1)th derivative has constant sign*/
+    if((mode!=1)&&((mpfi_is_nonpos(nDeriv[n+1])>0)||(mpfi_is_nonneg(nDeriv[n+1])>0))){ 
+      //printf("we reached the zumkeler technique");
+      computeMonotoneRemaiderCtPowerVar(&tt->rem_bound, n,p, tt->poly_array, x0,x);
+    }
+    else{
+    
     mpfi_mul_ui(fact,fact,n);
     mpfi_set(tt->rem_bound,nDeriv[n]);
     mpfi_div(tt->rem_bound,tt->rem_bound,fact);
+    /*if we are in the case of the absolute error,
+     we also have to multiply by (x-x0)^n*/
+    if (mode!=1){
+      /*absolute error*/
+      mpfi_init2(pow,getToolPrecision());
+      mpfi_set_ui(pow,n);
+      mpfi_sub(temp,x,x0);
+      mpfi_pow(temp,temp,pow);
+      mpfi_mul(tt->rem_bound,tt->rem_bound,temp);
+      mpfi_clear(pow);
+      mpfi_clear(temp);
+    }
+    
+    }
     
     polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
    
     copytModel(t,tt);
     cleartModel(tt);
     mpfi_clear(fact);
-    for(i=0;i<=n;i++){
+    for(i=0;i<=n+1;i++){
       mpfi_clear(nDeriv[i]);
     }
     free(nDeriv); 
@@ -1851,41 +2270,61 @@ void  ctPowerVar_TM(tModel *t,mpfi_t x0, mpfi_t x, int n, mpfr_t p){
 }
 
 /*this function computes the taylor model for p^x*/
-void  varCtPower_TM(tModel *t,mpfi_t x0, mpfi_t x, int n, mpfr_t p){
+void  varCtPower_TM(tModel *t,mpfi_t x0, mpfi_t x, int n, mpfr_t p,int mode){
     tModel *tt;
     mpfi_t *nDeriv;
     int i;
-    mpfi_t fact;    
+    mpfi_t fact,pow,temp;    
       
     tt=createEmptytModel(n,x0,x); 
         
     powerFunction_diff(tt->poly_array,p, x0, n-1);
-    
-    nDeriv= (mpfi_t *)safeMalloc((n+1)*sizeof(mpfi_t));
-    for(i=0;i<=n;i++){
-      mpfi_init2(nDeriv[i], getToolPrecision());
-    }
-    powerFunction_diff(nDeriv,p, x, n);
-    
     mpfi_init2(fact, getToolPrecision());
     mpfi_set_ui(fact,1);
     for(i=1;i<n;i++){
       mpfi_mul_ui(fact,fact,i);
       mpfi_div(tt->poly_array[i],tt->poly_array[i],fact);
     }
-    mpfi_mul_ui(fact,fact,n);
-    mpfi_set(tt->rem_bound,nDeriv[n]);
-    mpfi_div(tt->rem_bound,tt->rem_bound,fact);
     
-    polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
-   
-    copytModel(t,tt);
-    cleartModel(tt);
-    mpfi_clear(fact);
+    nDeriv= (mpfi_t *)safeMalloc((n+2)*sizeof(mpfi_t));
     for(i=0;i<=n;i++){
-      mpfi_clear(nDeriv[i]);
+      mpfi_init2(nDeriv[i], getToolPrecision());
     }
-    free(nDeriv); 
+    powerFunction_diff(nDeriv,p, x, n+1);
+    /*Use Zumkeller technique to improve the bound in the absolute case,
+    when the (n+1)th derivative has constant sign*/
+    if((mode!=1)&&((mpfi_is_nonpos(nDeriv[n+1])>0)||(mpfi_is_nonneg(nDeriv[n+1])>0))){ 
+      //printf("we reached the zumkeler technique");
+      computeMonotoneRemaiderVarCtPower(&tt->rem_bound,n,p, tt->poly_array, x0,x);
+    }
+    else{
+    
+      mpfi_mul_ui(fact,fact,n);
+      mpfi_set(tt->rem_bound,nDeriv[n]);
+      mpfi_div(tt->rem_bound,tt->rem_bound,fact);
+    
+      /*if we are in the case of the absolute error,
+      we also have to multiply by (x-x0)^n*/
+      if (mode!=1){
+        /*absolute error*/
+        mpfi_init2(pow,getToolPrecision());
+        mpfi_set_ui(pow,n);
+        mpfi_sub(temp,x,x0);
+        mpfi_pow(temp,temp,pow);
+        mpfi_mul(tt->rem_bound,tt->rem_bound,temp);
+        mpfi_clear(pow);
+        mpfi_clear(temp);
+      } 
+    }
+      polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
+   
+      copytModel(t,tt);
+      cleartModel(tt);
+      mpfi_clear(fact);
+      for(i=0;i<=n+1;i++){
+        mpfi_clear(nDeriv[i]);
+      }
+      free(nDeriv); 
 }
 
 /*This function computes an interval bound
@@ -2130,7 +2569,7 @@ void removeCoeffs_TM(tModel*d,tModel*s, int l){
 
 
 
-void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
+void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x, int mode) {
   int i;
   
   node *simplifiedChild1, *simplifiedChild2;
@@ -2157,8 +2596,14 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
   tt=createEmptytModel(n,x0,x); 
   mpfi_set(tt->poly_array[0],x0);
   if (n==1){
-    mpfi_set_ui(tt->rem_bound,1);
-    mpfi_set(tt->poly_bound,x0);
+    if (mode==1){ /*relative*/
+      mpfi_set_ui(tt->rem_bound,1);
+      mpfi_set(tt->poly_bound,x0);
+    }
+    else{/*absolute*/
+      mpfi_sub(tt->rem_bound,x,x0);
+      mpfi_set(tt->poly_bound,x0);
+    }
   }
   else{
     mpfi_set_ui(tt->rem_bound,0);
@@ -2192,7 +2637,7 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
     //create a new empty taylor model the child
     child1_tm=createEmptytModel(n, x0, x);
     //call taylor_model on the child
-    taylor_model(child1_tm, f->child1,n,x0,x);
+    taylor_model(child1_tm, f->child1,n,x0,x,mode);
     //do the necessary chages from child to parent
     for(i=0;i<n;i++) 
     mpfi_neg(tt->poly_array[i], child1_tm->poly_array[i]);
@@ -2212,10 +2657,10 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
     child1_tm=createEmptytModel(n, x0,x);
     child2_tm=createEmptytModel(n, x0,x);
     //call taylor_model on the children
-    taylor_model(child1_tm, f->child1,n,x0,x);
-    taylor_model(child2_tm, f->child2,n,x0,x);
+    taylor_model(child1_tm, f->child1,n,x0,x,mode);
+    taylor_model(child2_tm, f->child2,n,x0,x,mode);
     
-    addition_TM(tt,child1_tm, child2_tm);
+    addition_TM(tt,child1_tm, child2_tm,mode);
     copytModel(t,tt);
     //clear old taylor model
     cleartModel(child1_tm);
@@ -2230,14 +2675,14 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
     child1_tm=createEmptytModel(n, x0,x);
     child2_tm=createEmptytModel(n, x0,x);
     //call taylor_model on the children
-    taylor_model(child1_tm, f->child1,n,x0,x);
-    taylor_model(child2_tm, f->child2,n,x0,x);
+    taylor_model(child1_tm, f->child1,n,x0,x,mode);
+    taylor_model(child2_tm, f->child2,n,x0,x,mode);
     
     //do the necessary chages from children to parent
     mpfi_init2(minusOne,getToolPrecision());
     mpfi_set_si(minusOne,-1);
-    ctMultiplication_TM(child2_tm,child2_tm, minusOne);
-    addition_TM(tt,child1_tm, child2_tm);
+    ctMultiplication_TM(child2_tm,child2_tm, minusOne,mode);
+    addition_TM(tt,child1_tm, child2_tm,mode);
       
     copytModel(t,tt);
     
@@ -2254,11 +2699,11 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
     child1_tm=createEmptytModel(n,x0,x);
     child2_tm=createEmptytModel(n, x0,x);
     //call taylor_model on the children
-    taylor_model(child1_tm, f->child1,n,x0,x);
-    taylor_model(child2_tm, f->child2,n,x0,x);
+    taylor_model(child1_tm, f->child1,n,x0,x,mode);
+    taylor_model(child2_tm, f->child2,n,x0,x,mode);
     
     //do the necessary chages from children to parent
-    multiplication_TM(tt,child1_tm, child2_tm);
+    multiplication_TM(tt,child1_tm, child2_tm,mode);
     copytModel(t,tt);
     //clear old taylor model
     cleartModel(child1_tm);
@@ -2275,79 +2720,80 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
   mpfi_init2(gx0, getToolPrecision());
   evaluateMpfiFunction(gx0,f->child2, x0, getToolPrecision())  ;
   
-  ttt=createEmptytModel(n,x0,x);  
-  if (mpfi_is_zero(gx0)){
+  ttt=createEmptytModel(n,x0,x); 
+   
+ // if (mode==1){/*relative case*/ 
+    if ((mpfi_is_zero(gx0))&& (mode==1)){
   
-    orderUpperBound=10;
-    //create a new empty taylor model the child
-    child1Extended_tm=createEmptytModel(n+orderUpperBound,x0,x);
-    child2Extended_tm=createEmptytModel(n+orderUpperBound,x0,x);
+      orderUpperBound=10;
+      //create a new empty taylor model the child
+      child1Extended_tm=createEmptytModel(n+orderUpperBound,x0,x);
+      child2Extended_tm=createEmptytModel(n+orderUpperBound,x0,x);
+      
+      //call taylor_model for the children
+      taylor_model(child1Extended_tm, f->child1,n+orderUpperBound,x0,x,mode);
+      taylor_model(child2Extended_tm, f->child2,n+orderUpperBound,x0,x,mode);
+      
+      //reduce order taylor model
+      int l;
+      l=0;
+      while((mpfi_is_zero(child1Extended_tm->poly_array[l])) && (mpfi_is_zero(child2Extended_tm->poly_array[l]))){
+      l++;}
     
-    //call taylor_model for the children
-    taylor_model(child1Extended_tm, f->child1,n+orderUpperBound,x0,x);
-    taylor_model(child2Extended_tm, f->child2,n+orderUpperBound,x0,x);
-    
-    //reduce order taylor model
-    int l;
-    l=0;
-    while((mpfi_is_zero(child1Extended_tm->poly_array[l])) && (mpfi_is_zero(child2Extended_tm->poly_array[l]))){
-    l++;}
-    
-    //printf("The order of the zero is: %d",l);
-    
-    
-    //remove coeffs that are 0
-    child1RemoveCoeffs_tm=createEmptytModel(n+orderUpperBound-l,x0,x);
-    child2RemoveCoeffs_tm=createEmptytModel(n+orderUpperBound-l,x0,x);
-    
-    
-    removeCoeffs_TM(child1RemoveCoeffs_tm, child1Extended_tm, l-1);
-    removeCoeffs_TM(child2RemoveCoeffs_tm, child2Extended_tm, l-1);
+      //printf("The order of the zero is: %d",l);
+      //remove coeffs that are 0
+      child1RemoveCoeffs_tm=createEmptytModel(n+orderUpperBound-l,x0,x);
+      child2RemoveCoeffs_tm=createEmptytModel(n+orderUpperBound-l,x0,x);
        
+      removeCoeffs_TM(child1RemoveCoeffs_tm, child1Extended_tm, l-1);
+      removeCoeffs_TM(child2RemoveCoeffs_tm, child2Extended_tm, l-1);
+       
+      child1_tm=createEmptytModel(n,x0,x);
+      child2_tm=createEmptytModel(n,x0,x);
+      reduceOrder_TM(child1_tm,child1RemoveCoeffs_tm,n);
+      reduceOrder_TM(child2_tm,child2RemoveCoeffs_tm,n);
+      /*printf("\nThe reduced tm are:\n");
+      printtModel(child1_tm);
+      printtModel(child2_tm);
+      */
     
-    child1_tm=createEmptytModel(n,x0,x);
-    child2_tm=createEmptytModel(n,x0,x);
+      cleartModel(child1RemoveCoeffs_tm);
+      cleartModel(child2RemoveCoeffs_tm);
     
-    reduceOrder_TM(child1_tm,child1RemoveCoeffs_tm,n);
-    reduceOrder_TM(child2_tm,child2RemoveCoeffs_tm,n);
-    /*printf("\nThe reduced tm are:\n");
-    printtModel(child1_tm);
-    printtModel(child2_tm);
-    */
-    
-    cleartModel(child1RemoveCoeffs_tm);
-    cleartModel(child2RemoveCoeffs_tm);
-    
-    cleartModel(child1Extended_tm);
-    cleartModel(child2Extended_tm);
-    
-    
-  }//we have reduced the poles, we have taylor models of order n, we apply the basic division
-  else{//just create tms or order n directly
-  //create a new empty taylor model the child
-    child1_tm=createEmptytModel(n,x0,x);
-    child2_tm=createEmptytModel(n,x0,x);
-    //call taylor_model for the children
-    taylor_model(child1_tm, f->child1,n,x0,x);
-    taylor_model(child2_tm, f->child2,n,x0,x);
-  }
+      cleartModel(child1Extended_tm);
+      cleartModel(child2Extended_tm);
+        
+    }//we have reduced the poles, we have taylor models of order n, we apply the basic division
+    else{//just create tms or order n directly
+      //create a new empty taylor model the child
+      child1_tm=createEmptytModel(n,x0,x);
+      child2_tm=createEmptytModel(n,x0,x);
+      //call taylor_model for the children
+      taylor_model(child1_tm, f->child1,n,x0,x,mode);
+      taylor_model(child2_tm, f->child2,n,x0,x,mode);
+    }
     mpfi_set(gx0,child2_tm->poly_array[0]);
     mpfi_init2(rangeg, getToolPrecision());
+    
     
     mpfi_init2(powx, getToolPrecision());
     mpfi_set_ui(powx,n);
     
-    mpfi_sub(rangeg, child2_tm->x,child2_tm->x0);
-    mpfi_pow(rangeg,rangeg,powx);
-    mpfi_mul(rangeg,rangeg,child2_tm->rem_bound);
-    mpfi_add(rangeg,rangeg, child2_tm->poly_bound);
+    if (mode==1){
+      mpfi_sub(rangeg, child2_tm->x,child2_tm->x0);
+      mpfi_pow(rangeg,rangeg,powx);
+      mpfi_mul(rangeg,rangeg,child2_tm->rem_bound);
+      mpfi_add(rangeg,rangeg, child2_tm->poly_bound);
+    }
+    else {
+    mpfi_add(rangeg,child2_tm->rem_bound,child2_tm->poly_bound);
+    }  
+      inv_tm=createEmptytModel(n,gx0,rangeg);
     
-    inv_tm=createEmptytModel(n,gx0,rangeg);
+    varInv_TM(inv_tm,gx0,rangeg,n,mode);
+    composition_TM(ttt,inv_tm,child2_tm,mode);
     
-    varInv_TM(inv_tm,gx0,rangeg,n);
-    composition_TM(ttt,inv_tm,child2_tm);
-    
-    multiplication_TM(tt, ttt, child1_tm);
+    multiplication_TM(tt, ttt, child1_tm,mode);
     //clear old children
     cleartModel(child1_tm);
     cleartModel(child2_tm);
@@ -2402,7 +2848,7 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
     child1_tm=createEmptytModel(n,x0,x);
     child2_tm=createEmptytModel(n,x0,x);
     //call taylor_model on the child
-    taylor_model(child1_tm, f->child1,n,x0,x);
+    taylor_model(child1_tm, f->child1,n,x0,x,mode);
     //compute tm for the basic case
     
         
@@ -2413,13 +2859,21 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
     mpfi_set_ui(pow,n);
     
     evaluateMpfiFunction(fx0,f->child1,x0,getToolPrecision());
+    if (mode==1){
+      mpfi_sub(rangef, x,x0);
+      mpfi_pow(rangef,rangef,pow);
+      mpfi_mul(rangef,rangef,child1_tm->rem_bound);
+      mpfi_add(rangef,rangef, child1_tm->poly_bound);
+    }
+    else{
+      mpfi_add(rangef,child1_tm->rem_bound, child1_tm->poly_bound);
+    }
     
-    mpfi_sub(rangef, x,x0);
-    mpfi_pow(rangef,rangef,pow);
-    mpfi_mul(rangef,rangef,child1_tm->rem_bound);
-    mpfi_add(rangef,rangef, child1_tm->poly_bound);
-    base_TM(child2_tm,f->nodeType,n,fx0, rangef);
-    composition_TM(tt,child2_tm, child1_tm);
+    base_TM(child2_tm,f->nodeType,n,fx0, rangef,mode);
+    //printtModel(child2_tm);
+    //printtModel(child1_tm);
+    composition_TM(tt,child2_tm, child1_tm,mode);
+    //printtModel(tt);
     //clear old child
     cleartModel(child1_tm);
     cleartModel(child2_tm);
@@ -2457,7 +2911,7 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
         //create a new empty taylor model the child
         child1_tm=createEmptytModel(n,x0,x);
         //call taylor_model for the child
-        taylor_model(child1_tm, f->child1,n,x0,x);
+        taylor_model(child1_tm, f->child1,n,x0,x,mode);
         //printf("\n\n-----------taylormodel child1: \n");
         //printtModel(child1_tm);
         //printf("-----------------------------\n");
@@ -2467,21 +2921,26 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
         mpfi_init2(rangef, getToolPrecision());
         mpfi_init2(powx, getToolPrecision());
         mpfi_set_ui(powx,n);
-        mpfi_sub(rangef, child1_tm->x,child1_tm->x0);
-        mpfi_pow(rangef,rangef,powx);
-        mpfi_mul(rangef,rangef,child1_tm->rem_bound);
-        mpfi_add(rangef,rangef, child1_tm->poly_bound);
+        if (mode==1){
+          mpfi_sub(rangef, child1_tm->x,child1_tm->x0);
+          mpfi_pow(rangef,rangef,powx);
+          mpfi_mul(rangef,rangef,child1_tm->rem_bound);
+          mpfi_add(rangef,rangef, child1_tm->poly_bound);
+        }
+        else{
+          mpfi_add(rangef,child1_tm->rem_bound, child1_tm->poly_bound);
+        }
         //create tm for x^p over ragef in fx0
         ctPowVar_tm=createEmptytModel(n,fx0,rangef);
         
-        ctPowerVar_TM(ctPowVar_tm,fx0,rangef,n,*(simplifiedChild2->value) );
+        ctPowerVar_TM(ctPowVar_tm,fx0,rangef,n,*(simplifiedChild2->value),mode );
         
         //printf("\n\n-----------taylormodel child1: \n");
         //printtModel(ctPowVar_tm);
         //printf("-----------------------------\n");
         
         
-        composition_TM(tt,ctPowVar_tm,child1_tm);
+        composition_TM(tt,ctPowVar_tm,child1_tm,mode);
     
         //clear old child
         cleartModel(child1_tm);
@@ -2498,7 +2957,7 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
         //create a new empty taylor model the child
         child2_tm=createEmptytModel(n,x0,x);
         //call taylor_model for the child
-        taylor_model(child2_tm, f->child2,n,x0,x);
+        taylor_model(child2_tm, f->child2,n,x0,x,mode);
         
         mpfi_init2(fx0,getToolPrecision());
         evaluateMpfiFunction(fx0,f->child1,x0,getToolPrecision());
@@ -2506,15 +2965,21 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
         mpfi_init2(rangef, getToolPrecision());
         mpfi_init2(powx, getToolPrecision());
         mpfi_set_ui(powx,n);
-        mpfi_sub(rangef, child2_tm->x,child2_tm->x0);
-        mpfi_pow(rangef,rangef,powx);
-        mpfi_mul(rangef,rangef,child2_tm->rem_bound);
-        mpfi_add(rangef,rangef, child2_tm->poly_bound);
+        
+        if (mode==1){
+          mpfi_sub(rangef, child2_tm->x,child2_tm->x0);
+          mpfi_pow(rangef,rangef,powx);
+          mpfi_mul(rangef,rangef,child2_tm->rem_bound);
+          mpfi_add(rangef,rangef, child2_tm->poly_bound);
+        }
+        else{
+          mpfi_add(rangef,child1_tm->rem_bound, child1_tm->poly_bound);
+        }
         //create tm for p^x over ragef in fx0
         varCtPower_tm=createEmptytModel(n,fx0,rangef);
         
-        varCtPower_TM(varCtPower_tm,fx0,rangef,n,*(simplifiedChild1->value) );
-        composition_TM(tt,varCtPower_tm,child2_tm);
+        varCtPower_TM(varCtPower_tm,fx0,rangef,n,*(simplifiedChild1->value),mode );
+        composition_TM(tt,varCtPower_tm,child2_tm,mode);
     
         //clear old child
         cleartModel(child2_tm);
@@ -2533,10 +2998,10 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
         child1_tm=createEmptytModel(n,x0,x);
         child2_tm=createEmptytModel(n,x0,x);
         //call taylor_model for child 2 = g
-        taylor_model(child2_tm, f->child2,n,x0,x);
+        taylor_model(child2_tm, f->child2,n,x0,x,mode);
         
         //call taylor_model for child 1 = f
-        taylor_model(child1_tm, f->child1,n,x0,x);
+        taylor_model(child1_tm, f->child1,n,x0,x,mode);
         
         //create  taylor_model for log (child 1) = log(f)
                 
@@ -2546,21 +3011,27 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
         mpfi_init2(rangef, getToolPrecision());
         mpfi_init2(powx, getToolPrecision());
         mpfi_set_ui(powx,n);
-        mpfi_sub(rangef, child1_tm->x,child1_tm->x0);
-        mpfi_pow(rangef,rangef,powx);
-        mpfi_mul(rangef,rangef,child1_tm->rem_bound);
-        mpfi_add(rangef,rangef, child1_tm->poly_bound);
+        
+        if (mode==1){
+          mpfi_sub(rangef, child1_tm->x,child1_tm->x0);
+          mpfi_pow(rangef,rangef,powx);
+          mpfi_mul(rangef,rangef,child1_tm->rem_bound);
+          mpfi_add(rangef,rangef, child1_tm->poly_bound);
+        }
+        else{
+          mpfi_add(rangef,child1_tm->rem_bound, child1_tm->poly_bound);
+        }
         
         logx_tm=createEmptytModel(n,fx0,rangef);
-        base_TM(logx_tm,LOG,n,fx0, rangef);
+        base_TM(logx_tm,LOG,n,fx0, rangef,mode);
         logf_tm=createEmptytModel(n,x0,x);
-        composition_TM(logf_tm,logx_tm,child1_tm);
+        composition_TM(logf_tm,logx_tm,child1_tm,mode);
         //-------------------------------------------
         
         
         //multiply g by log f
         ttt=createEmptytModel(n,x0,x);
-        multiplication_TM(ttt,logf_tm,child2_tm);
+        multiplication_TM(ttt,logf_tm,child2_tm,mode);
         
         //------------------------------------------
         mpfi_init2(gx0,getToolPrecision());
@@ -2569,14 +3040,18 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
         mpfi_mul(gx0,gx0,fx0);
         
         mpfi_set_ui(powx,n);
-        mpfi_sub(rangef, ttt->x,ttt->x0);
-        mpfi_pow(rangef,rangef,powx);
-        mpfi_mul(rangef,rangef,ttt->rem_bound);
-        mpfi_add(rangef,rangef, ttt->poly_bound);
-        
+        if (mode==1){
+          mpfi_sub(rangef, ttt->x,ttt->x0);
+          mpfi_pow(rangef,rangef,powx);
+          mpfi_mul(rangef,rangef,ttt->rem_bound);
+          mpfi_add(rangef,rangef, ttt->poly_bound);
+        }
+        else{
+          mpfi_add(rangef,ttt->rem_bound, ttt->poly_bound);
+        }    
         expx_tm=createEmptytModel(n,gx0,rangef);
-        base_TM(expx_tm,EXP,n,gx0, rangef);
-        composition_TM(tt,expx_tm,ttt);
+        base_TM(expx_tm,EXP,n,gx0, rangef,mode);
+        composition_TM(tt,expx_tm,ttt,mode);
                
     
         //clear old child
@@ -2740,7 +3215,13 @@ mpfi_set(x0Int,*x0);
 t=createEmptytModel(n,x0Int,*d);
 //printf("we have created an emptytm");  
 
-taylor_model(t,f,n,x0Int,*d);
+if (mode==RELATIVE){ 
+  taylor_model(t,f,n,x0Int,*d,1);
+}
+else{
+  taylor_model(t,f,n,x0Int,*d,0);
+}
+
 
 //printtModel(t);
 
@@ -2765,6 +3246,7 @@ err=constructChain(coeffsErrors,t->n-1);
 
 //printMpfiChain(err);
  *errors = err;
+/*
 if (mode == ABSOLUTE) {
     mpfi_init2(pow, getToolPrecision());
     mpfi_set_si(pow, t->n);
@@ -2779,7 +3261,8 @@ if (mode == ABSOLUTE) {
     mpfi_set(*rest,t->rem_bound);
     
     }
-  
+*/
+mpfi_set(*rest,t->rem_bound);  
 *delta=rest;
     
 for(i=0;i<n;i++){
