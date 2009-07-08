@@ -1791,9 +1791,9 @@ void computeMonotoneRemaiderVarInv(mpfi_t *bound, int n, mpfi_t *poly_array, mpf
   
   
   polynomialBoundSharp(&bound2,n-1,poly_array,x0,xsup);
-  mpfi_ui_div(boundf1,1,xsup);
+  mpfi_ui_div(boundf2,1,xsup);
   mpfi_sub(bound2,bound2,boundf2);
- 
+  
   /*in the case when n is even, the remainder is 
   bounded by the values it takes on the two extremas of the interval*/
   
@@ -1860,7 +1860,7 @@ void computeMonotoneRemaiderCtPowerVar(mpfi_t *bound, int n, mpfr_t p, mpfi_t *p
   
   
   polynomialBoundSharp(&bound2,n-1,poly_array,x0,xsup);
-  mpfi_pow(boundf1,xsup,pow);
+  mpfi_pow(boundf2,xsup,pow);
   mpfi_sub(bound2,bound2,boundf2);
  
   /*in the case when n is even, the remainder is 
@@ -1930,7 +1930,7 @@ void computeMonotoneRemaiderVarCtPower(mpfi_t *bound, int n, mpfr_t p, mpfi_t *p
   
   
   polynomialBoundSharp(&bound2,n-1,poly_array,x0,xsup);
-  mpfi_pow(boundf1,pow,xsup);
+  mpfi_pow(boundf2,pow,xsup);
   mpfi_sub(bound2,bound2,boundf2);
  
   /*in the case when n is even, the remainder is 
@@ -2277,7 +2277,7 @@ void  varCtPower_TM(tModel *t,mpfi_t x0, mpfi_t x, int n, mpfr_t p,int mode){
     mpfi_t fact,pow,temp;    
       
     tt=createEmptytModel(n,x0,x); 
-        
+     
     powerFunction_diff(tt->poly_array,p, x0, n-1);
     mpfi_init2(fact, getToolPrecision());
     mpfi_set_ui(fact,1);
@@ -2287,7 +2287,7 @@ void  varCtPower_TM(tModel *t,mpfi_t x0, mpfi_t x, int n, mpfr_t p,int mode){
     }
     
     nDeriv= (mpfi_t *)safeMalloc((n+2)*sizeof(mpfi_t));
-    for(i=0;i<=n;i++){
+    for(i=0;i<=n+1;i++){
       mpfi_init2(nDeriv[i], getToolPrecision());
     }
     powerFunction_diff(nDeriv,p, x, n+1);
