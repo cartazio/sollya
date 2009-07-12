@@ -1722,26 +1722,26 @@ void computeMonotoneRemaider(mpfi_t *bound, int nodeType, int n, mpfi_t *poly_ar
   polynomialBoundSharp(&bound1,n-1,poly_array,x0,xinf);
   baseFunction_diff(&boundf1,nodeType,xinf,0);
   
-  mpfi_sub(bound1,bound1,boundf1);
+  mpfi_sub(bound1,boundf1,bound1);
   
   
   polynomialBoundSharp(&bound2,n-1,poly_array,x0,xsup);
   baseFunction_diff(&boundf2,nodeType,xsup,0);
-  mpfi_sub(bound2,bound2,boundf2);
+  mpfi_sub(bound2,boundf2,bound2);
  
-  /*in the case when n is even, the remainder is 
+  /*in the case when n-1 is even, the remainder is 
   bounded by the values it takes on the two extremas of the interval*/
   
   mpfi_union(*bound,bound1,bound2);
   
-  /*in the case when n is odd, the remainder is 
+  /*in the case when n-1 is odd, the remainder is 
   in the convex hull determined by the two extremas and the value in x0 (which is 0, theoretically,
   but since x0 is a small interval...*/
   
-  if ((n%2)!=0){
+  if (((n-1)%2)!=0){
     polynomialBoundSharp(&bound2,n-1,poly_array,x0,x0);
     baseFunction_diff(&boundf2,nodeType,x0,0);
-    mpfi_sub(bound2,bound2,boundf2);
+    mpfi_sub(bound2,boundf2,bound2);
     mpfi_union(*bound,*bound,bound2);
   }
   
@@ -1787,26 +1787,26 @@ void computeMonotoneRemaiderVarInv(mpfi_t *bound, int n, mpfi_t *poly_array, mpf
   polynomialBoundSharp(&bound1,n-1,poly_array,x0,xinf);
   mpfi_ui_div(boundf1,1,xinf);
   
-  mpfi_sub(bound1,bound1,boundf1);
+  mpfi_sub(bound1,boundf1,bound1);
   
   
   polynomialBoundSharp(&bound2,n-1,poly_array,x0,xsup);
   mpfi_ui_div(boundf2,1,xsup);
-  mpfi_sub(bound2,bound2,boundf2);
+  mpfi_sub(bound2,boundf2,bound2);
   
-  /*in the case when n is even, the remainder is 
+  /*in the case when n-1 is even, the remainder is 
   bounded by the values it takes on the two extremas of the interval*/
   
   mpfi_union(*bound,bound1,bound2);
   
-  /*in the case when n is odd, the remainder is 
+  /*in the case when n-1 is odd, the remainder is 
   in the convex hull determined by the two extremas and the value in x0 (which is 0, theoretically,
   but since x0 is a small interval...*/
   
-  if ((n%2)!=0){
+  if (((n-1)%2)!=0){
     polynomialBoundSharp(&bound2,n-1,poly_array,x0,x0);
     mpfi_ui_div(boundf2,1,x0);
-    mpfi_sub(bound2,bound2,boundf2);
+    mpfi_sub(bound2,boundf2,bound2);
     mpfi_union(*bound,*bound,bound2);
   }
   
@@ -1856,12 +1856,12 @@ void computeMonotoneRemaiderCtPowerVar(mpfi_t *bound, int n, mpfr_t p, mpfi_t *p
   polynomialBoundSharp(&bound1,n-1,poly_array,x0,xinf);
   mpfi_pow(boundf1,xinf,pow);
   
-  mpfi_sub(bound1,bound1,boundf1);
+  mpfi_sub(bound1,boundf1,bound1);
   
   
   polynomialBoundSharp(&bound2,n-1,poly_array,x0,xsup);
   mpfi_pow(boundf2,xsup,pow);
-  mpfi_sub(bound2,bound2,boundf2);
+  mpfi_sub(bound2,boundf2,bound2);
  
   /*in the case when n is even, the remainder is 
   bounded by the values it takes on the two extremas of the interval*/
@@ -1872,10 +1872,10 @@ void computeMonotoneRemaiderCtPowerVar(mpfi_t *bound, int n, mpfr_t p, mpfi_t *p
   in the convex hull determined by the two extremas and the value in x0 (which is 0, theoretically,
   but since x0 is a small interval...*/
   
-  if ((n%2)!=0){
+  if (((n-1)%2)!=0){
     polynomialBoundSharp(&bound2,n-1,poly_array,x0,x0);
     mpfi_pow(boundf2,x0,pow);
-    mpfi_sub(bound2,bound2,boundf2);
+    mpfi_sub(bound2,boundf2,bound2);
     mpfi_union(*bound,*bound,bound2);
   }
   
@@ -1926,26 +1926,26 @@ void computeMonotoneRemaiderVarCtPower(mpfi_t *bound, int n, mpfr_t p, mpfi_t *p
   polynomialBoundSharp(&bound1,n-1,poly_array,x0,xinf);
   mpfi_pow(boundf1,pow,xinf);
   
-  mpfi_sub(bound1,bound1,boundf1);
+  mpfi_sub(bound1,boundf1,bound1);
   
   
   polynomialBoundSharp(&bound2,n-1,poly_array,x0,xsup);
   mpfi_pow(boundf2,pow,xsup);
-  mpfi_sub(bound2,bound2,boundf2);
+  mpfi_sub(bound2,boundf2,bound2);
  
-  /*in the case when n is even, the remainder is 
+  /*in the case when n-1 is even, the remainder is 
   bounded by the values it takes on the two extremas of the interval*/
   
   mpfi_union(*bound,bound1,bound2);
   
-  /*in the case when n is odd, the remainder is 
+  /*in the case when n-1 is odd, the remainder is 
   in the convex hull determined by the two extremas and the value in x0 (which is 0, theoretically,
   but since x0 is a small interval...*/
   
-  if ((n%2)!=0){
+  if (((n-1)%2)!=0){
     polynomialBoundSharp(&bound2,n-1,poly_array,x0,x0);
     mpfi_pow(boundf2,pow,x0);
-    mpfi_sub(bound2,bound2,boundf2);
+    mpfi_sub(bound2,boundf2,bound2);
     mpfi_union(*bound,*bound,bound2);
   }
   
@@ -2091,7 +2091,7 @@ void composition_TM(tModel *t,tModel *g, tModel *f, int mode){
     mpfi_add(tt->rem_bound,tt->rem_bound,partial_tmul->rem_bound);
   }
   else{
-    mpfi_set(tt->rem_bound,g->rem_bound);
+    mpfi_add(tt->rem_bound,tt->rem_bound,g->rem_bound);
   
   }
   polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
