@@ -49,6 +49,7 @@ knowledge of the CeCILL-C license and that you accept its terms.
 
 #include "taylorform.h"
 #include "external.h"
+#include "remez.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -2404,6 +2405,9 @@ void polynomialBoundSharpUncertified(mpfi_t *bound,int n,mpfi_t *coeffs,mpfi_t x
  //derivate the polynomial
  diff_poly = differentiate(poly);
  //find the zeros
+
+ /* chain *uncertifiedFindZeros(node *tree, mpfr_t a, mpfr_t b, unsigned long int points, mp_prec_t prec); */
+
  zeros =uncertifiedFindZeros(diff_poly, a, b, points, getToolPrecision());
  nrRoots=lengthChain(zeros);
  rootsIntervals= (mpfi_t *)safeMalloc((nrRoots)*sizeof(mpfi_t));
@@ -3176,78 +3180,74 @@ void printMpfiChain(chain *c) {
 
 void taylorform(node **T, chain **errors, mpfi_t **delta,
 		node *f, int n,	mpfi_t *x0, mpfi_t *d, int mode) {
+  tModel *t;
+  mpfi_t x0Int;
+  mpfr_t *coeffsMpfr;
+  mpfi_t *coeffsErrors;
+  int i;
+  node *z;
+  chain *err;
+  mpfi_t *rest;
+  mpfi_t temp;
+  mpfi_t pow;
+  mpfi_t myD;
 
-  printf("taylorform: f  = ");
-  printTree(f);
-  printf("\n");
-  printf("taylorform: n  = %d\n",n);
-  printf("taylorform: x0 = ");
-  printInterval(x0);
+  /* Adjust n to the notion of degree in the taylor command */
+  n++;
+
+  /* Check if degree is at least 1, once it has been adjusted */
+  if (n < 1) {
+    printMessage(1,"Warning: the degree of a Taylor Model must be at least 0.\n");
+    *T = NULL;
+    return;
+  } 
+
   if (d != NULL) {
-    printf("taylorform: d  = ");
-    printInterval(d);
-    printf("\n");
+    mpfi_init2(myD,mpfi_get_prec(*d));
+    mpfi_set(myD,*d);
   } else {
-    printf("taylorform: no domain d given\n");
+    mpfi_init2(myD,mpfi_get_prec(*x0));
+    mpfi_set(myD,*x0);
   }
-  if (mode == ABSOLUTE) {
-    printf("taylorform: absolute mode\n");
-  } else {
-    if (mode == RELATIVE) {
-      printf("taylorform: relative mode\n");
-    } else {
-      printf("taylorform: mode %d\n",mode);
-    }
+
+  mpfi_init2(x0Int,getToolPrecision());
+  mpfi_set(x0Int,*x0);
+  t=createEmptytModel(n,x0Int,myD);
+  //printf("we have created an emptytm");  
+
+  if (mode==RELATIVE){ 
+    taylor_model(t,f,n,x0Int,myD,1);
   }
-tModel *t;
-mpfi_t x0Int;
-mpfr_t *coeffsMpfr;
-mpfi_t *coeffsErrors;
-int i;
-node *z;
-chain *err;
-mpfi_t *rest;
-mpfi_t temp;
-mpfi_t pow;
-
-mpfi_init2(x0Int,getToolPrecision());
-mpfi_set(x0Int,*x0);
-t=createEmptytModel(n,x0Int,*d);
-//printf("we have created an emptytm");  
-
-if (mode==RELATIVE){ 
-  taylor_model(t,f,n,x0Int,*d,1);
-}
-else{
-  taylor_model(t,f,n,x0Int,*d,0);
-}
+  else{
+    taylor_model(t,f,n,x0Int,myD,0);
+  }
 
 
-//printtModel(t);
+  //printtModel(t);
 
-coeffsMpfr= (mpfr_t *)safeMalloc((n)*sizeof(mpfr_t));
-coeffsErrors= (mpfi_t *)safeMalloc((n)*sizeof(mpfi_t));
+  coeffsMpfr= (mpfr_t *)safeMalloc((n)*sizeof(mpfr_t));
+  coeffsErrors= (mpfi_t *)safeMalloc((n)*sizeof(mpfi_t));
 
-rest= (mpfi_t*)safeMalloc(sizeof(mpfi_t));
-mpfi_init2(*rest,getToolPrecision());
+  rest= (mpfi_t*)safeMalloc(sizeof(mpfi_t));
+  mpfi_init2(*rest,getToolPrecision());
 
- for(i=0;i<n;i++){
-   mpfi_init2(coeffsErrors[i],getToolPrecision());
-   mpfr_init2(coeffsMpfr[i],getToolPrecision());
- }
- //mpfr_get_poly(mpfr_t *rc, mpfi_t *errors, mpfi_t rest, int n, mpfi_t *gc, mpfi_t x0, mpfi_t x)
- mpfr_get_poly(coeffsMpfr, coeffsErrors, *rest, t->n -1,t->poly_array, t->x0,t->x);
+  for(i=0;i<n;i++){
+    mpfi_init2(coeffsErrors[i],getToolPrecision());
+    mpfr_init2(coeffsMpfr[i],getToolPrecision());
+  }
+  //mpfr_get_poly(mpfr_t *rc, mpfi_t *errors, mpfi_t rest, int n, mpfi_t *gc, mpfi_t x0, mpfi_t x)
+  mpfr_get_poly(coeffsMpfr, coeffsErrors, *rest, t->n -1,t->poly_array, t->x0,t->x);
  
- //create T; 
- *T=constructPoly(coeffsMpfr, t->n-1, t->x0);
+  //create T; 
+  *T=constructPoly(coeffsMpfr, t->n-1, t->x0);
 
-//create errors;
-err=constructChain(coeffsErrors,t->n-1);
+  //create errors;
+  err=constructChain(coeffsErrors,t->n-1);
 
-//printMpfiChain(err);
- *errors = err;
-/*
-if (mode == ABSOLUTE) {
+  //printMpfiChain(err);
+  *errors = err;
+  /*
+    if (mode == ABSOLUTE) {
     mpfi_init2(pow, getToolPrecision());
     mpfi_set_si(pow, t->n);
     mpfi_init2(temp,getToolPrecision());
@@ -3261,15 +3261,22 @@ if (mode == ABSOLUTE) {
     mpfi_set(*rest,t->rem_bound);
     
     }
-*/
-mpfi_set(*rest,t->rem_bound);  
-*delta=rest;
-    
-for(i=0;i<n;i++){
-  mpfr_clear(coeffsMpfr[i]);
-}
-free(coeffsMpfr);
-mpfi_clear(x0Int);
-cleartModel(t);
+  */
 
+  if (d != NULL) {
+    mpfi_set(*rest,t->rem_bound);  
+    *delta=rest;
+  } else {
+    mpfi_clear(*rest);
+    free(rest);
+  }
+    
+  for(i=0;i<n;i++){
+    mpfr_clear(coeffsMpfr[i]);
+  }
+  free(coeffsMpfr);
+  mpfi_clear(x0Int);
+  cleartModel(t);
+
+  mpfi_clear(myD);
 }
