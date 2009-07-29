@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.60)
+AC_PREREQ(2.59)
 AC_INIT([sollya], [1.1.3], [christoph.lauter@ens-lyon.org, sylvain.chevillard@ens-lyon.org, mioara.joldes@ens-lyon.fr])
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE([1.6 no-define dist-zip dist-bzip2])
