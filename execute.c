@@ -97,16 +97,13 @@ node *parseString(char *str) {
   node *oldMinitree;
   void *myScanner;
   void *buffer;
-  char *myStr;
 
   blockSignals();
-  myStr = (char *) safeCalloc(strlen(str)+1,sizeof(char));
-  strcpy(myStr,str);
   oldMinitree = minitree;
   minitree = NULL;
   miniyylex_init(&myScanner);
   miniyyset_in(stdin, myScanner);
-  buffer = startMiniparser(myScanner,myStr);
+  buffer = startMiniparser(myScanner,str);
   if (!miniyyparse(myScanner)) {
     if (minitree != NULL) {
       result = evaluateThing(minitree);
@@ -117,7 +114,7 @@ node *parseString(char *str) {
     result = NULL;
   }
   minitree = oldMinitree;
-  free(myStr);
+  endMiniparser(buffer, myScanner);
   initSignalHandler();
 
   return result;
@@ -2052,7 +2049,7 @@ int dirtyIsConstant(node *tree) {
 }
 
 
-int evaluateThingToConstant(mpfr_t result, node *tree, mpfr_t *defaultVal, int silent) {
+int evaluateThingToConstant(mpfr_t result, node *tree, mpfr_t *defaultVal) {
   node *evaluatedResult, *simplified, *simplified2;
   mpfr_t tempMpfr, tempResult;
   int res, noMessage;
@@ -2187,7 +2184,7 @@ int evaluateThingToConstant(mpfr_t result, node *tree, mpfr_t *defaultVal, int s
     } else {
       if (simplified->nodeType != CONSTANT) {
 	if (!noMessage) {
-	  if ((!noRoundingWarnings) && (!silent)) {
+	  if (!noRoundingWarnings) {
 	    printMessage(1,"Warning: the given expression is not a constant but an expression to evaluate. A faithful evaluation will be used.\n");
 	  }
 	}
@@ -2224,7 +2221,7 @@ int evaluateThingToInteger(int *result, node *tree, int *defaultVal) {
 
   mpfr_init2(resultMpfr,sizeof(int)*16);
 
-  res = evaluateThingToConstant(resultMpfr, tree, defaultValMpfr, 0);
+  res = evaluateThingToConstant(resultMpfr, tree, defaultValMpfr);
 
   if (res) {
     tempResult = mpfr_get_si(resultMpfr, GMP_RNDN);
@@ -5092,7 +5089,7 @@ int evaluateThingToConstantList(chain **ch, node *tree) {
       mpfr_init2(*(arrayMpfr[i]),tools_precision);
     }
     for (i=0;i<number;i++) {
-      if (!evaluateThingToConstant(*(arrayMpfr[i]),arrayTrees[i],NULL,0)) {
+      if (!evaluateThingToConstant(*(arrayMpfr[i]),arrayTrees[i],NULL)) {
 	for (k=0;k<number;k++) {
 	  freeThing(arrayTrees[k]);
 	  mpfr_clear(*(arrayMpfr[k]));
@@ -5252,7 +5249,7 @@ int executeCommand(node *tree) {
 
 
 int executeCommandInner(node *tree) {
-  int result, res, intTemp, resA, resB, resC, resD, resE, resF, defaultVal, i;  
+  int result, res, intTemp, resA, resB, resC, resD, resE, defaultVal, i;  
   chain *curr, *tempList, *tempList2; 
   mpfr_t a, b, c, d, e;
   node *tempNode, *tempNode2, *tempNode3, *tempNode4;
@@ -5336,11 +5333,11 @@ int executeCommandInner(node *tree) {
     mpfr_init2(b,tools_precision);
     mpfr_init2(c,tools_precision);
     curr = tree->arguments;
-    resA = evaluateThingToConstant(a, (node *) (curr->value), NULL, 0);
+    resA = evaluateThingToConstant(a, (node *) (curr->value), NULL);
     curr = curr->next;
-    resB = evaluateThingToConstant(b, (node *) (curr->value), NULL, 0);
+    resB = evaluateThingToConstant(b, (node *) (curr->value), NULL);
     curr = curr->next;
-    resC = evaluateThingToConstant(c, (node *) (curr->value), NULL, 0);
+    resC = evaluateThingToConstant(c, (node *) (curr->value), NULL);
     curr = curr->next;
     tempNode4 = (node *) (curr->value);
     if (resA && resB && resC) {
@@ -5360,7 +5357,7 @@ int executeCommandInner(node *tree) {
 	  tempNode2 = getThingFromTable(tree->string);
 	  if (tempNode2 != NULL) {
 	    tempNode3 = makeAdd(tempNode2,makeConstant(c));
-	    resA = evaluateThingToConstant(a, tempNode3, NULL, 0);
+	    resA = evaluateThingToConstant(a, tempNode3, NULL);
 	    freeThing(tempNode3);
 	    if (resA) {
 	      tempNode3 = makeConstant(a);
@@ -5601,7 +5598,7 @@ int executeCommandInner(node *tree) {
     break;			
   case PRINTHEXA:
     mpfr_init2(a,tools_precision);
-    if (evaluateThingToConstant(a, tree->child1, NULL, 0)) {
+    if (evaluateThingToConstant(a, tree->child1, NULL)) {
       outputMode();
       printDoubleInHexa(a);
     } else {
@@ -5612,7 +5609,7 @@ int executeCommandInner(node *tree) {
     break; 
   case PRINTFLOAT:
     mpfr_init2(a,tools_precision);
-    if (evaluateThingToConstant(a, tree->child1, NULL, 0)) {
+    if (evaluateThingToConstant(a, tree->child1, NULL)) {
       outputMode();
       printSimpleInHexa(a);
     } else {
@@ -5623,7 +5620,7 @@ int executeCommandInner(node *tree) {
     break; 
   case PRINTBINARY:
     mpfr_init2(a,tools_precision);
-    if (evaluateThingToConstant(a, tree->child1, NULL, 0)) {
+    if (evaluateThingToConstant(a, tree->child1, NULL)) {
       outputMode();
       printBinary(a); printf("\n");
     } else {
@@ -5663,7 +5660,7 @@ int executeCommandInner(node *tree) {
     evaluateThingListToThingArray(&resA, &array, tree->arguments);
     if (evaluateThingToString(&tempString,array[0])) {
       resB = RELATIVE;
-      if (evaluateThingToExternalPlotMode(&resF,array[1],&resB)) {
+      if (evaluateThingToExternalPlotMode(&resA,array[1],&resB)) {
 	if (evaluateThingToPureTree(&tempNode,array[2])) {
 	  mpfr_init2(a,tools_precision);
 	  mpfr_init2(b,tools_precision);
@@ -5727,7 +5724,7 @@ int executeCommandInner(node *tree) {
 		resD = 1;
 	      } 
 	      if (resD) {
-		externalPlot(tempString, a, b, (mp_prec_t) resB, resC, tempNode, resF, tools_precision, tempString2, resE);
+		externalPlot(tempString, a, b, (mp_prec_t) resB, resC, tempNode, resA, tools_precision, tempString2, resE);
 	      }
 	      if (tempString2 != NULL) free(tempString2);
 	    } else {
@@ -5920,14 +5917,14 @@ int executeCommandInner(node *tree) {
     if (resC) {
       if (evaluateThingToPureTree(&tempNode,array[0])) {
 	mpfr_init2(a,tools_precision);
-	if (evaluateThingToConstant(a,array[1],NULL,0)) {
+	if (evaluateThingToConstant(a,array[1],NULL)) {
 	  mpfr_init2(b,tools_precision);
 	  mpfr_init2(c,tools_precision);
 	  if (evaluateThingToRange(b,c,array[2])) {
 	    mpfr_init2(d,tools_precision);
-	    if (evaluateThingToConstant(d,array[3],NULL,0)) {
+	    if (evaluateThingToConstant(d,array[3],NULL)) {
 	      mpfr_init2(e,tools_precision);
-	      if (evaluateThingToConstant(e,array[4],NULL,0)) {
+	      if (evaluateThingToConstant(e,array[4],NULL)) {
 		tempRange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
 		tempRange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
 		mpfr_init2(*(tempRange.a),tools_precision);
@@ -6064,7 +6061,7 @@ int executeCommandInner(node *tree) {
     tempNode = evaluateThing(tree->child1);
     if (isPureTree(tempNode) && isConstant(tempNode)) {
       mpfr_init2(a, tools_precision);
-      if (evaluateThingToConstant(a, tempNode, NULL,0))  {
+      if (evaluateThingToConstant(a, tempNode, NULL))  {
 	freeThing(tempNode);
 	tempNode = makeConstant(a);
       }
@@ -6108,7 +6105,7 @@ int executeCommandInner(node *tree) {
 		      if (evaluateThingToConstant(a, 
 						  (node *) accessInList(tempNode->arguments, 
 									lengthChain(tempNode->arguments) - 1), 
-						  NULL,0)) {
+						  NULL)) {
 			if (mpfr_integer_p(a)) {
 			  resD = mpfr_get_si(a, GMP_RNDN);
 			  mpfr_init2(b, 8 * sizeof(resD) + 5);
@@ -6271,7 +6268,7 @@ int executeCommandInner(node *tree) {
 	      tempNode2 = evaluateThing((node *) (curr->value));
 	      if (isPureTree(tempNode2) && isConstant(tempNode2)) {
 		mpfr_init2(a, tools_precision);
-		if (evaluateThingToConstant(a, tempNode2, NULL,0))  {
+		if (evaluateThingToConstant(a, tempNode2, NULL))  {
 		  freeThing(tempNode2);
 		  tempNode2 = makeConstant(a);
 		}
@@ -6298,7 +6295,7 @@ int executeCommandInner(node *tree) {
 		      if (evaluateThingToConstant(a, 
 						  (node *) accessInList(tempNode->arguments, 
 									lengthChain(tempNode->arguments) - 1), 
-						  NULL,0)) {
+						  NULL)) {
 			if (mpfr_integer_p(a)) {
 			  resD = mpfr_get_si(a, GMP_RNDN);
 			  mpfr_init2(b, 8 * sizeof(resD) + 5);
@@ -6351,7 +6348,7 @@ int executeCommandInner(node *tree) {
 		curr = tree->arguments;
 		if (isPureTree(tempNode3) && isConstant(tempNode3)) {
 		  mpfr_init2(a, tools_precision);
-		  if (evaluateThingToConstant(a, tempNode3, NULL, 0))  {
+		  if (evaluateThingToConstant(a, tempNode3, NULL))  {
 		    freeThing(tempNode3);
 		    tempNode3 = makeConstant(a);
 		  }
@@ -6383,7 +6380,7 @@ int executeCommandInner(node *tree) {
 		tempNode2 = evaluateThing((node *) (curr->value));
 		if (isPureTree(tempNode2) && isConstant(tempNode2)) {
 		  mpfr_init2(a, tools_precision);
-		  if (evaluateThingToConstant(a, tempNode2, NULL, 0))  {
+		  if (evaluateThingToConstant(a, tempNode2, NULL))  {
 		    freeThing(tempNode2);
 		    tempNode2 = makeConstant(a);
 		  }
@@ -6393,7 +6390,7 @@ int executeCommandInner(node *tree) {
 		curr = tree->arguments;
 		if (isPureTree(tempNode3) && isConstant(tempNode3)) {
 		  mpfr_init2(a, tools_precision);
-		  if (evaluateThingToConstant(a, tempNode3, NULL, 0))  {
+		  if (evaluateThingToConstant(a, tempNode3, NULL))  {
 		    freeThing(tempNode3);
 		    tempNode3 = makeConstant(a);
 		  }
@@ -6433,7 +6430,7 @@ int executeCommandInner(node *tree) {
 		      curr = tree->arguments;
 		      if (isPureTree(tempNode3) && isConstant(tempNode3)) {
 			mpfr_init2(a, tools_precision);
-			if (evaluateThingToConstant(a, tempNode3, NULL, 0))  {
+			if (evaluateThingToConstant(a, tempNode3, NULL))  {
 			  freeThing(tempNode3);
 			  tempNode3 = makeConstant(a);
 			}
@@ -6546,7 +6543,7 @@ int executeCommandInner(node *tree) {
     mpfr_init2(a,tools_precision);
     mpfr_init2(b,tools_precision);
     mpfr_set_d(b,DEFAULTDIAM,GMP_RNDN);
-    if (evaluateThingToConstant(a, tree->child1, &b, 0)) {
+    if (evaluateThingToConstant(a, tree->child1, &b)) {
       mpfr_clear(statediam);
       mpfr_init2(statediam,mpfr_get_prec(a));
       mpfr_set(statediam,a,GMP_RNDN);
@@ -6756,7 +6753,7 @@ int executeCommandInner(node *tree) {
     mpfr_init2(a,tools_precision);
     mpfr_init2(b,tools_precision);
     mpfr_set_d(b,DEFAULTDIAM,GMP_RNDN);
-    if (evaluateThingToConstant(a, tree->child1, &b, 0)) {
+    if (evaluateThingToConstant(a, tree->child1, &b)) {
       mpfr_clear(statediam);
       mpfr_init2(statediam,mpfr_get_prec(a));
       mpfr_set(statediam,a,GMP_RNDN);
@@ -10930,7 +10927,7 @@ int evaluateArgumentForExternalProc(void **res, node *argument, int type) {
   case CONSTANT_TYPE:
     *res = safeMalloc(sizeof(mpfr_t));
     mpfr_init2(*((mpfr_t *) (*res)), tools_precision);
-    retVal = evaluateThingToConstant(*((mpfr_t *) (*res)), argument, NULL, 0);
+    retVal = evaluateThingToConstant(*((mpfr_t *) (*res)), argument, NULL);
     if (!retVal) {
       mpfr_clear(*((mpfr_t *) (*res)));
       free(*res);
@@ -11670,7 +11667,6 @@ int executeExternalProcedure(node **resultThing, libraryProcedure *proc, chain *
 
   return res;
 }
-
 
 void *evaluateThingInnerOnVoid(void *tree) {
   return (void *) evaluateThingInner((node *) tree);
@@ -12906,7 +12902,7 @@ node *evaluateThingInner(node *tree) {
 		    if (evaluateThingToConstant(a, 
 						(node *) accessInList(copy->child1->arguments, 
 								      lengthChain(copy->child1->arguments) - 1), 
-						NULL, 0)) {
+						NULL)) {
 		      if (mpfr_integer_p(a)) {
 			resB = mpfr_get_si(a, GMP_RNDN);
 			mpfr_init2(b, 8 * sizeof(resB) + 5);
@@ -12981,8 +12977,8 @@ node *evaluateThingInner(node *tree) {
 	printMessage(2,"Information: equality test relies on floating-point result.\n");
 	mpfr_init2(a,tools_precision);
 	mpfr_init2(b,tools_precision);
-	if (evaluateThingToConstant(a,copy->child1,NULL,1) && 
-	    evaluateThingToConstant(b,copy->child2,NULL,1)) {
+	if (evaluateThingToConstant(a,copy->child1,NULL) && 
+	    evaluateThingToConstant(b,copy->child2,NULL)) {
 	  if (mpfr_cmp(a,b) == 0) {
 	    freeThing(copy);
 	    copy = makeTrue();		    
@@ -13013,8 +13009,8 @@ node *evaluateThingInner(node *tree) {
       if (timingString != NULL) pushTimeCounter();
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
-	  (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
+      if ((resA = evaluateThingToConstant(a,copy->child1,NULL)) && 
+	  (resB = evaluateThingToConstant(b,copy->child2,NULL))) {
 	if ((resA == 3) || (resB == 3)) 
 	  printMessage(1,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
 	resC = (mpfr_cmp(a,b) < 0);
@@ -13059,8 +13055,8 @@ node *evaluateThingInner(node *tree) {
       if (timingString != NULL) pushTimeCounter();
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
-	  (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
+      if ((resA = evaluateThingToConstant(a,copy->child1,NULL)) && 
+	  (resB = evaluateThingToConstant(b,copy->child2,NULL))) {
 	if ((resA == 3) || (resB == 3)) 
 	  printMessage(1,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
 	resC = (mpfr_cmp(a,b) > 0);
@@ -13105,8 +13101,8 @@ node *evaluateThingInner(node *tree) {
       if (timingString != NULL) pushTimeCounter();
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
-	  (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
+      if ((resA = evaluateThingToConstant(a,copy->child1,NULL)) && 
+	  (resB = evaluateThingToConstant(b,copy->child2,NULL))) {
 	if ((resA == 3) || (resB == 3)) 
 	  printMessage(1,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
 	resC = (mpfr_cmp(a,b) <= 0);
@@ -13151,8 +13147,8 @@ node *evaluateThingInner(node *tree) {
       if (timingString != NULL) pushTimeCounter();
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
-	  (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
+      if ((resA = evaluateThingToConstant(a,copy->child1,NULL)) && 
+	  (resB = evaluateThingToConstant(b,copy->child2,NULL))) {
 	if ((resA == 3) || (resB == 3)) 
 	  printMessage(1,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
 	resC = (mpfr_cmp(a,b) >= 0);
@@ -13207,8 +13203,8 @@ node *evaluateThingInner(node *tree) {
 	printMessage(2,"Information: equality test relies on floating-point result.\n");
 	mpfr_init2(a,tools_precision);
 	mpfr_init2(b,tools_precision);
-	if (evaluateThingToConstant(a,copy->child1,NULL,1) && 
-	    evaluateThingToConstant(b,copy->child2,NULL,1)) {
+	if (evaluateThingToConstant(a,copy->child1,NULL) && 
+	    evaluateThingToConstant(b,copy->child2,NULL)) {
 	  if (mpfr_cmp(a,b) == 0) {
 	    freeThing(copy);
 	    copy = makeFalse();		    
@@ -13245,7 +13241,7 @@ node *evaluateThingInner(node *tree) {
       if (isString(copy->child1) && isPureTree(copy->child2) && isConstant(copy->child2)) {
 	if (timingString != NULL) pushTimeCounter();
 	mpfr_init2(a,tools_precision);
-	if (evaluateThingToConstant(a, copy->child2, NULL,0)) {	  
+	if (evaluateThingToConstant(a, copy->child2, NULL)) {	  
 	  tempString2 = sprintValue(&a);
 	  tempString = (char *) safeCalloc(strlen(copy->child1->string) + strlen(tempString2) + 1, sizeof(char));
 	  sprintf(tempString,"%s%s",copy->child1->string,tempString2);
@@ -13261,7 +13257,7 @@ node *evaluateThingInner(node *tree) {
 	if (isString(copy->child2) && isPureTree(copy->child1) && isConstant(copy->child1)) {
 	  if (timingString != NULL) pushTimeCounter();
 	  mpfr_init2(a,tools_precision);
-	  if (evaluateThingToConstant(a, copy->child1, NULL,0)) {	  
+	  if (evaluateThingToConstant(a, copy->child1, NULL)) {	  
 	    tempString2 = sprintValue(&a);
 	    tempString = (char *) safeCalloc(strlen(copy->child2->string) + strlen(tempString2) + 1, sizeof(char));
 	    sprintf(tempString,"%s%s",tempString2,copy->child2->string);
@@ -14108,154 +14104,16 @@ node *evaluateThingInner(node *tree) {
   case ELLIPTIC:
     break; 			
   case RANGE:
-    if (tree->child1->nodeType == DECIMALCONSTANT) {
-      resA = 0;
-      tempString2 = strchr(tree->child1->string,'%');
-      tempString3 = strrchr(tree->child1->string,'%');
-      if ((tempString2 != NULL) &&
-          (tempString3 != NULL) &&
-          (tempString2 != tempString3) &&
-          (*(tempString2 + 1) != '\0') &&
-          (tempString3 != tree->child1->string) &&
-          (*(tempString3 + 1) != '\0')) {
-        tempString = (char *) safeCalloc(strlen(tempString3 + 1) + 1, sizeof(char));
-        strcpy(tempString,tempString3 + 1);
-        tempString4 = (char *) safeCalloc(strlen(tempString2 + 1) + 1, sizeof(char));
-        tempString5 = tempString4;
-        tempString2++;
-        while ((*tempString2 != '\0') && (tempString2 != tempString3)) {
-          *tempString5 = *tempString2;
-          tempString5++; tempString2++;
-        }
-        resB = atoi(tempString4);
-        free(tempString4);
-        if (resB < 12) {
-          printMessage(1,"Warning: the precision of values in the tool must be at least 12 bits.\n");
-          resB = 12;
-        }
-        pTemp = (mp_prec_t) resB;
-        pTemp2 = pTemp;
-        resA = 1;
-      } 
-      if (!resA) {
-        tempString = (char *) safeCalloc(strlen(tree->child1->string) + 1, sizeof(char));
-        strcpy(tempString,tree->child1->string);
-        pTemp = 4 * strlen(tempString) + 3324;
-        if (tools_precision > pTemp) pTemp = tools_precision;
-        pTemp2 = tools_precision;
-      } 
-      if (strchr(tempString,'%') == NULL) {
-        mpfr_init2(a,pTemp);
-        mpfr_init2(b,pTemp);
-        mpfr_set_str(a,tempString,10,GMP_RNDD);
-        mpfr_set_str(b,tempString,10,GMP_RNDU);    
-        if (mpfr_cmp(a,b) != 0) {
-          pTemp = pTemp2;
-        }
-        mpfr_clear(a); mpfr_clear(b);
-        mpfr_init2(a,pTemp);
-        mpfr_init2(b,pTemp);
-        mpfr_set_str(a,tempString,10,GMP_RNDD);
-        mpfr_set_str(b,tempString,10,GMP_RNDU);    
-        if (mpfr_cmp(a,b) != 0) {
-          if (!noRoundingWarnings) {
-            printMessage(1,
-                         "Warning: Rounding occurred when converting the constant \"%s\" to floating-point with %d bits.\n",
-                         tempString,(int) pTemp);
-            printMessage(1,"If safe computation is needed, try to increase the precision.\n");
-          }
-          mpfr_set_str(a,tempString,10,GMP_RNDD);
-        }
-        mpfr_init2(c,pTemp);
-        if (!resA) simplifyMpfrPrec(c, a); else mpfr_set(c,a,GMP_RNDN);
-        tempNode = makeConstant(c);
-        mpfr_clear(c);
-        mpfr_clear(b);
-        mpfr_clear(a);
-        copy->child1 = tempNode;
-      }
-      free(tempString);
-    } else {
-      copy->child1 = evaluateThingInner(tree->child1);
-    }
-    if (tree->child2->nodeType == DECIMALCONSTANT) {
-      resA = 0;
-      tempString2 = strchr(tree->child2->string,'%');
-      tempString3 = strrchr(tree->child2->string,'%');
-      if ((tempString2 != NULL) &&
-          (tempString3 != NULL) &&
-          (tempString2 != tempString3) &&
-          (*(tempString2 + 1) != '\0') &&
-          (tempString3 != tree->child2->string) &&
-          (*(tempString3 + 1) != '\0')) {
-        tempString = (char *) safeCalloc(strlen(tempString3 + 1) + 1, sizeof(char));
-        strcpy(tempString,tempString3 + 1);
-        tempString4 = (char *) safeCalloc(strlen(tempString2 + 1) + 1, sizeof(char));
-        tempString5 = tempString4;
-        tempString2++;
-        while ((*tempString2 != '\0') && (tempString2 != tempString3)) {
-          *tempString5 = *tempString2;
-          tempString5++; tempString2++;
-        }
-        resB = atoi(tempString4);
-        free(tempString4);
-        if (resB < 12) {
-          printMessage(1,"Warning: the precision of values in the tool must be at least 12 bits.\n");
-          resB = 12;
-        }
-        pTemp = (mp_prec_t) resB;
-        pTemp2 = pTemp;
-        resA = 1;
-      } 
-      if (!resA) {
-        tempString = (char *) safeCalloc(strlen(tree->child2->string) + 1, sizeof(char));
-        strcpy(tempString,tree->child2->string);
-        pTemp = 4 * strlen(tempString) + 3324;
-        if (tools_precision > pTemp) pTemp = tools_precision;
-        pTemp2 = tools_precision;
-      } 
-      if (strchr(tempString,'%') == NULL) {
-        mpfr_init2(a,pTemp);
-        mpfr_init2(b,pTemp);
-        mpfr_set_str(a,tempString,10,GMP_RNDD);
-        mpfr_set_str(b,tempString,10,GMP_RNDU);    
-        if (mpfr_cmp(a,b) != 0) {
-          pTemp = pTemp2;
-        }
-        mpfr_clear(a); mpfr_clear(b);
-        mpfr_init2(a,pTemp);
-        mpfr_init2(b,pTemp);
-        mpfr_set_str(a,tempString,10,GMP_RNDD);
-        mpfr_set_str(b,tempString,10,GMP_RNDU);    
-        if (mpfr_cmp(a,b) != 0) {
-          if (!noRoundingWarnings) {
-            printMessage(1,
-                         "Warning: Rounding occurred when converting the constant \"%s\" to floating-point with %d bits.\n",
-                         tempString,(int) pTemp);
-            printMessage(1,"If safe computation is needed, try to increase the precision.\n");
-          }
-          mpfr_set_str(a,tempString,10,GMP_RNDU);
-        }
-        mpfr_init2(c,pTemp);
-        if (!resA) simplifyMpfrPrec(c, a); else mpfr_set(c,a,GMP_RNDN);
-        tempNode = makeConstant(c);
-        mpfr_clear(c);
-        mpfr_clear(b);
-        mpfr_clear(a);
-        copy->child2 = tempNode;
-      }
-      free(tempString);
-    } else {
-      copy->child2 = evaluateThingInner(tree->child2);
-    }
+    copy->child1 = evaluateThingInner(tree->child1);
+    copy->child2 = evaluateThingInner(tree->child2);
     if (isPureTree(copy->child1) && 
 	isPureTree(copy->child2)) {
       if (timingString != NULL) pushTimeCounter();
       mpfr_init2(a,tools_precision);
-      resA = evaluateThingToConstant(a,copy->child1,NULL,0);
+      resA = evaluateThingToConstant(a,copy->child1,NULL);
       if(resA) {
 	mpfr_init2(b,tools_precision);
-	resB = evaluateThingToConstant(b,copy->child2,NULL,0);
+	resB = evaluateThingToConstant(b,copy->child2,NULL);
 	if(resB) {
 	  if ((resA == 3) || (resB == 3)) {
 	    xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
@@ -14343,7 +14201,7 @@ node *evaluateThingInner(node *tree) {
       tempNode = simplifyTreeErrorfree(copy->child1);
       if (isConstant(tempNode)) {
 	mpfr_init2(a,tools_precision);
-	if (evaluateThingToConstant(a,tempNode,NULL,0)) {
+	if (evaluateThingToConstant(a,tempNode,NULL)) {
 	  tempNode2 = makeConstant(a);
 	  freeThing(copy->child1);
 	  copy = tempNode2;
@@ -14491,7 +14349,7 @@ node *evaluateThingInner(node *tree) {
 	    if (fifthArg != NULL) {
 	      tempMpfrPtr = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
 	      mpfr_init2(*tempMpfrPtr,tools_precision);
-	      if (!evaluateThingToConstant(*tempMpfrPtr,fifthArg,NULL,0)) {
+	      if (!evaluateThingToConstant(*tempMpfrPtr,fifthArg,NULL)) {
 		printMessage(1,"Warning: the given argument cannot be evaluated to a constant. It will be ignored.\n");
 		mpfr_clear(*tempMpfrPtr);
 		free(tempMpfrPtr);
@@ -14734,7 +14592,7 @@ node *evaluateThingInner(node *tree) {
 	curr = curr->next;
 	mpfr_init2(a,tools_precision);
 	if (isPureTree((node *) (curr->value)) &&
-	    evaluateThingToConstant(a,(node *) (curr->value),NULL,0)) {
+	    evaluateThingToConstant(a,(node *) (curr->value),NULL)) {
 	  if (timingString != NULL) pushTimeCounter();      
 	  tempNode = makeConstant(a);
 	  curr = copy->arguments;
@@ -15010,7 +14868,7 @@ node *evaluateThingInner(node *tree) {
     copy->child2 = evaluateThingInner(tree->child2);
     if (isPureTree(copy->child1) && isPureTree(copy->child2)) {
       mpfr_init2(a,tools_precision);
-      if (evaluateThingToConstant(a,copy->child1,NULL,0)) {
+      if (evaluateThingToConstant(a,copy->child1,NULL)) {
 	if (evaluateThingToInteger(&resA,copy->child2,NULL)) {
 	  if (timingString != NULL) pushTimeCounter();      
 	  tempNode = rationalApprox(a,resA);
@@ -15114,7 +14972,7 @@ node *evaluateThingInner(node *tree) {
 	if (isRoundingSymbol((node *) (curr->value)) || isDefault((node *) (curr->value))) {
 	  curr = copy->arguments;
 	  mpfr_init2(a,tools_precision);
-	  if (evaluateThingToConstant(a,(node *) (curr->value),NULL,0)) {
+	  if (evaluateThingToConstant(a,(node *) (curr->value),NULL)) {
 	    curr = curr->next;
 	    resB = tools_precision;
 	    if (isPureTree((node *) (curr->value)) || 
@@ -15186,7 +15044,7 @@ node *evaluateThingInner(node *tree) {
       if (isPureTree(copy->child2)) {
 	if (isConstant(copy->child2)) {
 	  mpfr_init2(a,tools_precision);
-	  if (evaluateThingToConstant(a,copy->child2,NULL,0)) {
+	  if (evaluateThingToConstant(a,copy->child2,NULL)) {
 	    mpfr_init2(b,tools_precision);
 	    if (timingString != NULL) pushTimeCounter();      
 	    if (evaluateFaithful(b, copy->child1, a, tools_precision)) {
@@ -15658,7 +15516,7 @@ node *evaluateThingInner(node *tree) {
       mpfr_init2(b,tools_precision);
       mpfr_init2(c,tools_precision);
       if (evaluateThingToRange(a,b,secondArg) &&
-	  evaluateThingToConstant(c,thirdArg,NULL,0) &&
+	  evaluateThingToConstant(c,thirdArg,NULL) &&
 	  evaluateThingToRestrictedExpansionFormat(&resC,fourthArg) &&
 	  evaluateThingToString(&tempString2, fifthArg) &&
 	  evaluateThingToString(&tempString3, sixthArg)) {
@@ -15711,7 +15569,7 @@ node *evaluateThingInner(node *tree) {
       mpfr_init2(b,tools_precision);
       if (evaluateThingToRange(a,b,secondArg)) {
 	mpfr_init2(c,tools_precision);
-	if (evaluateThingToConstant(c,thirdArg,NULL,0)) {
+	if (evaluateThingToConstant(c,thirdArg,NULL)) {
 	  xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
 	  xrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
 	  mpfr_init2(*(xrange.a),tools_precision);
@@ -15776,7 +15634,7 @@ node *evaluateThingInner(node *tree) {
     if (isPureTree(copy->child1) &&
 	isPureTree(copy->child2)) {
       mpfr_init2(a,tools_precision);
-      if (evaluateThingToConstant(a,copy->child2,NULL,0)) {
+      if (evaluateThingToConstant(a,copy->child2,NULL)) {
 	if (timingString != NULL) pushTimeCounter();      
 	mpfr_init2(b,tools_precision);
 	if (isEvaluable(copy->child1, a, &b, tools_precision) != ISNOTEVALUABLE) {
@@ -15826,7 +15684,7 @@ node *evaluateThingInner(node *tree) {
 	  (lengthChain(fifthArg->arguments) == lengthChain(sixthArg->arguments))) {
 	if (evaluateThingToPureListOfPureTrees(&tempChain, firstArg)) {
 	  mpfr_init2(a,tools_precision);
-	  if (evaluateThingToConstant(a,secondArg,NULL,0) &&
+	  if (evaluateThingToConstant(a,secondArg,NULL) &&
 	      evaluateThingToInteger(&resA,thirdArg,NULL) &&
 	      evaluateThingToInteger(&resB,fourthArg,NULL)) {
 	    if (evaluateThingToExpansionFormatList(&tempChain2, fifthArg)) {
@@ -15882,7 +15740,7 @@ node *evaluateThingInner(node *tree) {
       mpfr_init2(b,tools_precision);
       mpfr_init2(c,tools_precision);
       if (evaluateThingToRange(a,b,secondArg) &&
-	  evaluateThingToConstant(c,thirdArg, NULL,0)) {
+	  evaluateThingToConstant(c,thirdArg, NULL)) {
 	if (timingString != NULL) pushTimeCounter(); 
 	yrange = guessDegreeWrapper(firstArg, fourthArg, a, b, c);
 	if (timingString != NULL) popTimeCounter(timingString);
@@ -16049,7 +15907,7 @@ node *evaluateThingInner(node *tree) {
     copy->child1 = evaluateThingInner(tree->child1);
     if (isPureTree(copy->child1)) {
       mpfr_init2(a,tools_precision);
-      if (evaluateThingToConstant(a,copy->child1,NULL,0)) {
+      if (evaluateThingToConstant(a,copy->child1,NULL)) {
 	mpfr_init2(b,mpfr_get_prec(a));
 	if (timingString != NULL) pushTimeCounter();      
 	if (mpfr_mant_exp(b, &expo, a) == 0) {
@@ -16067,7 +15925,7 @@ node *evaluateThingInner(node *tree) {
     copy->child1 = evaluateThingInner(tree->child1);
     if (isPureTree(copy->child1)) {
       mpfr_init2(a,tools_precision);
-      if (evaluateThingToConstant(a,copy->child1,NULL,0)) {
+      if (evaluateThingToConstant(a,copy->child1,NULL)) {
 	mpfr_init2(b,mpfr_get_prec(a));
 	if (timingString != NULL) pushTimeCounter();      
 	if (mpfr_mant_exp(b, &expo, a) == 0) {
@@ -16088,7 +15946,7 @@ node *evaluateThingInner(node *tree) {
     copy->child1 = evaluateThingInner(tree->child1);
     if (isPureTree(copy->child1)) {
       mpfr_init2(a,tools_precision);
-      if (evaluateThingToConstant(a,copy->child1,NULL,0)) {
+      if (evaluateThingToConstant(a,copy->child1,NULL)) {
 	mpfr_init2(b,mpfr_get_prec(a));
 	if (timingString != NULL) pushTimeCounter();      
 	if (mpfr_mant_exp(b, &expo, a) == 0) {
@@ -16146,7 +16004,7 @@ node *evaluateThingInner(node *tree) {
 	} else {
 	  if (isPureTree((node *) (copy->child1->arguments->value))) {
 	    mpfr_init2(a,tools_precision);
-	    if (evaluateThingToConstant(a,(node *) (copy->child1->arguments->value),NULL,0)) {
+	    if (evaluateThingToConstant(a,(node *) (copy->child1->arguments->value),NULL)) {
 	      if (mpfr_integer_p(a)) {
 		resA = mpfr_get_si(a, GMP_RNDN);
 		mpfr_init2(b, 8 * sizeof(resA) + 5);
