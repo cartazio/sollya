@@ -1,0 +1,554 @@
+
+procedure upperBoundPolyCoeffRests(l,I) {
+        var bound;
+        var myList;
+
+        if (l == [||]) then {
+                bound = [0];
+        } else {
+                myList = revert(l);
+                bound = head(myList);
+                myList = tail(myList);
+                while (myList != [||]) do {
+                        bound = bound * I + head(myList);
+                        myList = tail(myList);
+                };
+        };
+
+        return bound;
+};
+
+
+procedure myfindzeros(p,I) {
+        return findzeros(p,I);
+};
+
+procedure polyBound(p,I) {
+        var pdiff;
+        var z, zeros;
+        var boundA, boundB, boundC, bound;
+
+        pdiff = diff(p);
+        
+        boundA = evaluate(p,[inf(I)]);
+        boundB = evaluate(p,[sup(I)]);  
+        bound = boundA;
+        if (inf(boundB) < inf(bound)) then bound = [inf(boundB),sup(bound)];
+        if (sup(boundB) > sup(bound)) then bound = [inf(bound),sup(boundB)];
+
+        zeros = myfindzeros(pdiff,I);
+
+        for z in zeros do {
+                boundC = evaluate(p,z);
+                if (inf(boundC) < inf(bound)) then bound = [inf(boundC),sup(bound)];
+                if (sup(boundC) > sup(bound)) then bound = [inf(bound),sup(boundC)];
+        };
+
+        return bound;
+};
+
+procedure recurseFindZeros(p,I,n) {
+        var res;
+        var zeros;
+        var z;
+
+        if (n < 1) then {
+                res = findzeros(p,I);
+        } else {
+                zeros = recurseFindZeros(p,I,n-1);
+                res = [||];
+                for z in zeros do {
+                        res = res @ findzeros(p,z);
+                };
+        };
+
+        return res;
+};
+
+procedure showPositivity(p,I) {
+        var res;
+        var zeros;
+        
+        res = (numberroots(p,I) == 0);
+
+        if (!res) then {
+                zeros = recurseFindZeros(p,I,2);
+                res = (zeros == [||]);
+        };
+
+        if (!res) then {
+                write("Warning: could not show positivity\n");
+                write("Warning: the function might have zeros in ",zeros,"\n");
+        };
+
+        return res;
+};
+
+procedure showPositivityWorks(p,I) {
+        var res;
+        var bound;
+        var oldDisplay;
+        var q;
+        var oldTiming;
+
+        oldTiming = timing;
+        timing = on!;
+        {
+        timing = oldTiming!;
+        
+        q = horner(p);
+
+        bound = polyBound(q,I);
+
+        res = ((inf(bound) > 0) && (sup(bound) > 0));
+
+        if (!res) then {
+                zeros = recurseFindZeros(p,I,2);
+                res = (zeros == [||]);
+        };
+
+        if (!res) then {
+                write("Warning: could not show positivity\n");
+
+        };
+
+        timing = on!;
+        };
+        timing = oldTiming!;
+        write("Information: last timing result was for a showPositivity\n");
+
+        return res;
+};
+
+procedure checkPolyBound(p,I,bound) {
+        var res;
+        var qUp, qDown;
+        var sosInstances;
+
+        qUp = -(p - sup(bound));
+        qDown = p - inf(bound);
+
+        res = (showPositivity(qUp,I) && showPositivity(qDown,I));
+        
+        sosInstances = [| [| qUp, I |], [| qDown, I |] |];
+
+        return [| res, sosInstances |];
+};
+
+
+procedure polyApprox(f,I,x0,n,mode) {
+        var p;
+        var Delta, DeltaCoeffs, DeltaLagrange;
+        var TM;
+        var oldRationalMode, oldRoundingWarnings;
+        var T, TRounded, TDiff;
+        var DeltaRound;
+
+        TM = taylorform(f,n,x0,I,mode);
+        p = TM[0];
+        if (mode == absolute) then {
+                DeltaLagrange = TM[2];
+        } else {
+                DeltaLagrange = evaluate(x^(n-1),I-x0) * TM[2];
+        };
+        DeltaCoeffs = upperBoundPolyCoeffRests(TM[1],I-x0);
+        oldRationalMode = rationalmode;
+        rationalmode = on!;
+        T = horner(simplifysafe(p(x - x0)));
+        rationalmode = oldRationalMode!;
+        TRounded = roundcoefficients(T,[| prec... |]);
+        TDiff = horner(T - TRounded);
+        DeltaRound = evaluate(TDiff,I);
+        Delta = DeltaCoeffs + DeltaLagrange + DeltaRound;
+
+        return [| TRounded, Delta |];
+};
+
+procedure supnormLowBound(p,f,I,quality,mode) {
+        var res;
+        var zeros;
+        var g, gPrime;
+        var z, b;
+
+        if (mode == absolute) then {
+                g = p - f;
+                gPrime = diff(p - f);
+        } else {
+                g = p/f-1;
+                gPrime = diff(p) * f - diff(f) * p;
+        };
+
+        zeros = dirtyfindzeros(gPrime,I);
+        res = 0;
+        for z in zeros do {
+                b = abs(evaluate(g,[z]));
+                if (inf(b) > res) then res = inf(b);   
+        };
+        b = abs(evaluate(g,[inf(I)]));
+        if (inf(b) > res) then res = inf(b);   
+        b = abs(evaluate(g,[sup(I)]));
+        if (inf(b) > res) then res = inf(b);   
+
+        res = round(res,floor(-log2(abs(quality)))+5,RD);
+
+        return res;
+};
+
+
+procedure supnormAbsolute(p,f,I,quality) {
+        var n;
+        var x0;
+        var TDelta;
+        var T, Delta;
+        var DeltaDiff;
+        var r, res;
+        var lowBound;
+        var done;
+        var q;
+        var rWidened, DeltaDiffWidened, rWidenedRecomp;
+        var oldMidpointMode;
+        var sosInstances;
+        var polyBoundRes;
+
+        x0 := mid(I);
+        n = degree(p) + 1;
+
+        lowBound = supnormLowBound(p,f,I,quality/4,absolute);
+        highBound = infty;
+
+        done = false;
+        while ((n < 200) && (!done)) do {        
+                TDelta = polyApprox(f,I,x0,n,absolute);
+                T = TDelta[0];
+                Delta = TDelta[1];
+                q = p-T;
+
+                DeltaDiff = polyBound(q,I);
+
+                r = Delta + DeltaDiff;
+
+
+                "Delta", Delta;
+                "DeltaDiff", DeltaDiff;
+
+                highBound = abs(sup(r));
+                if (abs(inf(r)) > highBound) then {
+                    highBound = abs(inf(r));    
+                };
+                
+                "highBound", highBound;
+
+                if (abs(highBound - lowBound) < abs(lowBound * quality)) then {
+                        done = true;
+                } else {
+                        n = n + 1;
+                        oldMidpointMode = midpointmode;
+                        midpointmode = on!;
+                        write("Information: n = ",n,": current bounding ",[lowBound,highBound],"\n");
+                        midpointmode = oldMidpointMode!;
+                };
+        };
+
+        if (done) then {
+                rWidened = [-(lowBound * (1 + abs(quality)));(lowBound * (1 + abs(quality)))];
+                DeltaDiffWidened = rWidened - Delta;
+                polyBoundRes = checkPolyBound(q,I,DeltaDiffWidened);
+                sosInstances = polyBoundRes[1];
+                if (polyBoundRes[0]) then {
+                        rWidenedRecomp = Delta + DeltaDiffWidened;
+                        highBound = abs(sup(rWidenedRecomp));
+                        if (abs(inf(rWidenedRecomp)) > highBound) then {
+                                highBound = abs(inf(rWidenedRecomp));    
+                        };
+                } else {
+                        write("Warning in supnorm: widening did not work\n");
+                        polyBoundRes = checkPolyBound(q,I,DeltaDiff);
+                        sosInstances = polyBoundRes[1];
+                };
+                res = [lowBound,highBound];
+        } else {
+                write("Warning in supnorm: could not achieve the desired quality\n");
+                res = [lowBound;highBound];
+        };
+
+        return [| res, sosInstances |];
+};
+
+procedure encloseZeros(f,I) {
+        var res;
+        var oldDiam;
+
+        oldDiam = diam;
+        diam = 1/16!;
+        res = findzeros(f,I);
+        diam = oldDiam!;
+        return res;
+};
+
+procedure globIntervals(l) {
+        var res;
+        var myL;
+        var curr, rescurr;
+
+        if (length(l) <= 1) then {
+                res = l;
+        } else {
+                myL = l;
+                rescurr = head(myL);
+                myL = tail(myL);
+                res = [||];
+                while (myL != [||]) do {
+                        curr = head(myL);
+                        myL = tail(myL);
+                        if (inf(curr) > sup(rescurr)) then {
+                                res = rescurr .: res;
+                                rescurr = curr;
+                        } else {
+                                rescurr = [inf(rescurr);sup(curr)];
+                        };
+                };
+                res = rescurr .: res;
+
+                res = revert(res);
+        };
+
+        return res;
+};
+
+procedure invertIntervals(l,I) {
+        var res;
+        var myL;
+        var curr;
+        var a, b, bmax;
+
+        if (l == [||]) then {
+                res = [| I |];
+        } else {
+                myL = l;
+                curr = head(myL);
+                myL = tail(myL);
+                bmax = sup(I);
+                if (inf(curr) > inf(I)) then {
+                        a = inf(I);
+                        b = inf(curr);
+                        if (bmax < b) then b = bmax;
+                        res = [| [a;b] |];
+                } else {
+                        res = [||];
+                };
+                a = sup(curr);
+                while ((myL != [||]) && (a < bmax)) do {
+                        curr = head(myL);
+                        myL = tail(myL);
+                        b = inf(curr);
+                        if (bmax < b) then { 
+                                b = bmax;
+                                myL = [||];
+                        };
+                        res = [a;b] .: res;
+                        a = sup(curr);
+                };
+                if (a < bmax) then {
+                        res = [a;bmax] .: res;
+                };
+                res = revert(res);
+        };
+
+        return res;
+};
+
+
+procedure supnormRelativeNoPole(p,f,I,quality,x0,taylorModelMode) {
+        var n;
+        var TDelta;
+        var T, Delta;
+        var res;
+        var highBound, lowBound;
+        var done;
+        var r;
+        var alpha, DeltaRel, DeltaDiffRel;
+        var oldDisplay;
+        var h;
+        var oldRationalMode;
+        var oldMidpointMode;
+        var sosInstances;
+        var R, Eta;
+
+        n = degree(p) + 1;
+
+        lowBound = supnormLowBound(p,f,I,quality/4,relative);
+        highBound = infty;
+
+        done = false;
+        while ((n < 200) && (!done)) do {        
+                TDelta = polyApprox(f,I,x0,n,taylorModelMode);
+                T = TDelta[0];
+                Delta = TDelta[1];
+
+                alpha = polyBound(T,I);
+                DeltaRel = -Delta / (alpha + Delta);
+                
+                R = [- (lowBound * (1 + quality/2)); (lowBound * (1 + quality/2)) ];
+                Eta = (R - DeltaRel) / (1 + DeltaRel);
+
+                eta = abs(sup(Eta));
+                if (abs(inf(Eta)) > eta) then eta = abs(inf(Eta));
+
+                qUp = horner(-(p - T * (1 + eta)));
+                qDown = horner(p - T * (1 - eta));
+
+                DeltaDiffRel = [-eta;eta];
+
+                r = DeltaDiffRel + DeltaRel + DeltaDiffRel * DeltaRel;
+
+                highBound = abs(sup(r));
+                if (abs(inf(r)) > highBound) then {
+                    highBound = abs(inf(r));    
+                };
+
+                if (abs(highBound - lowBound) < abs(lowBound * quality)) then {
+                        positiveUp = showPositivity(qUp,I);
+                        positiveDown = showPositivity(qDown,I);
+                } else {
+                        positiveUp = false;
+                        positiveDown = false;
+                };
+                
+                if (positiveUp && positiveDown) then {
+                        done = true;
+                } else {
+                        oldMidpointMode = midpointmode;
+                        midpointmode = on!;
+                        write("Information: n = ",n,": current bounding ",[lowBound,highBound],"\n");
+                        midpointmode = oldMidpointMode!;
+                        n = n + 1;
+                };
+        };
+
+        if (done) then {
+                res = [lowBound,highBound];
+                sosInstances = [| [| qUp, I |], [| qDown, I |] |];
+        } else {
+                write("Warning in supnorm: could not achieve the desired quality\n");
+                res = [lowBound;highBound];
+        };
+
+        return [| res , sosInstances |];
+};
+
+procedure determineOrderOfZero(f,x0,n) {
+        var k;
+        var TM;
+        var T; 
+        var coeffBounds;
+        
+        TM = taylorform(f,n,x0,relative);
+        T = TM[0];
+        coeffBounds = TM[1];
+        k = 0;
+        while ((coeff(T,k) == 0) && (coeffBounds[k] == [0])) do {
+                k = k + 1;
+        };
+        
+        return k;
+};
+
+procedure findpoles(p,f,I) {
+        var res;
+
+        if ((inf(I) * sup(I) < 0) && (p(0) == 0)) then {
+                res = [|0|];
+        } else {
+                res = dirtyfindzeros(f,I);
+                if (res == [||]) then {
+                        res = dirtyfindzeros(p,I);
+                };
+        };
+
+        return res;
+};
+
+procedure supnormRelativePole(p,f,I,quality) {
+        var poles;
+        var res;
+        var x0;
+        var k, pTilde, fTilde, oldDisplay;
+        
+        poles = findpoles(p,f,I);
+        if (poles == [||]) then {
+                write("Warning in supnorm: did not find false pole\n");
+                res = supnormRelativeNoPole(p,f,I,quality,mid(I),absolute);
+        } else {
+                x0 = round(head(poles),floor(prec/2),RN);
+                k = determineOrderOfZero(f,x0,degree(p));
+                if (k == k) then {
+                        pTilde = horner((horner(p(x + x0))/(x^k))(x - x0));
+                        if (degree(pTilde) == degree(p) - k) then {
+                                fTilde = f/((x - x0)^k);
+                                res = supnormRelativeNoPole(pTilde,fTilde,I,quality,x0,relative);
+                        } else {
+                                write("Warning in supnorm: determined pole seems not to be a false one\n");
+                                res = [| [0;infty], [||] |];
+                        };
+                } else {
+                        write("Warning in supnorm: could not determine order of pole\n");
+                        res = [| [0;infty], [||] |];
+                };
+        };
+
+        return res;
+};
+
+procedure supnormRelative(p,f,I,quality) {
+        var possiblePoles;
+        var noPoles;
+        var i;
+        var resCurr;
+        var innerBound, outerBound;
+        var resCurrNorm;
+        var sosInstances;
+
+        possiblePoles = globIntervals(encloseZeros(f,I));
+        noPoles = invertIntervals(possiblePoles,I);
+
+        write("Information: splitting the domain into subdomains ",possiblePoles," (with possible poles) and ",noPoles," (without poles)\n");
+
+        innerBound = 0;
+        outerBound = 0;
+        sosInstances = [||];
+        for i in possiblePoles do {
+                write("Information: doing subdomain ",i,"\n");
+                resCurr = supnormRelativePole(p,f,i,quality);
+                resCurrNorm = resCurr[0];
+                sosInstances = resCurr[1] @ sosInstances;
+                if (inf(resCurrNorm) > innerBound) then innerBound = inf(resCurrNorm);
+                if (sup(resCurrNorm) > outerBound) then outerBound = sup(resCurrNorm);
+        };
+        for i in noPoles do {
+                write("Information: doing subdomain ",i,"\n");
+                resCurr = supnormRelativeNoPole(p,f,i,quality,mid(i),absolute);
+                resCurrNorm = resCurr[0];
+                sosInstances = resCurr[1] @ sosInstances;
+                if (inf(resCurrNorm) > innerBound) then innerBound = inf(resCurrNorm);
+                if (sup(resCurrNorm) > outerBound) then outerBound = sup(resCurrNorm);
+        };
+
+        return [| [innerBound, outerBound], sosInstances |];
+};
+
+
+procedure supnorm(p,f,I,quality,mode) {
+        var res;
+
+        res = error;
+        if (mode == absolute) then {
+                res = supnormAbsolute(p,f,I,quality);
+        } else {
+                if (mode == relative) then {
+                        res = supnormRelative(p,f,I,quality);
+                };
+        };
+
+        return res;
+};
+

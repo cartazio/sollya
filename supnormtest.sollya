@@ -1,0 +1,34 @@
+#include "supnorm.sollya";
+
+verbosity = 1!;
+
+midpointmode = on!;
+
+f = exp(x);
+I = [-1/16;1/16];
+deg = 15;
+
+p = fpminimax(f, [|0,...,deg|], [|DD,DD,DD,DD,DD,D...|], I);
+
+mode = absolute;
+
+
+"Starting supnorm";
+timing = on!;
+{
+timing = off!;
+res = supnorm(p,f,I,2^-20,mode);
+timing = on!;
+};
+timing = off!;
+norm = res[0];
+sosInstances = res[1];
+
+"Certified supnorm", norm;
+
+if (mode == absolute) then errFunc = p - f else errFunc = p/f-1;
+
+"Dirty supnorm     ", dirtyinfnorm(errFunc,I);
+
+// "SOS Instances", sosInstances;
+
