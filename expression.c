@@ -2452,7 +2452,7 @@ node* copyTree(node *tree) {
   return copy;
 }
 
-int mpfr_to_mpq( mpq_t y, mpfr_t x){
+int mpfr_to_mpq( mpq_t y, mpfr_t x) {
   mpz_t mant;
   mp_exp_t expo;
   mpq_t aux;

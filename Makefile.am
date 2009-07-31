@@ -59,6 +59,8 @@ taylor.c \
 taylor.h \
 taylorform.c \
 taylorform.h \
+sturm.c \
+sturm.h \
 worstcase.c \
 worstcase.h \
 xml.c \
@@ -110,6 +112,8 @@ remez.c \
 remez.h \
 taylorform.c \
 taylorform.h \
+sturm.c \
+sturm.h \
 taylor.c \
 taylor.h \
 worstcase.c \

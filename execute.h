@@ -252,6 +252,7 @@ extern void endBuffer(void);
 #define RATIONALMODEDEREF 241
 #define SINGLESYMBOL 242
 #define TAYLORFORM 243
+#define NUMBERROOTS 244
 
 int executeCommand(node *);
 
@@ -407,6 +408,7 @@ node *makeInfnorm(chain *thinglist);
 node *makeFindZeros(node *thing1, node *thing2);
 node *makeFPFindZeros(node *thing1, node *thing2);
 node *makeDirtyInfnorm(node *thing1, node *thing2);
+node *makeNumberRoots(node *thing1, node *thing2);
 node *makeIntegral(node *thing1, node *thing2);
 node *makeDirtyIntegral(node *thing1, node *thing2);
 node *makeImplementPoly(chain *thinglist);

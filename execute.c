@@ -853,6 +853,10 @@ node *copyThing(node *tree) {
     copy->child1 = copyThing(tree->child1);
     copy->child2 = copyThing(tree->child2);
     break; 			
+  case NUMBERROOTS:
+    copy->child1 = copyThing(tree->child1);
+    copy->child2 = copyThing(tree->child2);
+    break; 			
   case INTEGRAL:
     copy->child1 = copyThing(tree->child1);
     copy->child2 = copyThing(tree->child2);
@@ -1561,6 +1565,9 @@ char *getTimingStringForThing(node *tree) {
     break; 			
   case DIRTYINFNORM:
     constString = "computing an infinity norm dirtily";
+    break; 			
+  case NUMBERROOTS:
+    constString = "computing the number of real roots of a polynomial";
     break; 			
   case INTEGRAL:
     constString = "computing an integral";
@@ -4147,6 +4154,13 @@ char *sRawPrintThing(node *tree) {
     break; 			
   case DIRTYINFNORM:
     res = newString("dirtyinfnorm(");
+    res = concatAndFree(res, sRawPrintThing(tree->child1));
+    res = concatAndFree(res, newString(", "));
+    res = concatAndFree(res, sRawPrintThing(tree->child2));
+    res = concatAndFree(res, newString(")"));
+    break; 			
+  case NUMBERROOTS:
+    res = newString("numberroots(");
     res = concatAndFree(res, sRawPrintThing(tree->child1));
     res = concatAndFree(res, newString(", "));
     res = concatAndFree(res, sRawPrintThing(tree->child2));
@@ -8671,6 +8685,18 @@ node *makeDirtyInfnorm(node *thing1, node *thing2) {
 
 }
 
+node *makeNumberRoots(node *thing1, node *thing2) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = NUMBERROOTS;
+  res->child1 = thing1;
+  res->child2 = thing2;
+
+  return res;
+
+}
+
 node *makeIntegral(node *thing1, node *thing2) {
   node *res;
 
@@ -9881,6 +9907,11 @@ void freeThing(node *tree) {
     freeThing(tree->child2);
     free(tree);
     break; 			
+  case NUMBERROOTS:
+    freeThing(tree->child1);
+    freeThing(tree->child2);
+    free(tree);
+    break; 			
   case INTEGRAL:
     freeThing(tree->child1);
     freeThing(tree->child2);
@@ -10636,6 +10667,10 @@ int isEqualThing(node *tree, node *tree2) {
     if (!isEqualThing(tree->child2,tree2->child2)) return 0;
     break; 			
   case DIRTYINFNORM:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThing(tree->child2,tree2->child2)) return 0;
+    break; 			
+  case NUMBERROOTS:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     if (!isEqualThing(tree->child2,tree2->child2)) return 0;
     break; 			
@@ -15367,6 +15402,32 @@ node *evaluateThingInner(node *tree) {
 	free(xrange.b);
 	freeThing(copy);
 	copy = tempNode;
+      } 
+      mpfr_clear(a);
+      mpfr_clear(b);
+    }
+    break; 			
+  case NUMBERROOTS:
+    copy->child1 = evaluateThingInner(tree->child1);
+    copy->child2 = evaluateThingInner(tree->child2);
+    if (isPureTree(copy->child1) &&
+	isRange(copy->child2)) {
+      mpfr_init2(a,tools_precision);
+      mpfr_init2(b,tools_precision);
+      if (evaluateThingToRange(a,b,copy->child2)) {
+	mpfr_init2(c,tools_precision);
+        mpfi_init2(tempIA,tools_precision);
+        mpfi_interv_fr(tempIA,a,b);
+	if (timingString != NULL) pushTimeCounter(); 
+	resA = getNrRoots(c, copy->child1, tempIA);
+	if (timingString != NULL) popTimeCounter(timingString);
+        mpfi_clear(tempIA);
+        if (resA) {
+            tempNode = makeConstant(c);
+            freeThing(copy);
+            copy = tempNode;
+        }
+	mpfr_clear(c);
       } 
       mpfr_clear(a);
       mpfr_clear(b);

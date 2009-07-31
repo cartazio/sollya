@@ -277,6 +277,7 @@ void yyerror(char *message) {
 %token  FINDZEROSTOKEN;         					       
 %token  FPFINDZEROSTOKEN;       					       
 %token  DIRTYINFNORMTOKEN;      					       
+%token  NUMBERROOTSTOKEN;      					       
 %token  INTEGRALTOKEN;          					       
 %token  DIRTYINTEGRALTOKEN;  						       
 %token  WORSTCASETOKEN;         					       
@@ -1464,6 +1465,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | DIRTYINFNORMTOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
                           {
 			    $$ = makeDirtyInfnorm($3, $5);
+			  }      					       
+                      | NUMBERROOTSTOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
+                          {
+			    $$ = makeNumberRoots($3, $5);
 			  }      					       
                       | INTEGRALTOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
                           {
@@ -3018,6 +3023,14 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_DIRTYINFNORM_TEXT);
 #else
 			    outputMode(); printf("Floating-point infinity norm: dirtyinfnorm(func,range).\n");
+#endif
+                          }                 					                 					       
+                      | NUMBERROOTSTOKEN
+                          {
+#ifdef HELP_NUMBERROOTS_TEXT
+			    outputMode(); printf(HELP_NUMBERROOTS_TEXT);
+#else
+			    outputMode(); printf("Computes the number of real roots of a polynomial on a domain.\n");
 #endif
                           }                 					                 					       
                       | INTEGRALTOKEN

@@ -181,6 +181,7 @@ TAYLOR          "taylor"
 FINDZEROS       "findzeros"
 FPFINDZEROS     "fpfindzeros"
 DIRTYINFNORM    "dirtyinfnorm"
+NUMBERROOTS     "numberroots"
 
 EVALUATE        "evaluate"
 
@@ -642,6 +643,7 @@ NOP             "nop"
 {FINDZEROS}       			    {  return FINDZEROSTOKEN; }       					       
 {FPFINDZEROS}     			    {  return FPFINDZEROSTOKEN; }     					       
 {DIRTYINFNORM}    			    {  return DIRTYINFNORMTOKEN; }    					       
+{NUMBERROOTS}    			    {  return NUMBERROOTSTOKEN; }    					       
 {INTEGRAL}        			    {  return INTEGRALTOKEN; }        					       
 {DIRTYINTEGRAL}				    {  return DIRTYINTEGRALTOKEN; }				      	       
 {WORSTCASE}       			    {  return WORSTCASETOKEN; }       					       

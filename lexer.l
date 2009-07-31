@@ -184,6 +184,7 @@ TAYLORFORM      "taylorform"
 FINDZEROS       "findzeros"
 FPFINDZEROS     "fpfindzeros"
 DIRTYINFNORM    "dirtyinfnorm"
+NUMBERROOTS     "numberroots"
 
 EVALUATE        "evaluate"
 
@@ -725,6 +726,7 @@ NOP             "nop"
 {FINDZEROS}       			    { newTokenLexed(); return FINDZEROSTOKEN; }       					       
 {FPFINDZEROS}     			    { newTokenLexed(); return FPFINDZEROSTOKEN; }     					       
 {DIRTYINFNORM}    			    { newTokenLexed(); return DIRTYINFNORMTOKEN; }    					       
+{NUMBERROOTS}    			    { newTokenLexed(); return NUMBERROOTSTOKEN; }    					       
 {INTEGRAL}        			    { newTokenLexed(); return INTEGRALTOKEN; }        					       
 {DIRTYINTEGRAL}				    { newTokenLexed(); return DIRTYINTEGRALTOKEN; }				      	       
 {WORSTCASE}       			    { newTokenLexed(); return WORSTCASETOKEN; }       					       

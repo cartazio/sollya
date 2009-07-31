@@ -271,6 +271,7 @@ extern FILE *internyyget_in(void *scanner);
 %token  FINDZEROSTOKEN;         					       
 %token  FPFINDZEROSTOKEN;       					       
 %token  DIRTYINFNORMTOKEN;      					       
+%token  NUMBERROOTSTOKEN;      					       
 %token  INTEGRALTOKEN;          					       
 %token  DIRTYINTEGRALTOKEN;  						       
 %token  WORSTCASETOKEN;         					       
@@ -1421,6 +1422,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | DIRTYINFNORMTOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
                           {
 			    $$ = makeDirtyInfnorm($3, $5);
+			  }      					       
+                      | NUMBERROOTSTOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
+                          {
+			    $$ = makeNumberRoots($3, $5);
 			  }      					       
                       | INTEGRALTOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
                           {
