@@ -629,6 +629,11 @@ int getNrRoots(mpfr_t res, node *f, mpfi_t range) {
   int resMpfi;
   mp_prec_t prec;
   
+  if (!isPolynomial(f)) {
+      printMessage(1,"Warning: the given function must be a polynomial in this context.\n");
+      return 0;
+  }
+
   prec=getToolPrecision();
   
   mpfi_init2(x, mpfi_get_prec(range));
