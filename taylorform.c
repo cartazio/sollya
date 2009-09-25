@@ -49,11 +49,12 @@ knowledge of the CeCILL-C license and that you accept its terms.
 
 #include "taylorform.h"
 #include "external.h"
-#include "remez.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-
+#define ZZZ 1 //enable or disable zumkeller's technique
+#define TM2 0 //enable or disable 2nd order tms
+//int ZZZ;
 /***********************************************************/
 /***********************************************************/
 /***************functions related to autodiff!!!!!!!!!******/
@@ -1245,7 +1246,7 @@ void ctDivision_TM(tModel*d,tModel*s, mpfi_t c,int mode);
 void polynomialBoundHorner(mpfi_t *bound,int n,mpfi_t *coeffs,mpfi_t x0,mpfi_t x);
 void polynomialBoundSharp(mpfi_t *bound,int n,mpfi_t *coeffs,mpfi_t x0Int,mpfi_t x);
 void polynomialBoundSharp(mpfi_t *bound,int n,mpfi_t *coeffs,mpfi_t x0,mpfi_t x);
-  
+void polynomialTranslate(mpfi_t *coeffsT,int n,mpfi_t *coeffs,mpfi_t x0);  
 /*This function creates an empty taylor model
 */
 tModel* createEmptytModel(int n,  mpfi_t x0, mpfi_t x){
@@ -1999,8 +2000,8 @@ void base_TM(tModel *t,int nodeType, int n, mpfi_t x0, mpfi_t x, int mode){
    
   /*Use Zumkeller technique to improve the bound in the absolute case,
   when the (n+1)th derivative has constant sign*/
-  if((mode!=1)&&((mpfi_is_nonpos(nDeriv[n+1])>0)||(mpfi_is_nonneg(nDeriv[n+1])>0))){ 
-    //printf("we reached the zumkeler technique");
+  if((ZZZ==1)&&(mode!=1)&&((mpfi_is_nonpos(nDeriv[n+1])>0)||(mpfi_is_nonneg(nDeriv[n+1])>0))){ 
+    printf("we reached the zumkeler technique");
     computeMonotoneRemaider(&tt->rem_bound,nodeType, n, tt->poly_array, x0,x);
   }
   else{
@@ -2043,6 +2044,7 @@ void base_TM(tModel *t,int nodeType, int n, mpfi_t x0, mpfi_t x, int mode){
   free(nDeriv);  
 }
 
+
 /*composition:
   Assumptions:
 We are given a taylor model for the function f in x0, over x, order n
@@ -2052,6 +2054,9 @@ We obtain a taylor model for g(f(x)) in x0 over x.
 Note: this is just like in the proofs, but it is easier to create the tm for g 
 outside this function, such that a parameter of type NodeType is not needed here
 */
+
+/*This is not true anymore!!!
+for taylor models of order 2, we are given exaclty the same parameters, except that the expansion point for g is not f(x0) but mid (range(f,x))*/
 void composition_TM(tModel *t,tModel *g, tModel *f, int mode){
   int i;
   int n;
@@ -2062,9 +2067,19 @@ void composition_TM(tModel *t,tModel *g, tModel *f, int mode){
   /*create the taylor model for f(x)-f(x0): M1 in the proofs*/
   tinterm=createEmptytModel(n,f->x0,f->x);
   copytModel(tinterm,f);
+  /*if we create 2nd order tms*/
+  //if (TM2==1){
+  /*mpfi_sub(tinterm->poly_array[0],tinterm->poly_array[0],g->x0);*/
+  /* second possibility, put this difference in the remainder*/
+  /*mpfi_sub(tinterm->poly_array[0],tinterm->poly_array[0],g->x0);
+  mpfi_add(tinterm->rem_bound,tinterm->rem_bound,tinterm->poly_array[0]);
+  mpfi_set_ui(tinterm->poly_array[0],0);*/
+  
+  //}
+  //else{
   /*set the ct part of tinterm as 0*/
   mpfi_set_ui(tinterm->poly_array[0],0);
-  
+  //}
   tt=createEmptytModel(n,f->x0,f->x);
   consttModel(tt,g->poly_array[0]);
     
@@ -2173,12 +2188,11 @@ void  varInv_TM(tModel *t,mpfi_t x0, mpfi_t x, int n,int mode){
     
     /*Use Zumkeller technique to improve the bound in the absolute case,
    when the (n+1)th derivative has constant sign*/
-   if((mode!=1)&&((mpfi_is_nonpos(nDeriv[n+1])>0)||(mpfi_is_nonneg(nDeriv[n+1])>0))){ 
+   if((ZZZ==1)&&(mode!=1)&&((mpfi_is_nonpos(nDeriv[n+1])>0)||(mpfi_is_nonneg(nDeriv[n+1])>0))){ 
     //printf("we reached the zumkeler technique");
    computeMonotoneRemaiderVarInv(&tt->rem_bound, n, tt->poly_array, x0,x);
   }
   else{
-    
     mpfi_mul_ui(fact,fact,n);
     mpfi_set(tt->rem_bound,nDeriv[n]);
     mpfi_div(tt->rem_bound,tt->rem_bound,fact);
@@ -2187,6 +2201,7 @@ void  varInv_TM(tModel *t,mpfi_t x0, mpfi_t x, int n,int mode){
     if (mode!=1){
       /*absolute error*/
       mpfi_init2(pow,getToolPrecision());
+      mpfi_init2(temp,getToolPrecision());
       mpfi_set_ui(pow,n);
       mpfi_sub(temp,x,x0);
       mpfi_pow(temp,temp,pow);
@@ -2234,7 +2249,7 @@ void  ctPowerVar_TM(tModel *t,mpfi_t x0, mpfi_t x, int n, mpfr_t p,int mode){
     constantPower_diff(nDeriv,p, x, n+1);
     /*Use Zumkeller technique to improve the bound in the absolute case,
     when the (n+1)th derivative has constant sign*/
-    if((mode!=1)&&((mpfi_is_nonpos(nDeriv[n+1])>0)||(mpfi_is_nonneg(nDeriv[n+1])>0))){ 
+    if((ZZZ==1)&&(mode!=1)&&((mpfi_is_nonpos(nDeriv[n+1])>0)||(mpfi_is_nonneg(nDeriv[n+1])>0))){ 
       //printf("we reached the zumkeler technique");
       computeMonotoneRemaiderCtPowerVar(&tt->rem_bound, n,p, tt->poly_array, x0,x);
     }
@@ -2248,6 +2263,7 @@ void  ctPowerVar_TM(tModel *t,mpfi_t x0, mpfi_t x, int n, mpfr_t p,int mode){
     if (mode!=1){
       /*absolute error*/
       mpfi_init2(pow,getToolPrecision());
+      mpfi_init2(temp,getToolPrecision());
       mpfi_set_ui(pow,n);
       mpfi_sub(temp,x,x0);
       mpfi_pow(temp,temp,pow);
@@ -2278,7 +2294,7 @@ void  varCtPower_TM(tModel *t,mpfi_t x0, mpfi_t x, int n, mpfr_t p,int mode){
     mpfi_t fact,pow,temp;    
       
     tt=createEmptytModel(n,x0,x); 
-     
+    
     powerFunction_diff(tt->poly_array,p, x0, n-1);
     mpfi_init2(fact, getToolPrecision());
     mpfi_set_ui(fact,1);
@@ -2294,7 +2310,7 @@ void  varCtPower_TM(tModel *t,mpfi_t x0, mpfi_t x, int n, mpfr_t p,int mode){
     powerFunction_diff(nDeriv,p, x, n+1);
     /*Use Zumkeller technique to improve the bound in the absolute case,
     when the (n+1)th derivative has constant sign*/
-    if((mode!=1)&&((mpfi_is_nonpos(nDeriv[n+1])>0)||(mpfi_is_nonneg(nDeriv[n+1])>0))){ 
+    if((ZZZ==1)&&(mode!=1)&&((mpfi_is_nonpos(nDeriv[n+1])>0)||(mpfi_is_nonneg(nDeriv[n+1])>0))){ 
       //printf("we reached the zumkeler technique");
       computeMonotoneRemaiderVarCtPower(&tt->rem_bound,n,p, tt->poly_array, x0,x);
     }
@@ -2307,8 +2323,10 @@ void  varCtPower_TM(tModel *t,mpfi_t x0, mpfi_t x, int n, mpfr_t p,int mode){
       /*if we are in the case of the absolute error,
       we also have to multiply by (x-x0)^n*/
       if (mode!=1){
+        
         /*absolute error*/
         mpfi_init2(pow,getToolPrecision());
+        mpfi_init2(temp,getToolPrecision());
         mpfi_set_ui(pow,n);
         mpfi_sub(temp,x,x0);
         mpfi_pow(temp,temp,pow);
@@ -2405,9 +2423,6 @@ void polynomialBoundSharpUncertified(mpfi_t *bound,int n,mpfi_t *coeffs,mpfi_t x
  //derivate the polynomial
  diff_poly = differentiate(poly);
  //find the zeros
-
- /* chain *uncertifiedFindZeros(node *tree, mpfr_t a, mpfr_t b, unsigned long int points, mp_prec_t prec); */
-
  zeros =uncertifiedFindZeros(diff_poly, a, b, points, getToolPrecision());
  nrRoots=lengthChain(zeros);
  rootsIntervals= (mpfi_t *)safeMalloc((nrRoots)*sizeof(mpfi_t));
@@ -2480,12 +2495,30 @@ for a polynomial given by coeffs and order n,
 on int x, using whatever the user wants
 */
 void polynomialBoundSharp(mpfi_t *bound,int n,mpfi_t *coeffs,mpfi_t x0,mpfi_t x){
- polynomialBoundHorner(bound,n,coeffs,x0,x);
- //polynomialBoundSharpUncertified(bound,n,coeffs,x0,x);
+//polynomialBoundHorner(bound,n,coeffs,x0,x);
+polynomialBoundSharpUncertified(bound,n,coeffs,x0,x);
 }
 
+/*This function computes a translation for the polynomial P(x) to the polynomial P(x+x0)
+*/
 
-
+void polynomialTranslate(mpfi_t *coeffsT,int n,mpfi_t *coeffs,mpfi_t x0){
+  mpfi_t temp;
+  int i,k;
+  mpfi_init2(temp, getToolPrecision());
+  for (i=0; i<=n;i++){
+    mpfi_init2(coeffsT[i], getToolPrecision());
+    mpfi_set(coeffsT[i], coeffs[i]);
+  }
+  
+  for (i=1; i<=n; i++)
+    for(k=n-i;k<=n-1;k++){
+      mpfi_mul(temp, x0, coeffsT[k+1]);
+      mpfi_add(coeffsT[k],coeffsT[k],temp);  
+    }
+    mpfi_clear(temp);
+ 
+}
 
 
 
@@ -2592,6 +2625,10 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x, int mode) {
   mpfr_t zero;
   /*used by base functions*/
   mpfi_t fx0,rangef,pow;
+  /*used by tm2 in base functions*/
+  mpfi_t fmidI,c;
+  mpfr_t fmid;
+  tModel *child2Mid_tm;
   
   switch (f->nodeType) {
   
@@ -2859,6 +2896,9 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x, int mode) {
     mpfi_init2(fx0,getToolPrecision());
     mpfi_init2(rangef, getToolPrecision());
     
+    mpfi_init2(fmidI,getToolPrecision());
+    mpfr_init2(fmid, getToolPrecision());
+    
     mpfi_init2(pow, getToolPrecision());
     mpfi_set_ui(pow,n);
     
@@ -2872,8 +2912,46 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x, int mode) {
     else{
       mpfi_add(rangef,child1_tm->rem_bound, child1_tm->poly_bound);
     }
+    //code added for taylor models of order 2
+    //if we use tms2, we expand the basic function in the middle of rangef, and not f(x0), then we translate it to tm in f(x0).
+    if (TM2==1) {
     
+    mpfi_mid(fmid,rangef);
+    printInterval(rangef);
+    mpfi_set_fr(fmidI,fmid);
+    printInterval(fmidI);
+    child2Mid_tm=createEmptytModel(n,fmidI, rangef);
+    base_TM(child2Mid_tm,f->nodeType,n,fmidI, rangef,mode);
+    printf("\n---------------------Start of translation part-----------------\n");
+    printf("We expanded in: ");
+    printInterval(fmidI);
+    printf("And the range was:");
+    printInterval(rangef);
+    printf("We obtained the tm:");
+    printtModel(child2Mid_tm);
+    printf("We translate ");
+    child2_tm=createEmptytModel(n,fx0, rangef);
+    /*we are now in base: y-fmidI --> do the translation back to y-fx0*/
+    mpfi_init2(c, getToolPrecision());
+    mpfi_sub(c,fmidI,fx0);
+    polynomialTranslate(child2_tm->poly_array,n-1,child2Mid_tm->poly_array,c);
+    /*printf("The coefficients were:");
+    for (i=0; i<n;i++){
+    printf("%d: ", i);
+    printInterval(child2_tm->poly_array[i]);
+    printInterval(child2Mid_tm->poly_array[i]);
+    printf("\n");
+    }*/
+    mpfi_set(child2_tm->rem_bound, child2Mid_tm->rem_bound);
+    mpfi_set(child2_tm->poly_bound, child2Mid_tm->poly_bound);
+    printtModel(child2_tm);
+    mpfi_clear(c);
+    cleartModel(child2Mid_tm);
+    printf("End of translation------------------");
+    }
+    else{
     base_TM(child2_tm,f->nodeType,n,fx0, rangef,mode);
+    }
     //printtModel(child2_tm);
     //printtModel(child1_tm);
     composition_TM(tt,child2_tm, child1_tm,mode);
@@ -2886,6 +2964,8 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x, int mode) {
     mpfi_clear(fx0);    
     mpfi_clear(rangef);    
     mpfi_clear(pow);
+    mpfi_clear(fmidI);
+    mpfr_clear(fmid);
         
   break;
   case POW:
@@ -2956,15 +3036,14 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x, int mode) {
         mpfi_clear(fx0);
       } 
        else if (simplifiedChild1->nodeType==CONSTANT) { //we have the p^f case
-        
-        //mpfi_t powx,fx0,rangef;        
+         //mpfi_t powx,fx0,rangef;        
         //create a new empty taylor model the child
         child2_tm=createEmptytModel(n,x0,x);
         //call taylor_model for the child
         taylor_model(child2_tm, f->child2,n,x0,x,mode);
         
         mpfi_init2(fx0,getToolPrecision());
-        evaluateMpfiFunction(fx0,f->child1,x0,getToolPrecision());
+        evaluateMpfiFunction(fx0,f->child2,x0,getToolPrecision());
         
         mpfi_init2(rangef, getToolPrecision());
         mpfi_init2(powx, getToolPrecision());
@@ -2977,7 +3056,7 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x, int mode) {
           mpfi_add(rangef,rangef, child2_tm->poly_bound);
         }
         else{
-          mpfi_add(rangef,child1_tm->rem_bound, child1_tm->poly_bound);
+          mpfi_add(rangef,child2_tm->rem_bound, child2_tm->poly_bound);
         }
         //create tm for p^x over ragef in fx0
         varCtPower_tm=createEmptytModel(n,fx0,rangef);
@@ -3180,74 +3259,81 @@ void printMpfiChain(chain *c) {
 
 void taylorform(node **T, chain **errors, mpfi_t **delta,
 		node *f, int n,	mpfi_t *x0, mpfi_t *d, int mode) {
-  tModel *t;
-  mpfi_t x0Int;
-  mpfr_t *coeffsMpfr;
-  mpfi_t *coeffsErrors;
-  int i;
-  node *z;
-  chain *err;
-  mpfi_t *rest;
-  mpfi_t temp;
-  mpfi_t pow;
-  mpfi_t myD;
 
-  /* Adjust n to the notion of degree in the taylor command */
-  n++;
-
-  /* Check if degree is at least 1, once it has been adjusted */
-  if (n < 1) {
-    printMessage(1,"Warning: the degree of a Taylor Model must be at least 0.\n");
-    *T = NULL;
-    return;
-  } 
-
+  //ZZZ=1;
+  printf("taylorform: f  = ");
+  printTree(f);
+  printf("\n");
+  printf("taylorform: n  = %d\n",n);
+  printf("taylorform: x0 = ");
+  printInterval(x0);
   if (d != NULL) {
-    mpfi_init2(myD,mpfi_get_prec(*d));
-    mpfi_set(myD,*d);
+    printf("taylorform: d  = ");
+    printInterval(d);
+    printf("\n");
   } else {
-    mpfi_init2(myD,mpfi_get_prec(*x0));
-    mpfi_set(myD,*x0);
+    printf("taylorform: no domain d given\n");
   }
-
-  mpfi_init2(x0Int,getToolPrecision());
-  mpfi_set(x0Int,*x0);
-  t=createEmptytModel(n,x0Int,myD);
-  //printf("we have created an emptytm");  
-
-  if (mode==RELATIVE){ 
-    taylor_model(t,f,n,x0Int,myD,1);
+  if (mode == ABSOLUTE) {
+    printf("taylorform: absolute mode\n");
+  } else {
+    if (mode == RELATIVE) {
+      printf("taylorform: relative mode\n");
+    } else {
+      printf("taylorform: mode %d\n",mode);
+    }
   }
-  else{
-    taylor_model(t,f,n,x0Int,myD,0);
-  }
+tModel *t;
+mpfi_t x0Int;
+mpfr_t *coeffsMpfr;
+mpfi_t *coeffsErrors;
+int i;
+node *z;
+chain *err;
+mpfi_t *rest;
+mpfi_t temp;
+mpfi_t pow;
+
+mpfi_init2(x0Int,getToolPrecision());
+mpfi_set(x0Int,*x0);
+t=createEmptytModel(n,x0Int,*d);
+//printf("we have created an emptytm");  
+
+if (mode==RELATIVE){ 
+  //ZZZ=1;
+  taylor_model(t,f,n,x0Int,*d,1);
+}
+else{
+  //ZZZ=0;
+  taylor_model(t,f,n,x0Int,*d,0);
+}
 
 
-  //printtModel(t);
+//printtModel(t);
 
-  coeffsMpfr= (mpfr_t *)safeMalloc((n)*sizeof(mpfr_t));
-  coeffsErrors= (mpfi_t *)safeMalloc((n)*sizeof(mpfi_t));
+coeffsMpfr= (mpfr_t *)safeMalloc((n)*sizeof(mpfr_t));
+coeffsErrors= (mpfi_t *)safeMalloc((n)*sizeof(mpfi_t));
 
-  rest= (mpfi_t*)safeMalloc(sizeof(mpfi_t));
-  mpfi_init2(*rest,getToolPrecision());
+rest= (mpfi_t*)safeMalloc(sizeof(mpfi_t));
+mpfi_init2(*rest,getToolPrecision());
 
-  for(i=0;i<n;i++){
-    mpfi_init2(coeffsErrors[i],getToolPrecision());
-    mpfr_init2(coeffsMpfr[i],getToolPrecision());
-  }
-  //mpfr_get_poly(mpfr_t *rc, mpfi_t *errors, mpfi_t rest, int n, mpfi_t *gc, mpfi_t x0, mpfi_t x)
-  mpfr_get_poly(coeffsMpfr, coeffsErrors, *rest, t->n -1,t->poly_array, t->x0,t->x);
+ for(i=0;i<n;i++){
+   mpfi_init2(coeffsErrors[i],getToolPrecision());
+   mpfr_init2(coeffsMpfr[i],getToolPrecision());
+ }
+ //mpfr_get_poly(mpfr_t *rc, mpfi_t *errors, mpfi_t rest, int n, mpfi_t *gc, mpfi_t x0, mpfi_t x)
+ mpfr_get_poly(coeffsMpfr, coeffsErrors, *rest, t->n -1,t->poly_array, t->x0,t->x);
  
-  //create T; 
-  *T=constructPoly(coeffsMpfr, t->n-1, t->x0);
+ //create T; 
+ *T=constructPoly(coeffsMpfr, t->n-1, t->x0);
 
-  //create errors;
-  err=constructChain(coeffsErrors,t->n-1);
+//create errors;
+err=constructChain(coeffsErrors,t->n-1);
 
-  //printMpfiChain(err);
-  *errors = err;
-  /*
-    if (mode == ABSOLUTE) {
+//printMpfiChain(err);
+ *errors = err;
+/*
+if (mode == ABSOLUTE) {
     mpfi_init2(pow, getToolPrecision());
     mpfi_set_si(pow, t->n);
     mpfi_init2(temp,getToolPrecision());
@@ -3261,22 +3347,15 @@ void taylorform(node **T, chain **errors, mpfi_t **delta,
     mpfi_set(*rest,t->rem_bound);
     
     }
-  */
-
-  if (d != NULL) {
-    mpfi_set(*rest,t->rem_bound);  
-    *delta=rest;
-  } else {
-    mpfi_clear(*rest);
-    free(rest);
-  }
+*/
+mpfi_set(*rest,t->rem_bound);  
+*delta=rest;
     
-  for(i=0;i<n;i++){
-    mpfr_clear(coeffsMpfr[i]);
-  }
-  free(coeffsMpfr);
-  mpfi_clear(x0Int);
-  cleartModel(t);
+for(i=0;i<n;i++){
+  mpfr_clear(coeffsMpfr[i]);
+}
+free(coeffsMpfr);
+mpfi_clear(x0Int);
+cleartModel(t);
 
-  mpfi_clear(myD);
 }
