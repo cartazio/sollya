@@ -63,6 +63,8 @@ knowledge of the CeCILL-C license and that you accept its terms.
 /*********************Functions related to interpolation***********************/
 /*******************************************************************************/
 /*******************************************************************************/
+#define verbosity 10
+
 #include "sollya.h"
 #define coeff(i,j,n) ((i)-1)*(n)+(j)-1
 extern int mpfi_pow(mpfi_t res, mpfi_t x, mpfi_t y);
@@ -489,7 +491,12 @@ return hill;
 
 
 
- 
+/*this function performs the interpolation of a function f, over interval x,
+and returns a polynomial P of degree n whose coeffs are stored in coeffArray and a bound for:
+W= \prod_{i=0}^{i=n} (x-x_i), where x_i are interval enclosures of the roots of the error: f(x)-P(x).
+
+W \in wbound. 
+*/ 
    
 node* interpolation (mpfr_t *coeffArray, mpfi_t *wbound, node *f, mpfi_t x, int n) {
   node *res, *dif, *w;
@@ -505,7 +512,7 @@ node* interpolation (mpfr_t *coeffArray, mpfi_t *wbound, node *f, mpfi_t x, int 
   int points=getToolPoints();
   int notEnoughRoots,iteration,oldPoints;
 /*************************************************************/
-  int verbosity=10;
+  
   // Initialisations and precomputations
   
   mpfr_init2(u, getToolPrecision());
@@ -533,7 +540,7 @@ node* interpolation (mpfr_t *coeffArray, mpfi_t *wbound, node *f, mpfi_t x, int 
     mpfr_init2(chebArrayExtrema[j-1], getToolPrecision());
   }
   
-  /*Chebyshev points where the extremas are likely to be found*/ 
+  /*Chebyshev points where the extremas of W are likely to be found*/ 
 
   mpfr_const_pi(var1, GMP_RNDN);
   mpfr_div_si(var1, var1, (long)(freeDegrees+1), GMP_RNDN); // var1 = Pi/freeDegrees
@@ -554,7 +561,7 @@ node* interpolation (mpfr_t *coeffArray, mpfi_t *wbound, node *f, mpfi_t x, int 
   
   
   /*************************************************************/
-  /*                  Alternative Cheb points                  */
+  /*                  Chebyshev points used for interpolation             */
   mpfr_const_pi(var1, GMP_RNDN);
   mpfr_div_si(var1, var1, 2*((long)freeDegrees+1), GMP_RNDN); // var1 = Pi/(2*freeDegrees+2)
   mpfr_sub(var2, u, v, GMP_RNDN);
@@ -571,14 +578,14 @@ node* interpolation (mpfr_t *coeffArray, mpfi_t *wbound, node *f, mpfi_t x, int 
   
 
   if(verbosity>=8) {
-    printf("Computed points set:\n");
+    printf("Computed points set for interpolation:\n");
     for(i=1;i<=freeDegrees+1;i++) printMpfr(chebArray[i-1]);
   }
   
   perturbPoints(chebArray, freeDegrees+1);
 
   if(verbosity>=8) {
-    printf("Computed points set:\n");
+    printf("Computed points set for extemas of W:\n");
     for(i=1;i<=freeDegrees+1;i++) printMpfr(chebArray[i-1]);
   }
 /*************************************************************/
@@ -634,12 +641,14 @@ node* interpolation (mpfr_t *coeffArray, mpfi_t *wbound, node *f, mpfi_t x, int 
   for(i=1;i<=freeDegrees+1;i++) mpfr_set(coeffArray[i-1],lambdai_vect[i-1],GMP_RNDN);
   
   
-  
+  /*create a node for the difference between the polynomial and the function*/
   
   dif = (node*)safeMalloc(sizeof(node));
   dif->nodeType = SUB;
   dif->child1=f;
   dif->child2=res;
+  
+  /*find the numerical zeros of f-p*/
   notEnoughRoots=1;
   iteration=0;
   oldPoints=points;
@@ -656,59 +665,74 @@ node* interpolation (mpfr_t *coeffArray, mpfi_t *wbound, node *f, mpfi_t x, int 
     }
   
     rootsIntervals= (mpfi_t *)safeMalloc((nrRoots)*sizeof(mpfi_t));
-   printf("We have found %d and we had %d cheby points:",nrRoots,freeDegrees+1); 
-  
+    if(verbosity>=8) {
+      printf("We have found %d and we had %d cheby points:",nrRoots,freeDegrees+1); 
+    }
     if (nrRoots>(freeDegrees+1)) {
-      
-      printf("\n-------we have more cheby points than needed----------\n");
+      if(verbosity>=8) {
+      printf("\n-------we have more numerical roots for f-p than needed----------\n");
+      }
       notEnoughRoots=0;
       findNewSetRoots(newRoots, roots, nrRoots, chebArray, freeDegrees+1);
       w=constructPolyFromRoots(newRoots,freeDegrees+1);
     
-    for(i=0;i<freeDegrees+1;i++){
-    mpfi_init2(rootsIntervals[i],getToolPrecision());
-   // printf("we are going for the interval root\n");
-    if (0==(getIntervalAroundRoot(&rootsIntervals[i],dif, newRoots[i], getToolPrecision()))){printf("Huge Warning one root can not be made as an interval!!!!!!!!!!");}
-    //printInterval(rootsIntervals[i]);
-    }
+      for(i=0;i<freeDegrees+1;i++){
+        mpfi_init2(rootsIntervals[i],getToolPrecision());
+        // printf("we are going for the interval root\n");
+        if (0==(getIntervalAroundRoot(&rootsIntervals[i],dif, newRoots[i], getToolPrecision()))){
+          printf("Huge Warning one root can not be made as an interval!!!!!!!!!!");
+          printMpfr(newRoots[i]);
+        }
+         
+       }
    
-  } 
-  else if (nrRoots==(freeDegrees+1)){
-  printf("\n-------we have the good nr of cheby points----------\n");
-  notEnoughRoots=0;
-  w=constructPolyFromRoots(roots,freeDegrees+1);
-  for(i=0;i<freeDegrees+1;i++){
-    mpfi_init2(rootsIntervals[i],getToolPrecision());
-    if (0==(getIntervalAroundRoot(&rootsIntervals[i],dif, roots[i], getToolPrecision()))){printf("Huge Warning one root can not be made as an interval!!!!!!!!!!");}
-    //printInterval(rootsIntervals[i]);
-    }
+    } 
+    else if (nrRoots==(freeDegrees+1)){
+      if(verbosity>=8) {
+        printf("\n-------we have the good nr of numerical roots for f-p----------\n");
+      }
+      notEnoughRoots=0;
+      w=constructPolyFromRoots(roots,freeDegrees+1);
+      for(i=0;i<freeDegrees+1;i++){
+        mpfi_init2(rootsIntervals[i],getToolPrecision());
+        if (0==(getIntervalAroundRoot(&rootsIntervals[i],dif, roots[i], getToolPrecision()))){
+          printf("Huge Warning one root can not be made as an interval!!!!!!!!!!");
+          printMpfr(roots[i]);
+          }
+          
+      }
   
-  }
-  else{
-  printf("\n-------we don't have enough cheby points----------\n");
-  points=2*points;
-  iteration++;
-  }
+    }
+    else{
+      if(verbosity>=8) {
+         printf("\n-------we don't have enough cheby points----------\n");
+      }
+      points=2*points;
+      iteration++;
+    }
   
   }
   points=oldPoints;
-  printf("Roots:\n");
-  for(i=0;i<freeDegrees+1;i++){
-    printInterval(rootsIntervals[i]);
-    
-  }
+  if(verbosity>=8) {
+    printf("Interval roots of f-p (or of W):\n");
+    for(i=0;i<freeDegrees+1;i++){
+      printInterval(rootsIntervals[i]);
+    }
   
-  printf("Extremas:\n");
-  for(i=0;i<freeDegrees;i++){
-    printMpfr(chebArrayExtrema[i]);
-    
-  }
-  printf("W is");
-  printTree(w);
+    printf("Numerical guesses for extremas of W :\n");
+    for(i=0;i<freeDegrees;i++){
+      printMpfr(chebArrayExtrema[i]);
+    }
+    printf("W is");
+    printTree(w);
+  }  
   mpfr_init2(boundPos, getToolPrecision());
   mpfr_init2(boundNeg, getToolPrecision());
   uncertifiedInfnorm(boundPos, w, u,v, getToolPoints(), getToolPrecision());
-  printMpfr(boundPos);
+  if(verbosity>=4) {
+    printf("the uncertified norm for W is:");
+    printMpfr(boundPos);
+  }
   mpfr_neg(boundNeg, boundPos, GMP_RNDN);
   mpfi_interv_fr(*wbound, boundNeg, boundPos);
   printInterval(*wbound);
@@ -744,7 +768,9 @@ node* interpolation (mpfr_t *coeffArray, mpfi_t *wbound, node *f, mpfi_t x, int 
   free(chebArray);
   
   mpfr_clears(u, v, var1, var2, var3, zero_mpfr,(mpfr_ptr) 0);
-  printf("\n out of interpolation\n");
+  if(verbosity>=8) {
+    printf("\n out of interpolation\n");
+  }
   return res; 
 
 //:)
@@ -888,7 +914,8 @@ void printMatrix(mpfr_t *M, int n) {
   return;
 }
 /*********************************************************************/
-
+/*constructs a polynomial of coefficients given by coeffs of degree n*/
+/*********************************************************************/
 node *constructPoly(mpfr_t *coeff, int n) {
   int i=1;
   //chain *curr;
@@ -953,7 +980,8 @@ node *constructPoly(mpfr_t *coeff, int n) {
 
 
 /*********************************************************************/
-
+/*constructs a polynomial with roots given by *roots of degree n*/
+/*********************************************************************/
 node *constructPolyFromRoots(mpfr_t *roots, int n) {
   int i=1;
   //chain *curr;
@@ -2689,7 +2717,8 @@ rem_bound - bound for the remainder
 poly_array - array of coeffs for the polynomial (mpfi's)
 poly_bound - bound for the polynomial (helpful for computations)
 x- interval on which the tm is computed
-x0 - interval around the translation point
+x0 - interval around the translation point - if!! we need to use
+translations of the monomial basis
 */
 typedef struct cmdl {
 int n; 
@@ -2751,7 +2780,7 @@ void consttModel(tModel*t, mpfi_t ct){
 
 /*This function dealocates a cheby model
 */
-void cleartModel(tModel *t){
+void clearcModel(tModel *t){
   int i;
   for(i=0;i<t->n;i++) mpfi_clear(t->poly_array[i]);
   free(t->poly_array);
@@ -2950,7 +2979,7 @@ void  multiplication_CM(tModel *t,tModel *c1, tModel *c2){
   mpfi_init2(temp2, getToolPrecision());
   
   
-  /*absolute error*/
+  /*absolute error only*/
   /*We are multiplying cheby models, considering the absolute error
     We are given:  (C1,delta1)
                    (C2,delta2)
@@ -2979,47 +3008,39 @@ void  multiplication_CM(tModel *t,tModel *c1, tModel *c2){
    for(i=0; i<n;i++)
      for (j=0;j<n;j++){
        mpfi_mul(temp1,c1->poly_array[i], c2->poly_array[j]);
-       //if ((i+j)<n )
-       //  mpfi_add(tt->poly_array[i+j],tt->poly_array[i+j],temp1);
-       //else
-        mpfi_add(r[i+j],r[i+j],temp1);
+       mpfi_add(r[i+j],r[i+j],temp1);
      }
-     /*in r we have the product of the two polynomials*/
-    /*interpolate r*/
+   /*in r we have the product of the two polynomials*/
+   /*interpolate r*/
     ttt=createEmptycModel(n,t->x0, t->x);
     polynomial_CM(ttt,r,2*n-1, n,t->x0,t->x);
-    printf("\nAfter multiplication - interpolation we have:\n");
-    printcModel(ttt);
-    //polynomialBoundSharp(&temp1, 2*n-2,r,t->x0,t->x);
+    if (verbosity>=5){
+      printf("\nAfter multiplication - interpolation we have:\n");
+      printcModel(ttt);
+    }
     for(i=0; i<n;i++){
-    mpfi_set(tt->poly_array[i],ttt->poly_array[i]);
+      mpfi_set(tt->poly_array[i],ttt->poly_array[i]);
     }
     mpfi_set(tt->poly_bound, ttt->poly_bound);
     
     /*we add temp1 in the bound for the remainder*/
     mpfi_add(tt->rem_bound,tt->rem_bound,ttt->rem_bound);
    
-    /*we compute the new polynomial bound for the new model*/
-    //polynomialBoundSharp(&temp1, n-1,tt->poly_array,t->x0,t->x);   
-    //mpfi_set(tt->poly_bound,temp1);
-    /*for(i=0;i<2*n-1;i++)
+    for(i=0;i<2*n-1;i++)
       mpfi_clear(r[i]);
     free(r); 
-  */
-    
-  mpfi_clear(temp1);
-  mpfi_clear(temp2);
   
- 
-  
-  /*set the result*/
-  copycModel(t,tt);
-  /*clear the aux tm*/
-  cleartModel(tt);
-  //cleartModel(ttt);
-    
-    printf("out of multiplication");
-    
+    mpfi_clear(temp1);
+    mpfi_clear(temp2);
+   
+    /*set the result*/
+    copycModel(t,tt);
+    /*clear the aux tm*/
+    clearcModel(tt);
+    clearcModel(ttt);
+    if (verbosity>=8){
+      printf("out of multiplication");
+    }
     
  }
 
@@ -3031,11 +3052,9 @@ void  multiplication_CM(tModel *t,tModel *c1, tModel *c2){
 //-----------------------------------------------------------
 //-----------------------------------------------------------
 
-/*This function computes the tm for addition of two 
-given tm's 
-The addition of two taylor models is the same, regardless the mode, 
-absolute or relative - I put the parameter just to have some coherence
-with the other functions
+/*This function computes the cm for addition of two 
+given cm's 
+The addition of two cheby/taylor models is the same
 */
 void addition_CM(tModel *t,tModel *child1_tm, tModel *child2_tm){
   int i;
@@ -3050,14 +3069,17 @@ void addition_CM(tModel *t,tModel *child1_tm, tModel *child2_tm){
   mpfi_add(tt->rem_bound,child1_tm->rem_bound,child2_tm->rem_bound);
   polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,t->x0,t->x);   
   copycModel(t,tt);
-  cleartModel(tt);
+  clearcModel(tt);
 }
 
+
+/*This function computes the cm of degree n for a polynomial with given degree d
+over interval x, given by mpfi_t *coeffs and possibly a translation to basis x-x0 if x0 != 0
+*/
 void polynomial_CM(tModel *t,mpfi_t *r, int d, int n, mpfi_t x0, mpfi_t x){
   int i, trueDegree;
   tModel *tt;
-  mpfi_t *nDeriv;//, *nDeriv2;
-  //mpfi_t fact, temp,pow;
+  mpfi_t *nDeriv;
   node *f, *p;
   mpfr_t *coeffArray;
   mpfr_t *coeffPoly;
@@ -3066,88 +3088,87 @@ void polynomial_CM(tModel *t,mpfi_t *r, int d, int n, mpfi_t x0, mpfi_t x){
   mpfi_t temp;
   
   tt=createEmptycModel(n,x0,x);
-  printcModel(tt);
-  /*Use INTERPOLATION to compute the coeffs*/
+  
+  /*Search first what is the "true" degree of the polynomial
+    Eliminate leading coeffcients that are 0*/
  
   trueDegree=d; 
   while (mpfi_is_zero(r[trueDegree-1])>0)  {
-  trueDegree--;
-  if (trueDegree==0) break;}
-  printf("The true degree of the polynomial is: %d", trueDegree-1);
-  
+    trueDegree--;
+    if (trueDegree==0) break; //this is unlikely to happen
+  }
+  if (verbosity>=8){
+    printf("The true degree of the polynomial is: %d", trueDegree-1);
+  }
  
   if(trueDegree<=n){
-  printf("\n\nsmaller\n\n");
+    if (verbosity>=8){
+      printf("\n\nthe poly degree is smaller then cm order, nothing left to be done\n\n");
+    }
     for (i=0;i<trueDegree;i++){
     mpfi_set(tt->poly_array[i], r[i]);
     }
     for (i=trueDegree;i<n;i++){
     mpfi_set_ui(tt->poly_array[i], 0);
     }
-    
     mpfi_set_ui(tt->rem_bound,0);
-    
     /*bound the polynomial obtained*/
-    
-     polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
+    polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
   }
   else{
-  printf("trueDegree=  %d, n= %d ", trueDegree,n);
+    if (verbosity>=8){
+      printf("trueDegree=  %d, n= %d ", trueDegree,n);
+    }
+    coeffPoly=safeMalloc((trueDegree)*sizeof(mpfr_t));
+    for (i=0;i<trueDegree;i++){
+      mpfr_init2(coeffPoly[i], getToolPrecision());
+    }
   
-  coeffPoly=safeMalloc((trueDegree)*sizeof(mpfr_t));
-  for (i=0;i<trueDegree;i++){
-  mpfr_init2(coeffPoly[i], getToolPrecision());
-  
-  }
-  mpfi_init2(rest, getToolPrecision());
-  /*create a polynomial*/
-  printf("before mpfr_get_poly");
-  mpfr_get_poly2(coeffPoly, &rest, trueDegree-1, r, x0,x);
-  printf("after mpfr_get_poly");  
-  f=constructPoly(coeffPoly, trueDegree-1);
-  
-  printf("\n in cheby models for polynomial: ");
-  printTree(f);
-  printf("\n");
-  
-  coeffArray=safeMalloc((n)*sizeof(mpfr_t));
-  for (i=0;i<n;i++){
-  mpfr_init2(coeffArray[i], getToolPrecision());
-  }
-  printInterval(x);
-  mpfi_init2(temp, getToolPrecision());
-  p=interpolation(coeffArray,&temp, f,x,n-1);
-  if (p==NULL) {printf("Interpolation did not work!!!");return;}
-  /*Use AD for the base functions to bound derivatives up to nth derivative*/
-  nDeriv= (mpfi_t *)safeMalloc((n+1)*sizeof(mpfi_t));
+    mpfi_init2(rest, getToolPrecision());
+    /*create the polynomial*/
+    mpfr_get_poly2(coeffPoly, &rest, trueDegree-1, r, x0,x);
+    f=constructPoly(coeffPoly, trueDegree-1);
+    
+    if (verbosity>=8){
+      printf("\n We interpolate the following polynomial: ");
+      printTree(f);
+      printf("\n");
+    }
+    coeffArray=safeMalloc((n)*sizeof(mpfr_t));
+    for (i=0;i<n;i++){
+      mpfr_init2(coeffArray[i], getToolPrecision());
+    }
+    mpfi_init2(temp, getToolPrecision());
+    /*Use INTERPOLATION to compute the coeffs of the new polynomial*/    
+    p=interpolation(coeffArray,&temp, f,x,n-1);
+    if (p==NULL) {
+      printf("Interpolation did not work!!!");return;//this is unlikely to happen
+    }
+    /*Use AD for the base functions to bound derivatives up to nth derivative*/
+    nDeriv= (mpfi_t *)safeMalloc((n+1)*sizeof(mpfi_t));
     for(i=0;i<=n;i++){
       mpfi_init2(nDeriv[i], getToolPrecision());
     }
+    auto_diff(nDeriv,f,x,n);
+    mpfi_set(tt->rem_bound, nDeriv[n]);
+    mpfr_init2(fac, getToolPrecision());
+    mpfr_fac_ui(fac,n,GMP_RNDN);
+    mpfi_div_fr(tt->rem_bound, tt->rem_bound, fac);
+    mpfi_mul(tt->rem_bound,tt->rem_bound,temp);
+   
   
-  auto_diff(nDeriv,f,x,n);
-  printf("zzzzzzzzzzzzzzzzzzz");
-  mpfi_set(tt->rem_bound, nDeriv[n]);
-  mpfr_init2(fac, getToolPrecision());
-  mpfr_fac_ui(fac,n,GMP_RNDN);
-  mpfi_div_fr(tt->rem_bound, tt->rem_bound, fac);
-  mpfi_mul(tt->rem_bound,tt->rem_bound,temp);
-  mpfr_clear(fac);
+    for (i=0;i<n;i++){
+      mpfi_set_fr(tt->poly_array[i], coeffArray[i]);
+    }
+ 
   
-  for (i=0;i<n;i++){
-  mpfi_set_fr(tt->poly_array[i], coeffArray[i]);
-  printInterval(tt->poly_array[i]);
-  }
-  printf("zzzzzzzzzzzzzzzzzzz");
-  
-  //polynomialTranslateCM(tt->poly_array,n-1,tt->poly_array,tt->x0);
+  polynomialTranslateCM(tt->poly_array,n-1,tt->poly_array,tt->x0);
   
   /*bound the polynomial obtained*/
     
   polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
   
-  printf("zzzzzzzzzzzzzzzzzzz");
-  printInterval(tt->poly_bound);
-  /*
+  
   for(i=0;i<=n;i++){
     mpfi_clear(nDeriv[i]);
   }
@@ -3157,24 +3178,26 @@ void polynomial_CM(tModel *t,mpfi_t *r, int d, int n, mpfi_t x0, mpfi_t x){
     mpfr_clear(coeffArray[i]);
   }
   free(coeffArray);  
-  for(i=0;i<d;i++){
+  for(i=0;i<trueDegree;i++){
     mpfr_clear(coeffPoly[i]);
   }
-  free(coeffPoly);  */
+  free(coeffPoly); 
+  mpfi_clear(rest);
+  mpfr_clear(fac);
+  mpfi_clear(temp);
 }
-
 copycModel(t,tt);
-  cleartModel(tt);
-  
-printf("\n\nout\n\n");
+clearcModel(tt);
+//printf("\n\nout\n\n");
 }
 
-
+/*This function computes the cm of degree n for a polynomial given as a node*,
+over interval x, and possibly a translation to basis x-x0 if x0 != 0
+*/
 void polynomialNode_CM(tModel *t,node*f, int n, mpfi_t x0, mpfi_t x){
   int i;
   tModel *tt;
-  mpfi_t *nDeriv;//, *nDeriv2;
-  //mpfi_t fact, temp,pow;
+  mpfi_t *nDeriv;
   node  *p;
   mpfr_t *coeffArray;
   
@@ -3183,13 +3206,11 @@ void polynomialNode_CM(tModel *t,node*f, int n, mpfi_t x0, mpfi_t x){
   tt=createEmptycModel(n,x0,x);
   
   /*Use INTERPOLATION to compute the coeffs*/
- 
-  
-  
-  
-  printf("\n in cheby models for polynomial: ");
-  printTree(f);
-  printf("\n");
+  if (verbosity>=8){
+      printf("\n We interpolate the following polynomial: ");
+      printTree(f);
+      printf("\n");
+    }
   
   coeffArray=safeMalloc((n)*sizeof(mpfr_t));
   for (i=0;i<n;i++){
@@ -3204,6 +3225,7 @@ void polynomialNode_CM(tModel *t,node*f, int n, mpfi_t x0, mpfi_t x){
     }
   
   auto_diff(nDeriv,f,x,n);
+  
   mpfi_mul(tt->rem_bound,tt->rem_bound, nDeriv[n]);
   mpfr_init2(fac, getToolPrecision());
   mpfr_fac_ui(fac,n,GMP_RNDN);
@@ -3220,7 +3242,7 @@ void polynomialNode_CM(tModel *t,node*f, int n, mpfi_t x0, mpfi_t x){
   polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
   
   copycModel(t,tt);
-  cleartModel(tt);
+  clearcModel(tt);
   
   for(i=0;i<=n;i++){
     mpfi_clear(nDeriv[i]);
@@ -3241,8 +3263,7 @@ for a base function*/
 void base_CM(tModel *t,int nodeType, int n, mpfi_t x0, mpfi_t x){
   int i;
   tModel *tt;
-  mpfi_t *nDeriv;//, *nDeriv2;
-  //mpfi_t fact, temp,pow;
+  mpfi_t *nDeriv;
   node *f, *v, *p;
   mpfr_t *coeffArray;
   mpfr_t fac;
@@ -3257,9 +3278,11 @@ void base_CM(tModel *t,int nodeType, int n, mpfi_t x0, mpfi_t x){
   v = (node*)safeMalloc(sizeof(node));
   v->nodeType = VARIABLE;
   f->child1=v;
-  printf("\n in cheby models for base functions: ");
-  printTree(f);
-  printf("\n");
+  if (verbosity>=8){
+      printf("\n We interpolate the following base function: ");
+      printTree(f);
+      printf("\n");
+  }
   
   coeffArray=safeMalloc((n)*sizeof(mpfr_t));
   for (i=0;i<n;i++){
@@ -3290,50 +3313,36 @@ void base_CM(tModel *t,int nodeType, int n, mpfi_t x0, mpfi_t x){
   polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
   
   copycModel(t,tt);
-  cleartModel(tt);
+  clearcModel(tt);
   
   for(i=0;i<=n;i++){
     mpfi_clear(nDeriv[i]);
   }
   free(nDeriv);  
+  for (i=0;i<n;i++){
+  mpfr_clear(coeffArray[i]);
+  }
+  free(coeffArray);
 }
 
 
 /*composition:
-  Assumptions:
-We are given a taylor model for the function f in x0, over x, order n
-and a taylor model for basic function g in f(x0) over y \superset range(f,x), order n
-We obtain a taylor model for g(f(x)) in x0 over x.
-
-Note: this is just like in the proofs, but it is easier to create the tm for g 
-outside this function, such that a parameter of type NodeType is not needed here
-*/
-
-/*This is not true anymore!!!
-for taylor models of order 2, we are given exaclty the same parameters, except that the expansion point for g is not f(x0) but mid (range(f,x))*/
+ We are given 2 cms, we use additions and multiplications on the same principle like on tms 
+ to obtain the composed cmodel
+ */
 void composition_CM(tModel *t,tModel *g, tModel *f){
   int i;
   int n;
   tModel *tt, *partial_tmul,*tinterm,*tmul ;
   
   n=f->n;
-  printf("in Composition CM");
-  /*create the taylor model for f(x)-f(x0): M1 in the proofs*/
+  if(verbosity>=5){
+    printf("in Composition CM");
+  }
+  /*create an itermediary cheb model for f(x) that will be used in multiplications: */
   tinterm=createEmptycModel(n,f->x0,f->x);
   copycModel(tinterm,f);
-  /*if we create 2nd order tms*/
-  //if (CM2==1){
-  /*mpfi_sub(tinterm->poly_array[0],tinterm->poly_array[0],g->x0);*/
-  /* second possibility, put this difference in the remainder*/
-  /*mpfi_sub(tinterm->poly_array[0],tinterm->poly_array[0],g->x0);
-  mpfi_add(tinterm->rem_bound,tinterm->rem_bound,tinterm->poly_array[0]);
-  mpfi_set_ui(tinterm->poly_array[0],0);*/
   
-  //}
-  //else{
-  /*set the ct part of tinterm as 0*/
-  //mpfi_set_ui(tinterm->poly_array[0],0);
-  //}
   tt=createEmptycModel(n,f->x0,f->x);
   consttModel(tt,g->poly_array[0]);
     
@@ -3356,20 +3365,17 @@ void composition_CM(tModel *t,tModel *g, tModel *f){
   //printcModel(partial_tmul);
   //printcModel(tt);
    
-  //mpfi_mul(partial_tmul->rem_bound,partial_tmul->rem_bound,g->rem_bound);
   mpfi_add(tt->rem_bound,tt->rem_bound,g->rem_bound);
   polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
   copycModel(t,tt);
-  //printcModel(tt);
-  cleartModel(tt);
-  cleartModel(partial_tmul);
-  cleartModel(tmul);
-  cleartModel(tinterm);
+  clearcModel(tt);
+  clearcModel(partial_tmul);
+  clearcModel(tmul);
+  clearcModel(tinterm);
 }
 
 
-/*This function computes the tm for division
-with a ct term of a given tm
+/*This function computes the cm for division with a ct term 
 */
 void ctDivision_CM(tModel*d,tModel*s, mpfi_t c){
   int i;
@@ -3382,12 +3388,11 @@ void ctDivision_CM(tModel*d,tModel*s, mpfi_t c){
   mpfi_div(tt->rem_bound,tt->rem_bound,c);
   mpfi_div(tt->poly_bound,tt->poly_bound,c);
   copycModel(d,tt);
-  cleartModel(tt);
+  clearcModel(tt);
 }
 
 
-/*This function computes the tm for multiplication
-with a ct term of a given tm
+/*This function computes the cm for multiplication with a ct term 
 */
 void ctMultiplication_CM(tModel*d,tModel*s, mpfi_t c){
   int i;
@@ -3400,7 +3405,7 @@ void ctMultiplication_CM(tModel*d,tModel*s, mpfi_t c){
   mpfi_mul(tt->rem_bound,tt->rem_bound,c);
   mpfi_mul(tt->poly_bound,tt->poly_bound,c);
   copycModel(d,tt);
-  cleartModel(tt);
+  clearcModel(tt);
 }
 
 
@@ -3630,7 +3635,7 @@ void  varInv_CM(tModel *t,mpfi_t x0, mpfi_t x, int n){
   polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
   
   copycModel(t,tt);
-  cleartModel(tt);
+  clearcModel(tt);
   mpfr_clear(minusOne);    
   for(i=0;i<=n;i++){
       mpfi_clear(nDeriv[i]);
@@ -3705,7 +3710,7 @@ void  ctPowerVar_CM(tModel *t,mpfi_t x0, mpfi_t x, int n, mpfr_t p){
   polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
   
   copycModel(t,tt);
-  cleartModel(tt);
+  clearcModel(tt);
     
   for(i=0;i<=n;i++){
       mpfi_clear(nDeriv[i]);
@@ -3782,7 +3787,7 @@ void  varCtPower_CM(tModel *t,mpfi_t x0, mpfi_t x, int n, mpfr_t p){
   polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
   
   copycModel(t,tt);
-  cleartModel(tt);
+  clearcModel(tt);
     
   for(i=0;i<=n;i++){
       mpfi_clear(nDeriv[i]);
@@ -3825,46 +3830,43 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
   mpfr_init2(coeffArray[i], getToolPrecision());
   }
   if (isPolynomial(f) ){
-    //printf("We found a polynomial!!!\n");
+    if(verbosity>=12){
+      printf("We found a polynomial!!!\n");
+    }
     tt=createEmptycModel(n,x0,x); 
     getCoefficients(&d, &coefficients, f);
-    //for(i=0;i<=d;i++) if (coefficients[i]!=NULL) printTree(coefficients[i]);
     if (d<n){
-      //printf("The degree of polynomial smaller : %d than the requested degree\n",d);
+      if(verbosity>=12){
+        printf("The degree of polynomial smaller : %d than the requested degree\n",d);
+      }
       for(i=0;i<=d;i++) {
-        //printf("%d\n",i);
-        //
         mpfi_set_node(&(tt->poly_array[i]),coefficients[i]);
-        //printInterval(tt->poly_array[i]);
       }
       
       for(i=d+1;i<n;i++) {
-        //printf("%d\n",i);
-        //printInterval(t->poly_array[i]);
         mpfi_set_ui(tt->poly_array[i],0);
       }
-      //printcModel(tt);
-      //printf("-------------Before poly translate-----------");
       polynomialTranslateCM(tt->poly_array,n-1,tt->poly_array,tt->x0);
-      
-      //printf("-------------After poly translate-----------");
-      
-      
       mpfi_set_ui(tt->rem_bound,0);
-       polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
-      // printf("we set the coefficients\n");
-      printf("\n\n*****************The polynomial model is:\n********* ");
-      printcModel(tt);
+      polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
+      if(verbosity>=12){
+        printf("\n\n*****************The polynomial model is:\n********* ");
+        printcModel(tt);
+     }
     }
     else {
-      printf("The degree of polynomial bigger : %d then the cheby model degree\n",d);
-      
+      if(verbosity>=12){
+        printf("The degree of polynomial bigger : %d then the cheby model degree\n",d);
+      }
       polynomialNode_CM(tt, f, n, x0, x);
-      printf("\nThe polynomial obtained is:");
       polynomialTranslateCM(tt->poly_array,n-1,tt->poly_array,x0);
+      if(verbosity>=12){
+        printf("\n\n*****************The polynomial model is:\n********* ");
+        printcModel(tt);
+      } 
     }
     copycModel(t,tt);   
-    cleartModel(tt);
+    clearcModel(tt);
   }
   else {  
     switch (f->nodeType) {
@@ -3874,7 +3876,7 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
     case NEG:
   
       tt=createEmptycModel(n,x0,x);
-      //create a new empty taylor model the child
+      //create a new empty cheb model the child
       child1_tm=createEmptycModel(n, x0, x);
       //call cheby_model on the child
       cheby_model(child1_tm, f->child1,n,x0,x);
@@ -3886,8 +3888,8 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
       mpfi_neg(tt->poly_bound,child1_tm->poly_bound);
       copycModel(t,tt);
       //clear old cheby models
-      cleartModel(child1_tm);
-      cleartModel(tt);
+      clearcModel(child1_tm);
+      clearcModel(tt);
     
       break;
 
@@ -3904,9 +3906,9 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
       addition_CM(tt,child1_tm, child2_tm);
       copycModel(t,tt);
       //clear old cheby model
-      cleartModel(child1_tm);
-      cleartModel(child2_tm);
-      cleartModel(tt);
+      clearcModel(child1_tm);
+      clearcModel(child2_tm);
+      clearcModel(tt);
       break;
 
     case SUB:
@@ -3928,9 +3930,9 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
       copycModel(t,tt);
     
       //clear old cheby model
-      cleartModel(child1_tm);
-      cleartModel(child2_tm);
-      cleartModel(tt);
+      clearcModel(child1_tm);
+      clearcModel(child2_tm);
+      clearcModel(tt);
       mpfi_clear(minusOne);
       break;
 
@@ -3942,24 +3944,14 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
     //call cheby_model on the children
     cheby_model(child1_tm, f->child1,n,x0,x);
     cheby_model(child2_tm, f->child2,n,x0,x);
-    printf("\n\n\n\n\n\n\n****************************************************\n");
-    printf("****************************************************\n");
-    printf("****************************************************\n");
-    printf("****************************************************\n");    
-    printcModel(child1_tm);
-    printcModel(child2_tm);
-    printf("****************************************************\n");
-    printf("****************************************************\n");
-    printf("****************************************************\n");
-    printf("****************************************************\n\n\n\n\n");    
-       
+    
     //do the necessary chages from children to parent
     multiplication_CM(tt,child1_tm, child2_tm);
     copycModel(t,tt);
     //clear old cheby model
-    cleartModel(child1_tm);
-    cleartModel(child2_tm);     
-    cleartModel(tt);
+    clearcModel(child1_tm);
+    clearcModel(child2_tm);     
+    clearcModel(tt);
     break;
 
   case DIV:
@@ -3987,12 +3979,12 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
   composition_CM(ttt,inv_tm,child2_tm);
   multiplication_CM(tt, ttt, child1_tm);
   //clear old children
-  cleartModel(child1_tm);
-  cleartModel(child2_tm);
-  cleartModel(inv_tm);
-  cleartModel(ttt);
+  clearcModel(child1_tm);
+  clearcModel(child2_tm);
+  clearcModel(inv_tm);
+  clearcModel(ttt);
   copycModel(t,tt);
-  cleartModel(tt);
+  clearcModel(tt);
   mpfi_clear(rangeg);
   mpfi_clear(gx0);
   break;
@@ -4073,10 +4065,10 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
     printcModel(tt);
     
     //clear old child
-    cleartModel(child1_tm);
-    cleartModel(child2_tm);
+    clearcModel(child1_tm);
+    clearcModel(child2_tm);
     copycModel(t,tt);
-    cleartModel(tt);
+    clearcModel(tt);
     mpfi_clear(rangef);    
     mpfi_clear(fcoeff0);
     
@@ -4099,7 +4091,7 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
          mpfi_pow(temp1,temp1,temp2);
          consttModel(tt,temp1);
          copycModel(t,tt);
-         cleartModel(tt);
+         clearcModel(tt);
          mpfi_clear(temp1);
          mpfi_clear(temp2);
       }
@@ -4133,10 +4125,10 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
         composition_CM(tt,ctPowVar_tm,child1_tm);
     
         //clear old child
-        cleartModel(child1_tm);
-        cleartModel(ctPowVar_tm);
+        clearcModel(child1_tm);
+        clearcModel(ctPowVar_tm);
         copycModel(t,tt);
-        cleartModel(tt);
+        clearcModel(tt);
         mpfi_clear(rangef);
         mpfi_clear(fx0);
       } 
@@ -4162,10 +4154,10 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
         composition_CM(tt,varCtPower_tm,child2_tm);
     
         //clear old child
-        cleartModel(child2_tm);
-        cleartModel(varCtPower_tm);
+        clearcModel(child2_tm);
+        clearcModel(varCtPower_tm);
         copycModel(t,tt);
-        cleartModel(tt);
+        clearcModel(tt);
         mpfi_clear(rangef);
         mpfi_clear(fx0);
         }
@@ -4213,15 +4205,15 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
                
     
         //clear old child
-        cleartModel(child2_tm);
-        cleartModel(child1_tm);
-        cleartModel(ttt);
-        cleartModel(expx_tm);
-        cleartModel(logx_tm);
-        cleartModel(logf_tm);
+        clearcModel(child2_tm);
+        clearcModel(child1_tm);
+        clearcModel(ttt);
+        clearcModel(expx_tm);
+        clearcModel(logx_tm);
+        clearcModel(logf_tm);
         
         copycModel(t,tt);
-        cleartModel(tt);
+        clearcModel(tt);
         mpfi_clear(rangef);
         
         mpfi_clear(fx0);   
@@ -4447,7 +4439,7 @@ int CM(chain**resP, void **args) {
   }
   free(coeffsMpfr);
   
-  cleartModel(t);
+  clearcModel(t);
 
    
   mpfi_clear(x);
