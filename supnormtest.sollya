@@ -4,11 +4,11 @@ verbosity = 1!;
 
 midpointmode = on!;
 
-f = exp(x);
+f = sin(x);
 I = [-1/16;1/16];
-deg = 15;
+deg = 7;
 
-p = fpminimax(f, [|0,...,deg|], [|DD,DD,DD,DD,DD,D...|], I);
+p = fpminimax(f, [|1,...,deg|], [|DD,DD,DD,DD,DD,D...|], I);
 
 mode = absolute;
 
@@ -17,7 +17,7 @@ mode = absolute;
 timing = on!;
 {
 timing = off!;
-res = supnorm(p,f,I,2^-20,mode);
+res = supnorm(p,f,I,2^-25,mode);
 timing = on!;
 };
 timing = off!;
@@ -30,5 +30,5 @@ if (mode == absolute) then errFunc = p - f else errFunc = p/f-1;
 
 "Dirty supnorm     ", dirtyinfnorm(errFunc,I);
 
-// "SOS Instances", sosInstances;
+"SOS Instances", sosInstances;
 

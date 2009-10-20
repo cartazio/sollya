@@ -84,7 +84,7 @@ procedure showPositivity(p,I) {
         return res;
 };
 
-procedure showPositivityWorks(p,I) {
+procedure showPositivityAlternative(p,I) {
         var res;
         var bound;
         var oldDisplay;
@@ -164,7 +164,7 @@ procedure polyApprox(f,I,x0,n,mode) {
         return [| TRounded, Delta |];
 };
 
-procedure supnormLowBound(p,f,I,quality,mode) {
+procedure supnormLowBoundAlternative(p,f,I,quality,mode) {
         var res;
         var zeros;
         var g, gPrime;
@@ -190,6 +190,26 @@ procedure supnormLowBound(p,f,I,quality,mode) {
         if (inf(b) > res) then res = inf(b);   
 
         res = round(res,floor(-log2(abs(quality)))+5,RD);
+
+        return res;
+};
+
+
+procedure supnormLowBound(p,f,I,quality,mode) {
+        var res;
+        var zeros;
+        var g, gPrime;
+        var z, b;
+
+        if (mode == absolute) then {
+                g = p - f;
+        } else {
+                g = p/f-1;
+        };
+
+        res = dirtyinfnorm(g,I);
+
+        res = round(res,floor(-log2(abs(quality)))+10,RD);
 
         return res;
 };
