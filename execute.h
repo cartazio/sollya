@@ -253,6 +253,8 @@ extern void endBuffer(void);
 #define SINGLESYMBOL 242
 #define TAYLORFORM 243
 #define NUMBERROOTS 244
+#define TIME 245
+#define NOPARG 246
 
 int executeCommand(node *);
 
@@ -301,6 +303,7 @@ node *makeCanonicalAssign(node *thing);
 node *makeAutoSimplifyAssign(node *thing);
 node *makeTaylorRecursAssign(node *thing);
 node *makeTimingAssign(node *thing);
+node *makeTime(node *thing);
 node *makeFullParenAssign(node *thing);
 node *makeMidpointAssign(node *thing);
 node *makeRationalModeAssign(node *thing);
@@ -336,6 +339,7 @@ node *makePrepend(node *thing1, node *thing2);
 node *makeAppend(node *thing1, node *thing2); 
 node *makeOn();
 node *makeNop();
+node *makeNopArg(node *thing1);
 node *makeOff();
 node *makeDyadic();
 node *makePowers();

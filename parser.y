@@ -193,6 +193,7 @@ void yyerror(char *message) {
 %token  AUTOSIMPLIFYTOKEN;      					       
 %token  TAYLORRECURSIONSTOKEN;  					       
 %token  TIMINGTOKEN;            					       
+%token  TIMETOKEN;
 %token  FULLPARENTHESESTOKEN;   					       
 %token  MIDPOINTMODETOKEN;      					       
 %token  SUPPRESSWARNINGSTOKEN;
@@ -600,11 +601,19 @@ simplecommand:          QUITTOKEN
                           {
 			    $$ = makeNop();
 			  }
+                      | NOPTOKEN LPARTOKEN thing RPARTOKEN 
+                          {
+			    $$ = makeNopArg($3);
+			  }
+                      | NOPTOKEN LPARTOKEN RPARTOKEN 
+                          {
+			    $$ = makeNopArg(makeDefault());
+			  }
                       | RESTARTTOKEN
                           {
 			    $$ = makeRestart();
 			  }
-                      | PRINTTOKEN LPARTOKEN thinglist RPARTOKEN            					       
+                      | PRINTTOKEN LPARTOKEN thinglist RPARTOKEN 
                           {
 			    $$ = makePrint($3);
 			  }
@@ -1244,6 +1253,10 @@ basicthing:             ONTOKEN
                           {
 			    $$ = $2;
 			  }
+                      | TIMETOKEN LPARTOKEN command RPARTOKEN
+                          {
+			    $$ = makeTime($3);
+                          }
 ;
 
 
@@ -2455,7 +2468,15 @@ help:                   CONSTANTTOKEN
 #else
 			    outputMode(); printf("Global environment variable timing of computations.\n");
 #endif
-                          }                 					                       					       
+                          }                 					                       		
+                      | TIMETOKEN
+                          {
+#ifdef HELP_TIME_TEXT
+			    outputMode(); printf(HELP_TIME_TEXT);
+#else
+			    outputMode(); printf("High-level time procedure.\n");
+#endif
+                          }                 					                       					       			       
                       | FULLPARENTHESESTOKEN
                           {
 #ifdef HELP_FULLPARENTHESES_TEXT
