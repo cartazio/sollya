@@ -1,26 +1,25 @@
 #include "supnorm.sollya";
+#include "sos.sollya";
+
 
 verbosity = 1!;
 
 midpointmode = on!;
 
 f = sin(x);
-I = [-1/16;1/16];
-deg = 7;
+I = [-1/8;1/8];
+deg = 15;
 
 p = fpminimax(f, [|1,...,deg|], [|DD,DD,DD,DD,DD,D...|], I);
 
-mode = absolute;
+mode = relative;
+
+quality = 2^-24;
+
 
 
 "Starting supnorm";
-timing = on!;
-{
-timing = off!;
-res = supnorm(p,f,I,2^-25,mode);
-timing = on!;
-};
-timing = off!;
+timeSupnorm = time(res = supnorm(p,f,I,quality,mode));
 norm = res[0];
 sosInstances = res[1];
 
@@ -28,7 +27,16 @@ sosInstances = res[1];
 
 if (mode == absolute) then errFunc = p - f else errFunc = p/f-1;
 
-"Dirty supnorm     ", dirtyinfnorm(errFunc,I);
+timeDirtySupnorm = time(dirtyNorm = dirtyinfnorm(errFunc,I));
 
-"SOS Instances", sosInstances;
+"Dirty supnorm     ", dirtyNorm;
+
+"Time for supnorm:       ", ceil(timeSupnorm * 1000), "ms";
+"Time for dirty supnorm: ", ceil(timeDirtySupnorm * 1000), "ms";
+
+"Checking SOS instances";
+timeSOS = time(sosResult = sos(sosInstances));
+
+"SOS instances checking result", sosResult;
+"Time for SOS checking:  ", ceil(timeSOS * 1000), "ms";
 
