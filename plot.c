@@ -79,7 +79,8 @@ void plotTree(chain *treeList, mpfr_t a, mpfr_t b, unsigned long int points, mp_
   int test, i, flush;
   chain *list;
   node *tree;
-  mpfr_t x, y, step, cutoff;
+  mpfr_t current_x, x, y, step, perturb, cutoff;
+  gmp_randstate_t random_state;
   double xd, yd, ad, bd;
   FILE *file;
   char *gplotname;
@@ -205,7 +206,15 @@ void plotTree(chain *treeList, mpfr_t a, mpfr_t b, unsigned long int points, mp_
  
   overflow = 0;
   flush = 0;
-  for(mpfr_set(x,a,GMP_RNDN); mpfr_lessequal_p(x,b); mpfr_add(x,x,step,GMP_RNDN)) {
+
+  mpfr_init2(current_x, pp);
+  gmp_randinit_default(random_state);
+  gmp_randseed_ui(random_state, 65845285);
+  mpfr_init2(perturb, pp);
+  
+  mpfr_set(current_x,a,GMP_RNDN);
+  mpfr_set(x, current_x, GMP_RNDN);
+  while(mpfr_lessequal_p(x,b)) {
     xd =  mpfr_get_d(x, GMP_RNDN);
     if (xd >= MAX_VALUE_GNUPLOT) xd = MAX_VALUE_GNUPLOT;
     if (xd <= -MAX_VALUE_GNUPLOT) xd = -MAX_VALUE_GNUPLOT;
@@ -249,9 +258,18 @@ void plotTree(chain *treeList, mpfr_t a, mpfr_t b, unsigned long int points, mp_
       list = list->next;
     }
     fprintf(file,"\n");
+
+    mpfr_add(current_x, current_x,step,GMP_RNDN);
+    mpfr_urandomb(perturb, random_state); mpfr_mul_2ui(perturb, perturb, 1, GMP_RNDN);
+    mpfr_sub_ui(perturb, perturb, 1, GMP_RNDN); mpfr_div_2ui(perturb, perturb, 2, GMP_RNDN);
+    mpfr_mul(perturb, perturb, step, GMP_RNDN); // perturb \in [-step/4; step/4]
+    mpfr_add(x, current_x, perturb, GMP_RNDU);
   }
 
   mpfr_clear(cutoff);
+  mpfr_clear(perturb);
+  mpfr_clear(current_x);
+  gmp_randclear(random_state);
  
   fclose(file);
 
@@ -314,6 +332,8 @@ void removePlotFiles(void) {
 
 void asciiPlotTree(node *tree, mpfr_t a, mpfr_t b, mp_prec_t prec) {
   mpfr_t y, x, step, minValue, maxValue;
+  mpfr_t perturb;
+  gmp_randstate_t random_state;
   int sizeX, sizeY, i, k, drawXAxis, drawYAxis, xAxis, yAxis;
   struct winsize {
         unsigned short  ws_row;     /* rows in characters */
@@ -365,15 +385,28 @@ void asciiPlotTree(node *tree, mpfr_t a, mpfr_t b, mp_prec_t prec) {
   mpfr_sub(step,b,a,GMP_RNDN);
   mpfr_set_si(x,sizeX-2,GMP_RNDN);
   mpfr_div(step,step,x,GMP_RNDN);
+
+  mpfr_init2(perturb, prec);
+  gmp_randinit_default(random_state);
+  gmp_randseed_ui(random_state, 65845285);
+
   for (i=0;i<sizeX-1;i++) {
     mpfr_set_si(x,i,GMP_RNDN);
     mpfr_mul(x,x,step,GMP_RNDN);
     mpfr_add(x,x,a,GMP_RNDN);
+
+    mpfr_urandomb(perturb, random_state); mpfr_mul_2ui(perturb, perturb, 1, GMP_RNDN);
+    mpfr_sub_ui(perturb, perturb, 1, GMP_RNDN); mpfr_div_2ui(perturb, perturb, 2, GMP_RNDN);
+    mpfr_mul(perturb, perturb, step, GMP_RNDN); // perturb \in [-step/4; step/4]
+    mpfr_add(x, x, perturb, GMP_RNDN);
     evaluateFaithful(values[i],tree,x,prec);
     if (!mpfr_number_p(values[i])) {
       mpfr_set_d(values[i],0.0,GMP_RNDN);
     }
   }
+
+  mpfr_clear(perturb);
+  gmp_randclear(random_state);
 
   mpfr_init2(minValue,prec);
   mpfr_init2(maxValue,prec);

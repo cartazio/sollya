@@ -309,6 +309,7 @@ void miniyyerror(void *myScanner, char *message) {
 
 %token  VARTOKEN;    
 %token  PROCTOKEN;
+%token  TIMETOKEN;
 %token  PROCEDURETOKEN;
 %token  RETURNTOKEN;
 %token  NOPTOKEN;
@@ -554,6 +555,14 @@ simplecommand:          FALSEQUITTOKEN
                       | NOPTOKEN
                           {
 			    $$ = makeNop();
+			  }
+                      | NOPTOKEN LPARTOKEN thing RPARTOKEN 
+                          {
+			    $$ = makeNopArg($3);
+			  }
+                      | NOPTOKEN LPARTOKEN RPARTOKEN 
+                          {
+			    $$ = makeNopArg(makeDefault());
 			  }
 		      | PRINTTOKEN LPARTOKEN thinglist RPARTOKEN            					       
                           {
@@ -1195,6 +1204,10 @@ basicthing:             ONTOKEN
                           {
 			    $$ = $2;
 			  }
+                      | TIMETOKEN LPARTOKEN command RPARTOKEN
+                          {
+			    $$ = makeTime($3);
+                          }
 ;
 
 
