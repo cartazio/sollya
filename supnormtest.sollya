@@ -6,15 +6,17 @@ verbosity = 1!;
 
 midpointmode = on!;
 
-f = sin(x);
+f = sin(exp(x) - 1);
 I = [-1/8;1/8];
 deg = 15;
 
-p = fpminimax(f, [|1,...,deg|], [|DD,DD,DD,DD,DD,D...|], I);
+p = fpminimax(f, [|1,...,deg|], [|DD,D...|], I);
 
 mode = relative;
 
 quality = 2^-24;
+
+printSosInstances = false;
 
 
 
@@ -34,9 +36,20 @@ timeDirtySupnorm = time(dirtyNorm = dirtyinfnorm(errFunc,I));
 "Time for supnorm:       ", ceil(timeSupnorm * 1000), "ms";
 "Time for dirty supnorm: ", ceil(timeDirtySupnorm * 1000), "ms";
 
-"Checking SOS instances";
+"Producing SOS rewrites";
+autosimplify = off!;
 timeSOS = time(sosResult = sos(sosInstances));
 
-"SOS instances checking result", sosResult;
-"Time for SOS checking:  ", ceil(timeSOS * 1000), "ms";
+sosResultOkay = sosResult[0];
+sosInstancesResult = sosResult[1];
+autosimplify = on!;
+
+"SOS instances checking result", sosResultOkay;
+"Time for SOS:           ", ceil(timeSOS * 1000), "ms";
+
+if (printSosInstances) then {
+        display = dyadic!;
+        write("SOS instances: ", sosInstancesResult, "\n");
+        display = default!;
+};
 

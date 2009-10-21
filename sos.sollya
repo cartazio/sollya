@@ -1,7 +1,92 @@
 
+gpInputFile = "sosInput.gp";
+gpOutputFile = "sosOutput.sollya";
+gpSOSScript = "unisos.gp";
+
 procedure sos(sosInstances) {
+        var okay;
+        var sosInst;
+        var mySosInstances;
+        var returnInstances;
+        var p, I, a, b;
+        var oldDisplay;
+        var oldAutosimplify, oldRationalmode;
+        var diffPQ;
+        var res;
 
+        oldDisplay = display;
+        display = powers!;
 
-        return true;
+        okay = true;
+        mySosInstances = sosInstances;
+        returnInstances = [||];
+        while (okay && (mySosInstances != [||])) do {
+                sosInst = head(mySosInstances);
+                mySosInstances = tail(mySosInstances);
+
+                p = simplifysafe(sosInst[0]);
+                I = sosInst[1];
+                a = inf(I);
+                b = sup(I);
+                
+                write("p = ", p, ";\n") > gpInputFile;
+                write("a = ", a, ";\n") >> gpInputFile;
+                write("b = ", b, ";\n") >> gpInputFile;
+
+                bashexecute("gp -q " @ gpSOSScript @ " > " @ gpOutputFile);
+
+                oldAutosimplify = autosimplify;
+                autosimplify = off!;
+                oldRationalmode = rationalmode;
+                rationalmode = off!;
+                q = error;
+                execute(gpOutputFile);
+                autosimplify = oldAutosimplify!;
+                rationalmode = oldRationalmode!;
+
+                if ((q == error) || (q != error)) then {
+                        oldAutosimplify = autosimplify;
+                        autosimplify = on!;
+                        oldRationalmode = rationalmode;
+                        rationalmode = on!;                
+                        diffPQ = simplifysafe(horner(simplifysafe(horner(q) - horner(p))));
+                        rationalmode = oldRationalmode!;
+                        autosimplify = oldAutosimplify!;
+                        if (diffPQ != 0) then {
+                                write("Warning: SOS returned a different polynomial for the following instance\n");
+                                write("p = ", p, ";\n");
+                                write("a = ", a, ";\n");
+                                write("b = ", b, ";\n");
+                                write("q = ", q, ";\n");                               
+                                okay = false;
+                        } else {
+                                oldAutosimplify = autosimplify;
+                                autosimplify = off!;
+                                oldRationalmode = rationalmode;
+                                rationalmode = off!;
+                                returnInstances = returnInstances :. [| q, [a, b] |];
+                                autosimplify = oldAutosimplify!;
+                                rationalmode = oldRationalmode!;
+                        }; 
+                } else {
+                        write("Warning: SOS did not work for the following instance\n");
+                        write("p = ", p, ";\n");
+                        write("a = ", a, ";\n");
+                        write("b = ", b, ";\n");
+                        okay = false;
+                };
+        };
+
+        display = oldDisplay!;
+
+        oldAutosimplify = autosimplify;
+        autosimplify = off!;
+        oldRationalmode = rationalmode;
+        rationalmode = off!;
+        res = [|okay, returnInstances |];
+        autosimplify = oldAutosimplify!;
+        rationalmode = oldRationalmode!;
+        
+        return res;
 };
 
