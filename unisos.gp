@@ -47,10 +47,14 @@ sos(p) =
 {
   local(s,c,q,n,m,t,e,r,k,ok,l,a,p_can,p_cnj,s1,s2,u,v,i,sqs,cfs);
 
-  /* Factor out the repeated roots, separating squared part s    */
-  /* Also get rid of the coefficient so the remaining q is monic */
+  /* Factor out the repeated roots, separating squared part s     */
+  /* Also get rid of the coefficient so the remaining q is monic  */
+  /* If the leading coefficient is negative, the polynomial can't */
+  /* be positive semidefinite, so return immediately.           */
+
   s = squaredpart(p);
   c = polcoeff(p,poldegree(p));
+  if (c < 0,return);
   q = p / (c * s^2);
 
   /* Let n = 2 m be the degree; fail if this is odd (can't be pos def) */
@@ -67,7 +71,7 @@ sos(p) =
   /* let t = 1 + x^2 + ... + x^2m and r = q - e * t be safe perturbation */
   t = (x^(n+2)-1)/(x^2-1);
   e = 1;
-  while((q-e*t != 0 & polsturm(q-e*t) != 0),e = e / 2); 
+  while((q-e*t != 0 & polsturm(q-e*t) != 0),e = e / 2);
   e = e / 2;
   r = q - e * t;
 
