@@ -414,6 +414,13 @@ procedure supnormLowBound(p,f,I,quality,mode) {
         var oldPrec;
         var z, y;
 
+        // Construct approximation error function, differentiate it
+        // (resp. take the numerator of its derivative), find the zeros
+        // of the derivative and do an interval evaluation of these
+        // zeros plus the interval endpoints. The lower bounds
+        // of the image bounding intervals are near the real
+        // supremum norm but certainly below it.
+
         if (mode == absolute) then {
                 g = p - f;
                 gPrime = diff(p) - diff(f);
@@ -473,38 +480,71 @@ procedure supnormAbsolute(p,f,I,quality) {
         var highBound;
         var rWidening, DeltaDiffWidened, rWidened, highBoundWidened;
 
+        // Take a Taylor Form midpoint
         x0 := mid(I);
+
+        // Take a starting degree
         n = startDegree(degree(p));
 
+        // Get a low bound that is:
+        //
+        // * of good quality
+        // * certainly 1/8 * quality lower
+        //
         lowBound = supnormLowBound(p,f,I,quality/8,absolute);
 	lowBound = lowBound - abs(lowBound * quality/8);
+
+        // Preset the high bound
+        //
         highBound = infty;
 
+        // In the end, the Taylor Form polynomial will approximate f that well
+        // that the supremum norm of p - f is typically p - T
+        //
+        // So we do not need to compute the bound for p - T at each loop turn
+        // but just to prove it. That is much faster. We infer the bound to 
+        // prove from the low bound for the sup norm that we have.
+        //
         DeltaDiff = [-(lowBound * (1 + abs(quality/2)));(lowBound * (1 + abs(quality/2)))];
 
         done = false;
         while ((n < 200) && (!done)) do {        
+                // Get a Taylor form, get q = p - T
                 TDelta = polyApprox(f,I,x0,n,absolute);
                 T = TDelta[0];
                 Delta = TDelta[1];
                 q = p-T;
 
+                // Compute the complete bounding, infered bound for p - T plus (minus actually)
+                // the Lagrange bound.
+                //
                 r = DeltaDiff - Delta;
 
+                // Get the current high bound
                 highBound = abs(sup(r));
                 if (abs(inf(r)) > highBound) then {
                     highBound = abs(inf(r));    
                 };
 
+                // Safety check, should be useless
                 if (highBound - lowBound < 0) then {
                         write("Warning: highBound is less than lowBound.\n");
                         write("highBound = ",highBound,"\n");
                         write("lowBound  = ",lowBound,"\n");
                 };
 
+                // Check if accuracy is already okay.
                 if (abs(highBound - lowBound) < abs(lowBound * quality)) then {
+                        // Only if the accuracy is okay, it is worth checking
+                        // if p - T is in the infered bound (otherwise we would 
+                        // throw the result away).
+                        // 
+
            	        polyBoundRes = checkPolyBound(q,I,DeltaDiff,true);
                         if (polyBoundRes[0]) then {
+                                // Here, we have found something that is proveable
+                                // and gives us the accuracy we need.
+                                //
                                 sosInstances = polyBoundRes[1];
                                 res = [lowBound,highBound];
                                 done = true;
@@ -549,6 +589,7 @@ procedure encloseZeros(f,I) {
         var res;
         var oldDiam;
 
+        // diam is relative to the input interval
         oldDiam = diam;
         diam = 1/16!;
         res = findzeros(f,I);
@@ -583,6 +624,9 @@ procedure globIntervals(l) {
         var res;
         var myL;
         var curr, rescurr;
+
+        // For the reader: please check that uninteresting 
+        // piece of code that produces headaches and add a comment.
 
         if (length(l) <= 1) then {
                 res = l;
@@ -634,6 +678,9 @@ procedure invertIntervals(l,I) {
         var myL;
         var curr;
         var a, b, bmax;
+
+        // For the reader: please check that uninteresting 
+        // piece of code that produces headaches and add a comment.
 
         if (l == [||]) then {
                 res = [| I |];
@@ -711,14 +758,21 @@ procedure supnormRelativeNoPole(p,f,I,quality,x0,taylorModelMode) {
         var sosInstances;
         var R, Eta;
 
+        // Get a start degree for the Taylor forms
         n = startDegree(degree(p));
 
+        // Get a low bound that is 
+        //
+        // * lower in any case
+        // * has good quality
+        //
         lowBound = supnormLowBound(p,f,I,quality/8,relative);
 	lowBound = lowBound - abs(lowBound * quality/8);
         highBound = infty;
 
         done = false;
         while ((n < 200) && (!done)) do {        
+                // Get the Taylor form with absolute error Delta
                 TDelta = polyApprox(f,I,x0,n,taylorModelMode);
                 T = TDelta[0];
                 Delta = TDelta[1];
@@ -794,14 +848,21 @@ procedure supnormRelativeNoPole(p,f,I,quality,x0,taylorModelMode) {
                         qDown = -qDown;
                 };
 
+                // Compute the current combined bound
                 r = DeltaDiffRel + DeltaRel + DeltaDiffRel * DeltaRel;
 
+                // Compute the current high bound
                 highBound = abs(sup(r));
                 if (abs(inf(r)) > highBound) then {
                     highBound = abs(inf(r));    
                 };
 
+                // Check if the accuracy is okay
                 if (abs(highBound - lowBound) < abs(lowBound * quality)) then {
+                        // If the accuracy is okay and only then,
+                        // check if p/T-1 is in the infered bound DeltaDiffRel.
+                        // Otherwise, we will just throw the result away.
+                        //
                         positiveUp = showPositivity(qUp,I,false);
                         positiveDown = showPositivity(qDown,I,false);
                 } else {
@@ -846,6 +907,15 @@ procedure determineOrderOfZero(f,x0,n) {
         var T; 
         var coeffBounds;
         
+        // This should be an exact transcription
+        // of the algorithm we proved when 
+        // Mioara and Sylvain were in Portland.
+        //
+        // To the reader: please check as the
+        // correctness of that piece of code is 
+        // important.
+        //
+
         TM = taylorform(f,n,x0,relative);
         T = TM[0];
         coeffBounds = TM[1];
@@ -883,6 +953,12 @@ procedure findpoles(p,f,I) {
         } else {
                 res = dirtyfindzeros(f,I);
                 if (res == [||]) then {
+                        // In some cases, we might miss 
+                        // a zero of the function.
+                        // However as we suppose p/f-1 is
+                        // continuous, we should find the 
+                        // same zeros in p.
+                        //
                         res = dirtyfindzeros(p,I);
                 };
         };
@@ -930,8 +1006,25 @@ procedure supnormRelativePole(p,f,I,quality) {
                 x0 = round(head(poles),floor(prec/2),RN);
                 k = determineOrderOfZero(f,x0,degree(p));
                 if (k == k) then {
+                        // The next terrible line is a Sollya trick to 
+                        // divide the polynomial p by (x - x0)^k
+                        // Sollya actually can divide by x^k but not by (x - x0)^k
+                        //
                         pTilde = horner((horner(p(x + x0))/(x^k))(x - x0));
+
+                        // Check if the division worked
                         if (degree(pTilde) == degree(p) - k) then {
+                                // Divide f by the same (x - x0)^k 
+                                // and instead of computing p/f - 1 compute
+                                //
+                                //            p/(x - x0)^k
+                                // p/f - 1 = ------------------ - 1
+                                //            f/(x - x0)^k
+                                //
+                                // The relative Taylor Form code can compute
+                                // a polynomial for f/(x - x^0)^k with a finite
+                                // rest bound. That is the reason the thing works.
+                                // 
                                 fTilde = f/((x - x0)^k);
                                 res = supnormRelativeNoPole(pTilde,fTilde,I,quality,x0,relative);
                         } else {
@@ -979,11 +1072,24 @@ procedure supnormRelative(p,f,I,quality) {
         var resCurrNorm;
         var sosInstances;
 
+        // Find intervals where poles may occur.
+        // If they are adjacent, combine them in order to 
+        // make them symetrical around the pole (heuristic, inherited
+        // from the old, old infnorm).
+        //
+        // Compute the complement, too.
+        //
         possiblePoles = globIntervals(encloseZeros(f,I));
         noPoles = invertIntervals(possiblePoles,I);
 
         write("Information: splitting the domain into subdomains ",possiblePoles," (with possible poles) and ",noPoles," (without poles)\n");
 
+        // Go over all intervals with poles and without and combine the results.
+        //
+        // Actually, currently the code is a little slower as it should because each
+        // instance proves the quality even if we throw the results away then if the
+        // maximum is somewhere else.
+        //
         innerBound = 0;
         outerBound = 0;
         sosInstances = [||];
@@ -1007,7 +1113,7 @@ procedure supnormRelative(p,f,I,quality) {
         return [| [innerBound, outerBound], sosInstances |];
 };
 
-// Procedure supnormRelativePole
+// Procedure supnorm
 //
 // Given a polynomial p, a function f, an interval I, a real 
 // number quality and a mode mode one of absolute or relative, 
@@ -1037,6 +1143,8 @@ procedure supnormRelative(p,f,I,quality) {
 //
 procedure supnorm(p,f,I,quality,mode) {
         var res;
+
+        // That's a trivial wrapper (ourappeur...)
 
         res = error;
         if (mode == absolute) then {

@@ -23,7 +23,7 @@ mode = relative;
 quality = 2^-24;
 
 
-doSos = false;
+doSos = true;
 printSosInstances = false;
 
 
