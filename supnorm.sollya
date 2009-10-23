@@ -80,38 +80,23 @@ procedure myfindzeros(p,I,quality) {
         // Compute the number of zeros of p 
         nbZeros = numberroots(p,I);
 
-        // Using dirtyfindzeros try to find
-        // floating-point approximations of all these
-        // zeros of p. Start with almost no breakpoints,
-        // use more and more. 
-        //
-        // Set prec to a little more that what the quality asks 
-        // for in order to make the Newton iterations stop pretty 
-        // early. That prec condition makes the difference with
-        // a findzeros.
-        //
-        oldPoints = points;
-        points = nbZeros * 4!;
-        oldPrec = prec;
-        prec = ceil(-log2(abs(quality))) + 5!;
-        done = false;
-        while ((!done) && (points <= oldPoints)) do {
-                fpZeros = dirtyfindzeros(p,I);
-                if (length(fpZeros) >= nbZeros) then {
-                        done = true;
-                } else {
-                        points = points * 2!;
-                        prec = prec + 10!;
-                };
-        };
-        points = oldPoints!;
+	if (nbZeros > 0) then {
+                // If there is a zero to find
 
-        // There are cases where we need the precision, so try again
-        //
-        if (!done) then {
-                prec = oldPrec!;
+                // Using dirtyfindzeros try to find
+                // floating-point approximations of all these
+                // zeros of p. Start with almost no breakpoints,
+                // use more and more. 
+                //
+                // Set prec to a little more that what the quality asks 
+                // for in order to make the Newton iterations stop pretty 
+                // early. That prec condition makes the difference with
+                // a findzeros.
+                //
                 oldPoints = points;
                 points = nbZeros * 4!;
+                oldPrec = prec;
+                prec = ceil(-log2(abs(quality))) + 5!;
                 done = false;
                 while ((!done) && (points <= oldPoints)) do {
                         fpZeros = dirtyfindzeros(p,I);
@@ -124,42 +109,65 @@ procedure myfindzeros(p,I,quality) {
                 };
                 points = oldPoints!;
 
-                // In some cases, we fail to find a zero of even
-                // degree in zero. So we give a final try.
+                // There are cases where we need the precision, so try again
                 //
-                if ((!done) && (length(fpZeros) == nbZeros - 1)) then {
-                        tmp = evaluate(p,[0]);
-                        if (inf(tmp) * sup(tmp) <= 0) then {
-                                fpZeros = 0 .: fpZeros;
-                                done = true;
+                if (!done) then {
+                        prec = oldPrec!;
+                        oldPoints = points;
+                        points = nbZeros * 4!;
+                        done = false;
+                        while ((!done) && (points <= oldPoints)) do {
+                                fpZeros = dirtyfindzeros(p,I);
+                                if (length(fpZeros) >= nbZeros) then {
+                                        done = true;
+                                } else {
+                                        points = points * 2!;
+                                        prec = prec + 10!;
+                                };
                         };
-                };
-        };
+                        points = oldPoints!;
 
-        // If we found enough points, build up small intervals 
-        // around them and using Interval Arithmetic, check if the
-        // sign of p changes over these small intervals.
-        //
-        if (done) then {
-                zeros = [||];
-                for z in fpZeros do {
-                        Z = [z - abs(quality * z); z + abs(quality * z)];
-                        Y = evaluate(p,Z);
-                        if (inf(Y) * sup(Y) <= 0) then {
-                                zeros = zeros :. Z;
+                        // In some cases, we fail to find a zero of even
+                        // degree in zero. So we give a final try.
+                        //
+                        if ((!done) && (length(fpZeros) == nbZeros - 1)) then {
+                                tmp = evaluate(p,[0]);
+                                if (inf(tmp) * sup(tmp) <= 0) then {
+                                        fpZeros = 0 .: fpZeros;
+                                        done = true;
+                                };
                         };
                 };
-                if (length(zeros) < nbZeros) then {
-                        write("Warning: could not find enough high-quality zeros enclosures (1)\n");
+
+                // If we found enough points, build up small intervals 
+                // around them and using Interval Arithmetic, check if the
+                // sign of p changes over these small intervals.
+                //
+                if (done) then {
+                        zeros = [||];
+                        for z in fpZeros do {
+                                Z = [z - abs(quality * z); z + abs(quality * z)];
+                                Y = evaluate(p,Z);
+                                if (inf(Y) * sup(Y) <= 0) then {
+                                        zeros = zeros :. Z;
+                                };
+                        };
+                        if (length(zeros) < nbZeros) then {
+                                write("Warning: could not find enough high-quality zeros enclosures (1)\n");
+                                prec = oldPrec!;
+                                zeros = findzeros(p,I);
+                        };
+                } else {
+                        write("Warning: could not find enough high-quality zeros enclosures (2)\n");
                         prec = oldPrec!;
                         zeros = findzeros(p,I);
                 };
-        } else {
-                write("Warning: could not find enough high-quality zeros enclosures (2)\n");
                 prec = oldPrec!;
-                zeros = findzeros(p,I);
-        };
-        prec = oldPrec!;
+        } else {
+                // If there are no zeros to find...
+		//
+		zeros = [||];
+	};
 
         return zeros;
 };
@@ -416,7 +424,7 @@ procedure supnormLowBound(p,f,I,quality,mode) {
 
 
         oldPrec = prec;
-        prec = ceil(-log2(abs(quality)))!;
+        prec = ceil(-log2(abs(quality)))-5!;
         zeros = dirtyfindzeros(gPrime,I);        
         zeros = [|inf(I),sup(I)|] @ zeros;
         prec = prec + 5!;
@@ -426,7 +434,7 @@ procedure supnormLowBound(p,f,I,quality,mode) {
                 if (inf(y) > res) then res = inf(y);
         };
         prec = oldPrec!;
-        
+
         return res;
 };
 
@@ -468,8 +476,11 @@ procedure supnormAbsolute(p,f,I,quality) {
         x0 := mid(I);
         n = startDegree(degree(p));
 
-        lowBound = supnormLowBound(p,f,I,quality/4,absolute);
+        lowBound = supnormLowBound(p,f,I,quality/8,absolute);
+	lowBound = lowBound - abs(lowBound * quality/8);
         highBound = infty;
+
+        DeltaDiff = [-(lowBound * (1 + abs(quality/2)));(lowBound * (1 + abs(quality/2)))];
 
         done = false;
         while ((n < 200) && (!done)) do {        
@@ -478,9 +489,7 @@ procedure supnormAbsolute(p,f,I,quality) {
                 Delta = TDelta[1];
                 q = p-T;
 
-                DeltaDiff = polyBound(q,I,quality/4);
-
-                r = -Delta + DeltaDiff;
+                r = DeltaDiff - Delta;
 
                 highBound = abs(sup(r));
                 if (abs(inf(r)) > highBound) then {
@@ -494,8 +503,15 @@ procedure supnormAbsolute(p,f,I,quality) {
                 };
 
                 if (abs(highBound - lowBound) < abs(lowBound * quality)) then {
-                        done = true;
-                } else {
+           	        polyBoundRes = checkPolyBound(q,I,DeltaDiff,true);
+                        if (polyBoundRes[0]) then {
+                                sosInstances = polyBoundRes[1];
+                                res = [lowBound,highBound];
+                                done = true;
+                        }; 
+                }; 
+
+		if (!done) then {
                         oldMidpointMode = midpointmode;
                         midpointmode = on!;
                         write("Information: n = ",n,": current bounding ",[lowBound,highBound],"\n");
@@ -504,42 +520,7 @@ procedure supnormAbsolute(p,f,I,quality) {
                 };
         };
 
-        if (done) then {
-                DeltaDiffWidened = [-(lowBound * (1 + abs(quality/4))) + sup(Delta);(lowBound * (1 + abs(quality/4))) + inf(Delta)];
-                rWidened = DeltaDiffWidened - Delta;
-                highBoundWidened = abs(sup(rWidened));
-                if (abs(inf(rWidened)) > highBoundWidened) then {
-                    highBoundWidened = abs(inf(rWidened));    
-                };
-                if ((highBoundWidened - lowBound >= 0) && (abs(highBoundWidened - lowBound) < abs(lowBound * quality))) then {
-                        polyBoundRes = checkPolyBound(q,I,DeltaDiffWidened,true);
-                        if (polyBoundRes[0]) then {
-                                sosInstances = polyBoundRes[1];
-                                res = [lowBound,highBoundWidened];
-                        } else {
-                                write("Information: widening did not work, check direct evaluation\n");
-                                polyBoundRes = checkPolyBound(q,I,DeltaDiff,false);
-                                if (polyBoundRes[0]) then {
-                                        sosInstances = polyBoundRes[1];
-                                        res = [lowBound,highBound];
-                                } else {
-                                        write("Warning in supnorm: could not check polynomial bounds.\n");
-                                        res = [lowBound;sup(abs(evaluate(p-f,I)))];
-                                        sosInstances = [||];
-                                };
-                        };
-                } else {
-                        polyBoundRes = checkPolyBound(q,I,DeltaDiff,false);
-                        if (polyBoundRes[0]) then {
-                                sosInstances = polyBoundRes[1];
-                                res = [lowBound,highBound];
-                        } else {
-                                write("Warning in supnorm: could not check polynomial bounds.\n");
-                                res = [lowBound;sup(abs(evaluate(p-f,I)))];
-                                sosInstances = [||];
-                        };
-                };
-        } else {
+        if (!done) then {
                 write("Warning in supnorm: could not achieve the desired quality.\n");
                 res = [lowBound;sup(abs(evaluate(p-f,I)))];
         };
@@ -732,7 +713,8 @@ procedure supnormRelativeNoPole(p,f,I,quality,x0,taylorModelMode) {
 
         n = startDegree(degree(p));
 
-        lowBound = supnormLowBound(p,f,I,quality/4,relative);
+        lowBound = supnormLowBound(p,f,I,quality/8,relative);
+	lowBound = lowBound - abs(lowBound * quality/8);
         highBound = infty;
 
         done = false;
@@ -758,10 +740,31 @@ procedure supnormRelativeNoPole(p,f,I,quality,x0,taylorModelMode) {
                 //
                 // This makes the reason why the relative case may still be faster than the 
                 // absolute error case.
-       
-                alpha = polyBound(T,I,quality/4);
+    
+                // Actually, we don't care about the accuracy of alpha:
+		//
+		// We are currently too lazy to do a real error analysis
+		// but typically, in the end of the supnorm loop,
+		// we will have DeltaRel about quality times smaller than 
+		// DeltaDiffRel added to DeltaDiffRel. The accuracy of alpha
+		// actually effects almost directly the accuracy of Delta 
+		// as 1/(1+x) - 1 is -x + x^2 - ... but in the end, we will
+		// see that only in the quadratic error terms of the result.
+		//
+		// Actually, T in the end behaves like f over I. So it might be
+		// a good idea to estimate a bound we can live with for alpha 
+		// using f once in the very beginning and then only check 
+		// that bound for the polynomial T. That would be just as
+		// we simply check bounds for p/T-1 and do not compute them.
+		// 
+		// Anyway, if we make sure polyBound behaves reasonably on
+		// polynomials behaving like the function f (typically being 
+		// monotone or having one or two local extrema), we can live
+		// with the recomputation. 
+		//
+                alpha = polyBound(T,I,4 * quality);
                 DeltaRel = -Delta / (alpha + Delta);
-                
+
                 R = [- (lowBound * (1 + quality/2)); (lowBound * (1 + quality/2)) ];
                 Eta = (R - DeltaRel) / (1 + DeltaRel);
 

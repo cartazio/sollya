@@ -6,15 +6,22 @@ verbosity = 1!;
 
 midpointmode = on!;
 
-f = exp(sin(x) + x) - 1;
-I = [-1/8;1/8];
-deg = 15;
-
-p = fpminimax(f, [|1,...,deg|], [|DD,D...|], I);
-
-mode = absolute;
-
+/* 
+f = sin(x);
+I = [-1/32;1/32];
+deg = 7;
+p = fpminimax(f, [|1,...,deg|], [|D,D...|], I);
+mode = relative;
 quality = 2^-24;
+*/
+
+f = exp(x);
+I = [-1/32;1/32];
+deg = 7;
+p = fpminimax(f, [|0,...,deg|], [|D,D...|], I);
+mode = relative;
+quality = 2^-24;
+
 
 doSos = false;
 printSosInstances = false;
