@@ -63,7 +63,7 @@ knowledge of the CeCILL-C license and that you accept its terms.
 /*********************Functions related to interpolation***********************/
 /*******************************************************************************/
 /*******************************************************************************/
-#define verbosity 10
+#define verbosity 12
 
 #include "sollya.h"
 #define coeff(i,j,n) ((i)-1)*(n)+(j)-1
@@ -3373,6 +3373,384 @@ void composition_CM(tModel *t,tModel *g, tModel *f){
   clearcModel(tmul);
   clearcModel(tinterm);
 }
+/*******************************COMPOSITION HORNER SCHEME**********************************/
+/*composition:
+ We are given 2 cms, we use additions and multiplications on the same principle like on tms 
+ to obtain the composed cmodel based on horner scheme:
+ G(y)=g_0 + g_1 y + g_2 y^2 +... + g_{n-1} y^{n-1}
+ With horner: G(y)= g_0 + y( g_1 + y (g_2+... y(g_{n-2}+ yg_{n-1})))
+ Steps:
+ Initialize tt = g_{n-1}; tinterm = f (clone for multiplications)
+ 
+ Loop: from i=n-2 downto 0
+ 
+   1- multiply tt = tt * tinterm -> obtain the new tinterm by one interpolation
+   2. create an aditional constant cm for g_{i}
+   2.- tt= add g_{i} + tt-> no interpolation necessary, since L(f + g) = L(f) + L(g) and
+                                                            L(g_{i})= g_{i} 
+ End loop;
+ 
+ in tt we have the chebmodel
+ 
+ */
+void compositionHornerScheme_CM(tModel *t,tModel *g, tModel *f){
+  int i;
+  int n;
+  tModel *tt,*tinterm,*tmul ;
+  
+  n=f->n;
+  if(verbosity>=5){
+    printf("in Composition with horner CM");
+  }
+  /*create an itermediary cheb model for f(x) that will be used just as a clone in multiplications: */
+  tinterm=createEmptycModel(n,f->x0,f->x);
+  copycModel(tinterm,f);
+  
+  tt=createEmptycModel(n,f->x0,f->x);
+  consttModel(tt,g->poly_array[n-1]);
+    
+  tmul=createEmptycModel(n,f->x0,f->x);
+  
+  for (i=n-2;i>=0;i--){
+  multiplication_CM(tt,tt,tinterm);
+  consttModel(tmul, g->poly_array[i]);
+  addition_CM(tt,tt,tmul);
+  }
+  
+  //in tt we have now the good polynomial;
+  //we have to compute the bounds.
+  //printcModel(g);
+  //printcModel(partial_tmul);
+  //printcModel(tt);
+   
+  mpfi_add(tt->rem_bound,tt->rem_bound,g->rem_bound);
+  polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
+  copycModel(t,tt);
+  clearcModel(tt);
+  clearcModel(tmul);
+  clearcModel(tinterm);
+}
+/*******************************************************************************/
+
+
+
+/*composition:
+ We are given 2 cms, we use additions and multiplications on the same principle like on tms 
+ to obtain the composed cmodel
+ */
+
+/*******************************************************************************/
+
+void getCoeffsLagrangeBasis(tModel *t,mpfr_t* cArray, node *f, mpfi_t imagef,int n){
+int i,j;
+tModel *tt;
+
+mpfr_t u,v,var1,var2,var3,temp1,temp2,zero_mpfr;
+mpfr_t *chebArray, *coeffArray;
+
+mpfi_t fxi,xi,x0;
+node *p;
+
+/*get ChebyshevPoints*/
+  mpfr_init2(u, getToolPrecision());
+  mpfr_init2(v, getToolPrecision());
+ 
+  mpfr_init2(zero_mpfr,53);
+  mpfr_set_d(zero_mpfr,0.,GMP_RNDN);
+ 
+  mpfi_get_left(u,imagef);
+  mpfi_get_right(v,imagef);
+  
+  
+  mpfr_init2(var1, getToolPrecision());
+  mpfr_init2(var2, getToolPrecision());
+  mpfr_init2(var3, getToolPrecision());
+  
+  chebArray = safeMalloc((n)*sizeof(mpfr_t));
+  for(j=1; j <=n ; j++) {
+    mpfr_init2(chebArray[j-1], getToolPrecision());
+  }
+  mpfr_const_pi(var1, GMP_RNDN);
+  mpfr_div_si(var1, var1, 2*((long)n), GMP_RNDN); // var1 = Pi/(2*n)
+  mpfr_sub(var2, u, v, GMP_RNDN);
+  mpfr_div_2ui(var2, var2, 1, GMP_RNDN); // var2 = (u-v)/2
+  mpfr_add(var3, u, v, GMP_RNDN);
+  mpfr_div_2ui(var3, var3, 1, GMP_RNDN); // var3 = (u+v)/2
+
+  for (i=1 ; i <= n ; i++) {
+    mpfr_mul_si(chebArray[i-1], var1, 2*i-1, GMP_RNDN);
+    mpfr_cos(chebArray[i-1], chebArray[i-1], GMP_RNDN);
+    mpfr_fma(chebArray[i-1], chebArray[i-1], var2, var3, GMP_RNDN); // x_i=[cos((2i-1)*Pi/(2n))]*(u-v)/2 + (u+v)/2
+  }
+ // printf("ajunge aici...//..%d",n);
+  
+  for (i=1 ; i <= n ; i++) {
+  mpfr_set(cArray[i-1], chebArray[i-1], GMP_RNDN);
+  printMpfr(chebArray[i-1]);
+  }
+  
+  //printf("ajunge aici...//..");
+  
+  mpfr_init2(temp1, getToolPrecision());
+  mpfr_init2(temp2, getToolPrecision());
+  mpfi_init2(xi,getToolPrecision());
+  mpfi_init2(fxi,getToolPrecision());
+  /*compute f(xi)/prod(xi-xj)*/
+  
+  mpfi_init2(x0,getToolPrecision());
+  mpfi_set_ui(x0,0);
+  tt=createEmptycModel(n,x0,imagef);
+  
+  for (i=0;i<n;i++)
+  {
+    mpfr_set_ui(temp2, 1,GMP_RNDN);
+    for (j=0;j<n;j++){
+      if (j!=i) { 
+        mpfr_sub(temp1, chebArray[i],chebArray[j], GMP_RNDN);
+        mpfr_mul(temp2, temp2,temp1,GMP_RNDN);
+      }  
+    }
+  
+   mpfi_set_fr(xi, chebArray[i]);
+   //printf("ajunge aici");
+   evaluateMpfiFunction(fxi,f,xi,getToolPrecision());
+  
+   mpfi_div_fr(fxi,fxi, temp2);
+ 
+   mpfi_set(tt->poly_array[i], fxi);
+      
+  }
+  printf("\nthe coeffs of lagrange basis are:\n");
+   
+  
+  mpfi_set_ui(tt->rem_bound,0);
+  
+   for (i=0 ; i <= n-1 ; i++) { 
+  
+      printInterval(tt->poly_array[i]);
+   }
+   
+   coeffArray=safeMalloc((n)*sizeof(mpfr_t));
+  for (i=0;i<n;i++){
+  mpfr_init2(coeffArray[i], getToolPrecision());
+  }
+   
+   p=interpolation(coeffArray,&(tt->rem_bound), f,imagef,n-1);
+  
+  printf("the interpolation polynomial is:");
+  printTree(p);
+  /*mpfr_clear(u);
+  mpfr_clear(v);
+  mpfr_clear(var1);
+  mpfr_clear(var2);
+  mpfr_clear(var3);
+  mpfr_clear(temp1);
+  mpfr_clear(temp2);
+  mpfr_clear(zero_mpfr);
+  
+  mpfi_clear(fxi);
+  mpfi_clear(xi);
+  mpfi_clear(x0);
+  */
+  copycModel(t,tt);
+   clearcModel(tt);
+}
+
+/*******************************************************************************/
+
+/******************************************************************************/
+
+
+void compositionLagrangeBasis_CM(tModel *t,tModel *g, tModel *f, mpfr_t *chebArray){
+  int i,j;
+  int n;
+  tModel *tt, *partial_tmul,*tinterm,*tmul, *t1 ;
+  mpfi_t zero,one;
+  
+  mpfi_init2(zero, getToolPrecision());
+  mpfi_set_ui(zero,0);
+  
+  
+  mpfi_init2(one, getToolPrecision());
+  mpfi_set_ui(one,1);
+   n=f->n;
+  if(verbosity>=5){
+    printf("in Composition LAgrangeBAsis CM");
+  }
+  /*create an itermediary cheb model for f(x) that will be used in multiplications: */
+  tinterm=createEmptycModel(n,f->x0,f->x);
+  copycModel(tinterm,f);
+  
+  tt=createEmptycModel(n,f->x0,f->x);
+  consttModel(tt,zero);
+  
+  
+  t1=createEmptycModel(n,f->x0,f->x);
+  consttModel(t1,one);
+  
+  
+    
+  tmul=createEmptycModel(n,f->x0,f->x);
+  copycModel(tmul,tinterm);  
+  
+  partial_tmul=createEmptycModel(n,f->x0,f->x);
+  copycModel(partial_tmul,tinterm);  
+  partial_tmul=createEmptycModel(n,f->x0,f->x);
+  
+  for (i=0;i<n;i++){
+    copycModel(tinterm,t1);  
+    for (j=0;j<n;j++){
+      if (i!=j){
+        copycModel(partial_tmul,tmul);
+        mpfi_sub_fr(partial_tmul->poly_array[0],partial_tmul->poly_array[0],chebArray[j]);
+        multiplication_CM(tinterm,tinterm,partial_tmul);  
+      }
+    }
+    
+    ctMultiplication_CM(tinterm,tinterm,g->poly_array[i]);
+    addition_CM(tt,tt,tinterm);
+  
+  }
+  
+  //in tt we have now the good polynomial;
+  //we have to compute the bounds.
+  //printcModel(g);
+  //printcModel(partial_tmul);
+  //printcModel(tt);
+   
+  mpfi_add(tt->rem_bound,tt->rem_bound,g->rem_bound);
+  polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
+  copycModel(t,tt);
+  clearcModel(tt);
+  clearcModel(partial_tmul);
+  clearcModel(tmul);
+  clearcModel(tinterm);
+}
+
+
+
+/*************************************************************************************/
+
+
+void getCoeffsNewtonBasis(tModel *t,mpfr_t* cArray, node *f, mpfi_t imagef,int n){
+int i,j;
+tModel *tt;
+
+mpfr_t u,v,var1,var2,var3,zero_mpfr;
+mpfr_t *chebArray, *coeffArray;
+mpfi_t *fArray;
+mpfi_t xi,x0;
+node *p;
+
+/*get ChebyshevPoints*/
+  mpfr_init2(u, getToolPrecision());
+  mpfr_init2(v, getToolPrecision());
+ 
+  mpfr_init2(zero_mpfr,53);
+  mpfr_set_d(zero_mpfr,0.,GMP_RNDN);
+ 
+  mpfi_get_left(u,imagef);
+  mpfi_get_right(v,imagef);
+  
+  
+  mpfr_init2(var1, getToolPrecision());
+  mpfr_init2(var2, getToolPrecision());
+  mpfr_init2(var3, getToolPrecision());
+  
+  chebArray = safeMalloc((n)*sizeof(mpfr_t));
+  for(j=1; j <=n ; j++) {
+    mpfr_init2(chebArray[j-1], getToolPrecision());
+  }
+  mpfr_const_pi(var1, GMP_RNDN);
+  mpfr_div_si(var1, var1, 2*((long)n), GMP_RNDN); // var1 = Pi/(2*n)
+  mpfr_sub(var2, u, v, GMP_RNDN);
+  mpfr_div_2ui(var2, var2, 1, GMP_RNDN); // var2 = (u-v)/2
+  mpfr_add(var3, u, v, GMP_RNDN);
+  mpfr_div_2ui(var3, var3, 1, GMP_RNDN); // var3 = (u+v)/2
+
+  for (i=1 ; i <= n ; i++) {
+    mpfr_mul_si(chebArray[i-1], var1, 2*i-1, GMP_RNDN);
+    mpfr_cos(chebArray[i-1], chebArray[i-1], GMP_RNDN);
+    mpfr_fma(chebArray[i-1], chebArray[i-1], var2, var3, GMP_RNDN); // x_i=[cos((2i-1)*Pi/(2n))]*(u-v)/2 + (u+v)/2
+  }
+ // printf("ajunge aici...//..%d",n);
+  
+  for (i=1 ; i <= n ; i++) {
+  mpfr_set(cArray[i-1], chebArray[i-1], GMP_RNDN);
+  printMpfr(chebArray[i-1]);
+  }
+  
+  mpfi_init2(xi,getToolPrecision());
+    
+  fArray = safeMalloc((n)*sizeof(mpfi_t));
+  for(j=1; j <=n ; j++) {
+    mpfi_init2(fArray[j-1], getToolPrecision());
+    mpfi_set_fr(xi, chebArray[j-1]);
+    //printf("ajunge aici");
+    evaluateMpfiFunction(fArray[j-1],f,xi,getToolPrecision());
+  }
+  
+    
+  for (j=0;j<n;j++){
+    
+    for (i=j+1; i<n;i++)
+    mpfr_sub(chebArray[i],chebArray[i], chebArray[j],GMP_RNDN);
+    
+    for (i=j+1; i<n;i++){
+    mpfi_sub(fArray[i],fArray[i], fArray[j]);
+    mpfi_div_fr(fArray[i],fArray[i], chebArray[i]);
+    }
+  }
+  
+  //printf("ajunge aici...//..");
+  
+  tt=createEmptycModel(n,x0,imagef);
+   
+  mpfi_set_ui(tt->rem_bound,0);
+  
+  
+  
+  printf("\nthe coeffs of newton basis are:\n");
+  for (i=0 ; i <= n-1 ; i++) { 
+    mpfi_set(tt->poly_array[i],fArray[i]);
+    printInterval(tt->poly_array[i]);
+  }
+   
+  coeffArray=safeMalloc((n)*sizeof(mpfr_t));
+  for (i=0;i<n;i++){
+  mpfr_init2(coeffArray[i], getToolPrecision());
+  }
+   
+   p=interpolation(coeffArray,&(tt->rem_bound), f,imagef,n-1);
+  
+  printf("the interpolation polynomial is:");
+  printTree(p);
+  
+  mpfr_clear(u);
+  mpfr_clear(v);
+  mpfr_clear(var1);
+  mpfr_clear(var2);
+  mpfr_clear(var3);
+  mpfr_clear(zero_mpfr);
+  
+  
+  mpfi_clear(xi);
+  mpfi_clear(x0);
+  
+  copycModel(t,tt);
+   clearcModel(tt);
+}
+
+/*******************************************************************************/
+
+
+
+/**************************************************************************************/
+
+
+
+
+
 
 
 /*This function computes the cm for division with a ct term 
@@ -3605,6 +3983,9 @@ void  varInv_CM(tModel *t,mpfi_t x0, mpfi_t x, int n){
   }
   p=interpolation(coeffArray,&(tt->rem_bound), f,x,n-1);
   if (p==NULL) return;
+  printf("The W given by interpolation is:");
+  printInterval(tt->rem_bound);
+  
   /*Use AD for the base functions to bound derivatives up to nth derivative*/
   nDeriv= (mpfi_t *)safeMalloc((n+1)*sizeof(mpfi_t));
     for(i=0;i<=n;i++){
@@ -3643,6 +4024,161 @@ void  varInv_CM(tModel *t,mpfi_t x0, mpfi_t x, int n){
   free(nDeriv); 
 
 }
+
+/*This function computes a taylor remainder for 1/x as an interval, knowing
+it is monotone,  the coeffs of the series expansion are given as an array of mpfi's, developed over x, in x0. 
+*/
+void computeMonotoneRemaiderVarInv(mpfi_t *bound, int n, mpfi_t *poly_array, mpfi_t x0, mpfi_t x){
+  mpfi_t bound1, bound2,xinf,xsup;
+  mpfi_t boundf1, boundf2;
+  mpfr_t xinfFr, xsupFr;
+  
+  mpfr_init2(xinfFr, getToolPrecision());
+  mpfr_init2(xsupFr, getToolPrecision());
+  mpfi_init2(bound1, getToolPrecision());
+  mpfi_init2(bound2, getToolPrecision());  
+  mpfi_init2(xinf, getToolPrecision());
+  mpfi_init2(xsup, getToolPrecision());
+  
+  mpfi_init2(boundf1, getToolPrecision());
+  mpfi_init2(boundf2, getToolPrecision()); 
+  
+  mpfi_get_left(xinfFr,x);
+  mpfi_get_right(xsupFr,x); 
+  mpfi_set_fr(xinf, xinfFr);
+  mpfi_set_fr(xsup, xsupFr);  
+  
+   
+  polynomialBoundSharp(&bound1,n-1,poly_array,x0,xinf);
+  mpfi_ui_div(boundf1,1,xinf);
+  
+  mpfi_sub(bound1,boundf1,bound1);
+  
+  
+  polynomialBoundSharp(&bound2,n-1,poly_array,x0,xsup);
+  mpfi_ui_div(boundf2,1,xsup);
+  mpfi_sub(bound2,boundf2,bound2);
+  
+  /*in the case when n-1 is even, the remainder is 
+  bounded by the values it takes on the two extremas of the interval*/
+  
+  mpfi_union(*bound,bound1,bound2);
+  
+  /*in the case when n-1 is odd, the remainder is 
+  in the convex hull determined by the two extremas and the value in x0 (which is 0, theoretically,
+  but since x0 is a small interval...*/
+  
+  if (((n-1)%2)!=0){
+    polynomialBoundSharp(&bound2,n-1,poly_array,x0,x0);
+    mpfi_ui_div(boundf2,1,x0);
+    mpfi_sub(bound2,boundf2,bound2);
+    mpfi_union(*bound,*bound,bound2);
+  }
+  
+  //printInterval(*bound);
+  mpfr_clear(xinfFr);
+  mpfr_clear(xsupFr);
+  
+  mpfi_clear(bound1);
+  mpfi_clear(bound2);
+    
+  mpfi_clear(xinf);
+  mpfi_clear(xsup);
+  
+  mpfi_clear(boundf1);
+  mpfi_clear(boundf2);
+}
+
+
+/*this function computes a cheby model for 1/x - using geometric series*/
+void  varInvGeomSeries_CM(tModel *t,mpfi_t x0, mpfi_t x, int n){
+ 
+    tModel *tt;
+    mpfi_t *nDeriv;
+    int i;
+        
+    mpfr_t minusOne;
+    mpfi_t fact,temp,pow;    
+    mpfi_t midxI;
+    mpfr_t midx;
+    
+    tt=createEmptycModel(n,x0,x); 
+    mpfr_init2(minusOne, getToolPrecision());
+    mpfr_set_si(minusOne, -1, GMP_RNDN);
+
+    mpfr_init2(midx, getToolPrecision());
+    mpfi_init2(midxI, getToolPrecision());    
+    
+    
+    mpfi_mid(midx,x);
+    mpfi_set_fr(midxI,midx);
+    
+    constantPower_diff(tt->poly_array,minusOne, midxI, n-1);
+        
+    mpfi_init2(fact, getToolPrecision());
+    mpfi_set_ui(fact,1);
+    for(i=1;i<n;i++){
+      mpfi_mul_ui(fact,fact,i);
+      mpfi_div(tt->poly_array[i],tt->poly_array[i],fact);
+    }
+
+    
+    nDeriv= (mpfi_t *)safeMalloc((n+2)*sizeof(mpfi_t));
+    for(i=0;i<=n+1;i++){
+      mpfi_init2(nDeriv[i], getToolPrecision());
+    }
+    constantPower_diff(nDeriv,minusOne, x, n+1);
+    
+    /*Use Zumkeller technique to improve the bound in the absolute case,
+   when the (n+1)th derivative has constant sign*/
+   if(((mpfi_is_nonpos(nDeriv[n+1])>0)||(mpfi_is_nonneg(nDeriv[n+1])>0))){ 
+    //printf("we reached the zumkeler technique");
+   computeMonotoneRemaiderVarInv(&tt->rem_bound, n, tt->poly_array, midxI,x);
+  }
+  else{
+    mpfi_mul_ui(fact,fact,n);
+    mpfi_set(tt->rem_bound,nDeriv[n]);
+    mpfi_div(tt->rem_bound,tt->rem_bound,fact);
+    /*if we are in the case of the absolute error,
+     we also have to multiply by (x-x0)^n*/
+   
+      /*absolute error*/
+      mpfi_init2(pow,getToolPrecision());
+      mpfi_init2(temp,getToolPrecision());
+      mpfi_set_ui(pow,n);
+      mpfi_sub(temp,x,midxI);
+      mpfi_pow(temp,temp,pow);
+      mpfi_mul(tt->rem_bound,tt->rem_bound,temp);
+      mpfi_clear(pow);
+      mpfi_clear(temp);
+   
+    
+ }
+    //do the translation back to x-x0
+    mpfi_sub(midxI, midxI, tt->x0);
+    
+    polynomialTranslateCM(tt->poly_array,n-1,tt->poly_array,midxI);
+ 
+    polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
+   
+    copycModel(t,tt);
+    clearcModel(tt);
+    mpfr_clear(minusOne);    
+    mpfi_clear(fact);
+    for(i=0;i<=n+1;i++){
+      mpfi_clear(nDeriv[i]);
+    }
+    free(nDeriv); 
+
+    mpfr_clear(midx);    
+    mpfi_clear(midxI);
+    
+}
+
+
+
+
+
 
 /*this function computes a cheby model for x^p*/
 void  ctPowerVar_CM(tModel *t,mpfi_t x0, mpfi_t x, int n, mpfr_t p){
@@ -3799,8 +4335,8 @@ void  varCtPower_CM(tModel *t,mpfi_t x0, mpfi_t x, int n, mpfr_t p){
 
 /**Working lineL ana are mere**/
 
-void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
-  int i;
+void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x,int method) {
+  int i,j;
   
   node *simplifiedChild1, *simplifiedChild2;
   
@@ -3825,6 +4361,8 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
   //tModel *child2Mid_tm;
   
   mpfr_t *coeffArray;
+  mpfr_t *chebArray;
+  
   coeffArray=safeMalloc((n)*sizeof(mpfr_t));
   for (i=0;i<n;i++){
   mpfr_init2(coeffArray[i], getToolPrecision());
@@ -3879,7 +4417,7 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
       //create a new empty cheb model the child
       child1_tm=createEmptycModel(n, x0, x);
       //call cheby_model on the child
-      cheby_model(child1_tm, f->child1,n,x0,x);
+      cheby_model(child1_tm, f->child1,n,x0,x,method);
       //do the necessary chages from child to parent
       for(i=0;i<n;i++) 
       mpfi_neg(tt->poly_array[i], child1_tm->poly_array[i]);
@@ -3900,8 +4438,8 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
       child1_tm=createEmptycModel(n, x0,x);
       child2_tm=createEmptycModel(n, x0,x);
       //call cheby_model on the children
-      cheby_model(child1_tm, f->child1,n,x0,x);
-      cheby_model(child2_tm, f->child2,n,x0,x);
+      cheby_model(child1_tm, f->child1,n,x0,x,method);
+      cheby_model(child2_tm, f->child2,n,x0,x,method);
     
       addition_CM(tt,child1_tm, child2_tm);
       copycModel(t,tt);
@@ -3918,8 +4456,8 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
       child1_tm=createEmptycModel(n, x0,x);
       child2_tm=createEmptycModel(n, x0,x);
       //call cheby_model on the children
-      cheby_model(child1_tm, f->child1,n,x0,x);
-      cheby_model(child2_tm, f->child2,n,x0,x);
+      cheby_model(child1_tm, f->child1,n,x0,x,method);
+      cheby_model(child2_tm, f->child2,n,x0,x,method);
       
       //do the necessary chages from children to parent
       mpfi_init2(minusOne,getToolPrecision());
@@ -3942,8 +4480,8 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
     child1_tm=createEmptycModel(n,x0,x);
     child2_tm=createEmptycModel(n, x0,x);
     //call cheby_model on the children
-    cheby_model(child1_tm, f->child1,n,x0,x);
-    cheby_model(child2_tm, f->child2,n,x0,x);
+    cheby_model(child1_tm, f->child1,n,x0,x,method);
+    cheby_model(child2_tm, f->child2,n,x0,x,method);
     
     //do the necessary chages from children to parent
     multiplication_CM(tt,child1_tm, child2_tm);
@@ -3966,8 +4504,8 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
   child1_tm=createEmptycModel(n,x0,x);
   child2_tm=createEmptycModel(n,x0,x);
   //call cheby_model for the children
-  cheby_model(child1_tm, f->child1,n,x0,x);
-  cheby_model(child2_tm, f->child2,n,x0,x);
+  cheby_model(child1_tm, f->child1,n,x0,x,method);
+  cheby_model(child2_tm, f->child2,n,x0,x,method);
   mpfi_init2(gx0,getToolPrecision());
  // mpfi_set(gx0,child2_tm->poly_array[0]);
   mpfi_set_ui(gx0,0);
@@ -3976,7 +4514,13 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
   
   inv_tm=createEmptycModel(n,gx0,rangeg);
   varInv_CM(inv_tm,gx0,rangeg,n);
-  composition_CM(ttt,inv_tm,child2_tm);
+  //varInvGeomSeries_CM(inv_tm,gx0,rangeg,n);
+  if(method==0){
+    composition_CM(ttt,inv_tm,child2_tm);
+  }
+  else{
+    compositionHornerScheme_CM(ttt,inv_tm,child2_tm);
+  }
   multiplication_CM(tt, ttt, child1_tm);
   //clear old children
   clearcModel(child1_tm);
@@ -4031,7 +4575,7 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
     child1_tm=createEmptycModel(n,x0,x);
     child2_tm=createEmptycModel(n,x0,x);
     //call taylor_model on the child
-    cheby_model(child1_tm, f->child1,n,x0,x);
+    cheby_model(child1_tm, f->child1,n,x0,x,method);
     //compute tm for the basic case
     printf("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&");
     printf("\nThe cheb model for: ");
@@ -4051,6 +4595,17 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
     base_CM(child2_tm,f->nodeType,n,fcoeff0, rangef);
     printf("\n************* result************\n");   
     
+    
+    /*printf("\n************* cheby model based on Lagrange Basis************\n");
+    chebArray = safeMalloc((n)*sizeof(mpfr_t));
+    for(j=1; j <=n ; j++) {
+    mpfr_init2(chebArray[j-1], getToolPrecision());
+    }
+    getCoeffsLagrangeBasis(child2_tm, chebArray, f,rangef,n);
+    //base_CM(child2_tm,f->nodeType,n,fcoeff0, rangef);
+    printf("\n************* result************\n");   
+    */
+    
     printcModel(child2_tm);
     
     printf("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&");
@@ -4060,7 +4615,14 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
     printcModel(child2_tm);
     printf("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&");    
     printf("We compose");
+    
+    if (method==0) {
     composition_CM(tt,child2_tm, child1_tm);
+    }
+    else{
+    //compositionLagrangeBasis_CM(tt,child2_tm, child1_tm, chebArray);
+    compositionHornerScheme_CM(tt,child2_tm, child1_tm);
+    }
     printf("\n\n*************after the composition************\n");   
     printcModel(tt);
     
@@ -4101,7 +4663,7 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
         //create a new empty cheby model for the child
         child1_tm=createEmptycModel(n,x0,x);
         //call taylor_model for the child
-        cheby_model(child1_tm, f->child1,n,x0,x);
+        cheby_model(child1_tm, f->child1,n,x0,x,method);
         //printf("\n\n-----------chebymodel child1: \n");
         //printcModel(child1_tm);
         //printf("-----------------------------\n");
@@ -4137,7 +4699,7 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
         //create a new empty taylor model the child
         child2_tm=createEmptycModel(n,x0,x);
         //call cheby_model for the child
-        cheby_model(child2_tm, f->child2,n,x0,x);
+        cheby_model(child2_tm, f->child2,n,x0,x,method);
         
         mpfi_init2(fx0,getToolPrecision());
         mpfi_set(fx0, child2_tm->poly_array[0]);
@@ -4169,10 +4731,10 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
         child1_tm=createEmptycModel(n,x0,x);
         child2_tm=createEmptycModel(n,x0,x);
         //call cheby_model for child 2 = g
-        cheby_model(child2_tm, f->child2,n,x0,x);
+        cheby_model(child2_tm, f->child2,n,x0,x,method);
         
         //call cheby_model for child 1 = f
-        cheby_model(child1_tm, f->child1,n,x0,x);
+        cheby_model(child1_tm, f->child1,n,x0,x,method);
         
         //create  cheby_model for log (child 1) = log(f)
                 
@@ -4236,6 +4798,7 @@ void cheby_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x) {
 
 }
 }
+printf("out of cheby_model");
   return;
 }
 /*This function computes a translation for the polynomial P(x) to the polynomial P(x-x0)
@@ -4368,7 +4931,7 @@ int CM(chain**resP, void **args) {
   mpfi_t x,x0 ;// , bound;
   mpfr_t *coeffsMpfr;
   mpfi_t *coeffsErrors, *rest;
-  int n,i;
+  int n,i,method;
   chain *ch;
   node *resultPoly;
   node *remainderL, *remainderR;
@@ -4377,7 +4940,7 @@ int CM(chain**resP, void **args) {
   
   f = (node *)args[0];
   n = *( (int *)args[3] );
-
+  method=*( (int *)args[4] );
   mpfi_init2(x0, getToolPrecision());
   mpfi_set(x0, *( (mpfi_t *)args[1] ));
   
@@ -4387,7 +4950,7 @@ int CM(chain**resP, void **args) {
   tModel *t;
   
   t=createEmptycModel(n,x0,x);
-  cheby_model(t,f,n,x0,x);
+  cheby_model(t,f,n,x0,x,method);
   
   
   printcModel(t);
@@ -4446,5 +5009,231 @@ int CM(chain**resP, void **args) {
 	mpfi_clear(x0);   
   return 1;
 }
+
+
+int CM_MUL(chain**resP, void **args) {
+  node *f1, *f2;
+  mpfi_t x, x0;// , bound;
+  mpfi_t I1, I2;
+  mpfr_t *coeffsMpfr;
+  mpfi_t *coeffsErrors, *rest;
+  int n,i,method;
+  chain *ch;
+  node *resultPoly;
+  node *remainderL, *remainderR;
+  mpfr_t *ptr;
+  ch=NULL;
+  
+  f1 = (node *)args[0];
+  
+  mpfi_init2(I1, getToolPrecision());
+  mpfi_set(I1, *( (mpfi_t *)args[1] ));
+  
+  f2 = (node *)args[2];
+  mpfi_init2(I2, getToolPrecision());
+  mpfi_set(I2, *( (mpfi_t *)args[3] ));
+  
+  mpfi_init2(x, getToolPrecision());
+  mpfi_set(x, *( (mpfi_t *)args[4] ));
+  
+  
+  n = *( (int *)args[5] );
+  method=*( (int *)args[6] );
+  
+  
+ 
+  tModel *t1, *t2, *t;
+  
+  mpfi_init2(x0, getToolPrecision());
+  mpfi_set_ui(x0,0);
+  
+  t1=createEmptycModel(n,x0,x);
+  t2=createEmptycModel(n,x0,x);
+  
+  /*this is just to extract nicely the coeffs, without me bothering now*/
+  cheby_model(t1,f1,n,x0,x,method);
+  cheby_model(t2,f2,n,x0,x,method);  
+  printf("before reminder modification");
+  mpfi_set(t1->rem_bound, I1);
+  mpfi_set(t2->rem_bound, I2);
+  
+  
+    
+  t=createEmptycModel(n,x0,x);
+  printf("before multiplication");
+  multiplication_CM(t, t1,t2);
+   
+  printcModel(t);
+
+  coeffsMpfr= (mpfr_t *)safeMalloc((n)*sizeof(mpfr_t));
+  coeffsErrors= (mpfi_t *)safeMalloc((n)*sizeof(mpfi_t));
+
+  rest= (mpfi_t*)safeMalloc(sizeof(mpfi_t));
+  mpfi_init2(*rest,getToolPrecision());
+
+  for(i=0;i<n;i++){
+   mpfi_init2(coeffsErrors[i],getToolPrecision());
+   mpfr_init2(coeffsMpfr[i],getToolPrecision());
+  }
+  //mpfr_get_poly(mpfr_t *rc, mpfi_t *errors, mpfi_t rest, int n, mpfi_t *gc, mpfi_t x0, mpfi_t x)
+  mpfr_get_poly(coeffsMpfr, coeffsErrors, *rest, t->n -1,t->poly_array, t->x0,t->x);
+ 
+ //create T; 
+ resultPoly=constructPolyShifted(coeffsMpfr, t->n-1, t->x0);
+  mpfi_set(*rest,t->rem_bound);  
+  printInterval(*rest);
+  
+  
+  
+  remainderL = (node*)safeMalloc(sizeof(node));
+  remainderL->nodeType = CONSTANT;
+  ptr = (mpfr_t*)safeMalloc(sizeof(mpfr_t));
+  mpfr_init2(*ptr, getToolPrecision());
+  mpfi_get_left(*ptr,t->rem_bound);
+  remainderL->value = ptr;
+  
+  remainderR = (node*)safeMalloc(sizeof(node));
+  remainderR->nodeType = CONSTANT;
+  ptr = (mpfr_t*)safeMalloc(sizeof(mpfr_t));
+  mpfr_init2(*ptr, getToolPrecision());
+  mpfi_get_right(*ptr,t->rem_bound);
+  remainderR->value = ptr;
+  
+  
+  
+  
+   ch=addElement(ch, remainderR);
+   ch=addElement(ch, remainderL);
+   ch=addElement(ch, resultPoly);
+  *resP=ch;
+  
+  for(i=0;i<n;i++){
+    mpfr_clear(coeffsMpfr[i]);
+  }
+  free(coeffsMpfr);
+  
+  clearcModel(t);
+
+  clearcModel(t1);
+  clearcModel(t2);   
+  mpfi_clear(x);
+	mpfi_clear(x0);   
+	mpfi_clear(I1);
+	mpfi_clear(I2); 
+  return 1;
+}
+
+int CM_ADD(chain**resP, void **args) {
+  node *f1, *f2;
+  mpfi_t x, x0;// , bound;
+  mpfi_t I1, I2;
+  mpfr_t *coeffsMpfr;
+  mpfi_t *coeffsErrors, *rest;
+  int n,i,method;
+  chain *ch;
+  node *resultPoly;
+  node *remainderL, *remainderR;
+  mpfr_t *ptr;
+  ch=NULL;
+  
+  f1 = (node *)args[0];
+  
+  mpfi_init2(I1, getToolPrecision());
+  mpfi_set(I1, *( (mpfi_t *)args[1] ));
+  
+  f2 = (node *)args[2];
+  mpfi_init2(I2, getToolPrecision());
+  mpfi_set(I2, *( (mpfi_t *)args[3] ));
+  
+  mpfi_init2(x, getToolPrecision());
+  mpfi_set(x, *( (mpfi_t *)args[4] ));
+  
+  
+  n = *( (int *)args[5] );
+  method=*( (int *)args[6] );
+  
+  
+ 
+  tModel *t1, *t2, *t;
+  
+  mpfi_init2(x0, getToolPrecision());
+  mpfi_set_ui(x0,0);
+  
+  t1=createEmptycModel(n,x0,x);
+  t2=createEmptycModel(n,x0,x);
+  
+  /*this is just to extract nicely the coeffs, without me bothering now*/
+  cheby_model(t1,f1,n,x0,x,method);
+  cheby_model(t2,f2,n,x0,x,method);  
+  printf("before reminder modification");
+  mpfi_set(t1->rem_bound, I1);
+  mpfi_set(t2->rem_bound, I2);
+  
+  
+    
+  t=createEmptycModel(n,x0,x);
+  printf("before addition");
+  addition_CM(t, t1,t2);
+   
+  printcModel(t);
+
+  coeffsMpfr= (mpfr_t *)safeMalloc((n)*sizeof(mpfr_t));
+  coeffsErrors= (mpfi_t *)safeMalloc((n)*sizeof(mpfi_t));
+
+  rest= (mpfi_t*)safeMalloc(sizeof(mpfi_t));
+  mpfi_init2(*rest,getToolPrecision());
+
+  for(i=0;i<n;i++){
+   mpfi_init2(coeffsErrors[i],getToolPrecision());
+   mpfr_init2(coeffsMpfr[i],getToolPrecision());
+  }
+  //mpfr_get_poly(mpfr_t *rc, mpfi_t *errors, mpfi_t rest, int n, mpfi_t *gc, mpfi_t x0, mpfi_t x)
+  mpfr_get_poly(coeffsMpfr, coeffsErrors, *rest, t->n -1,t->poly_array, t->x0,t->x);
+ 
+ //create T; 
+ resultPoly=constructPolyShifted(coeffsMpfr, t->n-1, t->x0);
+  mpfi_set(*rest,t->rem_bound);  
+  printInterval(*rest);
+  
+  
+  
+  remainderL = (node*)safeMalloc(sizeof(node));
+  remainderL->nodeType = CONSTANT;
+  ptr = (mpfr_t*)safeMalloc(sizeof(mpfr_t));
+  mpfr_init2(*ptr, getToolPrecision());
+  mpfi_get_left(*ptr,t->rem_bound);
+  remainderL->value = ptr;
+  
+  remainderR = (node*)safeMalloc(sizeof(node));
+  remainderR->nodeType = CONSTANT;
+  ptr = (mpfr_t*)safeMalloc(sizeof(mpfr_t));
+  mpfr_init2(*ptr, getToolPrecision());
+  mpfi_get_right(*ptr,t->rem_bound);
+  remainderR->value = ptr;
+  
+  
+  
+  
+   ch=addElement(ch, remainderR);
+   ch=addElement(ch, remainderL);
+   ch=addElement(ch, resultPoly);
+  *resP=ch;
+  
+  for(i=0;i<n;i++){
+    mpfr_clear(coeffsMpfr[i]);
+  }
+  free(coeffsMpfr);
+  
+  clearcModel(t);
+
+  clearcModel(t1);
+  clearcModel(t2);   
+  mpfi_clear(x);
+	mpfi_clear(x0);   
+	mpfi_clear(I1);
+	mpfi_clear(I2); 
+  return 1;
+}
+
 
 
