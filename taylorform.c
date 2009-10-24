@@ -2188,6 +2188,7 @@ void  varInv_TM(tModel *t,mpfi_t x0, mpfi_t x, int n,int mode){
       /*absolute error*/
       mpfi_init2(pow,getToolPrecision());
       mpfi_set_ui(pow,n);
+      mpfi_init2(temp,getToolPrecision());
       mpfi_sub(temp,x,x0);
       mpfi_pow(temp,temp,pow);
       mpfi_mul(tt->rem_bound,tt->rem_bound,temp);
@@ -2249,6 +2250,7 @@ void  ctPowerVar_TM(tModel *t,mpfi_t x0, mpfi_t x, int n, mpfr_t p,int mode){
       /*absolute error*/
       mpfi_init2(pow,getToolPrecision());
       mpfi_set_ui(pow,n);
+      mpfi_init2(temp,getToolPrecision());
       mpfi_sub(temp,x,x0);
       mpfi_pow(temp,temp,pow);
       mpfi_mul(tt->rem_bound,tt->rem_bound,temp);
@@ -2310,6 +2312,7 @@ void  varCtPower_TM(tModel *t,mpfi_t x0, mpfi_t x, int n, mpfr_t p,int mode){
         /*absolute error*/
         mpfi_init2(pow,getToolPrecision());
         mpfi_set_ui(pow,n);
+        mpfi_init2(temp,getToolPrecision());
         mpfi_sub(temp,x,x0);
         mpfi_pow(temp,temp,pow);
         mpfi_mul(tt->rem_bound,tt->rem_bound,temp);
@@ -2406,8 +2409,6 @@ void polynomialBoundSharpUncertified(mpfi_t *bound,int n,mpfi_t *coeffs,mpfi_t x
  diff_poly = differentiate(poly);
  //find the zeros
 
- /* chain *uncertifiedFindZeros(node *tree, mpfr_t a, mpfr_t b, unsigned long int points, mp_prec_t prec); */
-
  zeros =uncertifiedFindZeros(diff_poly, a, b, points, getToolPrecision());
  nrRoots=lengthChain(zeros);
  rootsIntervals= (mpfi_t *)safeMalloc((nrRoots)*sizeof(mpfi_t));
@@ -2484,7 +2485,26 @@ void polynomialBoundSharp(mpfi_t *bound,int n,mpfi_t *coeffs,mpfi_t x0,mpfi_t x)
  //polynomialBoundSharpUncertified(bound,n,coeffs,x0,x);
 }
 
-
+/*This function computes a translation for the polynomial P(x) to the polynomial P(x+x0)
+*/
+ 
+void polynomialTranslate(mpfi_t *coeffsT,int n,mpfi_t *coeffs,mpfi_t x0){
+  mpfi_t temp;
+  int i,k;
+  mpfi_init2(temp, getToolPrecision());
+  for (i=0; i<=n;i++){
+    mpfi_init2(coeffsT[i], getToolPrecision());
+    mpfi_set(coeffsT[i], coeffs[i]);
+  }
+  
+  for (i=1; i<=n; i++)
+    for(k=n-i;k<=n-1;k++){
+      mpfi_mul(temp, x0, coeffsT[k+1]);
+      mpfi_add(coeffsT[k],coeffsT[k],temp);  
+    }
+    mpfi_clear(temp);
+ 
+}
 
 
 
@@ -2964,7 +2984,7 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x, int mode) {
         taylor_model(child2_tm, f->child2,n,x0,x,mode);
         
         mpfi_init2(fx0,getToolPrecision());
-        evaluateMpfiFunction(fx0,f->child1,x0,getToolPrecision());
+        evaluateMpfiFunction(fx0,f->child2,x0,getToolPrecision());
         
         mpfi_init2(rangef, getToolPrecision());
         mpfi_init2(powx, getToolPrecision());
@@ -2977,7 +2997,7 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x, int mode) {
           mpfi_add(rangef,rangef, child2_tm->poly_bound);
         }
         else{
-          mpfi_add(rangef,child1_tm->rem_bound, child1_tm->poly_bound);
+          mpfi_add(rangef,child2_tm->rem_bound, child2_tm->poly_bound);
         }
         //create tm for p^x over ragef in fx0
         varCtPower_tm=createEmptytModel(n,fx0,rangef);
