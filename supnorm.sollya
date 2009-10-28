@@ -1,43 +1,7 @@
 
-
-// Procedure startDegree
-//
-// Given the degree n of the polynomial p, approximating f, 
-// we are computing a supremum norm ||p-f|| or ||p/f-1|| on, 
-// estimate a degree for the Taylor Form polynomial T to start with.
-//
-// Postcondition: value returned greater than or equal to n
-//
-procedure startDegree(n) {
-        return n + 1;
-};
-
-
-// Procedure nextDegree
-//
-// Given the degree n of a Taylor Form T computing the supremum norm 
-// has failed with, give a greater degree of a new Taylor Form to try 
-// computing the supremum norm with.
-//
-// Postcondition: value returned greater than n 
-//
-procedure nextDegree(n) {
-        return n + 1;
-};
-
-
-// Procedure upperBoundPolyCoeffRests
-//
-// Given a list l of intervals l = [|c_0,...,c_n|] and an interval I, 
-// compute an interval bound such that 
-//
-// for all x in I, forall a_i in c_i, sum a_i * x^i in bound
-//
 procedure upperBoundPolyCoeffRests(l,I) {
         var bound;
         var myList;
-
-        // Details: just a simple Horner in Interval Arithmetic
 
         if (l == [||]) then {
                 bound = [0];
@@ -54,168 +18,25 @@ procedure upperBoundPolyCoeffRests(l,I) {
         return bound;
 };
 
-// Procedure myfindzeros
-//
-// Given a polynomial p, an interval I and a real number quality,
-// compute a list zeros = [z_0,...,z_n|] of intervals such that 
-//
-// for all z in I , p(z) = 0 implies exists z_i in zeros such that z in z_i
-//
-// and 
-// 
-// if things are pretty, the relative error of all values x in z_i with 
-// respect to the real zero z z_i represents is bounded by quality.
-//
-procedure myfindzeros(p,I,quality) {
-        var nbZeros;
-        var oldPoints;
-        var fpZeros;
-        var done;
-        var z;
-        var Z, Y;
-        var oldPrec;
-        var zeros;
-        var tmp;
 
-        // Compute the number of zeros of p 
-        nbZeros = numberroots(p,I);
-
-	if (nbZeros > 0) then {
-                // If there is a zero to find
-
-                // Using dirtyfindzeros try to find
-                // floating-point approximations of all these
-                // zeros of p. Start with almost no breakpoints,
-                // use more and more. 
-                //
-                // Set prec to a little more that what the quality asks 
-                // for in order to make the Newton iterations stop pretty 
-                // early. That prec condition makes the difference with
-                // a findzeros.
-                //
-                oldPoints = points;
-                points = nbZeros * 4!;
-                oldPrec = prec;
-                prec = ceil(-log2(abs(quality))) + 5!;
-                done = false;
-                while ((!done) && (points <= oldPoints)) do {
-                        fpZeros = dirtyfindzeros(p,I);
-                        if (length(fpZeros) >= nbZeros) then {
-                                done = true;
-                        } else {
-                                points = points * 2!;
-                                prec = prec + 10!;
-                        };
-                };
-                points = oldPoints!;
-
-                // There are cases where we need the precision, so try again
-                //
-                if (!done) then {
-                        prec = oldPrec!;
-                        oldPoints = points;
-                        points = nbZeros * 4!;
-                        done = false;
-                        while ((!done) && (points <= oldPoints)) do {
-                                fpZeros = dirtyfindzeros(p,I);
-                                if (length(fpZeros) >= nbZeros) then {
-                                        done = true;
-                                } else {
-                                        points = points * 2!;
-                                        prec = prec + 10!;
-                                };
-                        };
-                        points = oldPoints!;
-
-                        // In some cases, we fail to find a zero of even
-                        // degree in zero. So we give a final try.
-                        //
-                        if ((!done) && (length(fpZeros) == nbZeros - 1)) then {
-                                tmp = evaluate(p,[0]);
-                                if (inf(tmp) * sup(tmp) <= 0) then {
-                                        fpZeros = 0 .: fpZeros;
-                                        done = true;
-                                };
-                        };
-                };
-
-                // If we found enough points, build up small intervals 
-                // around them and using Interval Arithmetic, check if the
-                // sign of p changes over these small intervals.
-                //
-                if (done) then {
-                        zeros = [||];
-                        for z in fpZeros do {
-                                Z = [z - abs(quality * z); z + abs(quality * z)];
-                                Y = evaluate(p,Z);
-                                if (inf(Y) * sup(Y) <= 0) then {
-                                        zeros = zeros :. Z;
-                                };
-                        };
-                        if (length(zeros) < nbZeros) then {
-                                write("Warning: could not find enough high-quality zeros enclosures (1)\n");
-                                prec = oldPrec!;
-                                zeros = findzeros(p,I);
-                        };
-                } else {
-                        write("Warning: could not find enough high-quality zeros enclosures (2)\n");
-                        prec = oldPrec!;
-                        zeros = findzeros(p,I);
-                };
-                prec = oldPrec!;
-        } else {
-                // If there are no zeros to find...
-		//
-		zeros = [||];
-	};
-
-        return zeros;
+procedure myfindzeros(p,I) {
+        return findzeros(p,I);
 };
 
-
-// Procedure polyBound
-//
-// Given a polynomial p, an interval I and a real number quality
-// compute an interval bound such that 
-//
-// forall x in I, p(x) in bound
-//
-// and 
-//
-// if things are pretty, bound is the hull of all interval arithmetic 
-// evaluations of p(X) where X are intervals containing the critical points of 
-// p (possible extrema) and have a relative error (on the critical point X) not
-// larger than quality.
-//
-//
-procedure polyBound(p,I,quality) {
+procedure polyBound(p,I) {
         var pdiff;
         var z, zeros;
         var boundA, boundB, boundC, bound;
 
-        // Details:
-        //
-        // Find all zeros of the derivative and 
-        // evaluate there and on the bounds.
-        //
-        // Experiments show that even if we can 
-        // take low precision for the determination
-        // of the zeros, we have to maintain pretty 
-        // high precision for the Interval Arithmetic
-        // evaluation over the critical points.
-        // That might come from the fact that there is no
-        // precision adaption at all inside the evaluates.
-
         pdiff = diff(p);
-        zeros = myfindzeros(pdiff,I,quality);
-
+        
         boundA = evaluate(p,[inf(I)]);
         boundB = evaluate(p,[sup(I)]);  
         bound = boundA;
-        inner = boundA;
         if (inf(boundB) < inf(bound)) then bound = [inf(boundB),sup(bound)];
         if (sup(boundB) > sup(bound)) then bound = [inf(bound),sup(boundB)];
 
+        zeros = myfindzeros(pdiff,I);
 
         for z in zeros do {
                 boundC = evaluate(p,z);
@@ -226,114 +47,95 @@ procedure polyBound(p,I,quality) {
         return bound;
 };
 
-// Procedure showPositivity 
-//
-// Given a polynomial p, an interval I and a boolean silent, compute a 
-// boolean res such that 
-//
-// res is true implies forall x in I p(x) > 0,
-// 
-// and
-//
-// if silent is not true and res is false a warning is printed
-//
-// Additionally, make sure that if things are pretty, 
-//
-// forall x in I p(x) > 0 implies res is true
-//
-procedure showPositivity(p,I,silent) {
+procedure recurseFindZeros(p,I,n) {
         var res;
         var zeros;
+        var z;
 
-        // A polynomial is positive if it is positive somewhere and does not 
-        // cross x-axis.
-        //
-        // Actually the sign test is pretty useless as we know (for almost sure)
-        // our polynomials are positive somewhere. If you can prove that out of
-        // some easy precondition, please do so and remove the test.
-        //
-        res = (numberroots(p,I) == 0) && (inf(evaluate(p,[mid(I)])) > 0);
-
-        if ((!res) && (!silent)) then {
-                write("Warning: could not show positivity\n");
+        if (n < 1) then {
+                res = findzeros(p,I);
+        } else {
+                zeros = recurseFindZeros(p,I,n-1);
+                res = [||];
+                for z in zeros do {
+                        res = res @ findzeros(p,z);
+                };
         };
 
         return res;
 };
 
+procedure showPositivity(p,I) {
+        var res;
+        var zeros;
+        
+        res = (numberroots(p,I) == 0);
 
-// Procedure checkPolyBound
-//
-// Given a polynomial p, an interval I, a real number bound and 
-// a boolean silent compute a couple res (a list of 2 elements) 
-// consisting of a boolean checked and a list sosInstances such that
-//
-// checked is true implies that forall x in I, |p(x)| < bound
-//
-// and 
-//
-// if res is false and silent is false then a warning is printed.
-//
-// Additionally, make sure that if things are pretty,
-//
-// forall x in I |p(x)| < bound implies checked is true
-//
-// Finally, make sure the list sosInstances contains couples (lists 
-// of 2 elements) of polynomials q and the given interval I such 
-// that 
-//
-// forall x in I, q(x) > 0
-//
-// and
-//
-// q is either p - inf(bound) or -p + sup(bound) 
-//
-// where inf(bound) and sup(bound) denote the lower and upper 
-// bounds of the interval bound.
-//
-procedure checkPolyBound(p,I,bound,silent) {
-        var checked;
+        if (!res) then {
+                zeros = recurseFindZeros(p,I,2);
+                res = (zeros == [||]);
+        };
+
+        if (!res) then {
+                write("Warning: could not show positivity\n");
+                write("Warning: the function might have zeros in ",zeros,"\n");
+        };
+
+        return res;
+};
+
+procedure showPositivityAlternative(p,I) {
+        var res;
+        var bound;
+        var oldDisplay;
+        var q;
+        var oldTiming;
+
+        oldTiming = timing;
+        timing = on!;
+        {
+        timing = oldTiming!;
+        
+        q = horner(p);
+
+        bound = polyBound(q,I);
+
+        res = ((inf(bound) > 0) && (sup(bound) > 0));
+
+        if (!res) then {
+                zeros = recurseFindZeros(p,I,2);
+                res = (zeros == [||]);
+        };
+
+        if (!res) then {
+                write("Warning: could not show positivity\n");
+
+        };
+
+        timing = on!;
+        };
+        timing = oldTiming!;
+        write("Information: last timing result was for a showPositivity\n");
+
+        return res;
+};
+
+procedure checkPolyBound(p,I,bound) {
+        var res;
         var qUp, qDown;
         var sosInstances;
-
-        // Show bounding of a polynomial by showing it is 
-        // greater than the lower bound and less than the upper bound anywhere.
-        // That translates into showing that the translated (and possibly mirrored)
-        // polynomials are strictly positive.
 
         qUp = -(p - sup(bound));
         qDown = p - inf(bound);
 
-        checked = (showPositivity(qUp,I,silent) && showPositivity(qDown,I,silent));
+        res = (showPositivity(qUp,I) && showPositivity(qDown,I));
         
         sosInstances = [| [| qUp, I |], [| qDown, I |] |];
 
-        return [| checked, sosInstances |];
+        return [| res, sosInstances |];
 };
 
 
-// Procedure polyApprox
-//
-// Given a function f, an interval I, a real number x0 in I, 
-// an integer n and a mode mode one of absolute or relative,
-// compute a couple (list with 2 elements) consisting of 
-// a polynomial TRounded and an interval Delta such that 
-//
-// * forall x in I f(x) - TRounded(x) in Delta
-//
-// * TRounded has degree n
-// 
-// * All coefficients of TRounded are floating-point numbers
-//   of precision prec (prec being the ambient precision)
-//
-// * if mode is relative and f vanishes in x0, the interval
-//   Delta has finite bounds.
-//
-// Additionally, make sure that if things are pretty that 
-//
-// * if n and prec tend to infinity, the width of Delta tends 
-//   to zero and zero is inside Delta starting at some rank.
-//
 procedure polyApprox(f,I,x0,n,mode) {
         var p;
         var Delta, DeltaCoeffs, DeltaLagrange;
@@ -342,128 +144,78 @@ procedure polyApprox(f,I,x0,n,mode) {
         var T, TRounded, TDiff;
         var DeltaRound;
 
-        // Get a Taylorform
         TM = taylorform(f,n,x0,I,mode);
         p = TM[0];
-
-        // Now translate the Lagrange rest
-        // in an absolute Lagrange rest in all cases.
-        //
         if (mode == absolute) then {
                 DeltaLagrange = TM[2];
         } else {
-                DeltaLagrange = evaluate(x^(n-1),I-x0) * TM[2];
+                DeltaLagrange = evaluate(x^(n+1),I-x0) * TM[2]; 
+                //It was: DeltaLagrange = evaluate(x^(n-1),I-x0) * TM[2]; (M&S)
         };
-
-        // Bound the error due to the coefficient rests.
-        // This means evaluating the family of the polynomials
-        // having the rests as coefficients over the interval.
         DeltaCoeffs = upperBoundPolyCoeffRests(TM[1],I-x0);
-
-        // Now shift the Taylorform so that T is a polynomial
-        // trivially approximating f
         oldRationalMode = rationalmode;
-        rationalmode = on!;
+        rationalmode = on!;//we don't understand the rational mode (M&S)
         T = horner(simplifysafe(p(x - x0)));
         rationalmode = oldRationalMode!;
-
-        // Now round of the coefficients of T into small 
-        // floating-point numbers.
-        // This must be done after the translation.
-        //
         TRounded = roundcoefficients(T,[| prec... |]);
         TDiff = horner(T - TRounded);
-
-        // Bound the extra rounding error due to the
-        // rounding of the coefficient.
-        // This means bounding (evaluating in Interval Arithmetic)
-        // of the round-off polynomial.
-        //
         DeltaRound = evaluate(TDiff,I);
-
-        // Add up all 3 sources of error
         Delta = DeltaCoeffs + DeltaLagrange + DeltaRound;
 
         return [| TRounded, Delta |];
 };
 
-
-// Procedure supnormLowBound
-//
-// Given a polynomial p, a function f, an interval I,
-// a real number quality and a mode mode one of absolute
-// or relative, compute a real number res such that 
-//
-// ||g||_infty^I >= res
-//
-// where g is the function defined by 
-//
-// * g = p - f   if mode is absolute
-// * g = p/f - 1 if mode is relative
-//
-// Additionally, make sure that if things are pretty that
-//
-// exists err, |err| < quality, such that 
-//
-//  res = ||g||_infty^I * (1 + err)
-//
-procedure supnormLowBound(p,f,I,quality,mode) {
+procedure supnormLowBoundAlternative(p,f,I,quality,mode) {
         var res;
-        var g, gPrime;
         var zeros;
-        var oldPrec;
-        var z, y;
-
-        // Construct approximation error function, differentiate it
-        // (resp. take the numerator of its derivative), find the zeros
-        // of the derivative and do an interval evaluation of these
-        // zeros plus the interval endpoints. The lower bounds
-        // of the image bounding intervals are near the real
-        // supremum norm but certainly below it.
+        var g, gPrime;
+        var z, b;
 
         if (mode == absolute) then {
                 g = p - f;
-                gPrime = diff(p) - diff(f);
+                gPrime = diff(p - f);
         } else {
                 g = p/f-1;
-                gPrime = diff(p) * f - p * diff(f);
+                gPrime = diff(p) * f - diff(f) * p;
         };
 
-
-        oldPrec = prec;
-        prec = ceil(-log2(abs(quality)))-5!;
-        zeros = dirtyfindzeros(gPrime,I);        
-        zeros = [|inf(I),sup(I)|] @ zeros;
-        prec = prec + 5!;
+        zeros = dirtyfindzeros(gPrime,I);
         res = 0;
         for z in zeros do {
-                y = abs(evaluate(g,[z]));
-                if (inf(y) > res) then res = inf(y);
+                b = abs(evaluate(g,[z]));
+                if (inf(b) > res) then res = inf(b);   
         };
-        prec = oldPrec!;
+        b = abs(evaluate(g,[inf(I)]));
+        if (inf(b) > res) then res = inf(b);   
+        b = abs(evaluate(g,[sup(I)]));
+        if (inf(b) > res) then res = inf(b);   
+
+        res = round(res,floor(-log2(abs(quality)))+5,RD);
 
         return res;
 };
 
 
-// Procedure supnormAbsolute
-//
-// Given a polynomial p, a function f, an interval I and 
-// a real number quality compute a couple (list of 2 elements)
-// consisting of an interval res and a list sosInstances such that
-//
-// * ||p-f||_infty^I in res
-//
-// * sosInstances is a list of couples (lists of 2 elements)
-//   consisting each of a polynomial q and an interval J such that 
-//   ....
-//
-// * and if things are pretty, 
-//
-//   forall y in res exists err, |err| <= quality, such that 
-//
-//     y = ||p-f||_infty^I * (1 + err)
-//
+procedure supnormLowBound(p,f,I,quality,mode) {
+        var res;
+        var zeros;
+        var g, gPrime;
+        var z, b;
+
+        if (mode == absolute) then {
+                g = p - f;
+        } else {
+                g = p/f-1;
+        };
+
+        res = dirtyinfnorm(g,I);
+
+        res = round(res,floor(-log2(abs(quality)))+10,RD);
+        //the res obtained here is not certified to be a low bound for the infnorm(M&S)
+        return res;
+};
+
+
 procedure supnormAbsolute(p,f,I,quality) {
         var n;
         var x0;
@@ -474,122 +226,86 @@ procedure supnormAbsolute(p,f,I,quality) {
         var lowBound;
         var done;
         var q;
+        var rWidened, DeltaDiffWidened, rWidenedRecomp;
         var oldMidpointMode;
         var sosInstances;
         var polyBoundRes;
-        var highBound;
-        var rWidening, DeltaDiffWidened, rWidened, highBoundWidened;
 
-        // Take a Taylor Form midpoint
         x0 := mid(I);
+        n = degree(p) + 1;
 
-        // Take a starting degree
-        n = startDegree(degree(p));
-
-        // Get a low bound that is:
-        //
-        // * of good quality
-        // * certainly 1/8 * quality lower
-        //
-        lowBound = supnormLowBound(p,f,I,quality/8,absolute);
-	lowBound = lowBound - abs(lowBound * quality/8);
-
-        // Preset the high bound
-        //
+        lowBound = supnormLowBound(p,f,I,quality/4,absolute);
         highBound = infty;
-
-        // In the end, the Taylor Form polynomial will approximate f that well
-        // that the supremum norm of p - f is typically p - T
-        //
-        // So we do not need to compute the bound for p - T at each loop turn
-        // but just to prove it. That is much faster. We infer the bound to 
-        // prove from the low bound for the sup norm that we have.
-        //
-        DeltaDiff = [-(lowBound * (1 + abs(quality/2)));(lowBound * (1 + abs(quality/2)))];
 
         done = false;
         while ((n < 200) && (!done)) do {        
-                // Get a Taylor form, get q = p - T
                 TDelta = polyApprox(f,I,x0,n,absolute);
                 T = TDelta[0];
                 Delta = TDelta[1];
                 q = p-T;
 
-                // Compute the complete bounding, infered bound for p - T plus (minus actually)
-                // the Lagrange bound.
-                //
-                r = DeltaDiff - Delta;
+                DeltaDiff = polyBound(q,I);
 
-                // Get the current high bound
+                r = Delta - DeltaDiff;
+                
+                //it was r = Delta + DeltaDiff;
+                //M&S modified it
+                 
+                 
+                "Delta", Delta;
+                "DeltaDiff", DeltaDiff;
+
                 highBound = abs(sup(r));
                 if (abs(inf(r)) > highBound) then {
                     highBound = abs(inf(r));    
                 };
+                //highBound =sup(abs(r)); will work also (M&S)
+                
+                "highBound", highBound;
 
-                // Safety check, should be useless
-                if (highBound - lowBound < 0) then {
-                        write("Warning: highBound is less than lowBound.\n");
-                        write("highBound = ",highBound,"\n");
-                        write("lowBound  = ",lowBound,"\n");
-                };
-
-                // Check if accuracy is already okay.
                 if (abs(highBound - lowBound) < abs(lowBound * quality)) then {
-                        // Only if the accuracy is okay, it is worth checking
-                        // if p - T is in the infered bound (otherwise we would 
-                        // throw the result away).
-                        // 
-
-           	        polyBoundRes = checkPolyBound(q,I,DeltaDiff,true);
-                        if (polyBoundRes[0]) then {
-                                // Here, we have found something that is proveable
-                                // and gives us the accuracy we need.
-                                //
-                                sosInstances = polyBoundRes[1];
-                                res = [lowBound,highBound];
-                                done = true;
-                        }; 
-                }; 
-
-		if (!done) then {
+                        done = true;
+                } else {
+                        n = n + 1;
                         oldMidpointMode = midpointmode;
                         midpointmode = on!;
                         write("Information: n = ",n,": current bounding ",[lowBound,highBound],"\n");
                         midpointmode = oldMidpointMode!;
-                        n = nextDegree(n);
                 };
         };
 
-        if (!done) then {
-                write("Warning in supnorm: could not achieve the desired quality.\n");
-                res = [lowBound;sup(abs(evaluate(p-f,I)))];
+        if (done) then {
+                rWidened = [-(lowBound * (1 + abs(quality)));(lowBound * (1 + abs(quality)))];
+                DeltaDiffWidened = rWidened + Delta;
+                //it was DeltaDiffWidened = rWidened - Delta; (M&S)
+                
+                polyBoundRes = checkPolyBound(q,I,DeltaDiffWidened);
+                sosInstances = polyBoundRes[1];
+                if (polyBoundRes[0]) then {
+                        rWidenedRecomp = Delta - DeltaDiffWidened;
+                        //it was rWidenedRecomp = Delta + DeltaDiffWidened; (M&S)
+                        highBound = abs(sup(rWidenedRecomp));
+                        if (abs(inf(rWidenedRecomp)) > highBound) then {
+                                highBound = abs(inf(rWidenedRecomp));    
+                        };
+                } else {
+                        write("Warning in supnorm: widening did not work\n");
+                        polyBoundRes = checkPolyBound(q,I,DeltaDiff);
+                        sosInstances = polyBoundRes[1];
+                };
+                res = [lowBound,highBound];
+        } else {
+                write("Warning in supnorm: could not achieve the desired quality\n");
+                res = [lowBound;highBound];
         };
 
         return [| res, sosInstances |];
 };
 
-
-// Procedure encloseZeros
-//
-// Given a function f and an interval I, compute a 
-// list res of intervals Z_i such that 
-//
-// * forall z in I f(z) = 0 implies exists Z_i such that z in Z_i
-//
-// * the list res does not contain more that 16 elements
-//
-// * for all two intervals Z_i and Z_j in list res 
-//   
-//   i < j implies sup(Z_i) <= inf(Z_j)
-//
-//   where inf(Z) and sup(Z) are the lower resp. upper bound of
-//   an interval Z.
-//
 procedure encloseZeros(f,I) {
         var res;
         var oldDiam;
 
-        // diam is relative to the input interval
         oldDiam = diam;
         diam = 1/16!;
         res = findzeros(f,I);
@@ -597,36 +313,10 @@ procedure encloseZeros(f,I) {
         return res;
 };
 
-
-// Procedure globIntervals
-//
-// Given a list l of closed intervals I_i such that 
-//
-// for all two intervals I_i and I_j in list l
-//   
-//   i < j implies sup(I_i) < inf(I_j)
-//
-// where inf(Z) and sup(Z) are the lower resp. upper bound of
-// an interval Z, computes a list res of 
-//
-// closed intervals J_j such that 
-// 
-// * the union of real numbers in all I_i and the union of all real numbers
-//   in J_j are equal and
-//
-// * all intervals J_j in the list res are pairwise disjoint
-//
-// * for all two intervals J_i and J_j in list res 
-//   
-//   i < j implies sup(J_i) < inf(J_j)
-//
 procedure globIntervals(l) {
         var res;
         var myL;
         var curr, rescurr;
-
-        // For the reader: please check that uninteresting 
-        // piece of code that produces headaches and add a comment.
 
         if (length(l) <= 1) then {
                 res = l;
@@ -653,34 +343,11 @@ procedure globIntervals(l) {
         return res;
 };
 
-
-// Procedure invertIntervals
-//
-// Given a list l of intervals J_j 
-//
-// for all two intervals J_i and J_j in list l
-//   
-//   i < j implies sup(J_i) < inf(J_j)
-//
-// where inf(Z) and sup(Z) are the lower resp. upper bound of
-// an interval Z, and given an interval I, 
-// computes a list res of intervals K_k such that
-//
-// * the union of all intervals J_j in list l and of all intervals
-//   K_k in list res intersected by I is equal to I and
-//
-// * the union of all pairwise intersections of intervals J_j and 
-//   intervals K_k is equal to the set of numbers formed
-//   by the bounds of the intervals K_k in list res.
-//
 procedure invertIntervals(l,I) {
         var res;
         var myL;
         var curr;
         var a, b, bmax;
-
-        // For the reader: please check that uninteresting 
-        // piece of code that produces headaches and add a comment.
 
         if (l == [||]) then {
                 res = [| I |];
@@ -719,29 +386,6 @@ procedure invertIntervals(l,I) {
 };
 
 
-// Procedure supnormRelativeNoPole
-//
-// Given a polynomial p, a function f, an interval I, a real 
-// number quality, a real number x0 in I and a mode taylorModelMode
-// one of absolute or relative, compute a couple (list of 2 elements)
-// consisting of an interval res and a list sosInstances such that 
-//
-// * ||p/f-1||_infty^I in res
-//
-// * sosInstances is a list of couples (lists of 2 elements)
-//   consisting each of a polynomial q and an interval J such that 
-//   ....
-//
-// * if f does not vanish in I anywhere else but in x0 and if p/f - 1 is 
-//   continuous in x0, the bounds of res are finite
-//
-// * and if things are pretty and p/f - 1 is defined on all I 
-//   by continuity,
-//
-//   forall y in res exists err, |err| <= quality, such that 
-//
-//     y = ||p-f||_infty^I * (1 + err)
-//
 procedure supnormRelativeNoPole(p,f,I,quality,x0,taylorModelMode) {
         var n;
         var TDelta;
@@ -758,67 +402,20 @@ procedure supnormRelativeNoPole(p,f,I,quality,x0,taylorModelMode) {
         var sosInstances;
         var R, Eta;
 
-        // Get a start degree for the Taylor forms
-        n = startDegree(degree(p));
+        n = degree(p) + 1;
 
-        // Get a low bound that is 
-        //
-        // * lower in any case
-        // * has good quality
-        //
-        lowBound = supnormLowBound(p,f,I,quality/8,relative);
-	lowBound = lowBound - abs(lowBound * quality/8);
+        lowBound = supnormLowBound(p,f,I,quality/4,relative);
         highBound = infty;
 
         done = false;
         while ((n < 200) && (!done)) do {        
-                // Get the Taylor form with absolute error Delta
                 TDelta = polyApprox(f,I,x0,n,taylorModelMode);
                 T = TDelta[0];
                 Delta = TDelta[1];
 
-
-                // The general idea of what follows is 
-                //
-                // p/f-1 = p/(T+delta)-1 =
-                //       = p/T * T/(T+delta) - 1 =
-                //       = (p/T - 1 + 1) * (T/(T+delta) - 1 + 1) - 1 = 
-                //       = (p/T - 1) + (-delta/(T+delta) - 1) + (p/T - 1) * (-delta/(T+delta) - 1)
-                //       = DeltaDiffRel + DeltaRel + DeltaDiffRel * DeltaRel
-                //
-                // When the degree is correctly determined, DeltaRel is about quality times
-                // smaller than DeltaDiffRel. The supremum norm is then (mainly) expressed by 
-                // DeltaDiffRel. Hence we do not have to compute DeltaDiffRel (by calling a 
-                // polyBound) but we can estimate DeltaDiffRel as [-eta;+eta] and just 
-                // prove p/T-1 is contained in that strip.
-                //
-                // This makes the reason why the relative case may still be faster than the 
-                // absolute error case.
-    
-                // Actually, we don't care about the accuracy of alpha:
-		//
-		// We are currently too lazy to do a real error analysis
-		// but typically, in the end of the supnorm loop,
-		// we will have DeltaRel about quality times smaller than 
-		// DeltaDiffRel added to DeltaDiffRel. The accuracy of alpha
-		// actually effects almost directly the accuracy of Delta 
-		// as 1/(1+x) - 1 is -x + x^2 - ... but in the end, we will
-		// see that only in the quadratic error terms of the result.
-		//
-		// Actually, T in the end behaves like f over I. So it might be
-		// a good idea to estimate a bound we can live with for alpha 
-		// using f once in the very beginning and then only check 
-		// that bound for the polynomial T. That would be just as
-		// we simply check bounds for p/T-1 and do not compute them.
-		// 
-		// Anyway, if we make sure polyBound behaves reasonably on
-		// polynomials behaving like the function f (typically being 
-		// monotone or having one or two local extrema), we can live
-		// with the recomputation. 
-		//
-                alpha = polyBound(T,I,4 * quality);
+                alpha = polyBound(T,I);
                 DeltaRel = -Delta / (alpha + Delta);
-
+                
                 R = [- (lowBound * (1 + quality/2)); (lowBound * (1 + quality/2)) ];
                 Eta = (R - DeltaRel) / (1 + DeltaRel);
 
@@ -830,41 +427,16 @@ procedure supnormRelativeNoPole(p,f,I,quality,x0,taylorModelMode) {
 
                 DeltaDiffRel = [-eta;eta];
 
-                // As we have a symmetrical interval [-eta;eta], 
-                // we do not care of showing strict positivity or 
-                // strict negativity actually. The SOS code evidently does.
-                // So we have to negate qUp and qDown if they are 
-                // negative in some point.
-                //
-                // To convince yourself about that, just spell out the 
-                //
-                // -eta <= p/T - 1 <= eta 
-                //
-                // in all variants of signs for T.
-                //
-                
-                if (inf(evaluate(qUp,[mid(I)])) < 0) then {
-                        qUp = -qUp;
-                        qDown = -qDown;
-                };
-
-                // Compute the current combined bound
                 r = DeltaDiffRel + DeltaRel + DeltaDiffRel * DeltaRel;
 
-                // Compute the current high bound
                 highBound = abs(sup(r));
                 if (abs(inf(r)) > highBound) then {
                     highBound = abs(inf(r));    
                 };
 
-                // Check if the accuracy is okay
                 if (abs(highBound - lowBound) < abs(lowBound * quality)) then {
-                        // If the accuracy is okay and only then,
-                        // check if p/T-1 is in the infered bound DeltaDiffRel.
-                        // Otherwise, we will just throw the result away.
-                        //
-                        positiveUp = showPositivity(qUp,I,false);
-                        positiveDown = showPositivity(qDown,I,false);
+                        positiveUp = showPositivity(qUp,I);
+                        positiveDown = showPositivity(qDown,I);
                 } else {
                         positiveUp = false;
                         positiveDown = false;
@@ -877,7 +449,7 @@ procedure supnormRelativeNoPole(p,f,I,quality,x0,taylorModelMode) {
                         midpointmode = on!;
                         write("Information: n = ",n,": current bounding ",[lowBound,highBound],"\n");
                         midpointmode = oldMidpointMode!;
-                        n = nextDegree(n);
+                        n = n + 1;
                 };
         };
 
@@ -892,59 +464,23 @@ procedure supnormRelativeNoPole(p,f,I,quality,x0,taylorModelMode) {
         return [| res , sosInstances |];
 };
 
-
-// Procedure determineOrderOfZero
-//
-// Given a function f, a real number x0 and 
-// an integer n, compute an integer k such that
-//
-// k is an upper bound for the order of the zero
-// of f in x0
-// 
 procedure determineOrderOfZero(f,x0,n) {
         var k;
         var TM;
         var T; 
         var coeffBounds;
         
-        // This should be an exact transcription
-        // of the algorithm we proved when 
-        // Mioara and Sylvain were in Portland.
-        //
-        // To the reader: please check as the
-        // correctness of that piece of code is 
-        // important.
-        //
-
         TM = taylorform(f,n,x0,relative);
         T = TM[0];
         coeffBounds = TM[1];
         k = 0;
-        while ((coeff(T,k) == 0) && 
-               (coeffBounds[k] == [0]) &&
-               (k <= n-1)) do {
+        while ((coeff(T,k) == 0) && (coeffBounds[k] == [0])) do {
                 k = k + 1;
         };
-        if ((k > n-1) ||
-            ((coeff(T,k) == 0) && 
-               (coeffBounds[k] == [0]))) then {
-                k = error;
-        };
-
+        
         return k;
 };
 
-
-// Procedure findpoles
-//
-// Given a polynomial p, a function f and an interval I,
-// computes a list res of real numbers x_i such that
-//
-// if things are pretty, forall x_i in res, either f or
-// p vanishes in or near x_i.
-// 
-// Quelle specification!
-//
 procedure findpoles(p,f,I) {
         var res;
 
@@ -953,12 +489,6 @@ procedure findpoles(p,f,I) {
         } else {
                 res = dirtyfindzeros(f,I);
                 if (res == [||]) then {
-                        // In some cases, we might miss 
-                        // a zero of the function.
-                        // However as we suppose p/f-1 is
-                        // continuous, we should find the 
-                        // same zeros in p.
-                        //
                         res = dirtyfindzeros(p,I);
                 };
         };
@@ -966,32 +496,6 @@ procedure findpoles(p,f,I) {
         return res;
 };
 
-
-// Procedure supnormRelativePole
-//
-// Given a polynomial p, a function f, an interval I and a real 
-// number quality, compute a couple (list of 2 elements)
-// consisting of an interval res and a list sosInstances such that 
-//
-// * ||p/f-1||_infty^I in res
-//
-// * sosInstances is a list of couples (lists of 2 elements)
-//   consisting each of a polynomial q and an interval J such that 
-//   ....
-//
-// * and if things are pretty and p/f - 1 is defined on all I 
-//   by continuity,
-//
-//   forall y a finite number in res exists err, |err| <= quality, such that 
-//
-//     y = ||p/f-1||_infty^I * (1 + err)
-//
-//   Remark that this implies that the bounds of res are finite even 
-//   f vanishes in I and p/f-1 is nevertheless continuous in that point.
-//
-// Remark that is function expects finding a point x0 in which f vanishes 
-// but p/f-1 is anyway continuous. 
-//
 procedure supnormRelativePole(p,f,I,quality) {
         var poles;
         var res;
@@ -1006,25 +510,8 @@ procedure supnormRelativePole(p,f,I,quality) {
                 x0 = round(head(poles),floor(prec/2),RN);
                 k = determineOrderOfZero(f,x0,degree(p));
                 if (k == k) then {
-                        // The next terrible line is a Sollya trick to 
-                        // divide the polynomial p by (x - x0)^k
-                        // Sollya actually can divide by x^k but not by (x - x0)^k
-                        //
                         pTilde = horner((horner(p(x + x0))/(x^k))(x - x0));
-
-                        // Check if the division worked
                         if (degree(pTilde) == degree(p) - k) then {
-                                // Divide f by the same (x - x0)^k 
-                                // and instead of computing p/f - 1 compute
-                                //
-                                //            p/(x - x0)^k
-                                // p/f - 1 = ------------------ - 1
-                                //            f/(x - x0)^k
-                                //
-                                // The relative Taylor Form code can compute
-                                // a polynomial for f/(x - x^0)^k with a finite
-                                // rest bound. That is the reason the thing works.
-                                // 
                                 fTilde = f/((x - x0)^k);
                                 res = supnormRelativeNoPole(pTilde,fTilde,I,quality,x0,relative);
                         } else {
@@ -1040,29 +527,6 @@ procedure supnormRelativePole(p,f,I,quality) {
         return res;
 };
 
-
-// Procedure supnormRelativePole
-//
-// Given a polynomial p, a function f, an interval I and a real 
-// number quality, compute a couple (list of 2 elements)
-// consisting of an interval res and a list sosInstances such that 
-//
-// * ||p/f-1||_infty^I in res
-//
-// * sosInstances is a list of couples (lists of 2 elements)
-//   consisting each of a polynomial q and an interval J such that 
-//   ....
-//
-// * and if things are pretty and p/f - 1 is defined on all I 
-//   by continuity,
-//
-//   forall y a finite number in res exists err, |err| <= quality, such that 
-//
-//     y = ||p/f-1||_infty^I * (1 + err)
-//
-//   Remark that this implies that the bounds of res are finite even 
-//   f vanishes in I and p/f-1 is nevertheless continuous in that point.
-//
 procedure supnormRelative(p,f,I,quality) {
         var possiblePoles;
         var noPoles;
@@ -1072,24 +536,11 @@ procedure supnormRelative(p,f,I,quality) {
         var resCurrNorm;
         var sosInstances;
 
-        // Find intervals where poles may occur.
-        // If they are adjacent, combine them in order to 
-        // make them symetrical around the pole (heuristic, inherited
-        // from the old, old infnorm).
-        //
-        // Compute the complement, too.
-        //
         possiblePoles = globIntervals(encloseZeros(f,I));
         noPoles = invertIntervals(possiblePoles,I);
 
         write("Information: splitting the domain into subdomains ",possiblePoles," (with possible poles) and ",noPoles," (without poles)\n");
 
-        // Go over all intervals with poles and without and combine the results.
-        //
-        // Actually, currently the code is a little slower as it should because each
-        // instance proves the quality even if we throw the results away then if the
-        // maximum is somewhere else.
-        //
         innerBound = 0;
         outerBound = 0;
         sosInstances = [||];
@@ -1113,38 +564,9 @@ procedure supnormRelative(p,f,I,quality) {
         return [| [innerBound, outerBound], sosInstances |];
 };
 
-// Procedure supnorm
-//
-// Given a polynomial p, a function f, an interval I, a real 
-// number quality and a mode mode one of absolute or relative, 
-// compute a couple (list of 2 elements) consisting of an interval 
-// res and a list sosInstances such that 
-//
-// * ||g||_infty^I in res
-//
-//   where 
-//
-//   + g = p - f   if mode is absolute
-//   + g = p/f-1   if mode is relative
-//
-// * sosInstances is a list of couples (lists of 2 elements)
-//   consisting each of a polynomial q and an interval J such that 
-//   ....
-//
-// * and if things are pretty and g is defined on all I 
-//   by continuity,
-//
-//   forall y a finite number in res exists err, |err| <= quality, such that 
-//
-//     y = ||g||_infty^I * (1 + err)
-//
-//   Remark that this implies that the bounds of res are finite even if mode is 
-//   relative, f vanishes in I and p/f-1 is nevertheless continuous in that point.
-//
+
 procedure supnorm(p,f,I,quality,mode) {
         var res;
-
-        // That's a trivial wrapper (ourappeur...)
 
         res = error;
         if (mode == absolute) then {
