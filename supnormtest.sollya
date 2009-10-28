@@ -6,25 +6,10 @@ verbosity = 1!;
 
 midpointmode = on!;
 
-/* 
-f = sin(x);
-I = [-1/32;1/32];
-deg = 7;
-p = fpminimax(f, [|1,...,deg|], [|D,D...|], I);
-mode = relative;
-quality = 2^-24;
-*/
-
-f = exp(x);
-I = [-1/32;1/32];
-deg = 7;
-p = fpminimax(f, [|0,...,deg|], [|D,D...|], I);
-mode = relative;
-quality = 2^-24;
-
+read "example.sollya";
 
 doSos = true;
-printSosInstances = false;
+printSosInstances = true;
 
 
 
@@ -64,4 +49,3 @@ if (doSos) then {
         };
 
 };
-
