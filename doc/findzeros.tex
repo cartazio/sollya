@@ -4,7 +4,7 @@
 gives a list of intervals containing all zeros of a function on an interval.\\
 \noindent Usage: 
 \begin{center}
-\textbf{findzeros}(\emph{f},\emph{I}) : (\textsf{function}, \textsf{range}) $\rightarrow$ \textsf{list}
+\textbf{findzeros}(\emph{f},\emph{I}) : (\textsf{function}, \textsf{range}) $\rightarrow$ \textsf{list}\\
 \end{center}
 Parameters: 
 \begin{itemize}
@@ -13,10 +13,10 @@ Parameters:
 \end{itemize}
 \noindent Description: \begin{itemize}
 
-\item \textbf{findzeros}(\emph{f},\emph{I}) returns a list of intervals \emph{I1}, ... ,\emph{In} such that, for 
+\item \textbf{findzeros}(\emph{f},\emph{I}) returns a list of intervals $I_1, \dots, I_n$ such that, for 
    every zero $z$ of $f$, there exists some $k$ such that $z \in I_k$.
 
-\item The list may contain intervals \emph{Ik} that do not contain any zero of \emph{f}.
+\item The list may contain intervals $I_k$ that do not contain any zero of \emph{f}.
    An interval \emph{Ik} may contain many zeros of \emph{f}.
 
 \item This command is meant for cases when safety is critical. If you want to be sure

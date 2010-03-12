@@ -2,7 +2,7 @@
 
 Copyright 2008 by 
 
-Laboratoire de l'Informatique du Parallélisme, 
+Laboratoire de l'Informatique du Paralllisme, 
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
 
 Contributors Ch. Lauter, S. Chevillard, N. Jourdan
@@ -363,6 +363,9 @@ node *copyThing(node *tree) {
     copy->child1 = copyThing(tree->child1);
     break;
   case FLOOR:
+    copy->child1 = copyThing(tree->child1);
+    break;
+  case NEARESTINT:
     copy->child1 = copyThing(tree->child1);
     break;
   case PI_CONST:
@@ -944,6 +947,11 @@ node *copyThing(node *tree) {
     copy->child2 = copyThing(tree->child2);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
     break;
+  case PROCILLIM:
+    copy->child1 = copyThing(tree->child1);
+    copy->child2 = copyThing(tree->child2);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
+    break;
   case PRECDEREF:
     break; 			
   case POINTSDEREF:
@@ -1104,6 +1112,9 @@ char *getTimingStringForThing(node *tree) {
     constString = NULL;
     break;
   case FLOOR:
+    constString = NULL;
+    break;
+  case NEARESTINT:
     constString = NULL;
     break;
   case PI_CONST:
@@ -1655,6 +1666,9 @@ char *getTimingStringForThing(node *tree) {
   case PROC:
     constString = "executing a procedure";
     break;
+  case PROCILLIM:
+    constString = "executing a procedure";
+    break;
   case PRECDEREF:
     constString = "dereferencing the precision of the tool";
     break; 			
@@ -1828,6 +1842,9 @@ int isPureTree(node *tree) {
   case FLOOR:
     return isPureTree(tree->child1);
     break;
+  case NEARESTINT:
+    return isPureTree(tree->child1);
+    break;
   case PI_CONST:
     return 1;
     break;
@@ -1944,6 +1961,7 @@ int isExternalProcedureUsage(node *tree) {
 
 int isProcedure(node *tree) {
   if (tree->nodeType == PROC) return 1;
+  if (tree->nodeType == PROCILLIM) return 1;
   return 0;
 }
 
@@ -3207,6 +3225,11 @@ char *sRawPrintThing(node *tree) {
 			concatAndFree(sRawPrintThing(tree->child1),
 				      newString(")")));
     break;
+  case NEARESTINT:
+    res = concatAndFree(newString("nearestint("),
+			concatAndFree(sRawPrintThing(tree->child1),
+				      newString(")")));
+    break;
   case PI_CONST:
     res = newString("pi");
     break;
@@ -4358,6 +4381,21 @@ char *sRawPrintThing(node *tree) {
     res = concatAndFree(res, sRawPrintThing(tree->child2));
     res = concatAndFree(res, newString(";\nend"));
     break;
+  case PROCILLIM:
+    res = newString("proc(");
+    curr = tree->arguments;
+    res = concatAndFree(res, newString((char *) (curr->value)));
+    res = concatAndFree(res, newString(" = ...)\nbegin\n"));
+    curr = tree->child1->arguments;
+    while (curr != NULL) {
+      res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
+      res = concatAndFree(res, newString(";\n")); 
+      curr = curr->next;
+    }
+    res = concatAndFree(res, newString("return "));
+    res = concatAndFree(res, sRawPrintThing(tree->child2));
+    res = concatAndFree(res, newString(";\nend"));
+    break;
   case PRECDEREF:
     res = newString("prec = ?");
     break; 			
@@ -4975,7 +5013,7 @@ void autoprint(node *thing, int inList) {
 		  }
 		} else {
 		  printMessage(1,"Warning: the given expression is undefined or numerically unstable.\n");
-		  mpfr_set_nan(a);
+		  if (!isAffine(tempNode5)) mpfr_set_nan(a);
 		}
 	      }  
 	    }
@@ -6122,7 +6160,9 @@ int executeCommandInner(node *tree) {
 	else 
 	  printExternalProcedureUsage(tempNode);
 	freeThing(tempNode);
-	if (curr->next != NULL) printf(", ");
+	if (oldAutoPrint) {
+	  if (curr->next != NULL) printf(", ");
+	}
 	curr = curr->next;
       }
       printf("\n");
@@ -9054,7 +9094,19 @@ node *makeProc(chain *stringlist, node *body, node *returnVal) {
   return res;
 }
 
+node *makeProcIllim(char *arg, node *body, node *returnVal) {
+  node *res;
+  chain *argList;
 
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = PROCILLIM;
+  argList = addElement(NULL,arg);
+  res->arguments = argList;
+  res->child1 = body;
+  res->child2 = returnVal;
+
+  return res;
+}
 
 node *makePrecDeref() {
   node *res;
@@ -9389,6 +9441,10 @@ void freeThing(node *tree) {
     free(tree);
     break;
   case FLOOR:
+    freeThing(tree->child1);
+    free(tree);
+    break;
+  case NEARESTINT:
     freeThing(tree->child1);
     free(tree);
     break;
@@ -10136,6 +10192,12 @@ void freeThing(node *tree) {
     freeChain(tree->arguments, free);
     free(tree);
     break;
+  case PROCILLIM:
+    freeThing(tree->child1);
+    freeThing(tree->child2);
+    freeChain(tree->arguments, free);
+    free(tree);
+    break;
   case PRECDEREF:
     free(tree);
     break; 			
@@ -10220,7 +10282,7 @@ int isEqualThing(node *tree, node *tree2) {
   case VARIABLE:
     break;
   case CONSTANT:
-    if (mpfr_cmp(*(tree->value),*(tree2->value)) != 0) return 0;
+    if (!mpfr_equal_p(*(tree->value),*(tree2->value))) return 0;
     break;
   case ADD:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
@@ -10335,6 +10397,9 @@ int isEqualThing(node *tree, node *tree2) {
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break;
   case FLOOR:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    break;
+  case NEARESTINT:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break;
   case PI_CONST:
@@ -10882,6 +10947,11 @@ int isEqualThing(node *tree, node *tree2) {
     if (!isEqualThing(tree->child2,tree2->child2)) return 0;
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
     break;
+  case PROCILLIM:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThing(tree->child2,tree2->child2)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
+    break;
   case PRECDEREF:
     break; 			
   case POINTSDEREF:
@@ -10957,6 +11027,7 @@ int isCorrectlyTypedBaseSymbol(node *tree) {
   case EMPTYLIST:
   case EXTERNALPROCEDUREUSAGE:
   case PROC:
+  case PROCILLIM:
     return 1;
   default:
     return 0;
@@ -11002,8 +11073,10 @@ node *evaluateThing(node *tree) {
 
   if (!isCorrectlyTyped(evaluated)) {
     if (evaluated->nodeType == ERRORSPECIAL) {
-      if (tree->nodeType != ERRORSPECIAL) 
+      if ((tree->nodeType != ERRORSPECIAL) && 
+          (tree->nodeType != TABLEACCESS)) {
 	printMessage(1,"Warning: the given expression or command could not be handled.\n");
+      } 
     } else {
       printMessage(1,"Warning: at least one of the given expressions or a subexpression is not correctly typed\nor its evaluation has failed because of some error on a side-effect.\n");
       if (verbosity >= 2) {
@@ -11232,16 +11305,19 @@ void freeArgumentForExternalProc(void* arg, int type) {
 
 }
 
-int executeProcedureInner(node **resultThing, node *proc, chain *args) {
+int executeProcedureInner(node **resultThing, node *proc, chain *args, int elliptic) {
   int result, res, noError;
   chain *curr, *curr2;
+  node *tempNode;
   
-  if (lengthChain(proc->arguments) != lengthChain(args)) {
-    if (!((lengthChain(args) == 1) && 
-	(isUnit((node *) (args->value))) && 
-	  (lengthChain(proc->arguments) == 0))) {
-      *resultThing = NULL;
-      return 1;
+  if (proc->nodeType != PROCILLIM) {
+    if (lengthChain(proc->arguments) != lengthChain(args)) {
+      if (!((lengthChain(args) == 1) && 
+	    (isUnit((node *) (args->value))) && 
+	    (lengthChain(proc->arguments) == 0))) {
+	*resultThing = NULL;
+	return 1;
+      }
     }
   }
 
@@ -11288,7 +11364,22 @@ int executeProcedureInner(node **resultThing, node *proc, chain *args) {
 	} else {
 	  if (declaredSymbolTable != NULL) {
 	    noError = 1;
-	    declaredSymbolTable = declareNewEntry(declaredSymbolTable, (char *) (curr->value), (node *) (curr2->value), copyThingOnVoid);
+	    if (proc->nodeType != PROCILLIM) {
+	      declaredSymbolTable = declareNewEntry(declaredSymbolTable, (char *) (curr->value), (node *) (curr2->value), copyThingOnVoid);
+	    } else {
+	      if (curr2 == NULL) {
+		tempNode = makeEmptyList();
+		declaredSymbolTable = declareNewEntry(declaredSymbolTable, (char *) (curr->value), tempNode, copyThingOnVoid);
+		freeThing(tempNode);
+	      } else {
+		if (elliptic) 
+		  tempNode = makeFinalEllipticList(copyChainWithoutReversal(curr2, copyThingOnVoid));
+		else
+		  tempNode = makeList(copyChainWithoutReversal(curr2, copyThingOnVoid));
+		declaredSymbolTable = declareNewEntry(declaredSymbolTable, (char *) (curr->value), tempNode, copyThingOnVoid);
+		freeThing(tempNode);
+	      }
+	    }
 	  } else {
 	    printMessage(1,"Warning: previous command interruptions have corrupted the frame system.\n");
 	    printMessage(1,"The formal parameter \"%s\" cannot be bound to its actual value.\nThe procedure cannot be executed.\n",(char *) (curr->value));
@@ -11300,6 +11391,9 @@ int executeProcedureInner(node **resultThing, node *proc, chain *args) {
       result = 1;
       break;
     }
+
+    if (proc->nodeType == PROCILLIM) break;
+
     curr = curr->next;
     curr2 = curr2->next;
   }  
@@ -11343,20 +11437,22 @@ int executeProcedureInner(node **resultThing, node *proc, chain *args) {
   return 1;
 }
 
-int executeProcedure(node **resultThing, node *proc, chain *args) {
-  jmp_buf oldEnvironment;
+int executeProcedure(node **resultThing, node *proc, chain *args, int elliptic) {
+  jmp_buf *oldEnvironment;
   int res;
 
   pushTimeCounter();  
   
-  memmove(&oldEnvironment,&recoverEnvironmentError,sizeof(oldEnvironment));
+  oldEnvironment = (jmp_buf *) safeMalloc(sizeof(jmp_buf));
+  memmove(oldEnvironment,&recoverEnvironmentError,sizeof(oldEnvironment));
   if (!setjmp(recoverEnvironmentError)) {
-    res = executeProcedureInner(resultThing, proc, args);
+    res = executeProcedureInner(resultThing, proc, args, elliptic);
   } else {
     printMessage(1,"Warning: the last command could not be executed. May leak memory.\n");
     res = 0;
   }
-  memmove(&recoverEnvironmentError,&oldEnvironment,sizeof(recoverEnvironmentError));
+  memmove(&recoverEnvironmentError,oldEnvironment,sizeof(recoverEnvironmentError));
+  free(oldEnvironment);
 
   popTimeCounter("executing a procedure");
 
@@ -11840,6 +11936,10 @@ void *evaluateThingInnerOnVoid(void *tree) {
   return (void *) evaluateThingInner((node *) tree);
 }
 
+void *evaluateThingOnVoid(void *tree) {
+  return (void *) evaluateThing((node *) tree);
+}
+
 node *evaluateThingInner(node *tree) {
   node *copy, *tempNode, *tempNode2, *tempNode3;
   int *intptr;
@@ -11857,6 +11957,7 @@ node *evaluateThingInner(node *tree) {
   mp_prec_t pTemp, pTemp2;
   int undoVariableTrick;
   mpfi_t tempIA, tempIB, tempIC;
+  int alreadyDisplayed;
   mpfi_t *tmpInterv1, *tmpInterv2;
   mpfi_t *tmpInterv11;
   mpfr_t bb,cc;
@@ -12988,6 +13089,28 @@ node *evaluateThingInner(node *tree) {
       mpfi_clear(tempIC);
     }
     break;
+  case NEARESTINT:
+    copy->child1 = evaluateThingInner(tree->child1);
+    if (isRange(copy->child1)) {
+      pTemp = mpfr_get_prec(*(copy->child1->child1->value));
+      pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
+      if (pTemp2 > pTemp) pTemp = pTemp2;
+      mpfi_init2(tempIA,pTemp);
+      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      mpfi_init2(tempIC,tools_precision);
+      mpfi_nearestint(tempIC,tempIA);
+      freeThing(copy);
+      mpfr_init2(a,tools_precision);
+      mpfr_init2(b,tools_precision);
+      mpfi_get_left(a,tempIC);
+      mpfi_get_right(b,tempIC);
+      copy = makeRange(makeConstant(a),makeConstant(b));
+      mpfr_clear(a);
+      mpfr_clear(b);
+      mpfi_clear(tempIA);
+      mpfi_clear(tempIC);
+    }
+    break;
   case PI_CONST:
     break;
   case AND:
@@ -13126,9 +13249,13 @@ node *evaluateThingInner(node *tree) {
     }
     break; 				
   case COMPAREEQUAL:
-    copy->child1 = evaluateThingInner(tree->child1);
-    copy->child2 = evaluateThingInner(tree->child2);
+    copy->child1 = evaluateThing(tree->child1);
+    copy->child2 = evaluateThing(tree->child2);
     if (timingString != NULL) pushTimeCounter();
+    if ((isError(copy->child1) && (!isError(tree->child1)) && (!isError(tree->child2))) ||
+	(isError(copy->child2) && (!isError(tree->child2)) && (!isError(tree->child1)))) {
+	  printMessage(1,"Warning: the evaluation of one of the sides of an equality test yields error due to a syntax error or an error on a side-effect.\nThe other side either also yields error due to an syntax or side-effect error or does not evaluate to error.\nThe boolean returned may be meaningless.\n");
+    } 
     if (isEqualThing(copy->child1,copy->child2)) {
       if (!isError(copy->child1)) {
 	freeThing(copy);
@@ -13147,7 +13274,7 @@ node *evaluateThingInner(node *tree) {
 	mpfr_init2(b,tools_precision);
 	if (evaluateThingToConstant(a,copy->child1,NULL,1) && 
 	    evaluateThingToConstant(b,copy->child2,NULL,1)) {
-	  if (mpfr_cmp(a,b) == 0) {
+	  if (mpfr_equal_p(a,b)) {
 	    freeThing(copy);
 	    copy = makeTrue();		    
 	  } else {
@@ -13168,8 +13295,8 @@ node *evaluateThingInner(node *tree) {
     if (timingString != NULL) popTimeCounter(timingString);
     break; 			
   case COMPARELESS:
-    copy->child1 = evaluateThingInner(tree->child1);
-    copy->child2 = evaluateThingInner(tree->child2);
+    copy->child1 = evaluateThing(tree->child1);
+    copy->child2 = evaluateThing(tree->child2);
     if (isPureTree(copy->child1) && 
 	isPureTree(copy->child2) &&
 	isConstant(copy->child1) && 
@@ -13181,7 +13308,7 @@ node *evaluateThingInner(node *tree) {
 	  (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
 	if ((resA == 3) || (resB == 3)) 
 	  printMessage(1,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
-	resC = (mpfr_cmp(a,b) < 0);
+	resC = ((mpfr_cmp(a,b) < 0) && (!mpfr_unordered_p(a,b)));
 	if ((resA == 1) || (resB == 1)) {
 	  if (resC) {
 	    /* a < b */
@@ -13214,8 +13341,8 @@ node *evaluateThingInner(node *tree) {
     }
     break; 			
   case COMPAREGREATER:
-    copy->child1 = evaluateThingInner(tree->child1);
-    copy->child2 = evaluateThingInner(tree->child2);
+    copy->child1 = evaluateThing(tree->child1);
+    copy->child2 = evaluateThing(tree->child2);
     if (isPureTree(copy->child1) && 
 	isPureTree(copy->child2) &&
 	isConstant(copy->child1) && 
@@ -13227,7 +13354,7 @@ node *evaluateThingInner(node *tree) {
 	  (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
 	if ((resA == 3) || (resB == 3)) 
 	  printMessage(1,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
-	resC = (mpfr_cmp(a,b) > 0);
+	resC = ((mpfr_cmp(a,b) > 0) && (!mpfr_unordered_p(a,b)));
 	if ((resA == 1) || (resB == 1)) {
 	  if (resC) {
 	    /* a > b */
@@ -13260,8 +13387,8 @@ node *evaluateThingInner(node *tree) {
     }
     break; 			
   case COMPARELESSEQUAL:
-    copy->child1 = evaluateThingInner(tree->child1);
-    copy->child2 = evaluateThingInner(tree->child2);
+    copy->child1 = evaluateThing(tree->child1);
+    copy->child2 = evaluateThing(tree->child2);
     if (isPureTree(copy->child1) && 
 	isPureTree(copy->child2) &&
 	isConstant(copy->child1) && 
@@ -13273,7 +13400,7 @@ node *evaluateThingInner(node *tree) {
 	  (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
 	if ((resA == 3) || (resB == 3)) 
 	  printMessage(1,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
-	resC = (mpfr_cmp(a,b) <= 0);
+	resC = ((mpfr_cmp(a,b) <= 0) && (!mpfr_unordered_p(a,b)));
 	if ((resA == 1) || (resB == 1)) {
 	  if (resC) {
 	    /* a <= b */
@@ -13306,8 +13433,8 @@ node *evaluateThingInner(node *tree) {
     }
     break; 		
   case COMPAREGREATEREQUAL:
-    copy->child1 = evaluateThingInner(tree->child1);
-    copy->child2 = evaluateThingInner(tree->child2);
+    copy->child1 = evaluateThing(tree->child1);
+    copy->child2 = evaluateThing(tree->child2);
     if (isPureTree(copy->child1) && 
 	isPureTree(copy->child2) &&
 	isConstant(copy->child1) && 
@@ -13319,7 +13446,7 @@ node *evaluateThingInner(node *tree) {
 	  (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
 	if ((resA == 3) || (resB == 3)) 
 	  printMessage(1,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
-	resC = (mpfr_cmp(a,b) >= 0);
+	resC = ((mpfr_cmp(a,b) >= 0) && (!mpfr_unordered_p(a,b)));
 	if ((resA == 1) || (resB == 1)) {
 	  if (resC) {
 	    /* a >= b */
@@ -13352,9 +13479,13 @@ node *evaluateThingInner(node *tree) {
     }
     break;		
   case COMPARENOTEQUAL:
-    copy->child1 = evaluateThingInner(tree->child1);
-    copy->child2 = evaluateThingInner(tree->child2);
+    copy->child1 = evaluateThing(tree->child1);
+    copy->child2 = evaluateThing(tree->child2);
     if (timingString != NULL) pushTimeCounter();
+    if ((isError(copy->child1) && (!isError(tree->child1)) && (!isError(tree->child2))) ||
+	(isError(copy->child2) && (!isError(tree->child2)) && (!isError(tree->child1)))) {
+	  printMessage(1,"Warning: the evaluation of one of the sides of an inequality test yields error due to a syntax error or an error on a side-effect.\nThe other side either also yields error due to an syntax or side-effect error or does not evaluate to error.\nThe boolean returned may be meaningless.\n");
+    } 
     if (isEqualThing(copy->child1,copy->child2)) {
       if (!isError(copy->child1)) {
 	freeThing(copy);
@@ -13373,7 +13504,7 @@ node *evaluateThingInner(node *tree) {
 	mpfr_init2(b,tools_precision);
 	if (evaluateThingToConstant(a,copy->child1,NULL,1) && 
 	    evaluateThingToConstant(b,copy->child2,NULL,1)) {
-	  if (mpfr_cmp(a,b) == 0) {
+	  if (mpfr_equal_p(a,b) || mpfr_unordered_p(a,b)) {
 	    freeThing(copy);
 	    copy = makeFalse();		    
 	  } else {
@@ -13505,11 +13636,13 @@ node *evaluateThingInner(node *tree) {
 			free(copy->child2);
 			if (timingString != NULL) popTimeCounter(timingString);
 		      } else {
-			if (isProcedure(copy->child1) && isList(copy->child2)) {
-			  tempChain = copyChainWithoutReversal(copy->child2->arguments, evaluateThingInnerOnVoid);
-			  tempNode = evaluateThingInner(copy->child1);
+			if (isProcedure(copy->child1) && 
+			    (isList(copy->child2) || 
+			     ((copy->child1->nodeType == PROCILLIM) && isFinalEllipticList(copy->child2)))) {
+			  tempChain = copyChainWithoutReversal(copy->child2->arguments, evaluateThingOnVoid);
+			  tempNode = evaluateThing(copy->child1);
 			  tempNode2 = NULL;
-			  if (executeProcedure(&tempNode2, tempNode, tempChain)) {
+			  if (executeProcedure(&tempNode2, tempNode, tempChain, isFinalEllipticList(copy->child2))) {
 			    if (tempNode2 != NULL) {
 			      freeThing(copy);
 			      copy = tempNode2;
@@ -13521,6 +13654,22 @@ node *evaluateThingInner(node *tree) {
 			  }
 			  freeChain(tempChain, freeThingOnVoid);
 			  freeThing(tempNode);
+			} else {
+			  if (isProcedure(copy->child1) && isEmptyList(copy->child2)) {
+			    tempNode = evaluateThing(copy->child1);
+			    tempNode2 = NULL;
+			    if (executeProcedure(&tempNode2, tempNode, NULL, 0)) {
+			      if (tempNode2 != NULL) {
+				freeThing(copy);
+				copy = tempNode2;
+			      } 
+			    } else {
+			      printMessage(1,"Warning: an error occurred while executing a procedure.\n");
+			      freeThing(copy);
+			      copy = makeError();
+			    }
+			    freeThing(tempNode);
+			  } 
 			}
 		      }
 		    }
@@ -13828,9 +13977,9 @@ node *evaluateThingInner(node *tree) {
 	}
       } else {
 	if (isProcedure(tempNode)) {
-	  tempChain = copyChainWithoutReversal(tree->arguments, evaluateThingInnerOnVoid);
+	  tempChain = copyChainWithoutReversal(tree->arguments, evaluateThingOnVoid);
 	  tempNode2 = NULL;
-	  if (executeProcedure(&tempNode2, tempNode, tempChain)) {
+	  if (executeProcedure(&tempNode2, tempNode, tempChain, 0)) {
 	    if (tempNode2 != NULL) {
 	      free(copy);
 	      copy = tempNode2;
@@ -13935,9 +14084,9 @@ node *evaluateThingInner(node *tree) {
 	}
       } else {
 	if (isProcedure(tempNode)) {
-	  tempChain = copyChainWithoutReversal(tree->arguments, evaluateThingInnerOnVoid);
+	  tempChain = copyChainWithoutReversal(tree->arguments, evaluateThingOnVoid);
 	  tempNode2 = NULL;
-	  if (executeProcedure(&tempNode2, tempNode, tempChain)) {
+	  if (executeProcedure(&tempNode2, tempNode, tempChain, 0)) {
 	    if (tempNode2 != NULL) {
 	      free(copy);
 	      copy = tempNode2;
@@ -14272,7 +14421,12 @@ node *evaluateThingInner(node *tree) {
   case ELLIPTIC:
     break; 			
   case RANGE:
+    alreadyDisplayed = 0;
     if (tree->child1->nodeType == DECIMALCONSTANT) {
+      if (tree->child2->nodeType == DECIMALCONSTANT) {
+        if (!strcmp(tree->child1->string,tree->child2->string)) 
+          alreadyDisplayed = 1;
+      }
       resA = 0;
       tempString2 = strchr(tree->child1->string,'%');
       tempString3 = strrchr(tree->child1->string,'%');
@@ -14392,7 +14546,7 @@ node *evaluateThingInner(node *tree) {
         mpfr_set_str(a,tempString,10,GMP_RNDD);
         mpfr_set_str(b,tempString,10,GMP_RNDU);    
         if (mpfr_cmp(a,b) != 0) {
-          if (!noRoundingWarnings) {
+          if ((!noRoundingWarnings) && (!alreadyDisplayed)) {
             printMessage(1,
                          "Warning: Rounding occurred when converting the constant \"%s\" to floating-point with %d bits.\n",
                          tempString,(int) pTemp);
@@ -16572,6 +16726,10 @@ node *evaluateThingInner(node *tree) {
     if (timingString != NULL) popTimeCounter(timingString);
     break;  	 
   case PROC:
+    free(copy);
+    copy = copyThing(tree);
+    break;
+  case PROCILLIM:
     free(copy);
     copy = copyThing(tree);
     break;

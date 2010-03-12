@@ -78,6 +78,8 @@ void yyerror(char *message) {
   } 
 }
 
+// #define WARN_IF_NO_HELP_TEXT 1
+
 %}
 
 %defines
@@ -173,7 +175,8 @@ void yyerror(char *message) {
 %token  TRIPLEDOUBLETOKEN;      					       
 %token  DOUBLEEXTENDEDTOKEN;    					       
 %token  CEILTOKEN;              					       
-%token  FLOORTOKEN;             			
+%token  FLOORTOKEN;
+%token  NEARESTINTTOKEN;             			
 
 %token  HEADTOKEN;
 %token  REVERTTOKEN;
@@ -585,6 +588,38 @@ procbody:               LPARTOKEN RPARTOKEN BEGINTOKEN commandlist ENDTOKEN
                       | LPARTOKEN identifierlist RPARTOKEN BEGINTOKEN RETURNTOKEN thing SEMICOLONTOKEN ENDTOKEN
                           {
 			    $$ = makeProc($2, makeCommandList(addElement(NULL, makeNop())), $6);
+                          }
+                      | LPARTOKEN IDENTIFIERTOKEN EQUALTOKEN DOTSTOKEN RPARTOKEN BEGINTOKEN commandlist ENDTOKEN
+                          {
+			    $$ = makeProcIllim($2, makeCommandList($7), makeUnit());
+                          }
+                      | LPARTOKEN IDENTIFIERTOKEN EQUALTOKEN DOTSTOKEN RPARTOKEN BEGINTOKEN variabledeclarationlist commandlist ENDTOKEN
+                          {			    
+			    $$ = makeProcIllim($2, makeCommandList(concatChains($7, $8)), makeUnit());
+                          }
+                      | LPARTOKEN IDENTIFIERTOKEN EQUALTOKEN DOTSTOKEN RPARTOKEN BEGINTOKEN variabledeclarationlist ENDTOKEN
+                          {
+			    $$ = makeProcIllim($2, makeCommandList($7), makeUnit());
+                          }
+                      | LPARTOKEN IDENTIFIERTOKEN EQUALTOKEN DOTSTOKEN RPARTOKEN BEGINTOKEN ENDTOKEN
+                          {
+			    $$ = makeProcIllim($2, makeCommandList(addElement(NULL,makeNop())), makeUnit());
+                          }
+                      | LPARTOKEN IDENTIFIERTOKEN EQUALTOKEN DOTSTOKEN RPARTOKEN BEGINTOKEN commandlist RETURNTOKEN thing SEMICOLONTOKEN ENDTOKEN
+                          {
+			    $$ = makeProcIllim($2, makeCommandList($7), $9);
+                          }
+                      | LPARTOKEN IDENTIFIERTOKEN EQUALTOKEN DOTSTOKEN RPARTOKEN BEGINTOKEN variabledeclarationlist commandlist RETURNTOKEN thing SEMICOLONTOKEN ENDTOKEN
+                          {			    
+			    $$ = makeProcIllim($2, makeCommandList(concatChains($7, $8)), $10);
+                          }
+                      | LPARTOKEN IDENTIFIERTOKEN EQUALTOKEN DOTSTOKEN RPARTOKEN BEGINTOKEN variabledeclarationlist RETURNTOKEN thing SEMICOLONTOKEN ENDTOKEN
+                          {
+			    $$ = makeProcIllim($2, makeCommandList($7), $9);
+                          }
+                      | LPARTOKEN IDENTIFIERTOKEN EQUALTOKEN DOTSTOKEN RPARTOKEN BEGINTOKEN RETURNTOKEN thing SEMICOLONTOKEN ENDTOKEN
+                          {
+			    $$ = makeProcIllim($2, makeCommandList(addElement(NULL, makeNop())), $8);
                           }
 ;
 
@@ -1671,6 +1706,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeFloor($3);
 			  }             					       
+                      | NEARESTINTTOKEN LPARTOKEN thing RPARTOKEN
+                          {
+			    $$ = makeNearestInt($3);
+			  }             					       
                       | LENGTHTOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeLength($3);
@@ -1884,6 +1923,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_PI_TEXT);
 #else
 			    outputMode(); printf("Ratio circonference and diameter of a circle.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for PI"
+#endif
 #endif
                           }                					       
                       | IDENTIFIERTOKEN
@@ -1926,6 +1968,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_ASSIGNMENT_TEXT);
 #else
 			    outputMode(); printf("Assignment operator.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for ASSIGNMENT"
+#endif
 #endif
                           }       
                       | ASSIGNEQUALTOKEN
@@ -1934,6 +1979,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_FLOATASSIGNMENT_TEXT);
 #else
 			    outputMode(); printf("Evaluating assignment operator.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for FLOATASSIGNMENT"
+#endif
 #endif
                           }                 					       
                       | COMPAREEQUALTOKEN
@@ -1942,6 +1990,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_EQUAL_TEXT);
 #else
 			    outputMode(); printf("Equality test.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for EQUAL"
+#endif
 #endif
                           }                 					       
                       | COMMATOKEN
@@ -1954,6 +2005,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_NOT_TEXT);
 #else
 			    outputMode(); printf("Suppresses output on assignments or boolean negation.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for NOT"
+#endif
 #endif
                           }      						       
                       | STARLEFTANGLETOKEN
@@ -1966,6 +2020,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_LT_TEXT);
 #else
 			    outputMode(); printf("Comparison less than.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for LT"
+#endif
 #endif
                           }            
                       | LEFTANGLETOKEN EQUALTOKEN
@@ -1974,6 +2031,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_LE_TEXT);
 #else
 			    outputMode(); printf("Comparison less than or equal to.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for LE"
+#endif
 #endif
                           }             					       
                       | RIGHTANGLEUNDERSCORETOKEN
@@ -1990,6 +2050,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_GE_TEXT);
 #else
 			    outputMode(); printf("Comparison greater than or equal to.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for GE"
+#endif
 #endif
 			  }
                       | RIGHTANGLESTARTOKEN
@@ -2002,6 +2065,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_GT_TEXT);
 #else
 			    outputMode(); printf("Comparison greater than.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for GT"
+#endif
 #endif
                           }            					       
                       | DOTSTOKEN
@@ -2022,6 +2088,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_CONCAT_TEXT);
 #else
 			    outputMode(); printf("Concatenation of lists or strings.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for CONCAT"
+#endif
 #endif
                           }      							       
                       | DOUBLECOLONTOKEN
@@ -2034,6 +2103,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_PREPEND_TEXT);
 #else
 			    outputMode(); printf("a.:b prepends a to list b.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for PREPEND"
+#endif
 #endif
                           }    
                       | COLONDOTTOKEN
@@ -2042,6 +2114,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_APPEND_TEXT);
 #else
 			    outputMode(); printf("a:.b appends b to list a.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for APPEND"
+#endif
 #endif
                           }    
                       | EXCLAMATIONEQUALTOKEN
@@ -2050,6 +2125,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_NEQ_TEXT);
 #else
 			    outputMode(); printf("Comparison not equal.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for NEQ"
+#endif
 #endif
                           }    
                       | ANDTOKEN
@@ -2058,6 +2136,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_AND_TEXT);
 #else
 			    outputMode(); printf("Boolean and.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for AND"
+#endif
 #endif
                           }    
                       | ORTOKEN
@@ -2066,6 +2147,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_OR_TEXT);
 #else
 			    outputMode(); printf("Boolean or.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for OR"
+#endif
 #endif
                           }    
                       | PLUSTOKEN
@@ -2074,6 +2158,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_PLUS_TEXT);
 #else
 			    outputMode(); printf("Addition.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for PLUS"
+#endif
 #endif
                           }                  					       
                       | MINUSTOKEN
@@ -2082,6 +2169,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_MINUS_TEXT);
 #else
 			    outputMode(); printf("Substraction.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for MINUS"
+#endif
 #endif
                           }                 					       
                       | APPROXTOKEN
@@ -2090,6 +2180,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_APPROX_TEXT);
 #else
 			    outputMode(); printf("Floating-point approximation of a constant expression.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for APPROX"
+#endif
 #endif
                           }                 					       
                       | MULTOKEN
@@ -2098,6 +2191,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_MULT_TEXT);
 #else
 			    outputMode(); printf("Multiplication.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for MULT"
+#endif
 #endif
                           }                						       
                       | DIVTOKEN
@@ -2106,6 +2202,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_DIVIDE_TEXT);
 #else
 			    outputMode(); printf("Division.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for DIVIDE"
+#endif
 #endif
                           }                  					       
                       | POWTOKEN
@@ -2114,6 +2213,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_POWER_TEXT);
 #else
 			    outputMode(); printf("Exponentiation.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for POWER"
+#endif
 #endif
                           }                  					       
                       | SQRTTOKEN
@@ -2122,6 +2224,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_SQRT_TEXT);
 #else
 			    outputMode(); printf("Square root.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for SQRT"
+#endif
 #endif
                           }                  					       
                       | EXPTOKEN
@@ -2130,6 +2235,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_EXP_TEXT);
 #else
 			    outputMode(); printf("Exponential.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for EXP"
+#endif
 #endif
                           }                   					       
                       | LOGTOKEN
@@ -2138,6 +2246,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_LOG_TEXT);
 #else
 			    outputMode(); printf("Natural logarithm.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for LOG"
+#endif
 #endif
                           }                   					       
                       | LOG2TOKEN
@@ -2146,6 +2257,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_LOG2_TEXT);
 #else
 			    outputMode(); printf("Logarithm in base 2.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for LOG2"
+#endif
 #endif
                           }                  					       
                       | LOG10TOKEN
@@ -2154,6 +2268,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_LOG10_TEXT);
 #else
 			    outputMode(); printf("Logarithm in base 10.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for LOG10"
+#endif
 #endif
                           }                 					       
                       | SINTOKEN
@@ -2162,6 +2279,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_SIN_TEXT);
 #else
 			    outputMode(); printf("Sine.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for SIN"
+#endif
 #endif
                           }                   					       
                       | COSTOKEN
@@ -2170,6 +2290,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_COS_TEXT);
 #else
 			    outputMode(); printf("Cosine.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for COS"
+#endif
 #endif
                           }                   					       
                       | TANTOKEN
@@ -2178,6 +2301,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_TAN_TEXT);
 #else
 			    outputMode(); printf("Tangent.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for TAN"
+#endif
 #endif
                           }                   					       
                       | ASINTOKEN
@@ -2186,6 +2312,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_ASIN_TEXT);
 #else
 			    outputMode(); printf("Arcsine.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for ASIN"
+#endif
 #endif
                           }                  					       
                       | ACOSTOKEN
@@ -2194,6 +2323,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_ACOS_TEXT);
 #else
 			    outputMode(); printf("Arcosine.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for ACOS"
+#endif
 #endif
                           }                  					       
                       | ATANTOKEN
@@ -2202,6 +2334,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_ATAN_TEXT);
 #else
 			    outputMode(); printf("Arctangent.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for ATAN"
+#endif
 #endif
                           }                  					       
                       | SINHTOKEN
@@ -2210,6 +2345,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_SINH_TEXT);
 #else
 			    outputMode(); printf("Hyperbolic sine.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for SINH"
+#endif
 #endif
                           }                  					       
                       | COSHTOKEN
@@ -2218,6 +2356,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_COSH_TEXT);
 #else
 			    outputMode(); printf("Hyperbolic cosine.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for COSH"
+#endif
 #endif
                           }                  					       
                       | TANHTOKEN
@@ -2226,6 +2367,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_TANH_TEXT);
 #else
 			    outputMode(); printf("Hyperbolic tangent.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for TANH"
+#endif
 #endif
                           }                  					       
                       | ASINHTOKEN
@@ -2234,6 +2378,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_ASINH_TEXT);
 #else
 			    outputMode(); printf("Area sine.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for ASINH"
+#endif
 #endif
                           }                 					       
                       | ACOSHTOKEN
@@ -2242,6 +2389,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_ACOSH_TEXT);
 #else
 			    outputMode(); printf("Area cosine.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for ACOSH"
+#endif
 #endif
                           }                 					       
                       | ATANHTOKEN
@@ -2251,6 +2401,9 @@ help:                   CONSTANTTOKEN
 #else
 
 			    outputMode(); printf("Area tangent.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for ATANH"
+#endif
 #endif
                           }                 					                        					       
                       | ABSTOKEN
@@ -2259,6 +2412,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_ABS_TEXT);
 #else
 			    outputMode(); printf("Absolute value.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for ABS"
+#endif
 #endif
                           }                 					                          					       
                       | ERFTOKEN
@@ -2267,6 +2423,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_ERF_TEXT);
 #else
 			    outputMode(); printf("Error function.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for ERF"
+#endif
 #endif
                           }                 					                          					       
                       | ERFCTOKEN
@@ -2275,6 +2434,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_ERFC_TEXT);
 #else
 			    outputMode(); printf("Complementary error function.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for ERFC"
+#endif
 #endif
                           }                 					                         					       
                       | LOG1PTOKEN
@@ -2283,6 +2445,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_LOG1P_TEXT);
 #else
 			    outputMode(); printf("Natural logarithm of 1 plus argument.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for LOG1P"
+#endif
 #endif
                           }                 					                        					       
                       | EXPM1TOKEN
@@ -2291,6 +2456,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_EXPM1_TEXT);
 #else
 			    outputMode(); printf("Exponential of argument minus 1.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for EXPM1"
+#endif
 #endif
                           }                 					                        					       
                       | DOUBLETOKEN
@@ -2299,6 +2467,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_DOUBLE_TEXT);
 #else
 			    outputMode(); printf("Double precision rounding operator.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for DOUBLE"
+#endif
 #endif
                           }                 					                       					       
                       | SINGLETOKEN
@@ -2307,6 +2478,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_SINGLE_TEXT);
 #else
 			    outputMode(); printf("Single precision rounding operator.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for SINGLE"
+#endif
 #endif
                           }                 					                       					       
                       | DOUBLEDOUBLETOKEN
@@ -2315,6 +2489,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_DOUBLEDOUBLE_TEXT);
 #else
 			    outputMode(); printf("Double-double precision rounding operator.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for DOUBLEDOUBLE"
+#endif
 #endif
                           }                 					             						       
                       | TRIPLEDOUBLETOKEN
@@ -2323,6 +2500,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_TRIPLEDOUBLE_TEXT);
 #else
 			    outputMode(); printf("Triple-double precision rounding operator.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for TRIPLEDOUBLE"
+#endif
 #endif
                           }                 					                 					       
                       | DOUBLEEXTENDEDTOKEN
@@ -2331,6 +2511,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_DOUBLEEXTENDED_TEXT);
 #else
 			    outputMode(); printf("Double-extended precision rounding operator.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for DOUBLEEXTENDED"
+#endif
 #endif
                           }                 					               					       
                       | CEILTOKEN
@@ -2339,6 +2522,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_CEIL_TEXT);
 #else
 			    outputMode(); printf("Ceiling.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for CEIL"
+#endif
 #endif
                           }                 					                         					       
                       | FLOORTOKEN
@@ -2347,6 +2533,20 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_FLOOR_TEXT);
 #else
 			    outputMode(); printf("Floor.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for FLOOR"
+#endif
+#endif
+                          }                 					                        			
+                      | NEARESTINTTOKEN
+                          {
+#ifdef HELP_NEARESTINT_TEXT
+			    outputMode(); printf(HELP_NEARESTINT_TEXT);
+#else
+			    outputMode(); printf("Nearest integer with even tie cases rule.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for NEARESTINT"
+#endif
 #endif
                           }                 					                        			
                       | HEADTOKEN
@@ -2355,6 +2555,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_HEAD_TEXT);
 #else
 			    outputMode(); printf("Head of a list.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for HEAD"
+#endif
 #endif
                           }                 					       
                       | ROUNDCORRECTLYTOKEN
@@ -2363,6 +2566,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_ROUNDCORRECTLY_TEXT);
 #else
 			    outputMode(); printf("Round a bounding to the nearest floating-point value such that correct rounding is possible.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for ROUNDCORRECTLY"
+#endif
 #endif
                           }                 					       
                       | READFILETOKEN
@@ -2371,6 +2577,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_READFILE_TEXT);
 #else
 			    outputMode(); printf("Reads a file into a string.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for READFILE"
+#endif
 #endif
                           }                 					           
                       | REVERTTOKEN
@@ -2379,6 +2588,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_REVERT_TEXT);
 #else
 			    outputMode(); printf("Reverts a list that is not finally elliptic.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for REVERT"
+#endif
 #endif
                           }                 					       
                       | SORTTOKEN
@@ -2387,6 +2599,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_SORT_TEXT);
 #else
 			    outputMode(); printf("Sorts a list of constants in ascending order.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for SORT"
+#endif
 #endif
                           }                 					       
                       | TAILTOKEN
@@ -2395,6 +2610,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_TAIL_TEXT);
 #else
 			    outputMode(); printf("Tail of a list.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for TAIL"
+#endif
 #endif
                           }                 					       
                       | PRECTOKEN
@@ -2403,6 +2621,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_PREC_TEXT);
 #else
 			    outputMode(); printf("Global environment variable precision.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for PREC"
+#endif
 #endif
                           }                 					       
                       | POINTSTOKEN
@@ -2411,6 +2632,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_POINTS_TEXT);
 #else
 			    outputMode(); printf("Global environment variable number of points.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for POINTS"
+#endif
 #endif
                           }                 					                       					       
                       | DIAMTOKEN
@@ -2419,6 +2643,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_DIAM_TEXT);
 #else
 			    outputMode(); printf("Global environment variable diameter.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for DIAM"
+#endif
 #endif
                           }                 					                         					       
                       | DISPLAYTOKEN
@@ -2427,6 +2654,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_DISPLAY_TEXT);
 #else
 			    outputMode(); printf("Global environment variable display mode.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for DISPLAY"
+#endif
 #endif
                           }                 					                       					       
                       | VERBOSITYTOKEN
@@ -2435,6 +2665,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_VERBOSITY_TEXT);
 #else
 			    outputMode(); printf("Global environment variable verbosity.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for VERBOSITY"
+#endif
 #endif
                           }                 					                    					       
                       | CANONICALTOKEN
@@ -2443,6 +2676,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_CANONICAL_TEXT);
 #else
 			    outputMode(); printf("Global environment variable canonical output.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for CANONICAL"
+#endif
 #endif
                           }                 					                    					       
                       | AUTOSIMPLIFYTOKEN
@@ -2451,6 +2687,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_AUTOSIMPLIFY_TEXT);
 #else
 			    outputMode(); printf("Global environment variable automatic simplification.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for AUTOSIMPLIFY"
+#endif
 #endif
                           }                 					                 					       
                       | TAYLORRECURSIONSTOKEN
@@ -2459,6 +2698,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_TAYLORRECURSIONS_TEXT);
 #else
 			    outputMode(); printf("Global environment variable recursions of Taylor evaluation.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for TAYLORRECURSIONS"
+#endif
 #endif
                           }                 					             					       
                       | TIMINGTOKEN
@@ -2467,6 +2709,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_TIMING_TEXT);
 #else
 			    outputMode(); printf("Global environment variable timing of computations.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for TIMING"
+#endif
 #endif
                           }                 					                       		
                       | TIMETOKEN
@@ -2475,6 +2720,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_TIME_TEXT);
 #else
 			    outputMode(); printf("High-level time procedure.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for TIME"
+#endif
 #endif
                           }                 					                       					       			       
                       | FULLPARENTHESESTOKEN
@@ -2483,6 +2731,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_FULLPARENTHESES_TEXT);
 #else
 			    outputMode(); printf("Global environment variable fully parenthized mode.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for FULLPARENTHESES"
+#endif
 #endif
                           }                 					              					       
                       | MIDPOINTMODETOKEN
@@ -2491,6 +2742,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_MIDPOINTMODE_TEXT);
 #else
 			    outputMode(); printf("Global environment variable midpoint mode.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for MIDPOINTMODE"
+#endif
 #endif
                           }
                       | RATIONALMODETOKEN
@@ -2499,6 +2753,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_RATIONALMODE_TEXT);
 #else
 			    outputMode(); printf("Global environment variable rational mode.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for RATIONALMODE"
+#endif
 #endif
                           }                 	                 	
                       | SUPPRESSWARNINGSTOKEN
@@ -2507,6 +2764,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_ROUNDINGWARNINGS_TEXT);
 #else
 			    outputMode(); printf("Global environment variable activating warnings about rounding.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for ROUNDINGWARNINGS"
+#endif
 #endif
                           }                 						                 					       
                       | HOPITALRECURSIONSTOKEN
@@ -2515,6 +2775,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_HOPITALRECURSIONS_TEXT);
 #else
 			    outputMode(); printf("Global environment variable recursions of Hopital evaluation.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for HOPITALRECURSIONS"
+#endif
 #endif
                           }                 					             					       
                       | ONTOKEN
@@ -2523,6 +2786,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_ON_TEXT);
 #else
 			    outputMode(); printf("Something is switched on.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for ON"
+#endif
 #endif
                           }                 					                           					       
                       | OFFTOKEN
@@ -2531,6 +2797,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_OFF_TEXT);
 #else
 			    outputMode(); printf("Something is switched off.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for OFF"
+#endif
 #endif
                           }                 					                          					       
                       | DYADICTOKEN
@@ -2539,6 +2808,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_DYADIC_TEXT);
 #else
 			    outputMode(); printf("Display mode is dyadic output.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for DYADIC"
+#endif
 #endif
                           }                 					             						       
                       | POWERSTOKEN
@@ -2547,6 +2819,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_POWERS_TEXT);
 #else
 			    outputMode(); printf("Display mode is dyadic output with powers.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for POWERS"
+#endif
 #endif
                           }                 					                       					       
                       | BINARYTOKEN
@@ -2555,6 +2830,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_BINARY_TEXT);
 #else
 			    outputMode(); printf("Display mode is binary.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for BINARY"
+#endif
 #endif
                           }                 					                       					       
                       | HEXADECIMALTOKEN
@@ -2563,6 +2841,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_HEXADECIMAL_TEXT);
 #else
 			    outputMode(); printf("Display mode is hexadecimal.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for HEXADECIMAL"
+#endif
 #endif
                           }                 					                       					       
                       | FILETOKEN
@@ -2571,6 +2852,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_FILE_TEXT);
 #else
 			    outputMode(); printf("A file will be specified.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for FILE"
+#endif
 #endif
                           }                 					                         					       
                       | POSTSCRIPTTOKEN
@@ -2579,6 +2863,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_POSTSCRIPT_TEXT);
 #else
 			    outputMode(); printf("A postscript file will be specified.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for POSTSCRIPT"
+#endif
 #endif
                           }                 					                   					       
                       | POSTSCRIPTFILETOKEN
@@ -2587,6 +2874,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_POSTSCRIPTFILE_TEXT);
 #else
 			    outputMode(); printf("A postscript file and a file will be specified.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for POSTSCRIPTFILE"
+#endif
 #endif
                           }                 					               					       
                       | PERTURBTOKEN
@@ -2595,6 +2885,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_PERTURB_TEXT);
 #else
 			    outputMode(); printf("Perturbation is demanded.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for PERTURB"
+#endif
 #endif
                           }                 					                      					       
                       | MINUSWORDTOKEN
@@ -2603,6 +2896,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_RD_TEXT);
 #else
 			    outputMode(); printf("Round towards minus infinity.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for RD"
+#endif
 #endif
                           }                 					                    					       
                       | PLUSWORDTOKEN
@@ -2611,6 +2907,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_RU_TEXT);
 #else
 			    outputMode(); printf("Round towards plus infinity.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for RU"
+#endif
 #endif
                           }                 					                     					       
                       | ZEROWORDTOKEN
@@ -2619,6 +2918,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_RZ_TEXT);
 #else
 			    outputMode(); printf("Round towards zero.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for RZ"
+#endif
 #endif
                           }                 					                     					       
                       | NEARESTTOKEN
@@ -2627,6 +2929,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_RN_TEXT);
 #else
 			    outputMode(); printf("Round to nearest.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for RN"
+#endif
 #endif
                           }                 					                      					       
                       | HONORCOEFFPRECTOKEN
@@ -2635,6 +2940,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_HONORCOEFFPREC_TEXT);
 #else
 			    outputMode(); printf("Honorate the precision of the coefficients.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for HONORCOEFFPREC"
+#endif
 #endif
                           }                 					              					       
                       | TRUETOKEN
@@ -2643,6 +2951,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_TRUE_TEXT);
 #else
 			    outputMode(); printf("Boolean constant true.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for TRUE"
+#endif
 #endif
                           }                 					             							       
                       | FALSETOKEN
@@ -2651,6 +2962,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_FALSE_TEXT);
 #else
 			    outputMode(); printf("Boolean constant false.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for FALSE"
+#endif
 #endif
                           }                 					             							       
                       | DEFAULTTOKEN
@@ -2659,6 +2973,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_DEFAULT_TEXT);
 #else
 			    outputMode(); printf("Default value.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for DEFAULT"
+#endif
 #endif
                           }                        											       
                       | ABSOLUTETOKEN
@@ -2667,6 +2984,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_ABSOLUTE_TEXT);
 #else
 			    outputMode(); printf("Consider an absolute error.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for ABSOLUTE"
+#endif
 #endif
                           }                 					       
                       | DECIMALTOKEN
@@ -2675,6 +2995,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_DECIMAL_TEXT);
 #else
 			    outputMode(); printf("Display mode is decimal.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for DECIMAL"
+#endif
 #endif
                           }                 					       
                       | RELATIVETOKEN
@@ -2683,6 +3006,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_RELATIVE_TEXT);
 #else
 			    outputMode(); printf("Consider a relative error.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for RELATIVE"
+#endif
 #endif
                           }
                       | FIXEDTOKEN
@@ -2691,6 +3017,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_FIXED_TEXT);
 #else
 			    outputMode(); printf("Consider fixed-point numbers.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for FIXED"
+#endif
 #endif
                           }
                       | FLOATINGTOKEN
@@ -2699,6 +3028,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_FLOATING_TEXT);
 #else
 			    outputMode(); printf("Consider floating-point numbers.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for FLOATING"
+#endif
 #endif
                           }                 					       
                       | ERRORTOKEN
@@ -2707,6 +3039,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_ERROR_TEXT);
 #else
 			    outputMode(); printf("Type error meta-value.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for ERROR"
+#endif
 #endif
                           }                 					       
                       | QUITTOKEN
@@ -2715,6 +3050,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_QUIT_TEXT);
 #else
 			    outputMode(); printf("Exit from the tool.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for QUIT"
+#endif
 #endif
                           }                 					                         					       
                       | FALSEQUITTOKEN
@@ -2723,6 +3061,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_QUIT_TEXT);
 #else
 			    outputMode(); printf("Exit from the tool - help is called inside a read macro.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for QUIT"
+#endif
 #endif
                           }                 					             						       
                       | RESTARTTOKEN
@@ -2731,6 +3072,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_RESTART_TEXT);
 #else
 			    outputMode(); printf("Restart the tool.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for RESTART"
+#endif
 #endif
                           }                 					                      					       
                       | LIBRARYTOKEN
@@ -2739,6 +3083,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_LIBRARY_TEXT);
 #else
 			    outputMode(); printf("Library binding dereferencer.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for LIBRARY"
+#endif
 #endif
                           }                 					                      					       
                       | DIFFTOKEN
@@ -2747,6 +3094,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_DIFF_TEXT);
 #else
 			    outputMode(); printf("Differentiation: diff(func).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for DIFF"
+#endif
 #endif
                           }                 					                         					       
                       | SIMPLIFYTOKEN
@@ -2755,6 +3105,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_SIMPLIFY_TEXT);
 #else
 			    outputMode(); printf("Simplify: simplify(func).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for SIMPLIFY"
+#endif
 #endif
                           }                 					             						       
                       | REMEZTOKEN
@@ -2763,6 +3116,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_REMEZ_TEXT);
 #else
 			    outputMode(); printf("Remez: remez(func,degree|monoms,range[,weight[,quality]]).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for REMEZ"
+#endif
 #endif
                           }                 					                        					       
                       | FPMINIMAXTOKEN
@@ -2771,6 +3127,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_FPMINIMAX_TEXT);
 #else
 			    outputMode(); printf("Fpminimax: fpminimax(func,degree|monoms,formats,range|pointslist[,absolute|relative[,fixed|floating[,constrainedPart[, minimaxpoly]]]]).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for FPMINIMAX"
+#endif
 #endif
                           }                 					                        					       
                       | HORNERTOKEN
@@ -2779,6 +3138,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_HORNER_TEXT);
 #else
 			    outputMode(); printf("Horner: horner(func)\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for HORNER"
+#endif
 #endif
                           }                 					                       					       
                       | EXPANDTOKEN
@@ -2787,6 +3149,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_EXPAND_TEXT);
 #else
 			    outputMode(); printf("Expand: expand(func).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for EXPAND"
+#endif
 #endif
                           }                 					                       					       
                       | SIMPLIFYSAFETOKEN
@@ -2795,6 +3160,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_SIMPLIFYSAFE_TEXT);
 #else
 			    outputMode(); printf("Safe simplification: simplifysafe(func).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for SIMPLIFYSAFE"
+#endif
 #endif
                           }                 					             						       
                       | TAYLORTOKEN
@@ -2803,6 +3171,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_TAYLOR_TEXT);
 #else
 			    outputMode(); printf("Taylor expansion: taylor(func,degree,point).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for TAYLOR"
+#endif
 #endif
                           }                 					                      					       
                       | DEGREETOKEN
@@ -2811,6 +3182,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_DEGREE_TEXT);
 #else
 			    outputMode(); printf("Degree of a polynomial: degree(func).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for DEGREE"
+#endif
 #endif
                           }                 					                       					       
                       | NUMERATORTOKEN
@@ -2819,6 +3193,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_NUMERATOR_TEXT);
 #else
 			    outputMode(); printf("Numerator of an expression: numerator(func).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for NUMERATOR"
+#endif
 #endif
                           }                 					                    					       
                       | DENOMINATORTOKEN
@@ -2827,6 +3204,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_DENOMINATOR_TEXT);
 #else
 			    outputMode(); printf("Denominator of an expression: denominator(func).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for DENOMINATOR"
+#endif
 #endif
                           }                 					                  					       
                       | SUBSTITUTETOKEN
@@ -2835,6 +3215,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_SUBSTITUTE_TEXT);
 #else
 			    outputMode(); printf("Substitute func2 for free variable in func: substitute(func,func2).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for SUBSTITUTE"
+#endif
 #endif
                           }                 					                   					       
                       | COEFFTOKEN
@@ -2843,6 +3226,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_COEFF_TEXT);
 #else
 			    outputMode(); printf("i-th coefficient of a polynomial: coeff(func,degree).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for COEFF"
+#endif
 #endif
                           }                 					                        					       
                       | SUBPOLYTOKEN
@@ -2851,6 +3237,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_SUBPOLY_TEXT);
 #else
 			    outputMode(); printf("Subpolynomial consisting in monomials: subpoly(func,list of degrees).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for SUBPOLY"
+#endif
 #endif
                           }                 					                      					       
                       | ROUNDCOEFFICIENTSTOKEN
@@ -2859,6 +3248,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_ROUNDCOEFFICIENTS_TEXT);
 #else
 			    outputMode(); printf("Round coefficients of a polynomial to format: roundcoefficients(func,list of formats).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for ROUNDCOEFFICIENTS"
+#endif
 #endif
                           }                 					              					       
                       | RATIONALAPPROXTOKEN
@@ -2867,6 +3259,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_RATIONALAPPROX_TEXT);
 #else
 			    outputMode(); printf("Rational approximation: rationalapprox(constant).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for RATIONALAPPROX"
+#endif
 #endif
                           }                 					               					       
                       | ACCURATEINFNORMTOKEN
@@ -2875,6 +3270,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_ACCURATEINFNORM_TEXT);
 #else
 			    outputMode(); printf("Faithful rounded infinity norm: accurateinfnorm(func,bits,range,domains to exclude).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for ACCURATEINFNORM"
+#endif
 #endif
                           }                 					               					       
                       | ROUNDTOFORMATTOKEN
@@ -2883,6 +3281,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_ROUND_TEXT);
 #else
 			    outputMode(); printf("Round to a given format: round(constant,precision,rounding mode).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for ROUND"
+#endif
 #endif
                           }                 					                					       
                       | EVALUATETOKEN
@@ -2891,6 +3292,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_EVALUATE_TEXT);
 #else
 			    outputMode(); printf("Evaluate a function in a point or interval: round(func,constant|range).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for EVALUATE"
+#endif
 #endif
                           }                 					                     					       
                       | LENGTHTOKEN
@@ -2899,6 +3303,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_LENGTH_TEXT);
 #else
 			    outputMode(); printf("Length of a list: length(list).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for LENGTH"
+#endif
 #endif
                           }                 					           
                       | PARSETOKEN
@@ -2907,6 +3314,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_PARSE_TEXT);
 #else
 			    outputMode(); printf("Parse a string to function: parse(string).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for PARSE"
+#endif
 #endif
                           }                 					                        					       
                       | PRINTTOKEN
@@ -2915,6 +3325,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_PRINT_TEXT);
 #else
 			    outputMode(); printf("Print something: print(thing1, thing2, ...).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for PRINT"
+#endif
 #endif
                           }                 					                        					       
                       | PRINTXMLTOKEN
@@ -2923,6 +3336,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_PRINTXML_TEXT);
 #else
 			    outputMode(); printf("Print a function in XML: printxml(func).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for PRINTXML"
+#endif
 #endif
                           }                 					                        					       
                       | READXMLTOKEN
@@ -2931,6 +3347,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_READXML_TEXT);
 #else
 			    outputMode(); printf("Reads a function in XML: readxml(filename).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for READXML"
+#endif
 #endif
                           }                 					                        					       
                       | PLOTTOKEN
@@ -2940,6 +3359,9 @@ help:                   CONSTANTTOKEN
 #else
 			    outputMode(); printf("Plot (a) function(s) in a range: plot(func,func2,...,range).\n");
 			    outputMode(); printf("There are further options.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for PLOT"
+#endif
 #endif
                           }                 					                         					       
                       | PRINTHEXATOKEN
@@ -2948,6 +3370,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_PRINTHEXA_TEXT);
 #else
 			    outputMode(); printf("Print a constant in hexadecimal: printhexa(constant).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for PRINTHEXA"
+#endif
 #endif
                           }                 					       
                       | PRINTFLOATTOKEN
@@ -2956,6 +3381,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_PRINTFLOAT_TEXT);
 #else
 			    outputMode(); printf("Print a constant in hexadecimal simple precision: printfloat(constant).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for PRINTFLOAT"
+#endif
 #endif
                           }                 					                    					       
                       | PRINTBINARYTOKEN
@@ -2964,6 +3392,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_PRINTBINARY_TEXT);
 #else
 			    outputMode(); printf("Print a constant in binary: printbinary(constant).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for PRINTBINARY"
+#endif
 #endif
                           }                 					                  					       
                       | PRINTEXPANSIONTOKEN
@@ -2972,6 +3403,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_PRINTEXPANSION_TEXT);
 #else
 			    outputMode(); printf("Print a polynomial as an expansion of double precision numbers: printexpansion(func).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for PRINTEXPANSION"
+#endif
 #endif
                           }                 					               					       
                       | BASHEXECUTETOKEN
@@ -2980,6 +3414,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_BASHEXECUTE_TEXT);
 #else
 			    outputMode(); printf("Execute a command in a shell: bashexecute(string).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for BASHEXECUTE"
+#endif
 #endif
                           }                 					                  					       
                       | EXTERNALPLOTTOKEN
@@ -2988,6 +3425,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_EXTERNALPLOT_TEXT);
 #else
 			    outputMode(); printf("Here should be some help text.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for EXTERNALPLOT"
+#endif
 #endif
                           }                 					                 					       
                       | WRITETOKEN
@@ -2996,6 +3436,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_WRITE_TEXT);
 #else
 			    outputMode(); printf("Write something without adding spaces and newlines: write(thing1, thing2, ...).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for WRITE"
+#endif
 #endif
                           }                 					                        					       
                       | ASCIIPLOTTOKEN
@@ -3004,6 +3447,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_ASCIIPLOT_TEXT);
 #else
 			    outputMode(); printf("Plot a function in a range using an ASCII terminal: asciiplot(func,range).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for ASCIIPLOT"
+#endif
 #endif
                           }                 					               
                       | RENAMETOKEN
@@ -3012,6 +3458,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_RENAME_TEXT);
 #else
 			    outputMode(); printf("Rename free variable string1 to string2: rename(string1, string2).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for RENAME"
+#endif
 #endif
                           }                 					       
                       | INFNORMTOKEN
@@ -3020,6 +3469,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_INFNORM_TEXT);
 #else
 			    outputMode(); printf("Certified infinity norm: infnorm(func,range[,prooffile[,list of funcs]]).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for INFNORM"
+#endif
 #endif
                           }                 					                      					       
                       | FINDZEROSTOKEN
@@ -3028,6 +3480,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_FINDZEROS_TEXT);
 #else
 			    outputMode(); printf("Certified bounding of zeros: findzeros(func,range).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for FINDZEROS"
+#endif
 #endif
                           }                 					                    					       
                       | FPFINDZEROSTOKEN
@@ -3036,6 +3491,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_FPFINDZEROS_TEXT);
 #else
 			    outputMode(); printf("Approximate zeros of a function: fpfindzeros(func,range).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for FPFINDZEROS"
+#endif
 #endif
                           }                 					                  					       
                       | DIRTYINFNORMTOKEN
@@ -3044,6 +3502,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_DIRTYINFNORM_TEXT);
 #else
 			    outputMode(); printf("Floating-point infinity norm: dirtyinfnorm(func,range).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for DIRTYINFNORM"
+#endif
 #endif
                           }                 					                 					       
                       | NUMBERROOTSTOKEN
@@ -3060,6 +3521,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_INTEGRAL_TEXT);
 #else
 			    outputMode(); printf("Certified integral: integral(func,range).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for INTEGRAL"
+#endif
 #endif
                           }                 					                     					       
                       | DIRTYINTEGRALTOKEN
@@ -3068,6 +3532,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_DIRTYINTEGRAL_TEXT);
 #else
 			    outputMode(); printf("Floating-point integral: dirtyintegral(func,range).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for DIRTYINTEGRAL"
+#endif
 #endif
                           }                 					             						       
                       | WORSTCASETOKEN
@@ -3076,6 +3543,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_WORSTCASE_TEXT);
 #else
 			    outputMode(); printf("Print all worst-cases under a certain bound: worstcase(func,constant,range,constant,constant[,file]).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for WORSTCASE"
+#endif
 #endif
                           }                 					                    					       
                       | IMPLEMENTPOLYTOKEN
@@ -3085,6 +3555,9 @@ help:                   CONSTANTTOKEN
 #else
 			    outputMode(); printf("Implement a polynomial in C: implementpoly(func,range,constant,format,string,string2[,honorcoeffprec[,string3]]).\n");
 			    outputMode(); printf("Implements func in range with error constant with entering format named in function\nstring writing to file string2 honoring the precision of the coefficients or not with a proof in file string3.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for IMPLEMENTPOLY"
+#endif
 #endif
                           }                 					             						       
                       | CHECKINFNORMTOKEN
@@ -3093,6 +3566,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_CHECKINFNORM_TEXT);
 #else
 			    outputMode(); printf("Checks whether an infinity norm is bounded: checkinfnorm(func,range,constant).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for CHECKINFNORM"
+#endif
 #endif
                           }                 					                 					       
                       | ZERODENOMINATORSTOKEN
@@ -3101,6 +3577,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_ZERODENOMINATORS_TEXT);
 #else
 			    outputMode(); printf("Searches floating-point approximations to zeros of denominators: zerodenominators(func,range).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for ZERODENOMINATORS"
+#endif
 #endif
                           }                 					             					       
                       | ISEVALUABLETOKEN
@@ -3109,6 +3588,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_ISEVALUABLE_TEXT);
 #else
 			    outputMode(); printf("Tests if func is evaluable on range: isevaluable(func,range).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for ISEVALUABLE"
+#endif
 #endif
                           }                 					                  					       
                       | SEARCHGALTOKEN
@@ -3117,6 +3599,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_SEARCHGAL_TEXT);
 #else
 			    outputMode(); printf("Searches Gal values for func (or list of func): searchgal(func|list of func, constant, integer, integer, format|list of formats, constant|list of constants).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for SEARCHGAL"
+#endif
 #endif
                           }                 					                    					       
                       | GUESSDEGREETOKEN
@@ -3125,6 +3610,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_GUESSDEGREE_TEXT);
 #else
 			    outputMode(); printf("Guesses the degree needed for approximating func: guessdegree(func,range,constant[,weight]).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for GUESSDEGREE"
+#endif
 #endif
                           }                 					                  					       
                       | DIRTYFINDZEROSTOKEN
@@ -3133,6 +3621,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_DIRTYFINDZEROS_TEXT);
 #else
 			    outputMode(); printf("Finds zeros of a function dirtily: dirtyfindzeros(func,range).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for DIRTYFINDZEROS"
+#endif
 #endif
                           }                 					               					       
                       | IFTOKEN
@@ -3190,6 +3681,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_INF_TEXT);
 #else
 			    outputMode(); printf("Dereferencing the infimum of a range: inf(range).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for INF"
+#endif
 #endif
                           }                 					       
                       | MIDTOKEN
@@ -3198,6 +3692,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_MID_TEXT);
 #else
 			    outputMode(); printf("Dereferencing the midpoint of a range: mid(range).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for MID"
+#endif
 #endif
                           }                 					       
                       | SUPTOKEN
@@ -3206,6 +3703,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_SUP_TEXT);
 #else
 			    outputMode(); printf("Dereferencing the supremum of a range: sup(range).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for SUP"
+#endif
 #endif
                           }                 					       
                       | EXPONENTTOKEN
@@ -3214,6 +3714,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_EXPONENT_TEXT);
 #else
 			    outputMode(); printf("exponent(constant): returns an integer such that constant scaled by the power of 2\nof this integer is an odd or zero integer.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for EXPONENT"
+#endif
 #endif
                           }                 					       
                       | MANTISSATOKEN
@@ -3222,6 +3725,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_MANTISSA_TEXT);
 #else
 			    outputMode(); printf("mantissa(constant): returns an odd or zero integer equal to constant scaled by an integer power of 2.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for MANTISSA"
+#endif
 #endif
                           }                 					       
                       | PRECISIONTOKEN
@@ -3230,6 +3736,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_PRECISION_TEXT);
 #else
 			    outputMode(); printf("precision(constant): returns the least number of bits constant can be written on.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for PRECISION"
+#endif
 #endif
                           }                 					       
                       | EXECUTETOKEN
@@ -3238,6 +3747,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_EXECUTE_TEXT);
 #else
 			    outputMode(); printf("execute(string): executes an %s script contained in a file named string.\n",PACKAGE_NAME);
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for EXECUTE"
+#endif
 #endif
                           }                 					       
                       | ISBOUNDTOKEN
@@ -3246,6 +3758,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_ISBOUND_TEXT);
 #else
 			    outputMode(); printf("isbound(identifier): returns a boolean indicating if identifier is bound.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for ISBOUND"
+#endif
 #endif
                           }                 					       
                       | VERSIONTOKEN 
@@ -3257,6 +3772,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_EXTERNALPROC_TEXT);
 #else
 			    outputMode(); printf("externalplot(identifier, file, argumentypes -> resulttype): binds identifier to an external procedure with signature argumenttypes -> resulttype in file.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for EXTERNALPROC"
+#endif
 #endif
                           }                 					           
                       | VOIDTOKEN                          {
@@ -3264,6 +3782,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_VOID_TEXT);
 #else
 			    outputMode(); printf("Represents the void type for externalproc.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for VOID"
+#endif
 #endif
                           }                 					       
                       | CONSTANTTYPETOKEN                          {
@@ -3271,6 +3792,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_CONSTANT_TEXT);
 #else
 			    outputMode(); printf("Represents the constant type for externalproc.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for CONSTANT"
+#endif
 #endif
                           }                 					       
                       | FUNCTIONTOKEN                          {
@@ -3278,6 +3802,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_FUNCTION_TEXT);
 #else
 			    outputMode(); printf("Represents the function type for externalproc.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for FUNCTION"
+#endif
 #endif
                           }                 					       
                       | RANGETOKEN                          {
@@ -3285,6 +3812,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_RANGE_TEXT);
 #else
 			    outputMode(); printf("Represents the range type for externalproc.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for RANGE"
+#endif
 #endif
                           }                 					       
                       | INTEGERTOKEN                          {
@@ -3292,6 +3822,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_INTEGER_TEXT);
 #else
 			    outputMode(); printf("Represents the integer type for externalproc.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for INTEGER"
+#endif
 #endif
                           }                 					       
                       | STRINGTYPETOKEN                          {
@@ -3299,6 +3832,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_STRING_TEXT);
 #else
 			    outputMode(); printf("Represents the string type for externalproc.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for STRING"
+#endif
 #endif
                           }                 					       
                       | BOOLEANTOKEN                          {
@@ -3306,6 +3842,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_BOOLEAN_TEXT);
 #else
 			    outputMode(); printf("Represents the boolean type for externalproc.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for BOOLEAN"
+#endif
 #endif
                           }                 					       
                       | LISTTOKEN                          {
@@ -3313,6 +3852,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_LISTOF_TEXT);
 #else
 			    outputMode(); printf("Represents the list type for externalproc.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for LISTOF"
+#endif
 #endif
                           }                 					       
                       | OFTOKEN                          {
@@ -3320,6 +3862,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_LISTOF_TEXT);
 #else
 			    outputMode(); printf("Used in list of type for externalproc.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for LISTOF"
+#endif
 #endif
                           }                 					       
                       | VARTOKEN                          {
@@ -3327,6 +3872,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_VAR_TEXT);
 #else
 			    outputMode(); printf("Declares a local variable.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for VAR"
+#endif
 #endif
                           }                 					       
                       | NOPTOKEN                          {
@@ -3334,6 +3882,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_NOP_TEXT);
 #else
 			    outputMode(); printf("Does nothing.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for NOP"
+#endif
 #endif
                           }                 		
                       | PROCTOKEN                          {
@@ -3341,6 +3892,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_PROC_TEXT);
 #else
 			    outputMode(); printf("Defines a nameless procedure.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for PROC"
+#endif
 #endif
                           }                 					       			       
                       | PROCEDURETOKEN                     {
@@ -3348,6 +3902,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_PROCEDURE_TEXT);
 #else
 			    outputMode(); printf("Defines a named procedure.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for PROCEDURE"
+#endif
 #endif
                           }                 	
                       | RETURNTOKEN                     {
@@ -3355,6 +3912,9 @@ help:                   CONSTANTTOKEN
 			    outputMode(); printf(HELP_RETURN_TEXT);
 #else
 			    outputMode(); printf("Returns an expression in a procedure.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for RETURN"
+#endif
 #endif
                           }                 					       			       
                       | HELPTOKEN

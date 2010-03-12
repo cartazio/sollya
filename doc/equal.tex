@@ -1,10 +1,10 @@
-\subsection{equal}
+\subsection{$==$}
 \label{labequal}
 \noindent Name: \textbf{$==$}\\
 equality test operator\\
 \noindent Usage: 
 \begin{center}
-\emph{expr1} \textbf{$==$} \emph{expr2} : (\textsf{any type}, \textsf{any type}) $\rightarrow$ \textsf{boolean}
+\emph{expr1} \textbf{$==$} \emph{expr2} : (\textsf{any type}, \textsf{any type}) $\rightarrow$ \textsf{boolean}\\
 \end{center}
 Parameters: 
 \begin{itemize}
@@ -18,7 +18,9 @@ Parameters:
    floating-point number with the global precision \textbf{prec}. The user should
    be aware of the fact that because of floating-point evaluation, the
    operator \textbf{$==$} is not exactly the same as the mathematical
-   equality.
+   equality. Further remark that according to IEEE 754-2008 floating-point
+   rules, which \sollya emulates, floating-point data which are NaN do not
+   compare equal to any other floating-point datum, including NaN. 
 \end{itemize}
 \noindent Example 1: 
 \begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
@@ -59,6 +61,16 @@ true
 \noindent Example 5: 
 \begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > error == error;
+false
+\end{Verbatim}
+\end{minipage}\end{center}
+\noindent Example 6: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> a = "Biba";
+> b = NaN;
+> a == a;
+true
+> b == b;
 false
 \end{Verbatim}
 \end{minipage}\end{center}

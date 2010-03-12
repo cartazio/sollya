@@ -163,7 +163,8 @@ void miniyyerror(void *myScanner, char *message) {
 %token  TRIPLEDOUBLETOKEN;      					       
 %token  DOUBLEEXTENDEDTOKEN;    					       
 %token  CEILTOKEN;              					       
-%token  FLOORTOKEN;             			
+%token  FLOORTOKEN;
+%token  NEARESTINTTOKEN;             			
 
 %token  HEADTOKEN;
 %token  REVERTTOKEN;
@@ -539,6 +540,38 @@ procbody:               LPARTOKEN RPARTOKEN BEGINTOKEN commandlist ENDTOKEN
                       | LPARTOKEN identifierlist RPARTOKEN BEGINTOKEN RETURNTOKEN thing SEMICOLONTOKEN ENDTOKEN
                           {
 			    $$ = makeProc($2, makeCommandList(addElement(NULL, makeNop())), $6);
+                          }
+                      | LPARTOKEN IDENTIFIERTOKEN EQUALTOKEN DOTSTOKEN RPARTOKEN BEGINTOKEN commandlist ENDTOKEN
+                          {
+			    $$ = makeProcIllim($2, makeCommandList($7), makeUnit());
+                          }
+                      | LPARTOKEN IDENTIFIERTOKEN EQUALTOKEN DOTSTOKEN RPARTOKEN BEGINTOKEN variabledeclarationlist commandlist ENDTOKEN
+                          {			    
+			    $$ = makeProcIllim($2, makeCommandList(concatChains($7, $8)), makeUnit());
+                          }
+                      | LPARTOKEN IDENTIFIERTOKEN EQUALTOKEN DOTSTOKEN RPARTOKEN BEGINTOKEN variabledeclarationlist ENDTOKEN
+                          {
+			    $$ = makeProcIllim($2, makeCommandList($7), makeUnit());
+                          }
+                      | LPARTOKEN IDENTIFIERTOKEN EQUALTOKEN DOTSTOKEN RPARTOKEN BEGINTOKEN ENDTOKEN
+                          {
+			    $$ = makeProcIllim($2, makeCommandList(addElement(NULL,makeNop())), makeUnit());
+                          }
+                      | LPARTOKEN IDENTIFIERTOKEN EQUALTOKEN DOTSTOKEN RPARTOKEN BEGINTOKEN commandlist RETURNTOKEN thing SEMICOLONTOKEN ENDTOKEN
+                          {
+			    $$ = makeProcIllim($2, makeCommandList($7), $9);
+                          }
+                      | LPARTOKEN IDENTIFIERTOKEN EQUALTOKEN DOTSTOKEN RPARTOKEN BEGINTOKEN variabledeclarationlist commandlist RETURNTOKEN thing SEMICOLONTOKEN ENDTOKEN
+                          {			    
+			    $$ = makeProcIllim($2, makeCommandList(concatChains($7, $8)), $10);
+                          }
+                      | LPARTOKEN IDENTIFIERTOKEN EQUALTOKEN DOTSTOKEN RPARTOKEN BEGINTOKEN variabledeclarationlist RETURNTOKEN thing SEMICOLONTOKEN ENDTOKEN
+                          {
+			    $$ = makeProcIllim($2, makeCommandList($7), $9);
+                          }
+                      | LPARTOKEN IDENTIFIERTOKEN EQUALTOKEN DOTSTOKEN RPARTOKEN BEGINTOKEN RETURNTOKEN thing SEMICOLONTOKEN ENDTOKEN
+                          {
+			    $$ = makeProcIllim($2, makeCommandList(addElement(NULL, makeNop())), $8);
                           }
 ;
 
@@ -1614,6 +1647,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | FLOORTOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeFloor($3);
+			  }             					       
+                      | NEARESTINTTOKEN LPARTOKEN thing RPARTOKEN
+                          {
+			    $$ = makeNearestInt($3);
 			  }             					       
                       | LENGTHTOKEN LPARTOKEN thing RPARTOKEN
                           {

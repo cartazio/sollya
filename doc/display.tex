@@ -4,8 +4,9 @@
 sets or inspects the global variable specifying number notation\\
 \noindent Usage: 
 \begin{center}
-\textbf{display} = \emph{notation value} : \textsf{decimal$|$binary$|$dyadic$|$powers$|$hexadecimal} $\rightarrow$ \textsf{void}
-\textbf{display} = \emph{notation value} ! : \textsf{decimal$|$binary$|$dyadic$|$powers$|$hexadecimal} $\rightarrow$ \textsf{void}
+\textbf{display} = \emph{notation value} : \textsf{decimal$|$binary$|$dyadic$|$powers$|$hexadecimal} $\rightarrow$ \textsf{void}\\
+\textbf{display} = \emph{notation value} ! : \textsf{decimal$|$binary$|$dyadic$|$powers$|$hexadecimal} $\rightarrow$ \textsf{void}\\
+\textbf{display} : \textsf{decimal$|$binary$|$dyadic$|$powers$|$hexadecimal}\\
 \end{center}
 Parameters: 
 \begin{itemize}
@@ -26,7 +27,7 @@ Parameters:
    notation compatible with Maple and PARI/GP.  If the global notation
    variable \textbf{display} is \textbf{binary}, all numbers will be output in binary
    notation.  If the global notation variable \textbf{display} is \textbf{hexadecimal},
-   all numbers will be output in C99/ IEEE754R notation.  All output
+   all numbers will be output in C99/ IEEE754-2008 notation.  All output
    notations can be parsed back by \sollya, inducing no error if the input
    and output precisions are the same (see \textbf{prec}).
     

@@ -4,6 +4,9 @@
 #TYPE $ONOFF_TYPE -> $VOID_TYPE
 #CALLING $COMMAND = <activation value> !
 #TYPE $ONOFF_TYPE -> $VOID_TYPE
+#CALLING $COMMAND
+#TYPE $ONOFF_TYPE
+
 
 #PARAMETERS <activation value> represents $ON or $OFF, i.e. activation or deactivation
 
@@ -21,10 +24,10 @@ indicated by the user perform better in many commands when simplified
 before being passed in argument to a command. When the automatic
 simplification of expressions is activated, $SOLLYA automatically
 performs a safe (not value changing) simplification process on such
-expression.
+expressions.
 §§ § §§
 The automatic generation of subexpressions can be annoying, in
-particular if it takes too much time for not enough usage. Further the
+particular if it takes too much time for not enough benefit. Further the
 user might want to inspect the structure of the expression tree
 returned by a command. In this case, the automatic simplification
 should be deactivated.

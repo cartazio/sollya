@@ -2,6 +2,16 @@
 \label{labtaylorrecursions}
 \noindent Name: \textbf{taylorrecursions}\\
 controls the number of recursion steps when applying Taylor's rule.\\
+\noindent Usage: 
+\begin{center}
+\textbf{taylorrecursions} = \emph{n} : \textsf{integer} $\rightarrow$ \textsf{void}\\
+\textbf{taylorrecursions} = \emph{n} ! : \textsf{integer} $\rightarrow$ \textsf{void}\\
+\textbf{taylorrecursions} : \textsf{integer}\\
+\end{center}
+Parameters: 
+\begin{itemize}
+\item \emph{n} represents the number of recursions
+\end{itemize}
 \noindent Description: \begin{itemize}
 
 \item \textbf{taylorrecursions} is a global variable. Its value represents the number of steps
@@ -15,8 +25,8 @@ controls the number of recursion steps when applying Taylor's rule.\\
    This rule can be applied recursively.
    The number of step in this recursion process is controlled by \textbf{taylorrecursions}.
 
-\item Setting \textbf{taylorrecursions} to 0 makes \sollya use this rule only one time;
-   setting it to 1 makes \sollya use the rule two times, and so on.
+\item Setting \textbf{taylorrecursions} to 0 makes \sollya use this rule only once;
+   setting it to 1 makes \sollya use the rule twice, and so on.
    In particular: the rule is always applied at least once.
 \end{itemize}
 \noindent Example 1: 

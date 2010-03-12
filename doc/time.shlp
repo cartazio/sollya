@@ -1,0 +1,39 @@
+#NAME $TIME
+#QUICK_DESCRIPTION procedure for timing $SOLLYA code.
+#CALLING $COMMAND(<code>)
+#TYPE $CODE_TYPE -> $CONSTANT_TYPE
+
+#PARAMETERS <code> is the code to be timed.
+
+#DESCRIPTION 
+$COMMAND permits timing a $SOLLYA instruction, resp. a begin-end block
+of $SOLLYA instructions. The timing value, measured in seconds, is returned
+as a $SOLLYA constant (and not merely displayed as for $TIMING). This 
+permits performing computations of the timing measurement value inside $SOLLYA.
+
+#DESCRIPTION 
+The extended $NOP command permits executing a defined number of
+useless instructions. Taking the ratio of the time needed to execute a
+certain $SOLLYA instruction and the time for executing a $NOP
+therefore gives a way to abstract from the speed of a particular 
+machine when evaluating an algorithm's performance.
+
+#EXAMPLE
+t = time(p=remez(sin(x),10,[-1;1]));
+write(t,"s were spent computing p = ",p,"\n");
+
+#EXAMPLE
+write(time({ p=remez(sin(x),10,[-1;1]); write("The error is 2^(", log2(dirtyinfnorm(p-sin(x),[-1;1])), ")\n"); }), "were spent\n");
+
+#EXAMPLE
+t = time(bashexecute("sleep 10"));
+write(~(t-10),"s of execution overhead.\n");
+
+#EXAMPLE
+ratio := time(p=remez(sin(x),10,[-1;1]))/time(nop(10));
+write("This ratio = ", ratio, " should somehow be independent of the type of machine.\n");
+
+#SEEALSO $TIMING
+#SEEALSO $NOP
+
+

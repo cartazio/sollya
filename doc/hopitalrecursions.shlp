@@ -1,5 +1,13 @@
 #NAME $HOPITALRECURSIONS
 #QUICK_DESCRIPTION controls the number of recursion steps when applying L'Hopital's rule.
+#CALLING $COMMAND = <n>
+#TYPE $INTEGER_TYPE -> $VOID_TYPE
+#CALLING $COMMAND = <n> !
+#TYPE $INTEGER_TYPE -> $VOID_TYPE
+#CALLING $COMMAND
+#TYPE $INTEGER_TYPE
+
+#PARAMETERS <n> represents the number of recursions
 
 #DESCRIPTION 
 $COMMAND is a global variable. Its value represents the number of steps of
@@ -13,12 +21,12 @@ arithmetic on an interval §§I§$I$§§ and if §§f§$f$§§ and §§g§$g$§�
 in §§I§$I$§§, a direct evaluation leads to NaN.
 $SOLLYA implements a safe heuristic to avoid this, based on L'Hopital's rule: in 
 such a case, it can be shown that §§(f/g)(I) C (f'/g')(I)§$(f/g)(I) \subseteq (f'/g')(I)$§§. Since
-the same problem may hold for §§f'/g'§$f'/g'$§§, the rule is applied recursively.
+the same problem may exist for §§f'/g'§$f'/g'$§§, the rule is applied recursively.
 The number of step in this recursion process is controlled by $COMMAND.
 
 #DESCRIPTION
-Setting $COMMAND to 0 makes $SOLLYA use this rule only one time ;
-setting it to 1 makes $SOLLYA use the rule two times, and so on.
+Setting $COMMAND to 0 makes $SOLLYA use this rule only once;
+setting it to 1 makes $SOLLYA use the rule twice, and so on.
 In particular: the rule is always applied at least once, if necessary.
 
 #EXAMPLE

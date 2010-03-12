@@ -4,7 +4,7 @@
 checks whether the infinity norm of a function is bounded by a value\\
 \noindent Usage: 
 \begin{center}
-\textbf{checkinfnorm}(\emph{function},\emph{range},\emph{constant}) : (\textsf{function}, \textsf{range}, \textsf{constant}) $\rightarrow$ \textsf{boolean}
+\textbf{checkinfnorm}(\emph{function},\emph{range},\emph{constant}) : (\textsf{function}, \textsf{range}, \textsf{constant}) $\rightarrow$ \textsf{boolean}\\
 \end{center}
 Parameters: 
 \begin{itemize}
@@ -38,9 +38,8 @@ Parameters:
 \begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > checkinfnorm(sin(x),[0;1.75], 1);
 true
-> checkinfnorm(sin(x),[0;1.75], 1/2); checkinfnorm(sin(x),[0;20/39],
+> checkinfnorm(sin(x),[0;1.75], 1/2); checkinfnorm(sin(x),[0;20/39],1/2);
 false
-> 1/2);
 true
 \end{Verbatim}
 \end{minipage}\end{center}

@@ -314,6 +314,7 @@ DIRTYFINDZEROS  "dirtyfindzeros"
 
 CEIL            "ceil"
 FLOOR           "floor"
+NEARESTINT      "nearestint"
 
 HEAD            "head"
 TAIL            "tail"

@@ -2,7 +2,7 @@
 
 Copyright 2008 by 
 
-Laboratoire de l'Informatique du Parallélisme, 
+Laboratoire de l'Informatique du Paralllisme, 
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
 
 Contributors Ch. Lauter, S. Chevillard, N. Jourdan
@@ -278,6 +278,10 @@ void free_memory(node *tree) {
     free_memory(tree->child1);
     free(tree);
     break;
+  case NEARESTINT:
+    free_memory(tree->child1);
+    free(tree);
+    break;
   case PI_CONST:
     free(tree);
     break;
@@ -417,6 +421,9 @@ void fprintHeadFunction(FILE *fd,node *tree, char *x, char *y) {
     break;
   case FLOOR:
     fprintf(fd,"floor(%s)",x);
+    break;
+  case NEARESTINT:
+    fprintf(fd,"nearestint(%s)",x);
     break;
   case PI_CONST:
     fprintf(fd,"pi");
@@ -1296,6 +1303,11 @@ void fprintTreeWithPrintMode(FILE *fd, node *tree) {
     fprintTreeWithPrintMode(fd,tree->child1);
     fprintf(fd,")");
     break;
+  case NEARESTINT:
+    fprintf(fd,"nearestint(");
+    fprintTreeWithPrintMode(fd,tree->child1);
+    fprintf(fd,")");
+    break;
   case PI_CONST:
     fprintf(fd,"pi");
     break;
@@ -1685,6 +1697,11 @@ void printTree(node *tree) {
     printTree(tree->child1);
     printf(")");
     break;
+  case NEARESTINT:
+    printf("nearestint(");
+    printTree(tree->child1);
+    printf(")");
+    break;
   case PI_CONST:
     printf("pi");
     break;
@@ -1963,6 +1980,11 @@ char *sprintTree(node *tree) {
     buffer = (char *) safeCalloc(strlen(buffer1) + 9, sizeof(char));
     sprintf(buffer,"floor(%s)",buffer1);
     break;
+  case NEARESTINT:
+    buffer1 = sprintTree(tree->child1);
+    buffer = (char *) safeCalloc(strlen(buffer1) + 12, sizeof(char));
+    sprintf(buffer,"nearestint(%s)",buffer1);
+    break;
   case PI_CONST:
     buffer = (char *) safeCalloc(3, sizeof(char));
     sprintf(buffer,"pi");
@@ -2220,6 +2242,11 @@ void fprintTree(FILE *fd, node *tree) {
     fprintTree(fd,tree->child1);
     fprintf(fd,")");
     break;
+  case NEARESTINT:
+    fprintf(fd,"nearestint(");
+    fprintTree(fd,tree->child1);
+    fprintf(fd,")");
+    break;
   case PI_CONST:
     fprintf(fd,"pi");
     break;
@@ -2237,6 +2264,7 @@ node* copyTree(node *tree) {
   node *copy;
   mpfr_t *value;
   mp_prec_t prec, p;
+  mpfr_t temp;
 
   switch (tree->nodeType) {
   case VARIABLE:
@@ -2250,8 +2278,11 @@ node* copyTree(node *tree) {
     prec = tools_precision;
     p = mpfr_get_prec(*(tree->value));
     if (p > prec) prec = p;
-    mpfr_init2(*value,prec);
-    simplifyMpfrPrec(*value,*(tree->value));
+    mpfr_init2(temp,prec);
+    simplifyMpfrPrec(temp,*(tree->value));
+    mpfr_init2(*value,mpfr_get_prec(temp));
+    mpfr_set(*value,temp,GMP_RNDN);
+    mpfr_clear(temp);
     copy->value = value;
     break;
   case ADD:
@@ -2441,6 +2472,11 @@ node* copyTree(node *tree) {
     copy->nodeType = FLOOR;
     copy->child1 = copyTree(tree->child1);
     break;
+  case NEARESTINT:
+    copy = (node*) safeMalloc(sizeof(node));
+    copy->nodeType = NEARESTINT;
+    copy->child1 = copyTree(tree->child1);
+    break;
   case PI_CONST:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = PI_CONST;
@@ -2450,6 +2486,10 @@ node* copyTree(node *tree) {
    exit(1);
   }
   return copy;
+}
+
+int mpfr_nearestint(mpfr_t rop, mpfr_t op) {
+  return mpfr_rint(rop,op,GMP_RNDN);
 }
 
 int mpfr_to_mpq( mpq_t y, mpfr_t x) {
@@ -2755,8 +2795,11 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
     simplified = (node*) safeMalloc(sizeof(node));
     simplified->nodeType = CONSTANT;
     value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-    mpfr_init2(*value,mpfr_get_prec(*(tree->value)) + 10);
-    simplifyMpfrPrec(*value, *(tree->value));
+    mpfr_init2(temp,mpfr_get_prec(*(tree->value)) + 10);
+    simplifyMpfrPrec(temp, *(tree->value));
+    mpfr_init2(*value,mpfr_get_prec(temp));
+    mpfr_set(*value,temp,GMP_RNDN);
+    mpfr_clear(temp);
     simplified->value = value;
     break;
   case ADD:
@@ -3682,7 +3725,7 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
       if ((mpfr_pow(*value, *(simplChild1->value), *(simplChild2->value), GMP_RNDN) != 0) || 
-	  (!mpfr_number_p(*value))) {
+	  (!mpfr_number_p(*value)) || (!mpfr_number_p(*(simplChild1->value)))) {
 	simplified->nodeType = POW;
 	simplified->child1 = simplChild1;
 	simplified->child2 = simplChild2;
@@ -3743,7 +3786,7 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
       mpfr_init2(*value,prec);
       simplified->value = value;
       if ((mpfr_neg(*value, *(simplChild1->value), GMP_RNDN) != 0) || 
-	  (!mpfr_number_p(*value))) {
+	  (mpfr_nan_p(*value))) {
 	simplified->nodeType = NEG;
 	simplified->child1 = simplChild1;
 	mpfr_clear(*value);
@@ -4287,6 +4330,64 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
         free(yrange.b);
       } else {
         simplified->nodeType = FLOOR;
+        simplified->child1 = simplChild1;
+      }
+    }
+    break;
+  case NEARESTINT:
+    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
+    simplified = (node*) safeMalloc(sizeof(node));
+    if (simplChild1->nodeType == CONSTANT) {
+      simplified->nodeType = CONSTANT;
+      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+      mpfr_init2(*value,tools_precision);
+      simplified->value = value;
+      mpfr_nearestint(*value, *(simplChild1->value));
+      if ((!mpfr_number_p(*value))) {
+	simplified->nodeType = NEARESTINT;
+	simplified->child1 = simplChild1;
+	mpfr_clear(*value);
+	free(value);
+      } else {
+	free_memory(simplChild1);
+      }
+    } else {
+      if (isConstant(simplChild1)) {
+        xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+        xrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+        yrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+        yrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+        mpfr_init2(*(yrange.a),tools_precision);
+        mpfr_init2(*(yrange.b),tools_precision);
+        mpfr_init2(*(xrange.a),4 * tools_precision);
+        mpfr_init2(*(xrange.b),4 * tools_precision);
+        mpfr_set_ui(*(xrange.a),1,GMP_RNDD);
+        mpfr_set_ui(*(xrange.b),1,GMP_RNDU);
+        evaluateRangeFunction(yrange, simplChild1, xrange, 8 * tools_precision);
+        mpfr_nearestint(*(xrange.a),*(yrange.a));
+        mpfr_nearestint(*(xrange.b),*(yrange.b));
+        if (mpfr_number_p(*(xrange.a)) && 
+            mpfr_number_p(*(xrange.b)) &&
+            (mpfr_cmp(*(xrange.a),*(xrange.b)) == 0)) {
+          simplified->nodeType = CONSTANT;
+          value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+          mpfr_init2(*value,tools_precision);
+          simplified->value = value;
+          mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
+        } else {
+          simplified->nodeType = NEARESTINT;
+          simplified->child1 = simplChild1;
+        }
+        mpfr_clear(*(xrange.a));
+        mpfr_clear(*(xrange.b));
+        mpfr_clear(*(yrange.a));
+        mpfr_clear(*(yrange.b));
+        free(xrange.a);
+        free(xrange.b);
+        free(yrange.a);
+        free(yrange.b);
+      } else {
+        simplified->nodeType = NEARESTINT;
         simplified->child1 = simplChild1;
       }
     }
@@ -5196,6 +5297,17 @@ node* differentiateUnsimplified(node *tree) {
 	temp_node->value = mpfr_temp;
 	derivative = temp_node;
 	break;
+      case NEARESTINT:
+	printMessage(1,
+		     "Warning: the nearestint operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
+	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+	mpfr_init2(*mpfr_temp,tools_precision);
+	mpfr_set_d(*mpfr_temp,0.0,GMP_RNDN);
+	temp_node = (node*) safeMalloc(sizeof(node));
+	temp_node->nodeType = CONSTANT;
+	temp_node->value = mpfr_temp;
+	derivative = temp_node;
+	break;
       case PI_CONST:
 	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
 	mpfr_init2(*mpfr_temp,tools_precision);
@@ -5450,6 +5562,11 @@ int evaluateConstantExpression(mpfr_t result, node *tree, mp_prec_t prec) {
     if (!isConstant) break;
     mpfr_floor(result, stack1);
     break;
+  case NEARESTINT:
+    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
+    if (!isConstant) break;
+    mpfr_nearestint(result, stack1);
+    break;
   case PI_CONST:
     mpfr_const_pi(result, GMP_RNDN);
     isConstant = 1;
@@ -5467,6 +5584,7 @@ int evaluateConstantExpression(mpfr_t result, node *tree, mp_prec_t prec) {
 node* simplifyTreeInner(node *tree) {
   node *simplChild1, *simplChild2, *simplified;
   mpfr_t *value;
+  mpfr_t temp;
 
   switch (tree->nodeType) {
   case VARIABLE:
@@ -5477,8 +5595,11 @@ node* simplifyTreeInner(node *tree) {
     simplified = (node*) safeMalloc(sizeof(node));
     simplified->nodeType = CONSTANT;
     value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-    mpfr_init2(*value,tools_precision);
-    simplifyMpfrPrec(*value,*(tree->value));
+    mpfr_init2(temp,tools_precision);
+    simplifyMpfrPrec(temp,*(tree->value));
+    mpfr_init2(*value,mpfr_get_prec(temp));
+    mpfr_set(*value,temp,GMP_RNDN);
+    mpfr_clear(temp);
     simplified->value = value;
     break;
   case ADD:
@@ -6107,6 +6228,21 @@ node* simplifyTreeInner(node *tree) {
       simplified->child1 = simplChild1;
     }
     break;
+  case NEARESTINT:
+    simplChild1 = simplifyTreeInner(tree->child1);
+    simplified = (node*) safeMalloc(sizeof(node));
+    if (simplChild1->nodeType == CONSTANT) {
+      simplified->nodeType = CONSTANT;
+      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+      mpfr_init2(*value,tools_precision);
+      simplified->value = value;
+      mpfr_nearestint(*value, *(simplChild1->value));
+      free_memory(simplChild1);
+    } else {
+      simplified->nodeType = NEARESTINT;
+      simplified->child1 = simplChild1;
+    }
+    break;
   case PI_CONST:
     simplified = (node*) safeMalloc(sizeof(node));
     simplified->nodeType = CONSTANT;
@@ -6126,6 +6262,7 @@ node* simplifyTreeInner(node *tree) {
 node* simplifyAllButDivisionInner(node *tree) {
   node *simplChild1, *simplChild2, *simplified;
   mpfr_t *value;
+  mpfr_t temp;
 
   switch (tree->nodeType) {
   case VARIABLE:
@@ -6136,8 +6273,11 @@ node* simplifyAllButDivisionInner(node *tree) {
     simplified = (node*) safeMalloc(sizeof(node));
     simplified->nodeType = CONSTANT;
     value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-    mpfr_init2(*value,tools_precision);
-    simplifyMpfrPrec(*value,*(tree->value));
+    mpfr_init2(temp,tools_precision);
+    simplifyMpfrPrec(temp,*(tree->value));
+    mpfr_init2(*value,mpfr_get_prec(temp));
+    mpfr_set(*value,temp,GMP_RNDN);
+    mpfr_clear(temp);
     simplified->value = value;
     break;
   case ADD:
@@ -6740,6 +6880,21 @@ node* simplifyAllButDivisionInner(node *tree) {
       simplified->child1 = simplChild1;
     }
     break;
+  case NEARESTINT:
+    simplChild1 = simplifyAllButDivisionInner(tree->child1);
+    simplified = (node*) safeMalloc(sizeof(node));
+    if (simplChild1->nodeType == CONSTANT) {
+      simplified->nodeType = CONSTANT;
+      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+      mpfr_init2(*value,tools_precision);
+      simplified->value = value;
+      mpfr_nearestint(*value, *(simplChild1->value));
+      free_memory(simplChild1);
+    } else {
+      simplified->nodeType = NEARESTINT;
+      simplified->child1 = simplChild1;
+    }
+    break;
   case PI_CONST:
     simplified = (node*) safeMalloc(sizeof(node));
     simplified->nodeType = CONSTANT;
@@ -6938,6 +7093,10 @@ void evaluate(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
     evaluate(stack1, tree->child1, x, prec);
     mpfr_floor(result, stack1);
     break;
+  case NEARESTINT:
+    evaluate(stack1, tree->child1, x, prec);
+    mpfr_nearestint(result, stack1);
+    break;
   case PI_CONST:
     mpfr_const_pi(result, GMP_RNDN);
     break;
@@ -7066,6 +7225,9 @@ int arity(node *tree) {
     return 1;
     break;
   case FLOOR:
+    return 1;
+    break;
+  case NEARESTINT:
     return 1;
     break;
   default:
@@ -7245,6 +7407,9 @@ int isPolynomial(node *tree) {
   case FLOOR:
     res = 0;
     break;
+  case NEARESTINT:
+    res = 0;
+    break;
   case PI_CONST:
     res = 1;
     break;
@@ -7254,6 +7419,155 @@ int isPolynomial(node *tree) {
   }
  return res;
 }
+
+int isAffine(node *tree) {
+  int res;
+  node *temp;
+
+  switch (tree->nodeType) {
+  case VARIABLE:
+    res = 1;
+    break;
+  case CONSTANT:
+    res = 1;
+    break;
+  case ADD:
+    res = isAffine(tree->child1) && isAffine(tree->child2);
+    break;
+  case SUB:
+    res = isAffine(tree->child1) && isAffine(tree->child2);
+    break;
+  case MUL:
+    res = isAffine(tree->child1) && isAffine(tree->child2);
+    break;
+  case DIV:
+    res = 0;
+    break;
+  case SQRT:
+    res = 0;
+    break;
+  case EXP:
+    res = 0;
+    break;
+  case LOG:
+    res = 0;
+    break;
+  case LOG_2:
+    res = 0;
+    break;
+  case LOG_10:
+    res = 0;
+    break;
+  case SIN:
+    res = 0;
+    break;
+  case COS:
+    res = 0;
+    break;
+  case TAN:
+    res = 0;
+    break;
+  case ASIN:
+    res = 0;
+    break;
+  case ACOS:
+    res = 0;
+    break;
+  case ATAN:
+    res = 0;
+    break;
+  case SINH:
+    res = 0;
+    break;
+  case COSH:
+    res = 0;
+    break;
+  case TANH:
+    res = 0;
+    break;
+  case ASINH:
+    res = 0;
+    break;
+  case ACOSH:
+    res = 0;
+    break;
+  case ATANH:
+    res = 0;
+    break;
+  case POW:
+    {
+      res = 0;
+      if (isAffine(tree->child1)) {
+        if (tree->child2->nodeType == CONSTANT) 
+          temp = tree->child2; 
+        else 
+          temp = simplifyTreeErrorfree(tree->child2);
+        if (temp->nodeType == CONSTANT) {
+          if (mpfr_number_p(*(temp->value)) && mpfr_integer_p(*(temp->value))) {
+            if (mpfr_sgn(*(temp->value)) > 0) {
+              res = 1;
+            }
+          }
+        }
+        if (tree->child2->nodeType != CONSTANT) free_memory(temp);
+      }
+    }
+    break;
+  case NEG:
+    res = isAffine(tree->child1);
+    break;
+  case ABS:
+    res = 0;
+    break;
+  case DOUBLE:
+    res = 0;
+    break;
+  case SINGLE:
+    res = 0;
+    break;
+  case DOUBLEDOUBLE:
+    res = 0;
+    break;
+  case TRIPLEDOUBLE:
+    res = 0;
+    break;
+  case ERF:
+    res = 0;
+    break;
+  case ERFC:
+    res = 0;
+    break;
+  case LOG_1P:
+    res = 0;
+    break;
+  case EXP_M1:
+    res = 0;
+    break;
+  case DOUBLEEXTENDED:
+    res = 0;
+    break;
+  case LIBRARYFUNCTION:
+    res = 0;
+    break;
+  case CEIL:
+    res = 0;
+    break;
+  case FLOOR:
+    res = 0;
+    break;
+  case NEARESTINT:
+    res = 0;
+    break;
+  case PI_CONST:
+    res = 1;
+    break;
+  default:
+    fprintf(stderr,"Error: isAffine: unknown identifier in the tree\n");
+    exit(1);
+  }
+ return res;
+}
+
 
 #define MAX(a,b) (a) > (b) ? (a) : (b)
 #define MIN(a,b) (a) < (b) ? (a) : (b)
@@ -7735,6 +8049,7 @@ node* expandPowerInPolynomial(node *tree) {
 node* expandDivision(node *tree) {
   node *copy, *left, *right, *tempNode;
   mpfr_t *value;
+  mpfr_t temp;
 
   switch (tree->nodeType) {
   case VARIABLE:
@@ -7745,8 +8060,11 @@ node* expandDivision(node *tree) {
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = CONSTANT;
     value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-    mpfr_init2(*value,tools_precision);
-    simplifyMpfrPrec(*value,*(tree->value));
+    mpfr_init2(temp,tools_precision);
+    simplifyMpfrPrec(temp,*(tree->value));
+    mpfr_init2(*value,mpfr_get_prec(temp));
+    mpfr_set(*value,temp,GMP_RNDN);
+    mpfr_clear(temp);
     copy->value = value;
     break;
   case ADD:
@@ -7946,6 +8264,11 @@ node* expandDivision(node *tree) {
   case FLOOR:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = FLOOR;
+    copy->child1 = expandDivision(tree->child1);
+    break;
+  case NEARESTINT:
+    copy = (node*) safeMalloc(sizeof(node));
+    copy->nodeType = NEARESTINT;
     copy->child1 = expandDivision(tree->child1);
     break;
   case PI_CONST:
@@ -8314,6 +8637,7 @@ node* expandPolynomial(node *tree) {
 node* expandUnsimplified(node *tree) {
   node *copy;
   mpfr_t *value;
+  mpfr_t temp;
 
   if (!isConstant(tree) && isPolynomial(tree)) return expandPolynomial(tree);
 
@@ -8326,8 +8650,11 @@ node* expandUnsimplified(node *tree) {
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = CONSTANT;
     value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-    mpfr_init2(*value,tools_precision);
-    simplifyMpfrPrec(*value,*(tree->value));
+    mpfr_init2(temp,tools_precision);
+    simplifyMpfrPrec(temp,*(tree->value));
+    mpfr_init2(*value,mpfr_get_prec(temp));
+    mpfr_set(*value,temp,GMP_RNDN);
+    mpfr_clear(temp);
     copy->value = value;
     break;
   case ADD:
@@ -8517,6 +8844,11 @@ node* expandUnsimplified(node *tree) {
     copy->nodeType = FLOOR;
     copy->child1 = expand(tree->child1);
     break;
+  case NEARESTINT:
+    copy = (node*) safeMalloc(sizeof(node));
+    copy->nodeType = NEARESTINT;
+    copy->child1 = expand(tree->child1);
+    break;
   case PI_CONST:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = PI_CONST;
@@ -8655,6 +8987,9 @@ int isConstant(node *tree) {
     return isConstant(tree->child1);
     break;
   case FLOOR:
+    return isConstant(tree->child1);
+    break;
+  case NEARESTINT:
     return isConstant(tree->child1);
     break;
   default:
@@ -9370,6 +9705,7 @@ node* hornerPolynomial(node *tree) {
 node* hornerUnsimplified(node *tree) {
   node *copy;
   mpfr_t *value;
+  mpfr_t temp;
 
   if (isPolynomial(tree)) return hornerPolynomial(tree);
 
@@ -9382,8 +9718,11 @@ node* hornerUnsimplified(node *tree) {
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = CONSTANT;
     value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-    mpfr_init2(*value,tools_precision);
-    simplifyMpfrPrec(*value,*(tree->value));
+    mpfr_init2(temp,tools_precision);
+    simplifyMpfrPrec(temp,*(tree->value));
+    mpfr_init2(*value,mpfr_get_prec(temp));
+    mpfr_set(*value,temp,GMP_RNDN);
+    mpfr_clear(temp);
     copy->value = value;
     break;
   case ADD:
@@ -9571,6 +9910,11 @@ node* hornerUnsimplified(node *tree) {
   case FLOOR:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = FLOOR;
+    copy->child1 = horner(tree->child1);
+    break;
+  case NEARESTINT:
+    copy = (node*) safeMalloc(sizeof(node));
+    copy->nodeType = NEARESTINT;
     copy->child1 = horner(tree->child1);
     break;
   case PI_CONST:
@@ -9956,6 +10300,7 @@ int getNumeratorDenominator(node **numerator, node **denominator, node *tree) {
 node *substitute(node* tree, node *t) {
   node *copy;
   mpfr_t *value;
+  mpfr_t temp;
 
   switch (tree->nodeType) {
   case VARIABLE:
@@ -9965,8 +10310,11 @@ node *substitute(node* tree, node *t) {
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = CONSTANT;
     value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-    mpfr_init2(*value,mpfr_get_prec(*(tree->value)));
-    simplifyMpfrPrec(*value,*(tree->value));
+    mpfr_init2(temp,mpfr_get_prec(*(tree->value)));
+    simplifyMpfrPrec(temp,*(tree->value));
+    mpfr_init2(*value,mpfr_get_prec(temp));
+    mpfr_set(*value,temp,GMP_RNDN);
+    mpfr_clear(temp);
     copy->value = value;
     break;
   case ADD:
@@ -10154,6 +10502,11 @@ node *substitute(node* tree, node *t) {
   case FLOOR:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = FLOOR;
+    copy->child1 = substitute(tree->child1,t);
+    break;
+  case NEARESTINT:
+    copy = (node*) safeMalloc(sizeof(node));
+    copy->nodeType = NEARESTINT;
     copy->child1 = substitute(tree->child1,t);
     break;
   case PI_CONST:
@@ -10425,6 +10778,9 @@ int treeSize(node *tree) {
     return treeSize(tree->child1) + 1;
     break;
   case FLOOR:
+    return treeSize(tree->child1) + 1;
+    break;
+  case NEARESTINT:
     return treeSize(tree->child1) + 1;
     break;
   default:
@@ -10706,6 +11062,7 @@ int isCanonical(node *tree) {
 node *makeCanonical(node *tree, mp_prec_t prec) {
   node *copy;
   mpfr_t *value;
+  mpfr_t temp;
 
   if (isCanonical(tree)) {
     printMessage(7,"Information: no canonical form simplification will be performed because the given tree is already canonical.\n");
@@ -10723,8 +11080,11 @@ node *makeCanonical(node *tree, mp_prec_t prec) {
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = CONSTANT;
     value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-    mpfr_init2(*value,tools_precision);
-    simplifyMpfrPrec(*value,*(tree->value));
+    mpfr_init2(temp,tools_precision);
+    simplifyMpfrPrec(temp,*(tree->value));
+    mpfr_init2(*value,mpfr_get_prec(temp));
+    mpfr_set(*value,temp,GMP_RNDN);
+    mpfr_clear(temp);
     copy->value = value;
     break;
   case ADD:
@@ -10914,6 +11274,11 @@ node *makeCanonical(node *tree, mp_prec_t prec) {
     copy->nodeType = FLOOR;
     copy->child1 = makeCanonical(tree->child1,prec);
     break;
+  case NEARESTINT:
+    copy = (node*) safeMalloc(sizeof(node));
+    copy->nodeType = NEARESTINT;
+    copy->child1 = makeCanonical(tree->child1,prec);
+    break;
   case PI_CONST:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = PI_CONST;
@@ -11083,6 +11448,10 @@ node *makeCeil(node *op1) {
 
 node *makeFloor(node *op1) {
   return makeUnary(op1,FLOOR);
+}
+
+node *makeNearestInt(node *op1) {
+  return makeUnary(op1,NEARESTINT);
 }
 
 node *makePi() {

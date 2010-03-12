@@ -6,14 +6,13 @@ verbosity = 1!;
 
 midpointmode = on!;
 
-
-f = sin(x);
+read "example.sollya";
+/*f = sin(x);
 I = [-1/32;1/32];
 deg = 7;
 p = fpminimax(f, [|1,...,deg|], [|D,D...|], I);
 mode = relative;
-quality = 2^-24;
-
+quality = 2^-24;*/
 
 /*
 f = exp(x);

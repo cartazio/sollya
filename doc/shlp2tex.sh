@@ -1,4 +1,4 @@
-#!/bin/dash
+#!/bin/sh
 
 sollyaBin="../sollya"
 
@@ -108,7 +108,7 @@ preprocessTeX() {
 processName() {
  nLines=`cat $tempfile | grep "#NAME" | wc -l`
  if [ $nLines -eq 0 ]
- then echo "Error: you must specify at least one name. Exiting"; exit 1
+ then printf "Error: you must specify at least one name. Exiting\n"; exit 1
  fi
 
  if [ $nLines -eq 1 ]
@@ -125,18 +125,16 @@ processQuickDescription() {
  then return
  fi
 
- if quickDescr=`grep "#QUICK_DESCRIPTION" $tempfile`
- then
-   echo -n "$quickDescr" | sed -n 's/#QUICK_DESCRIPTION //;p' >> $target
-   printf "\\\\\\\\" >> $target
-   echo "" >> $target
- fi
+ ( grep "#QUICK_DESCRIPTION" $tempfile | \
+     sed -n 's/#QUICK_DESCRIPTION //;p' | \
+     tr -d '\n' ;
+     printf "\\\\\\\\\n") >> $target
 }
 
 processCallingAndTypes() {
  if [ `grep "#CALLING" $tempfile | wc -l` != `grep "#TYPE" $tempfile |wc -l` ]
  then
-   echo "ASSERT failed : there shall be the same number of #CALLING and #TYPE instructions. Exits."
+   printf "ASSERT failed : there shall be the same number of #CALLING and #TYPE instructions. Exits.\n"
    exit 1
  fi
 
@@ -152,8 +150,8 @@ processCallingAndTypes() {
    do
    ( grep "#CALLING" $tempfile | head -n $i | tail -n 1 | sed -n 's/#CALLING //;p' | tr -d '\n'; \
        printf " : " ; \
-       grep "#TYPE" $tempfile | head -n $i | tail -n 1 | sed -n 's/#TYPE //;p' | sed -n 's/->/$\\rightarrow$/g;p' )>> $target
-#   type=`echo $type | sed -n 's/|/$|$/g;p'`
+       grep "#TYPE" $tempfile | head -n $i | tail -n 1 | sed -n 's/#TYPE //;p' | sed -n 's/->/$\\rightarrow$/g;p' | tr -d '\n'; \
+       printf "\\\\\\\\\n" )>> $target
    i=`expr $i + 1`
  done
  
@@ -167,7 +165,7 @@ processParameters() {
  fi
 
  i=1;
- echo "Parameters: " >> $target
+ printf "Parameters: \n" >> $target
  printf "\\\\begin{itemize}\n" >> $target
  while [ $i -le $nLines ]
    do
@@ -198,7 +196,7 @@ processDescriptions() {
    then
      firstLine="on"
      mode="on"
-     echo "" >> $target
+     printf "\n" >> $target
      printf "\\\\item " >> $target
    else
      if [ $mode = "on" -a -n "$line" ]
@@ -208,7 +206,7 @@ processDescriptions() {
        else
          if [ $firstLine = "on" ]
            then firstLine="off"
-           else echo -n "   " >> $target
+           else printf "   " >> $target
          fi
          printf "$line""\n" >> $target 
        fi
@@ -227,9 +225,9 @@ processExampleFile() {
  total=0;
  while [ $ilocal -le $nLineslocal ]
  do
-   echo -n "> " >> $target
+   printf "> " >> $target
    cat $exampleFile | head -n $ilocal | tail -n 1 | sed -n 's/\t/    /g;p' | sed -n 's/\(..............................................................................\)/\1\n/g;p' >> $target
-   echo "verbosity=0!; roundingwarnings=on!;" "`head -n $ilocal $exampleFile`" | $sollyaBin > $tempfile2
+   printf "verbosity=0!; roundingwarnings=on!;""`head -n $ilocal $exampleFile`\n"| $sollyaBin > $tempfile2
    sed -i -n 's/^//;p' $tempfile2
    total=`cat $tempfile2 | wc -l`
    countlocal=`expr $total - $countlocal`
@@ -250,7 +248,7 @@ processExamples() {
  while [ $i -le $nLines ]
  do
    line=`cat $tempfile | head -n $i | tail -n 1`
-   if echo "$line" | grep "#EXAMPLE" > /dev/null
+   if printf "$line" | grep "#EXAMPLE" > /dev/null
    then
      if [ $mode = "on" ]
        then processExampleFile
@@ -265,10 +263,10 @@ processExamples() {
    else
      if [ $mode = "on" -a -n "$line" ]
      then
-       if echo "$line" | grep -e "^#" > /dev/null
+       if printf "$line" | grep -e "^#" > /dev/null
        then  i=`expr $nLines + 1`
        else
-         echo "$line" >> $exampleFile 
+         cat $tempfile | head -n $i | tail -n 1 >> $exampleFile 
        fi
      fi
    fi
@@ -286,10 +284,9 @@ processSeeAlso() {
  then return
  fi
 
- echo -n "See also: " >> $target
-# grep "#SEEALSO" $tempfile | sed -n 's/#SEEALSO \\textbf{\(.*\)}/\\textbf{\1} (\\ref{lab\1})/;p' | sed -n 's/$/, /;p' | tr -d "\n" | sed -n 's/, $//;p' >> $target
+ printf "See also: " >> $target
  grep "#SEEALSO" $tempfile | sed -n 's/#SEEALSO //;p' | sed -n 's/$/, /;p' | tr -d "\n" | sed -n 's/, $//;p' >> $target
- echo "" >> $target
+ printf "\n" >> $target
 }
 
 processFile() {
@@ -299,15 +296,24 @@ processFile() {
 
   getCommand
   sed -n 's/\(\$COMMAND\)/'$command'/g;p' $source > $tempfile
-  echo "" >> $tempfile
+  printf "\n" >> $tempfile
   preprocessKeywords
   preprocessTypes
   preprocessMeta
   preprocessTeX
   sed -n -i 's/$SOLLYA/'"$sollya_name"'/g;p' $tempfile
 
+  command=`echo $command | sed -n 's/\$\(.*\)/\1/;p'`  # removes the initial "$" of $command (e.g. GT)
+  nameOfCommand=`cat $keywords_defs | grep "^$command=" | sed -n 's/\(=.*\)//;p' | tr 'A-Z' 'a-z'` # name of the command (e.g. gt) used to name the files
+  realNameOfCommand=`cat $keywords_defs | grep "^$command=" | sed -n 's/\(.*="\)\(.*\)\("\)/\2/;p' | sed -n 's/§§\([^§]*\)§\([^§]*\)§§/\2/g;p'`  # name of the command really used in Sollya (e.g. >)
 
-  printf "\\\\subsection{"$sectionName"}\n" >> $target
+  # Interpretiation of the following line: the content of the quotes is first evaluated,
+  # hence $realNameOfCommand becomes its content (e.g. "\\&\\&") and the line becomes e.g.
+  # printf "\\&\\&" | sed -n 's/\\\\/\\/g;p'
+  # this is evaluated and, in turn, gives  "\&\&"
+  realNameOfCommand=`printf $realNameOfCommand | sed -n 's/\\\\\\\\/\\\\/g;p'`
+  
+  printf "\\\\subsection{"$realNameOfCommand"}\n" >> $target
   printf "\\\\label{lab"$sectionName"}\n" | sed -n 's/ //g;p' >> $target
   processName
   processQuickDescription
@@ -341,15 +347,15 @@ main() {
       source=$file
       sectionName=`echo $source | sed -n 's/\.shlp//;p'`
       target=`echo $source | sed -n 's/\.shlp/\.tex/;p'`
-      echo "Processing file "$source
+      printf "Processing file "$source"\n"
       processFile
       if grep `printf "\\\\input{$source}\n" | sed -n 's/\.shlp//;p'` $listOfCommands > /dev/null
-      then echo "Nothing to change in "$listOfCommands
+      then printf "Nothing to change in "$listOfCommands"\n"
       else
         printf "\\\\input{"`echo $source | sed -n 's/\.shlp//;p'`"}\n" >> $listOfCommands
       fi
     else
-      echo "File "$file" does not exist!"
+      printf "File "$file" does not exist!\n"
     fi
   done
 

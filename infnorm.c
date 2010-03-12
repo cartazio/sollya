@@ -141,9 +141,39 @@ void mpfi_pow(mpfi_t z, mpfi_t x, mpfi_t y) {
 
   if ((mpfr_cmp(l,r) == 0) && (mpfr_integer_p(l))) {
     if (mpfr_zero_p(l)) {
-      mpfi_set_d(res,1.0);
+      if (!mpfi_bounded_p(x)) {
+        precx = mpfi_get_prec(x);
+
+        mpfr_init2(lx,precx);
+        mpfr_init2(rx,precx);
+
+        mpfi_get_right(rx,x);
+        mpfi_get_left(lx,x);
+
+        if (mpfr_number_p(lx)) { 
+          mpfr_set_d(lx,1.0,GMP_RNDN);
+        } else {
+          mpfr_set_nan(lx);
+        }
+
+        if (mpfr_number_p(rx)) {
+          mpfr_set_d(rx,1.0,GMP_RNDN);
+        } else {
+          mpfr_set_nan(rx);
+        }
+
+        mpfi_interv_fr(res,lx,rx);
+        mpfi_revert_if_needed(res);
+
+        mpfr_clear(lx);
+        mpfr_clear(rx);
+      } else {
+        mpfi_set_d(res,1.0);
+      }
     } else {
       precx = mpfi_get_prec(x);
+      if (mpfi_get_prec(res) > precx) 
+        precx = mpfi_get_prec(res);
 
       mpfr_init2(lx,precx);
       mpfr_init2(rx,precx);
@@ -158,7 +188,7 @@ void mpfi_pow(mpfi_t z, mpfi_t x, mpfi_t y) {
 	must_divide = 0;
       }
       if (mpfi_has_zero(x)) {
-		mpfr_div_2ui(r,l,1,GMP_RNDN);
+        mpfr_div_2ui(r,l,1,GMP_RNDN);
 	if (mpfr_integer_p(r)) {   /* l is even */
 	  mpfr_pow(lx,lx,l,GMP_RNDU);
 	  mpfr_pow(rx,rx,l,GMP_RNDU);
@@ -203,7 +233,17 @@ void mpfi_pow(mpfi_t z, mpfi_t x, mpfi_t y) {
   } else {
     mpfi_log(res,x);
     mpfi_mul(res,res,y);
-    mpfi_exp(res,res);
+    mpfi_get_right(r,res);
+    mpfi_get_left(l,res);
+    if (!(mpfr_inf_p(l) &&
+          mpfr_inf_p(r) &&
+          (mpfr_sgn(l) < 0) &&
+          (mpfr_sgn(r) < 0))) {
+      mpfi_exp(res,res);
+    } else {
+      mpfr_set_nan(l);
+      mpfi_interv_fr(res,l,l);
+    }
   }
   mpfr_clear(l);
   mpfr_clear(r);
@@ -421,6 +461,30 @@ void mpfi_floor(mpfi_t rop, mpfi_t op) {
   
   mpfr_floor(ropl,opr);
   mpfr_floor(ropr,opl);
+
+  mpfi_interv_fr(rop,ropl,ropr);
+  mpfi_revert_if_needed(rop);
+
+  mpfr_clear(opl);
+  mpfr_clear(opr);
+  mpfr_clear(ropl);
+  mpfr_clear(ropr);
+}
+
+void mpfi_nearestint(mpfi_t rop, mpfi_t op) {
+  mpfr_t opl, opr, ropl, ropr;
+
+  mpfr_init2(opl,mpfi_get_prec(op));
+  mpfr_init2(opr,mpfi_get_prec(op));
+
+  mpfr_init2(ropl,mpfi_get_prec(op));
+  mpfr_init2(ropr,mpfi_get_prec(op));
+  
+  mpfi_get_left(opl,op);
+  mpfi_get_right(opr,op);
+  
+  mpfr_nearestint(ropl,opr);
+  mpfr_nearestint(ropr,opl);
 
   mpfi_interv_fr(rop,ropl,ropr);
   mpfi_revert_if_needed(rop);
@@ -1840,6 +1904,13 @@ chain* evaluateI(mpfi_t result, node *tree, mpfi_t x, mp_prec_t prec, int simpli
       mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
+  case NEARESTINT:
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
+    mpfi_nearestint(stack3, stack1);
+    if (internalTheo != NULL) {
+      mpfi_set(*(internalTheo->boundLeft),stack1);
+    }
+    break;
   case PI_CONST:
     mpfi_const_pi(stack3);
     excludes = NULL;
@@ -1979,7 +2050,6 @@ chain* evaluateITaylor(mpfi_t result, node *func, node *deriv, mpfi_t x, mp_prec
       mpfr_set_nan(leftX);
       mpfi_interv_fr(result, leftX, leftX);
     }
-
 
     mpfr_clear(leftX);
     mpfr_clear(rightX);
@@ -3439,7 +3509,15 @@ void evaluateRangeFunction(rangetype yrange, node *func, rangetype xrange, mp_pr
 
   temp = differentiate(func);
   deriv = horner(temp);
-  temp2 = horner(func);
+
+  if ((func->nodeType == POW) && 
+      (func->child1->nodeType == VARIABLE) &&
+      (func->child2->nodeType == CONSTANT) &&
+      mpfr_zero_p(*(func->child2->value))) {
+    temp2 = copyTree(func);
+  } else {
+    temp2 = horner(func);
+  }
 
   f = NULL;
 
@@ -4122,6 +4200,9 @@ chain *uncertifiedZeroDenominators(node *tree, mpfr_t a, mpfr_t b, mp_prec_t pre
     return uncertifiedZeroDenominators(tree->child1,a,b,prec);
     break;
   case FLOOR:
+    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
+    break;
+  case NEARESTINT:
     return uncertifiedZeroDenominators(tree->child1,a,b,prec);
     break;
   default:
@@ -5350,6 +5431,27 @@ int evaluateSign(int *s, node *rawFunc) {
 	free_memory(tempNode);
 	break;
       case FLOOR:
+	okayA = evaluateSign(&signA, func->child1);
+	tempNode = makeDoubleConstant(1.0);
+	if (okayA) 
+	  okayB = compareConstant(&signB, func->child1, tempNode);
+	else
+	  okayB = 0;
+	if (okayA && okayB) {
+	  okay = 1;
+	  if (signA < 0) {
+	    sign = -1;
+	  } else {
+	    if (signB < 0) {
+	      sign = 0;
+	    } else {
+	      sign = 1;
+	    }
+	  }
+	}
+	free_memory(tempNode);
+	break;
+      case NEARESTINT:
 	okayA = evaluateSign(&signA, func->child1);
 	tempNode = makeDoubleConstant(1.0);
 	if (okayA) 

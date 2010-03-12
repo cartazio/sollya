@@ -65,6 +65,7 @@ knowledge of the CeCILL-C license and that you accept its terms.
 #include "parser.h"
 #include <termios.h>
 #include <sys/time.h>
+#include <sys/resource.h>
 #include <time.h>
 #include "execute.h"
 
@@ -75,6 +76,7 @@ knowledge of the CeCILL-C license and that you accept its terms.
 
 /* STATE OF THE TOOL */
 
+int oldAutoPrint = 0;
 char *variablename = NULL;
 mp_prec_t defaultprecision = DEFAULTPRECISION;
 mp_prec_t tools_precision = DEFAULTPRECISION;
@@ -844,9 +846,16 @@ int general(int argc, char *argv[]) {
   int parseAbort, executeAbort;
   int i;
   FILE *fd;
-  
+  struct rlimit rlim;
+  char *error;
+  int doNotModifyStackSize;
+  int repeatSetRLimit;
+  int lastWasError;
+
+  doNotModifyStackSize = 0;
   inputFileOpened = 0;
   flushOutput = 0;
+  oldAutoPrint = 0;
 
   if (tcgetattr(0,&termAttr) == -1) {
     eliminatePromptBackup = 1;
@@ -864,6 +873,8 @@ int general(int argc, char *argv[]) {
       printf("--noprompt : do not print a prompt symbol\n");
       printf("--flush : flush standard output and standard error after each command\n");
       printf("--oldrlwrapcompatible : acheive some compatibilty with old rlwrap versions by emitting wrong ANSI sequences (deprecated)\n");
+      printf("--donotmodifystacksize : do not attempt to set the maximal stack size to the maximum size allowed on the system\n");
+      printf("--oldautoprint : print commas between autoprinted elements separated by commas\n");
       printf("--help : print this help text\n");
       printf("\nFor help on %s commands type \"help;\" on the %s prompt\n",PACKAGE_NAME,PACKAGE_NAME);
       printf("More documentation on %s is available on the %s website.\nFor bug reports send an email to %s.\n",PACKAGE_NAME,PACKAGE_NAME,PACKAGE_BUGREPORT);
@@ -872,7 +883,9 @@ int general(int argc, char *argv[]) {
       if (strcmp(argv[i],"--nocolor") == 0) noColor = 1; else
 	if (strcmp(argv[i],"--noprompt") == 0) eliminatePromptBackup = 1; else
 	  if (strcmp(argv[i],"--oldrlwrapcompatible") == 0) oldrlwrapcompatible = 1; else
-              if (strcmp(argv[i],"--flush") == 0) flushOutput = 1; else {
+              if (strcmp(argv[i],"--flush") == 0) flushOutput = 1; else 
+		if (strcmp(argv[i],"--oldautoprint") == 0) oldAutoPrint = 1; else
+		if (strcmp(argv[i],"--donotmodifystacksize") == 0) doNotModifyStackSize = 1; else {
 	    if (!inputFileOpened) {
 	      fd = fopen(argv[i],"r");
 	      if (fd != NULL) {
@@ -895,6 +908,37 @@ int general(int argc, char *argv[]) {
     yyset_in(inputFile, scanner);
   }
 
+  if (!doNotModifyStackSize) {
+#if defined(RLIMIT_STACK)
+    if (getrlimit(RLIMIT_STACK,&rlim) == 0) {
+      rlim.rlim_cur = rlim.rlim_max;
+      setrlimit(RLIMIT_STACK,&rlim);
+#if !defined(__CYGWIN__)
+      repeatSetRLimit = 0;
+      if (getrlimit(RLIMIT_STACK,&rlim) == 0) {
+        repeatSetRLimit = (rlim.rlim_cur != rlim.rlim_max);
+      } else {
+        repeatSetRLimit = 1;
+      }
+      if (repeatSetRLimit) {
+        if (setrlimit(RLIMIT_STACK,&rlim) != 0) {
+          if ((error = strerror(errno)) != NULL) {
+            printMessage(1,"Warning: during initial setup, the following error occurred: \"%s\"\nTry using --donotmodifystacksize when invoking the tool.\n",error);
+          } else {
+            printMessage(1,"Warning: during initial setup, an unknown error occurred.\nTry using --donotmodifystacksize when invoking the tool.\n");
+          }
+        } 
+      }
+#endif
+    } else {
+      if ((error = strerror(errno)) != NULL) {
+	printMessage(1,"Warning: during initial setup, the following error occurred: \"%s\"\nTry using --donotmodifystacksize when invoking the tool.\n",error);
+      } else {
+	printMessage(1,"Warning: during initial setup, an unknown error occurred.\nTry using --donotmodifystacksize when invoking the tool.\n");
+      }
+    }
+#endif 
+  }
   initSignalHandler();
   blockSignals();
   mp_set_memory_functions(safeMalloc,wrapSafeRealloc,NULL);
@@ -903,10 +947,12 @@ int general(int argc, char *argv[]) {
   exitInsteadOfRecover = 0;
   helpNotFinished = 0;
   printPrompt();
+  lastWasError = 0;
   while (1) {
     executeAbort = 0;
     parsedThing = NULL;
     parseAbort = yyparse(scanner);
+    lastWasError = 0;
     if (parsedThing != NULL) {
       
       handlingCtrlC = 0;
@@ -943,6 +989,7 @@ int general(int argc, char *argv[]) {
       } else {
 	displayColor = -1; normalMode();
 	blockSignals();
+	lastWasError = 1;
 	if (handlingCtrlC) 
 	  printMessage(1,"Warning: the last command has been interrupted. May leak memory.\n");
 	else 
@@ -962,6 +1009,8 @@ int general(int argc, char *argv[]) {
       }
 
       freeThing(parsedThing);
+    } else {
+	lastWasError = 1;
     } 
     if (parseAbort || executeAbort) break;
     promptToBePrinted = 1;
@@ -977,6 +1026,6 @@ int general(int argc, char *argv[]) {
     inputFileOpened = 0;
   }
 
-  return 0;
+  if (lastWasError) return 1; else return 0;
 }
 

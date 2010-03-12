@@ -352,7 +352,8 @@ procedure polyApprox(f,I,x0,n,mode) {
         if (mode == absolute) then {
                 DeltaLagrange = TM[2];
         } else {
-                DeltaLagrange = evaluate(x^(n-1),I-x0) * TM[2];
+                DeltaLagrange = evaluate(x^(n+1),I-x0) * TM[2]; 
+                //It was: DeltaLagrange = evaluate(x^(n-1),I-x0) * TM[2]; (M&S)
         };
 
         // Bound the error due to the coefficient rests.
@@ -363,7 +364,7 @@ procedure polyApprox(f,I,x0,n,mode) {
         // Now shift the Taylorform so that T is a polynomial
         // trivially approximating f
         oldRationalMode = rationalmode;
-        rationalmode = on!;
+        rationalmode = on!;//we don't understand the rational mode (M&S)
         T = horner(simplifysafe(p(x - x0)));
         rationalmode = oldRationalMode!;
 
@@ -525,6 +526,7 @@ procedure supnormAbsolute(p,f,I,quality) {
                 if (abs(inf(r)) > highBound) then {
                     highBound = abs(inf(r));    
                 };
+                //highBound =sup(abs(r)); will work also (M&S)
 
                 // Safety check, should be useless
                 if (highBound - lowBound < 0) then {

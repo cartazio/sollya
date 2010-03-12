@@ -4,8 +4,8 @@
 replace the occurrences of the free variable in an expression.\\
 \noindent Usage: 
 \begin{center}
-\textbf{substitute}(\emph{f},\emph{g}) : (\textsf{function}, \textsf{function}) $\rightarrow$ \textsf{function}
-\textbf{substitute}(\emph{f},\emph{t}) : (\textsf{function}, \textsf{constant}) $\rightarrow$ \textsf{constant}
+\textbf{substitute}(\emph{f},\emph{g}) : (\textsf{function}, \textsf{function}) $\rightarrow$ \textsf{function}\\
+\textbf{substitute}(\emph{f},\emph{t}) : (\textsf{function}, \textsf{constant}) $\rightarrow$ \textsf{constant}\\
 \end{center}
 Parameters: 
 \begin{itemize}
@@ -22,8 +22,8 @@ Parameters:
    way as if you type the expression \emph{f} replacing instances of the free variable 
    by \emph{t}).
 
-\item If \emph{f} is stored in a variable \emph{F}. It is absolutely equivalent to 
-   writing \emph{F(g)} or \emph{F(t)}.
+\item If \emph{f} is stored in a variable \emph{F}, the effect of the commands \textbf{substitute}(\emph{F},\emph{g}) or \textbf{substitute}(\emph{F},\emph{t}) is absolutely equivalent to 
+   writing \emph{F(g)} resp. \emph{F(t)}.
 \end{itemize}
 \noindent Example 1: 
 \begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]

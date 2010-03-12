@@ -4,7 +4,7 @@
 tests whether a function can be evaluated at a point \\
 \noindent Usage: 
 \begin{center}
-\textbf{isevaluable}(\emph{function}, \emph{constant}) : (\textsf{function}, \textsf{constant}) $\rightarrow$ \textsf{boolean}
+\textbf{isevaluable}(\emph{function}, \emph{constant}) : (\textsf{function}, \textsf{constant}) $\rightarrow$ \textsf{boolean}\\
 \end{center}
 Parameters: 
 \begin{itemize}
@@ -16,7 +16,7 @@ Parameters:
 \item \textbf{isevaluable} applied to function \emph{function} and a constant \emph{constant} returns
    a boolean indicating whether or not a subsequent call to \textbf{evaluate} on the
    same function \emph{function} and constant \emph{constant} will produce a numerical
-   result or NaN. I.e. \textbf{isevaluable} returns false iff \textbf{evaluate} will return NaN.
+   result or NaN. This means \textbf{isevaluable} returns false iff \textbf{evaluate} will return NaN.
 \end{itemize}
 \noindent Example 1: 
 \begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
