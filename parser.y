@@ -3176,6 +3176,17 @@ help:                   CONSTANTTOKEN
 #endif
 #endif
                           }                 					                      					       
+                      | TAYLORFORMTOKEN
+                          {
+#ifdef HELP_TAYLORFORM_TEXT
+			    outputMode(); printf(HELP_TAYLORFORM_TEXT);
+#else
+			    outputMode(); printf("Taylor form computation.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for TAYLORFORM"
+#endif
+#endif
+                          }                 					                      					       
                       | DEGREETOKEN
                           {
 #ifdef HELP_DEGREE_TEXT

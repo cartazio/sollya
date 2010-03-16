@@ -3103,6 +3103,20 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x, int mode) {
   
   
   case LIBRARYFUNCTION:
+
+    // COMMENT BY CHRISTOPH:
+    //
+    // The typical line for getting the n-th derivative of a library
+    // function is
+    //
+    //     tree->libFun->code(y, x, tree->libFunDeriv + n);
+    //
+    // Here, tree->libFunDeriv indicates the number of times that the
+    // library function has already been "symbolically" derivated
+    // using diff.
+    //
+
+
   break;
 
   default:
