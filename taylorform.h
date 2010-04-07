@@ -52,6 +52,31 @@ knowledge of the CeCILL-C license and that you accept its terms.
 #include "expression.h"
 #include "chain.h"
 
+/* Autodiff related functions */
+
+void exp_diff(mpfi_t *res, mpfi_t x, int n);
+void expm1_diff(mpfi_t *res, mpfi_t x, int n);
+void log_diff(mpfi_t *res, mpfi_t x, int n);
+void log2_diff(mpfi_t *res, mpfi_t x, int n);
+void log10_diff(mpfi_t *res, mpfi_t x, int n);
+void sin_diff(mpfi_t *res, mpfi_t x, int n);
+void cos_diff(mpfi_t *res, mpfi_t x, int n);
+void sinh_diff(mpfi_t *res, mpfi_t x, int n);
+void cosh_diff(mpfi_t *res, mpfi_t x, int n);
+void tan_diff(mpfi_t *res, mpfi_t x, int n);
+void tanh_diff(mpfi_t *res, mpfi_t x, int n);
+void atan_diff(mpfi_t *res, mpfi_t x, int n);
+void atanh_diff(mpfi_t *res, mpfi_t x, int n);
+void asin_diff(mpfi_t *res, mpfi_t x, int n);
+void acos_diff(mpfi_t *res, mpfi_t x, int n);
+void asinh_diff(mpfi_t *res, mpfi_t x, int n);
+void acosh_diff(mpfi_t *res, mpfi_t x, int n);
+
+void powerFunction_diff(mpfi_t *res, mpfr_t p, mpfi_t x, int n);
+void constantPower_diff(mpfi_t *res, mpfi_t x, mpfr_t p, int n);
+void baseFunction_diff(mpfi_t *res, int nodeType, mpfi_t x, int n);
+
+
 void taylorform(node **T, chain **errors, mpfi_t **delta,
 		node *f, int n, mpfi_t *x0, mpfi_t *d, int mode);
 

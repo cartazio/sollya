@@ -64,14 +64,16 @@ void auto_diff(mpfi_t* res, node *f, mpfi_t x, int n);
 
 /* Computes the successive derivatives of y -> y^p at point x */ 
 /* [x^p    p*x^(p-1)   ...   p*(p-1)*...*(p-n+1)*x^(p-n) ]    */
-void constantPower_diff(mpfi_t *res, mpfr_t p, mpfi_t x, int n) {
+void constantPower_diff(mpfi_t *res, mpfi_t x, mpfr_t p, int n) {
   mpfi_t expo, acc;
+  mp_prec_t prec_expo, prec;
   int i;
   
-  /* The precision of expo is set in such a way that expo will
-     be a point interval during the algorithm */
-  mpfi_init2(expo, mpfr_get_prec(p)+8*sizeof(int));
-  mpfi_init2(acc, getToolPrecision());
+  prec = getToolPrecision();
+  prec_expo = (prec > mpfr_get_prec(p))?prec:mpfr_get_prec(p);
+
+  mpfi_init2(expo, prec_expo);
+  mpfi_init2(acc, prec);
   
   mpfi_set_fr(expo, p);
   mpfi_set_ui(acc, 1);
@@ -93,12 +95,13 @@ void constantPower_diff(mpfi_t *res, mpfr_t p, mpfi_t x, int n) {
   return;
 }
 
-
 void exp_diff(mpfi_t *res, mpfi_t x, int n) {
   int i;
   mpfi_t temp;
+  mp_prec_t prec;
 
-  mpfi_init2(temp, getToolPrecision());
+  prec = getToolPrecision();
+  mpfi_init2(temp, prec);
 
   mpfi_exp(temp, x);
   for(i=0;i<=n;i++) mpfi_set(res[i], temp);
@@ -110,8 +113,11 @@ void exp_diff(mpfi_t *res, mpfi_t x, int n) {
 void expm1_diff(mpfi_t *res, mpfi_t x, int n) {
   int i;
   mpfi_t temp;
+  mp_prec_t prec;
 
-  mpfi_init2(temp, getToolPrecision());
+  prec = getToolPrecision();
+
+  mpfi_init2(temp, prec);
 
   mpfi_exp(temp, x);
   for(i=0;i<=n;i++) mpfi_set(res[i], temp);
@@ -122,45 +128,58 @@ void expm1_diff(mpfi_t *res, mpfi_t x, int n) {
   return;
 }
 
-void powerFunction_diff(mpfi_t *res, mpfr_t p, mpfi_t x, int n) { //the power function is: p^x, where p is a positive ct
+/* the power function is: p^x, where p is a positive constant */
+/* [p^x, log(p)p^x, ... , log(p)^n p^x ] */
+void powerFunction_diff(mpfi_t *res, mpfr_t p, mpfi_t x, int n) {
   int i;
   mpfi_t temp1,temp2;
+  mp_prec_t prec;
 
-  mpfi_init2(temp1, getToolPrecision());
-  mpfi_init2(temp2, getToolPrecision());
+  prec = getToolPrecision();
+  mpfi_init2(temp1, prec);
+  mpfi_init2(temp2, prec);
+
   mpfi_set_fr(temp1,p);
-  mpfi_log(temp1,temp1);
-  mpfi_mul(temp2,temp1,x);
-  mpfi_exp(temp2, temp2);
+
+  mpfi_pow(temp2, temp1, x); /* temp2 = p^x */
+  mpfi_log(temp1,temp1); /* temp1 = log(p) */
+
   for(i=0;i<=n;i++) {
     mpfi_set(res[i], temp2);
     mpfi_mul(temp2,temp2,temp1);
   }
+
   mpfi_clear(temp1);
   mpfi_clear(temp2);
   return;
 }
 
 
-
 void log_diff(mpfi_t *res, mpfi_t x, int n) {
   mpfr_t minusOne;
-  
+  mp_prec_t prec;
+
+  prec = getToolPrecision();
+
   mpfi_log(res[0], x);
 
   if(n>=1) {
-    mpfr_init2(minusOne, getToolPrecision());
+    mpfr_init2(minusOne, prec);
     mpfr_set_si(minusOne, -1, GMP_RNDN);
-    constantPower_diff(res+1, minusOne, x, n-1);
+    constantPower_diff(res+1, x, minusOne, n-1);
     mpfr_clear(minusOne);
   }
   return;
 }
 
+/* log2(x) = log(x) * (1/log(2)) */
 void log2_diff(mpfi_t *res, mpfi_t x, int n) {
   int i;
   mpfi_t log2;
-  mpfi_init2(log2, getToolPrecision());
+  mp_prec_t prec;
+
+  prec = getToolPrecision();
+  mpfi_init2(log2, prec);
 
   mpfi_set_ui(log2, 2); mpfi_log(log2, log2);
   log_diff(res,x,n);
@@ -170,10 +189,14 @@ void log2_diff(mpfi_t *res, mpfi_t x, int n) {
   return;
 }
 
+/* idem */
 void log10_diff(mpfi_t *res, mpfi_t x, int n) {
   int i;
   mpfi_t log10;
-  mpfi_init2(log10, getToolPrecision());
+  mp_prec_t prec;
+
+  prec = getToolPrecision();
+  mpfi_init2(log10, prec);
 
   mpfi_set_ui(log10, 10); mpfi_log(log10, log10);
   log_diff(res,x,n);
@@ -186,13 +209,16 @@ void log10_diff(mpfi_t *res, mpfi_t x, int n) {
 void sin_diff(mpfi_t *res, mpfi_t x, int n) {
   int i,index;
   mpfi_t vals[4];
-  
+  mp_prec_t prec;
+
+  prec = getToolPrecision();
   if(n==0) mpfi_sin(res[0], x);
   else {
     
-    for(index=0;index<4;index++) mpfi_init2(vals[index], getToolPrecision());
+    for(index=0;index<4;index++) mpfi_init2(vals[index], prec);
     
-    mpfi_sin(vals[0], x);  mpfi_cos(vals[1], x);
+    mpfi_sin(vals[0], x); 
+    mpfi_cos(vals[1], x);
     mpfi_neg(vals[2],vals[0]);
     mpfi_neg(vals[3],vals[1]);
 
@@ -207,13 +233,17 @@ void sin_diff(mpfi_t *res, mpfi_t x, int n) {
 void cos_diff(mpfi_t *res, mpfi_t x, int n) {
   int i,index;
   mpfi_t vals[4];
+  mp_prec_t prec;
+
+  prec = getToolPrecision();
   
   if(n==0) mpfi_cos(res[0], x);
   else {
     
-    for(index=0;index<4;index++) mpfi_init2(vals[index], getToolPrecision());
+    for(index=0;index<4;index++) mpfi_init2(vals[index], prec);
     
-    mpfi_cos(vals[0], x);  mpfi_sin(vals[3], x);
+    mpfi_cos(vals[0], x);  
+    mpfi_sin(vals[3], x);
     mpfi_neg(vals[2],vals[0]);
     mpfi_neg(vals[1],vals[3]);
 
@@ -228,11 +258,14 @@ void cos_diff(mpfi_t *res, mpfi_t x, int n) {
 void sinh_diff(mpfi_t *res, mpfi_t x, int n) {
   int i,index;
   mpfi_t vals[2];
-  
+  mp_prec_t prec;
+
+  prec = getToolPrecision();
+
   if(n==0) mpfi_sinh(res[0], x);
   else {
     
-    for(index=0;index<2;index++) mpfi_init2(vals[index], getToolPrecision());
+    for(index=0;index<2;index++) mpfi_init2(vals[index], prec);
     
     mpfi_sinh(vals[0], x);  mpfi_cosh(vals[1], x);
 
@@ -247,11 +280,14 @@ void sinh_diff(mpfi_t *res, mpfi_t x, int n) {
 void cosh_diff(mpfi_t *res, mpfi_t x, int n) {
   int i,index;
   mpfi_t vals[2];
+  mp_prec_t prec;
+
+  prec = getToolPrecision();
   
   if(n==0) mpfi_cosh(res[0], x);
   else {
     
-    for(index=0;index<2;index++) mpfi_init2(vals[index], getToolPrecision());
+    for(index=0;index<2;index++) mpfi_init2(vals[index], prec);
     
     mpfi_cosh(vals[0], x);  mpfi_sinh(vals[1], x);
 
@@ -263,868 +299,588 @@ void cosh_diff(mpfi_t *res, mpfi_t x, int n) {
   return;
 }
 
-/*tan_diff : recurrence formula: p_(n+1)(u)=p'_n(u) * (1+u^2) , u=tan(x)
-tan^(n)=p_(n)(u)
-p_0=u;
-p_1=1+u^2
+
+/* Takes a polynomial given by the array of its coefficients [p0...pn] 
+   and differentiates it (returns the array of the derivative) */
+
+/* It IS safe to use the same pointer for res and coeff_array */
+/* (in-place computation) */
+void symbolic_poly_diff(mpfi_t *res, mpfi_t *coeff_array, int degree) {
+  mpfi_t temp;
+  mp_prec_t prec;
+  int i;
+
+  prec = getToolPrecision();
+  mpfi_init2(temp, prec);
+
+  for(i=0;i<=degree-1;i++) {
+    mpfi_set_ui(temp, i+1);
+    mpfi_mul(res[i], temp, coeff_array[i+1]);
+  }
+
+  mpfi_clear(temp);
+}
+
+/* Evaluates a symbolic polynomial at point x by Horner scheme */
+void symbolic_poly_evaluation_horner(mpfi_t res, mpfi_t *coeffs_array, mpfi_t x, int degree) {
+  int i;
+  mpfi_t temp;
+  mp_prec_t prec;
+
+  prec = getToolPrecision();
+  mpfi_init2(temp, prec);
+
+  mpfi_set(temp, coeffs_array[degree]);
+  for(i=degree-1;i>=0;i--) {
+    mpfi_mul(temp, temp, x);
+    mpfi_add(temp, temp, coeffs_array[i]);
+  }
+  mpfi_set(res, temp);
+  mpfi_clear(temp);
+}
+
+/* Evaluates a symbolic polynomial at point x by computing successive powers */
+void symbolic_poly_evaluation_powers(mpfi_t res, mpfi_t *coeffs_array, mpfi_t *powers_array, mpfi_t x, int degree) {
+  int i;
+  mpfi_t temp, acc;
+  mp_prec_t prec;
+
+  prec = getToolPrecision();
+  mpfi_init2(temp, prec);
+  mpfi_init2(acc, prec);
+
+  mpfi_set_ui(acc, 0);
+  for(i=0;i<=degree;i++) {
+    mpfi_mul(temp, coeffs_array[i], powers_array[i]);
+    mpfi_add(acc, acc, temp);
+  }
+  mpfi_set(res, acc);
+
+  mpfi_clear(temp);
+  mpfi_clear(acc);
+}
+
+
+/*  u=tan(x), tan^(n)=p_(n)(u) with
+    p_0 = u;
+
+recurrence formula: p_(n+1)(u) = (p_n(u))' = p'_n(u) * (1+u^2)
+   -> p_n of degree n+1
 */
+
 void tan_diff(mpfi_t *res, mpfi_t x, int n) {
   int i,index;
-  mpfi_t *coeffs_array, *powers_array, u, partialSum,s1,oldCoeff,pow;
-  
-    
+  mpfi_t *coeffs_array;
+  mpfi_t u;
+  mp_prec_t prec;
+
+  prec = getToolPrecision();
   coeffs_array = (mpfi_t *)safeMalloc( (n+2)*sizeof(mpfi_t));
-  powers_array = (mpfi_t *)safeMalloc( (n+2)*sizeof(mpfi_t));
 
-  for (index=0; index<=n+1; index++){
-    mpfi_init2(coeffs_array[index], getToolPrecision());
-    mpfi_init2(powers_array[index], getToolPrecision());
+  for (index=0; index<=n+1; index++) {
+    mpfi_init2(coeffs_array[index], prec);
+    mpfi_set_ui(coeffs_array[index], 0);
   }
- 
+  mpfi_init2(u, prec);
 
-  mpfi_init2(partialSum,getToolPrecision());
-  mpfi_init2(oldCoeff,getToolPrecision());
-  mpfi_init2(s1,getToolPrecision());
-  mpfi_init2(pow,getToolPrecision());
-  mpfi_init2(u,getToolPrecision());
   mpfi_tan(u, x);
+  mpfi_set_ui(coeffs_array[0], 0);
+  mpfi_set_ui(coeffs_array[1], 1);
   
-  for (index=0; index<=n; index++){
-    if (index==0){
-      mpfi_set_ui(coeffs_array[0],0);
-      mpfi_set_ui(coeffs_array[1],1);
-      mpfi_set_ui(powers_array[0],1);
-      mpfi_set(powers_array[1],u);
-      
-    }
-    else if (index==1){
-      mpfi_set_ui(coeffs_array[0],1);
-      mpfi_set_ui(coeffs_array[1],0);
-      mpfi_set_ui(coeffs_array[2],1);
-      mpfi_set_ui(pow,2);
-      mpfi_pow(powers_array[2],u,pow);
-    }
-    else{
-     //newcoeff(k)=(k-1) coeff(k-1)+(k+1)coeff(k+1) except for the last two ones and first two ones
-     //the new coefficent added at index+1
-      mpfi_set(coeffs_array[index+1],coeffs_array[index]);
-      mpfi_mul_ui(coeffs_array[index+1],coeffs_array[index+1],index);
-      //keep the coeff at index      
-      mpfi_set(oldCoeff,coeffs_array[index]);
-      //modify at index with new value      
-      mpfi_set(coeffs_array[index],coeffs_array[index-1]);
-      mpfi_mul_ui(coeffs_array[index],coeffs_array[index],index-1);
-      //inter-extremities case
-      for (i=index-1; i>1;i--){
-        mpfi_set(s1,oldCoeff);
-        mpfi_mul_ui(s1,s1,i+1);
-        mpfi_set(oldCoeff,coeffs_array[i]);
-        mpfi_set(coeffs_array[i],coeffs_array[i-1]);
-        mpfi_mul_ui(coeffs_array[i],coeffs_array[i],i-1);
-        mpfi_add(coeffs_array[i],coeffs_array[i], s1);
-      }
-      //modify at coeff 0 with new value      
-      mpfi_set(coeffs_array[0],coeffs_array[1]);
-      //modify at 1 with new value      
-      mpfi_set(coeffs_array[1],oldCoeff);
-      mpfi_mul_ui(coeffs_array[1],coeffs_array[1],2);
-      //add in powers array one more power
-      mpfi_set_ui(pow,index+1);
-      mpfi_pow(powers_array[index+1],u,pow);
-    }
-    //we have the coeffcients, we compute the result
-    /*printf("index=%d",index);
-    for (i=0;i<=index+1; i++){
-      printInterval(coeffs_array[i]);
-    }
-    printf("\n");*/
-    mpfi_set_ui(res[index],0);    
-    for (i=0;i<=index+1; i++){
-      mpfi_mul(partialSum,coeffs_array[i],powers_array[i]);
-      mpfi_add(res[index],res[index],partialSum);
-    }
+  mpfi_set(res[0], u);
 
+  for(index=1; index<=n; index++) {
+    /* coeffs_array represents p_(index-1) */
+    
+    symbolic_poly_diff(coeffs_array, coeffs_array, index);
+    mpfi_set_ui(coeffs_array[index], 0);
+    /* now it represents p_(index-1)' */
+
+    for(i=index+1; i>=2; i--) {
+      mpfi_add(coeffs_array[i], coeffs_array[i], coeffs_array[i-2]);
+    }
+    /* now it represents p_(index) */
+
+    symbolic_poly_evaluation_horner(res[index], coeffs_array, u, index+1);
   }
+    
   for (index=0; index<=n+1; index++){
     mpfi_clear(coeffs_array[index]);
-    mpfi_clear(powers_array[index]);
   }
-  mpfi_clear(oldCoeff);
-  mpfi_clear(partialSum);
-  mpfi_clear(s1);
-  mpfi_clear(pow);
   mpfi_clear(u);
   free(coeffs_array);
-  free(powers_array);
   
   return;
 }
 
-/*tanh_diff : recurrence formula: p_(n+1)(u)=p'_n(u) * (1-u^2) , u=tanh(x)
-tan^(n)=p_(n)(u)
-p_0=u;
-p_1=1-u^2
+/*  u=tanh(x), tanh^(n)=p_(n)(u) with
+    p_0 = u;
+
+recurrence formula: p_(n+1)(u) = (p_n(u))' = p'_n(u) * (1-u^2)
+   -> p_n of degree n+1
 */
+
 void tanh_diff(mpfi_t *res, mpfi_t x, int n) {
   int i,index;
-  mpfi_t *coeffs_array, *powers_array, u, partialSum,s1,oldCoeff,pow;
-  
-    
+  mpfi_t *coeffs_array;
+  mpfi_t u;
+  mp_prec_t prec;
+
+  prec = getToolPrecision();
   coeffs_array = (mpfi_t *)safeMalloc( (n+2)*sizeof(mpfi_t));
-  powers_array = (mpfi_t *)safeMalloc( (n+2)*sizeof(mpfi_t));
 
-  for (index=0; index<=n+1; index++){
-    mpfi_init2(coeffs_array[index], getToolPrecision());
-    mpfi_init2(powers_array[index], getToolPrecision());
+  for (index=0; index<=n+1; index++) {
+    mpfi_init2(coeffs_array[index], prec);
+    mpfi_set_ui(coeffs_array[index], 0);
   }
- 
+  mpfi_init2(u, prec);
 
-  mpfi_init2(partialSum,getToolPrecision());
-  mpfi_init2(oldCoeff,getToolPrecision());
-  mpfi_init2(s1,getToolPrecision());
-  mpfi_init2(pow,getToolPrecision());
-  mpfi_init2(u,getToolPrecision());
   mpfi_tanh(u, x);
+  mpfi_set_ui(coeffs_array[0], 0);
+  mpfi_set_ui(coeffs_array[1], 1);
   
-  for (index=0; index<=n; index++){
-    if (index==0){
-      mpfi_set_ui(coeffs_array[0],0);
-      mpfi_set_ui(coeffs_array[1],1);
-      mpfi_set_ui(powers_array[0],1);
-      mpfi_set(powers_array[1],u);
-      
-    }
-    else if (index==1){
-      mpfi_set_ui(coeffs_array[0],1);
-      mpfi_set_ui(coeffs_array[1],0);
-      mpfi_set_si(coeffs_array[2],-1);
-      mpfi_set_ui(pow,2);
-      mpfi_pow(powers_array[2],u,pow);
-    }
-    else{
-     //newcoeff(k)=-(k-1) coeff(k-1)+(k+1)coeff(k+1) except for the last two ones and first two ones
-     //the new coefficent added at index+1
-      mpfi_set(coeffs_array[index+1],coeffs_array[index]);
-      mpfi_mul_si(coeffs_array[index+1],coeffs_array[index+1],-index);
-      //keep the coeff at index      
-      mpfi_set(oldCoeff,coeffs_array[index]);
-      //modify at index with new value      
-      mpfi_set(coeffs_array[index],coeffs_array[index-1]);
-      mpfi_mul_si(coeffs_array[index],coeffs_array[index],-(index-1));
-      //inter-extremities case
-      for (i=index-1; i>1;i--){
-        mpfi_set(s1,oldCoeff);
-        mpfi_mul_ui(s1,s1,i+1);
-        mpfi_set(oldCoeff,coeffs_array[i]);
-        mpfi_set(coeffs_array[i],coeffs_array[i-1]);
-        mpfi_mul_si(coeffs_array[i],coeffs_array[i],-(i-1));
-        mpfi_add(coeffs_array[i],coeffs_array[i], s1);
-      }
-      //modify at coeff 0 with new value      
-      mpfi_set(coeffs_array[0],coeffs_array[1]);
-      //modify at 1 with new value      
-      mpfi_set(coeffs_array[1],oldCoeff);
-      mpfi_mul_ui(coeffs_array[1],coeffs_array[1],2);
-      //add in powers array one more power
-      mpfi_set_ui(pow,index+1);
-      mpfi_pow(powers_array[index+1],u,pow);
-    }
-    //we have the coeffcients, we compute the result
-    /*printf("index=%d",index);
-    for (i=0;i<=index+1; i++){
-      printInterval(coeffs_array[i]);
-    }
-    printf("\n");*/
-    mpfi_set_ui(res[index],0);    
-    for (i=0;i<=index+1; i++){
-      mpfi_mul(partialSum,coeffs_array[i],powers_array[i]);
-      mpfi_add(res[index],res[index],partialSum);
-    }
+  mpfi_set(res[0], u);
 
+  for(index=1; index<=n; index++) {
+    /* coeffs_array represents p_(index-1) */
+    
+    symbolic_poly_diff(coeffs_array, coeffs_array, index);
+    mpfi_set_ui(coeffs_array[index], 0);
+    /* now it represents p_(index-1)' */
+
+    for(i=index+1; i>=2; i--) {
+      mpfi_sub(coeffs_array[i], coeffs_array[i], coeffs_array[i-2]);
+    }
+    /* now it represents p_(index) */
+
+    symbolic_poly_evaluation_horner(res[index], coeffs_array, u, index+1);
   }
+    
   for (index=0; index<=n+1; index++){
     mpfi_clear(coeffs_array[index]);
-    mpfi_clear(powers_array[index]);
   }
-  mpfi_clear(oldCoeff);
-  mpfi_clear(partialSum);
-  mpfi_clear(s1);
-  mpfi_clear(pow);
   mpfi_clear(u);
   free(coeffs_array);
-  free(powers_array);
+  
   return;
 }
 
 
+/* atan_diff : reccurence formula: p_(n+1)=p'_n * (1+x^2) - 2nx * p_n 
+   atan^(0) = atan(x)
+   atan^(n)=p_(n)(x)/((1+x^2)^n)
+   p_1=1;
 
-/*atan_diff : reccurence formula: p_(n+1)=p'_n * (1+x^2) -2*n *x * p_n 
-atan^(n)=p_(n)/((1+x^2)^n)
-p_1=1;
+   --> degree of p_n is (n-1)
 */
 void atan_diff(mpfi_t *res, mpfi_t x, int n) {
   int i,index;
-  mpfi_t *coeffs_array, *powers_array, u, partialSum,s1,oldCoeff,pow,a1,nominator;
-  
+  mpfi_t *coeffs_array, *coeffs_array_diff;
+  mpfi_t u, temp;
+
+  mp_prec_t prec;
     
-  coeffs_array = (mpfi_t *)safeMalloc( (n)*sizeof(mpfi_t));
-  powers_array = (mpfi_t *)safeMalloc( (n)*sizeof(mpfi_t));
+  prec = getToolPrecision();
+  coeffs_array = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
+  coeffs_array_diff = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
 
-  for (index=0; index<=n-1; index++){
-    mpfi_init2(coeffs_array[index], getToolPrecision());
-    mpfi_init2(powers_array[index], getToolPrecision());
+  for (index=0; index<=n-1; index++) {
+    mpfi_init2(coeffs_array[index], prec);
+    mpfi_init2(coeffs_array_diff[index], prec);
+
+    mpfi_set_ui(coeffs_array[index], 0);
+    mpfi_set_ui(coeffs_array_diff[index], 0);
   }
- 
 
-  mpfi_init2(partialSum,getToolPrecision());
-  mpfi_init2(oldCoeff,getToolPrecision());
-  mpfi_init2(s1,getToolPrecision());
-  mpfi_init2(pow,getToolPrecision());
-  mpfi_init2(u,getToolPrecision());
-  mpfi_init2(a1,getToolPrecision());
-  mpfi_atan(u, x);
-  mpfi_init2(nominator,getToolPrecision());
-  mpfi_sqr(nominator,x);
-  mpfi_add_si(nominator, nominator,1);
-  mpfi_set(res[0],u);
-  //if (n==0) 
-  //else
-  //{
-    for (index=0; index<=n-1; index++){
-      if (index==0){
-        mpfi_set_ui(coeffs_array[0],1);
-        mpfi_set_ui(powers_array[0],1);
-      }
-      else if (index==1){
-        mpfi_set_ui(coeffs_array[0],0);
-        mpfi_set_si(coeffs_array[1],-2);
-        mpfi_set_ui(pow,index);
-        mpfi_pow(powers_array[1],x,pow);
-      }
-      else if (index==2){
-        mpfi_set_si(coeffs_array[0],-2);
-        mpfi_set_ui(coeffs_array[1],0);
-        mpfi_set_ui(coeffs_array[2],6);
-        mpfi_set_ui(pow,index);
-        mpfi_pow(powers_array[2],x,pow);
-      }
-      else if (index==3){
-        mpfi_set_si(coeffs_array[0],0);
-        mpfi_set_ui(coeffs_array[1],24);
-        mpfi_set_ui(coeffs_array[2],0);
-        mpfi_set_si(coeffs_array[3],-24);
-        mpfi_set_ui(pow,index);
-        mpfi_pow(powers_array[3],x,pow);
-      }
-      else{
-        //newcoeff(k)=(k-1 -2*n) coeff(k-1)+(k+1)coeff(k+1) except for the last two ones and first two ones
-        //the new coefficent added at index
-        mpfi_set(coeffs_array[index],coeffs_array[index-1]);
-        mpfi_mul_si(coeffs_array[index],coeffs_array[index],index-1-2*(index));
-        //keep the coeff at index-1     
-        mpfi_set(oldCoeff,coeffs_array[index-1]);
-        //modify at index with new value      
-        mpfi_set(coeffs_array[index-1],coeffs_array[index-2]);
-        mpfi_mul_si(coeffs_array[index-1],coeffs_array[index-1],index-2-2*(index));
-        //inter-extremities case
-        for (i=index-2; i>1;i--){
-          mpfi_set(s1,oldCoeff);
-          mpfi_mul_si(s1,s1,i+1);
-          mpfi_set(oldCoeff,coeffs_array[i]);
-          mpfi_set(coeffs_array[i],coeffs_array[i-1]);
-          mpfi_mul_si(coeffs_array[i],coeffs_array[i],i-1-2*(index));
-          mpfi_add(coeffs_array[i],coeffs_array[i], s1);
-        } 
-        //for a1 and ao special case
-        //newa1=2*a2-2n*a0   newa0=a1      
-        //compute 2*a2      
-        mpfi_mul_si(oldCoeff, oldCoeff,2);      
-        mpfi_set(a1, coeffs_array[1]);      
-        //compute -2n*a0 
-        mpfi_mul_si(coeffs_array[1],coeffs_array[0],-2*(index));
-        //add
-        mpfi_add(coeffs_array[1], coeffs_array[1],oldCoeff);
-        //modify at coeff 0 with new value      
-        mpfi_set(coeffs_array[0],a1);
-        //add in powers array one more power
-        mpfi_set_ui(pow,index);
-        mpfi_pow(powers_array[index],x,pow);
-      }
-      //we have the coeffcients, we compute the result
-     /* printf("index=%d",index);
-      for (i=0;i<=index; i++){
-        printInterval(coeffs_array[i]);
-      }
-      printf("\n");*/
-      mpfi_set_ui(res[index+1],0);    
-      for (i=0;i<=index; i++){
-        mpfi_mul(partialSum,coeffs_array[i],powers_array[i]);
-        mpfi_add(res[index+1],res[index+1],partialSum);
-      } 
-      mpfi_sqr(nominator,x);
-      mpfi_add_si(nominator, nominator,1);
-  
-      mpfi_set_ui(pow,index+1);
-      mpfi_pow(nominator,nominator,pow);
-      mpfi_div(res[index+1],res[index+1],nominator);
+  mpfi_init2(u, prec);
+  mpfi_init2(temp, prec);
+
+  mpfi_atan(res[0], x);
+
+  if(n>=1) {
+    mpfi_sqr(u, x);
+    mpfi_add_ui(u, u, 1);
+
+    mpfi_inv(res[1], u);
+
+    mpfi_set_ui(coeffs_array[0], 1);
+  }
+
+  for(index=2; index<=n; index++) {
+    /* coeffs_array represents p_(index-1) */
+    
+    symbolic_poly_diff(coeffs_array_diff, coeffs_array, index-2);
+    mpfi_set_ui(coeffs_array_diff[index-2], 0);
+    /* now it represents p_(index-1)' */
+
+    for(i=index-1; i>=2; i--) {
+      mpfi_add(coeffs_array[i], coeffs_array_diff[i], coeffs_array_diff[i-2]);
+      mpfi_mul_ui(temp, coeffs_array[i-1], 2*(index-1));
+      mpfi_sub(coeffs_array[i], coeffs_array[i], temp);
     }
-  //}
+
+    mpfi_mul_ui(temp, coeffs_array[0], 2*(index-1));
+    mpfi_sub(coeffs_array[1], coeffs_array_diff[1], temp);
+
+    mpfi_set(coeffs_array[0], coeffs_array_diff[0]);
+    /* now it represents p_(index) */
+
+    symbolic_poly_evaluation_horner(res[index], coeffs_array, x, index-1);
+    mpfi_set_ui(temp, index);
+    mpfi_pow(temp, u, temp);
+    mpfi_div(res[index], res[index], temp);
+  }
+    
   for (index=0; index<=n-1; index++){
     mpfi_clear(coeffs_array[index]);
-    mpfi_clear(powers_array[index]);
+    mpfi_clear(coeffs_array_diff[index]);
   }
-  mpfi_clear(oldCoeff);
-  mpfi_clear(partialSum);
-  mpfi_clear(s1);
-  mpfi_clear(pow);
-  mpfi_clear(a1);
-  mpfi_clear(nominator);
   mpfi_clear(u);
+  mpfi_clear(temp);
   free(coeffs_array);
-  free(powers_array);
+  free(coeffs_array_diff);
+  
   return;
 }
 
 
-/*atanh_diff : reccurence formula: p_(n+1)=p'_n * (1-x^2) +2*n *x * p_n 
-atan^(n)=p_(n)/((1-x^2)^n)
-p_1=1;
+/* atanh_diff : reccurence formula: p_(n+1)=p'_n * (1-x^2) + 2nx * p_n 
+   atanh^(0) = atanh(x)
+   atanh^(n)=p_(n)(x)/((1-x^2)^n)
+   p_1=1;
+
+   --> degree of p_n is (n-1)
 */
 void atanh_diff(mpfi_t *res, mpfi_t x, int n) {
   int i,index;
-  mpfi_t *coeffs_array, *powers_array, u, partialSum,s1,oldCoeff,pow,a1,nominator;
-  
+  mpfi_t *coeffs_array, *coeffs_array_diff;
+  mpfi_t u, temp;
+
+  mp_prec_t prec;
     
-  coeffs_array = (mpfi_t *)safeMalloc( (n)*sizeof(mpfi_t));
-  powers_array = (mpfi_t *)safeMalloc( (n)*sizeof(mpfi_t));
+  prec = getToolPrecision();
+  coeffs_array = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
+  coeffs_array_diff = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
 
-  for (index=0; index<=n-1; index++){
-    mpfi_init2(coeffs_array[index], getToolPrecision());
-    mpfi_init2(powers_array[index], getToolPrecision());
+  for (index=0; index<=n-1; index++) {
+    mpfi_init2(coeffs_array[index], prec);
+    mpfi_init2(coeffs_array_diff[index], prec);
+
+    mpfi_set_ui(coeffs_array[index], 0);
+    mpfi_set_ui(coeffs_array_diff[index], 0);
   }
- 
 
-  mpfi_init2(partialSum,getToolPrecision());
-  mpfi_init2(oldCoeff,getToolPrecision());
-  mpfi_init2(s1,getToolPrecision());
-  mpfi_init2(pow,getToolPrecision());
-  mpfi_init2(u,getToolPrecision());
-  mpfi_init2(a1,getToolPrecision());
-  mpfi_atanh(u, x);
-  mpfi_init2(nominator,getToolPrecision());
-  mpfi_sqr(nominator,x);
-  mpfi_add_si(nominator, nominator,1);
-  mpfi_set(res[0],u);
-  //if (n==0) 
-  //else
-  //{
-    for (index=0; index<=n-1; index++){
-      if (index==0){
-        mpfi_set_ui(coeffs_array[0],1);
-        mpfi_set_ui(powers_array[0],1);
-      }
-      else if (index==1){
-        mpfi_set_ui(coeffs_array[0],0);
-        mpfi_set_si(coeffs_array[1],2);
-        mpfi_set_ui(pow,index);
-        mpfi_pow(powers_array[1],x,pow);
-      }
-      else if (index==2){
-        mpfi_set_si(coeffs_array[0],2);
-        mpfi_set_ui(coeffs_array[1],0);
-        mpfi_set_ui(coeffs_array[2],6);
-        mpfi_set_ui(pow,index);
-        mpfi_pow(powers_array[2],x,pow);
-      }
-      else if (index==3){
-        mpfi_set_si(coeffs_array[0],0);
-        mpfi_set_ui(coeffs_array[1],24);
-        mpfi_set_ui(coeffs_array[2],0);
-        mpfi_set_si(coeffs_array[3],24);
-        mpfi_set_ui(pow,index);
-        mpfi_pow(powers_array[3],x,pow);
-      }
-      else{
-        //newcoeff(k)=(-(k-1) +2*n) coeff(k-1)+(k+1)coeff(k+1) except for the last two ones and first two ones
-        //the new coefficent added at index
-        mpfi_set(coeffs_array[index],coeffs_array[index-1]);
-        mpfi_mul_si(coeffs_array[index],coeffs_array[index],-(index-1)+2*(index));
-        //keep the coeff at index-1     
-        mpfi_set(oldCoeff,coeffs_array[index-1]);
-        //modify at index with new value      
-        mpfi_set(coeffs_array[index-1],coeffs_array[index-2]);
-        mpfi_mul_si(coeffs_array[index-1],coeffs_array[index-1],-(index-2)+2*(index));
-        //inter-extremities case
-        for (i=index-2; i>1;i--){
-          mpfi_set(s1,oldCoeff);
-          mpfi_mul_si(s1,s1,i+1);
-          mpfi_set(oldCoeff,coeffs_array[i]);
-          mpfi_set(coeffs_array[i],coeffs_array[i-1]);
-          mpfi_mul_si(coeffs_array[i],coeffs_array[i],-(i-1)+2*(index));
-          mpfi_add(coeffs_array[i],coeffs_array[i], s1);
-        } 
-        //for a1 and ao special case
-        //newa1=2*a2+2n*a0   newa0=a1      
-        //compute 2*a2      
-        mpfi_mul_si(oldCoeff, oldCoeff,2);      
-        mpfi_set(a1, coeffs_array[1]);      
-        //compute -2n*a0 
-        mpfi_mul_si(coeffs_array[1],coeffs_array[0],2*(index));
-        //add
-        mpfi_add(coeffs_array[1], coeffs_array[1],oldCoeff);
-        //modify at coeff 0 with new value      
-        mpfi_set(coeffs_array[0],a1);
-        //add in powers array one more power
-        mpfi_set_ui(pow,index);
-        mpfi_pow(powers_array[index],x,pow);
-      }
-      //we have the coeffcients, we compute the result
-     /* printf("index=%d",index);
-      for (i=0;i<=index; i++){
-        printInterval(coeffs_array[i]);
-      }
-      printf("\n");*/
-      mpfi_set_ui(res[index+1],0);    
-      for (i=0;i<=index; i++){
-        mpfi_mul(partialSum,coeffs_array[i],powers_array[i]);
-        mpfi_add(res[index+1],res[index+1],partialSum);
-      } 
-      mpfi_sqr(nominator,x);
-      mpfi_si_sub(nominator, 1,nominator);
-  
-      mpfi_set_ui(pow,index+1);
-      mpfi_pow(nominator,nominator,pow);
-      mpfi_div(res[index+1],res[index+1],nominator);
+  mpfi_init2(u, prec);
+  mpfi_init2(temp, prec);
+
+  mpfi_atanh(res[0], x);
+
+  if(n>=1) {
+    mpfi_sqr(u, x);
+    mpfi_sub_ui(u, u, 1); /* TODO: FIX IT when MPFI is patched */
+    mpfi_neg(u, u);
+
+    mpfi_inv(res[1], u);
+
+    mpfi_set_ui(coeffs_array[0], 1);
+  }
+
+  for(index=2; index<=n; index++) {
+    /* coeffs_array represents p_(index-1) */
+    
+    symbolic_poly_diff(coeffs_array_diff, coeffs_array, index-2);
+    mpfi_set_ui(coeffs_array_diff[index-2], 0);
+    /* now it represents p_(index-1)' */
+
+    for(i=index-1; i>=2; i--) {
+      mpfi_sub(coeffs_array[i], coeffs_array_diff[i], coeffs_array_diff[i-2]);
+      mpfi_mul_ui(temp, coeffs_array[i-1], 2*(index-1));
+      mpfi_add(coeffs_array[i], coeffs_array[i], temp);
     }
-  //}
+
+    mpfi_mul_ui(temp, coeffs_array[0], 2*(index-1));
+    mpfi_add(coeffs_array[1], coeffs_array_diff[1], temp);
+
+    mpfi_set(coeffs_array[0], coeffs_array_diff[0]);
+    /* now it represents p_(index) */
+
+    symbolic_poly_evaluation_horner(res[index], coeffs_array, x, index-1);
+    mpfi_set_ui(temp, index);
+    mpfi_pow(temp, u, temp);
+    mpfi_div(res[index], res[index], temp);
+  }
+    
   for (index=0; index<=n-1; index++){
     mpfi_clear(coeffs_array[index]);
-    mpfi_clear(powers_array[index]);
+    mpfi_clear(coeffs_array_diff[index]);
   }
-  mpfi_clear(oldCoeff);
-  mpfi_clear(partialSum);
-  mpfi_clear(s1);
-  mpfi_clear(pow);
-  mpfi_clear(a1);
-  mpfi_clear(nominator);
   mpfi_clear(u);
+  mpfi_clear(temp);
   free(coeffs_array);
-  free(powers_array);
+  free(coeffs_array_diff);
+  
   return;
 }
 
 
 
+/* asin_diff : recurrence formula: p_(n+1)=p'_n * (1-x^2) + (2n-1)x * p_n 
+   asin^(0) = asin(x)
+   asin^(n)=p_(n)(x) / (1-x^2)^((2n-1)/2)
+   p_1=1;
 
-
-
-/*asin_diff : reccurence formula: p_(n+1)=p'_n * (1-x^2) +(2*n-1) *x * p_n 
-asin^(n)=p_(n)/((1-x^2)^((2*n-1)/2))
-p_1=1;
-p_2=x;
-p_3=2x^2+1
+   --> degree of p_n is (n-1)
 */
 void asin_diff(mpfi_t *res, mpfi_t x, int n) {
   int i,index;
-  mpfi_t *coeffs_array, *powers_array, u, partialSum,s1,oldCoeff,pow,a1,nominator;
-  
-  //the polynomial for the nth derivative has degree n-1, need n coeffs  
-  coeffs_array = (mpfi_t *)safeMalloc( (n)*sizeof(mpfi_t));
-  powers_array = (mpfi_t *)safeMalloc( (n)*sizeof(mpfi_t));
+  mpfi_t *coeffs_array, *coeffs_array_diff;
+  mpfi_t u, temp;
 
-  for (index=0; index<=n-1; index++){
-    mpfi_init2(coeffs_array[index], getToolPrecision());
-    mpfi_init2(powers_array[index], getToolPrecision());
+  mp_prec_t prec;
+    
+  prec = getToolPrecision();
+  coeffs_array = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
+  coeffs_array_diff = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
+
+  for (index=0; index<=n-1; index++) {
+    mpfi_init2(coeffs_array[index], prec);
+    mpfi_init2(coeffs_array_diff[index], prec);
+
+    mpfi_set_ui(coeffs_array[index], 0);
+    mpfi_set_ui(coeffs_array_diff[index], 0);
   }
- 
 
-  mpfi_init2(partialSum,getToolPrecision());
-  mpfi_init2(oldCoeff,getToolPrecision());
-  mpfi_init2(s1,getToolPrecision());
-  mpfi_init2(pow,getToolPrecision());
-  mpfi_init2(u,getToolPrecision());
-  mpfi_init2(a1,getToolPrecision());
-  mpfi_asin(u, x);
-  //we need the nominator for dividing the polynominal by ((1-x^2)^((2*n-1)/2))
-  mpfi_init2(nominator,getToolPrecision());
-  mpfi_sqr(nominator,x);
-  mpfi_si_sub(nominator, 1,nominator);
-  //put the asin value in res[0]
-  mpfi_set(res[0],u);
-  //if (n==0) 
-  //else
-  //{
-    for (index=0; index<=n-1; index++){
-      if (index==0){
-        mpfi_set_ui(coeffs_array[0],1);
-        mpfi_set_ui(powers_array[0],1);
-      }
-      else if (index==1){
-        mpfi_set_ui(coeffs_array[0],0);
-        mpfi_set_si(coeffs_array[1],1);
-        mpfi_set_ui(pow,index);
-        mpfi_pow(powers_array[1],x,pow);
-      }
-      else if (index==2){
-        mpfi_set_si(coeffs_array[0],1);
-        mpfi_set_ui(coeffs_array[1],0);
-        mpfi_set_ui(coeffs_array[2],2);
-        mpfi_set_ui(pow,index);
-        mpfi_pow(powers_array[2],x,pow);
-      }
-      else if (index==3){
-        mpfi_set_si(coeffs_array[0],0);
-        mpfi_set_ui(coeffs_array[1],9);
-        mpfi_set_ui(coeffs_array[2],0);
-        mpfi_set_si(coeffs_array[3],6);
-        mpfi_set_ui(pow,index);
-        mpfi_pow(powers_array[3],x,pow);
-      }
-      else{
-        //newcoeff(k)=(-(k-1) +(2*n-1)) coeff(k-1)+(k+1)coeff(k+1) except for the last two ones and first two ones
-        //the new coefficent added at index
-        mpfi_set(coeffs_array[index],coeffs_array[index-1]);
-        mpfi_mul_si(coeffs_array[index],coeffs_array[index],-(index-1)+(2*index-1));
-        //keep the coeff at index-1     
-        mpfi_set(oldCoeff,coeffs_array[index-1]);
-        //modify at index with new value      
-        mpfi_set(coeffs_array[index-1],coeffs_array[index-2]);
-        mpfi_mul_si(coeffs_array[index-1],coeffs_array[index-1],-(index-2)+(2*index-1));
-        //inter-extremities case
-        for (i=index-2; i>1;i--){
-          mpfi_set(s1,oldCoeff);
-          mpfi_mul_si(s1,s1,i+1);
-          mpfi_set(oldCoeff,coeffs_array[i]);
-          mpfi_set(coeffs_array[i],coeffs_array[i-1]);
-          mpfi_mul_si(coeffs_array[i],coeffs_array[i],-(i-1)+(2*index-1));
-          mpfi_add(coeffs_array[i],coeffs_array[i], s1);
-        } 
-        //for a1 and ao special case
-        //newa1=2*a2 +(2n-1)*a0   newa0=a1      
-        //compute 2*a2      
-        mpfi_mul_si(oldCoeff, oldCoeff,2);      
-        mpfi_set(a1, coeffs_array[1]);      
-        //compute (2n-1)*a0 
-        mpfi_mul_si(coeffs_array[1],coeffs_array[0],2*index-1);
-        //add
-        mpfi_add(coeffs_array[1], coeffs_array[1],oldCoeff);
-        //modify at coeff 0 with new value      
-        mpfi_set(coeffs_array[0],a1);
-        //add in powers array one more power
-        mpfi_set_ui(pow,index);
-        mpfi_pow(powers_array[index],x,pow);
-      }
-      //we have the coeffcients, we compute the result
-      /*printf("index=%d",index);
-      for (i=0;i<=index; i++){
-        printInterval(coeffs_array[i]);
-      }
-      printf("\n");*/
-      mpfi_set_ui(res[index+1],0);    
-      for (i=0;i<=index; i++){
-        mpfi_mul(partialSum,coeffs_array[i],powers_array[i]);
-        mpfi_add(res[index+1],res[index+1],partialSum);
-      } 
-      mpfi_sqr(nominator,x);
-      mpfi_si_sub(nominator, 1,nominator);
-  
-      mpfi_set_si(pow,(2*index+1));
-      mpfi_div_si(pow,pow,2);
-      mpfi_pow(nominator,nominator,pow);
-      mpfi_div(res[index+1],res[index+1],nominator);
+  mpfi_init2(u, prec);
+  mpfi_init2(temp, prec);
+
+  mpfi_asin(res[0], x);
+
+  if(n>=1) {
+    mpfi_sqr(u, x);
+    mpfi_sub_ui(u, u, 1); /* TODO: FIX IT when MPFI is patched */
+    mpfi_neg(u, u);
+    mpfi_sqrt(u, u);
+
+    mpfi_inv(res[1], u);
+
+    mpfi_set_ui(coeffs_array[0], 1);
+  }
+
+  for(index=2; index<=n; index++) {
+    /* coeffs_array represents p_(index-1) */
+    
+    symbolic_poly_diff(coeffs_array_diff, coeffs_array, index-2);
+    mpfi_set_ui(coeffs_array_diff[index-2], 0);
+    /* now it represents p_(index-1)' */
+
+    for(i=index-1; i>=2; i--) {
+      mpfi_sub(coeffs_array[i], coeffs_array_diff[i], coeffs_array_diff[i-2]);
+      mpfi_mul_ui(temp, coeffs_array[i-1], 2*(index-1)-1);
+      mpfi_add(coeffs_array[i], coeffs_array[i], temp);
     }
-  //}
+
+    mpfi_mul_ui(temp, coeffs_array[0], 2*(index-1)-1);
+    mpfi_add(coeffs_array[1], coeffs_array_diff[1], temp);
+
+    mpfi_set(coeffs_array[0], coeffs_array_diff[0]);
+    /* now it represents p_(index) */
+
+    symbolic_poly_evaluation_horner(res[index], coeffs_array, x, index-1);
+    mpfi_set_ui(temp, 2*index-1);
+    mpfi_pow(temp, u, temp);
+    mpfi_div(res[index], res[index], temp);
+  }
+    
   for (index=0; index<=n-1; index++){
     mpfi_clear(coeffs_array[index]);
-    mpfi_clear(powers_array[index]);
+    mpfi_clear(coeffs_array_diff[index]);
   }
-  mpfi_clear(oldCoeff);
-  mpfi_clear(partialSum);
-  mpfi_clear(s1);
-  mpfi_clear(pow);
-  mpfi_clear(a1);
-  mpfi_clear(nominator);
   mpfi_clear(u);
+  mpfi_clear(temp);
   free(coeffs_array);
-  free(powers_array);
+  free(coeffs_array_diff);
+  
   return;
 }
+
 
 /*acos_diff : except for the res[0], all the terms are equal to -asin^(n)(x)
 */
 void acos_diff(mpfi_t *res, mpfi_t x, int n) {
-  int i;
- 
-  
+  int i; 
+  mpfi_t temp;
+  mp_prec_t prec;
+
+  prec = getToolPrecision();
+  mpfi_init2(temp, prec);
+
   asin_diff(res,x,n);
-  mpfi_acos(res[0],x);
+  mpfi_const_pi(temp); mpfi_div_2ui(temp, temp, 1);
+  mpfi_sub(res[0], temp, res[0]);
+
   for (i=1; i<=n;i++)
     mpfi_mul_si(res[i],res[i],-1);
   return;
+
+  mpfi_clear(temp);
 }
 
-/*asinh_diff : reccurence formula: p_(n+1)=p'_n * (1+x^2) -(2*n-1) *x * p_n 
-asin^(n)=p_(n)/((1+x^2)^((2*n-1)/2))
-p_1=1;
-p_2=-x;
-p_3=2x^2-1
+
+/* asinh_diff : recurrence formula: p_(n+1)=p'_n * (1+x^2) - (2n-1)x * p_n 
+   asinh^(0) = asinh(x)
+   asinh^(n)=p_(n)(x) / (1+x^2)^((2n-1)/2)
+   p_1=1;
+
+   --> degree of p_n is (n-1)
 */
 void asinh_diff(mpfi_t *res, mpfi_t x, int n) {
   int i,index;
-  mpfi_t *coeffs_array, *powers_array, u, partialSum,s1,oldCoeff,pow,a1,nominator;
-  
-  //the polynomial for the nth derivative has degree n-1, need n coeffs  
-  coeffs_array = (mpfi_t *)safeMalloc( (n)*sizeof(mpfi_t));
-  powers_array = (mpfi_t *)safeMalloc( (n)*sizeof(mpfi_t));
+  mpfi_t *coeffs_array, *coeffs_array_diff;
+  mpfi_t u, temp;
 
-  for (index=0; index<=n-1; index++){
-    mpfi_init2(coeffs_array[index], getToolPrecision());
-    mpfi_init2(powers_array[index], getToolPrecision());
+  mp_prec_t prec;
+    
+  prec = getToolPrecision();
+  coeffs_array = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
+  coeffs_array_diff = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
+
+  for (index=0; index<=n-1; index++) {
+    mpfi_init2(coeffs_array[index], prec);
+    mpfi_init2(coeffs_array_diff[index], prec);
+
+    mpfi_set_ui(coeffs_array[index], 0);
+    mpfi_set_ui(coeffs_array_diff[index], 0);
   }
- 
 
-  mpfi_init2(partialSum,getToolPrecision());
-  mpfi_init2(oldCoeff,getToolPrecision());
-  mpfi_init2(s1,getToolPrecision());
-  mpfi_init2(pow,getToolPrecision());
-  mpfi_init2(u,getToolPrecision());
-  mpfi_init2(a1,getToolPrecision());
-  mpfi_asinh(u, x);
-  //we need the nominator for dividing the polynominal by ((1+x^2)^((2*n-1)/2))
-  mpfi_init2(nominator,getToolPrecision());
-  mpfi_sqr(nominator,x);
-  mpfi_add_si(nominator, nominator,1);
-  //put the asin value in res[0]
-  mpfi_set(res[0],u);
-  //if (n==0) 
-  //else
-  //{
-    for (index=0; index<=n-1; index++){
-      if (index==0){
-        mpfi_set_ui(coeffs_array[0],1);
-        mpfi_set_ui(powers_array[0],1);
-      }
-      else if (index==1){
-        mpfi_set_ui(coeffs_array[0],0);
-        mpfi_set_si(coeffs_array[1],-1);
-        mpfi_set_ui(pow,index);
-        mpfi_pow(powers_array[1],x,pow);
-      }
-      else if (index==2){
-        mpfi_set_si(coeffs_array[0],-1);
-        mpfi_set_ui(coeffs_array[1],0);
-        mpfi_set_ui(coeffs_array[2],2);
-        mpfi_set_ui(pow,index);
-        mpfi_pow(powers_array[2],x,pow);
-      }
-      else if (index==3){
-        mpfi_set_si(coeffs_array[0],0);
-        mpfi_set_ui(coeffs_array[1],9);
-        mpfi_set_ui(coeffs_array[2],0);
-        mpfi_set_si(coeffs_array[3],-6);
-        mpfi_set_ui(pow,index);
-        mpfi_pow(powers_array[3],x,pow);
-      }
-      else{
-        //newcoeff(k)=(-(k-1) -(2*n-1)) coeff(k-1)+(k+1)coeff(k+1) except for the last two ones and first two ones
-        //the new coefficent added at index
-        mpfi_set(coeffs_array[index],coeffs_array[index-1]);
-        mpfi_mul_si(coeffs_array[index],coeffs_array[index],(index-1)-(2*index-1));
-        //keep the coeff at index-1     
-        mpfi_set(oldCoeff,coeffs_array[index-1]);
-        //modify at index with new value      
-        mpfi_set(coeffs_array[index-1],coeffs_array[index-2]);
-        mpfi_mul_si(coeffs_array[index-1],coeffs_array[index-1],(index-2)-(2*index-1));
-        //inter-extremities case
-        for (i=index-2; i>1;i--){
-          mpfi_set(s1,oldCoeff);
-          mpfi_mul_si(s1,s1,i+1);
-          mpfi_set(oldCoeff,coeffs_array[i]);
-          mpfi_set(coeffs_array[i],coeffs_array[i-1]);
-          mpfi_mul_si(coeffs_array[i],coeffs_array[i],(i-1)-(2*index-1));
-          mpfi_add(coeffs_array[i],coeffs_array[i], s1);
-        } 
-        //for a1 and ao special case
-        //newa1=2*a2 -(2n-1)*a0   newa0=a1      
-        //compute 2*a2      
-        mpfi_mul_si(oldCoeff, oldCoeff,2);      
-        mpfi_set(a1, coeffs_array[1]);      
-        //compute -(2n-1)*a0 
-        mpfi_mul_si(coeffs_array[1],coeffs_array[0],-(2*index-1));
-        //add
-        mpfi_add(coeffs_array[1], coeffs_array[1],oldCoeff);
-        //modify at coeff 0 with new value      
-        mpfi_set(coeffs_array[0],a1);
-        //add in powers array one more power
-        mpfi_set_ui(pow,index);
-        mpfi_pow(powers_array[index],x,pow);
-      }
-      //we have the coeffcients, we compute the result
-      /*printf("index=%d",index);
-      for (i=0;i<=index; i++){
-        printInterval(coeffs_array[i]);
-      }
-      printf("\n");*/
-      mpfi_set_ui(res[index+1],0);    
-      for (i=0;i<=index; i++){
-        mpfi_mul(partialSum,coeffs_array[i],powers_array[i]);
-        mpfi_add(res[index+1],res[index+1],partialSum);
-      } 
-      mpfi_sqr(nominator,x);
-      mpfi_add_si(nominator, nominator,1);
-  
-      mpfi_set_si(pow,(2*index+1));
-      mpfi_div_si(pow,pow,2);
-      mpfi_pow(nominator,nominator,pow);
-      mpfi_div(res[index+1],res[index+1],nominator);
+  mpfi_init2(u, prec);
+  mpfi_init2(temp, prec);
+
+  mpfi_asinh(res[0], x);
+
+  if(n>=1) {
+    mpfi_sqr(u, x);
+    mpfi_add_ui(u, u, 1);
+    mpfi_sqrt(u, u);
+
+    mpfi_inv(res[1], u);
+
+    mpfi_set_ui(coeffs_array[0], 1);
+  }
+
+  for(index=2; index<=n; index++) {
+    /* coeffs_array represents p_(index-1) */
+    
+    symbolic_poly_diff(coeffs_array_diff, coeffs_array, index-2);
+    mpfi_set_ui(coeffs_array_diff[index-2], 0);
+    /* now it represents p_(index-1)' */
+
+    for(i=index-1; i>=2; i--) {
+      mpfi_add(coeffs_array[i], coeffs_array_diff[i], coeffs_array_diff[i-2]);
+      mpfi_mul_ui(temp, coeffs_array[i-1], 2*(index-1)-1);
+      mpfi_sub(coeffs_array[i], coeffs_array[i], temp);
     }
-  //}
+
+    mpfi_mul_ui(temp, coeffs_array[0], 2*(index-1)-1);
+    mpfi_sub(coeffs_array[1], coeffs_array_diff[1], temp);
+
+    mpfi_set(coeffs_array[0], coeffs_array_diff[0]);
+    /* now it represents p_(index) */
+
+    symbolic_poly_evaluation_horner(res[index], coeffs_array, x, index-1);
+    mpfi_set_ui(temp, 2*index-1);
+    mpfi_pow(temp, u, temp);
+    mpfi_div(res[index], res[index], temp);
+  }
+    
   for (index=0; index<=n-1; index++){
     mpfi_clear(coeffs_array[index]);
-    mpfi_clear(powers_array[index]);
+    mpfi_clear(coeffs_array_diff[index]);
   }
-  mpfi_clear(oldCoeff);
-  mpfi_clear(partialSum);
-  mpfi_clear(s1);
-  mpfi_clear(pow);
-  mpfi_clear(a1);
-  mpfi_clear(nominator);
   mpfi_clear(u);
+  mpfi_clear(temp);
   free(coeffs_array);
-  free(powers_array);
+  free(coeffs_array_diff);
+  
   return;
 }
 
 
-/*acosh_diff : reccurence formula: p_(n+1)=p'_n * (x^2-1) -(2*n-1) *x * p_n 
-asin^(n)=p_(n)/((x^2-1)^((2*n-1)/2))
-p_1=1;
-p_2=-x;
-p_3=2x^2+1
+/* acosh_diff : recurrence formula: p_(n+1)=p'_n * (x^2-1) - (2n-1)x * p_n 
+   acosh^(0) = acosh(x)
+   acosh^(n)=p_(n)(x) / (x^2-1)^((2n-1)/2)
+   p_1=1;
+
+   --> degree of p_n is (n-1)
 */
 void acosh_diff(mpfi_t *res, mpfi_t x, int n) {
   int i,index;
-  mpfi_t *coeffs_array, *powers_array, u, partialSum,s1,oldCoeff,pow,a1,nominator;
-  
-  //the polynomial for the nth derivative has degree n-1, need n coeffs  
-  coeffs_array = (mpfi_t *)safeMalloc( (n)*sizeof(mpfi_t));
-  powers_array = (mpfi_t *)safeMalloc( (n)*sizeof(mpfi_t));
+  mpfi_t *coeffs_array, *coeffs_array_diff;
+  mpfi_t u, temp;
 
-  for (index=0; index<=n-1; index++){
-    mpfi_init2(coeffs_array[index], getToolPrecision());
-    mpfi_init2(powers_array[index], getToolPrecision());
+  mp_prec_t prec;
+    
+  prec = getToolPrecision();
+  coeffs_array = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
+  coeffs_array_diff = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
+
+  for (index=0; index<=n-1; index++) {
+    mpfi_init2(coeffs_array[index], prec);
+    mpfi_init2(coeffs_array_diff[index], prec);
+
+    mpfi_set_ui(coeffs_array[index], 0);
+    mpfi_set_ui(coeffs_array_diff[index], 0);
   }
- 
 
-  mpfi_init2(partialSum,getToolPrecision());
-  mpfi_init2(oldCoeff,getToolPrecision());
-  mpfi_init2(s1,getToolPrecision());
-  mpfi_init2(pow,getToolPrecision());
-  mpfi_init2(u,getToolPrecision());
-  mpfi_init2(a1,getToolPrecision());
-  mpfi_acosh(u, x);
-  //we need the nominator for dividing the polynominal by ((1+x^2)^((2*n-1)/2))
-  mpfi_init2(nominator,getToolPrecision());
-  mpfi_sqr(nominator,x);
-  mpfi_add_si(nominator, nominator,1);
-  //put the asin value in res[0]
-  mpfi_set(res[0],u);
-  //if (n==0) 
-  //else
-  //{
-    for (index=0; index<=n-1; index++){
-      if (index==0){
-        mpfi_set_ui(coeffs_array[0],1);
-        mpfi_set_ui(powers_array[0],1);
-      }
-      else if (index==1){
-        mpfi_set_ui(coeffs_array[0],0);
-        mpfi_set_si(coeffs_array[1],-1);
-        mpfi_set_ui(pow,index);
-        mpfi_pow(powers_array[1],x,pow);
-      }
-      else if (index==2){
-        mpfi_set_si(coeffs_array[0],1);
-        mpfi_set_ui(coeffs_array[1],0);
-        mpfi_set_ui(coeffs_array[2],2);
-        mpfi_set_ui(pow,index);
-        mpfi_pow(powers_array[2],x,pow);
-      }
-      else if (index==3){
-        mpfi_set_si(coeffs_array[0],0);
-        mpfi_set_si(coeffs_array[1],-9);
-        mpfi_set_ui(coeffs_array[2],0);
-        mpfi_set_si(coeffs_array[3],-6);
-        mpfi_set_ui(pow,index);
-        mpfi_pow(powers_array[3],x,pow);
-      }
-      else{
-        //newcoeff(k)=((k-1) -(2*n-1)) coeff(k-1)-(k+1)coeff(k+1) except for the last two ones and first two ones
-        //the new coefficent added at index
-        mpfi_set(coeffs_array[index],coeffs_array[index-1]);
-        mpfi_mul_si(coeffs_array[index],coeffs_array[index],(index-1)-(2*index-1));
-        //keep the coeff at index-1     
-        mpfi_set(oldCoeff,coeffs_array[index-1]);
-        //modify at index with new value      
-        mpfi_set(coeffs_array[index-1],coeffs_array[index-2]);
-        mpfi_mul_si(coeffs_array[index-1],coeffs_array[index-1],(index-2)-(2*index-1));
-        //inter-extremities case
-        for (i=index-2; i>1;i--){
-          mpfi_set(s1,oldCoeff);
-          mpfi_mul_si(s1,s1,-(i+1));
-          mpfi_set(oldCoeff,coeffs_array[i]);
-          mpfi_set(coeffs_array[i],coeffs_array[i-1]);
-          mpfi_mul_si(coeffs_array[i],coeffs_array[i],(i-1)-(2*index-1));
-          mpfi_add(coeffs_array[i],coeffs_array[i], s1);
-        } 
-        //for a1 and ao special case
-        //newa1=-2*a2 -(2n-1)*a0   newa0=-a1      
-        //compute -2*a2      
-        mpfi_mul_si(oldCoeff, oldCoeff,-2);      
-        mpfi_set(a1, coeffs_array[1]);      
-        //compute -(2n-1)*a0 
-        mpfi_mul_si(coeffs_array[1],coeffs_array[0],-(2*index-1));
-        //add
-        mpfi_add(coeffs_array[1], coeffs_array[1],oldCoeff);
-        //modify at coeff 0 with new value      
-        mpfi_mul_si(coeffs_array[0],a1,-1);
-        //add in powers array one more power
-        mpfi_set_ui(pow,index);
-        mpfi_pow(powers_array[index],x,pow);
-      }
-      //we have the coeffcients, we compute the result
-      /*printf("index=%d",index);
-      for (i=0;i<=index; i++){
-        printInterval(coeffs_array[i]);
-      }
-      printf("\n");*/
-      mpfi_set_ui(res[index+1],0);    
-      for (i=0;i<=index; i++){
-        mpfi_mul(partialSum,coeffs_array[i],powers_array[i]);
-        mpfi_add(res[index+1],res[index+1],partialSum);
-      } 
-      mpfi_sqr(nominator,x);
-      mpfi_sub_si(nominator, nominator,1);
-  
-      mpfi_set_si(pow,(2*index+1));
-      mpfi_div_si(pow,pow,2);
-      mpfi_pow(nominator,nominator,pow);
-      mpfi_div(res[index+1],res[index+1],nominator);
+  mpfi_init2(u, prec);
+  mpfi_init2(temp, prec);
+
+  mpfi_acosh(res[0], x);
+
+  if(n>=1) {
+    mpfi_sqr(u, x);
+    mpfi_sub_ui(u, u, 1);
+    mpfi_sqrt(u, u);
+
+    mpfi_inv(res[1], u);
+
+    mpfi_set_ui(coeffs_array[0], 1);
+  }
+
+  for(index=2; index<=n; index++) {
+    /* coeffs_array represents p_(index-1) */
+    
+    symbolic_poly_diff(coeffs_array_diff, coeffs_array, index-2);
+    mpfi_set_ui(coeffs_array_diff[index-2], 0);
+    /* now it represents p_(index-1)' */
+
+    for(i=index-1; i>=2; i--) {
+      mpfi_sub(coeffs_array[i], coeffs_array_diff[i-2], coeffs_array_diff[i]);
+      mpfi_mul_ui(temp, coeffs_array[i-1], 2*(index-1)-1);
+      mpfi_sub(coeffs_array[i], coeffs_array[i], temp);
     }
-  //}
+
+    mpfi_mul_ui(temp, coeffs_array[0], 2*(index-1)-1);
+    mpfi_add(coeffs_array[1], temp, coeffs_array_diff[1]);
+    mpfi_neg(coeffs_array[1], coeffs_array[1]);
+
+    mpfi_neg(coeffs_array[0], coeffs_array_diff[0]);
+    /* now it represents p_(index) */
+
+    symbolic_poly_evaluation_horner(res[index], coeffs_array, x, index-1);
+    mpfi_set_ui(temp, 2*index-1);
+    mpfi_pow(temp, u, temp);
+    mpfi_div(res[index], res[index], temp);
+  }
+    
   for (index=0; index<=n-1; index++){
     mpfi_clear(coeffs_array[index]);
-    mpfi_clear(powers_array[index]);
+    mpfi_clear(coeffs_array_diff[index]);
   }
-  mpfi_clear(oldCoeff);
-  mpfi_clear(partialSum);
-  mpfi_clear(s1);
-  mpfi_clear(pow);
-  mpfi_clear(a1);
-  mpfi_clear(nominator);
   mpfi_clear(u);
+  mpfi_clear(temp);
   free(coeffs_array);
-  free(powers_array);
+  free(coeffs_array_diff);
+  
   return;
 }
 
@@ -1136,7 +892,7 @@ void baseFunction_diff(mpfi_t *res, int nodeType, mpfi_t x, int n) {
   case SQRT:
     mpfr_init2(oneHalf, getToolPrecision());
     mpfr_set_d(oneHalf, 0.5, GMP_RNDN);
-    constantPower_diff(res, oneHalf, x, n);
+    constantPower_diff(res, x, oneHalf, n);
     mpfr_clear(oneHalf);
     break;
   case EXP:
@@ -2155,7 +1911,7 @@ void  varInv_TM(tModel *t,mpfi_t x0, mpfi_t x, int n,int mode){
     mpfr_init2(minusOne, getToolPrecision());
     mpfr_set_si(minusOne, -1, GMP_RNDN);
 
-    constantPower_diff(tt->poly_array,minusOne, x0, n-1);
+    constantPower_diff(tt->poly_array, x0, minusOne, n-1);
     
     mpfi_init2(fact, getToolPrecision());
     mpfi_set_ui(fact,1);
@@ -2169,7 +1925,7 @@ void  varInv_TM(tModel *t,mpfi_t x0, mpfi_t x, int n,int mode){
     for(i=0;i<=n+1;i++){
       mpfi_init2(nDeriv[i], getToolPrecision());
     }
-    constantPower_diff(nDeriv,minusOne, x, n+1);
+    constantPower_diff(nDeriv, x, minusOne, n+1);
     
     /*Use Zumkeller technique to improve the bound in the absolute case,
    when the (n+1)th derivative has constant sign*/
@@ -2220,7 +1976,7 @@ void  ctPowerVar_TM(tModel *t,mpfi_t x0, mpfi_t x, int n, mpfr_t p,int mode){
     
     tt=createEmptytModel(n,x0,x); 
        
-    constantPower_diff(tt->poly_array,p, x0, n-1);
+    constantPower_diff(tt->poly_array, x0, p, n-1);
     mpfi_init2(fact, getToolPrecision());
     mpfi_set_ui(fact,1);
     for(i=1;i<n;i++){
@@ -2232,7 +1988,7 @@ void  ctPowerVar_TM(tModel *t,mpfi_t x0, mpfi_t x, int n, mpfr_t p,int mode){
     for(i=0;i<=n+1;i++){
       mpfi_init2(nDeriv[i], getToolPrecision());
     }
-    constantPower_diff(nDeriv,p, x, n+1);
+    constantPower_diff(nDeriv, x, p, n+1);
     /*Use Zumkeller technique to improve the bound in the absolute case,
     when the (n+1)th derivative has constant sign*/
     if((mode!=1)&&((mpfi_is_nonpos(nDeriv[n+1])>0)||(mpfi_is_nonneg(nDeriv[n+1])>0))){ 
