@@ -56,6 +56,7 @@ knowledge of the CeCILL-C license and that you accept its terms.
 
 void exp_diff(mpfi_t *res, mpfi_t x, int n);
 void expm1_diff(mpfi_t *res, mpfi_t x, int n);
+void log1p_diff(mpfi_t *res, mpfi_t x, int n);
 void log_diff(mpfi_t *res, mpfi_t x, int n);
 void log2_diff(mpfi_t *res, mpfi_t x, int n);
 void log10_diff(mpfi_t *res, mpfi_t x, int n);
@@ -71,11 +72,40 @@ void asin_diff(mpfi_t *res, mpfi_t x, int n);
 void acos_diff(mpfi_t *res, mpfi_t x, int n);
 void asinh_diff(mpfi_t *res, mpfi_t x, int n);
 void acosh_diff(mpfi_t *res, mpfi_t x, int n);
+void erf_diff(mpfi_t *res, mpfi_t x, int n);
+void erfc_diff(mpfi_t *res, mpfi_t x, int n);
+void abs_diff(mpfi_t *res, mpfi_t x, int n);
 
 void powerFunction_diff(mpfi_t *res, mpfr_t p, mpfi_t x, int n);
 void constantPower_diff(mpfi_t *res, mpfi_t x, mpfr_t p, int n);
 void baseFunction_diff(mpfi_t *res, int nodeType, mpfi_t x, int n);
 
+
+
+
+/* Taylor model structure:
+n- order: polynomial of degree n-1, remainder of order O(x^n)
+rem_bound - bound for the remainder f-T
+poly_array - array of coeffs for the polynomial (mpfi's) in basis (x-x0)
+poly_bound - bound for the polynomial (helpful for computations)
+x - interval on which the tm is computed
+x0 - interval around the expansion point
+*/
+typedef struct tmdl {
+int n; 
+mpfi_t rem_bound;
+mpfi_t *poly_array;
+mpfi_t poly_bound;
+mpfi_t x;
+mpfi_t x0;
+
+} tModel;
+
+void ctMultiplication_TM(tModel*d,tModel*s, mpfi_t c,int mode);
+void ctDivision_TM(tModel*d,tModel*s, mpfi_t c,int mode);
+void polynomialBoundHorner(mpfi_t *bound,int n,mpfi_t *coeffs,mpfi_t x0,mpfi_t x);
+void polynomialBoundSharp(mpfi_t *bound,int n,mpfi_t *coeffs,mpfi_t x0Int,mpfi_t x);
+void polynomialBoundSharp(mpfi_t *bound,int n,mpfi_t *coeffs,mpfi_t x0,mpfi_t x);
 
 void taylorform(node **T, chain **errors, mpfi_t **delta,
 		node *f, int n, mpfi_t *x0, mpfi_t *d, int mode);
