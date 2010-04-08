@@ -235,6 +235,7 @@ extern FILE *internyyget_in(void *scanner);
 %token  SIMPLIFYSAFETOKEN;  						       
 %token  TAYLORTOKEN;           					       
 %token  TAYLORFORMTOKEN;
+%token  AUTODIFFTOKEN;
 %token  DEGREETOKEN;            					       
 %token  NUMERATORTOKEN;         					       
 %token  DENOMINATORTOKEN;       					       
@@ -1400,6 +1401,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | TAYLORFORMTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thinglist RPARTOKEN
                           {
                             $$ = makeTaylorform(addElement(addElement($7, $5), $3));
+			  }           					       
+                      | AUTODIFFTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thing RPARTOKEN
+                          {
+                            $$ = makeAutodiff(addElement(addElement(addElement(NULL, $7), $5), $3));
 			  }           					       
                       | DEGREETOKEN LPARTOKEN thing RPARTOKEN
                           {

@@ -76,6 +76,10 @@ knowledge of the CeCILL-C license and that you accept its terms.
 
 #define READBUFFERSIZE 16000
 
+void auto_diff(mpfi_t* res, node *f, mpfi_t x, int n) {
+  return;
+}
+
 
 extern int internyyparse(void *);
 extern void internyylex_destroy(void *);
@@ -802,6 +806,9 @@ node *copyThing(node *tree) {
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 			 	
   case TAYLORFORM:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
+    break; 			 	
+  case AUTODIFF:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 			 	
   case DEGREE:
@@ -1539,6 +1546,9 @@ char *getTimingStringForThing(node *tree) {
     break; 			 	
   case TAYLORFORM:
     constString = "taylorform";
+    break; 			 	
+  case AUTODIFF:
+    constString = "autodiff";
     break; 			 	
   case DEGREE:
     constString = "getting the degree";
@@ -4078,6 +4088,16 @@ char *sRawPrintThing(node *tree) {
     break; 			 	
   case TAYLORFORM:
     res = newString("taylorform(");
+    curr = tree->arguments;
+    while (curr != NULL) {
+      res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
+      if (curr->next != NULL) res = concatAndFree(res, newString(", ")); 
+      curr = curr->next;
+    }
+    res = concatAndFree(res, newString(")"));
+    break; 			 	
+  case AUTODIFF:
+    res = newString("autodiff(");
     curr = tree->arguments;
     while (curr != NULL) {
       res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
@@ -8635,6 +8655,17 @@ node *makeTaylorform(chain *thinglist) {
 
 }
 
+node *makeAutodiff(chain *thinglist) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = AUTODIFF;
+  res->arguments = thinglist;
+
+  return res;
+
+}
+
 node *makeDegree(node *thing) {
   node *res;
 
@@ -10008,6 +10039,10 @@ void freeThing(node *tree) {
     freeChain(tree->arguments, freeThingOnVoid);
     free(tree);
     break; 			 	
+  case AUTODIFF:
+    freeChain(tree->arguments, freeThingOnVoid);
+    free(tree);
+    break; 			 	
   case DEGREE:
     freeThing(tree->child1);
     free(tree);
@@ -10802,6 +10837,9 @@ int isEqualThing(node *tree, node *tree2) {
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
     break; 			 	
   case TAYLORFORM:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
+    break; 			 	
+  case AUTODIFF:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
     break; 			 	
   case DEGREE:
@@ -15237,6 +15275,58 @@ node *evaluateThingInner(node *tree) {
       }
     }
     break; 			 	
+  case AUTODIFF:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateThingInnerOnVoid);
+    curr = copy->arguments;
+    if (isPureTree((node *) (curr->value))) {
+      curr = curr->next;
+      if (isPureTree((node *) (curr->value)) &&
+	  evaluateThingToInteger(&resA,(node *) (curr->value),NULL)) {
+        if (resA >= 0) {
+          curr = curr->next;
+          mpfr_init2(a,tools_precision);
+          mpfr_init2(b,tools_precision);
+          if (isRange((node *) (curr->value)) &&
+              evaluateThingToRange(a,b,(node *) (curr->value))) {
+            if (timingString != NULL) pushTimeCounter();      
+            pTemp = mpfr_get_prec(a);
+            if (mpfr_get_prec(b) > pTemp) pTemp = mpfr_get_prec(b);
+            mpfi_init2(tempIA,pTemp);
+            mpfi_interv_fr(tempIA,a,b);
+            tmpInterv1 = (mpfi_t *) safeCalloc(resA + 1, sizeof(mpfi_t));
+            for (resB=0;resB<resA+1;resB++) {
+              mpfi_init2(tmpInterv1[resB],tools_precision);
+            }
+            auto_diff(tmpInterv1, (node *) (copy->arguments->value), tempIA, resA);
+            curr = NULL;
+            for (resB=0;resB<resA+1;resB++) {
+              pTemp = mpfi_get_prec(tmpInterv1[resB]);
+              mpfr_init2(c,pTemp);
+              mpfr_init2(d,pTemp);
+              mpfi_get_left(c,tmpInterv1[resB]);
+              mpfi_get_right(d,tmpInterv1[resB]);
+              curr = addElement(curr,makeRange(makeConstant(c), makeConstant(d)));
+              mpfr_clear(c);
+              mpfr_clear(d);
+            }
+            tempNode = makeList(curr);
+            freeThing(copy);
+            copy = tempNode;
+            for (resB=0;resB<resA+1;resB++) {
+              mpfi_clear(tmpInterv1[resB]);
+            }
+            free(tmpInterv1);
+            mpfi_clear(tempIA);
+            if (timingString != NULL) popTimeCounter(timingString);
+          } 
+          mpfr_clear(a);
+          mpfr_clear(b);
+        } else {
+          printMessage(1,"Warning: the degree of differentiation in autodiff must not be negative.\n");
+        }
+      }
+    }
+    break;
   case DEGREE:
     copy->child1 = evaluateThingInner(tree->child1);
     if (isPureTree(copy->child1)) {

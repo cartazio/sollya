@@ -244,6 +244,7 @@ void yyerror(char *message) {
 %token  SIMPLIFYSAFETOKEN;  						       
 %token  TAYLORTOKEN;
 %token  TAYLORFORMTOKEN;           					       
+%token  AUTODIFFTOKEN;           					       
 %token  DEGREETOKEN;            					       
 %token  NUMERATORTOKEN;         					       
 %token  DENOMINATORTOKEN;       					       
@@ -1445,6 +1446,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | TAYLORFORMTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thinglist RPARTOKEN
                           {
                             $$ = makeTaylorform(addElement(addElement($7, $5), $3));
+			  }           					       
+                      | AUTODIFFTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thing RPARTOKEN
+                          {
+                            $$ = makeAutodiff(addElement(addElement(addElement(NULL, $7), $5), $3));
 			  }           					       
                       | DEGREETOKEN LPARTOKEN thing RPARTOKEN
                           {
@@ -3187,6 +3192,17 @@ help:                   CONSTANTTOKEN
 #endif
 #endif
                           }                 					                      					       
+                      | AUTODIFFTOKEN
+                          {
+#ifdef HELP_AUTODIFF_TEXT
+			    outputMode(); printf(HELP_AUTODIFF_TEXT);
+#else
+			    outputMode(); printf("Automatic differentiation.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for AUTODIFF"
+#endif
+#endif
+                          }                 					                      					       
                       | DEGREETOKEN
                           {
 #ifdef HELP_DEGREE_TEXT
@@ -3976,6 +3992,7 @@ help:                   CONSTANTTOKEN
 			    printf("- asinh\n");
 			    printf("- atan\n");
 			    printf("- atanh\n");
+			    printf("- autodiff\n");
 			    printf("- autosimplify\n");
 			    printf("- bashexecute\n");
 			    printf("- begin\n");
@@ -4057,6 +4074,7 @@ help:                   CONSTANTTOKEN
 			    printf("- mantissa\n");
 			    printf("- mid\n");
 			    printf("- midpointmode\n");
+			    printf("- numberroots\n");
 			    printf("- nop\n");
 			    printf("- numerator\n");
 			    printf("- of\n");
@@ -4114,6 +4132,7 @@ help:                   CONSTANTTOKEN
 			    printf("- tan\n");
 			    printf("- tanh\n");
 			    printf("- taylor\n");
+			    printf("- taylorform\n");
 			    printf("- taylorrecursions\n");
 			    printf("- TD\n");
 			    printf("- then\n");

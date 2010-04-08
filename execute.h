@@ -257,6 +257,11 @@ extern void endBuffer(void);
 #define NOPARG 246
 #define PROCILLIM 247
 
+
+
+
+#define AUTODIFF 252
+
 int executeCommand(node *);
 
 node *copyThing(node *);
@@ -397,6 +402,7 @@ node *makeCanonicalThing(node *thing);
 node *makeExpand(node *thing);
 node *makeTaylor(node *thing1, node *thing2, node *thing3);
 node *makeTaylorform(chain *thinglist);
+node *makeAutodiff(chain *thinglist);
 node *makeDegree(node *thing);
 node *makeNumerator(node *thing);
 node *makeDenominator(node *thing);

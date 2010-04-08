@@ -178,6 +178,7 @@ SIMPLIFYSAFE    ({SIMPLIFYSAFE1}|{SIMPLIFYSAFE2})
 
 TAYLOR          "taylor"
 TAYLORFORM      "taylorform"
+AUTODIFF        "autodiff"
 
 FINDZEROS       "findzeros"
 FPFINDZEROS     "fpfindzeros"
@@ -615,6 +616,7 @@ NOP             "nop"
 {SIMPLIFYSAFE}				    {  return SIMPLIFYSAFETOKEN; }				      	       
 {TAYLOR}         			    {  return TAYLORTOKEN; }         					       
 {TAYLORFORM}         			    {  return TAYLORFORMTOKEN; }         					       
+{AUTODIFF}         			    {  return AUTODIFFTOKEN; }         					       
 {DEGREE}          			    {  return DEGREETOKEN; }          					       
 {NUMERATOR}       			    {  return NUMERATORTOKEN; }       					       
 {DENOMINATOR}     			    {  return DENOMINATORTOKEN; }     					       
