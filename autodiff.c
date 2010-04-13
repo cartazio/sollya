@@ -70,7 +70,7 @@ void multiplication_AD(mpfi_t *res, mpfi_t *f, mpfi_t *g, int n) {
   prec = getToolPrecision();
   mpfi_init2(temp, prec);
 
-  temp_array = (mpfi_t *)safeMalloc((n+1)*sizeof(mpfi_t));
+  temp_array = (mpfi_t *)safeCalloc((n+1),sizeof(mpfi_t));
   for(p=0;p<=n;p++) mpfi_init2(temp_array[p], prec);
 
   for(p=0; p<=n; p++) {
@@ -114,9 +114,9 @@ void composition_AD(mpfi_t *res, mpfi_t *g, mpfi_t *f, int n) {
   prec = getToolPrecision();
   if(n==0) mpfi_set(res[0], g[0]);
   else {
-    temp_array = (mpfi_t *)safeMalloc(n*sizeof(mpfi_t));
-    fprime = (mpfi_t *)safeMalloc(n*sizeof(mpfi_t));
-    gprime = (mpfi_t *)safeMalloc(n*sizeof(mpfi_t));
+    temp_array = (mpfi_t *)safeCalloc(n,sizeof(mpfi_t));
+    fprime = (mpfi_t *)safeCalloc(n,sizeof(mpfi_t));
+    gprime = (mpfi_t *)safeCalloc(n,sizeof(mpfi_t));
     for(i=0;i<=n-1;i++) {
       mpfi_init2(temp_array[i], prec);
       mpfi_init2(fprime[i], prec);
@@ -153,8 +153,8 @@ void binary_function_diff(mpfi_t *res, int nodeType, mpfi_t x0, node *f, node *g
   mp_prec_t prec;
 
   prec = getToolPrecision();
-  res1 = (mpfi_t *)safeMalloc((n+1)*sizeof(mpfi_t));
-  res2 = (mpfi_t *)safeMalloc((n+1)*sizeof(mpfi_t));
+  res1 = (mpfi_t *)safeCalloc((n+1),sizeof(mpfi_t));
+  res2 = (mpfi_t *)safeCalloc((n+1),sizeof(mpfi_t));
   for(i=0;i<=n;i++) {
     mpfi_init2(res1[i], prec);
     mpfi_init2(res2[i], prec);
@@ -173,7 +173,7 @@ void binary_function_diff(mpfi_t *res, int nodeType, mpfi_t x0, node *f, node *g
     multiplication_AD(res, res1, res2, n);
     break;
   case DIV: /* We compute it by g/h = g * h^{-1} */
-    temp_array = (mpfi_t *)safeMalloc((n+1)*sizeof(mpfi_t));
+    temp_array = (mpfi_t *)safeCalloc((n+1),sizeof(mpfi_t));
     for(i=0;i<=n;i++) mpfi_init2(temp_array[i], prec);
 
     /* temp_array corresponds to x->1/x at point h(x0) */
@@ -508,7 +508,7 @@ void tan_diff(mpfi_t *res, mpfi_t x, int n) {
   mp_prec_t prec;
 
   prec = getToolPrecision();
-  coeffs_array = (mpfi_t *)safeMalloc( (n+2)*sizeof(mpfi_t));
+  coeffs_array = (mpfi_t *)safeCalloc( (n+2),sizeof(mpfi_t));
 
   for (index=0; index<=n+1; index++) {
     mpfi_init2(coeffs_array[index], prec);
@@ -563,7 +563,7 @@ void tanh_diff(mpfi_t *res, mpfi_t x, int n) {
   mp_prec_t prec;
 
   prec = getToolPrecision();
-  coeffs_array = (mpfi_t *)safeMalloc( (n+2)*sizeof(mpfi_t));
+  coeffs_array = (mpfi_t *)safeCalloc( (n+2),sizeof(mpfi_t));
 
   for (index=0; index<=n+1; index++) {
     mpfi_init2(coeffs_array[index], prec);
@@ -620,8 +620,8 @@ void atan_diff(mpfi_t *res, mpfi_t x, int n) {
   mp_prec_t prec;
     
   prec = getToolPrecision();
-  coeffs_array = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
-  coeffs_array_diff = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
+  coeffs_array = (mpfi_t *)safeCalloc( n,sizeof(mpfi_t));
+  coeffs_array_diff = (mpfi_t *)safeCalloc( n,sizeof(mpfi_t));
 
   for (index=0; index<=n-1; index++) {
     mpfi_init2(coeffs_array[index], prec);
@@ -701,8 +701,8 @@ void atanh_diff(mpfi_t *res, mpfi_t x, int n) {
   mp_prec_t prec;
     
   prec = getToolPrecision();
-  coeffs_array = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
-  coeffs_array_diff = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
+  coeffs_array = (mpfi_t *)safeCalloc( n,sizeof(mpfi_t));
+  coeffs_array_diff = (mpfi_t *)safeCalloc( n,sizeof(mpfi_t));
 
   for (index=0; index<=n-1; index++) {
     mpfi_init2(coeffs_array[index], prec);
@@ -784,8 +784,8 @@ void asin_diff(mpfi_t *res, mpfi_t x, int n) {
   mp_prec_t prec;
     
   prec = getToolPrecision();
-  coeffs_array = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
-  coeffs_array_diff = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
+  coeffs_array = (mpfi_t *)safeCalloc( n,sizeof(mpfi_t));
+  coeffs_array_diff = (mpfi_t *)safeCalloc( n,sizeof(mpfi_t));
 
   for (index=0; index<=n-1; index++) {
     mpfi_init2(coeffs_array[index], prec);
@@ -881,8 +881,8 @@ void asinh_diff(mpfi_t *res, mpfi_t x, int n) {
   mp_prec_t prec;
     
   prec = getToolPrecision();
-  coeffs_array = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
-  coeffs_array_diff = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
+  coeffs_array = (mpfi_t *)safeCalloc( n,sizeof(mpfi_t));
+  coeffs_array_diff = (mpfi_t *)safeCalloc( n,sizeof(mpfi_t));
 
   for (index=0; index<=n-1; index++) {
     mpfi_init2(coeffs_array[index], prec);
@@ -963,8 +963,8 @@ void acosh_diff(mpfi_t *res, mpfi_t x, int n) {
   mp_prec_t prec;
     
   prec = getToolPrecision();
-  coeffs_array = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
-  coeffs_array_diff = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
+  coeffs_array = (mpfi_t *)safeCalloc( n,sizeof(mpfi_t));
+  coeffs_array_diff = (mpfi_t *)safeCalloc( n,sizeof(mpfi_t));
 
   for (index=0; index<=n-1; index++) {
     mpfi_init2(coeffs_array[index], prec);
@@ -1042,8 +1042,8 @@ void erf_diff(mpfi_t *res, mpfi_t x, int n) {
   mp_prec_t prec;
     
   prec = getToolPrecision();
-  coeffs_array = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
-  coeffs_array_diff = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
+  coeffs_array = (mpfi_t *)safeCalloc( n,sizeof(mpfi_t));
+  coeffs_array_diff = (mpfi_t *)safeCalloc( n,sizeof(mpfi_t));
 
   for (index=0; index<=n-1; index++) {
     mpfi_init2(coeffs_array[index], prec);
@@ -1456,8 +1456,8 @@ void auto_diff_scaled(mpfi_t* res, node *f, mpfi_t x0, int n) {
   case CEIL:
   case FLOOR:
   case NEARESTINT:
-    res1 = (mpfi_t *)safeMalloc((n+1)*sizeof(mpfi_t));
-    res2 = (mpfi_t *)safeMalloc((n+1)*sizeof(mpfi_t));
+    res1 = (mpfi_t *)safeCalloc((n+1),sizeof(mpfi_t));
+    res2 = (mpfi_t *)safeCalloc((n+1),sizeof(mpfi_t));
     for(i=0;i<=n;i++) {
       mpfi_init2(res1[i], prec);
       mpfi_init2(res2[i], prec);
@@ -1499,7 +1499,7 @@ void auto_diff_scaled(mpfi_t* res, node *f, mpfi_t x0, int n) {
     /* p^x case */
     else if ( (simplifiedChild1->nodeType == CONSTANT) &&
 	      (simplifiedChild2->nodeType == VARIABLE) ) {
-      powerFunction_diff(res, *(simplifiedChild2->value), x0, n);
+      powerFunction_diff(res, *(simplifiedChild1->value), x0, n);
     }
 
     /* p^q case */
@@ -1520,8 +1520,8 @@ void auto_diff_scaled(mpfi_t* res, node *f, mpfi_t x0, int n) {
     else if ( (simplifiedChild1->nodeType==CONSTANT) ||
 	      (simplifiedChild2->nodeType==CONSTANT) ) {
       
-      res1 = (mpfi_t *)safeMalloc((n+1)*sizeof(mpfi_t));
-      res2 = (mpfi_t *)safeMalloc((n+1)*sizeof(mpfi_t));
+      res1 = (mpfi_t *)safeCalloc((n+1),sizeof(mpfi_t));
+      res2 = (mpfi_t *)safeCalloc((n+1),sizeof(mpfi_t));
       for(i=0;i<=n;i++) {
 	mpfi_init2(res1[i], prec);
 	mpfi_init2(res2[i], prec);

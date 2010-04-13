@@ -54,6 +54,7 @@ knowledge of the CeCILL-C license and that you accept its terms.
 #include "external.h"
 #include "infnorm.h"
 #include "autodiff.h"
+#include "general.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -74,7 +75,7 @@ tModel* createEmptytModel(int n,  mpfi_t x0, mpfi_t x){
   mpfi_init2(t->x0, prec);
   mpfi_set(t->x0, x0);
   t->n = n;
-  t->poly_array = (mpfi_t *)safeMalloc(n*sizeof(mpfi_t));
+  t->poly_array = (mpfi_t *)safeCalloc(n,sizeof(mpfi_t));
   for(i=0;i<n;i++){
     mpfi_init2(t->poly_array[i], prec);
   }
@@ -197,7 +198,7 @@ void mpfr_get_poly(mpfr_t *rc, mpfi_t *errors_array, mpfi_t rest, int n, mpfi_t 
 
   prec = getToolPrecision();
 
-  errors = (mpfi_t *)safeMalloc((n+1)*sizeof(mpfi_t));
+  errors = (mpfi_t *)safeCalloc((n+1),sizeof(mpfi_t));
   for (i=0; i<=n; i++) mpfi_init2(errors[i], prec);
 
   mpfi_init2(temp, prec);
@@ -265,7 +266,7 @@ void multiplication_TM(tModel *t, tModel *t1, tModel *t2, int mode){
   /* When mode = RELATIVE, r = [r0, ..., r(n-2), 0, 0, ....]                            */
   /*              it represents the polynomial T1*T2|[n....2n-2] / (x-x0)^n             */
   /**************************************************************************************/
-  r = (mpfi_t *)safeMalloc((2*n-1)*sizeof(mpfi_t));
+  r = (mpfi_t *)safeCalloc((2*n-1),sizeof(mpfi_t));
   for(i=0; i < 2*n-1; i++){
     mpfi_init2(r[i], prec);
     mpfi_set_ui(r[i],0);
@@ -488,7 +489,7 @@ void base_TMAux(tModel *t, int typeOfFunction, int nodeType, mpfr_t p, int n, mp
   tt = createEmptytModel(n,x0,x);
 
   /* We use AD for computing bound on the derivatives up to (n+1)th derivative */
-  nDeriv= (mpfi_t *)safeMalloc((n+2)*sizeof(mpfi_t));
+  nDeriv= (mpfi_t *)safeCalloc((n+2),sizeof(mpfi_t));
   for(i=0;i<=n+1;i++) mpfi_init2(nDeriv[i], prec);
 
   switch(typeOfFunction) {
@@ -634,7 +635,7 @@ void reduceOrder_TM(tModel*d, tModel*s, int n){
   for(i=0;i<n;i++) mpfi_set(tt->poly_array[i], s->poly_array[i]);
 
   /* we are left with terms from n up to oldn-1 */
-  remTerms= (mpfi_t *)safeMalloc((oldn-n)*sizeof(mpfi_t));
+  remTerms= (mpfi_t *)safeCalloc((oldn-n),sizeof(mpfi_t));
   for(i=n;i<oldn;i++){
     mpfi_init2(remTerms[i-n], prec);
     mpfi_set(remTerms[i-n], s->poly_array[i]);
@@ -1363,8 +1364,8 @@ void taylorform(node **T, chain **errors, mpfi_t **delta,
 
   //printtModel(t);
 
-  coeffsMpfr= (mpfr_t *)safeMalloc((n)*sizeof(mpfr_t));
-  coeffsErrors= (mpfi_t *)safeMalloc((n)*sizeof(mpfi_t));
+  coeffsMpfr= (mpfr_t *)safeCalloc((n),sizeof(mpfr_t));
+  coeffsErrors= (mpfi_t *)safeCalloc((n),sizeof(mpfi_t));
 
   rest= (mpfi_t*)safeMalloc(sizeof(mpfi_t));
   mpfi_init2(*rest,getToolPrecision());
