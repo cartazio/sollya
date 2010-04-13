@@ -1,15 +1,18 @@
 /*
 
-Copyright 2008 by 
+Copyright 2007-2010 by 
 
 Laboratoire de l'Informatique du Paralllisme, 
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
 
-Contributors Ch. Lauter, S. Chevillard, N. Jourdan
+and by
+
+LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2)
+
+Contributors Ch. Lauter, S. Chevillard
 
 christoph.lauter@ens-lyon.org
 sylvain.chevillard@ens-lyon.org
-nicolas.jourdan@ens-lyon.fr
 
 This software is a computer program whose purpose is to provide an
 environment for safe floating-point code development. It is
@@ -114,12 +117,14 @@ node *parseString(char *str) {
   if (!miniyyparse(myScanner)) {
     if (minitree != NULL) {
       result = evaluateThing(minitree);
+      freeThing(minitree);
     } else {
       result = NULL;
     }
   } else {
     result = NULL;
   }
+  miniyylex_destroy(myScanner);
   minitree = oldMinitree;
   free(myStr);
   initSignalHandler();
@@ -143,6 +148,7 @@ rangetype guessDegreeWrapper(node *func, node *weight, mpfr_t a, mpfr_t b, mpfr_
     defaultpoints = oldPoints;
     printMessage(1,"Warning: some error occurred while executing guessdegree.\n");
     printMessage(1,"Warning: the last command could not be executed. May leak memory.\n");
+    considerDyingOnError();
     result.a = NULL; result.b = NULL;
   }
   memmove(&recoverEnvironmentError,&oldEnvironment,sizeof(recoverEnvironmentError));
@@ -230,6 +236,8 @@ char *readFileIntoString(FILE *fd) {
   }
 
   if (newString == NULL) newString = safeCalloc(1,sizeof(char));
+
+  free(readBuf);
 
   return newString;
 }
@@ -536,6 +544,9 @@ node *copyThing(node *tree) {
   case MIDPOINTASSIGN:
     copy->child1 = copyThing(tree->child1);
     break;
+  case DIEONERRORMODEASSIGN:
+    copy->child1 = copyThing(tree->child1);
+    break;
   case RATIONALMODEASSIGN:
     copy->child1 = copyThing(tree->child1);
     break; 			 			
@@ -578,6 +589,9 @@ node *copyThing(node *tree) {
   case MIDPOINTSTILLASSIGN:
     copy->child1 = copyThing(tree->child1);
     break;
+  case DIEONERRORMODESTILLASSIGN:
+    copy->child1 = copyThing(tree->child1);
+    break;
   case RATIONALMODESTILLASSIGN:
     copy->child1 = copyThing(tree->child1);
     break; 		 		
@@ -603,6 +617,10 @@ node *copyThing(node *tree) {
     copy->child2 = copyThing(tree->child2);
     break; 				
   case COMPAREEQUAL:
+    copy->child1 = copyThing(tree->child1);
+    copy->child2 = copyThing(tree->child2);
+    break; 			
+  case COMPAREIN:
     copy->child1 = copyThing(tree->child1);
     copy->child2 = copyThing(tree->child2);
     break; 			
@@ -979,6 +997,8 @@ node *copyThing(node *tree) {
     break; 			
   case MIDPOINTDEREF:
     break;
+  case DIEONERRORMODEDEREF:
+    break;
   case RATIONALMODEDEREF:
     break;
   case SUPPRESSWARNINGSDEREF:
@@ -1177,10 +1197,10 @@ char *getTimingStringForThing(node *tree) {
     constString = "plot statement";
     break;			
   case PRINTHEXA:
-    constString = "printhexa statement";
+    constString = "printdouble statement";
     break; 
   case PRINTFLOAT:
-    constString = "printfloat statement";
+    constString = "printsingle statement";
     break; 
   case PRINTBINARY:
     constString = "printbinary statement";
@@ -1269,6 +1289,9 @@ char *getTimingStringForThing(node *tree) {
   case MIDPOINTASSIGN:
     constString = "assigning the midpoint printing mode";
     break; 			
+  case DIEONERRORMODEASSIGN:
+    constString = "assigning the die-on-error mode";
+    break; 			
   case RATIONALMODEASSIGN:
     constString = "assigning the midpoint printing mode";
     break; 			
@@ -1311,6 +1334,9 @@ char *getTimingStringForThing(node *tree) {
   case MIDPOINTSTILLASSIGN:
     constString = NULL;
     break;
+  case DIEONERRORMODESTILLASSIGN:
+    constString = NULL;
+    break;
   case RATIONALMODESTILLASSIGN:
     constString = NULL;
     break;
@@ -1334,6 +1360,9 @@ char *getTimingStringForThing(node *tree) {
     break; 				
   case COMPAREEQUAL:
     constString = "compare equal";
+    break; 			
+  case COMPAREIN:
+    constString = "compare if in interval";
     break; 			
   case COMPARELESS:
     constString = "compare less";
@@ -1710,8 +1739,11 @@ char *getTimingStringForThing(node *tree) {
   case MIDPOINTDEREF:
     constString = "dereferencing the midpoint mode state of the tool";
     break; 			
+  case DIEONERRORMODEDEREF:
+    constString = "dereferencing the die-on-error mode state of the tool";
+    break; 			
   case RATIONALMODEDEREF:
-    constString = "dereferencing the midpoint mode state of the tool";
+    constString = "dereferencing the rational number mode state of the tool";
     break; 			
   case SUPPRESSWARNINGSDEREF:
     constString = "dereferencing the warning activation state of the tool";
@@ -2200,8 +2232,8 @@ int evaluateThingToConstant(mpfr_t result, node *tree, mpfr_t *defaultVal, int s
 	  mpfr_set_ui(tempResult,0,GMP_RNDN);
 	  if (!noMessage) {
 	    if (!noRoundingWarnings) {
-	      printMessage(1,"Warning: the given expression is not a constant but an expression to evaluate and\n");
-	      printMessage(1,"a faithful evaluation is not possible. Will consider the constant to be 0.\n");
+	      printMessage(1,"Warning: the given expression is not a constant but an expression to evaluate\n");
+	      printMessage(1,"and a faithful evaluation is not possible. Will consider the constant to be 0.\n");
 	    } 
 	  } else {
 	    if (!noRoundingWarnings) {
@@ -2211,8 +2243,9 @@ int evaluateThingToConstant(mpfr_t result, node *tree, mpfr_t *defaultVal, int s
 	} else {
 	  if (!noMessage) {
 	    if (!noRoundingWarnings) {
-	      printMessage(1,"Warning: the given expression is not a constant but an expression to evaluate and\n");
-	      printMessage(1,"a faithful evaluation is not possible.\nWill use a plain floating-point evaluation, which might yield a completely wrong value.\n");
+	      printMessage(1,"Warning: the given expression is not a constant but an expression to evaluate\n");
+	      printMessage(1,"and a faithful evaluation is not possible.\n");
+              printMessage(1,"Will use a plain floating-point evaluation, which might yield a completely wrong value.\n");
 	    } 
 	  } else {
 	    if (!noRoundingWarnings) {
@@ -2252,6 +2285,8 @@ int evaluateThingToConstant(mpfr_t result, node *tree, mpfr_t *defaultVal, int s
     } else {
       if (exact) return 2; else return 1;
     }
+  } else {
+    freeThing(evaluatedResult);
   }
   
   return 0;
@@ -3242,7 +3277,7 @@ char *sRawPrintThing(node *tree) {
     res = newString("pi");
     break;
   case COMMANDLIST:
-    res = newString("begin\n");
+    res = newString("{\n");
     curr = tree->arguments;
     while (curr != NULL) {
       res = concatAndFree(res,
@@ -3250,7 +3285,7 @@ char *sRawPrintThing(node *tree) {
       res = concatAndFree(res,newString(";\n"));
       curr = curr->next;
     }
-    res = concatAndFree(res,newString("end"));
+    res = concatAndFree(res,newString("}"));
     break;			
   case WHILE:
     res = newString("while ");
@@ -3372,12 +3407,12 @@ char *sRawPrintThing(node *tree) {
     res = concatAndFree(res, newString(")"));
     break;			
   case PRINTHEXA:
-    res = concatAndFree(newString("printhexa("),
+    res = concatAndFree(newString("printdouble("),
 			concatAndFree(sRawPrintThing(tree->child1),
 				      newString(")")));
     break; 
   case PRINTFLOAT:
-    res = concatAndFree(newString("printfloat("),
+    res = concatAndFree(newString("printsingle("),
 			concatAndFree(sRawPrintThing(tree->child1),
 				      newString(")")));
     break; 
@@ -3655,6 +3690,10 @@ char *sRawPrintThing(node *tree) {
     res = newString("midpointmode = ");
     res = concatAndFree(res, sRawPrintThing(tree->child1));
     break; 			
+  case DIEONERRORMODEASSIGN:
+    res = newString("dieonerrormode = ");
+    res = concatAndFree(res, sRawPrintThing(tree->child1));
+    break; 			
   case RATIONALMODEASSIGN:
     res = newString("rationalmode = ");
     res = concatAndFree(res, sRawPrintThing(tree->child1));
@@ -3722,6 +3761,11 @@ char *sRawPrintThing(node *tree) {
     res = concatAndFree(res, sRawPrintThing(tree->child1));
     res = concatAndFree(res, newString("!"));
     break;
+  case DIEONERRORMODESTILLASSIGN:
+    res = newString("dieonerrormode = ");
+    res = concatAndFree(res, sRawPrintThing(tree->child1));
+    res = concatAndFree(res, newString("!"));
+    break;
   case RATIONALMODESTILLASSIGN:
     res = newString("midpointmode = ");
     res = concatAndFree(res, sRawPrintThing(tree->child1));
@@ -3765,6 +3809,13 @@ char *sRawPrintThing(node *tree) {
     res = concatAndFree(newString("("),
 			concatAndFree(sRawPrintThing(tree->child1),
 				      concatAndFree(newString(") == ("),
+						    concatAndFree(sRawPrintThing(tree->child2),
+								  newString(")")))));
+    break; 			
+  case COMPAREIN:
+    res = concatAndFree(newString("("),
+			concatAndFree(sRawPrintThing(tree->child1),
+				      concatAndFree(newString(") in ("),
 						    concatAndFree(sRawPrintThing(tree->child2),
 								  newString(")")))));
     break; 			
@@ -4388,7 +4439,7 @@ char *sRawPrintThing(node *tree) {
       if (curr->next != NULL) res = concatAndFree(res, newString(", ")); 
       curr = curr->next;
     }
-    res = concatAndFree(res, newString(")\nbegin\n"));
+    res = concatAndFree(res, newString(")\n{\n"));
     curr = tree->child1->arguments;
     while (curr != NULL) {
       res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
@@ -4397,13 +4448,13 @@ char *sRawPrintThing(node *tree) {
     }
     res = concatAndFree(res, newString("return "));
     res = concatAndFree(res, sRawPrintThing(tree->child2));
-    res = concatAndFree(res, newString(";\nend"));
+    res = concatAndFree(res, newString(";\n}"));
     break;
   case PROCILLIM:
     res = newString("proc(");
     curr = tree->arguments;
     res = concatAndFree(res, newString((char *) (curr->value)));
-    res = concatAndFree(res, newString(" = ...)\nbegin\n"));
+    res = concatAndFree(res, newString(" = ...)\n{\n"));
     curr = tree->child1->arguments;
     while (curr != NULL) {
       res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
@@ -4412,49 +4463,52 @@ char *sRawPrintThing(node *tree) {
     }
     res = concatAndFree(res, newString("return "));
     res = concatAndFree(res, sRawPrintThing(tree->child2));
-    res = concatAndFree(res, newString(";\nend"));
+    res = concatAndFree(res, newString(";\n}"));
     break;
   case PRECDEREF:
-    res = newString("prec = ?");
+    res = newString("prec");
     break; 			
   case POINTSDEREF:
-    res = newString("points = ?");
+    res = newString("points");
     break; 			
   case DIAMDEREF:
-    res = newString("diam = ?");
+    res = newString("diam");
     break; 			
   case DISPLAYDEREF:
-    res = newString("display = ?");
+    res = newString("display");
     break; 			
   case VERBOSITYDEREF:
-    res = newString("verbosity = ?");
+    res = newString("verbosity");
     break; 			
   case CANONICALDEREF:
-    res = newString("canonical = ?");
+    res = newString("canonical");
     break; 			
   case AUTOSIMPLIFYDEREF:
-    res = newString("autosimplify = ?");
+    res = newString("autosimplify");
     break; 		
   case TAYLORRECURSDEREF:
-    res = newString("taylorrecursions = ?");
+    res = newString("taylorrecursions");
     break; 		
   case TIMINGDEREF:
-    res = newString("timing = ?");
+    res = newString("timing");
     break; 			
   case FULLPARENDEREF:
-    res = newString("fullparentheses = ?");
+    res = newString("fullparentheses");
     break; 			
   case MIDPOINTDEREF:
-    res = newString("midpointmode = ?");
+    res = newString("midpointmode");
+    break; 			
+  case DIEONERRORMODEDEREF:
+    res = newString("dieonerrormode");
     break; 			
   case RATIONALMODEDEREF:
-    res = newString("rationalmode = ?");
+    res = newString("rationalmode");
     break; 			
   case SUPPRESSWARNINGSDEREF:
-    res = newString("roundingwarnings = ?");
+    res = newString("roundingwarnings");
     break; 			
   case HOPITALRECURSDEREF:
-    res = newString("hopitalrecursions = ?");
+    res = newString("hopitalrecursions");
     break;  	       
   default:
     fprintf(stderr,"Error: sRawPrintThing: unknown identifier (%d) in the tree\n",tree->nodeType);
@@ -4777,6 +4831,7 @@ int assignThingToTable(char *identifier, node *thing) {
       (getFunction(identifier) != NULL) ||
       (getProcedure(identifier) != NULL)) {
     printMessage(1,"Warning: the identifier \"%s\" is already bound to the free variable, to a library function or to an external procedure.\nThe command will have no effect.\n", identifier);
+    considerDyingOnError();
     return 0;
   }
 
@@ -5336,6 +5391,7 @@ int executeCommand(node *tree) {
     res = executeCommandInner(tree);
   } else {
     printMessage(1,"Warning: the last command could not be executed. May leak memory.\n");
+    considerDyingOnError();
     res = 0;
   }
   memmove(&recoverEnvironmentError,&oldEnvironment,sizeof(recoverEnvironmentError));
@@ -5441,6 +5497,7 @@ int executeCommandInner(node *tree) {
       if (!evaluateThingToBoolean(&intTemp, tree->child1, NULL)) {
 	printMessage(1,"Warning: the given expression does not evaluate to a boolean.\n");
 	printMessage(1,"The while loop will not be executed.\n");
+        considerDyingOnError();
 	break;
       }
       if (!intTemp) 
@@ -5458,6 +5515,7 @@ int executeCommandInner(node *tree) {
     if (!evaluateThingToBoolean(&intTemp, (node *) (curr->value), NULL)) {
       printMessage(1,"Warning: the given expression does not evaluate to a boolean.\n");
       printMessage(1,"Neither the if nor the else statement will be executed.\n");
+      considerDyingOnError();
     } else {
       if (intTemp) {
 	curr = curr->next;
@@ -5473,6 +5531,7 @@ int executeCommandInner(node *tree) {
     if (!evaluateThingToBoolean(&intTemp, tree->child1, NULL)) {
       printMessage(1,"Warning: the given expression does not evaluate to a boolean.\n");
       printMessage(1,"The if statement will not be executed.\n");
+      considerDyingOnError();
     } else {
       if (intTemp) {
 	result = executeCommand(tree->child2);
@@ -5516,6 +5575,7 @@ int executeCommandInner(node *tree) {
 	      if (!assignThingToTable(tree->string,tempNode3)) {
 		printMessage(1,"Warning: at the end of a for loop, the loop variable \"%s\" cannot longer be assigned to.\n",tree->string);
 		printMessage(1,"The for loop will no longer be executed.\n");
+                considerDyingOnError();
 		freeThing(tempNode3);
 		break;
 	      }
@@ -5523,22 +5583,26 @@ int executeCommandInner(node *tree) {
 	    } else {
 	      printMessage(1,"Warning: at the end of a for loop, the loop variable \"%s\" decreased by the loop step does no longer evaluate to a constant.\n",tree->string);
 	      printMessage(1,"The for loop will no longer be executed.\n");
+              considerDyingOnError();
 	      break;
 	    }
 	  } else {
 	    printMessage(1,"Warning: the tool has been restarted inside a for loop.\n");
 	    printMessage(1,"The for loop will no longer be executed.\n");
+            considerDyingOnError();
 	    break;
 	  }
 	}
       } else {
 	printMessage(1,"Warning: the identifier \"%s\" cannot be assigned to.\n",tree->string);
 	printMessage(1,"The for loop will not be executed.\n");
+        considerDyingOnError();
       }
       freeThing(tempNode);
     } else {
       printMessage(1,"Warning: one of the arguments of the for loop does not evaluate to a constant.\n");
       printMessage(1,"The for loop will not be executed.\n");
+      considerDyingOnError();
     }
     mpfr_clear(a);
     mpfr_clear(b);
@@ -5557,6 +5621,7 @@ int executeCommandInner(node *tree) {
 	} else {
 	  printMessage(1,"Warning: the identifier \"%s\" can no longer be assigned to.\n",tree->string);
 	  printMessage(1,"The execution of the for loop will be stopped.\n");
+          considerDyingOnError();
 	  break;
 	}
 	curr = curr->next;
@@ -5568,6 +5633,7 @@ int executeCommandInner(node *tree) {
       } else {
 	printMessage(1,"Warning: the expression given does not evaluate to a non-elliptic list.\n");
 	printMessage(1,"The loop will not be executed.\n");
+        considerDyingOnError();
       }
     }
     break;  				
@@ -5588,6 +5654,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     result = 0;
     break;
@@ -5613,16 +5680,17 @@ int executeCommandInner(node *tree) {
       if ((variablename != NULL) && (strcmp(variablename, (char *) (curr->value)) == 0)) {
 	printMessage(1,"Warning: the identifier \"%s\" is already bound to the current free variable.\nIt cannot be declared as a local variable. The declaration of \"%s\" will have no effect.\n",
 		     (char *) (curr->value),(char *) (curr->value));
+        considerDyingOnError();
       } else {
 	if (getFunction((char *) (curr->value)) != NULL) {
 	  printMessage(1,"Warning: the identifier \"%s\" is already bound to a library function.\nIt cannot be declared as a local variable. The declaration of \"%s\" will have no effect.\n",
 		     (char *) (curr->value),(char *) (curr->value));
-
+          considerDyingOnError();
 	} else {
 	  if (getProcedure((char *) (curr->value)) != NULL) {
 	    printMessage(1,"Warning: the identifier \"%s\" is already bound to an external procedure.\nIt cannot be declared as a local variable. The declaration of \"%s\" will have no effect.\n",
 		     (char *) (curr->value),(char *) (curr->value));
-
+            considerDyingOnError();
 	  } else {
 	    if (declaredSymbolTable != NULL) {
 	      tempNode = makeError();
@@ -5631,6 +5699,7 @@ int executeCommandInner(node *tree) {
 	    } else {
 	      printMessage(1,"Warning: previous command interruptions have corrupted the frame system.\n");
 	      printMessage(1,"Local variable \"%s\" cannot be declared.\n",(char *) (curr->value));
+              considerDyingOnError();
 	    }
 	  }
 	}
@@ -5667,11 +5736,13 @@ int executeCommandInner(node *tree) {
       } else {
 	printMessage(1,"Warning: the file \"%s\" could not be opened for writing.\n",tempString);
 	printMessage(1,"This command will have no effect.\n");
+        considerDyingOnError();
       }
       free(tempString);
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     } 
     break; 			
   case APPENDFILEPRINT:
@@ -5691,11 +5762,13 @@ int executeCommandInner(node *tree) {
       } else {
 	printMessage(1,"Warning: the file \"%s\" could not be opened for writing.\n",tempString);
 	printMessage(1,"This command will have no effect.\n");
+        considerDyingOnError();
       }
       free(tempString);
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     } 
     break; 			
   case PLOT:
@@ -5721,6 +5794,7 @@ int executeCommandInner(node *tree) {
       } else {
 	printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
 	printMessage(1,"This command will have no effect.\n");
+        considerDyingOnError();
       }
     } else {
       resB = resA;
@@ -5743,16 +5817,19 @@ int executeCommandInner(node *tree) {
 	    } else {
 	      printMessage(1,"Warning: the first argument is not a list of pure functions.\n");
 	      printMessage(1,"This command will have no effect.\n");
+              considerDyingOnError();
 	    }
 	  } else {
 	    printMessage(1,"Warning: at least one of the given expressions does not evaluate to a pure function.\n");
 	    printMessage(1,"Warning: the first argument is not a list of pure functions.\n");
 	    printMessage(1,"This command will have no effect.\n");
+            considerDyingOnError();
 	  }
 	}
       } else {
 	printMessage(1,"Warning: the expression given does not evaluate to a range.\n");
 	printMessage(1,"This command will have no effect.\n");
+        considerDyingOnError();
       }
       mpfr_clear(a);
       mpfr_clear(b);
@@ -5770,6 +5847,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a constant value.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     mpfr_clear(a);
     break; 
@@ -5781,6 +5859,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a constant value.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     mpfr_clear(a);
     break; 
@@ -5792,6 +5871,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a constant value.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     mpfr_clear(a);
     break; 			
@@ -5808,6 +5888,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the given expression does not evaluate to a function.\n");
       printMessage(1,"The command will not be executed.\n");
+      considerDyingOnError();
     }
     break;
   case BASHEXECUTE:
@@ -5820,6 +5901,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break; 			
   case EXTERNALPLOT:
@@ -5856,6 +5938,7 @@ int executeCommandInner(node *tree) {
 		      } else {
 			printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
 			printMessage(1,"This command will have no effect.\n");
+                        considerDyingOnError();
 		      }
 		    }
 		  } else {
@@ -5882,6 +5965,7 @@ int executeCommandInner(node *tree) {
 		      } else {
 			printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
 			printMessage(1,"This command will have no effect.\n");
+                        considerDyingOnError();
 		      }
 		    } 
 		  }
@@ -5896,10 +5980,12 @@ int executeCommandInner(node *tree) {
 	    } else {
 	      printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
 	      printMessage(1,"This command will have no effect.\n");
+              considerDyingOnError();
 	    }
 	  } else {
 	    printMessage(1,"Warning: the expression given does not evaluate to a constant range.\n");
 	    printMessage(1,"This command will have no effect.\n");
+            considerDyingOnError();
 	  }
 	  mpfr_clear(a);
 	  mpfr_clear(b);
@@ -5907,15 +5993,18 @@ int executeCommandInner(node *tree) {
 	} else {
 	  printMessage(1,"Warning: the expression given does not evaluate to a function.\n");
 	  printMessage(1,"This command will have no effect.\n");
+          considerDyingOnError();
 	}
       } else {
 	printMessage(1,"Warning: the expression given does not evaluate to one of absolute or relative.\n");
 	printMessage(1,"This command will have no effect.\n");
+        considerDyingOnError();
       }
       free(tempString);
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     for (i=0;i<resA;i++)
       freeThing(array[i]);
@@ -5946,11 +6035,13 @@ int executeCommandInner(node *tree) {
       } else {
 	printMessage(1,"Warning: the file \"%s\" could not be opened for writing.\n",tempString);
 	printMessage(1,"This command will have no effect.\n");
+        considerDyingOnError();
       }
       free(tempString);
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     } 
     break;
   case APPENDFILEWRITE:
@@ -5968,11 +6059,13 @@ int executeCommandInner(node *tree) {
       } else {
 	printMessage(1,"Warning: the file \"%s\" could not be opened for appending.\n",tempString);
 	printMessage(1,"This command will have no effect.\n");
+        considerDyingOnError();
       }
       free(tempString);
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     } 
     break; 
   case ASCIIPLOT:
@@ -5985,6 +6078,7 @@ int executeCommandInner(node *tree) {
       } else {
 	printMessage(1,"Warning: the given expression does not evaluate to a constant range.\n");
 	printMessage(1,"The command will not be executed.\n");
+        considerDyingOnError();
       }
       freeThing(tempNode);
       mpfr_clear(a);
@@ -5992,6 +6086,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the given expression does not evaluate to a function.\n");
       printMessage(1,"The command will not be executed.\n");
+      considerDyingOnError();
     }
     break;			
   case PRINTXML:
@@ -6003,6 +6098,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the given expression does not evaluate to a function.\n");
       printMessage(1,"The command will not be executed.\n");
+      considerDyingOnError();
     }
     break;	
   case EXECUTE:
@@ -6014,11 +6110,13 @@ int executeCommandInner(node *tree) {
       } else {
 	printMessage(1,"Warning: the file \"%s\" could not be opened for reading.\n",tempString);
 	printMessage(1,"This command will have no effect.\n");
+        considerDyingOnError();
       }
       free(tempString);
     } else {
       printMessage(1,"Warning: the given expression does not evaluate to a string.\n");
       printMessage(1,"The command will not be executed.\n");
+      considerDyingOnError();
     }
     break;
   case PRINTXMLNEWFILE:
@@ -6031,16 +6129,19 @@ int executeCommandInner(node *tree) {
 	} else {
 	  printMessage(1,"Warning: the file \"%s\" could not be opened for writing.\n",tempString);
 	  printMessage(1,"This command will have no effect.\n");
+          considerDyingOnError();
 	}
 	free(tempString);
       } else {
 	printMessage(1,"Warning: the given expression does not evaluate to a string.\n");
 	printMessage(1,"The command will not be executed.\n");
+        considerDyingOnError();
       }      
       freeThing(tempNode);
     } else {
       printMessage(1,"Warning: the given expression does not evaluate to a function.\n");
       printMessage(1,"The command will not be executed.\n");
+      considerDyingOnError();
     }
     break;			
   case PRINTXMLAPPENDFILE:
@@ -6053,16 +6154,19 @@ int executeCommandInner(node *tree) {
 	} else {
 	  printMessage(1,"Warning: the file \"%s\" could not be opened for writing.\n",tempString);
 	  printMessage(1,"This command will have no effect.\n");
+          considerDyingOnError();
 	}
 	free(tempString);
       } else {
 	printMessage(1,"Warning: the given expression does not evaluate to a string.\n");
 	printMessage(1,"The command will not be executed.\n");
+        considerDyingOnError();
       }      
       freeThing(tempNode);
     } else {
       printMessage(1,"Warning: the given expression does not evaluate to a function.\n");
       printMessage(1,"The command will not be executed.\n");
+      considerDyingOnError();
     }
     break;			
   case WORSTCASE:
@@ -6075,6 +6179,7 @@ int executeCommandInner(node *tree) {
       } else {
 	printMessage(1,"Warning: the file \"%s\" could not be opened for writing.\n",(array[5])->string);
 	printMessage(1,"This command will have no effect.\n");
+        considerDyingOnError();
       }
     } else {
       resC = 1;
@@ -6106,28 +6211,33 @@ int executeCommandInner(node *tree) {
 	      } else {
 		printMessage(1,"Warning: the given expression does not evaluate to a constant.\n");
 		printMessage(1,"The command will not be executed.\n");
+                considerDyingOnError();
 	      }
 	      mpfr_clear(e);			
 	    } else {
 	      printMessage(1,"Warning: the given expression does not evaluate to a constant.\n");
 	      printMessage(1,"The command will not be executed.\n");
+              considerDyingOnError();
 	    }
 	    mpfr_clear(d);
 	  } else {
 	    printMessage(1,"Warning: the given expression does not evaluate to a constant range.\n");
 	    printMessage(1,"The command will not be executed.\n");
+            considerDyingOnError();
 	  }
 	  mpfr_clear(b);
 	  mpfr_clear(c);
 	} else {
 	  printMessage(1,"Warning: the given expression does not evaluate to a constant.\n");
 	  printMessage(1,"The command will not be executed.\n");
+          considerDyingOnError();
 	}
 	mpfr_clear(a);
 	freeThing(tempNode);
       } else {
 	printMessage(1,"Warning: the given expression does not evaluate to a function.\n");
 	printMessage(1,"The command will not be executed.\n");
+        considerDyingOnError();
       }
       if (fd != NULL) fclose(fd);
     }
@@ -6151,6 +6261,7 @@ int executeCommandInner(node *tree) {
 	printMessage(1,"Warning: the current free variable is named \"%s\" and not \"%s\". Can only rename the free variable.\n",
 		     variablename,tree->string);
 	printMessage(1,"The last command will have no effect.\n");
+        considerDyingOnError();
       }
     }
     break; 				
@@ -6190,28 +6301,34 @@ int executeCommandInner(node *tree) {
     if ((variablename != NULL) && (strcmp(variablename,tree->string) == 0)) {
       printMessage(1,"Warning: the identifier \"%s\" is already be bound as the current free variable.\n",variablename);
       printMessage(1,"It cannot be bound to an external procedure. This command will have no effect.\n");
+      considerDyingOnError();
     } else {
       if (containsEntry(symbolTable, tree->string) || containsDeclaredEntry(declaredSymbolTable, tree->string)) {
 	printMessage(1,"Warning: the identifier \"%s\" is already assigned to.\n",tree->string);
 	printMessage(1,"It cannot be bound to an external procedure. This command will have no effect.\n");
+        considerDyingOnError();
       } else {
 	if (getFunction(tree->string) != NULL) {
 	  printMessage(1,"Warning: the identifier \"%s\" is already bound to a library function.\n",tree->string);
 	  printMessage(1,"It cannot be bound to an external procedure. This command will have no effect.\n");
+          considerDyingOnError();
 	} else {
 	  if (getProcedure(tree->string) != NULL) {
 	    printMessage(1,"Warning: the identifier \"%s\" is already bound to an external procedure.\n",tree->string);
 	    printMessage(1,"It cannot be bound to an external procedure. This command will have no effect.\n");
+            considerDyingOnError();
 	  } else {
 	    if (evaluateThingToString(&tempString, tree->child1)) {
 	      tempLibraryProcedure = bindProcedure(tempString, tree->string, tree->arguments);
 	      if(tempLibraryProcedure == NULL) {
 		printMessage(1,"Warning: an error occurred. The last command will have no effect.\n");
+                considerDyingOnError();
 	      }
 	      free(tempString);
 	    } else {
 	      printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
 	      printMessage(1,"This command will have no effect.\n");
+              considerDyingOnError();
 	    }
 	  }
 	}
@@ -6221,9 +6338,12 @@ int executeCommandInner(node *tree) {
   case ASSIGNMENT:
     tempNode = evaluateThing(tree->child1);
     if (!assignThingToTable(tree->string, tempNode)) {
+      freeThing(tempNode);
       printMessage(1,"Warning: the last assignment will have no effect.\n");
+      considerDyingOnError();
+    } else {
+      freeThing(tempNode);
     }
-    freeThing(tempNode);
     break; 	
   case FLOATASSIGNMENT:
     tempNode = evaluateThing(tree->child1);
@@ -6237,6 +6357,7 @@ int executeCommandInner(node *tree) {
     }
     if (!assignThingToTable(tree->string, tempNode)) {
       printMessage(1,"Warning: the last assignment will have no effect.\n");
+      considerDyingOnError();
     }
     freeThing(tempNode);
     break; 	
@@ -6326,19 +6447,23 @@ int executeCommandInner(node *tree) {
 		curr = tree->arguments;
 		if (!assignThingToTable(((node *) (curr->value))->string, tempNode3)) {
 		  printMessage(1,"Warning: the last assignment will have no effect.\n");
+                  considerDyingOnError();
 		}
 		freeThing(tempNode3);
 	      } else {
 		printMessage(1,"Warning: assigning to indexed elements of lists is only allowed on indexes in the existing range.\n");
 		printMessage(1,"This command will have no effect.\n");
+                considerDyingOnError();
 	      }
 	    } else {
 	      printMessage(1,"Warning: assigning to indexed elements of lists is only allowed on indexes in the existing range.\n");
 	      printMessage(1,"This command will have no effect.\n");
+              considerDyingOnError();
 	    }
 	  } else {
 	    printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
 	    printMessage(1,"This command will have no effect.\n");
+            considerDyingOnError();
 	  }
 	} else {
 	  if (isEmptyList(tempNode)) {
@@ -6352,15 +6477,18 @@ int executeCommandInner(node *tree) {
 		curr = tree->arguments;
 		if (!assignThingToTable(((node *) (curr->value))->string, tempNode3)) {
 		  printMessage(1,"Warning: the last assignment will have no effect.\n");
+                  considerDyingOnError();
 		}
 		freeThing(tempNode3);
 	      } else {
 		printMessage(1,"Warning: assigning to indexed elements of empty lists is only allowed on index 0.\n");
 		printMessage(1,"This command will have no effect.\n");
+                considerDyingOnError();
 	      }
 	    } else {
 	      printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
 	      printMessage(1,"This command will have no effect.\n");
+              considerDyingOnError();
 	    }
 	  } else {
 	    if (isString(tempNode)) {
@@ -6384,30 +6512,36 @@ int executeCommandInner(node *tree) {
 		      curr = tree->arguments;
 		      if (!assignThingToTable(((node *) (curr->value))->string, tempNode3)) {
 			printMessage(1,"Warning: the last assignment will have no effect.\n");
+                        considerDyingOnError();
 		      }
 		      freeThing(tempNode3);
 		    } else {
 		      printMessage(1,"Warning: the string to be assigned is not of length 1.\n");
 		      printMessage(1,"This command will have no effect.\n");		      
+                      considerDyingOnError();
 		    }
 		    free(tempString);
 		  } else {
 		    printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
 		    printMessage(1,"This command will have no effect.\n");
+                    considerDyingOnError();
 		  }
 		} else {
 		  printMessage(1,"Warning: assigning to indexed elements of strings is only allowed in the existing range.\n");
 		  printMessage(1,"This command will have no effect.\n");
+                  considerDyingOnError();
 		}
 	      } else {
 		printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
 		printMessage(1,"This command will have no effect.\n");
+                considerDyingOnError();
 	      }	       
 	    } else {
 	      curr = tree->arguments;
 	      printMessage(1,"Warning: the identifier \"%s\" is not assigned to a (empty) list or a string.\n",
 			   ((node *) (curr->value))->string);
 	      printMessage(1,"The command will not be executed.\n");
+              considerDyingOnError();
 	    }
 	  }
 	}
@@ -6416,10 +6550,12 @@ int executeCommandInner(node *tree) {
 	curr = tree->arguments;
 	printMessage(1,"Warning: the identifier \"%s\" is not assigned to.\n",((node *) (curr->value))->string);
 	printMessage(1,"This command will have no effect.\n");
+        considerDyingOnError();
       }
     } else {
       printMessage(1,"Warning: the first element is not an identifier.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break;
   case FLOATASSIGNMENTININDEXING:
@@ -6524,19 +6660,23 @@ int executeCommandInner(node *tree) {
 		}
 		if (!assignThingToTable(((node *) (curr->value))->string, tempNode3)) {
 		  printMessage(1,"Warning: the last assignment will have no effect.\n");
+                  considerDyingOnError();
 		}
 		freeThing(tempNode3);
 	      } else {
 		printMessage(1,"Warning: assigning to indexed elements of lists is only allowed on indexes in the existing range.\n");
 		printMessage(1,"This command will have no effect.\n");
+                considerDyingOnError();
 	      }
 	    } else {
 	      printMessage(1,"Warning: assigning to indexed elements of lists is only allowed on indexes in the existing range.\n");
 	      printMessage(1,"This command will have no effect.\n");
+              considerDyingOnError();
 	    }
 	  } else {
 	    printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
 	    printMessage(1,"This command will have no effect.\n");
+            considerDyingOnError();
 	  }
 	} else {
 	  if (isEmptyList(tempNode)) {
@@ -6566,15 +6706,18 @@ int executeCommandInner(node *tree) {
 		}
 		if (!assignThingToTable(((node *) (curr->value))->string, tempNode3)) {
 		  printMessage(1,"Warning: the last assignment will have no effect.\n");
+                  considerDyingOnError();
 		}
 		freeThing(tempNode3);
 	      } else {
 		printMessage(1,"Warning: assigning to indexed elements of empty lists is only allowed on index 0.\n");
 		printMessage(1,"This command will have no effect.\n");
+                considerDyingOnError();
 	      }
 	    } else {
 	      printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
 	      printMessage(1,"This command will have no effect.\n");
+              considerDyingOnError();
 	    }
 	  } else {
 	    if (isString(tempNode)) {
@@ -6606,30 +6749,36 @@ int executeCommandInner(node *tree) {
 		      }
 		      if (!assignThingToTable(((node *) (curr->value))->string, tempNode3)) {
 			printMessage(1,"Warning: the last assignment will have no effect.\n");
+                        considerDyingOnError();
 		      }
 		      freeThing(tempNode3);
 		    } else {
 		      printMessage(1,"Warning: the string to be assigned is not of length 1.\n");
 		      printMessage(1,"This command will have no effect.\n");		      
+                      considerDyingOnError();
 		    }
 		    free(tempString);
 		  } else {
 		    printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
 		    printMessage(1,"This command will have no effect.\n");
+                    considerDyingOnError();
 		  }
 		} else {
 		  printMessage(1,"Warning: assigning to indexed elements of strings is only allowed in the existing range.\n");
 		  printMessage(1,"This command will have no effect.\n");
+                  considerDyingOnError();
 		}
 	      } else {
 		printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
 		printMessage(1,"This command will have no effect.\n");
+                considerDyingOnError();
 	      }	       
 	    } else {
 	      curr = tree->arguments;
 	      printMessage(1,"Warning: the identifier \"%s\" is not assigned to a (empty) list or a string.\n",
 			   ((node *) (curr->value))->string);
 	      printMessage(1,"The command will not be executed.\n");
+              considerDyingOnError();
 	    }
 	  }
 	}
@@ -6638,38 +6787,46 @@ int executeCommandInner(node *tree) {
 	curr = tree->arguments;
 	printMessage(1,"Warning: the identifier \"%s\" is not assigned to.\n",((node *) (curr->value))->string);
 	printMessage(1,"This command will have no effect.\n");
+        considerDyingOnError();
       }
     } else {
       printMessage(1,"Warning: the first element is not an identifier.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break;
   case LIBRARYBINDING:
     if ((variablename != NULL) && (strcmp(variablename,tree->string) == 0)) {
       printMessage(1,"Warning: the identifier \"%s\" is already be bound as the current free variable.\n",variablename);
       printMessage(1,"It cannot be bound to a library function. This command will have no effect.\n");
+      considerDyingOnError();
     } else {
       if (containsEntry(symbolTable, tree->string) || containsDeclaredEntry(declaredSymbolTable, tree->string)) {
 	printMessage(1,"Warning: the identifier \"%s\" is already assigned to.\n",tree->string);
 	printMessage(1,"It cannot be bound to a library function. This command will have no effect.\n");
+        considerDyingOnError();
       } else {
 	if (getProcedure(tree->string) != NULL) {
 	  printMessage(1,"Warning: the identifier \"%s\" is already bound to an external procedure.\n",tree->string);
 	  printMessage(1,"It cannot be bound to a library function. This command will have no effect.\n");
+          considerDyingOnError();
 	} else {
 	  if (getFunction(tree->string) != NULL) {
 	    printMessage(1,"Warning: the identifier \"%s\" is already bound to a library function.\n",tree->string);
 	    printMessage(1,"It cannot be bound to a library function. This command will have no effect.\n");
+            considerDyingOnError();
 	  } else {
 	    if (evaluateThingToString(&tempString, tree->child1)) {
 	      tempLibraryFunction = bindFunction(tempString, tree->string);
 	      if(tempLibraryFunction == NULL) {
 		printMessage(1,"Warning: an error occurred. The last command will have no effect.\n");
+                considerDyingOnError();
 	      }
 	      free(tempString);
 	    } else {
 	      printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
 	      printMessage(1,"This command will have no effect.\n");
+              considerDyingOnError();
 	    }
 	  }
 	}
@@ -6690,6 +6847,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break; 			
   case POINTSASSIGN:
@@ -6705,6 +6863,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break; 			
   case DIAMASSIGN:
@@ -6721,6 +6880,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     mpfr_clear(a);
     mpfr_clear(b);
@@ -6752,6 +6912,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to default, dyadic, powers, hexadecimal or binary.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break; 			
   case VERBOSITYASSIGN:
@@ -6767,6 +6928,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break;  		
   case CANONICALASSIGN:
@@ -6781,6 +6943,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break; 		
   case AUTOSIMPLIFYASSIGN:
@@ -6795,6 +6958,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break;  		
   case TAYLORRECURSASSIGN:
@@ -6809,6 +6973,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break; 		
   case TIMINGASSIGN:
@@ -6822,6 +6987,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break; 			
   case FULLPARENASSIGN:
@@ -6835,6 +7001,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break;  		
   case MIDPOINTASSIGN:
@@ -6848,6 +7015,21 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
+    }
+    break; 			
+  case DIEONERRORMODEASSIGN:
+    defaultVal = 1;
+    if (evaluateThingToOnOff(&resA, tree->child1, &defaultVal)) {
+      dieOnErrorMode = resA;     outputMode();
+      if (dieOnErrorMode) 
+	printf("Die-on-error mode has been activated.\n");
+      else 
+	printf("Die-on-error mode has been deactivated.\n");
+    } else {
+      printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
+      printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break; 			
   case RATIONALMODEASSIGN:
@@ -6861,6 +7043,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break; 			
   case SUPPRESSWARNINGSASSIGN:
@@ -6874,6 +7057,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break; 			
   case HOPITALRECURSASSIGN:
@@ -6888,6 +7072,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break; 		
   case PRECSTILLASSIGN:
@@ -6902,6 +7087,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break; 		
   case POINTSSTILLASSIGN:
@@ -6915,6 +7101,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break; 		
   case DIAMSTILLASSIGN:
@@ -6928,6 +7115,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     mpfr_clear(a);
     mpfr_clear(b);
@@ -6939,6 +7127,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to default, dyadic, powers, hexadecimal or binary.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break;  		
   case VERBOSITYSTILLASSIGN:
@@ -6952,6 +7141,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break; 		
   case CANONICALSTILLASSIGN:
@@ -6961,6 +7151,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break; 		
   case AUTOSIMPLIFYSTILLASSIGN:
@@ -6970,6 +7161,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break;  	
   case TAYLORRECURSSTILLASSIGN:
@@ -6983,6 +7175,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break; 	
   case TIMINGSTILLASSIGN:
@@ -6992,6 +7185,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break; 		
   case FULLPARENSTILLASSIGN:
@@ -7001,6 +7195,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break;  		
   case MIDPOINTSTILLASSIGN:
@@ -7010,6 +7205,17 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
+    }
+    break; 		
+  case DIEONERRORMODESTILLASSIGN:
+    defaultVal = 1;
+    if (evaluateThingToOnOff(&resA, tree->child1, &defaultVal)) {
+      dieOnErrorMode = resA;
+    } else {
+      printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
+      printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break; 		
   case RATIONALMODESTILLASSIGN:
@@ -7019,6 +7225,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break; 		
   case SUPPRESSWARNINGSSTILLASSIGN:
@@ -7028,6 +7235,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break; 		
   case HOPITALRECURSSTILLASSIGN:
@@ -7041,6 +7249,7 @@ int executeCommandInner(node *tree) {
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
       printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
     }
     break;  	
   default:
@@ -7641,6 +7850,17 @@ node *makeMidpointAssign(node *thing) {
 
 }
 
+node *makeDieOnErrorAssign(node *thing) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = DIEONERRORMODEASSIGN;
+  res->child1 = thing;
+
+  return res;
+
+}
+
 node *makeRationalModeAssign(node *thing) {
   node *res;
 
@@ -7798,6 +8018,17 @@ node *makeMidpointStillAssign(node *thing) {
 
 }
 
+node *makeDieOnErrorStillAssign(node *thing) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = DIEONERRORMODESTILLASSIGN;
+  res->child1 = thing;
+
+  return res;
+
+}
+
 node *makeRationalModeStillAssign(node *thing) {
   node *res;
 
@@ -7885,6 +8116,18 @@ node *makeCompareEqual(node *thing1, node *thing2) {
 
   res = (node *) safeMalloc(sizeof(node));
   res->nodeType = COMPAREEQUAL;
+  res->child1 = thing1;
+  res->child2 = thing2;
+
+  return res;
+
+}
+
+node *makeCompareIn(node *thing1, node *thing2) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = COMPAREIN;
   res->child1 = thing1;
   res->child2 = thing2;
 
@@ -9256,6 +9499,16 @@ node *makeMidpointDeref() {
 
 }
 
+node *makeDieOnErrorDeref() {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = DIEONERRORMODEDEREF;
+
+  return res;
+
+}
+
 node *makeRationalModeDeref() {
   node *res;
 
@@ -9685,6 +9938,10 @@ void freeThing(node *tree) {
     freeThing(tree->child1);
     free(tree);
     break; 			
+  case DIEONERRORMODEASSIGN:
+    freeThing(tree->child1);
+    free(tree);
+    break; 			
   case RATIONALMODEASSIGN:
     freeThing(tree->child1);
     free(tree);
@@ -9741,6 +9998,10 @@ void freeThing(node *tree) {
     freeThing(tree->child1);
     free(tree);
     break; 		
+  case DIEONERRORMODESTILLASSIGN:
+    freeThing(tree->child1);
+    free(tree);
+    break; 		
   case RATIONALMODESTILLASSIGN:
     freeThing(tree->child1);
     free(tree);
@@ -9773,6 +10034,11 @@ void freeThing(node *tree) {
     free(tree);
     break; 				
   case COMPAREEQUAL:
+    freeThing(tree->child1);
+    freeThing(tree->child2);
+    free(tree);
+    break; 			
+  case COMPAREIN:
     freeThing(tree->child1);
     freeThing(tree->child2);
     free(tree);
@@ -10264,6 +10530,9 @@ void freeThing(node *tree) {
   case MIDPOINTDEREF:
     free(tree);
     break; 			
+  case DIEONERRORMODEDEREF:
+    free(tree);
+    break; 			
   case RATIONALMODEDEREF:
     free(tree);
     break; 			
@@ -10588,6 +10857,9 @@ int isEqualThing(node *tree, node *tree2) {
   case MIDPOINTASSIGN:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break; 			
+  case DIEONERRORMODEASSIGN:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    break; 			
   case RATIONALMODEASSIGN:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break; 			
@@ -10630,6 +10902,9 @@ int isEqualThing(node *tree, node *tree2) {
   case MIDPOINTSTILLASSIGN:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break; 		
+  case DIEONERRORMODESTILLASSIGN:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    break; 		
   case RATIONALMODESTILLASSIGN:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break; 		
@@ -10655,6 +10930,10 @@ int isEqualThing(node *tree, node *tree2) {
     if (!isEqualThing(tree->child2,tree2->child2)) return 0;
     break; 				
   case COMPAREEQUAL:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThing(tree->child2,tree2->child2)) return 0;
+    break; 			
+  case COMPAREIN:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     if (!isEqualThing(tree->child2,tree2->child2)) return 0;
     break; 			
@@ -11010,6 +11289,8 @@ int isEqualThing(node *tree, node *tree2) {
     break; 			
   case MIDPOINTDEREF:
     break; 			
+  case DIEONERRORMODEDEREF:
+    break; 			
   case RATIONALMODEDEREF:
     break; 			
   case SUPPRESSWARNINGSDEREF:
@@ -11109,9 +11390,11 @@ node *evaluateThing(node *tree) {
 
   if (!isCorrectlyTyped(evaluated)) {
     if (evaluated->nodeType == ERRORSPECIAL) {
+      freeThing(evaluated);
       if ((tree->nodeType != ERRORSPECIAL) && 
           (tree->nodeType != TABLEACCESS)) {
 	printMessage(1,"Warning: the given expression or command could not be handled.\n");
+        considerDyingOnError();
       } 
     } else {
       printMessage(1,"Warning: at least one of the given expressions or a subexpression is not correctly typed\nor its evaluation has failed because of some error on a side-effect.\n");
@@ -11122,11 +11405,12 @@ node *evaluateThing(node *tree) {
 	printf("\n");     
 	restoreMode();
       }
+      freeThing(evaluated);
+      considerDyingOnError();
     }
 
     printMessage(3,"Information: evaluation creates an error special symbol.\n");
 
-    freeThing(evaluated);
     evaluated = makeError();
   }
 
@@ -11152,6 +11436,7 @@ int evaluateFormatsListForFPminimax(chain **res, node *list, int n) {
 
   if( (list->nodeType==LIST) && (lengthChain(list->arguments) < n) ) {
     printMessage(1, "Error in fpminimax: there is less formats indications than monomials\n");
+    considerDyingOnError();
     return 0;
   }
   if( (list->nodeType==LIST) && (lengthChain(list->arguments) > n) ) {
@@ -11171,6 +11456,7 @@ int evaluateFormatsListForFPminimax(chain **res, node *list, int n) {
     default:
       if (! evaluateThingToInteger(&a, (node *)(curr->value), NULL) ) {
 	printMessage(1, "Error in fpminimax: the formats list must contains only integers or formats\n");
+        considerDyingOnError();
 	freeChain(result, freeIntPtr);
 	return 0;
       }
@@ -11366,6 +11652,7 @@ int executeProcedureInner(node **resultThing, node *proc, chain *args, int ellip
 	isFalseRestart((node *) (curr->value))) {
       printMessage(1,"Warning: a quit or restart command may not be part of a procedure body.\n");
       printMessage(1,"The procedure will not be executed.\n");
+      considerDyingOnError();
       result = 1;
       break;
     } 
@@ -11387,15 +11674,18 @@ int executeProcedureInner(node **resultThing, node *proc, chain *args, int ellip
     if ((variablename != NULL) && (strcmp(variablename, (char *) (curr->value)) == 0)) {
       printMessage(1,"Warning: the identifier \"%s\" is already bound to the current free variable.\nIt cannot be used as a formal parameter of a procedure. The procedure cannot be executed.\n",
 		   (char *) (curr->value));
+      considerDyingOnError();
     } else {
       if (getFunction((char *) (curr->value)) != NULL) {
 	printMessage(1,"Warning: the identifier \"%s\" is already bound to a library function.\nIt cannot be used as a formal parameter of a procedure. The procedure cannot be executed.\n",
 		     (char *) (curr->value));
+        considerDyingOnError();
 	
       } else {
 	if (getProcedure((char *) (curr->value)) != NULL) {
 	  printMessage(1,"Warning: the identifier \"%s\" is already bound to an external procedure.\nIt cannot be used as a formal parameter of a procedure. The procedure cannot be executed.\n",
 		       (char *) (curr->value),(char *) (curr->value));
+          considerDyingOnError();
 	  
 	} else {
 	  if (declaredSymbolTable != NULL) {
@@ -11418,7 +11708,8 @@ int executeProcedureInner(node **resultThing, node *proc, chain *args, int ellip
 	    }
 	  } else {
 	    printMessage(1,"Warning: previous command interruptions have corrupted the frame system.\n");
-	    printMessage(1,"The formal parameter \"%s\" cannot be bound to its actual value.\nThe procedure cannot be executed.\n",(char *) (curr->value));
+	    printMessage(1,"The formal parameter \"%s\" cannot be bound to its actual value.\nThe procedure cannot be executed.\n",(char *) (curr->value));      
+            considerDyingOnError();
 	  }
 	}
       }
@@ -11485,6 +11776,7 @@ int executeProcedure(node **resultThing, node *proc, chain *args, int elliptic) 
     res = executeProcedureInner(resultThing, proc, args, elliptic);
   } else {
     printMessage(1,"Warning: the last command could not be executed. May leak memory.\n");
+      considerDyingOnError();
     res = 0;
   }
   memmove(&recoverEnvironmentError,oldEnvironment,sizeof(recoverEnvironmentError));
@@ -11958,6 +12250,7 @@ int executeExternalProcedure(node **resultThing, libraryProcedure *proc, chain *
     res = executeExternalProcedureInner(resultThing, proc, args);
   } else {
     printMessage(1,"Warning: the last command could not be executed. May leak memory.\n");
+      considerDyingOnError();
     res = 0;
   }
   memmove(&recoverEnvironmentError,&oldEnvironment,sizeof(recoverEnvironmentError));
@@ -13329,7 +13622,116 @@ node *evaluateThingInner(node *tree) {
       }
     }
     if (timingString != NULL) popTimeCounter(timingString);
-    break; 			
+    break; 
+  case COMPAREIN:
+    copy->child1 = evaluateThing(tree->child1);
+    copy->child2 = evaluateThing(tree->child2);
+    resE = 0;
+    if (isPureTree(copy->child1) && 
+	isConstant(copy->child1) && 
+	isRange(copy->child2)) {
+      if (timingString != NULL) pushTimeCounter();
+      mpfr_init2(a,tools_precision);
+      mpfr_init2(b,tools_precision);
+      mpfr_init2(c,tools_precision);
+      if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
+	  evaluateThingToRange(b,c,copy->child2)) {
+	if (resA == 3) 
+	  printMessage(1,"Warning: containment test relies on floating-point result that is not faithfully evaluated.\n");
+	resC = ((mpfr_cmp(b,a) <= 0) && 
+		(mpfr_cmp(a,c) <= 0) && 
+		(!mpfr_unordered_p(a,b)) && 
+		(!mpfr_unordered_p(a,c)));
+	resB = 0;
+	if (resA == 1) {
+	  mpfr_init2(d,mpfr_get_prec(a));
+	  mpfr_set(d,a,GMP_RNDN);
+	  if (resC) {
+	    /* b <= a <= c */
+	    mpfr_nextbelow(a);
+	    resB = (resC != ((mpfr_cmp(b,a) <= 0) && 
+			     (mpfr_cmp(a,c) <= 0) && 
+			     (!mpfr_unordered_p(a,b)) && 
+			     (!mpfr_unordered_p(a,c))));
+	    if (!resB) {
+	      mpfr_set(a,d,GMP_RNDN);
+	      mpfr_nextabove(a);
+	      resB = (resC != ((mpfr_cmp(b,a) <= 0) && 
+			     (mpfr_cmp(a,c) <= 0) && 
+			     (!mpfr_unordered_p(a,b)) && 
+			     (!mpfr_unordered_p(a,c))));
+	    }
+	  } else {
+	    /* a < b or c < a */
+	    mpfr_nextabove(a);
+	    resB = (resC != ((mpfr_cmp(b,a) <= 0) && 
+			     (mpfr_cmp(a,c) <= 0) && 
+			     (!mpfr_unordered_p(a,b)) && 
+			     (!mpfr_unordered_p(a,c))));
+	    if (!resB) {
+	      mpfr_set(a,d,GMP_RNDN);
+	      mpfr_nextbelow(a);
+	      resB = (resC != ((mpfr_cmp(b,a) <= 0) && 
+			     (mpfr_cmp(a,c) <= 0) && 
+			     (!mpfr_unordered_p(a,b)) && 
+			     (!mpfr_unordered_p(a,c))));
+	    }
+	  }
+	  if (resB) {
+	    tempNode = makeConstant(b);
+	    tempNode2 = makeConstant(c);
+	    if (compareConstant(&resA, tempNode, copy->child1) && 
+		compareConstant(&resB, copy->child1, tempNode2)) {
+	      resC = (resA <= 0) && (resB <= 0);
+	    } else
+	      printMessage(1,"Warning: containment test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+	    freeThing(tempNode);
+	    freeThing(tempNode2);
+	  } else 
+	    printMessage(2,"Information: containment test relies on floating-point result.\n");
+	  mpfr_clear(d);
+	}
+	if (resC) {
+	  freeThing(copy);
+	  copy = makeTrue();		    
+	} else {
+	  freeThing(copy);
+	  copy = makeFalse();		    
+	}
+	resE = 1;
+      }
+      mpfr_clear(a);
+      mpfr_clear(b);
+      mpfr_clear(c);
+      if (timingString != NULL) popTimeCounter(timingString);
+    }
+    if ((!resE) && 
+	isRange(copy->child1) && 
+	isRange(copy->child1)) {
+      if (timingString != NULL) pushTimeCounter();
+      mpfr_init2(a,tools_precision);
+      mpfr_init2(b,tools_precision);
+      mpfr_init2(c,tools_precision);
+      mpfr_init2(d,tools_precision);
+      if (evaluateThingToRange(a,b,copy->child1) && 
+	  evaluateThingToRange(c,d,copy->child2)) {
+	resC = ((mpfr_cmp(c,a) <= 0) && (!mpfr_unordered_p(c,a)) && 
+		(mpfr_cmp(b,d) <= 0) && (!mpfr_unordered_p(b,d)));
+	if (resC) {
+	  freeThing(copy);
+	  copy = makeTrue();		    
+	} else {
+	  freeThing(copy);
+	  copy = makeFalse();		    
+	}
+      }
+      mpfr_clear(a);
+      mpfr_clear(b);
+      mpfr_clear(c);
+      mpfr_clear(d);
+      if (timingString != NULL) popTimeCounter(timingString);
+    } 
+    break; 						
   case COMPARELESS:
     copy->child1 = evaluateThing(tree->child1);
     copy->child2 = evaluateThing(tree->child2);
@@ -13685,6 +14087,7 @@ node *evaluateThingInner(node *tree) {
 			    } 
 			  } else {
 			    printMessage(1,"Warning: an error occurred while executing a procedure.\n");
+                            considerDyingOnError();
 			    freeThing(copy);
 			    copy = makeError();
 			  }
@@ -13701,6 +14104,7 @@ node *evaluateThingInner(node *tree) {
 			      } 
 			    } else {
 			      printMessage(1,"Warning: an error occurred while executing a procedure.\n");
+                              considerDyingOnError();
 			      freeThing(copy);
 			      copy = makeError();
 			    }
@@ -14007,6 +14411,7 @@ node *evaluateThingInner(node *tree) {
 	  }
 	} else {
 	  printMessage(1,"Warning: external procedure has signalized failure.\n");
+          considerDyingOnError();
 	  free(copy);
 	  copy = makeError();
 	  freeChain(tempChain, freeThingOnVoid);
@@ -14027,6 +14432,7 @@ node *evaluateThingInner(node *tree) {
 	    }
 	  } else {
 	    printMessage(1,"Warning: an error occurred while executing a procedure.\n");
+            considerDyingOnError();
 	    free(copy);
 	    copy = makeError();
 	    freeChain(tempChain, freeThingOnVoid);
@@ -14114,6 +14520,7 @@ node *evaluateThingInner(node *tree) {
 	  }
 	} else {
 	  printMessage(1,"Warning: external procedure has signalized failure.\n");
+          considerDyingOnError();
 	  free(copy);
 	  copy = makeError();
 	  freeChain(tempChain, freeThingOnVoid);
@@ -14133,6 +14540,7 @@ node *evaluateThingInner(node *tree) {
 	    }
 	  } else {
 	    printMessage(1,"Warning: an error occurred while executing a procedure.\n");
+            considerDyingOnError();
 	    free(copy);
 	    copy = makeError();
 	    freeChain(tempChain, freeThingOnVoid);
@@ -14609,7 +15017,13 @@ node *evaluateThingInner(node *tree) {
       resA = evaluateThingToConstant(a,copy->child1,NULL,0);
       if(resA) {
 	mpfr_init2(b,tools_precision);
-	resB = evaluateThingToConstant(b,copy->child2,NULL,0);
+        if (isSyntacticallyEqual(copy->child1,copy->child2)) {
+          resB = resA;
+          mpfr_set_prec(b,mpfr_get_prec(a));
+          mpfr_set(b,a,GMP_RNDN);
+        } else {
+          resB = evaluateThingToConstant(b,copy->child2,NULL,0);
+        }
 	if(resB) {
 	  if ((resA == 3) || (resB == 3)) {
 	    xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
@@ -14859,6 +15273,7 @@ node *evaluateThingInner(node *tree) {
 	      mpfr_init2(*tempMpfrPtr,tools_precision);
 	      if (!evaluateThingToConstant(*tempMpfrPtr,fifthArg,NULL,0)) {
 		printMessage(1,"Warning: the given argument cannot be evaluated to a constant. It will be ignored.\n");
+                considerDyingOnError();
 		mpfr_clear(*tempMpfrPtr);
 		free(tempMpfrPtr);
 		tempMpfrPtr = NULL;
@@ -14928,7 +15343,7 @@ node *evaluateThingInner(node *tree) {
     else{
       if( (!evaluateThingToIntegerList(&tempChain, &resA, secondArg)) ||
 	  (resA=0) ) {
-	printMessage(1, "The second argument of fpminimax must be either an integer or a finite list of integers\n");
+	printMessage(1, "The second argument of fpminimax must be either an integer or a finite list of integers.\n");
       }
     }
   
@@ -14936,7 +15351,7 @@ node *evaluateThingInner(node *tree) {
     if( (thirdArg->nodeType == LIST) || (thirdArg->nodeType == FINALELLIPTICLIST) )
       evaluateFormatsListForFPminimax(&tempChain2, thirdArg, lengthChain(tempChain));
     else
-      printMessage(1, "The third argument of fpminimax must be a list of formats indications\n");
+      printMessage(1, "The third argument of fpminimax must be a list of formats indications.\n");
 
 
     tempChain3 = NULL;
@@ -15732,6 +16147,7 @@ node *evaluateThingInner(node *tree) {
 	copy = tempNode; 
       } else {
 	printMessage(1,"Warning: the string \"%s\" could not be parsed by the miniparser.\n",copy->child1->string);
+        considerDyingOnError();
       }
       if (timingString != NULL) popTimeCounter(timingString);
     }
@@ -15751,6 +16167,7 @@ node *evaluateThingInner(node *tree) {
 	}
       } else {
 	printMessage(1,"Warning: the file \"%s\" could not be read as an XML file.\n",copy->child1->string);
+        considerDyingOnError();
       }
       if (timingString != NULL) popTimeCounter(timingString);
     }
@@ -15799,6 +16216,7 @@ node *evaluateThingInner(node *tree) {
 	    resB = 1;
 	    if ((fd = fopen(tempString,"w")) == NULL) {
 	      printMessage(1,"Warning: the file \"%s\" could not be opened for writing. The proof argument will be ignored.\n",tempString);
+              considerDyingOnError();
 	    }
 	    free(tempString);
 	  }
@@ -16088,6 +16506,7 @@ node *evaluateThingInner(node *tree) {
     if (tempString != NULL) {
       if ((fd = fopen(tempString,"w")) == NULL) {
 	printMessage(1,"Warning: the file \"%s\" could not be opened for writing. The proof argument will be ignored.\n",tempString);
+        considerDyingOnError();
       }
       free(tempString);
     }
@@ -16122,11 +16541,13 @@ node *evaluateThingInner(node *tree) {
 	  free(xrange.b);
 	  if (tempNode == NULL) {
 	    printMessage(1,"Warning: the implementation has not succeeded. The command could be executed.\n");
+            considerDyingOnError();
 	    tempNode = makeError();
 	  }
 	  fclose(fd2);
 	} else {
 	  printMessage(1,"Warning: the file \"%s\" could not be opened for writing. The command cannot be executed.\n",tempString3);
+          considerDyingOnError();
 	  tempNode = makeError();
 	}
 	free(tempString2);
@@ -16444,6 +16865,7 @@ node *evaluateThingInner(node *tree) {
 	fclose(fd);
       } else {
 	printMessage(1,"Warning: the file \"%s\" could not be opened for reading.\n",copy->child1->string);
+        considerDyingOnError();
       }
     }
     break;
@@ -16778,6 +17200,16 @@ node *evaluateThingInner(node *tree) {
     if (timingString != NULL) pushTimeCounter();      
     freeThing(copy);
     if (midpointMode) {
+      copy = makeOn();
+    } else {
+      copy = makeOff();
+    }
+    if (timingString != NULL) popTimeCounter(timingString);
+    break; 			
+  case DIEONERRORMODEDEREF:
+    if (timingString != NULL) pushTimeCounter();      
+    freeThing(copy);
+    if (dieOnErrorMode) {
       copy = makeOn();
     } else {
       copy = makeOff();

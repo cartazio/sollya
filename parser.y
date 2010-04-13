@@ -1,15 +1,14 @@
 /*
 
-Copyright 2008 by 
+Copyright 2006-2010 by 
 
 Laboratoire de l'Informatique du Parallélisme, 
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
 
-Contributors Ch. Lauter, S. Chevillard, N. Jourdan
+Contributors Ch. Lauter, S. Chevillard
 
 christoph.lauter@ens-lyon.org
 sylvain.chevillard@ens-lyon.org
-nicolas.jourdan@ens-lyon.fr
 
 This software is a computer program whose purpose is to provide an
 environment for safe floating-point code development. It is
@@ -75,6 +74,7 @@ void yyerror(char *message) {
     printMessage(1,"Warning: %s.\nThe last symbol read has been \"%s\".\nWill skip input until next semicolon after the unexpected token. May leak memory.\n",message,str);
     free(str);
     promptToBePrinted = 1;
+    considerDyingOnError();
   } 
 }
 
@@ -199,6 +199,7 @@ void yyerror(char *message) {
 %token  TIMETOKEN;
 %token  FULLPARENTHESESTOKEN;   					       
 %token  MIDPOINTMODETOKEN;      					       
+%token  DIEONERRORMODETOKEN;      					       
 %token  SUPPRESSWARNINGSTOKEN;
 %token  RATIONALMODETOKEN;    					       
 %token  HOPITALRECURSIONSTOKEN;  					       
@@ -405,7 +406,7 @@ startsymbol:            command SEMICOLONTOKEN
                       | VERSIONTOKEN SEMICOLONTOKEN
                           {
 			    outputMode();
-			    printf("This is\n\n\t%s.\n\nCopyright 2008 by Laboratoire de l'Informatique du Parallelisme,\nUMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668\n\nContributors are Ch. Lauter, S. Chevillard, N. Jourdan and M. Joldes.\n\nThis software is governed by the CeCILL-C license under French law and\nabiding by the rules of distribution of free software.  You can  use,\nmodify and/ or redistribute the software under the terms of the CeCILL-C\nlicense as circulated by CEA, CNRS and INRIA at the following URL\n\"http://www.cecill.info\".\n\nPlease send bug reports to %s.\n",PACKAGE_STRING,PACKAGE_BUGREPORT);
+			    printf("This is\n\n\t%s.\n\nCopyright 2006-2010 by\n    Laboratoire de l'Informatique du Parallelisme,\n    UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668, Lyon, France,\nand by\n    LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2), Nancy, France.\nAll rights reserved.\n\nContributors are S. Chevillard, N. Jourdan, M. Joldes and Chr. Lauter.\n\nThis software is governed by the CeCILL-C license under French law and\nabiding by the rules of distribution of free software.  You can  use,\nmodify and/ or redistribute the software under the terms of the CeCILL-C\nlicense as circulated by CEA, CNRS and INRIA at the following URL\n\"http://www.cecill.info\".\n\nPlease send bug reports to %s.\n",PACKAGE_STRING,PACKAGE_BUGREPORT);
 			    parsedThing = NULL;
 			    $$ = NULL;
 			    YYACCEPT;
@@ -840,6 +841,10 @@ stateassignment:        PRECTOKEN EQUALTOKEN thing
                           {
 			    $$ = makeMidpointAssign($3);
 			  }
+                      | DIEONERRORMODETOKEN EQUALTOKEN thing      					       
+                          {
+			    $$ = makeDieOnErrorAssign($3);
+			  }
                       | RATIONALMODETOKEN EQUALTOKEN thing      					       
                           {
 			    $$ = makeRationalModeAssign($3);
@@ -897,6 +902,10 @@ stillstateassignment:   PRECTOKEN EQUALTOKEN thing
                       | MIDPOINTMODETOKEN EQUALTOKEN thing      					       
                           {
 			    $$ = makeMidpointStillAssign($3);
+			  }
+                      | DIEONERRORMODETOKEN EQUALTOKEN thing      					       
+                          {
+			    $$ = makeDieOnErrorStillAssign($3);
 			  }
                       | RATIONALMODETOKEN EQUALTOKEN thing      					       
                           {
@@ -956,6 +965,10 @@ megaterm:               hyperterm
                       | megaterm COMPAREEQUALTOKEN hyperterm
                           {
 			    $$ = makeCompareEqual($1, $3);
+			  }
+                      | megaterm INTOKEN hyperterm
+                          {
+			    $$ = makeCompareIn($1, $3);
 			  }
                       | megaterm LEFTANGLETOKEN hyperterm
                           {
@@ -1774,6 +1787,10 @@ statedereference:       PRECTOKEN egalquestionmark
                       | MIDPOINTMODETOKEN egalquestionmark			       
                           {
 			    $$ = makeMidpointDeref();
+			  }
+                      | DIEONERRORMODETOKEN egalquestionmark			       
+                          {
+			    $$ = makeDieOnErrorDeref();
 			  }
                       | RATIONALMODETOKEN egalquestionmark			       
                           {
@@ -2752,6 +2769,17 @@ help:                   CONSTANTTOKEN
 #endif
 #endif
                           }
+                      | DIEONERRORMODETOKEN
+                          {
+#ifdef HELP_DIEONERRORMODE_TEXT
+			    outputMode(); printf(HELP_DIEONERRORMODE_TEXT);
+#else
+			    outputMode(); printf("Global environment variable for die-on-error mode.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for DIEONERRORMODE"
+#endif
+#endif
+                          }
                       | RATIONALMODETOKEN
                           {
 #ifdef HELP_RATIONALMODE_TEXT
@@ -3671,8 +3699,15 @@ help:                   CONSTANTTOKEN
                           }                 					             							       
                       | INTOKEN
                           {
-			    outputMode(); printf("For construct: for i in list do command.\n");
-                          }                 					             							       
+#ifdef HELP_IN_TEXT
+			    outputMode(); printf(HELP_IN_TEXT);
+#else
+			    outputMode(); printf("In construct: for in construct and containment operator.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for IN"
+#endif
+#endif
+                          }                 					               					       			       
                       | FROMTOKEN
                           {
 			    outputMode(); printf("For construct: for i from const to const2 [by const3] do command.\n");
@@ -3948,40 +3983,45 @@ help:                   CONSTANTTOKEN
                           {
 			    outputMode(); printf("Type \"help <keyword>;\" for help on the keyword <keyword>.\nFor example type \"help implementpoly;\" for help on the command \"implementpoly\".\n\n");
 			    printf("Possible keywords in %s are:\n",PACKAGE_NAME);
-			    printf("- ^\n");
+			    printf("- !\n");
+			    printf("- !=\n");
+			    printf("- &&\n");
+			    printf("- (\n");
+			    printf("- )\n");
+			    printf("- *\n");
+			    printf("- *<\n");
+			    printf("- +\n");
+			    printf("- ,\n");
+			    printf("- -\n");
+			    printf("- ...\n");
+			    printf("- .:\n");
+			    printf("- /\n");
+			    printf("- :.\n");
+			    printf("- ::\n");
+			    printf("- :=\n");
+			    printf("- ;\n");
 			    printf("- <\n");
-			    printf("- <=\n");
 			    printf("- =\n");
 			    printf("- ==\n");
 			    printf("- >\n");
-			    printf("- >=\n");
-			    printf("- >_\n");
-			    printf("- >.\n");
 			    printf("- >*\n");
-			    printf("- |\n");
-			    printf("- ||\n");
-			    printf("- -\n");
-			    printf("- ,\n");
-			    printf("- ;\n");
-			    printf("- :=\n");
-			    printf("- ::\n");
-			    printf("- :.\n");
-			    printf("- .:\n");
-			    printf("- !\n");
+			    printf("- >.\n");
+			    printf("- >_\n");
 			    printf("- ?\n");
-			    printf("- /\n");
-			    printf("- ...\n");
-			    printf("- (\n");
-			    printf("- )\n");
-			    printf("- [\n");
-			    printf("- [|\n");
-			    printf("- ]\n");
-			    printf("- |]\n");
 			    printf("- @\n");
-			    printf("- *\n");
-			    printf("- *<\n");
-			    printf("- &&\n");
-			    printf("- +\n");
+			    printf("- D\n");
+			    printf("- DD\n");
+			    printf("- DE\n");
+			    printf("- Pi\n");
+			    printf("- RD\n");
+			    printf("- RN\n");
+			    printf("- RU\n");
+			    printf("- RZ\n");
+			    printf("- SG\n");
+			    printf("- TD\n");
+			    printf("- [\n");
+			    printf("- ]\n");
+			    printf("- ^\n");
 			    printf("- abs\n");
 			    printf("- absolute\n");
 			    printf("- accurateinfnorm\n");
@@ -4006,17 +4046,15 @@ help:                   CONSTANTTOKEN
 			    printf("- constant\n");
 			    printf("- cos\n");
 			    printf("- cosh\n");
-			    printf("- D\n");
-			    printf("- DD\n");
-			    printf("- DE\n");
 			    printf("- decimal\n");
 			    printf("- default\n");
 			    printf("- degree\n");
 			    printf("- denominator\n");
 			    printf("- diam\n");
+			    printf("- dieonerrormode\n");
 			    printf("- diff\n");
-			    printf("- dirtyinfnorm\n");
 			    printf("- dirtyfindzeros\n");
+			    printf("- dirtyinfnorm\n");
 			    printf("- dirtyintegral\n");
 			    printf("- display\n");
 			    printf("- do\n");
@@ -4051,7 +4089,7 @@ help:                   CONSTANTTOKEN
 			    printf("- function\n");
 			    printf("- guessdegree\n");
 			    printf("- head\n");
-			    printf("- help\n");
+			    printf("- hexadecimal\n");
 			    printf("- honorcoeffprec\n");
 			    printf("- hopitalrecursions\n");
 			    printf("- horner\n");
@@ -4074,6 +4112,7 @@ help:                   CONSTANTTOKEN
 			    printf("- mantissa\n");
 			    printf("- mid\n");
 			    printf("- midpointmode\n");
+			    printf("- nearestint\n");
 			    printf("- numberroots\n");
 			    printf("- nop\n");
 			    printf("- numerator\n");
@@ -4092,35 +4131,36 @@ help:                   CONSTANTTOKEN
 			    printf("- precision\n");
 			    printf("- print\n");
 			    printf("- printbinary\n");
+			    printf("- printdouble\n");
 			    printf("- printexpansion\n");
 			    printf("- printfloat\n");
 			    printf("- printhexa\n");
+			    printf("- printsingle\n");
 			    printf("- printxml\n");
 			    printf("- proc\n");
 			    printf("- procedure\n");
 			    printf("- quit\n");
-			    printf("- RD\n");
-			    printf("- RN\n");
-			    printf("- RU\n");
-			    printf("- RZ\n");
 			    printf("- range\n");
 			    printf("- rationalapprox\n");
-			    printf("- read\n");
+			    printf("- rationalmode\n");
 			    printf("- readfile\n");
 			    printf("- readxml\n");
 			    printf("- relative\n");
 			    printf("- remez\n");
 			    printf("- rename\n");
 			    printf("- restart\n");
+			    printf("- return\n");
 			    printf("- revert\n");
 			    printf("- round\n");
 			    printf("- roundcoefficients\n");
 			    printf("- roundcorrectly\n");
 			    printf("- roundingwarnings\n");
+			    printf("- safesimplify\n");
 			    printf("- searchgal\n");
 			    printf("- simplify\n");
 			    printf("- simplifysafe\n");
 			    printf("- sin\n");
+			    printf("- single\n");
 			    printf("- sinh\n");
 			    printf("- sort\n");
 			    printf("- sqrt\n");
@@ -4134,8 +4174,8 @@ help:                   CONSTANTTOKEN
 			    printf("- taylor\n");
 			    printf("- taylorform\n");
 			    printf("- taylorrecursions\n");
-			    printf("- TD\n");
 			    printf("- then\n");
+			    printf("- time\n");
 			    printf("- timing\n");
 			    printf("- to\n");
 			    printf("- tripledouble\n");
@@ -4148,6 +4188,11 @@ help:                   CONSTANTTOKEN
 			    printf("- worstcase\n");
 			    printf("- write\n");
 			    printf("- zerodenominators\n");
+			    printf("- {\n");
+			    printf("- |\n");
+			    printf("- ||\n");
+			    printf("- }\n");
+			    printf("- ~\n");
 			    printf("\n");
                           }                                                           
 ;

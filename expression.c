@@ -1,15 +1,14 @@
 /*
 
-Copyright 2008 by 
+Copyright 2006-2010 by 
 
 Laboratoire de l'Informatique du Paralllisme, 
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
 
-Contributors Ch. Lauter, S. Chevillard, N. Jourdan
+Contributors Ch. Lauter, S. Chevillard
 
 christoph.lauter@ens-lyon.org
 sylvain.chevillard@ens-lyon.org
-nicolas.jourdan@ens-lyon.fr
 
 This software is a computer program whose purpose is to provide an
 environment for safe floating-point code development. It is
@@ -2508,6 +2507,7 @@ int mpfr_to_mpq( mpq_t y, mpfr_t x) {
       mpq_div_2exp(aux,aux,(unsigned int)(-expo));
     mpq_set(y,aux);
     mpq_clear(aux);
+    mpz_clear(mant);
     return 1;
   }
   else return 0;
@@ -3873,6 +3873,7 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
           mpfr_init2(*value,tools_precision);
           simplified->value = value;
           mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
+	  free_memory(simplChild1);
         } else {
           simplified->nodeType = DOUBLE;
           simplified->child1 = simplChild1;
@@ -3931,6 +3932,7 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
           mpfr_init2(*value,tools_precision);
           simplified->value = value;
           mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
+	  free_memory(simplChild1);
         } else {
           simplified->nodeType = SINGLE;
           simplified->child1 = simplChild1;
@@ -3989,6 +3991,7 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
           mpfr_init2(*value,tools_precision);
           simplified->value = value;
           mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
+	  free_memory(simplChild1);
         } else {
           simplified->nodeType = DOUBLEDOUBLE;
           simplified->child1 = simplChild1;
@@ -4047,6 +4050,7 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
           mpfr_init2(*value,tools_precision);
           simplified->value = value;
           mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
+	  free_memory(simplChild1);
         } else {
           simplified->nodeType = TRIPLEDOUBLE;
           simplified->child1 = simplChild1;
@@ -4193,6 +4197,7 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
           mpfr_init2(*value,tools_precision);
           simplified->value = value;
           mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
+	  free_memory(simplChild1);
         } else {
           simplified->nodeType = DOUBLEEXTENDED;
           simplified->child1 = simplChild1;
@@ -4258,6 +4263,7 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
           mpfr_init2(*value,tools_precision);
           simplified->value = value;
           mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
+	  free_memory(simplChild1);
         } else {
           simplified->nodeType = CEIL;
           simplified->child1 = simplChild1;
@@ -4316,6 +4322,7 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
           mpfr_init2(*value,tools_precision);
           simplified->value = value;
           mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
+	  free_memory(simplChild1);
         } else {
           simplified->nodeType = FLOOR;
           simplified->child1 = simplChild1;
@@ -4374,6 +4381,7 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
           mpfr_init2(*value,tools_precision);
           simplified->value = value;
           mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
+	  free_memory(simplChild1);
         } else {
           simplified->nodeType = NEARESTINT;
           simplified->child1 = simplChild1;
@@ -10529,7 +10537,8 @@ int readHexadecimal(mpfr_t rop, char *c) {
   c2 = (char *) safeCalloc(strlen(c) + 2, sizeof(char));
   strcpy(c2, c);
 
-  if (c2[strlen(c2) - 1] == 'p') c2[strlen(c2)] = '0';
+  if ((c2[strlen(c2) - 1] == 'p') || 
+      (c2[strlen(c2) - 1] == 'P')) c2[strlen(c2)] = '0';
 
 
   p = mpfr_get_prec(rop);

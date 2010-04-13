@@ -1,15 +1,14 @@
 /*
 
-Copyright 2008 by 
+Copyright 2007-2010 by 
 
 Laboratoire de l'Informatique du Parallélisme, 
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
 
-Contributors Ch. Lauter, S. Chevillard, N. Jourdan
+Contributors Ch. Lauter, S. Chevillard
 
 christoph.lauter@ens-lyon.org
 sylvain.chevillard@ens-lyon.org
-nicolas.jourdan@ens-lyon.fr
 
 This software is a computer program whose purpose is to provide an
 environment for safe floating-point code development. It is
@@ -256,10 +255,10 @@ extern void endBuffer(void);
 #define TIME 245
 #define NOPARG 246
 #define PROCILLIM 247
-
-
-
-
+#define DIEONERRORMODEASSIGN 248
+#define DIEONERRORMODESTILLASSIGN 249
+#define DIEONERRORMODEDEREF 250
+#define COMPAREIN 251
 #define AUTODIFF 252
 
 int executeCommand(node *);
@@ -312,6 +311,7 @@ node *makeTimingAssign(node *thing);
 node *makeTime(node *thing);
 node *makeFullParenAssign(node *thing);
 node *makeMidpointAssign(node *thing);
+node *makeDieOnErrorAssign(node *thing);
 node *makeRationalModeAssign(node *thing);
 node *makeRationalModeStillAssign(node *thing);
 node *makeSuppressWarningsAssign(node *thing);
@@ -328,12 +328,14 @@ node *makeTaylorRecursStillAssign(node *thing);
 node *makeTimingStillAssign(node *thing);
 node *makeFullParenStillAssign(node *thing);
 node *makeMidpointStillAssign(node *thing);
+node *makeDieOnErrorStillAssign(node *thing);
 node *makeHopitalRecursStillAssign(node *thing);
 node *makeAnd(node *thing1, node *thing2);
 node *makeOr(node *thing1, node *thing2);
 node *makeNegation(node *thing);
 node *makeIndex(node *thing1, node *thing2);
 node *makeCompareEqual(node *thing1, node *thing2);
+node *makeCompareIn(node *thing1, node *thing2);
 node *makeCompareLess(node *thing1, node *thing2);
 node *makeCompareGreater(node *thing1, node *thing2);
 node *makeCompareLessEqual(node *thing1, node *thing2);
@@ -450,6 +452,7 @@ node *makeTaylorRecursDeref();
 node *makeTimingDeref();
 node *makeFullParenDeref();
 node *makeMidpointDeref();
+node *makeDieOnErrorDeref();
 node *makeRationalModeDeref();
 node *makeSuppressWarningsDeref();
 node *makeHopitalRecursDeref();

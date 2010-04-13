@@ -1,15 +1,14 @@
 /*
 
-Copyright 2008 by 
+Copyright 2007-2010 by 
 
 Laboratoire de l'Informatique du Parallélisme, 
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
 
-Contributors Ch. Lauter, S. Chevillard, N. Jourdan
+Contributors Ch. Lauter, S. Chevillard
 
 christoph.lauter@ens-lyon.org
 sylvain.chevillard@ens-lyon.org
-nicolas.jourdan@ens-lyon.fr
 
 This software is a computer program whose purpose is to provide an
 environment for safe floating-point code development. It is
@@ -79,7 +78,7 @@ CONSTANT        ({ACONSTANT})|((("%")({NUMBER})({NUMBER}+)("%"))({ACONSTANT}))
 DYADICCONSTANT  ({NUMBER}+)([bB])([+-]?)({NUMBER}+)
 HEXCONSTANT     ("0x")({HEXNUMBER}{16}|{HEXNUMBER}{8})
 
-HEXADECIMALCONSTANT ("0x")(({HEXNUMBER}*"."{HEXNUMBER}+)|({HEXNUMBER}+((".")?)))("p"(([+-])?)({NUMBER}*))
+HEXADECIMALCONSTANT ("0x"|"0X")(({HEXNUMBER}*"."{HEXNUMBER}+)|({HEXNUMBER}+((".")?)))(("p"|"P")(([+-])?)({NUMBER}*))
 
 BINARYCONSTANT  (([0-1])+|(([0-1])*"."([0-1])+))"_2"
 
@@ -237,8 +236,8 @@ CHECKINFNORM    "checkinfnorm"
 
 TAYLORRECURSIONS "taylorrecursions"
 
-PRINTHEXA       "printhexa"
-PRINTFLOAT      "printfloat"
+PRINTHEXA       ("printhexa"|"printdouble")
+PRINTFLOAT      ("printfloat"|"printsingle")
 PRINTBINARY     "printbinary"
 
 ROUNDCOEFFICIENTS "roundcoefficients"
@@ -303,6 +302,7 @@ TIMING          "timing"
 TIME            "time"
 FULLPARENTHESES "fullparentheses"
 MIDPOINTMODE    "midpointmode"
+DIEONERRORMODE  "dieonerrormode"
 SUPPRESSWARNINGS "roundingwarnings"
 RATIONALMODE    "rationalmode"
 
@@ -555,6 +555,7 @@ NOP             "nop"
 {TIME}          			    {  return TIMETOKEN; }          					       
 {FULLPARENTHESES} 			    {  return FULLPARENTHESESTOKEN; } 					       
 {MIDPOINTMODE}    			    {  return MIDPOINTMODETOKEN; }    					       
+{DIEONERRORMODE}    			    {  return DIEONERRORMODETOKEN; }    					       
 {SUPPRESSWARNINGS}			    {  return SUPPRESSWARNINGSTOKEN; }    					       
 {RATIONALMODE}			            {  return RATIONALMODETOKEN; }    					       
 {HOPITALRECURSIONS}			    {  return HOPITALRECURSIONSTOKEN; }					       

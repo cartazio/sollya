@@ -26,7 +26,7 @@ preprocessKeywords() {
   do
     pattern2=`cat $keywords_defs | grep "=" | head -n $i | tail -n 1 | sed -n 's/\(=.*\)//;p'`
     pattern=\$"$pattern2"
-    pattern2=`echo $pattern2 | tr A-Z a-z`
+    pattern2=`printf $pattern2 | tr A-Z a-z`
 
     replacement=`cat $keywords_defs | grep "=" | head -n $i | tail -n 1 | sed -n 's/\(.*="\)\(.*\)\("\)/\2/;p'`
 
@@ -192,7 +192,7 @@ processDescriptions() {
  do
    # little trick to escape the backslashes
    line=`cat $tempfile | head -n $i | tail -n 1 | sed -n 's/\\\\/\\\\\\\\/g;p'`
-   if printf "$line" | grep "#DESCRIPTION" > /dev/null
+   if printf "%b" "$line" | grep "#DESCRIPTION" > /dev/null
    then
      firstLine="on"
      mode="on"
@@ -201,14 +201,14 @@ processDescriptions() {
    else
      if [ $mode = "on" -a -n "$line" ]
      then
-       if printf "$line" | grep -e "^#" > /dev/null
+       if printf "%b" "$line" | grep -e "^#" > /dev/null
        then  i=`expr $nLines + 1`
        else
          if [ $firstLine = "on" ]
            then firstLine="off"
            else printf "   " >> $target
          fi
-         printf "$line""\n" >> $target 
+         printf "%b" "$line\n" >> $target 
        fi
      fi
    fi
@@ -248,7 +248,7 @@ processExamples() {
  while [ $i -le $nLines ]
  do
    line=`cat $tempfile | head -n $i | tail -n 1`
-   if printf "$line" | grep "#EXAMPLE" > /dev/null
+   if printf "%b" "$line" | grep "#EXAMPLE" > /dev/null
    then
      if [ $mode = "on" ]
        then processExampleFile
@@ -263,7 +263,7 @@ processExamples() {
    else
      if [ $mode = "on" -a -n "$line" ]
      then
-       if printf "$line" | grep -e "^#" > /dev/null
+       if printf "%b" "$line" | grep -e "^#" > /dev/null
        then  i=`expr $nLines + 1`
        else
          cat $tempfile | head -n $i | tail -n 1 >> $exampleFile 
@@ -303,18 +303,16 @@ processFile() {
   preprocessTeX
   sed -n -i 's/$SOLLYA/'"$sollya_name"'/g;p' $tempfile
 
-  command=`echo $command | sed -n 's/\$\(.*\)/\1/;p'`  # removes the initial "$" of $command (e.g. GT)
+  command=`printf $command | sed -n 's/\$\(.*\)/\1/;p'`  # removes the initial "$" of $command (e.g. GT)
   nameOfCommand=`cat $keywords_defs | grep "^$command=" | sed -n 's/\(=.*\)//;p' | tr 'A-Z' 'a-z'` # name of the command (e.g. gt) used to name the files
   realNameOfCommand=`cat $keywords_defs | grep "^$command=" | sed -n 's/\(.*="\)\(.*\)\("\)/\2/;p' | sed -n 's/§§\([^§]*\)§\([^§]*\)§§/\2/g;p'`  # name of the command really used in Sollya (e.g. >)
 
-  # Interpretiation of the following line: the content of the quotes is first evaluated,
-  # hence $realNameOfCommand becomes its content (e.g. "\\&\\&") and the line becomes e.g.
-  # printf "\\&\\&" | sed -n 's/\\\\/\\/g;p'
-  # this is evaluated and, in turn, gives  "\&\&"
-  realNameOfCommand=`printf $realNameOfCommand | sed -n 's/\\\\\\\\/\\\\/g;p'`
-  
-  printf "\\\\subsection{"$realNameOfCommand"}\n" >> $target
-  printf "\\\\label{lab"$sectionName"}\n" | sed -n 's/ //g;p' >> $target
+  # Interpretiation of the following lines: $realNameOfCommand may contain echapment
+  # characters for '/' (typically for divide) due to its use in preprocessKeywords.
+  # We simulate a use of sed to remove this echapment sequences.
+  printf "\\\\subsection{AAA}\n" >> $target
+  sed -n -i 's/subsection{AAA}/subsection{'"$realNameOfCommand"'}/;p' $target
+  printf "\\\\label{lab$sectionName}\n" | sed -n 's/ //g;p' >> $target
   processName
   processQuickDescription
   processCallingAndTypes
@@ -345,14 +343,14 @@ main() {
     if [ -e $file ]
     then
       source=$file
-      sectionName=`echo $source | sed -n 's/\.shlp//;p'`
-      target=`echo $source | sed -n 's/\.shlp/\.tex/;p'`
+      sectionName=`printf $source | sed -n 's/\.shlp//;p'`
+      target=`printf $source | sed -n 's/\.shlp/\.tex/;p'`
       printf "Processing file "$source"\n"
       processFile
       if grep `printf "\\\\input{$source}\n" | sed -n 's/\.shlp//;p'` $listOfCommands > /dev/null
       then printf "Nothing to change in "$listOfCommands"\n"
       else
-        printf "\\\\input{"`echo $source | sed -n 's/\.shlp//;p'`"}\n" >> $listOfCommands
+        printf "\\\\input{"`printf $source | sed -n 's/\.shlp//;p'`"}\n" >> $listOfCommands
       fi
     else
       printf "File "$file" does not exist!\n"

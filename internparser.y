@@ -1,15 +1,14 @@
 /*
 
-Copyright 2008 by 
+Copyright 2007-2010 by 
 
 Laboratoire de l'Informatique du Parallélisme, 
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
 
-Contributors Ch. Lauter, S. Chevillard, N. Jourdan
+Contributors Ch. Lauter, S. Chevillard
 
 christoph.lauter@ens-lyon.org
 sylvain.chevillard@ens-lyon.org
-nicolas.jourdan@ens-lyon.fr
 
 This software is a computer program whose purpose is to provide an
 environment for safe floating-point code development. It is
@@ -68,6 +67,7 @@ extern FILE *internyyget_in(void *scanner);
  void internyyerror(void *myScanner, char *message) {
    if (!feof(internyyget_in(myScanner))) {
      printMessage(1,"Warning: %s.\nWill skip input until next semicolon after the unexpected token. May leak memory.\n",message);
+     considerDyingOnError();
    }
  }
 
@@ -194,6 +194,7 @@ extern FILE *internyyget_in(void *scanner);
 %token  TIMINGTOKEN;            					       
 %token  FULLPARENTHESESTOKEN;   					       
 %token  MIDPOINTMODETOKEN;      					       
+%token  DIEONERRORMODETOKEN;      					       
 %token  SUPPRESSWARNINGSTOKEN;    					       
 %token  HOPITALRECURSIONSTOKEN;  					       
 %token  RATIONALMODETOKEN;  
@@ -798,6 +799,10 @@ stateassignment:        PRECTOKEN EQUALTOKEN thing
                           {
 			    $$ = makeMidpointAssign($3);
 			  }
+                      | DIEONERRORMODETOKEN EQUALTOKEN thing      					       
+                          {
+			    $$ = makeDieOnErrorAssign($3);
+			  }
                       | RATIONALMODETOKEN EQUALTOKEN thing      					       
                           {
 			    $$ = makeRationalModeAssign($3);
@@ -855,6 +860,10 @@ stillstateassignment:   PRECTOKEN EQUALTOKEN thing
                       | MIDPOINTMODETOKEN EQUALTOKEN thing      					       
                           {
 			    $$ = makeMidpointStillAssign($3);
+			  }
+                      | DIEONERRORMODETOKEN EQUALTOKEN thing      					       
+                          {
+			    $$ = makeDieOnErrorStillAssign($3);
 			  }
                       | RATIONALMODETOKEN EQUALTOKEN thing      					       
                           {
@@ -914,6 +923,10 @@ megaterm:               hyperterm
                       | megaterm COMPAREEQUALTOKEN hyperterm
                           {
 			    $$ = makeCompareEqual($1, $3);
+			  }
+                      | megaterm INTOKEN hyperterm
+                          {
+			    $$ = makeCompareIn($1, $3);
 			  }
                       | megaterm LEFTANGLETOKEN hyperterm
                           {
@@ -1730,6 +1743,10 @@ statedereference:       PRECTOKEN egalquestionmark
                       | MIDPOINTMODETOKEN egalquestionmark			       
                           {
 			    $$ = makeMidpointDeref();
+			  }
+                      | DIEONERRORMODETOKEN egalquestionmark			       
+                          {
+			    $$ = makeDieOnErrorDeref();
 			  }
                       | RATIONALMODETOKEN egalquestionmark			       
                           {

@@ -3,7 +3,7 @@
 
 #DESCRIPTION 
 $COMMAND is a special value used to deactivate certain functionnalities
-of $SOLLYA (namely $CANONICAL, $TIMING, $FULLPARENTHESES, $MIDPOINTMODE).
+of $SOLLYA.
 
 #DESCRIPTION
 As any value it can be affected to a variable and stored in lists.
@@ -17,7 +17,13 @@ canonical=mode;
 p;
 
 #SEEALSO $ON
+#SEEALSO $AUTOSIMPLIFY
 #SEEALSO $CANONICAL
 #SEEALSO $TIMING
 #SEEALSO $FULLPARENTHESES
 #SEEALSO $MIDPOINTMODE
+#SEEALSO $RATIONALMODE
+#SEEALSO $ROUNDINGWARNINGS
+#SEEALSO $TIMING
+#SEEALSO $DIEONERRORMODE
+

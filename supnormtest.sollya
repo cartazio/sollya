@@ -1,4 +1,5 @@
-#include "supnorm.sollya";
+#include "supnormSylvain.sollya";
+//#include "supnorm.sollya";
 #include "sos.sollya";
 
 
@@ -6,13 +7,23 @@ verbosity = 1!;
 
 midpointmode = on!;
 
-read "example.sollya";
-/*f = sin(x);
+f = (2^x-1)/x;
+I = [-1/16; 1/16];
+deg = 9;
+p = 471731526451026588275889254154076601135b-129 + x * (17725587574382949699b-66 + x * (16381921401269255253b-68 + x * (5677541315722219251b-69 + x * (6296594808808851415b-72 + x * (11638578502092174591b-76 + x * (9219711846930283661b-79 + x * (6390650459381428685b-82 + x * (3937639283455054765b-85 + x * 15534594642922816829b-91))))))));
+mode = absolute;
+quality=2^(-30);
+
+
+/* read "example.sollya"; */
+/*
+f = sin(x);
 I = [-1/32;1/32];
 deg = 7;
 p = fpminimax(f, [|1,...,deg|], [|D,D...|], I);
 mode = relative;
-quality = 2^-24;*/
+quality = 2^-24;
+*/
 
 /*
 f = exp(x);
@@ -23,7 +34,7 @@ mode = relative;
 quality = 2^-24;
 */
 
-doSos = true;
+doSos = false;
 printSosInstances = false;
 
 
@@ -37,7 +48,7 @@ sosInstances = res[1];
 
 if (mode == absolute) then errFunc = p - f else errFunc = p/f-1;
 
-timeDirtySupnorm = time(dirtyNorm = dirtyinfnorm(errFunc,I));
+/*timeDirtySupnorm = time(dirtyNorm = dirtyinfnorm(errFunc,I));*/
 
 "Dirty supnorm     ", dirtyNorm;
 
@@ -64,4 +75,3 @@ if (doSos) then {
         };
 
 };
-

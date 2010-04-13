@@ -1,15 +1,15 @@
 /*
 
-Copyright 2008 by 
+Copyright 2007-2010 by 
 
 Laboratoire de l'Informatique du Parallélisme, 
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
 
-Contributors Ch. Lauter, S. Chevillard, N. Jourdan
+Contributors Ch. Lauter, S. Chevillard, M. Joldes
 
 christoph.lauter@ens-lyon.org
 sylvain.chevillard@ens-lyon.org
-nicolas.jourdan@ens-lyon.fr
+mioara.joldes@ens-lyon.fr
 
 This software is a computer program whose purpose is to provide an
 environment for safe floating-point code development. It is
@@ -48,6 +48,10 @@ knowledge of the CeCILL-C license and that you accept its terms.
 
 #ifndef SOLLYA_H
 #define SOLLYA_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdlib.h>
 #include <mpfr.h>
@@ -289,4 +293,9 @@ extern void *safeMalloc (size_t size);
 extern void printInterval(mpfi_t);
 extern void printValue(mpfr_t *);
 extern node* simplifyTreeErrorfree(node *tree);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

@@ -45,7 +45,7 @@ procedure sos(sosInstances) {
                 write("a = ", a, ";\n") >> gpInputFile;
                 write("b = ", b, ";\n") >> gpInputFile;
 
-                bashexecute("gp -q " @ gpSOSScript @ "|head -n -1 > " @ gpOutputFile);
+                bashexecute("gp -q " @ gpSOSScript @ " |head -n -1> " @ gpOutputFile);
 
                 oldAutosimplify = autosimplify;
                 autosimplify = off!;
