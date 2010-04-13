@@ -59,6 +59,7 @@ knowledge of the CeCILL-C license and that you accept its terms.
 #include <errno.h>
 #include <sys/time.h>
 #include <time.h>
+#include <limits.h>
 #include "general.h"
 #include "expression.h"
 #include "infnorm.h"
@@ -2293,7 +2294,7 @@ int evaluateThingToConstant(mpfr_t result, node *tree, mpfr_t *defaultVal, int s
 }
 
 int evaluateThingToInteger(int *result, node *tree, int *defaultVal) {
-  mpfr_t *defaultValMpfr, resultMpfr;
+  mpfr_t *defaultValMpfr, resultMpfr, resInt;
   int res, tempResult;
 
   if (defaultVal != NULL) {
@@ -2310,10 +2311,27 @@ int evaluateThingToInteger(int *result, node *tree, int *defaultVal) {
 
   if (res) {
     tempResult = mpfr_get_si(resultMpfr, GMP_RNDN);
-    
+
     mpfr_sub_si(resultMpfr, resultMpfr, tempResult, GMP_RNDN);
 
     if (!mpfr_zero_p(resultMpfr)) {
+      mpfr_init2(resInt,8 * sizeof(int) + 10);
+      mpfr_set_si(resInt,tempResult,GMP_RNDN);
+
+      if (mpfr_sgn(resInt) != mpfr_sgn(resultMpfr)) {
+	if (mpfr_sgn(resultMpfr) == 0) {
+	  tempResult = 0;
+	} else {
+	  if (mpfr_sgn(resultMpfr) > 0) {
+	    tempResult = INT_MAX;
+	  } else {
+	    tempResult = INT_MIN;
+	  }
+	}
+      }
+
+      mpfr_clear(resInt);
+
       if (!noRoundingWarnings) {
 	printMessage(1,"Warning: the given expression does not evaluate to a machine integer.\n");
 	printMessage(1,"Will round it to the nearest machine integer.\n");
