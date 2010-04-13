@@ -15699,9 +15699,16 @@ node *evaluateThingInner(node *tree) {
           curr = curr->next;
           mpfr_init2(a,tools_precision);
           mpfr_init2(b,tools_precision);
-          if (isRange((node *) (curr->value)) &&
-              evaluateThingToRange(a,b,(node *) (curr->value))) {
-            if (timingString != NULL) pushTimeCounter();      
+          resC = (isRange((node *) (curr->value)) &&
+                  evaluateThingToRange(a,b,(node *) (curr->value)));
+          if (resC || 
+              (isPureTree((node *) (curr->value)) && 
+               evaluateThingToConstant(a,(node *) (curr->value),NULL,0))) {
+            if (!resC) {
+              mpfr_set_prec(b,mpfr_get_prec(a));
+              mpfr_set(b,a,GMP_RNDN);
+            }
+            if (timingString != NULL) pushTimeCounter();
             pTemp = mpfr_get_prec(a);
             if (mpfr_get_prec(b) > pTemp) pTemp = mpfr_get_prec(b);
             mpfi_init2(tempIA,pTemp);
@@ -15712,7 +15719,7 @@ node *evaluateThingInner(node *tree) {
             }
             auto_diff(tmpInterv1, (node *) (copy->arguments->value), tempIA, resA);
             curr = NULL;
-            for (resB=0;resB<resA+1;resB++) {
+            for (resB=resA;resB>=0;resB--) {
               pTemp = mpfi_get_prec(tmpInterv1[resB]);
               mpfr_init2(c,pTemp);
               mpfr_init2(d,pTemp);
