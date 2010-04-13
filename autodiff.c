@@ -1265,6 +1265,22 @@ void nearestint_diff(mpfi_t *res, mpfi_t x, int n){
   mpfr_clear(temp);
 }
 
+void libraryFunction_diff(mpfi_t *res, node *f, mpfi_t x, int n) {
+  mpfi_t fact;
+  mp_prec_t prec;
+  int i;
+
+  prec = getToolPrecision();
+  mpfi_init2(fact, prec);
+  mpfi_set_ui(fact, 1);
+
+  for(i=0;i<=n;i++) {
+    f->libFun->code(res[i], x, f->libFunDeriv + i);
+    mpfi_div(res[i], res[i], fact);
+    mpfi_mul_ui(fact, fact, i+1);
+  }
+  mpfi_clear(fact);
+}
 
 void baseFunction_diff(mpfi_t *res, int nodeType, mpfi_t x, int n) {
   mpfr_t oneHalf;
@@ -1456,6 +1472,7 @@ void auto_diff_scaled(mpfi_t* res, node *f, mpfi_t x0, int n) {
   case CEIL:
   case FLOOR:
   case NEARESTINT:
+  case LIBRARYFUNCTION:
     res1 = (mpfi_t *)safeCalloc((n+1),sizeof(mpfi_t));
     res2 = (mpfi_t *)safeCalloc((n+1),sizeof(mpfi_t));
     for(i=0;i<=n;i++) {
@@ -1464,7 +1481,8 @@ void auto_diff_scaled(mpfi_t* res, node *f, mpfi_t x0, int n) {
     }
 
     auto_diff_scaled(res1, f->child1, x0, n);
-    baseFunction_diff(res2, f->nodeType, res1[0], n);
+    if(f->nodeType==LIBRARYFUNCTION) libraryFunction_diff(res2, f, res1[0], n);
+    else baseFunction_diff(res2, f->nodeType, res1[0], n);
     composition_AD(res, res2, res1, n);
 
     for(i=0;i<=n;i++) {
@@ -1473,17 +1491,6 @@ void auto_diff_scaled(mpfi_t* res, node *f, mpfi_t x0, int n) {
     }
     free(res1);
     free(res2);
-    break;
-
-  case LIBRARYFUNCTION:
-    mpfi_init2(temp1, prec);
-    mpfi_set_ui(temp1, 1);
-    for(i=0;i<=n;i++) {
-      f->libFun->code(res[i], x0, f->libFunDeriv + i);
-      mpfi_div(res[i], res[i], temp1);
-      mpfi_mul_ui(temp1, temp1, i+1);
-    }
-    mpfi_clear(temp1);
     break;
 
   case POW:    

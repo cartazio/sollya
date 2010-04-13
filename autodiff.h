@@ -89,6 +89,7 @@ void floor_diff(mpfi_t *res, mpfi_t x, int n);
 void nearestint_diff(mpfi_t *res, mpfi_t x, int n);
 void single_diff(mpfi_t *res, mpfi_t x, int n);
 void triple_double_diff(mpfi_t *res, mpfi_t x, int n);
+void libraryFunction_diff(mpfi_t *res, node *f, mpfi_t x, int n);
 
 void powerFunction_diff(mpfi_t *res, mpfr_t p, mpfi_t x0, int n);
 void constantPower_diff(mpfi_t *res, mpfi_t x0, mpfr_t p, int n);
