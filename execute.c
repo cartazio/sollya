@@ -60,6 +60,7 @@ knowledge of the CeCILL-C license and that you accept its terms.
 #include "expression.h"
 #include "infnorm.h"
 #include "assignment.h"
+#include "autodiff.h"
 #include "library.h"
 #include "external.h"
 #include "plot.h"
@@ -70,15 +71,12 @@ knowledge of the CeCILL-C license and that you accept its terms.
 #include "worstcase.h"
 #include "implement.h"
 #include "taylor.h"
+#include "taylorform.h"
 #include "xml.h"
 #include "miniparser.h"
 #include <setjmp.h>
 
 #define READBUFFERSIZE 16000
-
-void auto_diff(mpfi_t* res, node *f, mpfi_t x, int n) {
-  return;
-}
 
 
 extern int internyyparse(void *);

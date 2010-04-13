@@ -25,6 +25,8 @@ minilexer.l \
 help.h \
 assignment.c \
 assignment.h \
+autodiff.c \
+autodiff.h \
 chain.c \
 chain.h \
 double.c \
@@ -82,6 +84,8 @@ minilexer.l \
 help.h \
 assignment.c \
 assignment.h \
+autodiff.c \
+autodiff.h \
 chain.c \
 chain.h \
 double.c \

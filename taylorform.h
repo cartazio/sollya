@@ -1,15 +1,18 @@
 /*
 
-Copyright 2009 by 
+Copyright 2009-2010 by 
 
 Laboratoire de l'Informatique du Parallélisme, 
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
 
-Contributors Ch. Lauter, S. Chevillard, N. Jourdan
+and by
 
-christoph.lauter@ens-lyon.fr
+LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2)
+
+Contributors S. Chevillard, M. Joldes
+
 sylvain.chevillard@ens-lyon.fr
-nicolas.jourdan@ens-lyon.fr
+mioara.joldes@ens-lyon.fr
 
 This software is a computer program whose purpose is to provide an
 environment for safe floating-point code development. It is
@@ -52,44 +55,20 @@ knowledge of the CeCILL-C license and that you accept its terms.
 #include "expression.h"
 #include "chain.h"
 
-/* Autodiff related functions */
+void boundTranslatedPolynomialByHorner(mpfi_t bound, int n, mpfi_t *coeffs, mpfi_t x0, mpfi_t I);
+void polynomialBoundSharp(mpfi_t *bound, int n, mpfi_t *coeffs, mpfi_t x0, mpfi_t I);
 
-void exp_diff(mpfi_t *res, mpfi_t x, int n);
-void expm1_diff(mpfi_t *res, mpfi_t x, int n);
-void log1p_diff(mpfi_t *res, mpfi_t x, int n);
-void log_diff(mpfi_t *res, mpfi_t x, int n);
-void log2_diff(mpfi_t *res, mpfi_t x, int n);
-void log10_diff(mpfi_t *res, mpfi_t x, int n);
-void sin_diff(mpfi_t *res, mpfi_t x, int n);
-void cos_diff(mpfi_t *res, mpfi_t x, int n);
-void sinh_diff(mpfi_t *res, mpfi_t x, int n);
-void cosh_diff(mpfi_t *res, mpfi_t x, int n);
-void tan_diff(mpfi_t *res, mpfi_t x, int n);
-void tanh_diff(mpfi_t *res, mpfi_t x, int n);
-void atan_diff(mpfi_t *res, mpfi_t x, int n);
-void atanh_diff(mpfi_t *res, mpfi_t x, int n);
-void asin_diff(mpfi_t *res, mpfi_t x, int n);
-void acos_diff(mpfi_t *res, mpfi_t x, int n);
-void asinh_diff(mpfi_t *res, mpfi_t x, int n);
-void acosh_diff(mpfi_t *res, mpfi_t x, int n);
-void erf_diff(mpfi_t *res, mpfi_t x, int n);
-void erfc_diff(mpfi_t *res, mpfi_t x, int n);
-void abs_diff(mpfi_t *res, mpfi_t x, int n);
-
-void powerFunction_diff(mpfi_t *res, mpfr_t p, mpfi_t x, int n);
-void constantPower_diff(mpfi_t *res, mpfi_t x, mpfr_t p, int n);
-void baseFunction_diff(mpfi_t *res, int nodeType, mpfi_t x, int n);
-
-
-
+/* This function transforms a polynomial with interval coeffs
+   into a poly with mpfr coeffs and a small remainder */
+void mpfr_get_poly(mpfr_t *rc, mpfi_t *errors_array, mpfi_t rest, int n, mpfi_t *p, mpfi_t x0, mpfi_t x);
 
 /* Taylor model structure:
-n- order: polynomial of degree n-1, remainder of order O(x^n)
-rem_bound - bound for the remainder f-T
-poly_array - array of coeffs for the polynomial (mpfi's) in basis (x-x0)
-poly_bound - bound for the polynomial (helpful for computations)
-x - interval on which the tm is computed
-x0 - interval around the expansion point
+     n - order: polynomial of degree n-1, remainder of order O(x^n)
+     rem_bound - bound for the remainder f-T
+     poly_array - array of coeffs for the polynomial (mpfi's) in basis (x-x0)
+     poly_bound - bound for the polynomial (helpful for computations)
+     x - interval on which the tm is computed
+     x0 - interval around the expansion point
 */
 typedef struct tmdl {
 int n; 
@@ -101,11 +80,17 @@ mpfi_t x0;
 
 } tModel;
 
-void ctMultiplication_TM(tModel*d,tModel*s, mpfi_t c,int mode);
-void ctDivision_TM(tModel*d,tModel*s, mpfi_t c,int mode);
-void polynomialBoundHorner(mpfi_t *bound,int n,mpfi_t *coeffs,mpfi_t x0,mpfi_t x);
-void polynomialBoundSharp(mpfi_t *bound,int n,mpfi_t *coeffs,mpfi_t x0Int,mpfi_t x);
-void polynomialBoundSharp(mpfi_t *bound,int n,mpfi_t *coeffs,mpfi_t x0,mpfi_t x);
+tModel* createEmptytModel(int n,  mpfi_t x0, mpfi_t x);
+void cleartModel(tModel *t);
+void copytModel(tModel *t, tModel *tt);
+void printtModel(tModel *t);
+
+void consttModel(tModel*t, mpfi_t ct); 
+void addition_TM(tModel *t,tModel *t1, tModel *t2, int mode);
+void ctMultiplication_TM(tModel*d, tModel*s, mpfi_t c, int mode);
+void multiplication_TM(tModel *t, tModel *t1, tModel *t2, int mode);
+
+void composition_TM(tModel *t,tModel *g, tModel *f, int mode);
 
 void taylorform(node **T, chain **errors, mpfi_t **delta,
 		node *f, int n, mpfi_t *x0, mpfi_t *d, int mode);

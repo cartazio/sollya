@@ -1,15 +1,18 @@
 /*
 
-Copyright 2009 by 
+Copyright 2009-2010 by 
 
 Laboratoire de l'Informatique du Parallélisme, 
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
 
-Contributors Ch. Lauter, S. Chevillard, N. Jourdan
+and by
 
-christoph.lauter@ens-lyon.fr
+LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2)
+
+Contributors S. Chevillard, M. Joldes
+
 sylvain.chevillard@ens-lyon.fr
-nicolas.jourdan@ens-lyon.fr
+mioara.joldes@ens-lyon.fr
 
 This software is a computer program whose purpose is to provide an
 environment for safe floating-point code development. It is
@@ -49,1110 +52,13 @@ knowledge of the CeCILL-C license and that you accept its terms.
 
 #include "taylorform.h"
 #include "external.h"
-#include "remez.h"
 #include "infnorm.h"
+#include "autodiff.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-
-/***********************************************************/
-/***********************************************************/
-/***************functions related to autodiff!!!!!!!!!******/
-/***********************************************************/
-/***********************************************************/
-void auto_diff(mpfi_t* res, node *f, mpfi_t x, int n);
-
-
-/* Computes the successive derivatives of y -> y^p at point x */ 
-/* [x^p    p*x^(p-1)   ...   p*(p-1)*...*(p-n+1)*x^(p-n) ]    */
-void constantPower_diff(mpfi_t *res, mpfi_t x, mpfr_t p, int n) {
-  mpfi_t expo, acc;
-  mp_prec_t prec_expo, prec;
-  int i;
   
-  prec = getToolPrecision();
-  prec_expo = (prec > mpfr_get_prec(p))?prec:mpfr_get_prec(p);
-
-  mpfi_init2(expo, prec_expo);
-  mpfi_init2(acc, prec);
-  
-  mpfi_set_fr(expo, p);
-  mpfi_set_ui(acc, 1);
-  
-  for(i=0; i<=n; i++) {
-    if (mpfi_is_zero(acc)) mpfi_set_ui(res[i],0);
-    else {
-      mpfi_pow(res[i], x, expo);
-      mpfi_mul(res[i], res[i], acc);
-      
-      mpfi_mul(acc, acc, expo);
-      mpfi_sub_ui(expo, expo, 1);
-    }
-  }
-
-  mpfi_clear(expo);
-  mpfi_clear(acc);
-
-  return;
-}
-
-void exp_diff(mpfi_t *res, mpfi_t x, int n) {
-  int i;
-  mpfi_t temp;
-  mp_prec_t prec;
-
-  prec = getToolPrecision();
-  mpfi_init2(temp, prec);
-
-  mpfi_exp(temp, x);
-  for(i=0;i<=n;i++) mpfi_set(res[i], temp);
-
-  mpfi_clear(temp);
-  return;
-}
-
-void expm1_diff(mpfi_t *res, mpfi_t x, int n) {
-  int i;
-  mpfi_t temp;
-  mp_prec_t prec;
-
-  prec = getToolPrecision();
-
-  mpfi_init2(temp, prec);
-
-  mpfi_exp(temp, x);
-  for(i=0;i<=n;i++) mpfi_set(res[i], temp);
-
-  mpfi_sub_ui(res[0], res[0], 1);
-
-  mpfi_clear(temp);
-  return;
-}
-
-
-/* the power function is: p^x, where p is a positive constant */
-/* [p^x, log(p)p^x, ... , log(p)^n p^x ] */
-void powerFunction_diff(mpfi_t *res, mpfr_t p, mpfi_t x, int n) {
-  int i;
-  mpfi_t temp1,temp2;
-  mp_prec_t prec;
-
-  prec = getToolPrecision();
-  mpfi_init2(temp1, prec);
-  mpfi_init2(temp2, prec);
-
-  mpfi_set_fr(temp1,p);
-
-  mpfi_pow(temp2, temp1, x); /* temp2 = p^x */
-  mpfi_log(temp1,temp1); /* temp1 = log(p) */
-
-  for(i=0;i<=n;i++) {
-    mpfi_set(res[i], temp2);
-    mpfi_mul(temp2,temp2,temp1);
-  }
-
-  mpfi_clear(temp1);
-  mpfi_clear(temp2);
-  return;
-}
-
-
-void log_diff(mpfi_t *res, mpfi_t x, int n) {
-  mpfr_t minusOne;
-  mp_prec_t prec;
-
-  prec = getToolPrecision();
-
-  mpfi_log(res[0], x);
-
-  if(n>=1) {
-    mpfr_init2(minusOne, prec);
-    mpfr_set_si(minusOne, -1, GMP_RNDN);
-    constantPower_diff(res+1, x, minusOne, n-1);
-    mpfr_clear(minusOne);
-  }
-  return;
-}
-
-void log1p_diff(mpfi_t *res, mpfi_t x, int n) {
-  mpfr_t minusOne;
-  mpfi_t u;
-  mp_prec_t prec;
-
-  prec = getToolPrecision();
-  
-  mpfi_log1p(res[0], x);
-
-  if(n>=1) {
-    mpfi_init2(u, prec);
-    mpfi_add_ui(u, x, 1);
-    mpfr_init2(minusOne, prec);
-    mpfr_set_si(minusOne, -1, GMP_RNDN);
-    constantPower_diff(res+1, u, minusOne, n-1);
-    mpfr_clear(minusOne);
-    mpfi_clear(u);
-  }
-
-  return;
-}
-
-/* log2(x) = log(x) * (1/log(2)) */
-void log2_diff(mpfi_t *res, mpfi_t x, int n) {
-  int i;
-  mpfi_t log2;
-  mp_prec_t prec;
-
-  prec = getToolPrecision();
-  mpfi_init2(log2, prec);
-
-  mpfi_set_ui(log2, 2); mpfi_log(log2, log2);
-  log_diff(res,x,n);
-  for(i=0;i<=n;i++) mpfi_div(res[i], res[i], log2);
-
-  mpfi_clear(log2);
-  return;
-}
-
-/* idem */
-void log10_diff(mpfi_t *res, mpfi_t x, int n) {
-  int i;
-  mpfi_t log10;
-  mp_prec_t prec;
-
-  prec = getToolPrecision();
-  mpfi_init2(log10, prec);
-
-  mpfi_set_ui(log10, 10); mpfi_log(log10, log10);
-  log_diff(res,x,n);
-  for(i=0;i<=n;i++) mpfi_div(res[i], res[i], log10);
-
-  mpfi_clear(log10);
-  return;
-}
-
-void sin_diff(mpfi_t *res, mpfi_t x, int n) {
-  int i,index;
-  mpfi_t vals[4];
-  mp_prec_t prec;
-
-  prec = getToolPrecision();
-  if(n==0) mpfi_sin(res[0], x);
-  else {
-    
-    for(index=0;index<4;index++) mpfi_init2(vals[index], prec);
-    
-    mpfi_sin(vals[0], x); 
-    mpfi_cos(vals[1], x);
-    mpfi_neg(vals[2],vals[0]);
-    mpfi_neg(vals[3],vals[1]);
-
-    for(i=0;i<=n;i++) mpfi_set(res[i], vals[i % 4]);
-
-    for(index=0;index<4;index++) mpfi_clear(vals[index]);
-  }
-
-  return;
-}
-
-void cos_diff(mpfi_t *res, mpfi_t x, int n) {
-  int i,index;
-  mpfi_t vals[4];
-  mp_prec_t prec;
-
-  prec = getToolPrecision();
-  
-  if(n==0) mpfi_cos(res[0], x);
-  else {
-    
-    for(index=0;index<4;index++) mpfi_init2(vals[index], prec);
-    
-    mpfi_cos(vals[0], x);  
-    mpfi_sin(vals[3], x);
-    mpfi_neg(vals[2],vals[0]);
-    mpfi_neg(vals[1],vals[3]);
-
-    for(i=0;i<=n;i++) mpfi_set(res[i], vals[i % 4]);
-
-    for(index=0;index<4;index++) mpfi_clear(vals[index]);
-  }
-
-  return;
-}
-
-void sinh_diff(mpfi_t *res, mpfi_t x, int n) {
-  int i,index;
-  mpfi_t vals[2];
-  mp_prec_t prec;
-
-  prec = getToolPrecision();
-
-  if(n==0) mpfi_sinh(res[0], x);
-  else {
-    
-    for(index=0;index<2;index++) mpfi_init2(vals[index], prec);
-    
-    mpfi_sinh(vals[0], x);  mpfi_cosh(vals[1], x);
-
-    for(i=0;i<=n;i++) mpfi_set(res[i], vals[i % 2]);
-
-    for(index=0;index<2;index++) mpfi_clear(vals[index]);
-  }
-
-  return;
-}
-
-void cosh_diff(mpfi_t *res, mpfi_t x, int n) {
-  int i,index;
-  mpfi_t vals[2];
-  mp_prec_t prec;
-
-  prec = getToolPrecision();
-  
-  if(n==0) mpfi_cosh(res[0], x);
-  else {
-    
-    for(index=0;index<2;index++) mpfi_init2(vals[index], prec);
-    
-    mpfi_cosh(vals[0], x);  mpfi_sinh(vals[1], x);
-
-    for(i=0;i<=n;i++) mpfi_set(res[i], vals[i % 2]);
-
-    for(index=0;index<2;index++) mpfi_clear(vals[index]);
-  }
-
-  return;
-}
-
-
-/* Takes a polynomial given by the array of its coefficients [p0...pn] 
-   and differentiates it (returns the array of the derivative) */
-
-/* It IS safe to use the same pointer for res and coeff_array */
-/* (in-place computation) */
-void symbolic_poly_diff(mpfi_t *res, mpfi_t *coeff_array, int degree) {
-  mpfi_t temp;
-  mp_prec_t prec;
-  int i;
-
-  prec = getToolPrecision();
-  mpfi_init2(temp, prec);
-
-  for(i=0;i<=degree-1;i++) {
-    mpfi_set_ui(temp, i+1);
-    mpfi_mul(res[i], temp, coeff_array[i+1]);
-  }
-
-  mpfi_clear(temp);
-}
-
-/* Evaluates a symbolic polynomial at point x by Horner scheme */
-void symbolic_poly_evaluation_horner(mpfi_t res, mpfi_t *coeffs_array, mpfi_t x, int degree) {
-  int i;
-  mpfi_t temp;
-  mp_prec_t prec;
-
-  prec = getToolPrecision();
-  mpfi_init2(temp, prec);
-
-  mpfi_set(temp, coeffs_array[degree]);
-  for(i=degree-1;i>=0;i--) {
-    mpfi_mul(temp, temp, x);
-    mpfi_add(temp, temp, coeffs_array[i]);
-  }
-  mpfi_set(res, temp);
-  mpfi_clear(temp);
-}
-
-/* Evaluates a symbolic polynomial at point x by computing successive powers */
-void symbolic_poly_evaluation_powers(mpfi_t res, mpfi_t *coeffs_array, mpfi_t *powers_array, mpfi_t x, int degree) {
-  int i;
-  mpfi_t temp, acc;
-  mp_prec_t prec;
-
-  prec = getToolPrecision();
-  mpfi_init2(temp, prec);
-  mpfi_init2(acc, prec);
-
-  mpfi_set_ui(acc, 0);
-  for(i=0;i<=degree;i++) {
-    mpfi_mul(temp, coeffs_array[i], powers_array[i]);
-    mpfi_add(acc, acc, temp);
-  }
-  mpfi_set(res, acc);
-
-  mpfi_clear(temp);
-  mpfi_clear(acc);
-}
-
-
-/*  u=tan(x), tan^(n)=p_(n)(u) with
-    p_0 = u;
-
-recurrence formula: p_(n+1)(u) = (p_n(u))' = p'_n(u) * (1+u^2)
-   -> p_n of degree n+1
-*/
-
-void tan_diff(mpfi_t *res, mpfi_t x, int n) {
-  int i,index;
-  mpfi_t *coeffs_array;
-  mpfi_t u;
-  mp_prec_t prec;
-
-  prec = getToolPrecision();
-  coeffs_array = (mpfi_t *)safeMalloc( (n+2)*sizeof(mpfi_t));
-
-  for (index=0; index<=n+1; index++) {
-    mpfi_init2(coeffs_array[index], prec);
-    mpfi_set_ui(coeffs_array[index], 0);
-  }
-  mpfi_init2(u, prec);
-
-  mpfi_tan(u, x);
-  mpfi_set_ui(coeffs_array[0], 0);
-  mpfi_set_ui(coeffs_array[1], 1);
-  
-  mpfi_set(res[0], u);
-
-  for(index=1; index<=n; index++) {
-    /* coeffs_array represents p_(index-1) */
-    
-    symbolic_poly_diff(coeffs_array, coeffs_array, index);
-    mpfi_set_ui(coeffs_array[index], 0);
-    /* now it represents p_(index-1)' */
-
-    for(i=index+1; i>=2; i--) {
-      mpfi_add(coeffs_array[i], coeffs_array[i], coeffs_array[i-2]);
-    }
-    /* now it represents p_(index) */
-
-    symbolic_poly_evaluation_horner(res[index], coeffs_array, u, index+1);
-  }
-    
-  for (index=0; index<=n+1; index++){
-    mpfi_clear(coeffs_array[index]);
-  }
-  mpfi_clear(u);
-  free(coeffs_array);
-  
-  return;
-}
-
-/*  u=tanh(x), tanh^(n)=p_(n)(u) with
-    p_0 = u;
-
-recurrence formula: p_(n+1)(u) = (p_n(u))' = p'_n(u) * (1-u^2)
-   -> p_n of degree n+1
-*/
-
-void tanh_diff(mpfi_t *res, mpfi_t x, int n) {
-  int i,index;
-  mpfi_t *coeffs_array;
-  mpfi_t u;
-  mp_prec_t prec;
-
-  prec = getToolPrecision();
-  coeffs_array = (mpfi_t *)safeMalloc( (n+2)*sizeof(mpfi_t));
-
-  for (index=0; index<=n+1; index++) {
-    mpfi_init2(coeffs_array[index], prec);
-    mpfi_set_ui(coeffs_array[index], 0);
-  }
-  mpfi_init2(u, prec);
-
-  mpfi_tanh(u, x);
-  mpfi_set_ui(coeffs_array[0], 0);
-  mpfi_set_ui(coeffs_array[1], 1);
-  
-  mpfi_set(res[0], u);
-
-  for(index=1; index<=n; index++) {
-    /* coeffs_array represents p_(index-1) */
-    
-    symbolic_poly_diff(coeffs_array, coeffs_array, index);
-    mpfi_set_ui(coeffs_array[index], 0);
-    /* now it represents p_(index-1)' */
-
-    for(i=index+1; i>=2; i--) {
-      mpfi_sub(coeffs_array[i], coeffs_array[i], coeffs_array[i-2]);
-    }
-    /* now it represents p_(index) */
-
-    symbolic_poly_evaluation_horner(res[index], coeffs_array, u, index+1);
-  }
-    
-  for (index=0; index<=n+1; index++){
-    mpfi_clear(coeffs_array[index]);
-  }
-  mpfi_clear(u);
-  free(coeffs_array);
-  
-  return;
-}
-
-
-/* atan_diff : reccurence formula: p_(n+1)=p'_n * (1+x^2) - 2nx * p_n 
-   atan^(0) = atan(x)
-   atan^(n)=p_(n)(x)/((1+x^2)^n)
-   p_1=1;
-
-   --> degree of p_n is (n-1)
-*/
-void atan_diff(mpfi_t *res, mpfi_t x, int n) {
-  int i,index;
-  mpfi_t *coeffs_array, *coeffs_array_diff;
-  mpfi_t u, temp;
-
-  mp_prec_t prec;
-    
-  prec = getToolPrecision();
-  coeffs_array = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
-  coeffs_array_diff = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
-
-  for (index=0; index<=n-1; index++) {
-    mpfi_init2(coeffs_array[index], prec);
-    mpfi_init2(coeffs_array_diff[index], prec);
-
-    mpfi_set_ui(coeffs_array[index], 0);
-    mpfi_set_ui(coeffs_array_diff[index], 0);
-  }
-
-  mpfi_init2(u, prec);
-  mpfi_init2(temp, prec);
-
-  mpfi_atan(res[0], x);
-
-  if(n>=1) {
-    mpfi_sqr(u, x);
-    mpfi_add_ui(u, u, 1);
-
-    mpfi_inv(res[1], u);
-
-    mpfi_set_ui(coeffs_array[0], 1);
-  }
-
-  for(index=2; index<=n; index++) {
-    /* coeffs_array represents p_(index-1) */
-    
-    symbolic_poly_diff(coeffs_array_diff, coeffs_array, index-2);
-    mpfi_set_ui(coeffs_array_diff[index-2], 0);
-    /* now it represents p_(index-1)' */
-
-    for(i=index-1; i>=2; i--) {
-      mpfi_add(coeffs_array[i], coeffs_array_diff[i], coeffs_array_diff[i-2]);
-      mpfi_mul_ui(temp, coeffs_array[i-1], 2*(index-1));
-      mpfi_sub(coeffs_array[i], coeffs_array[i], temp);
-    }
-
-    mpfi_mul_ui(temp, coeffs_array[0], 2*(index-1));
-    mpfi_sub(coeffs_array[1], coeffs_array_diff[1], temp);
-
-    mpfi_set(coeffs_array[0], coeffs_array_diff[0]);
-    /* now it represents p_(index) */
-
-    symbolic_poly_evaluation_horner(res[index], coeffs_array, x, index-1);
-    mpfi_set_ui(temp, index);
-    mpfi_pow(temp, u, temp);
-    mpfi_div(res[index], res[index], temp);
-  }
-    
-  for (index=0; index<=n-1; index++){
-    mpfi_clear(coeffs_array[index]);
-    mpfi_clear(coeffs_array_diff[index]);
-  }
-  mpfi_clear(u);
-  mpfi_clear(temp);
-  free(coeffs_array);
-  free(coeffs_array_diff);
-  
-  return;
-}
-
-
-/* atanh_diff : reccurence formula: p_(n+1)=p'_n * (1-x^2) + 2nx * p_n 
-   atanh^(0) = atanh(x)
-   atanh^(n)=p_(n)(x)/((1-x^2)^n)
-   p_1=1;
-
-   --> degree of p_n is (n-1)
-*/
-void atanh_diff(mpfi_t *res, mpfi_t x, int n) {
-  int i,index;
-  mpfi_t *coeffs_array, *coeffs_array_diff;
-  mpfi_t u, temp;
-
-  mp_prec_t prec;
-    
-  prec = getToolPrecision();
-  coeffs_array = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
-  coeffs_array_diff = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
-
-  for (index=0; index<=n-1; index++) {
-    mpfi_init2(coeffs_array[index], prec);
-    mpfi_init2(coeffs_array_diff[index], prec);
-
-    mpfi_set_ui(coeffs_array[index], 0);
-    mpfi_set_ui(coeffs_array_diff[index], 0);
-  }
-
-  mpfi_init2(u, prec);
-  mpfi_init2(temp, prec);
-
-  mpfi_atanh(res[0], x);
-
-  if(n>=1) {
-    mpfi_sqr(u, x);
-    mpfi_sub_ui(u, u, 1); /* TODO: FIX IT when MPFI is patched */
-    mpfi_neg(u, u);
-
-    mpfi_inv(res[1], u);
-
-    mpfi_set_ui(coeffs_array[0], 1);
-  }
-
-  for(index=2; index<=n; index++) {
-    /* coeffs_array represents p_(index-1) */
-    
-    symbolic_poly_diff(coeffs_array_diff, coeffs_array, index-2);
-    mpfi_set_ui(coeffs_array_diff[index-2], 0);
-    /* now it represents p_(index-1)' */
-
-    for(i=index-1; i>=2; i--) {
-      mpfi_sub(coeffs_array[i], coeffs_array_diff[i], coeffs_array_diff[i-2]);
-      mpfi_mul_ui(temp, coeffs_array[i-1], 2*(index-1));
-      mpfi_add(coeffs_array[i], coeffs_array[i], temp);
-    }
-
-    mpfi_mul_ui(temp, coeffs_array[0], 2*(index-1));
-    mpfi_add(coeffs_array[1], coeffs_array_diff[1], temp);
-
-    mpfi_set(coeffs_array[0], coeffs_array_diff[0]);
-    /* now it represents p_(index) */
-
-    symbolic_poly_evaluation_horner(res[index], coeffs_array, x, index-1);
-    mpfi_set_ui(temp, index);
-    mpfi_pow(temp, u, temp);
-    mpfi_div(res[index], res[index], temp);
-  }
-    
-  for (index=0; index<=n-1; index++){
-    mpfi_clear(coeffs_array[index]);
-    mpfi_clear(coeffs_array_diff[index]);
-  }
-  mpfi_clear(u);
-  mpfi_clear(temp);
-  free(coeffs_array);
-  free(coeffs_array_diff);
-  
-  return;
-}
-
-
-
-/* asin_diff : recurrence formula: p_(n+1)=p'_n * (1-x^2) + (2n-1)x * p_n 
-   asin^(0) = asin(x)
-   asin^(n)=p_(n)(x) / (1-x^2)^((2n-1)/2)
-   p_1=1;
-
-   --> degree of p_n is (n-1)
-*/
-void asin_diff(mpfi_t *res, mpfi_t x, int n) {
-  int i,index;
-  mpfi_t *coeffs_array, *coeffs_array_diff;
-  mpfi_t u, temp;
-
-  mp_prec_t prec;
-    
-  prec = getToolPrecision();
-  coeffs_array = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
-  coeffs_array_diff = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
-
-  for (index=0; index<=n-1; index++) {
-    mpfi_init2(coeffs_array[index], prec);
-    mpfi_init2(coeffs_array_diff[index], prec);
-
-    mpfi_set_ui(coeffs_array[index], 0);
-    mpfi_set_ui(coeffs_array_diff[index], 0);
-  }
-
-  mpfi_init2(u, prec);
-  mpfi_init2(temp, prec);
-
-  mpfi_asin(res[0], x);
-
-  if(n>=1) {
-    mpfi_sqr(u, x);
-    mpfi_sub_ui(u, u, 1); /* TODO: FIX IT when MPFI is patched */
-    mpfi_neg(u, u);
-    mpfi_sqrt(u, u);
-
-    mpfi_inv(res[1], u);
-
-    mpfi_set_ui(coeffs_array[0], 1);
-  }
-
-  for(index=2; index<=n; index++) {
-    /* coeffs_array represents p_(index-1) */
-    
-    symbolic_poly_diff(coeffs_array_diff, coeffs_array, index-2);
-    mpfi_set_ui(coeffs_array_diff[index-2], 0);
-    /* now it represents p_(index-1)' */
-
-    for(i=index-1; i>=2; i--) {
-      mpfi_sub(coeffs_array[i], coeffs_array_diff[i], coeffs_array_diff[i-2]);
-      mpfi_mul_ui(temp, coeffs_array[i-1], 2*(index-1)-1);
-      mpfi_add(coeffs_array[i], coeffs_array[i], temp);
-    }
-
-    mpfi_mul_ui(temp, coeffs_array[0], 2*(index-1)-1);
-    mpfi_add(coeffs_array[1], coeffs_array_diff[1], temp);
-
-    mpfi_set(coeffs_array[0], coeffs_array_diff[0]);
-    /* now it represents p_(index) */
-
-    symbolic_poly_evaluation_horner(res[index], coeffs_array, x, index-1);
-    mpfi_set_ui(temp, 2*index-1);
-    mpfi_pow(temp, u, temp);
-    mpfi_div(res[index], res[index], temp);
-  }
-    
-  for (index=0; index<=n-1; index++){
-    mpfi_clear(coeffs_array[index]);
-    mpfi_clear(coeffs_array_diff[index]);
-  }
-  mpfi_clear(u);
-  mpfi_clear(temp);
-  free(coeffs_array);
-  free(coeffs_array_diff);
-  
-  return;
-}
-
-
-/*acos_diff : except for the res[0], all the terms are equal to -asin^(n)(x)
-*/
-void acos_diff(mpfi_t *res, mpfi_t x, int n) {
-  int i; 
-
-  asin_diff(res,x,n);
-
-  mpfi_acos(res[0], x);
-
-  for (i=1; i<=n;i++)  mpfi_neg(res[i],res[i]);
-
-  return;
-}
-
-
-/* asinh_diff : recurrence formula: p_(n+1)=p'_n * (1+x^2) - (2n-1)x * p_n 
-   asinh^(0) = asinh(x)
-   asinh^(n)=p_(n)(x) / (1+x^2)^((2n-1)/2)
-   p_1=1;
-
-   --> degree of p_n is (n-1)
-*/
-void asinh_diff(mpfi_t *res, mpfi_t x, int n) {
-  int i,index;
-  mpfi_t *coeffs_array, *coeffs_array_diff;
-  mpfi_t u, temp;
-
-  mp_prec_t prec;
-    
-  prec = getToolPrecision();
-  coeffs_array = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
-  coeffs_array_diff = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
-
-  for (index=0; index<=n-1; index++) {
-    mpfi_init2(coeffs_array[index], prec);
-    mpfi_init2(coeffs_array_diff[index], prec);
-
-    mpfi_set_ui(coeffs_array[index], 0);
-    mpfi_set_ui(coeffs_array_diff[index], 0);
-  }
-
-  mpfi_init2(u, prec);
-  mpfi_init2(temp, prec);
-
-  mpfi_asinh(res[0], x);
-
-  if(n>=1) {
-    mpfi_sqr(u, x);
-    mpfi_add_ui(u, u, 1);
-    mpfi_sqrt(u, u);
-
-    mpfi_inv(res[1], u);
-
-    mpfi_set_ui(coeffs_array[0], 1);
-  }
-
-  for(index=2; index<=n; index++) {
-    /* coeffs_array represents p_(index-1) */
-    
-    symbolic_poly_diff(coeffs_array_diff, coeffs_array, index-2);
-    mpfi_set_ui(coeffs_array_diff[index-2], 0);
-    /* now it represents p_(index-1)' */
-
-    for(i=index-1; i>=2; i--) {
-      mpfi_add(coeffs_array[i], coeffs_array_diff[i], coeffs_array_diff[i-2]);
-      mpfi_mul_ui(temp, coeffs_array[i-1], 2*(index-1)-1);
-      mpfi_sub(coeffs_array[i], coeffs_array[i], temp);
-    }
-
-    mpfi_mul_ui(temp, coeffs_array[0], 2*(index-1)-1);
-    mpfi_sub(coeffs_array[1], coeffs_array_diff[1], temp);
-
-    mpfi_set(coeffs_array[0], coeffs_array_diff[0]);
-    /* now it represents p_(index) */
-
-    symbolic_poly_evaluation_horner(res[index], coeffs_array, x, index-1);
-    mpfi_set_ui(temp, 2*index-1);
-    mpfi_pow(temp, u, temp);
-    mpfi_div(res[index], res[index], temp);
-  }
-    
-  for (index=0; index<=n-1; index++){
-    mpfi_clear(coeffs_array[index]);
-    mpfi_clear(coeffs_array_diff[index]);
-  }
-  mpfi_clear(u);
-  mpfi_clear(temp);
-  free(coeffs_array);
-  free(coeffs_array_diff);
-  
-  return;
-}
-
-
-/* acosh_diff : recurrence formula: p_(n+1)=p'_n * (x^2-1) - (2n-1)x * p_n 
-   acosh^(0) = acosh(x)
-   acosh^(n)=p_(n)(x) / (x^2-1)^((2n-1)/2)
-   p_1=1;
-
-   --> degree of p_n is (n-1)
-*/
-void acosh_diff(mpfi_t *res, mpfi_t x, int n) {
-  int i,index;
-  mpfi_t *coeffs_array, *coeffs_array_diff;
-  mpfi_t u, temp;
-
-  mp_prec_t prec;
-    
-  prec = getToolPrecision();
-  coeffs_array = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
-  coeffs_array_diff = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
-
-  for (index=0; index<=n-1; index++) {
-    mpfi_init2(coeffs_array[index], prec);
-    mpfi_init2(coeffs_array_diff[index], prec);
-
-    mpfi_set_ui(coeffs_array[index], 0);
-    mpfi_set_ui(coeffs_array_diff[index], 0);
-  }
-
-  mpfi_init2(u, prec);
-  mpfi_init2(temp, prec);
-
-  mpfi_acosh(res[0], x);
-
-  if(n>=1) {
-    mpfi_sqr(u, x);
-    mpfi_sub_ui(u, u, 1);
-    mpfi_sqrt(u, u);
-
-    mpfi_inv(res[1], u);
-
-    mpfi_set_ui(coeffs_array[0], 1);
-  }
-
-  for(index=2; index<=n; index++) {
-    /* coeffs_array represents p_(index-1) */
-    
-    symbolic_poly_diff(coeffs_array_diff, coeffs_array, index-2);
-    mpfi_set_ui(coeffs_array_diff[index-2], 0);
-    /* now it represents p_(index-1)' */
-
-    for(i=index-1; i>=2; i--) {
-      mpfi_sub(coeffs_array[i], coeffs_array_diff[i-2], coeffs_array_diff[i]);
-      mpfi_mul_ui(temp, coeffs_array[i-1], 2*(index-1)-1);
-      mpfi_sub(coeffs_array[i], coeffs_array[i], temp);
-    }
-
-    mpfi_mul_ui(temp, coeffs_array[0], 2*(index-1)-1);
-    mpfi_add(coeffs_array[1], temp, coeffs_array_diff[1]);
-    mpfi_neg(coeffs_array[1], coeffs_array[1]);
-
-    mpfi_neg(coeffs_array[0], coeffs_array_diff[0]);
-    /* now it represents p_(index) */
-
-    symbolic_poly_evaluation_horner(res[index], coeffs_array, x, index-1);
-    mpfi_set_ui(temp, 2*index-1);
-    mpfi_pow(temp, u, temp);
-    mpfi_div(res[index], res[index], temp);
-  }
-    
-  for (index=0; index<=n-1; index++){
-    mpfi_clear(coeffs_array[index]);
-    mpfi_clear(coeffs_array_diff[index]);
-  }
-  mpfi_clear(u);
-  mpfi_clear(temp);
-  free(coeffs_array);
-  free(coeffs_array_diff);
-  
-  return;
-}
-
-/* erf^(n)(x) = p_n(x)*e^(-x^2)        */
-/* with p_1(x) = 2/sqrt(pi)            */
-/* and p_(n+1)(x) = p_n'(x) - 2xp_n(x) */
-/*  -> degree of p_n is n-1            */
-void erf_diff(mpfi_t *res, mpfi_t x, int n) {
-  int i,index;
-  mpfi_t *coeffs_array, *coeffs_array_diff;
-  mpfi_t u, temp;
-
-  mp_prec_t prec;
-    
-  prec = getToolPrecision();
-  coeffs_array = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
-  coeffs_array_diff = (mpfi_t *)safeMalloc( n*sizeof(mpfi_t));
-
-  for (index=0; index<=n-1; index++) {
-    mpfi_init2(coeffs_array[index], prec);
-    mpfi_init2(coeffs_array_diff[index], prec);
-
-    mpfi_set_ui(coeffs_array[index], 0);
-    mpfi_set_ui(coeffs_array_diff[index], 0);
-  }
-
-  mpfi_init2(u, prec);
-  mpfi_init2(temp, prec);
-
-  mpfi_erf(res[0], x);
-
-  if(n>=1) {
-    mpfi_const_pi(temp);
-    mpfi_sqrt(temp, temp);
-    mpfi_ui_div(temp, 2, temp);
-
-    mpfi_sqr(u, x);
-    mpfi_neg(u, u);
-    mpfi_exp(u, u);
-
-    mpfi_mul(res[1], temp, u);
-
-    mpfi_set(coeffs_array[0], temp);
-  }
-
-  for(index=2; index<=n; index++) {
-    /* coeffs_array represents p_(index-1) */
-    
-    symbolic_poly_diff(coeffs_array_diff, coeffs_array, index-2);
-    mpfi_set_ui(coeffs_array_diff[index-2], 0);
-    /* now it represents p_(index-1)' */
-
-    for(i=index-1; i>=1; i--) {
-      mpfi_mul_ui(temp, coeffs_array[i-1], 2);
-      mpfi_sub(coeffs_array[i], coeffs_array_diff[i], temp);
-    }
-
-    mpfi_set(coeffs_array[0], coeffs_array_diff[0]);
-    /* now it represents p_(index) */
-
-    symbolic_poly_evaluation_horner(res[index], coeffs_array, x, index-1);
-    mpfi_mul(res[index], res[index], u);
-  }
-    
-  for (index=0; index<=n-1; index++){
-    mpfi_clear(coeffs_array[index]);
-    mpfi_clear(coeffs_array_diff[index]);
-  }
-  mpfi_clear(u);
-  mpfi_clear(temp);
-  free(coeffs_array);
-  free(coeffs_array_diff);
-  
-  return;  
-}
-
-void erfc_diff(mpfi_t *res, mpfi_t x, int n) {
-  int i; 
-
-  erf_diff(res,x,n);
-
-  mpfi_erfc(res[0], x);
-
-  for (i=1; i<=n;i++)  mpfi_neg(res[i],res[i]);
-
-  return;
-}
-
-void abs_diff(mpfi_t *res, mpfi_t x, int n) {
-  int s,i;
-  mpfi_t temp;
-  mp_prec_t prec;
-
-  prec = getToolPrecision();
-  mpfi_init2(temp, prec);
-
-  mpfi_abs(res[0], x);
-  if(n >= 1) {
-    if (mpfi_has_zero(x)) {
-      mpfi_interv_si(res[1], -1, 1);
-      mpfi_interv_ui(temp, 0, 1); mpfi_inv(temp, temp); mpfi_put_ui(temp, 0);
-      for(i=2; i<=n; i++) mpfi_set(res[i], temp);
-    }
-    else {
-      s = mpfi_is_pos(x) ? 1 : (-1);
-      mpfi_set_si(res[1], s);
-      for(i=2; i<=n; i++) mpfi_set_ui(res[i], 0);
-    }
-  }
-  return;
-}
-
-void baseFunction_diff(mpfi_t *res, int nodeType, mpfi_t x, int n) {
-  mpfr_t oneHalf;
-  mp_prec_t prec;
-  prec = getToolPrecision();
-
-  int i;
-  switch(nodeType) {
-  case NEG:
-    mpfi_neg(res[0], x);
-    if(n>=1) {
-      mpfi_set_si(res[1], -1);
-      for(i=2;i<=n;i++) mpfi_set_ui(res[i], 0);
-    }
-    break;
-  case SQRT:
-    mpfr_init2(oneHalf, prec);
-    mpfr_set_d(oneHalf, 0.5, GMP_RNDN);
-    constantPower_diff(res, x, oneHalf, n);
-    mpfr_clear(oneHalf);
-    break;
-  case ERF:
-    erf_diff(res, x, n);
-    break;
-  case ERFC:
-    erfc_diff(res, x, n);
-    break;
-  case EXP:
-    exp_diff(res, x, n);
-    break;
-  case EXP_M1:
-    expm1_diff(res,x,n);
-    break;
-  case LOG_1P:
-    log1p_diff(res, x, n);
-    break;
-  case LOG:
-    log_diff(res,x,n);
-    break;
-  case LOG_2:
-    log2_diff(res,x,n);
-    break;
-  case LOG_10:
-    log10_diff(res,x,n);
-    break;
-  case SIN:
-    sin_diff(res,x,n);
-    break;
-  case COS:
-    cos_diff(res,x,n);
-    break;
-  case TAN:
-    tan_diff(res,x,n);
-    break;
-  case ASIN:
-    asin_diff(res,x,n);
-    break;
-  case ACOS:
-    acos_diff(res,x,n);
-    break;
-  case ATAN:
-     atan_diff(res,x,n);
-    break;
-  case SINH:
-    sinh_diff(res,x,n);
-    break;
-  case COSH:
-    cosh_diff(res,x,n);
-    break;
-  case TANH:
-    tanh_diff(res,x,n);
-    break;
-  case ASINH:
-    asinh_diff(res,x,n);
-    break;
-  case ACOSH:
-    acosh_diff(res,x,n);
-    break;
-  case ATANH:
-    atanh_diff(res,x,n);
-    break;
-  case ABS:
-    abs_diff(res, x, n);
-    break;
-  case SINGLE:
-    break;
-  case DOUBLE:
-    break;
-  case DOUBLEDOUBLE:
-    break;
-  case TRIPLEDOUBLE:
-    break;
-  case DOUBLEEXTENDED:
-    break;
-  case CEIL:
-    break;
-  case FLOOR:
-    break;
-  case NEARESTINT:
-    break;
-  case LIBRARYFUNCTION:
-    fprintf(stderr,"Error: AD: library function is not supported here\n");
-    break;
-  case ADD:
-    fprintf(stderr,"Error: AD: '+' is not a unary function\n");
-    exit(1);
-  case SUB:
-    fprintf(stderr,"Error: AD: '-' is not a unary function\n");
-    exit(1);
-  case DIV:
-    fprintf(stderr,"Error: AD: '/' is not a unary function\n");
-    exit(1);
-  case MUL:
-    fprintf(stderr,"Error: AD: '*' is not a unary function\n");
-    exit(1);
-  case POW:
-    fprintf(stderr,"Error: AD: '^' is not a unary function\n");
-    exit(1);
-  case VARIABLE:
-    fprintf(stderr,"Error: AD: the variable is not a unary function\n");
-    exit(1);
-  case CONSTANT:
-    fprintf(stderr,"Error: AD: a constant is not a unary function\n");
-    exit(1);
-  case PI_CONST:
-    fprintf(stderr,"Error: AD: pi is not a unary function\n");
-    exit(1);
-  default:
-    fprintf(stderr,"Error: AD: unknown unary function (%d) in the tree\n",nodeType);
-    exit(1);
-  }
-
-  return;
-}
-
-
-
-/***********************************************************/
-/*           Functions related to Taylor Models            */
-/***********************************************************/
-
-  
-/*This function creates an empty taylor model
-*/
+/* This function creates an empty taylor model */
 tModel* createEmptytModel(int n,  mpfi_t x0, mpfi_t x){
   tModel* t;
   mp_prec_t prec;
@@ -1226,8 +132,9 @@ void consttModel(tModel*t, mpfi_t ct){
 
 
 
+/* Check that models are compatible one with another: i.e. they can be added, mulitplied, copied, etc. */
 int tModelsAreCompatible(tModel *t1, tModel *t2) {
-  return ((t1 != NULL) && (t2 != NULL) && mpfi_equal_p(t1->x, t2->x) && mpfi_equal_p(t1->x0, t2->x0) && (t1->n == t2->n));
+    return ((t1 != NULL) && (t2 != NULL) && mpfi_equal_p(t1->x, t2->x) && mpfi_equal_p(t1->x0, t2->x0) && (t1->n == t2->n));
 }
 
 /* This function returns a copy of the taylor model tt */
@@ -1250,28 +157,24 @@ void copytModel(tModel *t, tModel *tt){
 }
 
 
-/* FIXME: remove this function */
-/*This function computes an interval bound
-for a polynomial given by coeffs and order n, 
-on int x, using basic IA and Horner form
-*/
-
-void polynomialBoundHorner(mpfi_t *bound,int n,mpfi_t *coeffs,mpfi_t x0, mpfi_t x){
+/* Bound p(x-x0) over I, where p is a polynomial of degree n, given by the list of its coefficients */
+void boundTranslatedPolynomialByHorner(mpfi_t bound, int n, mpfi_t *coeffs, mpfi_t x0, mpfi_t I){
   mpfi_t temp;
   mp_prec_t prec;
   prec = getToolPrecision();
   mpfi_init2(temp, prec);
-  mpfi_sub(temp, x, x0);
-  symbolic_poly_evaluation_horner(*bound, coeffs, temp, n-1);
+  mpfi_sub(temp, I, x0);
+  symbolic_poly_evaluation_horner(bound, coeffs, temp, n);
   mpfi_clear(temp);
 }
 
 
-/* This function computes an interval bound for a polynomial */
-/* Maybe, it will be smarter than just Horner, one day       */
-/* For testing purpose, is is possible to plug polynomialBoundSharpUncertified instead of Horner here */
-void polynomialBoundSharp(mpfi_t *bound,int n,mpfi_t *coeffs,mpfi_t x0,mpfi_t x){
- polynomialBoundHorner(bound,n,coeffs,x0,x);
+/* This function computes an interval bound for a polynomial  */
+/* Maybe, it will be smarter than just Horner, one day        */
+/* For testing purpose, is is possible to plug an uncertified */
+/* polynomialBound function instead of Horner here            */
+void polynomialBoundSharp(mpfi_t *bound, int n, mpfi_t *coeffs, mpfi_t x0, mpfi_t I){
+ boundTranslatedPolynomialByHorner(*bound,n,coeffs,x0,I);
 }
 
 
@@ -1457,24 +360,44 @@ void addition_TM(tModel *t,tModel *t1, tModel *t2, int mode){
 }
 
 
+
+/* This function computes the tm for multiplication by a constant */
+void ctMultiplication_TM(tModel*d, tModel*s, mpfi_t c,int mode){
+  int i;
+  int n;
+  tModel *tt;
+
+  n=s->n;
+  tt=createEmptytModel(n, s->x0, s->x);
+  
+  for(i=0; i<n; i++)  mpfi_mul(tt->poly_array[i], s->poly_array[i], c);
+  mpfi_mul(tt->rem_bound, s->rem_bound, c);
+  mpfi_mul(tt->poly_bound, s->poly_bound, c);
+
+  copytModel(d,tt);
+  cleartModel(tt);
+}
+
 #define MONOTONE_REMAINDER_BASE_FUNCTION 0
 #define MONOTONE_REMAINDER_INV 1
-#define MONOTONE_REMAINDER_POWERCONSTVAR 2
+#define MONOTONE_REMAINDER_CONSTPOWERVAR 2
 #define MONOTONE_REMAINDER_VARCONSTPOWER 3
 
 /* This function computes a taylor remainder for a function on an interval, assuming
    the n-th derivative is monotone.
    typeOfFunction is used to separate the cases:
    * MONOTONE_REMAINDER_BASE_FUNCTION --> we consider a base function, represented by its nodeType (p is useless)
-   * MONOTONE_REMAINDER_INV  --> we consider x -> 1/x (nodeType and p are useless)
-   * MONOTONE_REMAINDER_POWERCONSTVAR --> we consider x -> p^x (nodeType is useless)
-   * MONOTONE_REMAINDER_VARCONSTPOWER --> we consider x -> x^p (nodeType is useless)
+   * MONOTONE_REMAINDER_INV  --> we consider (x -> 1/x) (nodeType and p are useless)
+   * MONOTONE_REMAINDER_CONSTPOWERVAR --> we consider (x -> p^x) (nodeType is useless)
+   * MONOTONE_REMAINDER_VARCONSTPOWER --> we consider (x -> x^p) (nodeType is useless)
 
    The coeffs of the series
    expansion are given as an array of mpfi's, developed over x, in x0.
-   This function is intended to be used with Zumkeller's remark.
+   For more details, see Lemmas 5.11 and following from Roland Zumkeller's thesis.
 */
-void computeMonotoneRemainderAux(mpfi_t *bound, int typeOfFunction, int nodeType, mpfr_t p,
+
+/* FIXME: maybe boundx0 can be safely replaced by [0] */
+void computeMonotoneRemainder(mpfi_t *bound, int typeOfFunction, int nodeType, mpfr_t p,
 				 int n, mpfi_t *poly_array, mpfi_t x0, mpfi_t x){
   mpfi_t xinf, xsup;
   mpfr_t xinfFr, xsupFr;
@@ -1510,20 +433,21 @@ void computeMonotoneRemainderAux(mpfi_t *bound, int typeOfFunction, int nodeType
     mpfi_inv(boundf2, xsup);
     if (((n-1)%2)!=0)   mpfi_inv(boundfx0, x0);
     break;
-  case MONOTONE_REMAINDER_POWERCONSTVAR:
-    mpfi_set_fr(p_interv,p);
-    mpfi_pow(boundf1, p_interv, xinf);
-    mpfi_pow(boundf2, p_interv, xsup);
-    if (((n-1)%2)!=0)  mpfi_pow(boundfx0, p_interv, x0);
-    break;
-  case MONOTONE_REMAINDER_VARCONSTPOWER:
+  case MONOTONE_REMAINDER_CONSTPOWERVAR:
     mpfi_set_fr(p_interv, p);
     mpfi_pow(boundf1, xinf, p_interv);
     mpfi_pow(boundf2, xsup, p_interv);
     if (((n-1)%2)!=0)  mpfi_pow(boundfx0, x0, p_interv);
     break;
+  case MONOTONE_REMAINDER_VARCONSTPOWER:
+    mpfi_set_fr(p_interv,p);
+    mpfi_pow(boundf1, p_interv, xinf);
+    mpfi_pow(boundf2, p_interv, xsup);
+    if (((n-1)%2)!=0)  mpfi_pow(boundfx0, p_interv, x0);
+    break;
   default:
-    fprintf(stderr, "Error in");
+    fprintf(stderr, "Error in tayloform: unkown type of function used with Zumkeller's technique\n");
+    return;
   }
   
   
@@ -1549,351 +473,138 @@ void computeMonotoneRemainderAux(mpfi_t *bound, int typeOfFunction, int nodeType
   return;
 }
 
-void computeMonotoneRemainder(mpfi_t *bound, int nodeType,
-			      int n, mpfi_t *poly_array, mpfi_t x0, mpfi_t x){
-  computeMonotoneRemainderAux(bound, MONOTONE_REMAINDER_BASE_FUNCTION, nodeType, NULL,
-			   n, poly_array, x0, x);
-  return;
-}
 
-/*This function computes a taylor remainder for 1/x as an interval, knowing
-it is monotone, the function is given by nodeType, the coeffs of the series
-expansion are given as an array of mpfi's, developed over x, in x0. 
-*/
-void computeMonotoneRemainderVarInv(mpfi_t *bound, int n, mpfi_t *poly_array, mpfi_t x0, mpfi_t x){
-  mpfi_t bound1, bound2,xinf,xsup;
-  mpfi_t boundf1, boundf2;
-  mpfr_t xinfFr, xsupFr;
-  
-  mpfr_init2(xinfFr, getToolPrecision());
-  mpfr_init2(xsupFr, getToolPrecision());
-  mpfi_init2(bound1, getToolPrecision());
-  mpfi_init2(bound2, getToolPrecision());  
-  mpfi_init2(xinf, getToolPrecision());
-  mpfi_init2(xsup, getToolPrecision());
-  
-  mpfi_init2(boundf1, getToolPrecision());
-  mpfi_init2(boundf2, getToolPrecision()); 
-  
-  mpfi_get_left(xinfFr,x);
-  mpfi_get_right(xsupFr,x); 
-  mpfi_set_fr(xinf, xinfFr);
-  mpfi_set_fr(xsup, xsupFr);  
-  
-   
-  polynomialBoundSharp(&bound1,n-1,poly_array,x0,xinf);
-  mpfi_ui_div(boundf1,1,xinf);
-  
-  mpfi_sub(bound1,boundf1,bound1);
-  
-  
-  polynomialBoundSharp(&bound2,n-1,poly_array,x0,xsup);
-  mpfi_ui_div(boundf2,1,xsup);
-  mpfi_sub(bound2,boundf2,bound2);
-  
-  /*in the case when n-1 is even, the remainder is 
-  bounded by the values it takes on the two extremas of the interval*/
-  
-  mpfi_union(*bound,bound1,bound2);
-  
-  /*in the case when n-1 is odd, the remainder is 
-  in the convex hull determined by the two extremas and the value in x0 (which is 0, theoretically,
-  but since x0 is a small interval...*/
-  
-  if (((n-1)%2)!=0){
-    polynomialBoundSharp(&bound2,n-1,poly_array,x0,x0);
-    mpfi_ui_div(boundf2,1,x0);
-    mpfi_sub(bound2,boundf2,bound2);
-    mpfi_union(*bound,*bound,bound2);
-  }
-  
-  //printInterval(*bound);
-  mpfr_clear(xinfFr);
-  mpfr_clear(xsupFr);
-  
-  mpfi_clear(bound1);
-  mpfi_clear(bound2);
-    
-  mpfi_clear(xinf);
-  mpfi_clear(xsup);
-  
-  mpfi_clear(boundf1);
-  mpfi_clear(boundf2);
-}
-
-/*This function computes a taylor remainder for x^p as an interval, knowing
-it is monotone, the function is given by nodeType, the coeffs of the series
-expansion are given as an array of mpfi's, developed over x, in x0. 
-*/
-void computeMonotoneRemainderCtPowerVar(mpfi_t *bound, int n, mpfr_t p, mpfi_t *poly_array, mpfi_t x0, mpfi_t x){
-  mpfi_t bound1, bound2,xinf,xsup;
-  mpfi_t boundf1, boundf2;
-  mpfr_t xinfFr, xsupFr;
-  mpfi_t pow;
-  
-  mpfr_init2(xinfFr, getToolPrecision());
-  mpfr_init2(xsupFr, getToolPrecision());
-  mpfi_init2(bound1, getToolPrecision());
-  mpfi_init2(bound2, getToolPrecision());  
-  mpfi_init2(xinf, getToolPrecision());
-  mpfi_init2(xsup, getToolPrecision());
-  
-  mpfi_init2(boundf1, getToolPrecision());
-  mpfi_init2(boundf2, getToolPrecision()); 
-  
-  mpfi_init2(pow, getToolPrecision()); 
-  mpfi_set_fr(pow,p);
-  
-  mpfi_get_left(xinfFr,x);
-  mpfi_get_right(xsupFr,x); 
-  mpfi_set_fr(xinf, xinfFr);
-  mpfi_set_fr(xsup, xsupFr);  
-  
-   
-  polynomialBoundSharp(&bound1,n-1,poly_array,x0,xinf);
-  mpfi_pow(boundf1,xinf,pow);
-  
-  mpfi_sub(bound1,boundf1,bound1);
-  
-  
-  polynomialBoundSharp(&bound2,n-1,poly_array,x0,xsup);
-  mpfi_pow(boundf2,xsup,pow);
-  mpfi_sub(bound2,boundf2,bound2);
- 
-  /*in the case when n is even, the remainder is 
-  bounded by the values it takes on the two extremas of the interval*/
-  
-  mpfi_union(*bound,bound1,bound2);
-  
-  /*in the case when n is odd, the remainder is 
-  in the convex hull determined by the two extremas and the value in x0 (which is 0, theoretically,
-  but since x0 is a small interval...*/
-  
-  if (((n-1)%2)!=0){
-    polynomialBoundSharp(&bound2,n-1,poly_array,x0,x0);
-    mpfi_pow(boundf2,x0,pow);
-    mpfi_sub(bound2,boundf2,bound2);
-    mpfi_union(*bound,*bound,bound2);
-  }
-  
-  //printInterval(*bound);
-  mpfr_clear(xinfFr);
-  mpfr_clear(xsupFr);
-  
-  mpfi_clear(bound1);
-  mpfi_clear(bound2);
-    
-  mpfi_clear(xinf);
-  mpfi_clear(xsup);
-  
-  mpfi_clear(boundf1);
-  mpfi_clear(boundf2);
-  mpfi_clear(pow);
-}
-
-/*This function computes a taylor remainder for p^x as an interval, knowing
-it is monotone, the function is given by nodeType, the coeffs of the series
-expansion are given as an array of mpfi's, developed over x, in x0. 
-*/
-void computeMonotoneRemainderVarCtPower(mpfi_t *bound, int n, mpfr_t p, mpfi_t *poly_array, mpfi_t x0, mpfi_t x){
-  mpfi_t bound1, bound2,xinf,xsup;
-  mpfi_t boundf1, boundf2;
-  mpfr_t xinfFr, xsupFr;
-  mpfi_t pow;
-  
-  mpfr_init2(xinfFr, getToolPrecision());
-  mpfr_init2(xsupFr, getToolPrecision());
-  mpfi_init2(bound1, getToolPrecision());
-  mpfi_init2(bound2, getToolPrecision());  
-  mpfi_init2(xinf, getToolPrecision());
-  mpfi_init2(xsup, getToolPrecision());
-  
-  mpfi_init2(boundf1, getToolPrecision());
-  mpfi_init2(boundf2, getToolPrecision()); 
-  
-  mpfi_init2(pow, getToolPrecision()); 
-  mpfi_set_fr(pow,p);
-  
-  mpfi_get_left(xinfFr,x);
-  mpfi_get_right(xsupFr,x); 
-  mpfi_set_fr(xinf, xinfFr);
-  mpfi_set_fr(xsup, xsupFr);  
-  
-   
-  polynomialBoundSharp(&bound1,n-1,poly_array,x0,xinf);
-  mpfi_pow(boundf1,pow,xinf);
-  
-  mpfi_sub(bound1,boundf1,bound1);
-  
-  
-  polynomialBoundSharp(&bound2,n-1,poly_array,x0,xsup);
-  mpfi_pow(boundf2,pow,xsup);
-  mpfi_sub(bound2,boundf2,bound2);
- 
-  /*in the case when n-1 is even, the remainder is 
-  bounded by the values it takes on the two extremas of the interval*/
-  
-  mpfi_union(*bound,bound1,bound2);
-  
-  /*in the case when n-1 is odd, the remainder is 
-  in the convex hull determined by the two extremas and the value in x0 (which is 0, theoretically,
-  but since x0 is a small interval...*/
-  
-  if (((n-1)%2)!=0){
-    polynomialBoundSharp(&bound2,n-1,poly_array,x0,x0);
-    mpfi_pow(boundf2,pow,x0);
-    mpfi_sub(bound2,boundf2,bound2);
-    mpfi_union(*bound,*bound,bound2);
-  }
-  
-  //printInterval(*bound);
-  mpfr_clear(xinfFr);
-  mpfr_clear(xsupFr);
-  
-  mpfi_clear(bound1);
-  mpfi_clear(bound2);
-    
-  mpfi_clear(xinf);
-  mpfi_clear(xsup);
-  
-  mpfi_clear(boundf1);
-  mpfi_clear(boundf2);
-  mpfi_clear(pow);
-}
-
-
-
-/*This function computes a taylor model
-for a base function*/
-void base_TM(tModel *t,int nodeType, int n, mpfi_t x0, mpfi_t x, int mode){
+/* This function computes a taylor model for a function, with the same convention
+   as with computeMonotoneRemainder */
+void base_TMAux(tModel *t, int typeOfFunction, int nodeType, mpfr_t p, int n, mpfi_t x0, mpfi_t x, int mode){
   int i;
   tModel *tt;
   mpfi_t *nDeriv, *nDeriv2;
-  mpfi_t fact, temp,pow;
-  
-  tt=createEmptytModel(n,x0,x);
-  /*Use AD for the base functions to compute the coeffs*/
-  baseFunction_diff( tt->poly_array,nodeType,x0, n-1);
-  
-  /*we have to divide each coeff by i!*/
-  mpfi_init2(fact,getToolPrecision());
-  mpfi_set_ui(fact,1);
-   
-  for(i=1;i<n;i++){
-  mpfi_mul_ui(fact,fact,i);
-  mpfi_div(tt->poly_array[i],tt->poly_array[i],fact);
+  mpfi_t temp, pow;
+  mpfr_t minusOne;
+  mp_prec_t prec;
+
+  prec = getToolPrecision();
+  tt = createEmptytModel(n,x0,x);
+
+  /* We use AD for computing bound on the derivatives up to (n+1)th derivative */
+  nDeriv= (mpfi_t *)safeMalloc((n+2)*sizeof(mpfi_t));
+  for(i=0;i<=n+1;i++) mpfi_init2(nDeriv[i], prec);
+
+  switch(typeOfFunction) {
+  case MONOTONE_REMAINDER_BASE_FUNCTION:
+    baseFunction_diff(tt->poly_array,nodeType,x0, n-1);
+    baseFunction_diff(nDeriv, nodeType, x, n+1);
+    break;
+  case MONOTONE_REMAINDER_INV: 
+    mpfr_init2(minusOne, prec);
+    mpfr_set_si(minusOne, -1, GMP_RNDN);
+    constantPower_diff(tt->poly_array, x0, minusOne, n-1);
+    constantPower_diff(nDeriv, x, minusOne, n+1);
+    mpfr_clear(minusOne);
+    break;
+  case MONOTONE_REMAINDER_CONSTPOWERVAR:
+    constantPower_diff(tt->poly_array, x0, p, n-1);
+    constantPower_diff(nDeriv, x, p, n+1);
+    break;
+  case MONOTONE_REMAINDER_VARCONSTPOWER:
+    powerFunction_diff(tt->poly_array, p, x0, n-1);
+    powerFunction_diff(nDeriv, p, x, n+1);
+    break;
+  default: 
+    fprintf(stderr, "Error in tayloform: unkown type of function used with Zumkeller's technique\n");
+    return;
   }
   
-  
-  /*Use AD for the base functions to bound derivatives up to n+1th derivative*/
-  nDeriv= (mpfi_t *)safeMalloc((n+2)*sizeof(mpfi_t));
-    for(i=0;i<=n+1;i++){
-      mpfi_init2(nDeriv[i], getToolPrecision());
-    }
-  baseFunction_diff(nDeriv,nodeType,x,n+1);
-  
-   
-  /*Use Zumkeller technique to improve the bound in the absolute case,
-  when the (n+1)th derivative has constant sign*/
-  if((mode==ABSOLUTE)&&((mpfi_is_nonpos(nDeriv[n+1])>0)||(mpfi_is_nonneg(nDeriv[n+1])>0))){ 
-    //printf("we reached the zumkeler technique");
-    computeMonotoneRemainder(&tt->rem_bound,nodeType, n, tt->poly_array, x0,x);
+  /* Use Zumkeller technique to improve the bound in the absolute case,
+     when the (n+1)th derivative has constant sign */
+  if((mode==ABSOLUTE)&&((mpfi_is_nonpos(nDeriv[n+1]) > 0)||(mpfi_is_nonneg(nDeriv[n+1]) > 0))){ 
+    computeMonotoneRemainder(&tt->rem_bound, typeOfFunction, nodeType, p, n, tt->poly_array, x0,x);
   }
   else{
-    /*just keep the bound obtained using AD*/    
-    /*we have to divide the remainder by n!*/
-    mpfi_mul_ui(fact,fact,n);
-    mpfi_set(tt->rem_bound,nDeriv[n]);
-    mpfi_div(tt->rem_bound,tt->rem_bound,fact);
+    /* just keep the bound obtained using AD */
+    mpfi_set(tt->rem_bound, nDeriv[n]);
   
-    /*if we are in the case of the absolute error,
-    we have to multiply by (x-x0)^n*/
+    /* if we are in the case of the absolute error,
+      we have to multiply by (x-x0)^n */
     
-    if (mode==ABSOLUTE){
-    
-    mpfi_init2(pow,getToolPrecision());
-    mpfi_set_ui(pow,n);
-    mpfi_init2(temp,getToolPrecision());
-    mpfi_sub(temp,x,x0);
-    mpfi_pow(temp,temp,pow);
-    //printInterval(temp);
-    mpfi_mul(tt->rem_bound,tt->rem_bound,temp);
-    //printInterval(tt->rem_bound);
-    mpfi_clear(pow);
-    mpfi_clear(temp);
+    if (mode==ABSOLUTE) {
+      mpfi_init2(pow, prec);
+      mpfi_set_ui(pow, n);
+      mpfi_init2(temp, prec);
+      mpfi_sub(temp,x,x0);
+      mpfi_pow(temp, temp, pow);
+      
+      mpfi_mul(tt->rem_bound,tt->rem_bound,temp);
+      
+      mpfi_clear(pow);
+      mpfi_clear(temp);
     }
   }
-    /*bound the polynomial obtained*/
-    polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,t->x0,t->x);   
- 
-    /*printf("basefunction interval:");
-    printInterval(tt->rem_bound);*/
   
-    copytModel(t,tt);
-    cleartModel(tt);
+  /* bound the polynomial obtained */
+  polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,t->x0,t->x);   
   
-  for(i=0;i<=n+1;i++){
-    mpfi_clear(nDeriv[i]);
-  }
-  mpfi_clear(fact);
+  copytModel(t,tt);
+  cleartModel(tt);
+  
+  for(i=0;i<=n+1;i++)  mpfi_clear(nDeriv[i]);
   free(nDeriv);  
 }
 
-/*composition:
-  Assumptions:
-We are given a taylor model for the function f in x0, over x, order n
-and a taylor model for basic function g in f(x0) over y \superset range(f,x), order n
-We obtain a taylor model for g(f(x)) in x0 over x.
+/* composition: g o f
+   VERY IMPORTANT ASSUMPTIONS:
+   We are given a taylor model for the function f in x0, over x, order n
+   and a taylor model for basic function g in y0 over y, order n with:
+       f->poly_array[0] \subseteq y0
+       range(f->poly)+ f->rem_bound \subseteq y
 
-Note: this is just like in the proofs, but it is easier to create the tm for g 
-outside this function, such that a parameter of type NodeType is not needed here
-*/
+   Note that these assumptions ARE NOT CHECKED inside the function.
+   If these assumptions are true, it returns a valid taylor model for g(f(x)) in x0 over x. */
 void composition_TM(tModel *t,tModel *g, tModel *f, int mode){
   int i;
   int n;
   tModel *tt, *partial_tmul,*tinterm,*tmul ;
-  
+  mp_prec_t prec;
+  mpfi_t temp;
+
+  prec = getToolPrecision();
   n=f->n;
   
-  /*create the taylor model for f(x)-f(x0): M1 in the proofs*/
-  tinterm=createEmptytModel(n,f->x0,f->x);
-  copytModel(tinterm,f);
-  /*set the ct part of tinterm as 0*/
-  mpfi_set_ui(tinterm->poly_array[0],0);
+  /* create a taylor model equal to the model of f, but the constant coeff, which is zero */
+  tmul = createEmptytModel(n, f->x0, f->x);
+  copytModel(tmul,f);
+  mpfi_set_ui(tmul->poly_array[0],0);
   
-  tt=createEmptytModel(n,f->x0,f->x);
-  consttModel(tt,g->poly_array[0]);
-    
-  tmul=createEmptytModel(n,f->x0,f->x);
-  copytModel(tmul,tinterm);  
-  
+  /* partial_tmul is used to represent the successive powers of tmul */
   partial_tmul=createEmptytModel(n,f->x0,f->x);
-  copytModel(partial_tmul,tinterm);  
+  copytModel(partial_tmul, tmul);  
   
-  
-  for (i=1;i<n;i++){
-  ctMultiplication_TM(tinterm,partial_tmul,g->poly_array[i],mode);
-  addition_TM(tt,tt,tinterm,mode);
-  multiplication_TM(partial_tmul,partial_tmul,tmul,mode);
+  /* initialize a temporary model */
+  tinterm = createEmptytModel(n, f->x0, f->x);
+
+  /* Constructs the model to be returned */
+  tt=createEmptytModel(n, f->x0, f->x);
+
+  consttModel(tt, g->poly_array[0]);
+  for(i=1; i<n; i++){
+    ctMultiplication_TM(tinterm, partial_tmul, g->poly_array[i], mode); 
+    addition_TM(tt, tt, tinterm, mode);
+    multiplication_TM(partial_tmul, partial_tmul, tmul, mode);
   }
   
-  //in tt we have now the good polynomial;
-  //we have to compute the bounds.
-  //printtModel(g);
-  //printtModel(partial_tmul);
-  //printtModel(tt);
-   
-  mpfi_mul(partial_tmul->rem_bound,partial_tmul->rem_bound,g->rem_bound);
-  if (mode==RELATIVE){
-    mpfi_add(tt->rem_bound,tt->rem_bound,partial_tmul->rem_bound);
+  /* Now, partial_tmul represents tmul^n */ 
+  if (mode==RELATIVE) {
+    mpfi_init2(temp, prec);
+    mpfi_mul(temp, partial_tmul->rem_bound, g->rem_bound);
+    mpfi_add(tt->rem_bound, tt->rem_bound, temp);
+    mpfi_clear(temp);
   }
-  else{
-    mpfi_add(tt->rem_bound,tt->rem_bound,g->rem_bound);
+  else  mpfi_add(tt->rem_bound,tt->rem_bound,g->rem_bound);
   
-  }
-  polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
+  polynomialBoundSharp(&tt->poly_bound, n-1, tt->poly_array, tt->x0, tt->x);   
   copytModel(t,tt);
-  //printtModel(tt);
+
   cleartModel(tt);
   cleartModel(partial_tmul);
   cleartModel(tmul);
@@ -1901,416 +612,41 @@ void composition_TM(tModel *t,tModel *g, tModel *f, int mode){
 }
 
 
-/*This function computes the tm for division
-with a ct term of a given tm
-*/
-void ctDivision_TM(tModel*d,tModel*s, mpfi_t c,int mode){
-  int i;
-  int n;
-  tModel *tt;
-  n=s->n;
-  tt=createEmptytModel(n,s->x0,s->x);
-  copytModel(tt,s);
-  for(i=0;i<n;i++)  mpfi_div(tt->poly_array[i],tt->poly_array[i], c);
-  mpfi_div(tt->rem_bound,tt->rem_bound,c);
-  mpfi_div(tt->poly_bound,tt->poly_bound,c);
-  copytModel(d,tt);
-  cleartModel(tt);
-}
-
-
-/*This function computes the tm for multiplication
-with a ct term of a given tm
-*/
-void ctMultiplication_TM(tModel*d, tModel*s, mpfi_t c,int mode){
-  int i;
-  int n;
-  n=s->n;
-  tModel *tt;
-  tt=createEmptytModel(n,s->x0,s->x);
-  copytModel(tt,s);
-  for(i=0;i<n;i++)  mpfi_mul(tt->poly_array[i], tt->poly_array[i],c);
-  mpfi_mul(tt->rem_bound,tt->rem_bound,c);
-  mpfi_mul(tt->poly_bound,tt->poly_bound,c);
-  copytModel(d,tt);
-  cleartModel(tt);
-}
-
-
-
-/*this function computes the taylor model for 1/x*/
-void  varInv_TM(tModel *t,mpfi_t x0, mpfi_t x, int n,int mode){
-    tModel *tt;
-    mpfi_t *nDeriv;
-    int i;
-        
-    mpfr_t minusOne;
-    mpfi_t fact,temp,pow;    
-    
-    tt=createEmptytModel(n,x0,x); 
-    mpfr_init2(minusOne, getToolPrecision());
-    mpfr_set_si(minusOne, -1, GMP_RNDN);
-
-    constantPower_diff(tt->poly_array, x0, minusOne, n-1);
-    
-    mpfi_init2(fact, getToolPrecision());
-    mpfi_set_ui(fact,1);
-    for(i=1;i<n;i++){
-      mpfi_mul_ui(fact,fact,i);
-      mpfi_div(tt->poly_array[i],tt->poly_array[i],fact);
-    }
-    
-    
-    nDeriv= (mpfi_t *)safeMalloc((n+2)*sizeof(mpfi_t));
-    for(i=0;i<=n+1;i++){
-      mpfi_init2(nDeriv[i], getToolPrecision());
-    }
-    constantPower_diff(nDeriv, x, minusOne, n+1);
-    
-    /*Use Zumkeller technique to improve the bound in the absolute case,
-   when the (n+1)th derivative has constant sign*/
-   if((mode==ABSOLUTE)&&((mpfi_is_nonpos(nDeriv[n+1])>0)||(mpfi_is_nonneg(nDeriv[n+1])>0))){ 
-    //printf("we reached the zumkeler technique");
-   computeMonotoneRemainderVarInv(&tt->rem_bound, n, tt->poly_array, x0,x);
-  }
-  else{
-    
-    mpfi_mul_ui(fact,fact,n);
-    mpfi_set(tt->rem_bound,nDeriv[n]);
-    mpfi_div(tt->rem_bound,tt->rem_bound,fact);
-    /*if we are in the case of the absolute error,
-     we also have to multiply by (x-x0)^n*/
-    if (mode==ABSOLUTE){
-      /*absolute error*/
-      mpfi_init2(pow,getToolPrecision());
-      mpfi_set_ui(pow,n);
-      mpfi_init2(temp,getToolPrecision());
-      mpfi_sub(temp,x,x0);
-      mpfi_pow(temp,temp,pow);
-      mpfi_mul(tt->rem_bound,tt->rem_bound,temp);
-      mpfi_clear(pow);
-      mpfi_clear(temp);
-    }
-    
- } 
-    polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
-   
-    copytModel(t,tt);
-    cleartModel(tt);
-    mpfr_clear(minusOne);    
-    mpfi_clear(fact);
-    for(i=0;i<=n+1;i++){
-      mpfi_clear(nDeriv[i]);
-    }
-    free(nDeriv); 
-
-}
-
-
-/*this function computes the taylor model for x^p*/
-void  ctPowerVar_TM(tModel *t,mpfi_t x0, mpfi_t x, int n, mpfr_t p,int mode){
-    tModel *tt;
-    mpfi_t *nDeriv;
-    int i;
-    mpfi_t fact,pow,temp;
-    
-    tt=createEmptytModel(n,x0,x); 
-       
-    constantPower_diff(tt->poly_array, x0, p, n-1);
-    mpfi_init2(fact, getToolPrecision());
-    mpfi_set_ui(fact,1);
-    for(i=1;i<n;i++){
-      mpfi_mul_ui(fact,fact,i);
-      mpfi_div(tt->poly_array[i],tt->poly_array[i],fact);
-    }
-    
-    nDeriv= (mpfi_t *)safeMalloc((n+2)*sizeof(mpfi_t));
-    for(i=0;i<=n+1;i++){
-      mpfi_init2(nDeriv[i], getToolPrecision());
-    }
-    constantPower_diff(nDeriv, x, p, n+1);
-    /*Use Zumkeller technique to improve the bound in the absolute case,
-    when the (n+1)th derivative has constant sign*/
-    if((mode==ABSOLUTE)&&((mpfi_is_nonpos(nDeriv[n+1])>0)||(mpfi_is_nonneg(nDeriv[n+1])>0))){ 
-      //printf("we reached the zumkeler technique");
-      computeMonotoneRemainderCtPowerVar(&tt->rem_bound, n,p, tt->poly_array, x0,x);
-    }
-    else{
-    
-    mpfi_mul_ui(fact,fact,n);
-    mpfi_set(tt->rem_bound,nDeriv[n]);
-    mpfi_div(tt->rem_bound,tt->rem_bound,fact);
-    /*if we are in the case of the absolute error,
-     we also have to multiply by (x-x0)^n*/
-    if (mode==ABSOLUTE){
-      /*absolute error*/
-      mpfi_init2(pow,getToolPrecision());
-      mpfi_set_ui(pow,n);
-      mpfi_init2(temp,getToolPrecision());
-      mpfi_sub(temp,x,x0);
-      mpfi_pow(temp,temp,pow);
-      mpfi_mul(tt->rem_bound,tt->rem_bound,temp);
-      mpfi_clear(pow);
-      mpfi_clear(temp);
-    }
-    
-    }
-    
-    polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
-   
-    copytModel(t,tt);
-    cleartModel(tt);
-    mpfi_clear(fact);
-    for(i=0;i<=n+1;i++){
-      mpfi_clear(nDeriv[i]);
-    }
-    free(nDeriv); 
-
-}
-
-/*this function computes the taylor model for p^x*/
-void  varCtPower_TM(tModel *t,mpfi_t x0, mpfi_t x, int n, mpfr_t p,int mode){
-    tModel *tt;
-    mpfi_t *nDeriv;
-    int i;
-    mpfi_t fact,pow,temp;    
-      
-    tt=createEmptytModel(n,x0,x); 
-     
-    powerFunction_diff(tt->poly_array,p, x0, n-1);
-    mpfi_init2(fact, getToolPrecision());
-    mpfi_set_ui(fact,1);
-    for(i=1;i<n;i++){
-      mpfi_mul_ui(fact,fact,i);
-      mpfi_div(tt->poly_array[i],tt->poly_array[i],fact);
-    }
-    
-    nDeriv= (mpfi_t *)safeMalloc((n+2)*sizeof(mpfi_t));
-    for(i=0;i<=n+1;i++){
-      mpfi_init2(nDeriv[i], getToolPrecision());
-    }
-    powerFunction_diff(nDeriv,p, x, n+1);
-    /*Use Zumkeller technique to improve the bound in the absolute case,
-    when the (n+1)th derivative has constant sign*/
-    if((mode==ABSOLUTE)&&((mpfi_is_nonpos(nDeriv[n+1])>0)||(mpfi_is_nonneg(nDeriv[n+1])>0))){ 
-      //printf("we reached the zumkeler technique");
-      computeMonotoneRemainderVarCtPower(&tt->rem_bound,n,p, tt->poly_array, x0,x);
-    }
-    else{
-    
-      mpfi_mul_ui(fact,fact,n);
-      mpfi_set(tt->rem_bound,nDeriv[n]);
-      mpfi_div(tt->rem_bound,tt->rem_bound,fact);
-    
-      /*if we are in the case of the absolute error,
-      we also have to multiply by (x-x0)^n*/
-      if (mode==ABSOLUTE){
-        /*absolute error*/
-        mpfi_init2(pow,getToolPrecision());
-        mpfi_set_ui(pow,n);
-        mpfi_init2(temp,getToolPrecision());
-        mpfi_sub(temp,x,x0);
-        mpfi_pow(temp,temp,pow);
-        mpfi_mul(tt->rem_bound,tt->rem_bound,temp);
-        mpfi_clear(pow);
-        mpfi_clear(temp);
-      } 
-    }
-      polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);   
-   
-      copytModel(t,tt);
-      cleartModel(tt);
-      mpfi_clear(fact);
-      for(i=0;i<=n+1;i++){
-        mpfi_clear(nDeriv[i]);
-      }
-      free(nDeriv); 
-}
-
-
-/*This function computes a sharp interval bound
-for a polynomial given by coeffs and order n, 
-on int x, using dirtyfindzeros - for the moment
-this function is not certified:
-**Sturm's nr of roots test is not integrated**
-**The mpfr's obtained for the roots are not expanded
-into small intervals arround the true root**
-*/
-void polynomialBoundSharpUncertified(mpfi_t *bound,int n,mpfi_t *coeffs,mpfi_t x0,mpfi_t x){
-  int i;
-  mpfi_t r,partialBound;
- 
-  mpfr_t *polyCoeffs;
-  node *poly, *diff_poly;
-  mpfr_t a, b;
-  chain *zeros;
-  mpfi_t *rootsIntervals;
-  mpfr_t inf, sup, pinf, psup;
-  mpfi_t extr1;
-  mpfi_t shiftx;
-  mpfi_t zero;
-  mpfi_t err;
-  int points, nrRoots;
-  points =100;
-  
-  mpfi_init2(r,getToolPrecision());
-  mpfi_init2(partialBound, getToolPrecision());
-  
-  polyCoeffs= (mpfr_t *)safeMalloc((n+1)*sizeof(mpfr_t));
-  for (i=0; i<=n; i++){
-  mpfr_init2(polyCoeffs[i], getToolPrecision());  
-  }
-  
-  mpfi_init2(shiftx,getToolPrecision());
-  mpfi_sub(shiftx,x,x0);
-  
-  mpfi_init2(zero,getToolPrecision());
-  mpfi_set_ui(zero,0);
-  
-  mpfi_init2(err,getToolPrecision());
-  
-  mpfr_init2(a, getToolPrecision());
-  mpfr_init2(b, getToolPrecision());    
-  mpfi_get_left(a,shiftx);
-  mpfi_get_right(b,shiftx);
-  
-  //transform the interval coeffs into mpfr + I;
-  //printf("\nWe transform into mpfrs the coeffs of poly\n");
-  
-  mpfr_get_poly(polyCoeffs, NULL, r, n,coeffs, x0,x);
-  
- //transform the polynomial with mpfr_coeffs into a node * p
- poly=makePolynomial(polyCoeffs, n);
- 
- //derivate the polynomial
- diff_poly = differentiate(poly);
- //find the zeros
-
- zeros =uncertifiedFindZeros(diff_poly, a, b, points, getToolPrecision());
- nrRoots=lengthChain(zeros);
- rootsIntervals= (mpfi_t *)safeMalloc((nrRoots)*sizeof(mpfi_t));
- for(i=0;i<nrRoots;i++){
-  mpfi_init2(rootsIntervals[i],getToolPrecision());
-  mpfi_set_fr(rootsIntervals[i],*((mpfr_t*)zeros->value));
- }
- 
- 
-  //compute the the bound for each small interval for the initial polynomial
-  mpfr_init2(inf,getToolPrecision());
-  mpfr_init2(sup,getToolPrecision());
-  mpfr_init2(pinf,getToolPrecision());
-  mpfr_init2(psup,getToolPrecision());
-  //take the values in the extremas of the interval
-  mpfi_init2(extr1,getToolPrecision());
-  mpfi_set_fr(extr1,a);
-  polynomialBoundHorner(&partialBound,n, coeffs,zero,extr1);
-  mpfi_get_left(inf, partialBound);
-  mpfi_get_right(sup,partialBound);
-  
-    for (i=0;i<nrRoots;i++){
-      polynomialBoundHorner(&partialBound,n, coeffs,zero,rootsIntervals[i]);
-      mpfi_get_left(pinf, partialBound);
-      mpfi_get_right(psup,partialBound);
-      if (mpfr_less_p(pinf,inf)!=0) mpfr_set(inf, pinf,GMP_RNDN);
-      if (mpfr_greater_p(psup,sup)!=0) mpfr_set(sup,psup,GMP_RNDU);
-    }
-    
-  mpfi_init2(extr1,getToolPrecision());
-  mpfi_set_fr(extr1,b);
-  polynomialBoundHorner(&partialBound,n, coeffs,zero,extr1);  
-  mpfi_get_left(pinf, partialBound);
-  mpfi_get_right(psup,partialBound);
-  if (mpfr_less_p(pinf,inf)!=0) mpfr_set(inf, pinf,GMP_RNDN);
-  if (mpfr_greater_p(psup,sup)!=0) mpfr_set(sup,psup,GMP_RNDU);
-  
-  mpfi_interv_fr(partialBound, inf,sup);
-  mpfi_add(r,r,partialBound);
-  mpfi_set(*bound,r);
-  
-  
-  
-  mpfi_clear(r);
-  mpfi_clear(partialBound);
-  mpfi_clear(extr1);
-  freeChain(zeros,freeMpfrPtr);
-  for(i=0;i<nrRoots;i++){
-  mpfi_clear(rootsIntervals[i]);
-  }
-  free(rootsIntervals);
-  
-  for(i=0;i<=n;i++){
-    mpfr_clear(polyCoeffs[i]);
-  }
-  free(polyCoeffs);
-  
-  mpfr_clear(a);
-  mpfr_clear(b);  
-  mpfr_clear(inf);
-  mpfr_clear(sup);
-  mpfr_clear(pinf);
-  mpfr_clear(psup);  
-  free_memory(poly);
-  free_memory(diff_poly);  
-  
-}
-
-
-/*This function computes a translation for the polynomial P(x) to the polynomial P(x+x0)
-*/
- 
-void polynomialTranslate(mpfi_t *coeffsT,int n,mpfi_t *coeffs,mpfi_t x0){
-  mpfi_t temp;
-  int i,k;
-  mpfi_init2(temp, getToolPrecision());
-  for (i=0; i<=n;i++){
-    mpfi_init2(coeffsT[i], getToolPrecision());
-    mpfi_set(coeffsT[i], coeffs[i]);
-  }
-  
-  for (i=1; i<=n; i++)
-    for(k=n-i;k<=n-1;k++){
-      mpfi_mul(temp, x0, coeffsT[k+1]);
-      mpfi_add(coeffsT[k],coeffsT[k],temp);  
-    }
-    mpfi_clear(temp);
- 
-}
-
-
-
-
-
-
-
-/*This function coputes a tm of order n from a given tm of higher order*/
-void reduceOrder_TM(tModel*d,tModel*s, int n){
+/* This function computes a tm of order n from a given tm of higher order */
+void reduceOrder_TM(tModel*d, tModel*s, int n){
   int i;
   int oldn;
   mpfi_t *remTerms;
   tModel *tt;
   mpfi_t pow;
   mpfi_t temp, temp2;
-  
+  mp_prec_t prec;
+
   oldn=s->n;
-  tt=createEmptytModel(n,s->x0,s->x);
+  prec = getToolPrecision();
+
+  if (n>oldn) {
+    fprintf(stderr, "Error: taylorform: trying to increase the order of a TM\n");
+    return;
+  }
   
-  for(i=0;i<n;i++){
-    mpfi_set(tt->poly_array[i], s->poly_array[i]);
-  }  
-  //we are left with terms from n up to oldn-1
+  tt=createEmptytModel(n,s->x0,s->x);
+  for(i=0;i<n;i++) mpfi_set(tt->poly_array[i], s->poly_array[i]);
+
+  /* we are left with terms from n up to oldn-1 */
   remTerms= (mpfi_t *)safeMalloc((oldn-n)*sizeof(mpfi_t));
   for(i=n;i<oldn;i++){
-      mpfi_init2(remTerms[i-n], getToolPrecision());
-      mpfi_set(remTerms[i-n], s->poly_array[i]);
+    mpfi_init2(remTerms[i-n], prec);
+    mpfi_set(remTerms[i-n], s->poly_array[i]);
   }
     
-  mpfi_init2(temp,getToolPrecision());  
-  polynomialBoundSharp(&temp, oldn-n-1,remTerms,tt->x0,tt->x);     
+  mpfi_init2(temp, prec);  
+  polynomialBoundSharp(&temp, oldn-n-1, remTerms, tt->x0, tt->x);     
       
   polynomialBoundSharp(&tt->poly_bound, n-1,tt->poly_array,tt->x0,tt->x);     
   
-  mpfi_init2(pow,getToolPrecision());  
-  mpfi_init2(temp2,getToolPrecision());  
+  mpfi_init2(pow, prec);  
+  mpfi_init2(temp2, prec);  
   mpfi_set_ui(pow,oldn-n);
   mpfi_sub(temp2,tt->x,tt->x0);
   mpfi_pow(temp2,temp2,pow);
@@ -2586,7 +922,7 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x, int mode) {
     }  
       inv_tm=createEmptytModel(n,gx0,rangeg);
     
-    varInv_TM(inv_tm,gx0,rangeg,n,mode);
+      base_TMAux(inv_tm, MONOTONE_REMAINDER_INV, 0, NULL, n, gx0, rangeg,mode);
     composition_TM(ttt,inv_tm,child2_tm,mode);
     
     multiplication_TM(tt, ttt, child1_tm,mode);
@@ -2642,7 +978,7 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x, int mode) {
     tt=createEmptytModel(n,x0,x); 
    //create a new empty taylor model the child
     child1_tm=createEmptytModel(n,x0,x);
-    child2_tm=createEmptytModel(n,x0,x);
+
     //call taylor_model on the child
     taylor_model(child1_tm, f->child1,n,x0,x,mode);
     //compute tm for the basic case
@@ -2664,8 +1000,9 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x, int mode) {
     else{
       mpfi_add(rangef,child1_tm->rem_bound, child1_tm->poly_bound);
     }
-    
-    base_TM(child2_tm,f->nodeType,n,fx0, rangef,mode);
+
+    child2_tm=createEmptytModel(n,fx0,rangef);
+    base_TMAux(child2_tm, MONOTONE_REMAINDER_BASE_FUNCTION, f->nodeType, NULL, n, fx0, rangef,mode);
     //printtModel(child2_tm);
     //printtModel(child1_tm);
     composition_TM(tt,child2_tm, child1_tm,mode);
@@ -2729,7 +1066,7 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x, int mode) {
         //create tm for x^p over ragef in fx0
         ctPowVar_tm=createEmptytModel(n,fx0,rangef);
         
-        ctPowerVar_TM(ctPowVar_tm,fx0,rangef,n,*(simplifiedChild2->value),mode );
+        base_TMAux(ctPowVar_tm, MONOTONE_REMAINDER_CONSTPOWERVAR, 0, *(simplifiedChild2->value), n, fx0,rangef,mode);
         
         //printf("\n\n-----------taylormodel child1: \n");
         //printtModel(ctPowVar_tm);
@@ -2774,7 +1111,7 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x, int mode) {
         //create tm for p^x over ragef in fx0
         varCtPower_tm=createEmptytModel(n,fx0,rangef);
         
-        varCtPower_TM(varCtPower_tm,fx0,rangef,n,*(simplifiedChild1->value),mode );
+        base_TMAux(varCtPower_tm, MONOTONE_REMAINDER_VARCONSTPOWER, 0, *(simplifiedChild1->value), n, fx0,rangef,mode );
         composition_TM(tt,varCtPower_tm,child2_tm,mode);
     
         //clear old child
@@ -2819,7 +1156,7 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x, int mode) {
         }
         
         logx_tm=createEmptytModel(n,fx0,rangef);
-        base_TM(logx_tm,LOG,n,fx0, rangef,mode);
+        base_TMAux(logx_tm, MONOTONE_REMAINDER_BASE_FUNCTION, LOG, NULL, n, fx0, rangef,mode);
         logf_tm=createEmptytModel(n,x0,x);
         composition_TM(logf_tm,logx_tm,child1_tm,mode);
         //-------------------------------------------
@@ -2846,7 +1183,7 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x, int mode) {
           mpfi_add(rangef,ttt->rem_bound, ttt->poly_bound);
         }    
         expx_tm=createEmptytModel(n,gx0,rangef);
-        base_TM(expx_tm,EXP,n,gx0, rangef,mode);
+        base_TMAux(expx_tm, MONOTONE_REMAINDER_BASE_FUNCTION, EXP, NULL, n, gx0, rangef, mode);
         composition_TM(tt,expx_tm,ttt,mode);
                
     
