@@ -74,6 +74,7 @@ knowledge of the CeCILL-C license and that you accept its terms.
 #include "double.h"
 #include "worstcase.h"
 #include "implement.h"
+#include "implement-cste.h"
 #include "taylor.h"
 #include "taylorform.h"
 #include "xml.h"
@@ -906,6 +907,9 @@ node *copyThing(node *tree) {
   case IMPLEMENTPOLY:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 			
+  case IMPLEMENTCSTE:
+    copy->child1 = copyThing(tree->child1);
+    break; 			
   case CHECKINFNORM:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 			
@@ -1643,6 +1647,9 @@ char *getTimingStringForThing(node *tree) {
     break;  			
   case IMPLEMENTPOLY:
     constString = "implementing a polynomial";
+    break; 			
+  case IMPLEMENTCSTE:
+    constString = "implementing a constant";
     break; 			
   case CHECKINFNORM:
     constString = "checking an infinity norm";
@@ -4328,7 +4335,12 @@ char *sRawPrintThing(node *tree) {
       curr = curr->next;
     }
     res = concatAndFree(res, newString(")"));
-    break; 			
+    break; 
+  case IMPLEMENTCSTE:
+    res = newString("implementcste(");
+    res = concatAndFree(res, sRawPrintThing(tree->child1));
+    res = concatAndFree(res, newString(")"));
+    break;
   case CHECKINFNORM:
     res = newString("checkinfnorm(");
     curr = tree->arguments;
@@ -5859,6 +5871,20 @@ int executeCommandInner(node *tree) {
       freeThing(array[i]);
     free(array);
     break;			
+  case IMPLEMENTCSTE:
+    tempNode = evaluateThing(tree->child1);
+    if (isPureTree(tempNode) && isConstant(tempNode)) {
+      if (timingString != NULL) pushTimeCounter();      
+      implementCste(tempNode);
+      if (timingString != NULL) popTimeCounter(timingString);
+    }
+    else {
+      printMessage(1, "Warning: the expression given does not evaluate to a constant value.\n");
+      printMessage(1, "This command will have no effect.\n");
+      considerDyingOnError();
+    }
+    free_memory(tempNode);
+    break;
   case PRINTHEXA:
     mpfr_init2(a,tools_precision);
     if (evaluateThingToConstant(a, tree->child1, NULL, 0)) {
@@ -9211,6 +9237,17 @@ node *makeImplementPoly(chain *thinglist) {
 
 }
 
+node *makeImplementCste(node *thing1) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = IMPLEMENTCSTE;
+  res->child1 = thing1;
+
+  return res;
+
+}
+
 node *makeCheckInfnorm(node *thing1, node *thing2, node *thing3) {
   node *res;
 
@@ -10456,6 +10493,10 @@ void freeThing(node *tree) {
     freeChain(tree->arguments, freeThingOnVoid);
     free(tree);
     break; 			
+  case IMPLEMENTCSTE:
+    freeThing(tree->child1);
+    free(tree);
+    break; 			
   case CHECKINFNORM:
     freeChain(tree->arguments, freeThingOnVoid);
     free(tree);
@@ -11243,9 +11284,12 @@ int isEqualThing(node *tree, node *tree2) {
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     if (!isEqualThing(tree->child2,tree2->child2)) return 0;
     break;  			
-  case IMPLEMENTPOLY:
+   case IMPLEMENTPOLY:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
     break; 			
+  case IMPLEMENTCSTE:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    break;  			
   case CHECKINFNORM:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
     break; 			
@@ -16680,7 +16724,7 @@ node *evaluateThingInner(node *tree) {
       mpfr_clear(c);
     }
     if (fd != NULL) fclose(fd);
-    break; 			
+    break;
   case CHECKINFNORM:
     copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateThingInnerOnVoid);
     curr = copy->arguments;

@@ -231,6 +231,7 @@ SUBSTITUTE      "substitute"
 DOTS            "..."
 
 IMPLEMENTPOLY   "implementpoly"
+IMPLEMENTCSTE   "implementconstant"
 
 CHECKINFNORM    "checkinfnorm"
 
@@ -657,6 +658,7 @@ NOP             "nop"
 {DIRTYINTEGRAL}				    {  return DIRTYINTEGRALTOKEN; }				      	       
 {WORSTCASE}       			    {  return WORSTCASETOKEN; }       					       
 {IMPLEMENTPOLY}				    {  return IMPLEMENTPOLYTOKEN; }				      	       
+{IMPLEMENTCSTE}                             {  return IMPLEMENTCSTETOKEN; }
 {CHECKINFNORM}    			    {  return CHECKINFNORMTOKEN; }    					       
 {ZERODENOMINATORS}			    {  return ZERODENOMINATORSTOKEN; }					       
 {ISEVALUABLE}     			    {  return ISEVALUABLETOKEN; }     					       

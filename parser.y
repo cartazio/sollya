@@ -291,6 +291,7 @@ void yyerror(char *message) {
 %token  DIRTYINTEGRALTOKEN;  						       
 %token  WORSTCASETOKEN;         					       
 %token  IMPLEMENTPOLYTOKEN;  						       
+%token  IMPLEMENTCSTETOKEN;  						       
 %token  CHECKINFNORMTOKEN;      					       
 %token  ZERODENOMINATORSTOKEN;  					       
 %token  ISEVALUABLETOKEN;       					       
@@ -685,6 +686,10 @@ simplecommand:          QUITTOKEN
                           {
 			    $$ = makePrintExpansion($3);
 			  }				       
+                      | IMPLEMENTCSTETOKEN LPARTOKEN thing RPARTOKEN
+                          {
+			    $$ = makeImplementCste($3);
+			  }  						       
                       | BASHEXECUTETOKEN LPARTOKEN thing RPARTOKEN      	
                           {
 			    $$ = makeBashExecute($3);
@@ -3618,6 +3623,18 @@ help:                   CONSTANTTOKEN
 #endif
 #endif
                           }                 					             						       
+                      | IMPLEMENTCSTETOKEN
+                          {
+#ifdef HELP_IMPLEMENTCSTE_TEXT
+			    outputMode(); printf(HELP_IMPLEMENTCSTE_TEXT);
+#else
+			    outputMode(); printf("Implement a constant expression in arbitrary precision with MPFR: implementconstant(constant)\n");
+			    outputMode(); printf("Generates code able to evaluate the given constant at any precision, with a guaranteed error.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for IMPLEMENTCSTE"
+#endif
+#endif
+                          }                 					             						       
                       | CHECKINFNORMTOKEN
                           {
 #ifdef HELP_CHECKINFNORM_TEXT
@@ -4098,6 +4115,7 @@ help:                   CONSTANTTOKEN
 			    printf("- horner\n");
 			    printf("- if\n");
 			    printf("- implementpoly\n");
+			    printf("- implementconstant\n");
 			    printf("- in\n");
 			    printf("- inf\n");
 			    printf("- infnorm\n");

@@ -233,6 +233,7 @@ SUBSTITUTE      "substitute"
 DOTS            "..."
 
 IMPLEMENTPOLY   "implementpoly"
+IMPLEMENTCSTE   "implementconstant"
 
 CHECKINFNORM    "checkinfnorm"
 
@@ -739,6 +740,7 @@ NOP             "nop"
 {DIRTYINTEGRAL}				    { newTokenLexed(); return DIRTYINTEGRALTOKEN; }				      	       
 {WORSTCASE}       			    { newTokenLexed(); return WORSTCASETOKEN; }       					       
 {IMPLEMENTPOLY}				    { newTokenLexed(); return IMPLEMENTPOLYTOKEN; }				      	       
+{IMPLEMENTCSTE}                             { newTokenLexed(); return IMPLEMENTCSTETOKEN; }
 {CHECKINFNORM}    			    { newTokenLexed(); return CHECKINFNORMTOKEN; }    					       
 {ZERODENOMINATORS}			    { newTokenLexed(); return ZERODENOMINATORSTOKEN; }					       
 {ISEVALUABLE}     			    { newTokenLexed(); return ISEVALUABLETOKEN; }     					       

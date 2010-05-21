@@ -260,6 +260,7 @@ extern void endBuffer(void);
 #define DIEONERRORMODEDEREF 250
 #define COMPAREIN 251
 #define AUTODIFF 252
+#define IMPLEMENTCSTE 253
 
 int executeCommand(node *);
 
@@ -428,6 +429,8 @@ node *makeNumberRoots(node *thing1, node *thing2);
 node *makeIntegral(node *thing1, node *thing2);
 node *makeDirtyIntegral(node *thing1, node *thing2);
 node *makeImplementPoly(chain *thinglist);
+node *makeImplementCste(node *thing1);
+node *makeNewCommand(node *thing1);
 node *makeCheckInfnorm(node *thing1, node *thing2, node *thing3);
 node *makeZeroDenominators(node *thing1, node *thing2);
 node *makeIsEvaluable(node *thing1, node *thing2);

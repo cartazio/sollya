@@ -279,6 +279,7 @@ extern FILE *internyyget_in(void *scanner);
 %token  DIRTYINTEGRALTOKEN;  						       
 %token  WORSTCASETOKEN;         					       
 %token  IMPLEMENTPOLYTOKEN;  						       
+%token  IMPLEMENTCSTETOKEN;  						       
 %token  CHECKINFNORMTOKEN;      					       
 %token  ZERODENOMINATORSTOKEN;  					       
 %token  ISEVALUABLETOKEN;       					       
@@ -1501,7 +1502,11 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | IMPLEMENTPOLYTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thing COMMATOKEN thing COMMATOKEN thing COMMATOKEN thinglist RPARTOKEN
                           {
 			    $$ = makeImplementPoly(addElement(addElement(addElement(addElement(addElement($13, $11), $9), $7), $5), $3));
-			  }  						       
+			  }  	
+                      | IMPLEMENTCSTETOKEN LPARTOKEN thing RPARTOKEN
+                          {
+			    $$ = makeImplementCste($3);
+			  }  						       					       
                       | CHECKINFNORMTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thing RPARTOKEN
                           {
 			    $$ = makeCheckInfnorm($3, $5, $7);

@@ -221,6 +221,7 @@ node *makeTanh(node *op1);
 node *makeAsinh(node *op1);
 node *makeAcosh(node *op1);
 node *makeAtanh(node *op1);
+node *makeUnary(node *op1, int nodeType);
 int mpfr_nearestint(mpfr_t rop, mpfr_t op);
 
 
