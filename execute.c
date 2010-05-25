@@ -5883,7 +5883,7 @@ int executeCommandInner(node *tree) {
       printMessage(1, "This command will have no effect.\n");
       considerDyingOnError();
     }
-    free_memory(tempNode);
+    freeThing(tempNode);
     break;
   case PRINTHEXA:
     mpfr_init2(a,tools_precision);
