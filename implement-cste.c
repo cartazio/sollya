@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "expression.h"
 #include "infnorm.h"
+#include "general.h"
 
 int constantImplementer(node *c, int gamma0, char *resName, int counter);
 
@@ -148,14 +149,14 @@ int implementDivMul(node *c, int gamma0, char *resName, int counter) {
   test = 1;
   /* Compute log2n such that 2^(log2n-1) <= n < 2^(log2n) */
   while (n>=1) { log2n++; if ((n%2)!=0) test=0; n = n/2;} 
-  /* Ajust log2n in order to have 2^(log2n-1) < n <= 2^(log2n) */
+  /* Adjust log2n in order to have 2^(log2n-1) < n <= 2^(log2n) */
   if(test) log2n--;
 
   curr = numerator;
   bufferNum = NULL;
   while(curr!=NULL) {
     sprintf(tmpName+3, "%d", toReturn+1);
-    tmp = (int *)safeMalloc(sizeof(int));
+    tmp = safeMalloc(sizeof(int));
     *tmp = toReturn+1;
     bufferNum = addElement(bufferNum, tmp);
     toReturn = constantImplementer(curr->value, gamma0+2+log2n, tmpName, toReturn+1);
@@ -218,9 +219,46 @@ int implementDivMul(node *c, int gamma0, char *resName, int counter) {
  
   freeChain(bufferNum, freeIntPtr);
   freeChain(bufferDenom, freeIntPtr);
-  freeChain(numerator, free_memory);
-  freeChain(denominator, free_memory);  
+  freeChain(numerator, (void (*)(void *))free_memory);
+  freeChain(denominator, (void (*)(void *))free_memory);  
   return toReturn;
+}
+
+int computeNumberOfTerms(node *c) {
+  int n,m;
+  if ((c->nodeType == ADD) || (c->nodeType == SUB)) {
+    n = computeNumberOfTerms(c->child1);
+    m = computeNumberOfTerms(c->child2);
+    return n+m;
+  }
+  else if (c->nodeType == NEG) {
+    n = computeNumberOfTerms(c->child1);
+    return n;
+  }
+  else return 1;
+}
+
+int implementAddSub(node *c, int gamma0, char *resName, int counter) {
+  int log2n, n, test;
+  int toReturn = counter;
+
+  n = computeNumberOfTerms(c);
+  log2n = 0;
+  test = 1;
+  /* Compute log2n such that 2^(log2n-1) <= n < 2^(log2n) */
+  while (n>=1) { log2n++; if ((n%2)!=0) test=0; n = n/2;} 
+  /* Adjust log2n in order to have 2^(log2n-1) < n <= 2^(log2n) */
+  if(test) log2n--;
+
+  /*  y = evaluate(c);
+  E = EXP(y);
+  y1 = evaluate(c->child1);
+  E1 = EXP(y1);
+  tmp(counter) <- (counter=genereEvaluation(c->child1, 2+E1+gamma0-E+log2n));
+  y2 = evaluate(c->child2);
+  E2 = EXP(y2);
+  tmp(counter) <- (counter=genereEvaluation(c->child1, 2+E1+gamma0-E+log2n));
+  resName <- mpfr_add()/mpfr_sub() en precision gamma0+3+EXP(yi)-E+log2n;*/
 }
 
 int constantImplementer(node *c, int gamma0, char *resName,  int counter) {
@@ -230,7 +268,7 @@ int constantImplementer(node *c, int gamma0, char *resName,  int counter) {
   switch (c->nodeType) {
   case ADD:
   case SUB:
-    /* toReturn = implementAddSub(c, gamma0, resName, counter); */
+    toReturn = implementAddSub(c, gamma0, resName, counter);
     break;
   case MUL:
   case DIV:
