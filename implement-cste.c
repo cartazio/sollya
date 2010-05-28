@@ -33,8 +33,8 @@ void implementCste(node *c) {
 
   printf("\n");
   printf("  /* Cleaning stuff */\n");
-  for(i=1; i<=counter; i++) printf("  mpfr_t tmp%d;\n", i);
-  for(i=1; i<=counter; i++) printf("  mpfr_init (tmp%d);\n", i);
+  /*  for(i=1; i<=counter; i++) printf("  mpfr_t tmp%d;\n", i);
+      for(i=1; i<=counter; i++) printf("  mpfr_init (tmp%d);\n", i);*/
   for(i=1; i<=counter; i++) printf("  mpfr_clear (tmp%d);\n", i);
   printf("}\n");
 
@@ -286,27 +286,42 @@ int implementPow(node *c, int gamma0, char *resName, int counter) {
 
   if ( (c->child1->nodeType==CONSTANT) 
        && mpfr_integer_p(*(c->child1->value))
-       && mpfr_fits_ulong_p(*(c->child1->value), MPFR_RNDN)) {
-    if ( (c->child2->nodeType==CONSTANT) 
-         && mpfr_integer_p(*(c->child2->value))
-         && mpfr_fits_ulong_p(*(c->child2->value), MPFR_RNDN)) { /* Case n^p */
-      printf("  mpfr_ui_pow_ui(%s, %lu, %lu, MPFR_RNDN);\n", resName, mpfr_get_ui(*(c->child1->value), MPFR_RNDN), mpfr_get_ui(*(c->child2->value), MPFR_RNDN));
-      return counter;
-    }
+       && mpfr_fits_ulong_p(*(c->child1->value), MPFR_RNDN)
+       && (c->child2->nodeType==CONSTANT) 
+       && mpfr_integer_p(*(c->child2->value))
+       && mpfr_fits_ulong_p(*(c->child2->value), MPFR_RNDN)) { /* Case n^p */
+    printf("  mpfr_ui_pow_ui(%s, %lu, %lu, MPFR_RNDN);\n", resName, mpfr_get_ui(*(c->child1->value), MPFR_RNDN), mpfr_get_ui(*(c->child2->value), MPFR_RNDN));
+    return counter;
   }
-  else {
-    if ( (c->child2->nodeType==CONSTANT) 
-         && mpfr_integer_p(*(c->child2->value))
-         && mpfr_fits_ulong_p(*(c->child2->value), GMP_RNDN) ) { /* Case x^p */
-      p = mpfr_get_ui(*(c->child2->value), GMP_RNDN);
-      log2p = ceil_log2n(p);
-      sprintf(tmpName+3, "%d", toReturn+1);
-      tmpNumber = toReturn + 1;
-      toReturn = constantImplementer(c->child1, gamma0+log2p+3, tmpName, toReturn+1);
-      printf("  mpfr_set_prec (%s, prec+%d);\n", resName, gamma0+2);
-      printf("  mpfr_pow_ui (%s, tmp%d, %d, MPFR_RNDN);\n", resName, tmpNumber, p);
-      return toReturn;
-      }
+
+  if ( (c->child2->nodeType==CONSTANT) 
+       && mpfr_integer_p(*(c->child2->value))
+       && mpfr_fits_ulong_p(*(c->child2->value), GMP_RNDN) ) { /* Case x^p */
+    p = mpfr_get_ui(*(c->child2->value), GMP_RNDN);
+    log2p = ceil_log2n(p);
+    sprintf(tmpName+3, "%d", toReturn+1);
+    tmpNumber = toReturn + 1;
+    toReturn = constantImplementer(c->child1, gamma0+log2p+3, tmpName, toReturn+1);
+    printf("  mpfr_set_prec (%s, prec+%d);\n", resName, gamma0+2);
+    printf("  mpfr_pow_ui (%s, tmp%d, %d, MPFR_RNDN);\n", resName, tmpNumber, p);
+    return toReturn;
+  }
+
+  if ( (c->child2->nodeType==DIV)
+       && (c->child2->child1->nodeType==CONSTANT)
+       && (mpfr_cmp_ui(*(c->child2->child1->value), 1)==0)
+       && (c->child2->child2->nodeType==CONSTANT)
+       && mpfr_integer_p(*(c->child2->child2->value))
+       && mpfr_fits_ulong_p(*(c->child2->child2->value), GMP_RNDN)
+       ) { /* Case x^(1/p) */
+    p = mpfr_get_ui(*(c->child2->child2->value), GMP_RNDN);
+    log2p = ceil_log2n(p);
+    sprintf(tmpName+3, "%d", toReturn+1);
+    tmpNumber = toReturn + 1;
+    toReturn = constantImplementer(c->child1, gamma0-log2p+3, tmpName, toReturn+1);
+    printf("  mpfr_set_prec (%s, prec+%d);\n", resName, gamma0+2);
+    printf("  mpfr_root (%s, tmp%d, %d, MPFR_RNDN);\n", resName, tmpNumber, p);
+    return toReturn;    
   }
 
   /* else... case x^y with x possibly integer. Handled as exp(y*ln(x)) */
