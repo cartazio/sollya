@@ -5,6 +5,19 @@
 
 int constantImplementer(node *c, int gamma0, char *resName, int counter);
 
+int ceil_log2n(int p) {
+  int n,log2p, test;
+  n = p;
+  log2p = 0;
+  test = 1;
+  /* Compute log2p such that 2^(log2p-1) <= p < 2^(log2p) */
+  while (n>=1) { log2p++; if ((n%2)!=0) test=0; n = n/2;} 
+  /* Adjust log2p in order to have 2^(log2p-1) < n <= 2^(log2p) */
+  if(test) log2p--;
+
+  return log2p;
+}
+
 void implementCste(node *c) {
   int i, counter;
 
@@ -137,7 +150,7 @@ int implementDivMul(node *c, int gamma0, char *resName, int counter) {
   chain *denominator = NULL;
   chain *curr;
   chain *bufferNum, *bufferDenom;
-  int log2n, n, test;
+  int log2n, n;
   char tmpName[10] = "tmp";
   int toReturn = counter;
   int *tmp;
@@ -145,13 +158,7 @@ int implementDivMul(node *c, int gamma0, char *resName, int counter) {
   normalizeDivMul(c, &numerator, &denominator);
 
   n = lengthChain(numerator) + lengthChain(denominator);
-  log2n = 0;
-  test = 1;
-  /* Compute log2n such that 2^(log2n-1) <= n < 2^(log2n) */
-  while (n>=1) { log2n++; if ((n%2)!=0) test=0; n = n/2;} 
-  /* Adjust log2n in order to have 2^(log2n-1) < n <= 2^(log2n) */
-  if(test) log2n--;
-
+  log2n = ceil_log2n(n);
   curr = numerator;
   bufferNum = NULL;
   while(curr!=NULL) {
@@ -224,41 +231,89 @@ int implementDivMul(node *c, int gamma0, char *resName, int counter) {
   return toReturn;
 }
 
-int computeNumberOfTerms(node *c) {
-  int n,m;
-  if ((c->nodeType == ADD) || (c->nodeType == SUB)) {
-    n = computeNumberOfTerms(c->child1);
-    m = computeNumberOfTerms(c->child2);
-    return n+m;
-  }
-  else if (c->nodeType == NEG) {
-    n = computeNumberOfTerms(c->child1);
-    return n;
-  }
-  else return 1;
+int implementAddSub(node *c, int gamma0, char *resName, int counter) {
+  mpfi_t y, a, b, tmp, tmp2;
+  int tmpa, tmpb;
+  int toReturn = counter;
+  char tmpName[10] = "tmp";
+  mp_prec_t prec;
+
+  prec = getToolPrecision();
+  mpfi_init2(y, prec);
+  mpfi_init2(a, prec);
+  mpfi_init2(b, prec);
+  mpfi_init2(tmp, prec);
+  mpfi_init2(tmp2, prec);
+
+  evaluateInterval(y, c, NULL, y);
+  evaluateInterval(a, c->child1, NULL, a);
+  evaluateInterval(b, c->child2, NULL, b);
+
+  tmpa = toReturn+1;
+  sprintf(tmpName+3, "%d", toReturn+1);
+  mpfi_div(tmp, y, a); mpfi_div_ui(tmp, tmp, 3);
+  toReturn = constantImplementer(c->child1, gamma0+1-mpfi_get_exp(tmp), tmpName, toReturn+1);
+
+  tmpb = toReturn+1;
+  sprintf(tmpName+3, "%d", toReturn+1);
+  mpfi_div(tmp, y, b); mpfi_div_ui(tmp, tmp, 3);
+  toReturn = constantImplementer(c->child2, gamma0+1-mpfi_get_exp(tmp), tmpName, toReturn+1);
+
+  mpfi_abs(tmp, a);
+  mpfi_abs(tmp2, b);
+  mpfi_add(tmp, tmp, tmp2);
+  mpfi_div(tmp, y, tmp);
+  mpfi_div_ui(tmp, tmp, 3);
+  printf("  mpfr_set_prec (%s, prec+%d);\n", resName, gamma0+2-mpfi_get_exp(tmp));
+  if (c->nodeType==ADD)
+    printf("  mpfr_add (%s, tmp%d, tmp%d, MPFR_RNDN);\n", resName, tmpa, tmpb);
+  else
+    printf("  mpfr_sub (%s, tmp%d, tmp%d, MPFR_RNDN);\n", resName, tmpa, tmpb);
+
+  mpfi_clear(y);
+  mpfi_clear(a);
+  mpfi_clear(b);
+  mpfi_clear(tmp);
+  mpfi_clear(tmp2);
+  return toReturn;
 }
 
-int implementAddSub(node *c, int gamma0, char *resName, int counter) {
-  int log2n, n, test;
+int implementPow(node *c, int gamma0, char *resName, int counter) {
   int toReturn = counter;
+  char tmpName[10] = "tmp";
+  int log2p, p, tmpNumber;
+  node *tmpNode;
 
-  n = computeNumberOfTerms(c);
-  log2n = 0;
-  test = 1;
-  /* Compute log2n such that 2^(log2n-1) <= n < 2^(log2n) */
-  while (n>=1) { log2n++; if ((n%2)!=0) test=0; n = n/2;} 
-  /* Adjust log2n in order to have 2^(log2n-1) < n <= 2^(log2n) */
-  if(test) log2n--;
+  if ( (c->child1->nodeType==CONSTANT) 
+       && mpfr_integer_p(*(c->child1->value))
+       && mpfr_fits_ulong_p(*(c->child1->value), MPFR_RNDN)) {
+    if ( (c->child2->nodeType==CONSTANT) 
+         && mpfr_integer_p(*(c->child2->value))
+         && mpfr_fits_ulong_p(*(c->child2->value), MPFR_RNDN)) { /* Case n^p */
+      printf("  mpfr_ui_pow_ui(%s, %lu, %lu, MPFR_RNDN);\n", resName, mpfr_get_ui(*(c->child1->value), MPFR_RNDN), mpfr_get_ui(*(c->child2->value), MPFR_RNDN));
+      return counter;
+    }
+  }
+  else {
+    if ( (c->child2->nodeType==CONSTANT) 
+         && mpfr_integer_p(*(c->child2->value))
+         && mpfr_fits_ulong_p(*(c->child2->value), GMP_RNDN) ) { /* Case x^p */
+      p = mpfr_get_ui(*(c->child2->value), GMP_RNDN);
+      log2p = ceil_log2n(p);
+      sprintf(tmpName+3, "%d", toReturn+1);
+      tmpNumber = toReturn + 1;
+      toReturn = constantImplementer(c->child1, gamma0+log2p+3, tmpName, toReturn+1);
+      printf("  mpfr_set_prec (%s, prec+%d);\n", resName, gamma0+2);
+      printf("  mpfr_pow_ui (%s, tmp%d, %d, MPFR_RNDN);\n", resName, tmpNumber, p);
+      return toReturn;
+      }
+  }
 
-  /*  y = evaluate(c);
-  E = EXP(y);
-  y1 = evaluate(c->child1);
-  E1 = EXP(y1);
-  tmp(counter) <- (counter=genereEvaluation(c->child1, 2+E1+gamma0-E+log2n));
-  y2 = evaluate(c->child2);
-  E2 = EXP(y2);
-  tmp(counter) <- (counter=genereEvaluation(c->child1, 2+E1+gamma0-E+log2n));
-  resName <- mpfr_add()/mpfr_sub() en precision gamma0+3+EXP(yi)-E+log2n;*/
+  /* else... case x^y with x possibly integer. Handled as exp(y*ln(x)) */
+  tmpNode = makeExp(makeMul(copyTree(c->child2), makeLog(copyTree(c->child1))));
+  toReturn = constantImplementer(tmpNode, gamma0, resName, counter);
+  free_memory(tmpNode);
+  return toReturn;
 }
 
 int constantImplementer(node *c, int gamma0, char *resName,  int counter) {
@@ -275,8 +330,8 @@ int constantImplementer(node *c, int gamma0, char *resName,  int counter) {
     toReturn = implementDivMul(c, gamma0, resName, counter);
     break;
   case POW:
+    toReturn = implementPow(c, gamma0, resName, counter);
     break;
-
   case CONSTANT:
     printf("  mpfr_set_prec (%s, prec+%d);\n", resName, gamma0);
     if (mpfr_integer_p(*(c->value)) && mpfr_fits_ulong_p(*(c->value), MPFR_RNDN)) {
