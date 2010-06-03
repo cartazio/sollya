@@ -3,7 +3,132 @@
 #include "infnorm.h"
 #include "general.h"
 
+#define BUFFERSIZE 64
+
+/* Possible instructions:
+   - mpfr_init2(var1, prec)
+   - mpfr_set_prec(var1, prec)
+   - 0ary function: name(var1, MPFR_RNDN)
+   - unary function: name(var1, var2, MPFR_RNDN)
+   - binary function: name(var1, var2, var3, MPFR_RNDN)
+   - mpfr_set_ui(var1, valui, MPFR_RNDN)
+   - mpfr_set_si(var1, valsi, MPFR_RNDN)
+   - mpfr_set_str(var1, valstr, 2, MPFR_RNDN)
+*/
+#define INIT2 0
+#define SETPREC 1
+#define CONSTANTFUNC 2
+#define UNARYFUNC 3
+#define BINARYFUNC 4
+#define SETUI 5
+#define SETSI 6
+#define SETSTR 7
+
+struct implementCsteInstruction {
+  int type;
+  char var1[BUFFERSIZE];
+  char var2[BUFFERSIZE];
+  char var3[BUFFERSIZE];
+  char name[BUFFERSIZE]
+  long int prec;
+  unsigned long int uival;
+  long sival;
+  char *strval
+};
+
+void fprintInstruction(FILE *output, struct implementCsteInstruction instr) {
+  const char init_string[]="mpfr_init2";
+  const char setprec_string[]="mpfr_set_prec";
+  char *ptr;
+
+  switch (instr.type) {
+  case INIT2:
+  case SETPREC:
+    if (instr.type == INIT2) ptr=init_string;
+    else ptr=setprec_string;
+
+    if (instr.prec > 0)
+      fprintf(output, "  %s (%s, prec+%d);\n", ptr, instr.var1, instr.prec);
+    else if (instr.prec == 0)
+      fprintf(output, "  %s (%s, prec);\n", ptr, instr.var1);
+    else {
+      fprintf(output, "  if (prec >= %d+MPFR_PREC_MIN)\n", -instr.prec);
+      fprintf(output, "  {\n");
+      fprintf(output, "    %s (%s, prec-%d);\n", ptr, instr.var1, -instr.prec);
+      fprintf(output, "  }\n");
+      fprintf(output, "  else\n");
+      fprintf(output, "  {\n");
+      fprintf(output, "    %s (%s, MPFR_PREC_MIN);\n", ptr, instr.var1);
+      fprintf(output, "  }\n");
+    }
+    break;
+  case CONSTANTFUNC:
+    fprintf(output, "  %s (%s, MPFR_RNDN);\n", instr.name, instr.var1);
+    break;
+  case UNARYFUNC:
+    fprintf(output, "  %s (%s, %s, MPFR_RNDN);\n", instr.name, instr.var1, instr.var2);
+    break;
+  case BINARYFUNC:
+    fprintf(output, "  %s (%s, %s, %s, MPFR_RNDN);\n", instr.name, instr.var1, instr.var2, instr.var3);
+    break;
+  case SETUI:
+    fprintf(output, "  mpfr_set_ui (%s, %lu, MPFR_RNDN);\n", instr.var1, instr.uival);
+    break;
+  case SETSI:
+    fprintf(output, "  mpfr_set_si (%s, %ld, MPFR_RNDN);\n", instr.var1, instr.sival);
+    break;
+  case SETSTR:
+    fprintf(output, "  mpfr_set_str (%s, %s, 2, MPFR_RNDN);\n", instr.var1, instr.strval);
+    break;
+  default: 
+    fprintf(stderr, "Unknown instruction %d\n", instr.type);
+  }
+  return;
+}
+
+void constructName(char *res, int counter) {
+  if (counter==0) sprintf(res, "y");
+  else sprintf(res, "tmp%d", counter);
+  return;
+}
+
+/* A program is given by a list of instructions, the index number of the last
+   temporary variable used in the program, and a list giving, for each temporary
+   variable, the maximum of the precision that it takes.      
+*/
+struct implementCsteProgram {
+  chain *instructions;
+  int counter;
+  chain *precisions;
+};
+
 int constantImplementer(node *c, int gamma0, char *resName, int counter);
+
+void implementCste(node *c) {
+  int i;
+  const char name[] = "something";
+  FILE *output = stdout;
+  struct implementCsteProgram program;
+
+  program.instructions = NULL;
+  program.counter = 0;
+  program.precisions = NULL;
+
+  counter = constantImplementer(c, 0, program);
+
+  fprintf(output, "void\n");
+  fprintf(output, "mpfr_const_%s (mpfr_ptr y, mp_prec_t prec)\n", name);
+  fprintf(output, "{\n");
+  fprintf(output, "  /* Declarations */\n");
+  fprintf(output, "  /* Initializations */\n");
+  fprintf(output, "\n");
+  fprintf(output, "  /* Core */\n");
+  fprintf(output, "\n");
+  fprintf(output, "  /* Cleaning stuff */\n");
+  fprintf(output, "}\n");
+
+  return;
+}
 
 int ceil_log2n(int p) {
   int n,log2p, test;
@@ -16,29 +141,6 @@ int ceil_log2n(int p) {
   if(test) log2p--;
 
   return log2p;
-}
-
-void implementCste(node *c) {
-  int i, counter;
-
-  printf("void\n");
-  printf("mpfr_const_xxx (mpfr_ptr y, mp_prec_t prec)\n");
-  printf("{\n");
-  printf("  /* Declarations */\n");
-  printf("  /* Initializations */\n");
-  printf("\n");
-  
-  counter = 0;
-  counter = constantImplementer(c, 0, "y", counter);
-
-  printf("\n");
-  printf("  /* Cleaning stuff */\n");
-  /*  for(i=1; i<=counter; i++) printf("  mpfr_t tmp%d;\n", i);
-      for(i=1; i<=counter; i++) printf("  mpfr_init (tmp%d);\n", i);*/
-  for(i=1; i<=counter; i++) printf("  mpfr_clear (tmp%d);\n", i);
-  printf("}\n");
-
-  return;
 }
 
 mp_exp_t mpfi_get_exp(mpfi_t x) {
@@ -331,34 +433,56 @@ int implementPow(node *c, int gamma0, char *resName, int counter) {
   return toReturn;
 }
 
-int constantImplementer(node *c, int gamma0, char *resName,  int counter) {
+void implementCsteCase(node *c, int gamma0, struct implementCsteProgram program) {
+  struct implementCsteInstruction *instr;
+
+  instr = safeMalloc(sizeof(instr));
+  instr->type = SETPREC;
+  constructName(instr->var1, program.counter);
+  instr->prec = gamma0;
+  addElement(program.instructions, instr);
+
+  if (mpfr_integer_p(*(c->value)) && mpfr_fits_ulong_p(*(c->value), GMP_RNDN)) {
+    instr = safeMalloc(sizeof(instr));
+    instr->type = SETUI;
+    constructName(instr->var1, program.counter);
+    instr->uival = mpfr_get_ui(*(c->value), GMP_RNDN);
+    addElement(program.instructions, instr);
+  }
+  else if (mpfr_integer_p(*(c->value)) && mpfr_fits_slong_p(*(c->value), GMP_RNDN)) {
+    instr = safeMalloc(sizeof(instr));
+    instr->type = SETSI;
+    constructName(instr->var1, program.counter);
+    instr->sival = mpfr_get_si(*(c->value), GMP_RNDN);
+    addElement(program.instructions, instr);
+  }
+  else {
+    instr = safeMalloc(sizeof(instr));
+    instr->type = SETSTR;
+    constructName(instr->var1, program.counter);
+    instr->strval = safeCalloc(mpfr_get_prec(*(c->value))+32); /* should be sufficient to store the string representing *(c->value) in binary */
+    mpfr_sprintf(instr->strval, "%RNb", *(c->value));
+    addElement(program.instructions, instr);
+  }
+}
+
+constantImplementer(node *c, int gamma0, struct implementCsteProgram program) {
   char tmpName[10] = "tmp";
-  int toReturn;
 
   switch (c->nodeType) {
   case ADD:
   case SUB:
-    toReturn = implementAddSub(c, gamma0, resName, counter);
+    implementAddSub(c, gamma0, program);
     break;
   case MUL:
   case DIV:
-    toReturn = implementDivMul(c, gamma0, resName, counter);
+    implementDivMul(c, gamma0, program);
     break;
   case POW:
-    toReturn = implementPow(c, gamma0, resName, counter);
+    implementPow(c, gamma0, program);
     break;
   case CONSTANT:
-    printf("  mpfr_set_prec (%s, prec+%d);\n", resName, gamma0);
-    if (mpfr_integer_p(*(c->value)) && mpfr_fits_ulong_p(*(c->value), MPFR_RNDN)) {
-      printf("  mpfr_set_ui (%s, %lu, MPFR_RNDN);\n", resName, mpfr_get_ui(*(c->value), GMP_RNDN));
-    }
-    else if (mpfr_integer_p(*(c->value)) && mpfr_fits_slong_p(*(c->value), MPFR_RNDN)) {
-      printf("  mpfr_set_si (%s, %ld, MPFR_RNDN);\n", resName, mpfr_get_si(*(c->value), GMP_RNDN));
-    }
-    else {
-      mpfr_printf("  mpfr_set_str (%s, \"%RNb\", 2, MPFR_RNDN);\n", resName, *(c->value));
-    }
-    toReturn = counter;
+    implementCsteCase(c, gamma0, program);
     break;
   case NEG:
     toReturn = constantImplementer(c->child1, gamma0, resName, counter);
