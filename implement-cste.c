@@ -1,3 +1,5 @@
+#include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include "expression.h"
 #include "infnorm.h"
@@ -14,6 +16,9 @@
    - mpfr_set_ui(var1, valui, MPFR_RNDN)
    - mpfr_set_si(var1, valsi, MPFR_RNDN)
    - mpfr_set_str(var1, valstr, 2, MPFR_RNDN)
+   - mpfr_ui_pow_ui(var1, valui, valui2, MPFR_RNDN);
+   - mpfr_pow_ui(var1, var2, valui, MPFR_RNDN);
+   - mpfr_root(var1, var2, valui, MPFR_RNDN);
 */
 #define INIT2 0
 #define SETPREC 1
@@ -23,23 +28,52 @@
 #define SETUI 5
 #define SETSI 6
 #define SETSTR 7
+#define UIPOWUI 8
+#define POWUI 9
+#define ROOT 10
 
 struct implementCsteInstruction {
   int type;
   char var1[BUFFERSIZE];
   char var2[BUFFERSIZE];
   char var3[BUFFERSIZE];
-  char name[BUFFERSIZE]
+  char name[BUFFERSIZE];
   long int prec;
   unsigned long int uival;
+  unsigned long int uival2;
   long sival;
-  char *strval
+  char *strval;
 };
+
+void free_implementCsteInstruction(void *instr) {
+  if ( ((struct implementCsteInstruction *)instr)->type==SETSTR)
+    free( ((struct implementCsteInstruction *)instr)->strval);
+  free( (struct implementCsteInstruction *)instr);
+  return;
+}
+
+void *copy_implementCsteInstructions(void *instr) {
+  struct implementCsteInstruction *newInstr;
+  newInstr = safeMalloc(sizeof(struct implementCsteInstruction));
+  newInstr->type = ((struct implementCsteInstruction *)instr)->type;
+  sprintf(newInstr->var1, "%s", ((struct implementCsteInstruction *)instr)->var1);
+  sprintf(newInstr->var2, "%s", ((struct implementCsteInstruction *)instr)->var2);
+  sprintf(newInstr->var3, "%s", ((struct implementCsteInstruction *)instr)->var3);
+  newInstr->prec = ((struct implementCsteInstruction *)instr)->prec;
+  newInstr->uival = ((struct implementCsteInstruction *)instr)->uival;
+  newInstr->uival2 = ((struct implementCsteInstruction *)instr)->uival2;
+  newInstr->sival = ((struct implementCsteInstruction *)instr)->sival;
+  if(newInstr->type == SETSTR) {
+    newInstr->strval = safeCalloc(1+strlen(((struct implementCsteInstruction *)instr)->strval) , sizeof(char));
+    strcpy(newInstr->strval, ((struct implementCsteInstruction *)instr)->strval);
+  }
+  return (void *)newInstr;
+}
 
 void fprintInstruction(FILE *output, struct implementCsteInstruction instr) {
   const char init_string[]="mpfr_init2";
   const char setprec_string[]="mpfr_set_prec";
-  char *ptr;
+  const char *ptr;
 
   switch (instr.type) {
   case INIT2:
@@ -80,6 +114,15 @@ void fprintInstruction(FILE *output, struct implementCsteInstruction instr) {
   case SETSTR:
     fprintf(output, "  mpfr_set_str (%s, %s, 2, MPFR_RNDN);\n", instr.var1, instr.strval);
     break;
+  case UIPOWUI:
+    fprintf(output, "  mpfr_ui_pow_ui(%s, %lu, %lu, MPFR_RNDN);\n", instr.var1, instr.uival, instr.uival2);
+    break;
+  case POWUI:
+    fprintf(output, "  mpfr_pow_ui(%s, %s, %lu, MPFR_RNDN);\n", instr.var1, instr.var2, instr.uival);
+    break;
+  case ROOT:
+    fprintf(output, "  mpfr_root(%s, %s, %lu, MPFR_RNDN);\n", instr.var1, instr.var2, instr.uival);
+    break;
   default: 
     fprintf(stderr, "Unknown instruction %d\n", instr.type);
   }
@@ -92,9 +135,9 @@ void constructName(char *res, int counter) {
   return;
 }
 
-/* A program is given by a list of instructions, the index number of the last
-   temporary variable used in the program, and a list giving, for each temporary
-   variable, the maximum of the precision that it takes.      
+/* A program is given by a list of instructions, the index number of the first
+   unused temporary variable in the program, and a list giving, for each
+   temporary variable, the maximum of the precision that it takes.      
 */
 struct implementCsteProgram {
   chain *instructions;
@@ -102,31 +145,205 @@ struct implementCsteProgram {
   chain *precisions;
 };
 
-int constantImplementer(node *c, int gamma0, char *resName, int counter);
+typedef struct implementCsteCouple {
+  int var;
+  long int prec;
+} couple;
 
+couple *makeCouple(int var, long int prec) {
+  couple *res = safeMalloc(sizeof(couple));
+  res->var=var;
+  res->prec=prec;
+  return res;
+}
+
+/* This functions looks for the variable var in program. If it is absent, it
+   adds the couple (var, prec) to program->precisions. If there already is an
+   occurence (var, prec2) in program->precisions, it compares prec and prec2
+   and keeps the largest.
+*/
+void appendPrecisionProg(int var, long int prec, struct implementCsteProgram *program) {
+  chain *curr;
+  int test = 0;
+  curr = program->precisions;
+  while ( (curr != NULL) && (!test) ) {
+    if ( ((couple *)(curr->value))->var == var) {
+      test = 1;
+      if (prec > ((couple *)(curr->value))->prec) ((couple *)(curr->value))->prec = prec;
+    }
+    else curr = curr->next;
+  }
+  if (!test) program->precisions = addElement(program->precisions, makeCouple(var, prec));
+  return;
+}
+
+/* These constructors allow one for adding an instruction to the end of a */
+/* give program.                                                          */
+void appendInit2Prog(int var1, long int prec, struct implementCsteProgram *program) {
+  struct implementCsteInstruction *instr;
+  instr = safeMalloc(sizeof(struct implementCsteInstruction));
+  instr->type = INIT2;
+  constructName(instr->var1, var1);
+  instr->prec = prec;
+  program->instructions = addElement(program->instructions, instr);
+  return;
+}
+
+void appendSetprecProg(int var1, long int prec, struct implementCsteProgram *program) {
+  struct implementCsteInstruction *instr;
+  instr = safeMalloc(sizeof(struct implementCsteInstruction));
+  instr->type = SETPREC;
+  constructName(instr->var1, var1);
+  instr->prec = prec;
+  program->instructions = addElement(program->instructions, instr);
+  appendPrecisionProg(var1, prec, program);
+  return;
+}
+
+void appendConstantfuncProg(char *name, int var1, struct implementCsteProgram *program) {
+  struct implementCsteInstruction *instr;
+  instr = safeMalloc(sizeof(struct implementCsteInstruction));
+  instr->type = CONSTANTFUNC;
+  constructName(instr->var1, var1);
+  sprintf(instr->name, "%s", name);
+  program->instructions = addElement(program->instructions, instr);
+  return;
+}
+
+void appendUnaryfuncProg(char *name, int var1, int var2, struct implementCsteProgram *program) {
+  struct implementCsteInstruction *instr;
+  instr = safeMalloc(sizeof(struct implementCsteInstruction));
+  instr->type = UNARYFUNC;
+  constructName(instr->var1, var1);
+  constructName(instr->var2, var2);
+  sprintf(instr->name, "%s", name);
+  program->instructions = addElement(program->instructions, instr);
+  return;
+}
+
+void appendBinaryfuncProg(char *name, int var1, int var2, int var3, struct implementCsteProgram *program) {
+  struct implementCsteInstruction *instr;
+  instr = safeMalloc(sizeof(struct implementCsteInstruction));
+  instr->type = UNARYFUNC;
+  constructName(instr->var1, var1);
+  constructName(instr->var2, var2);
+  constructName(instr->var3, var3);
+  sprintf(instr->name, "%s", name);
+  program->instructions = addElement(program->instructions, instr);
+  return;
+}
+
+void appendSetuiProg(int var1, unsigned long int val, struct implementCsteProgram *program) {
+  struct implementCsteInstruction *instr;
+  instr = safeMalloc(sizeof(struct implementCsteInstruction));
+  instr->type = SETUI;
+  constructName(instr->var1, var1);
+  instr->uival = val;
+  program->instructions = addElement(program->instructions, instr);
+  return;
+}
+
+void appendSetsiProg(int var1, long int val, struct implementCsteProgram *program) {
+  struct implementCsteInstruction *instr;
+  instr = safeMalloc(sizeof(struct implementCsteInstruction));
+  instr->type = SETSI;
+  constructName(instr->var1, var1);
+  instr->sival = val;
+  program->instructions = addElement(program->instructions, instr);
+  return;
+}
+
+void appendSetstrProg(int var1, mpfr_t val, struct implementCsteProgram *program) {
+  struct implementCsteInstruction *instr;
+  instr = safeMalloc(sizeof(struct implementCsteInstruction));
+  instr->type = SETSTR;
+  constructName(instr->var1, var1);
+  instr->strval = safeCalloc(mpfr_get_prec(val)+32, sizeof(char)); /* should be sufficient to store the string representing val in binary */
+  mpfr_sprintf(instr->strval, "%RNb", val);
+  program->instructions = addElement(program->instructions, instr);
+  return;
+}
+
+void appendUipowui(int var1, unsigned long int val1, unsigned long int val2, struct implementCsteProgram *program) {
+  struct implementCsteInstruction *instr;
+  instr = safeMalloc(sizeof(struct implementCsteInstruction));
+  instr->type = UIPOWUI;
+  constructName(instr->var1, var1);
+  instr->uival = val1;
+  instr->uival2 = val2;
+  program->instructions = addElement(program->instructions, instr);
+  return;  
+}
+
+void appendPowuiProg(int var1, int var2, unsigned long int val, struct implementCsteProgram *program) {
+  struct implementCsteInstruction *instr;
+  instr = safeMalloc(sizeof(struct implementCsteInstruction));
+  instr->type = POWUI;
+  constructName(instr->var1, var1);
+  constructName(instr->var2, var2);
+  instr->uival = val;
+  program->instructions = addElement(program->instructions, instr);
+  return;  
+}
+
+void appendRootProg(int var1, int var2, unsigned long int val, struct implementCsteProgram *program) {
+  struct implementCsteInstruction *instr;
+  instr = safeMalloc(sizeof(struct implementCsteInstruction));
+  instr->type = POWUI;
+  constructName(instr->var1, var1);
+  constructName(instr->var2, var2);
+  instr->uival = val;
+  program->instructions = addElement(program->instructions, instr);
+  return;  
+}
+
+/* Prototype of the recursive function */
+void constantImplementer(node *c, int gamma0, struct implementCsteProgram *program);
+
+/* Main function */
 void implementCste(node *c) {
   int i;
   const char name[] = "something";
   FILE *output = stdout;
   struct implementCsteProgram program;
-
+  chain *curr;
+  
   program.instructions = NULL;
   program.counter = 0;
   program.precisions = NULL;
 
-  counter = constantImplementer(c, 0, program);
+  constantImplementer(c, 0, &program);
+
+  /* reverse the chain */
+  curr = copyChain(program.instructions, copy_implementCsteInstructions);
+  freeChain(program.instructions, free_implementCsteInstruction);
+  program.instructions = curr;
+
+  curr = program.precisions;
+  while(curr != NULL) {
+    appendInit2Prog( ((couple *)(curr->value))->var, ((couple *)(curr->value))->prec, &program);
+    curr = curr->next;
+  }
 
   fprintf(output, "void\n");
   fprintf(output, "mpfr_const_%s (mpfr_ptr y, mp_prec_t prec)\n", name);
   fprintf(output, "{\n");
-  fprintf(output, "  /* Declarations */\n");
-  fprintf(output, "  /* Initializations */\n");
-  fprintf(output, "\n");
-  fprintf(output, "  /* Core */\n");
-  fprintf(output, "\n");
-  fprintf(output, "  /* Cleaning stuff */\n");
-  fprintf(output, "}\n");
-
+  while(0) {
+    fprintf(output, "  /* Declarations */\n");
+    fprintf(output, "  /* Initializations */\n");
+    fprintf(output, "\n");
+    fprintf(output, "  /* Core */\n");
+    fprintf(output, "\n");
+    fprintf(output, "  /* Cleaning stuff */\n");
+    fprintf(output, "}\n");
+  }
+  curr=program.instructions;
+  while(curr!=NULL) {
+    fprintInstruction(output, *(struct implementCsteInstruction *)(curr->value));
+    curr = curr->next;
+  }
+  freeChain(program.instructions, free_implementCsteInstruction);
+  freeChain(program.precisions, free);
   return;
 }
 
@@ -172,13 +389,13 @@ mp_exp_t mpfi_get_exp(mpfi_t x) {
 /* Let a be the constant given by the expression cste and f the function with */
 /* node type nodeType. This functions generates code for the implementation   */
 /* of f(a) in precision prec+gamma0, the result being stored in resName.      */
-int unaryFunctionCase(int nodeType, node *cste, char *functionName, int gamma0, char *resName, char * tmpName, int counter) {
+int unaryFunctionCase(int nodeType, node *cste, char *functionName, int gamma0, struct implementCsteProgram *program) {
   mpfi_t a, b, u, v, tmp;
   mpfr_t alpha, beta;
   mp_prec_t prec = getToolPrecision();
   node *func, *deriv;
   int gamma;
-  int toReturn;
+  int counter;
 
   mpfi_init2(a, prec);
   mpfi_init2(b, prec);
@@ -210,9 +427,12 @@ int unaryFunctionCase(int nodeType, node *cste, char *functionName, int gamma0, 
     mpfi_mul(v, u, tmp);
   } while (gamma < 2+mpfi_get_exp(v));
   
-  toReturn = constantImplementer(cste, gamma0+gamma, tmpName, counter);
-  printf("  mpfr_set_prec (%s, prec+%d);\n", resName, gamma0+2);
-  printf("  mpfr_%s (%s, %s, MPFR_RNDN);\n", functionName, resName, tmpName);
+  counter = program->counter;
+  program->counter++;
+  constantImplementer(cste, gamma0+gamma, program);
+  program->counter = counter;
+  appendSetprecProg(counter, gamma0+2, program);
+  appendUnaryfuncProg(functionName, counter, counter+1, program);
 
   mpfi_clear(a);
   mpfi_clear(b);
@@ -221,8 +441,9 @@ int unaryFunctionCase(int nodeType, node *cste, char *functionName, int gamma0, 
   mpfi_clear(tmp);
   mpfr_clear(alpha);
   mpfr_clear(beta);
-
-  return toReturn;
+  free_memory(func);
+  free_memory(deriv);
+  return;
 }
 
 void normalizeDivMul(node *c, chain **numerator, chain **denominator) {
@@ -246,99 +467,98 @@ void normalizeDivMul(node *c, chain **numerator, chain **denominator) {
   else *numerator = addElement(*numerator, copyTree(c));
 }
 
-
-int implementDivMul(node *c, int gamma0, char *resName, int counter) {
+int implementDivMul(node *c, int gamma0, struct implementCsteProgram *program) {
   chain *numerator = NULL;
   chain *denominator = NULL;
   chain *curr;
   chain *bufferNum, *bufferDenom;
   int log2n, n;
-  char tmpName[10] = "tmp";
-  int toReturn = counter;
   int *tmp;
+  int counter;
 
   normalizeDivMul(c, &numerator, &denominator);
 
   n = lengthChain(numerator) + lengthChain(denominator);
   log2n = ceil_log2n(n);
+  counter = program->counter;
+  program->counter++;
+
   curr = numerator;
   bufferNum = NULL;
   while(curr!=NULL) {
-    sprintf(tmpName+3, "%d", toReturn+1);
     tmp = safeMalloc(sizeof(int));
-    *tmp = toReturn+1;
+    *tmp = program->counter;
     bufferNum = addElement(bufferNum, tmp);
-    toReturn = constantImplementer(curr->value, gamma0+2+log2n, tmpName, toReturn+1);
+    constantImplementer(curr->value, gamma0+2+log2n, program);
     curr = curr->next;
   }
   curr = denominator;
   bufferDenom = NULL;
   while(curr!=NULL) {
-    sprintf(tmpName+3, "%d", toReturn+1);
     tmp = safeMalloc(sizeof(int));
-    *tmp = toReturn+1;
+    *tmp = program->counter;
     bufferDenom = addElement(bufferDenom, tmp);
-    toReturn = constantImplementer(curr->value, gamma0+2+log2n, tmpName, toReturn+1);
+    constantImplementer(curr->value, gamma0+2+log2n, program);
     curr = curr->next;
   }
 
+  program->counter = counter;
   if ( (lengthChain(numerator)==1) && (lengthChain(denominator)==1) ) {
-    printf("  mpfr_set_prec (%s, prec+%d);\n", resName, gamma0+2+log2n);
-    printf("  mpfr_div (%s, tmp%d, tmp%d);\n", resName, *((int *)(bufferNum->value)), *((int *)(bufferDenom->value)));
+    appendSetprecProg(counter, gamma0+2+log2n, program);
+    appendBinaryfuncProg("mpfr_div", counter, *((int *)(bufferNum->value)), *((int *)(bufferDenom->value)), program);
   }
   else if (lengthChain(numerator)==1) {
-    printf("  mpfr_set_prec (%s, prec+%d);\n", resName, gamma0+2+log2n);
-    printf("  mpfr_mul (%s, tmp%d, tmp%d, MPFR_RNDN);\n", resName, *((int *)(bufferDenom->value)), *((int *)(bufferDenom->next->value)));
+    appendSetprecProg(counter, gamma0+2+log2n, program);
+    appendBinaryfuncProg("mpfr_mul", counter, *((int *)(bufferDenom->value)), *((int *)(bufferDenom->next->value)), program);
     curr = bufferDenom->next->next;
     while(curr!=NULL) {
-      printf("  mpfr_mul (%s, %s, tmp%d, MPFR_RNDN);\n", resName, resName, *((int *)(curr->value)));
+      appendBinaryfuncProg("mpfr_mul", counter, counter, *((int *)(curr->value)), program);
       curr = curr->next;
     }
-    printf("  mpfr_div (%s, tmp%d, %s, MPFR_RNDN);\n", resName, *((int *)(bufferNum->value)), resName);
+    appendBinaryfuncProg("mpfr_div", counter, *((int *)(bufferNum->value)), counter, program);
   }
   else if (lengthChain(denominator)<=1) {
-    printf("  mpfr_set_prec (%s, prec+%d);\n", resName, gamma0+2+log2n);
-    printf("  mpfr_mul (%s, tmp%d, tmp%d, MPFR_RNDN);\n", resName, *((int *)(bufferNum->value)), *((int *)(bufferNum->next->value)));
+    appendSetprecProg(counter, gamma0+2+log2n, program);
+    appendBinaryfuncProg("mpfr_mul", counter, *((int *)(bufferNum->value)), *((int *)(bufferNum->next->value)), program);
     curr = bufferNum->next->next;
     while(curr!=NULL) {
-      printf("  mpfr_mul (%s, %s, tmp%d, MPFR_RNDN);\n", resName, resName, *((int *)(curr->value)));
+      appendBinaryfuncProg("mpfr_mul", counter, counter, *((int *)(curr->value)), program);
       curr = curr->next;
     }
     if (lengthChain(denominator)==1)
-      printf("  mpfr_div (%s, %s, tmp%d, MPFR_RNDN);\n", resName, resName, *((int *)(bufferDenom->value)));
+      appendBinaryfuncProg("mpfr_div", counter, counter, *((int *)(bufferDenom->value)), program);
   }
   else {
-    printf("  mpfr_set_prec (%s, prec+%d);\n", resName, gamma0+2+log2n);
-    printf("  mpfr_mul (%s, tmp%d, tmp%d, MPFR_RNDN);\n", resName, *((int *)(bufferNum->value)), *((int *)(bufferNum->next->value)));
+    appendSetprecProg(counter, gamma0+2+log2n, program);
+    appendBinaryfuncProg("mpfr_mul", counter, *((int *)(bufferNum->value)), *((int *)(bufferNum->next->value)), program);
     curr = bufferNum->next->next;
     while(curr!=NULL) {
-      printf("  mpfr_mul (%s, %s, tmp%d, MPFR_RNDN);\n", resName, resName, *((int *)(curr->value)));
+      appendBinaryfuncProg("mpfr_mul", counter, counter, *((int *)(curr->value)), program);
       curr = curr->next;
     }
-    toReturn++;
-    printf("  mpfr_set_prec (tmp%d, prec+%d);\n", toReturn, gamma0+2+log2n);
-    printf("  mpfr_mul (tmp%d, tmp%d, tmp%d, MPFR_RNDN);\n", toReturn, *((int *)(bufferDenom->value)), *((int *)(bufferDenom->next->value)));
+    appendSetprecProg(program->counter, gamma0+2+log2n, program);
+    appendBinaryfuncProg("mpfr_mul", program->counter,  *((int *)(bufferDenom->value)), *((int *)(bufferDenom->next->value)), program);
     curr = bufferDenom->next->next;
     while(curr!=NULL) {
-      printf("  mpfr_mul (tmp%d, tmp%d, tmp%d, MPFR_RNDN);\n", toReturn, toReturn, *((int *)(curr->value)));
+      appendBinaryfuncProg("mpfr_mul", program->counter, program->counter, *((int *)(curr->value)), program);
       curr = curr->next;
     }
-    printf("  mpfr_div (%s, %s, tmp%d, MPFR_RNDN);\n", resName, resName, toReturn);
+    appendBinaryfuncProg("mpfr_div", counter, counter, program->counter, program);
   }
  
+  program->counter = counter;
   freeChain(bufferNum, freeIntPtr);
   freeChain(bufferDenom, freeIntPtr);
   freeChain(numerator, (void (*)(void *))free_memory);
   freeChain(denominator, (void (*)(void *))free_memory);  
-  return toReturn;
+  return;
 }
 
-int implementAddSub(node *c, int gamma0, char *resName, int counter) {
+int implementAddSub(node *c, int gamma0, struct implementCsteProgram *program) {
   mpfi_t y, a, b, tmp, tmp2;
   int tmpa, tmpb;
-  int toReturn = counter;
-  char tmpName[10] = "tmp";
   mp_prec_t prec;
+  int counter;
 
   prec = getToolPrecision();
   mpfi_init2(y, prec);
@@ -351,49 +571,52 @@ int implementAddSub(node *c, int gamma0, char *resName, int counter) {
   evaluateInterval(a, c->child1, NULL, a);
   evaluateInterval(b, c->child2, NULL, b);
 
-  tmpa = toReturn+1;
-  sprintf(tmpName+3, "%d", toReturn+1);
-  mpfi_div(tmp, y, a); mpfi_div_ui(tmp, tmp, 3);
-  toReturn = constantImplementer(c->child1, gamma0+1-mpfi_get_exp(tmp), tmpName, toReturn+1);
+  counter = program->counter;
+  program->counter++;
 
-  tmpb = toReturn+1;
-  sprintf(tmpName+3, "%d", toReturn+1);
+  tmpa = program->counter;
+  mpfi_div(tmp, y, a); mpfi_div_ui(tmp, tmp, 3);
+  constantImplementer(c->child1, gamma0+1-mpfi_get_exp(tmp), program);
+
+  tmpb = program->counter;
   mpfi_div(tmp, y, b); mpfi_div_ui(tmp, tmp, 3);
-  toReturn = constantImplementer(c->child2, gamma0+1-mpfi_get_exp(tmp), tmpName, toReturn+1);
+  constantImplementer(c->child2, gamma0+1-mpfi_get_exp(tmp), program);
 
   mpfi_abs(tmp, a);
   mpfi_abs(tmp2, b);
   mpfi_add(tmp, tmp, tmp2);
   mpfi_div(tmp, y, tmp);
   mpfi_div_ui(tmp, tmp, 3);
-  printf("  mpfr_set_prec (%s, prec+%d);\n", resName, gamma0+2-mpfi_get_exp(tmp));
+  appendSetprecProg(counter, gamma0+2-mpfi_get_exp(tmp), program);
   if (c->nodeType==ADD)
-    printf("  mpfr_add (%s, tmp%d, tmp%d, MPFR_RNDN);\n", resName, tmpa, tmpb);
+    appendBinaryfuncProg("mpfr_add", counter, tmpa, tmpb, program);
   else
-    printf("  mpfr_sub (%s, tmp%d, tmp%d, MPFR_RNDN);\n", resName, tmpa, tmpb);
+    appendBinaryfuncProg("mpfr_sub", counter, tmpa, tmpb, program);
 
+  program->counter = counter;
   mpfi_clear(y);
   mpfi_clear(a);
   mpfi_clear(b);
   mpfi_clear(tmp);
   mpfi_clear(tmp2);
-  return toReturn;
+  return;
 }
 
-int implementPow(node *c, int gamma0, char *resName, int counter) {
-  int toReturn = counter;
-  char tmpName[10] = "tmp";
-  int log2p, p, tmpNumber;
+void implementPow(node *c, int gamma0, struct implementCsteProgram *program) {
+  int log2p, p, tmpNumber, counter;
   node *tmpNode;
 
+  counter = program->counter;
   if ( (c->child1->nodeType==CONSTANT) 
        && mpfr_integer_p(*(c->child1->value))
        && mpfr_fits_ulong_p(*(c->child1->value), MPFR_RNDN)
        && (c->child2->nodeType==CONSTANT) 
        && mpfr_integer_p(*(c->child2->value))
        && mpfr_fits_ulong_p(*(c->child2->value), MPFR_RNDN)) { /* Case n^p */
-    printf("  mpfr_ui_pow_ui(%s, %lu, %lu, MPFR_RNDN);\n", resName, mpfr_get_ui(*(c->child1->value), MPFR_RNDN), mpfr_get_ui(*(c->child2->value), MPFR_RNDN));
-    return counter;
+    appendSetprecProg(counter, gamma0, program);
+    appendUipowui(counter, mpfr_get_ui(*(c->child1->value), MPFR_RNDN), mpfr_get_ui(*(c->child2->value), MPFR_RNDN), program);
+    program->counter = counter;
+    return;
   }
 
   if ( (c->child2->nodeType==CONSTANT) 
@@ -401,12 +624,12 @@ int implementPow(node *c, int gamma0, char *resName, int counter) {
        && mpfr_fits_ulong_p(*(c->child2->value), GMP_RNDN) ) { /* Case x^p */
     p = mpfr_get_ui(*(c->child2->value), GMP_RNDN);
     log2p = ceil_log2n(p);
-    sprintf(tmpName+3, "%d", toReturn+1);
-    tmpNumber = toReturn + 1;
-    toReturn = constantImplementer(c->child1, gamma0+log2p+3, tmpName, toReturn+1);
-    printf("  mpfr_set_prec (%s, prec+%d);\n", resName, gamma0+2);
-    printf("  mpfr_pow_ui (%s, tmp%d, %d, MPFR_RNDN);\n", resName, tmpNumber, p);
-    return toReturn;
+    program->counter++;
+    constantImplementer(c->child1, gamma0+log2p+3, program);
+    appendSetprecProg(counter, gamma0+2, program);
+    appendPowuiProg(counter, counter+1, p, program);
+    program->counter = counter;
+    return;    
   }
 
   if ( (c->child2->nodeType==DIV)
@@ -418,55 +641,35 @@ int implementPow(node *c, int gamma0, char *resName, int counter) {
        ) { /* Case x^(1/p) */
     p = mpfr_get_ui(*(c->child2->child2->value), GMP_RNDN);
     log2p = ceil_log2n(p);
-    sprintf(tmpName+3, "%d", toReturn+1);
-    tmpNumber = toReturn + 1;
-    toReturn = constantImplementer(c->child1, gamma0-log2p+3, tmpName, toReturn+1);
-    printf("  mpfr_set_prec (%s, prec+%d);\n", resName, gamma0+2);
-    printf("  mpfr_root (%s, tmp%d, %d, MPFR_RNDN);\n", resName, tmpNumber, p);
-    return toReturn;    
+    constantImplementer(c->child1, gamma0-log2p+3, program);
+    appendSetprecProg(counter, gamma0+2, program);
+    appendRootProg(counter, counter+1, p, program);
+    program->counter = counter;
+    return;    
   }
 
   /* else... case x^y with x possibly integer. Handled as exp(y*ln(x)) */
   tmpNode = makeExp(makeMul(copyTree(c->child2), makeLog(copyTree(c->child1))));
-  toReturn = constantImplementer(tmpNode, gamma0, resName, counter);
+  constantImplementer(tmpNode, gamma0, program);
   free_memory(tmpNode);
-  return toReturn;
+  program->counter = counter;
+  return;
 }
 
-void implementCsteCase(node *c, int gamma0, struct implementCsteProgram program) {
-  struct implementCsteInstruction *instr;
-
-  instr = safeMalloc(sizeof(instr));
-  instr->type = SETPREC;
-  constructName(instr->var1, program.counter);
-  instr->prec = gamma0;
-  addElement(program.instructions, instr);
-
+void implementCsteCase(node *c, int gamma0, struct implementCsteProgram *program) {
+  appendSetprecProg(program->counter, gamma0, program);
   if (mpfr_integer_p(*(c->value)) && mpfr_fits_ulong_p(*(c->value), GMP_RNDN)) {
-    instr = safeMalloc(sizeof(instr));
-    instr->type = SETUI;
-    constructName(instr->var1, program.counter);
-    instr->uival = mpfr_get_ui(*(c->value), GMP_RNDN);
-    addElement(program.instructions, instr);
+    appendSetuiProg(program->counter, mpfr_get_ui(*(c->value), GMP_RNDN), program);
   }
   else if (mpfr_integer_p(*(c->value)) && mpfr_fits_slong_p(*(c->value), GMP_RNDN)) {
-    instr = safeMalloc(sizeof(instr));
-    instr->type = SETSI;
-    constructName(instr->var1, program.counter);
-    instr->sival = mpfr_get_si(*(c->value), GMP_RNDN);
-    addElement(program.instructions, instr);
+    appendSetsiProg(program->counter, mpfr_get_si(*(c->value), GMP_RNDN), program);
   }
   else {
-    instr = safeMalloc(sizeof(instr));
-    instr->type = SETSTR;
-    constructName(instr->var1, program.counter);
-    instr->strval = safeCalloc(mpfr_get_prec(*(c->value))+32); /* should be sufficient to store the string representing *(c->value) in binary */
-    mpfr_sprintf(instr->strval, "%RNb", *(c->value));
-    addElement(program.instructions, instr);
+    appendSetstrProg(program->counter, *(c->value), program);
   }
 }
 
-constantImplementer(node *c, int gamma0, struct implementCsteProgram program) {
+void constantImplementer(node *c, int gamma0, struct implementCsteProgram *program) {
   char tmpName[10] = "tmp";
 
   switch (c->nodeType) {
@@ -485,12 +688,12 @@ constantImplementer(node *c, int gamma0, struct implementCsteProgram program) {
     implementCsteCase(c, gamma0, program);
     break;
   case NEG:
-    toReturn = constantImplementer(c->child1, gamma0, resName, counter);
-    printf("  mpfr_neg (%s, %s, MPFR_RNDN);\n", resName, resName);
+    constantImplementer(c->child1, gamma0, program);
+    appendUnaryfuncProg("mpfr_neg", program->counter, program->counter, program);
     break;
   case ABS:
-    toReturn = constantImplementer(c->child1, gamma0, resName, counter);
-    printf("  mpfr_abs (%s, %s, MPFR_RNDN);\n", resName, resName);
+    constantImplementer(c->child1, gamma0, program);
+    appendUnaryfuncProg("mpfr_abs", program->counter, program->counter, program);
     break;
   case DOUBLE:        
     break;
@@ -505,9 +708,8 @@ constantImplementer(node *c, int gamma0, struct implementCsteProgram program) {
   case FLOOR:
     break;
   case PI_CONST:
-    printf("  mpfr_set_prec (%s, prec+%d);\n", resName, gamma0);
-    printf("  mpfr_const_pi (%s, MPFR_RNDN);\n", resName);
-    toReturn = counter;
+    appendSetprecProg(program->counter, gamma0, program);
+    appendConstantfuncProg("mpfr_const_pi", program->counter, program);
     break;
   case SINGLE:
     break;
@@ -515,88 +717,67 @@ constantImplementer(node *c, int gamma0, struct implementCsteProgram program) {
     break;
 
   case SQRT:
-    sprintf(tmpName+3, "%d", counter+1);
-    toReturn = unaryFunctionCase(c->nodeType, c->child1, "sqrt", gamma0, resName, tmpName, counter+1);
+    unaryFunctionCase(c->nodeType, c->child1, "mpfr_sqrt", gamma0, program);
     break;
   case EXP:
-    sprintf(tmpName+3, "%d", counter+1);
-    toReturn = unaryFunctionCase(c->nodeType, c->child1, "exp", gamma0, resName, tmpName, counter+1);
+    unaryFunctionCase(c->nodeType, c->child1, "mpfr_exp", gamma0, program);
     break;
   case LOG:
-    sprintf(tmpName+3, "%d", counter+1);
-    toReturn = unaryFunctionCase(c->nodeType, c->child1, "log", gamma0, resName, tmpName, counter+1);
+    unaryFunctionCase(c->nodeType, c->child1, "mpfr_log", gamma0, program);
     break;
   case LOG_2:
-    sprintf(tmpName+3, "%d", counter+1);
-    toReturn = unaryFunctionCase(c->nodeType, c->child1, "log2", gamma0, resName, tmpName, counter+1);
+    unaryFunctionCase(c->nodeType, c->child1, "mpfr_log2", gamma0, program);
     break;
   case LOG_10:
-    sprintf(tmpName+3, "%d", counter+1);
-    toReturn = unaryFunctionCase(c->nodeType, c->child1, "log10", gamma0, resName, tmpName, counter+1);
+    unaryFunctionCase(c->nodeType, c->child1, "mpfr_log10", gamma0, program);
     break;
   case SIN:
-    sprintf(tmpName+3, "%d", counter+1);
-    toReturn = unaryFunctionCase(c->nodeType, c->child1, "sin", gamma0, resName, tmpName, counter+1);
+    unaryFunctionCase(c->nodeType, c->child1, "mpfr_sin", gamma0, program);
     break;
   case COS:
-    sprintf(tmpName+3, "%d", counter+1);
-    toReturn = unaryFunctionCase(c->nodeType, c->child1, "cos", gamma0, resName, tmpName, counter+1);
+    unaryFunctionCase(c->nodeType, c->child1, "mpfr_cos", gamma0, program);
     break;
   case TAN:
-    sprintf(tmpName+3, "%d", counter+1);
-    toReturn = unaryFunctionCase(c->nodeType, c->child1, "tan", gamma0, resName, tmpName, counter+1);
+    unaryFunctionCase(c->nodeType, c->child1, "mpfr_tan", gamma0, program);
     break;
   case ASIN:
-    sprintf(tmpName+3, "%d", counter+1);
-    toReturn = unaryFunctionCase(c->nodeType, c->child1, "asin", gamma0, resName, tmpName, counter+1);
+    unaryFunctionCase(c->nodeType, c->child1, "mpfr_asin", gamma0, program);
     break;
   case ACOS:
-    sprintf(tmpName+3, "%d", counter+1);
-    toReturn = unaryFunctionCase(c->nodeType, c->child1, "acos", gamma0, resName, tmpName, counter+1);
+    unaryFunctionCase(c->nodeType, c->child1, "mpfr_acos", gamma0, program);
     break;
   case ATAN:
-    sprintf(tmpName+3, "%d", counter+1);
-    toReturn = unaryFunctionCase(c->nodeType, c->child1, "atan", gamma0, resName, tmpName, counter+1);
+    unaryFunctionCase(c->nodeType, c->child1, "mpfr_atan", gamma0, program);
     break;
   case SINH:
-    sprintf(tmpName+3, "%d", counter+1);
-    toReturn = unaryFunctionCase(c->nodeType, c->child1, "sinh", gamma0, resName, tmpName, counter+1);
+    unaryFunctionCase(c->nodeType, c->child1, "mpfr_sinh", gamma0, program);
     break;
   case COSH:
-    sprintf(tmpName+3, "%d", counter+1);
-    toReturn = unaryFunctionCase(c->nodeType, c->child1, "cosh", gamma0, resName, tmpName, counter+1);
+    unaryFunctionCase(c->nodeType, c->child1, "mpfr_cosh", gamma0, program);
     break;
   case TANH:
-    sprintf(tmpName+3, "%d", counter+1);
-    toReturn = unaryFunctionCase(c->nodeType, c->child1, "tanh", gamma0, resName, tmpName, counter+1);
+    unaryFunctionCase(c->nodeType, c->child1, "mpfr_tanh", gamma0, program);
     break;
   case ASINH:
-    sprintf(tmpName+3, "%d", counter+1);
-    toReturn = unaryFunctionCase(c->nodeType, c->child1, "asinh", gamma0, resName, tmpName, counter+1);
+    unaryFunctionCase(c->nodeType, c->child1, "mpfr_asinh", gamma0, program);
     break;
   case ACOSH:
-    sprintf(tmpName+3, "%d", counter+1);
-    toReturn = unaryFunctionCase(c->nodeType, c->child1, "acosh", gamma0, resName, tmpName, counter+1);
+    unaryFunctionCase(c->nodeType, c->child1, "mpfr_acosh", gamma0, program);
     break;
   case ATANH:
-    sprintf(tmpName+3, "%d", counter+1);
-    toReturn = unaryFunctionCase(c->nodeType, c->child1, "atanh", gamma0, resName, tmpName, counter+1);
+    unaryFunctionCase(c->nodeType, c->child1, "mpfr_atanh", gamma0, program);
     break;
   case ERF:
-    sprintf(tmpName+3, "%d", counter+1);
-    toReturn = unaryFunctionCase(c->nodeType, c->child1, "erf", gamma0, resName, tmpName, counter+1);
+    unaryFunctionCase(c->nodeType, c->child1, "mpfr_erf", gamma0, program);
     break;
   case ERFC:
-    sprintf(tmpName+3, "%d", counter+1);
-    toReturn = unaryFunctionCase(c->nodeType, c->child1, "erfc", gamma0, resName, tmpName, counter+1);
+    unaryFunctionCase(c->nodeType, c->child1, "mpfr_erfc", gamma0, program);
     break;
   case LOG_1P:
-    sprintf(tmpName+3, "%d", counter+1);
-    toReturn = unaryFunctionCase(c->nodeType, c->child1, "log1p", gamma0, resName, tmpName, counter+1);
+    unaryFunctionCase(c->nodeType, c->child1, "mpfr_log1p", gamma0, program);
     break;
   case EXP_M1:
-    sprintf(tmpName+3, "%d", counter+1);
-    toReturn = unaryFunctionCase(c->nodeType, c->child1, "expm1", gamma0, resName, tmpName, counter+1);
+    unaryFunctionCase(c->nodeType, c->child1, "mpfr_expm1", gamma0, program);
     break;
   case LIBRARYFUNCTION:
     break;
@@ -605,5 +786,6 @@ constantImplementer(node *c, int gamma0, struct implementCsteProgram program) {
     printMessage(1, "Unknown identifier (%d) in the tree\n", c->nodeType);
   }
 
-  return toReturn;
+  program->counter++;
+  return;
 }
