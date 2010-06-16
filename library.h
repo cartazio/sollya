@@ -65,16 +65,10 @@ typedef struct libraryFunctionStruct libraryFunction;
 struct libraryFunctionStruct 
 {
   char *functionName;
-  int (*code)(mpfi_t, mpfi_t, int);
+  int (*code)(mpfi_t, mpfi_t, int); /* used for LIBRARYFUNCTION */
+  void (*constant_code)(mpfr_t, mp_prec_t); /* used for LIBRARYCONSTANT */
 };
 
-typedef struct procLibraryHandleStruct procLibraryHandle;
-struct procLibraryHandleStruct 
-{
-  char *procLibraryName;
-  void *procLibraryDescriptor;
-  chain *procedureList;
-};
 
 typedef struct libraryProcedureStruct libraryProcedure;
 struct libraryProcedureStruct 
@@ -101,11 +95,22 @@ struct libraryProcedureStruct
 
 
 libraryFunction *bindFunction(char* libraryName, char *functionName);
-libraryFunction *getFunction(char *functionName);
-void freeLibraries();
-
+libraryFunction *bindConstantFunction(char* libraryName, char *functionName);
 libraryProcedure *bindProcedure(char* libraryName, char *procedureName, chain *signature);
+
+libraryFunction *getFunction(char *functionName);
+libraryFunction *getConstantFunction(char *functionName);
 libraryProcedure *getProcedure(char *procedureName);
+
+/* FIXME: it is impossible to export this prototype here because 
+   expression.h refers to library.h for the definition of the type node,
+   hence a circular definition problem. I do not see how to solve the
+   problem yet. 
+*/
+/* void libraryConstantToInterval(mpfi_t res, node *tree); */
+
+void freeFunctionLibraries();
+void freeConstantLibraries();
 void freeProcLibraries();
 
 #endif /* ifdef LIBRARY_H*/

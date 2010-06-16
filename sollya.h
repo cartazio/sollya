@@ -78,15 +78,8 @@ typedef struct libraryFunctionStruct libraryFunction;
 struct libraryFunctionStruct 
 {
   char *functionName;
-  int (*code)(mpfi_t, mpfi_t, int);
-};
-
-typedef struct procLibraryHandleStruct procLibraryHandle;
-struct procLibraryHandleStruct 
-{
-  char *procLibraryName;
-  void *procLibraryDescriptor;
-  chain *procedureList;
+  int (*code)(mpfi_t, mpfi_t, int); /* used for LIBRARYFUNCTION */
+  void (*constant_code)(mpfr_t, mp_prec_t); /* used for LIBRARYCONSTANT */
 };
 
 typedef struct libraryProcedureStruct libraryProcedure;
@@ -137,12 +130,14 @@ struct libraryProcedureStruct
 #define CEIL 36
 #define FLOOR 37
 #define PI_CONST 38
+#define SINGLE 39
+#define NEARESTINT 40
+#define LIBRARYCONSTANT 41
+
 #define FIXED 236
 #define FLOATING 237
 #define ABSOLUTESYM 197
 #define RELATIVESYM 198
-#define SINGLE 39
-#define NEARESTINT 40
 
 typedef struct nodeStruct node;
 struct nodeStruct 

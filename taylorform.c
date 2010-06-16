@@ -767,10 +767,12 @@ void taylor_model(tModel *t, node *f, int n, mpfi_t x0, mpfi_t x, int mode) {
   
   case PI_CONST:
   case CONSTANT:
-  
+  case LIBRARYCONSTANT:
+
   mpfi_init2(ct, getToolPrecision());
   tt=createEmptytModel(n,x0,x); 
   if (f->nodeType == PI_CONST) mpfi_const_pi(ct);
+  else if (f->nodeType == LIBRARYCONSTANT) libraryConstantToInterval(ct, f);
   else mpfi_set_fr(ct, *(f->value));
 
   consttModel(tt,ct);

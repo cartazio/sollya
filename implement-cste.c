@@ -19,6 +19,7 @@
    - mpfr_ui_pow_ui(var1, valui, valui2, MPFR_RNDN);
    - mpfr_pow_ui(var1, var2, valui, MPFR_RNDN);
    - mpfr_root(var1, var2, valui, MPFR_RNDN);
+   - valstr(var1, prec); for a library constant
 */
 #define INIT2 0
 #define SETPREC 1
@@ -31,6 +32,7 @@
 #define UIPOWUI 8
 #define POWUI 9
 #define ROOT 10
+#define LIBRARYCONST 11
 
 struct implementCsteInstruction {
   int type;
@@ -46,7 +48,7 @@ struct implementCsteInstruction {
 };
 
 void free_implementCsteInstruction(void *instr) {
-  if ( ((struct implementCsteInstruction *)instr)->type==SETSTR)
+  if ( ((struct implementCsteInstruction *)instr)->strval!=NULL )
     free( ((struct implementCsteInstruction *)instr)->strval);
   free( (struct implementCsteInstruction *)instr);
   return;
@@ -64,10 +66,11 @@ void *copy_implementCsteInstructions(void *instr) {
   newInstr->uival = ((struct implementCsteInstruction *)instr)->uival;
   newInstr->uival2 = ((struct implementCsteInstruction *)instr)->uival2;
   newInstr->sival = ((struct implementCsteInstruction *)instr)->sival;
-  if(newInstr->type == SETSTR) {
+  if(((struct implementCsteInstruction *)instr)->strval != NULL) {
     newInstr->strval = safeCalloc(1+strlen(((struct implementCsteInstruction *)instr)->strval) , sizeof(char));
     strcpy(newInstr->strval, ((struct implementCsteInstruction *)instr)->strval);
   }
+  else newInstr->strval = NULL;
   return (void *)newInstr;
 }
 
@@ -79,8 +82,10 @@ void fprintInstruction(FILE *output, struct implementCsteInstruction instr) {
   switch (instr.type) {
   case INIT2:
   case SETPREC:
+  case LIBRARYCONST:
     if (instr.type == INIT2) ptr=init_string;
-    else ptr=setprec_string;
+    else if (instr.type == SETPREC) ptr=setprec_string;
+    else ptr = instr.strval;
 
     if (instr.prec > 0)
       fprintf(output, "  %s (%s, prec+%d);\n", ptr, instr.var1, instr.prec);
@@ -197,6 +202,7 @@ void appendInit2Prog(int var1, long int prec, struct implementCsteProgram *progr
   strcpy(instr->var3, "");
   strcpy(instr->name, "");
   instr->prec = prec;
+  instr->strval = NULL;
   program->instructions = addElement(program->instructions, instr);
   return;
 }
@@ -210,6 +216,7 @@ void appendSetprecProg(int var1, long int prec, struct implementCsteProgram *pro
   strcpy(instr->var3, "");
   strcpy(instr->name, "");
   instr->prec = prec;
+  instr->strval = NULL;
   program->instructions = addElement(program->instructions, instr);
   appendPrecisionProg(var1, prec, program);
   return;
@@ -223,6 +230,7 @@ void appendConstantfuncProg(char *name, int var1, struct implementCsteProgram *p
   strcpy(instr->var2, "");
   strcpy(instr->var3, "");
   strcpy(instr->name, name);
+  instr->strval = NULL;
   program->instructions = addElement(program->instructions, instr);
   return;
 }
@@ -235,6 +243,7 @@ void appendUnaryfuncProg(char *name, int var1, int var2, struct implementCstePro
   constructName(instr->var2, var2);
   strcpy(instr->var3, "");
   strcpy(instr->name, name);
+  instr->strval = NULL;
   program->instructions = addElement(program->instructions, instr);
   return;
 }
@@ -247,6 +256,7 @@ void appendBinaryfuncProg(char *name, int var1, int var2, int var3, struct imple
   constructName(instr->var2, var2);
   constructName(instr->var3, var3);
   strcpy(instr->name, name);
+  instr->strval = NULL;
   program->instructions = addElement(program->instructions, instr);
   return;
 }
@@ -260,6 +270,7 @@ void appendSetuiProg(int var1, unsigned long int val, struct implementCsteProgra
   strcpy(instr->var3, "");
   strcpy(instr->name, "");
   instr->uival = val;
+  instr->strval = NULL;
   program->instructions = addElement(program->instructions, instr);
   return;
 }
@@ -273,6 +284,7 @@ void appendSetsiProg(int var1, long int val, struct implementCsteProgram *progra
   strcpy(instr->var3, "");
   strcpy(instr->name, "");
   instr->sival = val;
+  instr->strval = NULL;
   program->instructions = addElement(program->instructions, instr);
   return;
 }
@@ -301,6 +313,7 @@ void appendUipowui(int var1, unsigned long int val1, unsigned long int val2, str
   strcpy(instr->name, "");
   instr->uival = val1;
   instr->uival2 = val2;
+  instr->strval = NULL;
   program->instructions = addElement(program->instructions, instr);
   return;  
 }
@@ -314,6 +327,7 @@ void appendPowuiProg(int var1, int var2, unsigned long int val, struct implement
   strcpy(instr->var3, "");
   strcpy(instr->name, "");
   instr->uival = val;
+  instr->strval = NULL;
   program->instructions = addElement(program->instructions, instr);
   return;  
 }
@@ -327,6 +341,23 @@ void appendRootProg(int var1, int var2, unsigned long int val, struct implementC
   strcpy(instr->var3, "");
   strcpy(instr->name, "");
   instr->uival = val;
+  instr->strval = NULL;
+  program->instructions = addElement(program->instructions, instr);
+  return;  
+}
+
+void appendLibraryConstantProg(node *c, int gamma0, struct implementCsteProgram *program) {
+  struct implementCsteInstruction *instr;
+  instr = safeMalloc(sizeof(struct implementCsteInstruction));
+  instr->type = LIBRARYCONST;
+  constructName(instr->var1, program->counter);
+  instr->prec = gamma0;
+  strcpy(instr->var2, "");
+  strcpy(instr->var3, "");
+  strcpy(instr->name, "");
+  instr->strval = safeCalloc(strlen(c->libFun->functionName)+1, sizeof(char));
+  strcpy(instr->strval, c->libFun->functionName);
+
   program->instructions = addElement(program->instructions, instr);
   return;  
 }
@@ -779,6 +810,10 @@ void constantImplementer(node *c, int gamma0, struct implementCsteProgram *progr
   case PI_CONST:
     appendSetprecProg(program->counter, gamma0, program);
     appendConstantfuncProg("mpfr_const_pi", program->counter, program);
+    break;
+  case LIBRARYCONSTANT:
+    appendPrecisionProg(program->counter, gamma0, program);
+    appendLibraryConstantProg(c, gamma0, program);
     break;
   case SINGLE:
     break;

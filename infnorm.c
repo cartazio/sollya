@@ -1930,6 +1930,10 @@ chain* evaluateI(mpfi_t result, node *tree, mpfi_t x, mp_prec_t prec, int simpli
     mpfi_const_pi(stack3);
     excludes = NULL;
     break;
+  case LIBRARYCONSTANT:
+    libraryConstantToInterval(stack3, tree);
+    excludes = NULL;
+    break;
   default:
     fprintf(stderr,"Error: evaluateI: unknown identifier in the tree\n");
     exit(1);
@@ -4085,6 +4089,7 @@ chain *uncertifiedZeroDenominators(node *tree, mpfr_t a, mpfr_t b, mp_prec_t pre
     break;
   case CONSTANT:
   case PI_CONST:
+  case LIBRARYCONSTANT:
     return NULL;
     break;
   case ADD:
@@ -5211,6 +5216,7 @@ int evaluateSignTrigoUnsafe(int *s, node *child, int nodeType) {
 int evaluateSign(int *s, node *rawFunc) {
   int sign, okay, okayA, okayB, okayC;
   mpfr_t value, dummyX;
+  mpfi_t valueI;
   int signA, signB, signC;
   node *tempNode, *tempNode2;
   node *func, *rawFunc2;
@@ -5491,6 +5497,27 @@ int evaluateSign(int *s, node *rawFunc) {
 	okay = 1;
 	sign = 1;
 	break;
+      case LIBRARYCONSTANT:
+        /* By defininition, a library constant is known with a relative error
+           smaller that ~ 2^(-prec). So we can decide the sign, based on low
+           approximation of the constant. */
+        mpfi_init2(valueI, 12); 
+        libraryConstantToInterval(valueI, func);
+        if (mpfi_is_zero(valueI)) {
+          okay = 1;
+          sign = 0;
+        }
+        else {
+          if (mpfi_has_zero(valueI)) {
+            okay = 0;
+            sign = 0;
+          }
+          else {
+            okay = 1;
+            sign = (mpfi_is_pos(valueI))?1:(-1);
+          }
+        }
+        break;
       default:
 	fprintf(stderr,"Error: evaluateSign: unknown identifier (%d) in the tree\n",func->nodeType);
 	exit(1);

@@ -714,7 +714,8 @@ void freeTool() {
     readStack = readStackTemp;
   }
   yylex_destroy(scanner);
-  freeLibraries();
+  freeFunctionLibraries();
+  freeConstantLibraries();
   freeProcLibraries();
   freeCounter();
   freeSymbolTable(symbolTable, freeThingOnVoid);
@@ -759,7 +760,8 @@ void restartTool() {
   symbolTable = NULL;
   freeDeclaredSymbolTable(declaredSymbolTable, freeThingOnVoid);
   declaredSymbolTable = NULL;
-  freeLibraries();
+  freeFunctionLibraries();
+  freeConstantLibraries();
   freeProcLibraries();
   initToolDefaults();
   parseMode();

@@ -1453,6 +1453,11 @@ void auto_diff_scaled(mpfi_t* res, node *f, mpfi_t x0, int n) {
     for(i=1; i<=n; i++) mpfi_set_ui(res[i], 0);
     break;
 
+  case LIBRARYCONSTANT:
+    libraryConstantToInterval(res[0], f);
+    for(i=1; i<=n; i++) mpfi_set_ui(res[i], 0);
+    break;
+
   case CONSTANT:
     mpfi_set_fr(res[0], *(f->value));
     for(i=1; i<=n; i++) mpfi_set_ui(res[i], 0);

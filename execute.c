@@ -371,6 +371,9 @@ node *copyThing(node *tree) {
     copy->libFunDeriv = tree->libFunDeriv;
     copy->child1 = copyThing(tree->child1);
     break;
+  case LIBRARYCONSTANT:
+    copy->libFun = tree->libFun;
+    break;
   case CEIL:
     copy->child1 = copyThing(tree->child1);
     break;
@@ -509,6 +512,11 @@ node *copyThing(node *tree) {
     strcpy(copy->string,tree->string);
     break; 			
   case LIBRARYBINDING:
+    copy->child1 = copyThing(tree->child1);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;  			
+  case LIBRARYCONSTANTBINDING:
     copy->child1 = copyThing(tree->child1);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
@@ -1138,6 +1146,9 @@ char *getTimingStringForThing(node *tree) {
   case LIBRARYFUNCTION:
     constString = NULL;
     break;
+  case LIBRARYCONSTANT:
+    constString = NULL;
+    break;
   case CEIL:
     constString = NULL;
     break;
@@ -1260,6 +1271,9 @@ char *getTimingStringForThing(node *tree) {
     break; 			
   case LIBRARYBINDING:
     constString = "binding of a library function";
+    break;  			
+  case LIBRARYCONSTANTBINDING:
+    constString = "binding of a library constant";
     break;  			
   case PRECASSIGN:
     constString = "assigning the precision";
@@ -1883,6 +1897,9 @@ int isPureTree(node *tree) {
     break;
   case LIBRARYFUNCTION:
     return isPureTree(tree->child1);
+    break;
+  case LIBRARYCONSTANT:
+    return 1;
     break;
   case CEIL:
     return isPureTree(tree->child1);
@@ -3285,6 +3302,12 @@ char *sRawPrintThing(node *tree) {
       }
     }
     break;
+  case LIBRARYCONSTANT:
+    {
+      res = newString("");
+      res = concatAndFree(res,newString(tree->libFun->functionName));
+    }
+    break;
   case CEIL:
     res = concatAndFree(newString("ceil("),
 			concatAndFree(sRawPrintThing(tree->child1),
@@ -3670,6 +3693,12 @@ char *sRawPrintThing(node *tree) {
   case LIBRARYBINDING:
     res = newString(tree->string);
     res = concatAndFree(res, newString(" = library(")); 
+    res = concatAndFree(res, sRawPrintThing(tree->child1));
+    res = concatAndFree(res, newString(")")); 
+    break;  			
+  case LIBRARYCONSTANTBINDING:
+    res = newString(tree->string);
+    res = concatAndFree(res, newString(" = libraryconstant(")); 
     res = concatAndFree(res, sRawPrintThing(tree->child1));
     res = concatAndFree(res, newString(")")); 
     break;  			
@@ -4861,6 +4890,7 @@ int assignThingToTable(char *identifier, node *thing) {
 
   if (((variablename != NULL) && (strcmp(variablename,identifier) == 0)) || 
       (getFunction(identifier) != NULL) ||
+      (getConstantFunction(identifier) != NULL) ||
       (getProcedure(identifier) != NULL)) {
     printMessage(1,"Warning: the identifier \"%s\" is already bound to the free variable, to a library function or to an external procedure.\nThe command will have no effect.\n", identifier);
     considerDyingOnError();
@@ -4904,6 +4934,19 @@ node *getThingFromTable(char *identifier) {
     temp_node->libFunDeriv = 0;
     temp_node->child1 = (node *) safeMalloc(sizeof(node));
     temp_node->child1->nodeType = VARIABLE;
+    return temp_node;
+  }
+
+  if ((tempLibraryFunction = getConstantFunction(identifier)) != NULL) {
+    if (variablename==NULL) {
+      printMessage(1,"Warning: the current free variable is not bound to an identifier. Dereferencing library function \"%s\" requires this binding.\n",tempLibraryFunction->functionName);
+      printMessage(1,"Will bind the current free variable to the identifier \"x\".\n");
+      variablename = (char *) safeCalloc(2,sizeof(char));
+      variablename[0] = 'x';
+    }
+    temp_node = (node *) safeMalloc(sizeof(node));
+    temp_node->nodeType = LIBRARYCONSTANT;
+    temp_node->libFun = tempLibraryFunction;
     return temp_node;
   }
 
@@ -5719,22 +5762,28 @@ int executeCommandInner(node *tree) {
 		     (char *) (curr->value),(char *) (curr->value));
           considerDyingOnError();
 	} else {
-	  if (getProcedure((char *) (curr->value)) != NULL) {
-	    printMessage(1,"Warning: the identifier \"%s\" is already bound to an external procedure.\nIt cannot be declared as a local variable. The declaration of \"%s\" will have no effect.\n",
-		     (char *) (curr->value),(char *) (curr->value));
+          if (getConstantFunction((char *) (curr->value)) != NULL) {
+            printMessage(1,"Warning: the identifier \"%s\" is already bound to a library constant function.\nIt cannot be declared as a local variable. The declaration of \"%s\" will have no effect.\n",
+                         (char *) (curr->value),(char *) (curr->value));
             considerDyingOnError();
-	  } else {
-	    if (declaredSymbolTable != NULL) {
-	      tempNode = makeError();
-	      declaredSymbolTable = declareNewEntry(declaredSymbolTable, (char *) (curr->value), tempNode, copyThingOnVoid);
-	      freeThing(tempNode);
-	    } else {
-	      printMessage(1,"Warning: previous command interruptions have corrupted the frame system.\n");
-	      printMessage(1,"Local variable \"%s\" cannot be declared.\n",(char *) (curr->value));
+          } else {
+            if (getProcedure((char *) (curr->value)) != NULL) {
+              printMessage(1,"Warning: the identifier \"%s\" is already bound to an external procedure.\nIt cannot be declared as a local variable. The declaration of \"%s\" will have no effect.\n",
+                           (char *) (curr->value),(char *) (curr->value));
               considerDyingOnError();
-	    }
-	  }
-	}
+            } else {
+              if (declaredSymbolTable != NULL) {
+                tempNode = makeError();
+                declaredSymbolTable = declareNewEntry(declaredSymbolTable, (char *) (curr->value), tempNode, copyThingOnVoid);
+                freeThing(tempNode);
+              } else {
+                printMessage(1,"Warning: previous command interruptions have corrupted the frame system.\n");
+                printMessage(1,"Local variable \"%s\" cannot be declared.\n",(char *) (curr->value));
+                considerDyingOnError();
+              }
+            }
+          }
+        }
       }
       curr = curr->next;
     }
@@ -6359,23 +6408,29 @@ int executeCommandInner(node *tree) {
 	  printMessage(1,"It cannot be bound to an external procedure. This command will have no effect.\n");
           considerDyingOnError();
 	} else {
-	  if (getProcedure(tree->string) != NULL) {
-	    printMessage(1,"Warning: the identifier \"%s\" is already bound to an external procedure.\n",tree->string);
-	    printMessage(1,"It cannot be bound to an external procedure. This command will have no effect.\n");
+          if (getConstantFunction(tree->string) != NULL) {
+            printMessage(1,"Warning: the identifier \"%s\" is already bound to a library constant function.\n",tree->string);
+            printMessage(1,"It cannot be bound to an external procedure. This command will have no effect.\n");
             considerDyingOnError();
-	  } else {
-	    if (evaluateThingToString(&tempString, tree->child1)) {
-	      tempLibraryProcedure = bindProcedure(tempString, tree->string, tree->arguments);
-	      if(tempLibraryProcedure == NULL) {
-		printMessage(1,"Warning: an error occurred. The last command will have no effect.\n");
-                considerDyingOnError();
-	      }
-	      free(tempString);
-	    } else {
-	      printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
-	      printMessage(1,"This command will have no effect.\n");
+          } else {
+            if (getProcedure(tree->string) != NULL) {
+              printMessage(1,"Warning: the identifier \"%s\" is already bound to an external procedure.\n",tree->string);
+              printMessage(1,"It cannot be bound to an external procedure. This command will have no effect.\n");
               considerDyingOnError();
-	    }
+            } else {
+              if (evaluateThingToString(&tempString, tree->child1)) {
+                tempLibraryProcedure = bindProcedure(tempString, tree->string, tree->arguments);
+                if(tempLibraryProcedure == NULL) {
+                  printMessage(1,"Warning: an error occurred. The last command will have no effect.\n");
+                  considerDyingOnError();
+                }
+                free(tempString);
+              } else {
+                printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
+                printMessage(1,"This command will have no effect.\n");
+                considerDyingOnError();
+              }
+            }
 	  }
 	}
       }
@@ -6862,18 +6917,69 @@ int executeCommandInner(node *tree) {
 	    printMessage(1,"It cannot be bound to a library function. This command will have no effect.\n");
             considerDyingOnError();
 	  } else {
-	    if (evaluateThingToString(&tempString, tree->child1)) {
-	      tempLibraryFunction = bindFunction(tempString, tree->string);
-	      if(tempLibraryFunction == NULL) {
-		printMessage(1,"Warning: an error occurred. The last command will have no effect.\n");
-                considerDyingOnError();
-	      }
-	      free(tempString);
-	    } else {
-	      printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
-	      printMessage(1,"This command will have no effect.\n");
+            if (getConstantFunction(tree->string) != NULL) {
+              printMessage(1,"Warning: the identifier \"%s\" is already bound to a library function.\n",tree->string);
+              printMessage(1,"It cannot be bound to a library function. This command will have no effect.\n");
               considerDyingOnError();
-	    }
+            } else {
+              if (evaluateThingToString(&tempString, tree->child1)) {
+                tempLibraryFunction = bindFunction(tempString, tree->string);
+                if(tempLibraryFunction == NULL) {
+                  printMessage(1,"Warning: an error occurred. The last command will have no effect.\n");
+                  considerDyingOnError();
+                }
+                free(tempString);
+              } else {
+                printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
+                printMessage(1,"This command will have no effect.\n");
+                considerDyingOnError();
+              }
+            }
+	  }
+	}
+      }
+    }
+    break;  			
+  case LIBRARYCONSTANTBINDING:
+    if ((variablename != NULL) && (strcmp(variablename,tree->string) == 0)) {
+      printMessage(1,"Warning: the identifier \"%s\" is already be bound as the current free variable.\n",variablename);
+      printMessage(1,"It cannot be bound to a library constant. This command will have no effect.\n");
+      considerDyingOnError();
+    } else {
+      if (containsEntry(symbolTable, tree->string) || containsDeclaredEntry(declaredSymbolTable, tree->string)) {
+	printMessage(1,"Warning: the identifier \"%s\" is already assigned to.\n",tree->string);
+	printMessage(1,"It cannot be bound to a library constant. This command will have no effect.\n");
+        considerDyingOnError();
+      } else {
+	if (getProcedure(tree->string) != NULL) {
+	  printMessage(1,"Warning: the identifier \"%s\" is already bound to an external procedure.\n",tree->string);
+	  printMessage(1,"It cannot be bound to a library constant. This command will have no effect.\n");
+          considerDyingOnError();
+	} else {
+	  if (getFunction(tree->string) != NULL) {
+	    printMessage(1,"Warning: the identifier \"%s\" is already bound to a library function or a library constant.\n",tree->string);
+	    printMessage(1,"It cannot be bound to a library constant. This command will have no effect.\n");
+            considerDyingOnError();
+	  } else {
+            if (getConstantFunction(tree->string) != NULL) {
+              printMessage(1,"Warning: the identifier \"%s\" is already bound to a library function or a library constant.\n",tree->string);
+              printMessage(1,"It cannot be bound to a library constant. This command will have no effect.\n");
+              considerDyingOnError();
+            } else {
+              
+              if (evaluateThingToString(&tempString, tree->child1)) {
+                tempLibraryFunction = bindConstantFunction(tempString, tree->string);
+                if(tempLibraryFunction == NULL) {
+                  printMessage(1,"Warning: an error occurred. The last command will have no effect.\n");
+                  considerDyingOnError();
+                }
+                free(tempString);
+              } else {
+                printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
+                printMessage(1,"This command will have no effect.\n");
+                considerDyingOnError();
+              }
+            }
 	  }
 	}
       }
@@ -7756,6 +7862,18 @@ node *makeLibraryBinding(char *string, node *thing) {
 
   res = (node *) safeMalloc(sizeof(node));
   res->nodeType = LIBRARYBINDING;
+  res->child1 = thing;
+  res->string = (char *) safeCalloc(strlen(string) + 1, sizeof(char));
+  strcpy(res->string, string);
+
+  return res;
+}
+
+node *makeLibraryConstantBinding(char *string, node *thing) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = LIBRARYCONSTANTBINDING;
   res->child1 = thing;
   res->string = (char *) safeCalloc(strlen(string) + 1, sizeof(char));
   strcpy(res->string, string);
@@ -9804,6 +9922,9 @@ void freeThing(node *tree) {
     freeThing(tree->child1);
     free(tree);
     break;
+  case LIBRARYCONSTANT:
+    free(tree);
+    break;
   case CEIL:
     freeThing(tree->child1);
     free(tree);
@@ -9976,6 +10097,11 @@ void freeThing(node *tree) {
     free(tree);
     break; 			
   case LIBRARYBINDING:
+    freeThing(tree->child1);
+    free(tree->string);
+    free(tree);
+    break;  			
+  case LIBRARYCONSTANTBINDING:
     freeThing(tree->child1);
     free(tree->string);
     free(tree);
@@ -10785,6 +10911,9 @@ int isEqualThing(node *tree, node *tree2) {
     if (tree->libFunDeriv != tree2->libFunDeriv) return 0;
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break;
+  case LIBRARYCONSTANT:
+    if (tree->libFun != tree2->libFun) return 0;
+    break;
   case CEIL:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break;
@@ -10912,6 +11041,9 @@ int isEqualThing(node *tree, node *tree2) {
     if (strcmp(tree->string,tree2->string) != 0) return 0;    break; 			
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualIntPtrOnVoid)) return 0;
   case LIBRARYBINDING:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;  			
+  case LIBRARYCONSTANTBINDING:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     if (strcmp(tree->string,tree2->string) != 0) return 0;    break;  			
   case PRECASSIGN:
@@ -11775,35 +11907,42 @@ int executeProcedureInner(node **resultThing, node *proc, chain *args, int ellip
         considerDyingOnError();
 	
       } else {
-	if (getProcedure((char *) (curr->value)) != NULL) {
-	  printMessage(1,"Warning: the identifier \"%s\" is already bound to an external procedure.\nIt cannot be used as a formal parameter of a procedure. The procedure cannot be executed.\n",
-		       (char *) (curr->value),(char *) (curr->value));
+        if (getConstantFunction((char *) (curr->value)) != NULL) {
+          printMessage(1,"Warning: the identifier \"%s\" is already bound to a library constant function.\nIt cannot be used as a formal parameter of a procedure. The procedure cannot be executed.\n",
+                       (char *) (curr->value));
           considerDyingOnError();
-	  
-	} else {
-	  if (declaredSymbolTable != NULL) {
-	    noError = 1;
-	    if (proc->nodeType != PROCILLIM) {
-	      declaredSymbolTable = declareNewEntry(declaredSymbolTable, (char *) (curr->value), (node *) (curr2->value), copyThingOnVoid);
-	    } else {
-	      if (curr2 == NULL) {
-		tempNode = makeEmptyList();
-		declaredSymbolTable = declareNewEntry(declaredSymbolTable, (char *) (curr->value), tempNode, copyThingOnVoid);
-		freeThing(tempNode);
-	      } else {
-		if (elliptic) 
-		  tempNode = makeFinalEllipticList(copyChainWithoutReversal(curr2, copyThingOnVoid));
-		else
-		  tempNode = makeList(copyChainWithoutReversal(curr2, copyThingOnVoid));
-		declaredSymbolTable = declareNewEntry(declaredSymbolTable, (char *) (curr->value), tempNode, copyThingOnVoid);
-		freeThing(tempNode);
-	      }
-	    }
-	  } else {
-	    printMessage(1,"Warning: previous command interruptions have corrupted the frame system.\n");
-	    printMessage(1,"The formal parameter \"%s\" cannot be bound to its actual value.\nThe procedure cannot be executed.\n",(char *) (curr->value));      
+          
+        } else {
+          if (getProcedure((char *) (curr->value)) != NULL) {
+            printMessage(1,"Warning: the identifier \"%s\" is already bound to an external procedure.\nIt cannot be used as a formal parameter of a procedure. The procedure cannot be executed.\n",
+                         (char *) (curr->value),(char *) (curr->value));
             considerDyingOnError();
-	  }
+            
+          } else {
+            if (declaredSymbolTable != NULL) {
+              noError = 1;
+              if (proc->nodeType != PROCILLIM) {
+                declaredSymbolTable = declareNewEntry(declaredSymbolTable, (char *) (curr->value), (node *) (curr2->value), copyThingOnVoid);
+              } else {
+                if (curr2 == NULL) {
+                  tempNode = makeEmptyList();
+                  declaredSymbolTable = declareNewEntry(declaredSymbolTable, (char *) (curr->value), tempNode, copyThingOnVoid);
+                  freeThing(tempNode);
+                } else {
+                  if (elliptic) 
+                    tempNode = makeFinalEllipticList(copyChainWithoutReversal(curr2, copyThingOnVoid));
+                  else
+                    tempNode = makeList(copyChainWithoutReversal(curr2, copyThingOnVoid));
+                  declaredSymbolTable = declareNewEntry(declaredSymbolTable, (char *) (curr->value), tempNode, copyThingOnVoid);
+                  freeThing(tempNode);
+                }
+              }
+            } else {
+              printMessage(1,"Warning: previous command interruptions have corrupted the frame system.\n");
+              printMessage(1,"The formal parameter \"%s\" cannot be bound to its actual value.\nThe procedure cannot be executed.\n",(char *) (curr->value));      
+              considerDyingOnError();
+            }
+          }
 	}
       }
     }
@@ -13467,6 +13606,9 @@ node *evaluateThingInner(node *tree) {
       mpfi_clear(tempIC);
     }
     break;
+  case LIBRARYCONSTANT:
+    copy->libFun = tree->libFun;
+    break;
   case CEIL:
     copy->child1 = evaluateThingInner(tree->child1);
     if (isRange(copy->child1)) {
@@ -14500,7 +14642,9 @@ node *evaluateThingInner(node *tree) {
     if (isPureTree(tempNode)) {
       if (lengthChain(tree->arguments) == 1) {
 	if (evaluateThingToPureTree(&tempNode2,(node *) (tree->arguments->value))) {
-	  if ((tempNode->nodeType == LIBRARYFUNCTION) && (variablename == NULL)) {
+	  if ( ((tempNode->nodeType == LIBRARYFUNCTION) && (variablename == NULL))
+               || ((tempNode->nodeType == LIBRARYCONSTANT) && (variablename == NULL))
+               ) {
 	    printMessage(1,"Warning: the current free variable is not bound to an identifier. Dereferencing library function \"%s\" requires this binding.\n",tempNode->libFun->functionName);
 	    printMessage(1,"Will bind the current free variable to the identifier \"x\"\n");
 	    variablename = (char *) safeCalloc(2, sizeof(char));
@@ -14612,7 +14756,9 @@ node *evaluateThingInner(node *tree) {
     if (isPureTree(tempNode)) {
       if (lengthChain(tree->arguments) == 1) {
 	if (evaluateThingToPureTree(&tempNode2,(node *) (tree->arguments->value))) {
-	  if ((tempNode->nodeType == LIBRARYFUNCTION) && (variablename == NULL)) {
+	  if ( ((tempNode->nodeType == LIBRARYFUNCTION) && (variablename == NULL))
+               || ((tempNode->nodeType == LIBRARYCONSTANT) && (variablename == NULL))
+               ) {
 	    printMessage(1,"Warning: the current free variable is not bound to an identifier. Dereferencing library function \"%s\" requires this binding.\n",tempNode->libFun->functionName);
 	    printMessage(1,"Will bind the current free variable to the identifier \"x\"\n");
 	    variablename = (char *) safeCalloc(2, sizeof(char));
