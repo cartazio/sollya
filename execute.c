@@ -4938,12 +4938,6 @@ node *getThingFromTable(char *identifier) {
   }
 
   if ((tempLibraryFunction = getConstantFunction(identifier)) != NULL) {
-    if (variablename==NULL) {
-      printMessage(1,"Warning: the current free variable is not bound to an identifier. Dereferencing library function \"%s\" requires this binding.\n",tempLibraryFunction->functionName);
-      printMessage(1,"Will bind the current free variable to the identifier \"x\".\n");
-      variablename = (char *) safeCalloc(2,sizeof(char));
-      variablename[0] = 'x';
-    }
     temp_node = (node *) safeMalloc(sizeof(node));
     temp_node->nodeType = LIBRARYCONSTANT;
     temp_node->libFun = tempLibraryFunction;
@@ -14642,9 +14636,7 @@ node *evaluateThingInner(node *tree) {
     if (isPureTree(tempNode)) {
       if (lengthChain(tree->arguments) == 1) {
 	if (evaluateThingToPureTree(&tempNode2,(node *) (tree->arguments->value))) {
-	  if ( ((tempNode->nodeType == LIBRARYFUNCTION) && (variablename == NULL))
-               || ((tempNode->nodeType == LIBRARYCONSTANT) && (variablename == NULL))
-               ) {
+	  if ( ((tempNode->nodeType == LIBRARYFUNCTION) && (variablename == NULL)) ) {
 	    printMessage(1,"Warning: the current free variable is not bound to an identifier. Dereferencing library function \"%s\" requires this binding.\n",tempNode->libFun->functionName);
 	    printMessage(1,"Will bind the current free variable to the identifier \"x\"\n");
 	    variablename = (char *) safeCalloc(2, sizeof(char));
@@ -14756,9 +14748,7 @@ node *evaluateThingInner(node *tree) {
     if (isPureTree(tempNode)) {
       if (lengthChain(tree->arguments) == 1) {
 	if (evaluateThingToPureTree(&tempNode2,(node *) (tree->arguments->value))) {
-	  if ( ((tempNode->nodeType == LIBRARYFUNCTION) && (variablename == NULL))
-               || ((tempNode->nodeType == LIBRARYCONSTANT) && (variablename == NULL))
-               ) {
+	  if ( ((tempNode->nodeType == LIBRARYFUNCTION) && (variablename == NULL)) ) {
 	    printMessage(1,"Warning: the current free variable is not bound to an identifier. Dereferencing library function \"%s\" requires this binding.\n",tempNode->libFun->functionName);
 	    printMessage(1,"Will bind the current free variable to the identifier \"x\"\n");
 	    variablename = (char *) safeCalloc(2, sizeof(char));
