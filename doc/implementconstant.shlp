@@ -1,0 +1,40 @@
+#NAME $IMPLEMENTCONSTANT
+#QUICK_DESCRIPTION implements a constant in arbitrary precision
+#CALLING $COMMAND(<expr>)
+#TYPE $CONSTANT_TYPE -> $VOID_TYPE
+
+#DESCRIPTION 
+The command $COMMAND implements the constant expresion <expr> in 
+arbitrary precision. More precisely, it generates the source code (written
+in C, and using MPFR) of a function §§mpfr_const_something§\texttt{mpfr\_const\_something}§§ with the following
+signature:
+§§ §\begin{center}§§
+§§          void mpfr_const_something (mpfr_ptr y, mp_prec_t prec)§\texttt{void mpfr\_const\_something (mpfr\_ptr y, mp\_prec\_t prec)}§§
+§§ §\end{center}§§
+Let us denote by §§c§$c$§§ the exact mathematical value of the constant defined by
+the expression <expr>. When called with arguments §§y§$y$§§ and prec, the function
+§§mpfr_const_something§\texttt{mpfr\_const\_something}§§ sets the precision of §§y§$y$§§ to a suitable precision and
+stores in it an approximate value of c such that
+§§                            |y-c| <= c*2^(1-prec).§$$|y-c| \le c\,2^{1-\mathrm{prec}}.$$§§
+
+#DESCRIPTION
+If <expr> refers to a constant defined with $LIBRARYCONSTANT, the produced
+code uses the external code implementing this constant.
+
+#DESCRIPTION
+Currently, $COMMAND makes the assumption that none of the
+non-trivial subexpressions of <expr> evaluates to §§0§$0$§§. If <expr> contains
+such a subexpression, the behavior of $COMMAND is undefined.
+
+#EXAMPLE
+implementconstant(exp(1)+log(2)/sqrt(1/10));
+
+#EXAMPLE
+bashexecute("gcc -fPIC -Wall -c libraryconstantexample.c -I$HOME/.local/include");
+bashexecute("gcc -shared -o libraryconstantexample libraryconstantexample.o -lgmp -lmpfr");
+euler_gamma = libraryconstant("./libraryconstantexample");
+implementconstant(euler_gamma^(1/3));
+
+#SEEALSO $IMPLEMENTPOLY
+#SEEALSO $LIBRARYCONSTANT
+#SEEALSO $LIBRARY

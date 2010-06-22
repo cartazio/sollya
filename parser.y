@@ -3137,8 +3137,8 @@ help:                   CONSTANTTOKEN
                           }
                       | LIBRARYCONSTANTTOKEN
                           {
-#ifdef HELP_LIBRARY_TEXT
-			    outputMode(); printf(HELP_LIBRARY_TEXT);
+#ifdef HELP_LIBRARYCONSTANT_TEXT
+			    outputMode(); printf(HELP_LIBRARYCONSTANT_TEXT);
 #else
 			    outputMode(); printf("Library constant binding dereferencer.\n");
 #if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
@@ -3642,8 +3642,8 @@ help:                   CONSTANTTOKEN
                           }
                       | IMPLEMENTCSTETOKEN
                           {
-#ifdef HELP_IMPLEMENTCSTE_TEXT
-			    outputMode(); printf(HELP_IMPLEMENTCSTE_TEXT);
+#ifdef HELP_IMPLEMENTCONSTANT_TEXT
+			    outputMode(); printf(HELP_IMPLEMENTCONSTANT_TEXT);
 #else
 			    outputMode(); printf("Implement a constant expression in arbitrary precision with MPFR: implementconstant(constant)\n");
 			    outputMode(); printf("Generates code able to evaluate the given constant at any precision, with a guaranteed error.\n");
