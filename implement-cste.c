@@ -118,7 +118,7 @@ void fprintInstruction(FILE *output, struct implementCsteInstruction instr) {
     fprintf(output, "  mpfr_set_si (%s, %ld, MPFR_RNDN);\n", instr.var1, instr.sival);
     break;
   case SETSTR:
-    fprintf(output, "  mpfr_set_str (%s, %s, 2, MPFR_RNDN);\n", instr.var1, instr.strval);
+    fprintf(output, "  mpfr_set_str (%s, \"%s\", 2, MPFR_RNDN);\n", instr.var1, instr.strval);
     break;
   case UIPOWUI:
     fprintf(output, "  mpfr_ui_pow_ui (%s, %lu, %lu, MPFR_RNDN);\n", instr.var1, instr.uival, instr.uival2);
@@ -438,7 +438,8 @@ int ceil_log2n(int p) {
   return log2p;
 }
 
-mp_exp_t mpfi_get_exp(mpfi_t x) {
+/* Returns the maximal exponent of a number among those contained in x */
+mp_exp_t mpfi_max_exp(mpfi_t x) {
   mpfr_t u,v;
   mp_exp_t Eu, Ev, E;
   mp_prec_t prec;
@@ -459,6 +460,34 @@ mp_exp_t mpfi_get_exp(mpfi_t x) {
       E = (Eu<=Ev) ? Ev : Eu;
     }
   }
+  mpfr_clear(u);
+  mpfr_clear(v);
+  return E;
+}
+
+/* Return the smallest exponent among the exponents of the numbers contained
+   in x. If 0 \in x, it returns NULL, else it returns a valid pointer E such
+   that *E is the minimal exponent. */
+mp_exp_t *mpfi_min_exp(mpfi_t x) {
+  mpfr_t u,v;
+  mp_exp_t Eu, Ev;
+  mp_exp_t *E = NULL;
+  mp_prec_t prec;
+
+  prec = mpfi_get_prec(x);
+  mpfr_init2(u, prec);
+  mpfr_init2(v, prec);
+
+  mpfi_get_left(u, x);
+  mpfi_get_right(v, x);
+  
+  if (mpfr_sgn(u)*mpfr_sgn(v)>0) {
+    E = safeMalloc(sizeof(mp_exp_t));
+    Eu = mpfr_get_exp(u);
+    Ev = mpfr_get_exp(v);
+    *E = (Eu<=Ev) ? Eu : Ev;
+  }
+
   mpfr_clear(u);
   mpfr_clear(v);
   return E;
@@ -488,12 +517,22 @@ int unaryFunctionCase(int nodeType, node *cste, char *functionName, int gamma0, 
   
   evaluateInterval(a, cste, NULL, a);
   evaluateInterval(b, func, deriv, a);
+  if (mpfi_has_zero(b)) {
+    changeToWarningMode();
+    fprintf(stderr, "Error in implementconstant: the following expression seems to be exactly zero:\n");
+    fprintTree(stderr, makeUnary(copyTree(cste), nodeType));
+    fprintf(stderr, "\nIf it is not exactly zero, increasing prec should solve the issue.\nAbort.\n");
+    restoreMode();
+    recoverFromError();
+  }
+
   mpfi_div(u, a, b);
   evaluateInterval(tmp, deriv, NULL, a); 
   mpfi_mul(v, u, tmp);
-  do {
-    gamma = 2+mpfi_get_exp(v);
 
+  gamma = 2+mpfi_max_exp(v)-1;
+  do {
+    gamma++;
     mpfr_set_ui(beta, 1, GMP_RNDU);
     mpfr_div_2si(beta, beta, gamma+gamma0, GMP_RNDU);
     mpfr_ui_sub(alpha, 1, beta, GMP_RNDD);
@@ -503,7 +542,7 @@ int unaryFunctionCase(int nodeType, node *cste, char *functionName, int gamma0, 
     mpfi_mul(tmp, a, tmp);
     evaluateInterval(tmp, deriv, NULL, tmp);
     mpfi_mul(v, u, tmp);
-  } while (gamma < 2+mpfi_get_exp(v));
+  } while (gamma < 2+mpfi_max_exp(v));
   
   counter = program->counter;
   incrementProgramCounter(program);
@@ -635,6 +674,7 @@ int implementDivMul(node *c, int gamma0, struct implementCsteProgram *program) {
 
 int implementAddSub(node *c, int gamma0, struct implementCsteProgram *program) {
   mpfi_t y, a, b, tmp, tmp2;
+  mp_exp_t *Ea, *Eb, *Ey;
   int tmpa, tmpb;
   mp_prec_t prec;
   int counter;
@@ -646,7 +686,16 @@ int implementAddSub(node *c, int gamma0, struct implementCsteProgram *program) {
   mpfi_init2(tmp, prec);
   mpfi_init2(tmp2, prec);
 
+  
   evaluateInterval(y, c, NULL, y);
+  if (mpfi_has_zero(y)) {
+    changeToWarningMode();
+    fprintf(stderr, "Error in implementconstant: the following expression seems to be exactly zero:\n");
+    fprintTree(stderr, c);
+    fprintf(stderr, "\nIf it is not exactly zero, increasing prec should solve the issue.\nAbort.\n");
+    restoreMode();
+    recoverFromError();
+  }
   evaluateInterval(a, c->child1, NULL, a);
   evaluateInterval(b, c->child2, NULL, b);
 
@@ -655,24 +704,42 @@ int implementAddSub(node *c, int gamma0, struct implementCsteProgram *program) {
 
   tmpa = program->counter;
   mpfi_div(tmp, y, a); mpfi_div_ui(tmp, tmp, 3);
-  constantImplementer(c->child1, gamma0+1-mpfi_get_exp(tmp), program);
+  Ea = mpfi_min_exp(tmp);
+  if (Ea==NULL) {
+    printMessage(0, "Unexpected error. Aborting\n");
+    recoverFromError();
+  }
+  constantImplementer(c->child1, gamma0+1-*Ea, program);
 
   tmpb = program->counter;
   mpfi_div(tmp, y, b); mpfi_div_ui(tmp, tmp, 3);
-  constantImplementer(c->child2, gamma0+1-mpfi_get_exp(tmp), program);
+  Eb = mpfi_min_exp(tmp);
+  if (Eb==NULL) {
+    printMessage(0, "Unexpected error. Aborting\n");
+    recoverFromError();
+  }
+  constantImplementer(c->child2, gamma0+1-*Eb, program);
 
   mpfi_abs(tmp, a);
   mpfi_abs(tmp2, b);
   mpfi_add(tmp, tmp, tmp2);
   mpfi_div(tmp, y, tmp);
   mpfi_div_ui(tmp, tmp, 3);
-  appendSetprecProg(counter, gamma0+2-mpfi_get_exp(tmp), program);
+  Ey = mpfi_min_exp(tmp);
+  if (Ey==NULL) {
+    printMessage(0, "Unexpected error. Aborting\n");
+    recoverFromError();
+  }
+  appendSetprecProg(counter, gamma0+2-*Ey, program);
   if (c->nodeType==ADD)
     appendBinaryfuncProg("mpfr_add", counter, tmpa, tmpb, program);
   else
     appendBinaryfuncProg("mpfr_sub", counter, tmpa, tmpb, program);
 
   program->counter = counter;
+  free(Ea);
+  free(Eb);
+  free(Ey);
   mpfi_clear(y);
   mpfi_clear(a);
   mpfi_clear(b);
