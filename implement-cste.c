@@ -7,140 +7,6 @@
 
 #define BUFFERSIZE 64
 
-/* Possible instructions:
-   - mpfr_init2(var1, prec)
-   - mpfr_set_prec(var1, prec)
-   - 0ary function: name(var1, MPFR_RNDN)
-   - unary function: name(var1, var2, MPFR_RNDN)
-   - binary function: name(var1, var2, var3, MPFR_RNDN)
-   - mpfr_set_ui(var1, valui, MPFR_RNDN)
-   - mpfr_set_si(var1, valsi, MPFR_RNDN)
-   - mpfr_set_str(var1, valstr, 2, MPFR_RNDN)
-   - mpfr_ui_pow_ui(var1, valui, valui2, MPFR_RNDN);
-   - mpfr_pow_ui(var1, var2, valui, MPFR_RNDN);
-   - mpfr_root(var1, var2, valui, MPFR_RNDN);
-   - valstr(var1, prec); for a library constant
-*/
-#define INIT2 0
-#define SETPREC 1
-#define CONSTANTFUNC 2
-#define UNARYFUNC 3
-#define BINARYFUNC 4
-#define SETUI 5
-#define SETSI 6
-#define SETSTR 7
-#define UIPOWUI 8
-#define POWUI 9
-#define ROOT 10
-#define LIBRARYCONST 11
-
-struct implementCsteInstruction {
-  int type;
-  char var1[BUFFERSIZE];
-  char var2[BUFFERSIZE];
-  char var3[BUFFERSIZE];
-  char name[BUFFERSIZE];
-  long int prec;
-  unsigned long int uival;
-  unsigned long int uival2;
-  long sival;
-  char *strval;
-};
-
-void free_implementCsteInstruction(void *instr) {
-  if ( ((struct implementCsteInstruction *)instr)->strval!=NULL )
-    free( ((struct implementCsteInstruction *)instr)->strval);
-  free( (struct implementCsteInstruction *)instr);
-  return;
-}
-
-void *copy_implementCsteInstructions(void *instr) {
-  struct implementCsteInstruction *newInstr;
-  newInstr = safeMalloc(sizeof(struct implementCsteInstruction));
-  newInstr->type = ((struct implementCsteInstruction *)instr)->type;
-  strcpy(newInstr->var1, ((struct implementCsteInstruction *)instr)->var1);
-  strcpy(newInstr->var2, ((struct implementCsteInstruction *)instr)->var2);
-  strcpy(newInstr->var3, ((struct implementCsteInstruction *)instr)->var3);
-  strcpy(newInstr->name, ((struct implementCsteInstruction *)instr)->name);
-  newInstr->prec = ((struct implementCsteInstruction *)instr)->prec;
-  newInstr->uival = ((struct implementCsteInstruction *)instr)->uival;
-  newInstr->uival2 = ((struct implementCsteInstruction *)instr)->uival2;
-  newInstr->sival = ((struct implementCsteInstruction *)instr)->sival;
-  if(((struct implementCsteInstruction *)instr)->strval != NULL) {
-    newInstr->strval = safeCalloc(1+strlen(((struct implementCsteInstruction *)instr)->strval) , sizeof(char));
-    strcpy(newInstr->strval, ((struct implementCsteInstruction *)instr)->strval);
-  }
-  else newInstr->strval = NULL;
-  return (void *)newInstr;
-}
-
-void fprintInstruction(FILE *output, struct implementCsteInstruction instr) {
-  const char init_string[]="mpfr_init2";
-  const char setprec_string[]="mpfr_set_prec";
-  const char *ptr;
-
-  switch (instr.type) {
-  case INIT2:
-  case SETPREC:
-  case LIBRARYCONST:
-    if (instr.type == INIT2) ptr=init_string;
-    else if (instr.type == SETPREC) ptr=setprec_string;
-    else ptr = instr.strval;
-
-    if (instr.prec > 0)
-      fprintf(output, "  %s (%s, prec+%d);\n", ptr, instr.var1, instr.prec);
-    else if (instr.prec == 0)
-      fprintf(output, "  %s (%s, prec);\n", ptr, instr.var1);
-    else {
-      fprintf(output, "  if (prec >= %d+MPFR_PREC_MIN)\n", -instr.prec);
-      fprintf(output, "  {\n");
-      fprintf(output, "    %s (%s, prec-%d);\n", ptr, instr.var1, -instr.prec);
-      fprintf(output, "  }\n");
-      fprintf(output, "  else\n");
-      fprintf(output, "  {\n");
-      fprintf(output, "    %s (%s, MPFR_PREC_MIN);\n", ptr, instr.var1);
-      fprintf(output, "  }\n");
-    }
-    break;
-  case CONSTANTFUNC:
-    fprintf(output, "  %s (%s, MPFR_RNDN);\n", instr.name, instr.var1);
-    break;
-  case UNARYFUNC:
-    fprintf(output, "  %s (%s, %s, MPFR_RNDN);\n", instr.name, instr.var1, instr.var2);
-    break;
-  case BINARYFUNC:
-    fprintf(output, "  %s (%s, %s, %s, MPFR_RNDN);\n", instr.name, instr.var1, instr.var2, instr.var3);
-    break;
-  case SETUI:
-    fprintf(output, "  mpfr_set_ui (%s, %lu, MPFR_RNDN);\n", instr.var1, instr.uival);
-    break;
-  case SETSI:
-    fprintf(output, "  mpfr_set_si (%s, %ld, MPFR_RNDN);\n", instr.var1, instr.sival);
-    break;
-  case SETSTR:
-    fprintf(output, "  mpfr_set_str (%s, \"%s\", 2, MPFR_RNDN);\n", instr.var1, instr.strval);
-    break;
-  case UIPOWUI:
-    fprintf(output, "  mpfr_ui_pow_ui (%s, %lu, %lu, MPFR_RNDN);\n", instr.var1, instr.uival, instr.uival2);
-    break;
-  case POWUI:
-    fprintf(output, "  mpfr_pow_ui (%s, %s, %lu, MPFR_RNDN);\n", instr.var1, instr.var2, instr.uival);
-    break;
-  case ROOT:
-    fprintf(output, "  mpfr_root (%s, %s, %lu, MPFR_RNDN);\n", instr.var1, instr.var2, instr.uival);
-    break;
-  default: 
-    fprintf(stderr, "Unknown instruction %d\n", instr.type);
-  }
-  return;
-}
-
-void constructName(char *res, int counter) {
-  if (counter==0) strcpy(res, "y");
-  else sprintf(res, "tmp%d", counter);
-  return;
-}
-
 /* A program is given by a list of instructions, the index number of the first
    unused temporary variable in the program, the number of temporary variables
    used by the program and a list giving, for each temporary variable, the
@@ -163,6 +29,15 @@ couple *makeCouple(int var, long int prec) {
   res->var=var;
   res->prec=prec;
   return res;
+}
+
+void *copyCouple(void *c) {
+  couple *ptr, *newCouple;
+  ptr = (couple *)c;
+  newCouple = safeMalloc(sizeof(couple));
+  newCouple->var = ptr->var;
+  newCouple->prec = ptr->prec;
+  return (void *)ptr;
 }
 
 /* This functions looks for the variable var in program. If it is absent, it
@@ -191,6 +66,207 @@ void incrementProgramCounter(struct implementCsteProgram *program) {
   return;
 }
 
+/* Possible instructions:
+   - mpfr_init2(var1, prec)
+   - mpfr_set_prec(var1, prec)
+   - 0ary function: name(var1, MPFR_RNDN)
+   - unary function: name(var1, var2, MPFR_RNDN)
+   - binary function: name(var1, var2, var3, MPFR_RNDN)
+   - mpfr_set_ui(var1, valui, MPFR_RNDN)
+   - mpfr_set_si(var1, valsi, MPFR_RNDN)
+   - mpfr_set_str(var1, valstr, 2, MPFR_RNDN)
+   - mpfr_ui_pow_ui(var1, valui, valui2, MPFR_RNDN);
+   - mpfr_pow_ui(var1, var2, valui, MPFR_RNDN);
+   - mpfr_root(var1, var2, valui, MPFR_RNDN);
+   - valstr(var1, prec); for a library constant
+   - if(valstr) {prog1} else {prog2}
+*/
+#define INIT2 0
+#define SETPREC 1
+#define CONSTANTFUNC 2
+#define UNARYFUNC 3
+#define BINARYFUNC 4
+#define SETUI 5
+#define SETSI 6
+#define SETSTR 7
+#define UIPOWUI 8
+#define POWUI 9
+#define ROOT 10
+#define LIBRARYCONST 11
+#define IFTHENELSE 12
+
+/* Good practice: an instruction should always be created with a
+   function appendSomeInstructionProg. Moreover strval, prog1.instructions,
+   prog1.precisions, prog2.instructions and prog2.precisions must
+   be initialized with NULL: hence this value can be tested 
+   when freeing memory, in order to know if the char * has been
+   malloced or not.
+   This implies modifying all the append*Prog, when a new kind of
+   instruction is added with such a malloced parameter.
+   WARNING: in the implementation of if-then-else, the main program
+   and the branch programs share the same precisions list. In order
+   to avoid double freeing, one must explicitely set the precisions
+   list of prog1 and prog2 to NULL after the construction of the
+   if-then-else statement.
+*/
+struct implementCsteInstruction {
+  int type;
+  char var1[BUFFERSIZE];
+  char var2[BUFFERSIZE];
+  char var3[BUFFERSIZE];
+  char name[BUFFERSIZE];
+  long int prec;
+  unsigned long int uival;
+  unsigned long int uival2;
+  long sival;
+  char *strval;
+  struct implementCsteProgram prog1;
+  struct implementCsteProgram prog2;
+};
+
+void free_implementCsteInstruction(void *instr) {
+  struct implementCsteInstruction *ptr;
+  chain *curr;
+
+  ptr = (struct implementCsteInstruction *)instr;
+  if (ptr->strval != NULL )  free(ptr->strval);
+
+  freeChain(ptr->prog1.instructions, free_implementCsteInstruction);
+  freeChain(ptr->prog1.precisions, free);
+  freeChain(ptr->prog2.instructions, free_implementCsteInstruction);
+  freeChain(ptr->prog2.precisions, free);
+
+  free(ptr);
+  return;
+}
+
+void *copy_implementCsteInstructions(void *instr) {
+  struct implementCsteInstruction *ptr, *newInstr;
+  ptr = (struct implementCsteInstruction *)instr;
+  newInstr = safeMalloc(sizeof(struct implementCsteInstruction));
+  newInstr->type = ptr->type;
+  strcpy(newInstr->var1, ptr->var1);
+  strcpy(newInstr->var2, ptr->var2);
+  strcpy(newInstr->var3, ptr->var3);
+  strcpy(newInstr->name, ptr->name);
+  newInstr->prec = ptr->prec;
+  newInstr->uival = ptr->uival;
+  newInstr->uival2 = ptr->uival2;
+  newInstr->sival = ptr->sival;
+  if(ptr->strval != NULL) {
+    newInstr->strval = safeCalloc(1+strlen(ptr->strval) , sizeof(char));
+    strcpy(newInstr->strval, ptr->strval);
+  }
+  else newInstr->strval = NULL;
+
+  newInstr->prog1.instructions = copyChainWithoutReversal(ptr->prog1.instructions, copy_implementCsteInstructions);
+  newInstr->prog1.counter = ptr->prog1.counter;
+  newInstr->prog1.maxcounter = ptr->prog1.maxcounter;
+  newInstr->prog1.precisions = copyChainWithoutReversal(ptr->prog1.precisions, copyCouple);
+
+  newInstr->prog2.instructions = copyChainWithoutReversal(ptr->prog2.instructions, copy_implementCsteInstructions);
+  newInstr->prog2.counter = ptr->prog2.counter;
+  newInstr->prog2.maxcounter = ptr->prog2.maxcounter;
+  newInstr->prog2.precisions = copyChainWithoutReversal(ptr->prog2.precisions, copyCouple);
+
+  return (void *)newInstr;
+}
+
+void fprintInstruction(FILE *output, struct implementCsteInstruction instr, int indentlevel) {
+  const char init_string[]="mpfr_init2";
+  const char setprec_string[]="mpfr_set_prec";
+  const char *ptr;
+  chain * curr;
+  char *indent;
+  int i;
+
+  indent = safeCalloc(indentlevel*2+1, sizeof(char));
+  for(i=0;i<indentlevel*2;i++) indent[i] = ' ';
+  indent[i] = '\0';
+
+  switch (instr.type) {
+  case INIT2:
+  case SETPREC:
+  case LIBRARYCONST:
+    if (instr.type == INIT2) ptr=init_string;
+    else if (instr.type == SETPREC) ptr=setprec_string;
+    else ptr = instr.strval;
+
+    if (instr.prec > 0)
+      fprintf(output, "%s%s (%s, prec+%d);\n", indent, ptr, instr.var1, instr.prec);
+    else if (instr.prec == 0)
+      fprintf(output, "%s%s (%s, prec);\n", indent, ptr, instr.var1);
+    else {
+      fprintf(output, "%sif (prec >= %d+MPFR_PREC_MIN)\n", indent, -instr.prec);
+      fprintf(output, "%s{\n", indent);
+      fprintf(output, "%s  %s (%s, prec-%d);\n", indent, ptr, instr.var1, -instr.prec);
+      fprintf(output, "%s}\n", indent);
+      fprintf(output, "%selse\n", indent);
+      fprintf(output, "%s{\n", indent);
+      fprintf(output, "%s  %s (%s, MPFR_PREC_MIN);\n", indent, ptr, instr.var1);
+      fprintf(output, "%s}\n", indent);
+    }
+    break;
+  case CONSTANTFUNC:
+    fprintf(output, "%s%s (%s, MPFR_RNDN);\n", indent, instr.name, instr.var1);
+    break;
+  case UNARYFUNC:
+    fprintf(output, "%s%s (%s, %s, MPFR_RNDN);\n", indent, instr.name, instr.var1, instr.var2);
+    break;
+  case BINARYFUNC:
+    fprintf(output, "%s%s (%s, %s, %s, MPFR_RNDN);\n", indent, instr.name, instr.var1, instr.var2, instr.var3);
+    break;
+  case SETUI:
+    fprintf(output, "%smpfr_set_ui (%s, %lu, MPFR_RNDN);\n", indent, instr.var1, instr.uival);
+    break;
+  case SETSI:
+    fprintf(output, "%smpfr_set_si (%s, %ld, MPFR_RNDN);\n", indent, instr.var1, instr.sival);
+    break;
+  case SETSTR:
+    fprintf(output, "%smpfr_set_str (%s, \"%s\", 2, MPFR_RNDN);\n", indent, instr.var1, instr.strval);
+    break;
+  case UIPOWUI:
+    fprintf(output, "%smpfr_ui_pow_ui (%s, %lu, %lu, MPFR_RNDN);\n", indent, instr.var1, instr.uival, instr.uival2);
+    break;
+  case POWUI:
+    fprintf(output, "%smpfr_pow_ui (%s, %s, %lu, MPFR_RNDN);\n", indent, instr.var1, instr.var2, instr.uival);
+    break;
+  case ROOT:
+    fprintf(output, "%smpfr_root (%s, %s, %lu, MPFR_RNDN);\n", indent, instr.var1, instr.var2, instr.uival);
+    break;
+  case IFTHENELSE:
+    fprintf(output, "%sif (%s)\n", indent, instr.strval);
+    fprintf(output, "%s{\n", indent);
+    curr = instr.prog1.instructions;
+    while(curr!=NULL) {
+      fprintInstruction(output, *(struct implementCsteInstruction *)(curr->value), indentlevel+1);
+      curr = curr->next;
+    }
+    fprintf(output, "%s}\n", indent);
+    fprintf(output, "%selse\n", indent);
+    fprintf(output, "%s{\n", indent);
+    curr = instr.prog2.instructions;
+    while(curr!=NULL) {
+      fprintInstruction(output, *(struct implementCsteInstruction *)(curr->value), indentlevel+1);
+      curr = curr->next;
+    }
+    fprintf(output, "%s}\n", indent);
+    break;
+  default: 
+    fprintf(stderr, "Unknown instruction %d\n", instr.type);
+  }
+
+  free(indent);
+  return;
+}
+
+void constructName(char *res, int counter) {
+  if (counter==0) strcpy(res, "y");
+  else sprintf(res, "tmp%d", counter);
+  return;
+}
+
+
 /* These constructors allow one for adding an instruction to the end of a */
 /* give program.                                                          */
 void appendInit2Prog(int var1, long int prec, struct implementCsteProgram *program) {
@@ -203,6 +279,10 @@ void appendInit2Prog(int var1, long int prec, struct implementCsteProgram *progr
   strcpy(instr->name, "");
   instr->prec = prec;
   instr->strval = NULL;
+  instr->prog1.instructions = NULL;
+  instr->prog1.precisions = NULL;
+  instr->prog2.instructions = NULL;
+  instr->prog2.precisions = NULL;
   program->instructions = addElement(program->instructions, instr);
   return;
 }
@@ -217,6 +297,10 @@ void appendSetprecProg(int var1, long int prec, struct implementCsteProgram *pro
   strcpy(instr->name, "");
   instr->prec = prec;
   instr->strval = NULL;
+  instr->prog1.instructions = NULL;
+  instr->prog1.precisions = NULL;
+  instr->prog2.instructions = NULL;
+  instr->prog2.precisions = NULL;
   program->instructions = addElement(program->instructions, instr);
   appendPrecisionProg(var1, prec, program);
   return;
@@ -231,6 +315,10 @@ void appendConstantfuncProg(char *name, int var1, struct implementCsteProgram *p
   strcpy(instr->var3, "");
   strcpy(instr->name, name);
   instr->strval = NULL;
+  instr->prog1.instructions = NULL;
+  instr->prog1.precisions = NULL;
+  instr->prog2.instructions = NULL;
+  instr->prog2.precisions = NULL;
   program->instructions = addElement(program->instructions, instr);
   return;
 }
@@ -244,6 +332,10 @@ void appendUnaryfuncProg(char *name, int var1, int var2, struct implementCstePro
   strcpy(instr->var3, "");
   strcpy(instr->name, name);
   instr->strval = NULL;
+  instr->prog1.instructions = NULL;
+  instr->prog1.precisions = NULL;
+  instr->prog2.instructions = NULL;
+  instr->prog2.precisions = NULL;
   program->instructions = addElement(program->instructions, instr);
   return;
 }
@@ -257,6 +349,10 @@ void appendBinaryfuncProg(char *name, int var1, int var2, int var3, struct imple
   constructName(instr->var3, var3);
   strcpy(instr->name, name);
   instr->strval = NULL;
+  instr->prog1.instructions = NULL;
+  instr->prog1.precisions = NULL;
+  instr->prog2.instructions = NULL;
+  instr->prog2.precisions = NULL;
   program->instructions = addElement(program->instructions, instr);
   return;
 }
@@ -271,6 +367,10 @@ void appendSetuiProg(int var1, unsigned long int val, struct implementCsteProgra
   strcpy(instr->name, "");
   instr->uival = val;
   instr->strval = NULL;
+  instr->prog1.instructions = NULL;
+  instr->prog1.precisions = NULL;
+  instr->prog2.instructions = NULL;
+  instr->prog2.precisions = NULL;
   program->instructions = addElement(program->instructions, instr);
   return;
 }
@@ -285,6 +385,10 @@ void appendSetsiProg(int var1, long int val, struct implementCsteProgram *progra
   strcpy(instr->name, "");
   instr->sival = val;
   instr->strval = NULL;
+  instr->prog1.instructions = NULL;
+  instr->prog1.precisions = NULL;
+  instr->prog2.instructions = NULL;
+  instr->prog2.precisions = NULL;
   program->instructions = addElement(program->instructions, instr);
   return;
 }
@@ -297,6 +401,10 @@ void appendSetstrProg(int var1, mpfr_t val, struct implementCsteProgram *program
   strcpy(instr->var2, "");
   strcpy(instr->var3, "");
   strcpy(instr->name, "");
+  instr->prog1.instructions = NULL;
+  instr->prog1.precisions = NULL;
+  instr->prog2.instructions = NULL;
+  instr->prog2.precisions = NULL;
   instr->strval = safeCalloc(mpfr_get_prec(val)+32, sizeof(char)); /* should be sufficient to store the string representing val in binary */
   mpfr_sprintf(instr->strval, "%RNb", val);
   program->instructions = addElement(program->instructions, instr);
@@ -314,6 +422,10 @@ void appendUipowui(int var1, unsigned long int val1, unsigned long int val2, str
   instr->uival = val1;
   instr->uival2 = val2;
   instr->strval = NULL;
+  instr->prog1.instructions = NULL;
+  instr->prog1.precisions = NULL;
+  instr->prog2.instructions = NULL;
+  instr->prog2.precisions = NULL;
   program->instructions = addElement(program->instructions, instr);
   return;  
 }
@@ -328,6 +440,10 @@ void appendPowuiProg(int var1, int var2, unsigned long int val, struct implement
   strcpy(instr->name, "");
   instr->uival = val;
   instr->strval = NULL;
+  instr->prog1.instructions = NULL;
+  instr->prog1.precisions = NULL;
+  instr->prog2.instructions = NULL;
+  instr->prog2.precisions = NULL;
   program->instructions = addElement(program->instructions, instr);
   return;  
 }
@@ -342,6 +458,10 @@ void appendRootProg(int var1, int var2, unsigned long int val, struct implementC
   strcpy(instr->name, "");
   instr->uival = val;
   instr->strval = NULL;
+  instr->prog1.instructions = NULL;
+  instr->prog1.precisions = NULL;
+  instr->prog2.instructions = NULL;
+  instr->prog2.precisions = NULL;
   program->instructions = addElement(program->instructions, instr);
   return;  
 }
@@ -357,9 +477,48 @@ void appendLibraryConstantProg(node *c, int gamma0, struct implementCsteProgram 
   strcpy(instr->name, "");
   instr->strval = safeCalloc(strlen(c->libFun->functionName)+1, sizeof(char));
   strcpy(instr->strval, c->libFun->functionName);
+  instr->prog1.instructions = NULL;
+  instr->prog1.precisions = NULL;
+  instr->prog2.instructions = NULL;
+  instr->prog2.precisions = NULL;
 
   program->instructions = addElement(program->instructions, instr);
   return;  
+}
+
+void appendIfThenElseProg(char *cond, struct implementCsteProgram prog1, struct implementCsteProgram prog2, struct implementCsteProgram *program) {
+  struct implementCsteInstruction *instr;
+  instr = safeMalloc(sizeof(struct implementCsteInstruction));
+  instr->type = IFTHENELSE;
+  strcpy(instr->var1, "");
+  strcpy(instr->var2, "");
+  strcpy(instr->var3, "");
+  strcpy(instr->name, "");
+  instr->strval = NULL;
+
+  instr->prog1.counter = -1;
+  instr->prog1.maxcounter = -1;
+  instr->prog1.precisions = NULL;
+  instr->prog1.instructions = copyChain(prog1.instructions, copy_implementCsteInstructions); /* Note: it reverses the list, but it is what we want since the programs are created with instructions in reversed order */
+  instr->prog2.counter = -1;
+  instr->prog2.maxcounter = -1;
+  instr->prog2.precisions = NULL;
+  instr->prog2.instructions = copyChain(prog2.instructions, copy_implementCsteInstructions); /* Note: it reverses the list, but it is what we want since the programs are created with instructions in reversed order */
+  instr->strval = safeCalloc(strlen(cond)+1, sizeof(char));
+  strcpy(instr->strval, cond);
+
+  program->counter = (prog1.counter > prog2.counter)?prog1.counter:prog2.counter;
+  program->maxcounter = (prog1.maxcounter > prog2.maxcounter)?prog1.maxcounter:prog2.maxcounter; 
+  if(prog1.precisions != prog2.precisions) {
+    changeToWarningMode();
+    fprintf(stderr, "Unexpected error: in an if-then-else statement, both branches must share the same pointer of precisions\n");
+    restoreMode();
+    recoverFromError();
+  }
+  program->precisions = copyChainWithoutReversal(prog2.precisions, copyCouple);
+
+  program->instructions = addElement(program->instructions, instr);
+  return;
 }
 
 /* Prototype of the recursive function */
@@ -409,7 +568,7 @@ void implementCste(node *c) {
       fprintf(output, "  /* Core */\n");
       test = 0;
     }
-    fprintInstruction(output, *(struct implementCsteInstruction *)(curr->value));
+    fprintInstruction(output, *(struct implementCsteInstruction *)(curr->value), 1);
     curr = curr->next;
   }
 
@@ -678,6 +837,8 @@ int implementAddSub(node *c, int gamma0, struct implementCsteProgram *program) {
   int tmpa, tmpb;
   mp_prec_t prec;
   int counter;
+  struct implementCsteProgram prog1, prog2;
+  char *str;
 
   prec = getToolPrecision();
   mpfi_init2(y, prec);
@@ -699,26 +860,19 @@ int implementAddSub(node *c, int gamma0, struct implementCsteProgram *program) {
   evaluateInterval(a, c->child1, NULL, a);
   evaluateInterval(b, c->child2, NULL, b);
 
-  counter = program->counter;
-  incrementProgramCounter(program);
-
-  tmpa = program->counter;
   mpfi_div(tmp, y, a); mpfi_div_ui(tmp, tmp, 3);
   Ea = mpfi_min_exp(tmp);
   if (Ea==NULL) {
     printMessage(0, "Unexpected error. Aborting\n");
     recoverFromError();
   }
-  constantImplementer(c->child1, gamma0+1-*Ea, program);
 
-  tmpb = program->counter;
   mpfi_div(tmp, y, b); mpfi_div_ui(tmp, tmp, 3);
   Eb = mpfi_min_exp(tmp);
   if (Eb==NULL) {
     printMessage(0, "Unexpected error. Aborting\n");
     recoverFromError();
   }
-  constantImplementer(c->child2, gamma0+1-*Eb, program);
 
   mpfi_abs(tmp, a);
   mpfi_abs(tmp2, b);
@@ -730,6 +884,76 @@ int implementAddSub(node *c, int gamma0, struct implementCsteProgram *program) {
     printMessage(0, "Unexpected error. Aborting\n");
     recoverFromError();
   }
+
+  counter = program->counter;
+  incrementProgramCounter(program);
+
+  if( gamma0+1-*Ea>=0 ) { /* No need to perform a test inside 
+                             the generated code */
+    tmpa = program->counter;
+    constantImplementer(c->child1, gamma0+1-*Ea, program);
+  }
+  else {
+    prog1.instructions = NULL;
+    prog1.counter = program->counter;
+    prog1.maxcounter = program->maxcounter;
+    prog1.precisions = program->precisions;
+    
+    prog2.instructions = NULL;
+    prog2.counter = program->counter;
+    prog2.maxcounter = program->maxcounter;
+    
+    tmpa = program->counter;
+    appendSetuiProg(tmpa, 0, &prog1);
+    incrementProgramCounter(&prog1);
+    
+    prog2.precisions = prog1.precisions;
+    constantImplementer(c->child1, gamma0+1-*Ea, &prog2);
+    prog1.precisions = prog2.precisions;
+    
+    str = safeCalloc(32 , sizeof(char));
+    sprintf(str, "prec <= %d", *Ea-gamma0);
+    appendIfThenElseProg(str, prog1, prog2, program);
+    free(str);
+
+    /* No need to free progi.precisions: program.precisions now on it. */
+    freeChain(prog1.instructions, free_implementCsteInstruction);
+    freeChain(prog2.instructions, free_implementCsteInstruction);
+  }
+
+  if( gamma0+1-*Eb>=0 ) { /* No need to perform a test inside 
+                             the generated code */
+    tmpb = program->counter;
+    constantImplementer(c->child2, gamma0+1-*Eb, program);
+  }
+  else {
+    prog1.instructions = NULL;
+    prog1.counter = program->counter;
+    prog1.maxcounter = program->maxcounter;
+    prog1.precisions = program->precisions;
+ 
+    prog2.instructions = NULL;
+    prog2.counter = program->counter;
+    prog2.maxcounter = program->maxcounter;
+
+    tmpb = program->counter;
+    appendSetuiProg(tmpb, 0, &prog1);
+    incrementProgramCounter(&prog1);
+
+    prog2.precisions = prog1.precisions;
+    constantImplementer(c->child2, gamma0+1-*Eb, &prog2);
+    prog1.precisions = prog2.precisions;
+
+    str = safeCalloc(32 , sizeof(char));
+    sprintf(str, "prec <= %d", *Eb-gamma0);
+    appendIfThenElseProg(str, prog1, prog2, program);
+    free(str);
+    
+    /* No need to free progi.precisions: program.precisions now on it. */
+    freeChain(prog1.instructions, free_implementCsteInstruction);
+    freeChain(prog2.instructions, free_implementCsteInstruction);
+  }
+
   appendSetprecProg(counter, gamma0+2-*Ey, program);
   if (c->nodeType==ADD)
     appendBinaryfuncProg("mpfr_add", counter, tmpa, tmpb, program);
