@@ -832,9 +832,16 @@ int implementDivMul(node *c, int gamma0, struct implementCsteProgram *program) {
   return;
 }
 
+int summation_weight(node *c) {
+  if ( (c->nodeType == ADD) || (c->nodeType == SUB) )
+    return (summation_weight(c->child1) + summation_weight(c->child2) + 1);
+  else return 1;
+}
+
 int implementAddSub(node *c, int gamma0, struct implementCsteProgram *program) {
   mpfi_t y, a, b, tmp, tmp2;
   mp_exp_t *Ea, *Eb, *Ey;
+  int na, nb, n;
   int tmpa, tmpb;
   mp_prec_t prec;
   int counter;
@@ -861,14 +868,18 @@ int implementAddSub(node *c, int gamma0, struct implementCsteProgram *program) {
   evaluateInterval(a, c->child1, NULL, a);
   evaluateInterval(b, c->child2, NULL, b);
 
-  mpfi_div(tmp, y, a); mpfi_div_ui(tmp, tmp, 3);
+  na = summation_weight(c->child1);
+  nb = summation_weight(c->child2);
+  n = na+nb+1;
+
+  mpfi_div(tmp, y, a); mpfi_mul_ui(tmp, tmp, na); mpfi_div_ui(tmp, tmp, n);
   Ea = mpfi_min_exp(tmp);
   if (Ea==NULL) {
     printMessage(0, "Unexpected error. Aborting\n");
     recoverFromError();
   }
 
-  mpfi_div(tmp, y, b); mpfi_div_ui(tmp, tmp, 3);
+  mpfi_div(tmp, y, b); mpfi_mul_ui(tmp, tmp, nb); mpfi_div_ui(tmp, tmp, n);
   Eb = mpfi_min_exp(tmp);
   if (Eb==NULL) {
     printMessage(0, "Unexpected error. Aborting\n");
@@ -879,7 +890,7 @@ int implementAddSub(node *c, int gamma0, struct implementCsteProgram *program) {
   mpfi_abs(tmp2, b);
   mpfi_add(tmp, tmp, tmp2);
   mpfi_div(tmp, y, tmp);
-  mpfi_div_ui(tmp, tmp, 3);
+  mpfi_div_ui(tmp, tmp, n);
   Ey = mpfi_min_exp(tmp);
   if (Ey==NULL) {
     printMessage(0, "Unexpected error. Aborting\n");
@@ -958,8 +969,14 @@ int implementAddSub(node *c, int gamma0, struct implementCsteProgram *program) {
   appendSetprecProg(counter, gamma0+2-*Ey, program);
   if (c->nodeType==ADD)
     appendBinaryfuncProg("mpfr_add", counter, tmpa, tmpb, program);
-  else
+  else if (c->nodeType==SUB)
     appendBinaryfuncProg("mpfr_sub", counter, tmpa, tmpb, program);
+  else {
+    changeToWarningMode();
+    fprintf(stderr, "Unexpected error: an addition/subtraction must have nodeType=ADD or nodeType=SUB\n");
+    restoreMode();
+    recoverFromError();
+  }
 
   program->counter = counter;
   free(Ea);
