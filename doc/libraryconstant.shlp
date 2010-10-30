@@ -21,11 +21,11 @@ a function of the form:
 The semantic of this function is the following: it is an implementation of
 the constant in arbitrary precision.
 §§my_ident(result, prec)§\verb|my_ident(result, prec)|§§ shall set the
-precision of the variable result to a suitable precision and store in result
-an approximate value of the constant with a relative error not greater than
-§§2^(1-prec)§$2^{1-\mathrm{prec}}$§§. More precisely, if §§c§$c$§§ is the 
-exact value of the constant, the value stored in result should satisfy
-§§|result-c| <= 2^(1-prec)*c.§$$|\mathrm{result}-c| \le c\,2^{1-\mathrm{prec}}.$$§§
+precision of the variable result to a suitable precision (the variable is
+assumed to be already initialized) and store in result an approximate value
+of the constant with a relative error not greater than §§2^(1-prec)§$2^{1-\mathrm{prec}}$§§.
+More precisely, if §§c§$c$§§ is the exact value of the constant, the value stored
+in result should satisfy §§|result-c| <= 2^(1-prec)*c.§$$|\mathrm{result}-c| \le c\,2^{1-\mathrm{prec}}.$$§§
 
 #DESCRIPTION
 You can include sollya.h in your implementation and use library 

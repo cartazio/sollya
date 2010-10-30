@@ -22,11 +22,11 @@ binds an external mathematical constant to a variable in \sollya\\
    The semantic of this function is the following: it is an implementation of
    the constant in arbitrary precision.
    \verb|my_ident(result, prec)| shall set the
-   precision of the variable result to a suitable precision and store in result
-   an approximate value of the constant with a relative error not greater than
-   $2^{1-\mathrm{prec}}$. More precisely, if $c$ is the 
-   exact value of the constant, the value stored in result should satisfy
-   $$|\mathrm{result}-c| \le c\,2^{1-\mathrm{prec}}.$$
+   precision of the variable result to a suitable precision (the variable is
+   assumed to be already initialized) and store in result an approximate value
+   of the constant with a relative error not greater than $2^{1-\mathrm{prec}}$.
+   More precisely, if $c$ is the exact value of the constant, the value stored
+   in result should satisfy $$|\mathrm{result}-c| \le c\,2^{1-\mathrm{prec}}.$$
 
 \item You can include sollya.h in your implementation and use library 
    functionnalities of \sollya for your implementation. However, this requires to
@@ -63,4 +63,4 @@ Midpoint mode has been activated.
 0.577215664901532860606512090~0/1~
 \end{Verbatim}
 \end{minipage}\end{center}
-See also: \textbf{bashexecute} (\ref{labbashexecute}), \textbf{externalproc} (\ref{labexternalproc}), \textbf{externalplot} (\ref{labexternalplot}), \textbf{pi} (\ref{labpi}), \textbf{library} (\ref{lablibrary}), \textbf{evaluate} (\ref{labevaluate})
+See also: \textbf{bashexecute} (\ref{labbashexecute}), \textbf{externalproc} (\ref{labexternalproc}), \textbf{externalplot} (\ref{labexternalplot}), \textbf{pi} (\ref{labpi}), \textbf{library} (\ref{lablibrary}), \textbf{evaluate} (\ref{labevaluate}), \textbf{implementconstant} (\ref{labimplementconstant})

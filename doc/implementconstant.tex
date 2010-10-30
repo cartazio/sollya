@@ -16,7 +16,8 @@ implements a constant in arbitrary precision\\
    \texttt{void mpfr\_const\_something (mpfr\_ptr y, mp\_prec\_t prec)}
    \end{center}
    Let us denote by $c$ the exact mathematical value of the constant defined by
-   the expression \emph{expr}. When called with arguments $y$ and prec, the function
+   the expression \emph{expr}. When called with arguments $y$ and prec (where the
+   variable $y$ is supposed to be already initialized), the function
    \texttt{mpfr\_const\_something} sets the precision of $y$ to a suitable precision and
    stores in it an approximate value of c such that
    $$|y-c| \le c\,2^{1-\mathrm{prec}}.$$

@@ -546,7 +546,8 @@ void implementCste(node *c) {
 
   curr = program.precisions;
   while(curr != NULL) {
-    appendInit2Prog( ((couple *)(curr->value))->var, ((couple *)(curr->value))->prec, &program);
+    if( ((couple *)(curr->value))->var != 0 )
+      appendInit2Prog( ((couple *)(curr->value))->var, ((couple *)(curr->value))->prec, &program);
     curr = curr->next;
   }
 

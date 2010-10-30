@@ -12,7 +12,8 @@ signature:
 §§          void mpfr_const_something (mpfr_ptr y, mp_prec_t prec)§\texttt{void mpfr\_const\_something (mpfr\_ptr y, mp\_prec\_t prec)}§§
 §§ §\end{center}§§
 Let us denote by §§c§$c$§§ the exact mathematical value of the constant defined by
-the expression <expr>. When called with arguments §§y§$y$§§ and prec, the function
+the expression <expr>. When called with arguments §§y§$y$§§ and prec (where the
+variable §§y§$y$§§ is supposed to be already initialized), the function
 §§mpfr_const_something§\texttt{mpfr\_const\_something}§§ sets the precision of §§y§$y$§§ to a suitable precision and
 stores in it an approximate value of c such that
 §§                            |y-c| <= c*2^(1-prec).§$$|y-c| \le c\,2^{1-\mathrm{prec}}.$$§§
