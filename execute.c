@@ -103,6 +103,9 @@ node *copyThing(node *);
 node *evaluateThingInner(node *);
 node *evaluateThing(node *);
 void *copyThingOnVoid(void *);
+void *copyEntryOnVoid(void *ptr);
+void *evaluateEntryOnVoid(void *ptr);
+void freeEntryOnVoid(void *ptr);
 
 
 // Performs a fast check if a < b or a > b 
@@ -807,6 +810,11 @@ node *copyThing(node *tree) {
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     break;  	
+  case STRUCTACCESS:
+    copy->child1 = copyThing(tree->child1);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;  	
   case APPLY:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     copy->child1 = copyThing(tree->child1);
@@ -839,6 +847,9 @@ node *copyThing(node *tree) {
     break; 			
   case LIST:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
+    break; 	
+  case STRUCTURE:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyEntryOnVoid);
     break; 			 	
   case FINALELLIPTICLIST:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
@@ -1097,6 +1108,31 @@ node *copyThing(node *tree) {
 void *copyThingOnVoid(void *tree) {
   return (void *) copyThing((node *) tree);
 }
+
+void *copyEntryOnVoid(void *ptr) {
+  entry *copy;
+  copy = (entry *) safeMalloc(sizeof(entry));
+  copy->name = (char *) safeCalloc(strlen(((entry *) ptr)->name)+1,sizeof(char));
+  strcpy(copy->name,((entry *) ptr)->name);
+  copy->value = copyThing((node *) (((entry *) ptr)->value));
+  return copy;
+}
+
+void *evaluateEntryOnVoid(void *ptr) {
+  entry *copy;
+  copy = (entry *) safeMalloc(sizeof(entry));
+  copy->name = (char *) safeCalloc(strlen(((entry *) ptr)->name)+1,sizeof(char));
+  strcpy(copy->name,((entry *) ptr)->name);
+  copy->value = evaluateThing((node *) (((entry *) ptr)->value));
+  return copy;
+}
+
+void freeEntryOnVoid(void *ptr) {
+  free(((entry *) ptr)->name);
+  freeThing((node *) (((entry *) ptr)->value));
+  free(ptr);
+}
+
 
 char *getTimingStringForThing(node *tree) {
   char *constString, *newString;
@@ -1575,6 +1611,9 @@ char *getTimingStringForThing(node *tree) {
   case TABLEACCESSWITHSUBSTITUTE:
     constString = "dereferencing an identifier and substituting";
     break;  	
+  case STRUCTACCESS:
+    constString = "accessing a member of a structure";
+    break;  	
   case APPLY:
     constString = "applying something to something";
     break;  	
@@ -1601,6 +1640,9 @@ char *getTimingStringForThing(node *tree) {
     break; 			
   case LIST:
     constString = "handling a list";
+    break; 
+  case STRUCTURE:
+    constString = "handling a structure";
     break; 			 	
   case FINALELLIPTICLIST:
     constString = "handling a finally elliptic list";
@@ -1997,6 +2039,10 @@ int isString(node *tree) {
 
 int isList(node *tree) {
   return (tree->nodeType == LIST);
+}
+
+int isStructure(node *tree) {
+  return (tree->nodeType == STRUCTURE);
 }
 
 int isEmptyList(node *tree) {
@@ -4163,6 +4209,10 @@ char *sRawPrintThing(node *tree) {
     }
     res = concatAndFree(res, newString(")"));
     break;  	
+  case STRUCTACCESS:
+    res = concatAndFree(sRawPrintThing(tree->child1),newString("."));
+    res = concatAndFree(res, newString(tree->string));
+    break;  	
   case APPLY:
     res = concatAndFree(concatAndFree(concatAndFree(newString("("),sRawPrintThing(tree->child1)), newString(")")),newString("("));
     curr = tree->arguments;
@@ -4203,6 +4253,18 @@ char *sRawPrintThing(node *tree) {
       curr = curr->next;
     }
     res = concatAndFree(res, newString("|]"));
+    break; 			 	
+  case STRUCTURE:
+    res = newString("{ ");
+    curr = tree->arguments;
+    while (curr != NULL) {
+      res = concatAndFree(res,concatAndFree(newString("."),newString(((entry *) (curr->value))->name)));
+      res = concatAndFree(res,newString(" = "));
+      res = concatAndFree(res,sRawPrintThing((node *) (((entry *) (curr->value))->value)));
+      if (curr->next != NULL) res = concatAndFree(res, newString(", "));
+      curr = curr->next;
+    }
+    res = concatAndFree(res, newString(" }"));
     break; 			 	
   case FINALELLIPTICLIST:
     res = newString("[|");
@@ -5378,10 +5440,22 @@ void autoprint(node *thing, int inList) {
 	}
 	sollyaPrintf("...|]");
       } else {
-	if (inList) 
-	  printThingWithFullStrings(thing);
-	else 
-	  printThing(thing);
+	if (isStructure(thing)) {
+	  sollyaPrintf("{ ");
+	  curr = thing->arguments;
+	  while (curr != NULL) {
+	    sollyaPrintf(".%s = ", ((entry *) (curr->value))->name);
+	    autoprint((node *) (((entry *) (curr->value))->value),1);
+	    if (curr->next != NULL) sollyaPrintf(", ");
+	    curr = curr->next;
+	  }
+	  sollyaPrintf(" }");
+	} else {
+	  if (inList) 
+	    printThingWithFullStrings(thing);
+	  else 
+	    printThing(thing);
+	}
       }
     }
   }
@@ -8802,6 +8876,19 @@ node *makeTableAccessWithSubstitute(char *string, chain *thinglist) {
 
 }
 
+node *makeStructAccess(node *thing, char *string) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = STRUCTACCESS;
+  res->string = (char *) safeCalloc(strlen(string) + 1, sizeof(char));
+  strcpy(res->string, string);
+  res->child1 = thing;
+
+  return res;
+
+}
+
 node *makeApply(node *thing, chain *thinglist) {
   node *res;
 
@@ -8905,6 +8992,28 @@ node *makeList(chain *thinglist) {
   res = (node *) safeMalloc(sizeof(node));
   res->nodeType = LIST;
   res->arguments = thinglist;
+
+  return res;
+
+}
+
+node *makeStructure(chain *assoclist) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = STRUCTURE;
+  res->arguments = assoclist;
+
+  return res;
+}
+
+node *makeRevertedStructure(chain *assoclist) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = STRUCTURE;
+  res->arguments = copyChain(assoclist,copyEntryOnVoid);
+  freeChain(assoclist,freeEntryOnVoid);
 
   return res;
 
@@ -10465,6 +10574,11 @@ void freeThing(node *tree) {
     freeChain(tree->arguments, freeThingOnVoid);
     free(tree);
     break;  	
+  case STRUCTACCESS:
+    free(tree->string);
+    freeThing(tree->child1);
+    free(tree);
+    break;  	
   case APPLY:
     freeThing(tree->child1);
     freeChain(tree->arguments, freeThingOnVoid);
@@ -10499,6 +10613,10 @@ void freeThing(node *tree) {
     break; 			
   case LIST:
     freeChain(tree->arguments, freeThingOnVoid);
+    free(tree);
+    break; 			 	
+  case STRUCTURE:
+    freeChain(tree->arguments, freeEntryOnVoid);
     free(tree);
     break; 			 	
   case FINALELLIPTICLIST:
@@ -10856,6 +10974,8 @@ int isEqualThingOnVoid(void *tree, void *tree2) {
 }
 
 int isEqualThing(node *tree, node *tree2) {
+  chain *curri, *currj;
+  int found;
   
   if (tree == NULL) return 0;
   if (tree2 == NULL) return 0;
@@ -11329,6 +11449,9 @@ int isEqualThing(node *tree, node *tree2) {
   case TABLEACCESSWITHSUBSTITUTE:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
     if (strcmp(tree->string,tree2->string) != 0) return 0;    break;  	
+  case STRUCTACCESS:
+    if (!isEqualThing(tree->child1,tree2->child2)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;  	
   case APPLY:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
@@ -11348,6 +11471,24 @@ int isEqualThing(node *tree, node *tree2) {
     break; 			
   case LIST:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
+    break; 			 	
+  case STRUCTURE:
+    if (lengthChain(tree->arguments) != lengthChain(tree2->arguments)) return 0;
+    for (curri=tree->arguments;curri!=NULL;curri=curri->next) {
+      found = 0;
+      currj = tree2->arguments;
+      while ((!found) && 
+	     (currj != NULL)) {
+	if ((!strcmp(((entry *) (curri->value))->name,
+		     ((entry *) (currj->value))->name)) &&
+	    (isEqualThing(((node *) ((entry *) (curri->value))->value),
+			  ((node *) ((entry *) (currj->value))->value)))) {
+	  found = 1;
+	}
+	currj = currj->next;
+      }
+      if (!found) return 0;
+    }
     break; 			 	
   case FINALELLIPTICLIST:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
@@ -11649,6 +11790,19 @@ int isCorrectlyTypedBaseSymbol(node *tree) {
   return 0;
 }
 
+int associationContainsDoubleEntries(chain *assoc) {
+  chain *curri, *currj;
+
+  for (curri=assoc;curri!=NULL;curri=curri->next) {
+    for (currj=assoc;currj!=NULL;currj=currj->next) {
+      if ((curri != currj) &&
+	  (!strcmp(((entry *) (curri->value))->name,
+		   ((entry *) (currj->value))->name))) return 1;
+    }
+  }
+
+  return 0;
+}
 
 int isCorrectlyTyped(node *tree) {
   chain *curr;
@@ -11661,6 +11815,15 @@ int isCorrectlyTyped(node *tree) {
     curr = tree->arguments;
     while (curr != NULL) {
       if (!isCorrectlyTyped((node *) (curr->value))) return 0;
+      curr = curr->next;
+    }
+    return 1;
+  }
+  if (isStructure(tree)) {
+    if (associationContainsDoubleEntries(tree->arguments)) return 0;
+    curr = tree->arguments;
+    while (curr != NULL) {
+      if (!isCorrectlyTyped((node *) (((entry *) (curr->value))->value))) return 0;
       curr = curr->next;
     }
     return 1;
@@ -15256,6 +15419,49 @@ node *evaluateThingInner(node *tree) {
     freeThing(tempNode);
     if (timingString != NULL) popTimeCounter(timingString);
     break;
+  case STRUCTACCESS:
+    if (isStructure(tree->child1) && 
+	(!associationContainsDoubleEntries(tree->child1->arguments))) {
+      tempChain = tree->child1->arguments;
+      resA = 0; tempNode = NULL;
+      while ((!resA) && (tempChain != NULL)) {
+	if (!strcmp(tree->string,((entry *) (tempChain->value))->name)) {
+	  resA = 1;
+	  tempNode = (node *) (((entry *) (tempChain->value))->value);
+	}
+	tempChain = tempChain->next;
+      }
+      if ((resA) && (tempNode != NULL)) {
+	free(copy);
+	copy = evaluateThing(tempNode);
+      } else {
+	  copy->child1 = evaluateThingInner(tree->child1);
+	  copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+	  strcpy(copy->string,tree->string);
+      }
+    } else {
+      copy->child1 = evaluateThingInner(tree->child1);
+      copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+      strcpy(copy->string,tree->string);
+      if (isStructure(copy->child1) && 
+	  (!associationContainsDoubleEntries(copy->child1->arguments))) {
+	tempChain = copy->child1->arguments;
+	resA = 0; tempNode = NULL;
+	while ((!resA) && (tempChain != NULL)) {
+	  if (!strcmp(copy->string,((entry *) (tempChain->value))->name)) {
+	    resA = 1;
+	    tempNode = (node *) (((entry *) (tempChain->value))->value);
+	  }
+	  tempChain = tempChain->next;
+	}
+	if ((resA) && (tempNode != NULL)) {
+	  tempNode2 = evaluateThing(tempNode);
+	  freeThing(copy);
+	  copy = tempNode2;
+	} 
+      } 
+    }
+    break;
   case EXTERNALPROCEDUREUSAGE:
     copy->libProc = tree->libProc;
     break;
@@ -15639,7 +15845,17 @@ node *evaluateThingInner(node *tree) {
       copy = tempNode;
     }
     if (timingString != NULL) popTimeCounter(timingString);
-    break; 			 	
+    break; 	
+  case STRUCTURE:
+    if (!associationContainsDoubleEntries(tree->arguments)) {
+      if (timingString != NULL) pushTimeCounter();
+      copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateEntryOnVoid);
+      if (timingString != NULL) popTimeCounter(timingString);
+    } else {
+      printMessage(1,"Warning: a literal structure contains at least one entry twice. This is not allowed.\n");
+      copy->arguments = copyChainWithoutReversal(tree->arguments, copyEntryOnVoid);
+    }
+    break;
   case FINALELLIPTICLIST:
     tempChain = copyChain(tree->arguments, evaluateThingInnerOnVoid);
     if (timingString != NULL) pushTimeCounter();

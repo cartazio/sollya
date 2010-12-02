@@ -268,6 +268,8 @@ extern void endBuffer(void);
 #define MIN 253
 #define MAX 254
 #define SUPNORM 255
+#define STRUCTACCESS 256
+#define STRUCTURE 257
 
 
 int executeCommand(node *);
@@ -389,6 +391,7 @@ node *makeString(char *string);
 node *makeTableAccess(char *string);
 node *makeIsBound(char *string);
 node *makeTableAccessWithSubstitute(char *string, chain *thinglist);
+node *makeStructAccess(node *thing, char *string);
 node *makeDecimalConstant(char *string);
 node *makeMidpointConstant(char *string);
 node *makeDyadicConstant(char *string);
@@ -397,6 +400,8 @@ node *makeHexadecimalConstant(char *string);
 node *makeBinaryConstant(char *string);
 node *makeEmptyList();
 node *makeList(chain *thinglist);
+node *makeStructure(chain *assoclist);
+node *makeRevertedStructure(chain *assoclist);
 node *makeFinalEllipticList(chain *thinglist);
 node *makeRevertedList(chain *thinglist);
 node *makeRevertedFinalEllipticList(chain *thinglist);
