@@ -1328,6 +1328,11 @@ basicthing:             ONTOKEN
 			    $$ = makeStructAccess($1,$2);
 			    free($2);
 			  }
+                      | basicthing DOTIDENTIFIERTOKEN LPARTOKEN thinglist RPARTOKEN
+		          {
+			    $$ = makeApply(makeStructAccess($1,$2),$4);
+			    free($2);
+			  }
                       | LPARTOKEN thing RPARTOKEN LPARTOKEN thinglist RPARTOKEN
                           {
 			    $$ = makeApply($2,$5);
