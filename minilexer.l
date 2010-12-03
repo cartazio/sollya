@@ -92,6 +92,8 @@ MIDPOINTCONSTANT         (({AMIDPOINTCONSTANT})|(("-")((" ")*)({AMIDPOINTCONSTAN
 
 IDENTIFIER        ({CHAR}|{SPECIAL})({CHAR}|{NUMBER}|{SPECIAL})*
 
+DOTIDENTIFIER     ((".")({IDENTIFIER}))
+
 LPAR            "("
 RPAR            ")"
 
@@ -339,12 +341,10 @@ FROM            "from"
 TO              "to"
 BY              "by"
 DO              "do"
-BEGINLONG       "begin"
-ENDLONG         "end"
-BEGINSHORT      "{"
-ENDSHORT        "}"
-BEGIN           ({BEGINSHORT}|{BEGINLONG})
-END             ({ENDSHORT}|{ENDLONG})
+BEGIN           "begin" 
+END             "end"
+LBRACE          "{"
+RBRACE          "}"
 
 WHILEDEF        "while"
 
@@ -686,6 +686,8 @@ NOP             "nop"
 {DO}					    {  return DOTOKEN; }
 {BEGIN}					    {  return BEGINTOKEN; }
 {END}					    {  return ENDTOKEN; }
+{LBRACE}				    {  return LEFTCURLYBRACETOKEN; }
+{RBRACE}				    {  return RIGHTCURLYBRACETOKEN; }
 {WHILEDEF}				    {  return WHILETOKEN; }
 
 {EXTERNALPROC}                              {  return EXTERNALPROCTOKEN; }
@@ -712,6 +714,12 @@ NOP             "nop"
 					      strncpy(constBuffer,yytext,yyleng);
 					      yylval->value = constBuffer;
 					       return IDENTIFIERTOKEN; }
+
+{DOTIDENTIFIER}        			    { constBuffer = (char *) safeCalloc(yyleng,sizeof(char));
+					      strncpy(constBuffer,yytext+1,yyleng-1);
+					      yylval->value = constBuffer;
+					       return DOTIDENTIFIERTOKEN; }
+
 
 .		{ /* otherwise */
 			printMessage(1,"The character \"%s\" cannot be recognized. Will ignore it.\n",
