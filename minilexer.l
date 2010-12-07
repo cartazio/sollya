@@ -92,7 +92,7 @@ MIDPOINTCONSTANT         (({AMIDPOINTCONSTANT})|(("-")((" ")*)({AMIDPOINTCONSTAN
 
 IDENTIFIER        ({CHAR}|{SPECIAL})({CHAR}|{NUMBER}|{SPECIAL})*
 
-DOTIDENTIFIER     ((".")({IDENTIFIER}))
+DOT             "."
 
 LPAR            "("
 RPAR            ")"
@@ -500,6 +500,7 @@ NOP             "nop"
 {RIGHTANGLESTAR}			    {  return RIGHTANGLESTARTOKEN; }
 {RIGHTANGLE}      			    {  return RIGHTANGLETOKEN; }
 {DOTS}            			    {  return DOTSTOKEN; }
+{DOT}            			    {  return DOTTOKEN; }
 {QUESTIONMARK}				    {  return QUESTIONMARKTOKEN; }
 {AND}         				    {  return ANDTOKEN; }
 {OR}         				    {  return ORTOKEN; }
@@ -714,11 +715,6 @@ NOP             "nop"
 					      strncpy(constBuffer,yytext,yyleng);
 					      yylval->value = constBuffer;
 					       return IDENTIFIERTOKEN; }
-
-{DOTIDENTIFIER}        			    { constBuffer = (char *) safeCalloc(yyleng,sizeof(char));
-					      strncpy(constBuffer,yytext+1,yyleng-1);
-					      yylval->value = constBuffer;
-					       return DOTIDENTIFIERTOKEN; }
 
 
 .		{ /* otherwise */

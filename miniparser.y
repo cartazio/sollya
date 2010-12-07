@@ -104,7 +104,6 @@ void miniyyerror(void *myScanner, char *message) {
 %token  PITOKEN;
 
 %token  <value> IDENTIFIERTOKEN;
-%token  <value> DOTIDENTIFIERTOKEN;
 
 %token  <value> STRINGTOKEN;
 
@@ -125,6 +124,7 @@ void miniyyerror(void *myScanner, char *message) {
 %token  RIGHTANGLESTARTOKEN;
 %token  RIGHTANGLETOKEN;
 %token  DOTSTOKEN;
+%token  DOTTOKEN;
 %token  QUESTIONMARKTOKEN;
 %token  VERTBARTOKEN;
 %token  ATTOKEN;
@@ -347,6 +347,7 @@ void miniyyerror(void *myScanner, char *message) {
 %type <list>  structelementlist;
 %type <association>  structelement;
 %type <other>  structelementseparator;
+%type <tree>  structuring;
 %type <tree>  ifcommand;
 %type <tree>  forcommand;
 %type <tree>  assignment;
@@ -781,6 +782,21 @@ simpleassignment:       IDENTIFIERTOKEN EQUALTOKEN thing
 			    $$ = makeFloatAssignmentInIndexing($1->a,$1->b,$3);
 			    free($1);
 			  }
+                      | structuring EQUALTOKEN thing
+                          {
+			    $$ = makeProtoAssignmentInStructure($1,$3);
+			  }
+                      | structuring ASSIGNEQUALTOKEN thing
+                          {
+			    $$ = makeProtoFloatAssignmentInStructure($1,$3);
+			  }
+;
+
+structuring:            basicthing DOTTOKEN IDENTIFIERTOKEN 
+		          {
+			    $$ = makeStructAccess($1,$3);
+			    free($3);
+			  }
 ;
 
 stateassignment:        PRECTOKEN EQUALTOKEN thing
@@ -937,13 +953,13 @@ structelementseparator: COMMATOKEN
 			  }
 ;
 
-structelement:          DOTIDENTIFIERTOKEN EQUALTOKEN thing
+structelement:          DOTTOKEN IDENTIFIERTOKEN EQUALTOKEN thing
                           {
 			    $$ = (entry *) safeMalloc(sizeof(entry));
-			    $$->name = (char *) safeCalloc(strlen($1) + 1, sizeof(char));
-			    strcpy($$->name,$1);
-			    free($1);
-			    $$->value = (void *) ($3);
+			    $$->name = (char *) safeCalloc(strlen($2) + 1, sizeof(char));
+			    strcpy($$->name,$2);
+			    free($2);
+			    $$->value = (void *) ($4);
 			  }
 ;
 
@@ -1314,15 +1330,15 @@ basicthing:             ONTOKEN
 			    $$ = makeIndex($1->a, $1->b);
 			    free($1);
 			  }
-                      | basicthing DOTIDENTIFIERTOKEN 
+                      | basicthing DOTTOKEN IDENTIFIERTOKEN 
 		          {
-			    $$ = makeStructAccess($1,$2);
-			    free($2);
+			    $$ = makeStructAccess($1,$3);
+			    free($3);
 			  }
-                      | basicthing DOTIDENTIFIERTOKEN LPARTOKEN thinglist RPARTOKEN
+                      | basicthing DOTTOKEN IDENTIFIERTOKEN LPARTOKEN thinglist RPARTOKEN
 		          {
-			    $$ = makeApply(makeStructAccess($1,$2),$4);
-			    free($2);
+			    $$ = makeApply(makeStructAccess($1,$3),$5);
+			    free($3);
 			  }
                       | LPARTOKEN thing RPARTOKEN LPARTOKEN thinglist RPARTOKEN
                           {
