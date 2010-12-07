@@ -107,6 +107,10 @@ void *copyEntryOnVoid(void *ptr);
 void *evaluateEntryOnVoid(void *ptr);
 void freeEntryOnVoid(void *ptr);
 
+void freeDoNothing(void *ptr) {
+  UNUSED_PARAM(ptr); 
+  return;
+}
 
 // Performs a fast check if a < b or a > b 
 //
@@ -5795,9 +5799,55 @@ void doNothing(int n) {
   }
 }
 
+int tryToRewriteLeftHandStructAccessInner(chain **idents, node *thing) {
+  int okay;
+  char *buf;
+  chain *tempChain;
+
+  okay = 0;
+
+  switch (thing->nodeType) {
+  case TABLEACCESS:
+    buf = (char *) safeCalloc(strlen(thing->string)+1,sizeof(char));
+    strcpy(buf,thing->string);
+    *idents = addElement(NULL,buf);
+    okay = 1;
+    break;
+  case STRUCTACCESS:
+    if (tryToRewriteLeftHandStructAccessInner(&tempChain,thing->child1)) {
+      buf = (char *) safeCalloc(strlen(thing->string)+1,sizeof(char));
+      strcpy(buf,thing->string);
+      *idents = addElement(tempChain,buf);
+      okay = 1;
+    } else {
+      okay = 0;
+    }
+    break;
+  default:
+    okay = 0;
+  }
+    
+  return okay;
+}
+
+int tryToRewriteLeftHandStructAccess(chain **idents, node *thing) {
+  chain *tempChain, *curr;
+
+  if (tryToRewriteLeftHandStructAccessInner(&tempChain, thing)) {
+    *idents = NULL;
+    for (curr=tempChain;curr!=NULL;curr=curr->next) {
+      *idents = addElement(*idents,curr->value);
+    }
+    freeChain(tempChain, freeDoNothing);
+    return 1;
+  }
+  
+  return 0;
+}
+
 int executeCommandInner(node *tree) {
   int result, res, intTemp, resA, resB, resC, resD, resE, resF, defaultVal, i;  
-  chain *curr, *tempList, *tempList2; 
+  chain *curr, *tempList, *tempList2, *tempChain; 
   mpfr_t a, b, c, d, e;
   node *tempNode, *tempNode2, *tempNode3, *tempNode4;
   libraryFunction *tempLibraryFunction;
@@ -6892,7 +6942,7 @@ int executeCommandInner(node *tree) {
         considerDyingOnError();
       }
     } else {
-      printMessage(1,"Warning: the first element is not an identifier.\n");
+      printMessage(1,"Warning: the first element of the left-hand side is not an identifier.\n");
       printMessage(1,"This command will have no effect.\n");
       considerDyingOnError();
     }
@@ -7129,22 +7179,40 @@ int executeCommandInner(node *tree) {
         considerDyingOnError();
       }
     } else {
-      printMessage(1,"Warning: the first element is not an identifier.\n");
+      printMessage(1,"Warning: the first element of the left-hand side is not an identifier.\n");
       printMessage(1,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break;
   case ASSIGNMENTINSTRUCTURE:
-    // TODO
+    // TODO 
     break;
   case FLOATASSIGNMENTINSTRUCTURE:
     // TODO
     break;
   case PROTOASSIGNMENTINSTRUCTURE:
-    // TODO
+    if (tryToRewriteLeftHandStructAccess(&tempChain,tree->child1)) {
+      tempNode = makeAssignmentInStructure(tempChain,copyThing(tree->child2));
+      res = executeCommand(tempNode);
+      if (res) result = 1;
+      freeThing(tempNode);
+    } else {
+      printMessage(1,"Warning: the left-hand side is not an access to an element of a structured type.\n");
+      printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
+    }
     break;
   case PROTOFLOATASSIGNMENTINSTRUCTURE:
-    // TODO
+    if (tryToRewriteLeftHandStructAccess(&tempChain,tree->child1)) {
+      tempNode = makeFloatAssignmentInStructure(tempChain,copyThing(tree->child2));
+      res = executeCommand(tempNode);
+      if (res) result = 1;
+      freeThing(tempNode);
+    } else {
+      printMessage(1,"Warning: the left-hand side is not an access to an element of a structured type.\n");
+      printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
+    }
     break;
   case LIBRARYBINDING:
     if ((variablename != NULL) && (strcmp(variablename,tree->string) == 0)) {
