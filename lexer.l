@@ -94,7 +94,7 @@ MIDPOINTCONSTANT         (({AMIDPOINTCONSTANT})|(("-")((" ")*)({AMIDPOINTCONSTAN
 
 IDENTIFIER        ({CHAR}|{SPECIAL})({CHAR}|{NUMBER}|{SPECIAL})*
 
-DOTIDENTIFIER     ((".")({IDENTIFIER}))
+DOT             "."    
 
 LPAR            "("
 RPAR            ")"
@@ -578,6 +578,7 @@ NOP             "nop"
 {RIGHTANGLESTAR}			    { newTokenLexed(); return RIGHTANGLESTARTOKEN; }
 {RIGHTANGLE}      			    { newTokenLexed(); return RIGHTANGLETOKEN; }
 {DOTS}            			    { newTokenLexed(); return DOTSTOKEN; }
+{DOT}            			    { newTokenLexed(); return DOTTOKEN; }
 {QUESTIONMARK}				    { newTokenLexed(); return QUESTIONMARKTOKEN; }
 {AND}         				    { newTokenLexed(); return ANDTOKEN; }
 {OR}         				    { newTokenLexed(); return ORTOKEN; }
@@ -799,11 +800,6 @@ NOP             "nop"
 					      strncpy(constBuffer,yytext,yyleng);
 					      yylval->value = constBuffer;
 					      newTokenLexed(); return IDENTIFIERTOKEN; }
-
-{DOTIDENTIFIER}        			    { constBuffer = (char *) safeCalloc(yyleng,sizeof(char));
-					      strncpy(constBuffer,yytext+1,yyleng-1);
-					      yylval->value = constBuffer;
-					      newTokenLexed(); return DOTIDENTIFIERTOKEN; }
 
 .		{ /* otherwise */
 			printMessage(1,"The character \"%s\" cannot be recognized. Will ignore it.\n",

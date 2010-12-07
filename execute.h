@@ -270,6 +270,10 @@ extern void endBuffer(void);
 #define SUPNORM 255
 #define STRUCTACCESS 256
 #define STRUCTURE 257
+#define ASSIGNMENTINSTRUCTURE 258
+#define FLOATASSIGNMENTINSTRUCTURE 259
+#define PROTOASSIGNMENTINSTRUCTURE 260
+#define PROTOFLOATASSIGNMENTINSTRUCTURE 261
 
 
 int executeCommand(node *);
@@ -478,6 +482,10 @@ node *makeSuppressWarningsDeref();
 node *makeHopitalRecursDeref();
 node *makeAssignmentInIndexing(node *, node *, node *);
 node *makeFloatAssignmentInIndexing(node *, node *, node *);
+node *makeAssignmentInStructure(chain *, node *);
+node *makeFloatAssignmentInStructure(chain *, node *);
+node *makeProtoAssignmentInStructure(node *, node *);
+node *makeProtoFloatAssignmentInStructure(node *, node *);
 node *makeDoubleextendedSymbol();
 node *makePrintXml(node *);
 node *makePrintXmlNewFile(node *, node *);

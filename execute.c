@@ -1017,7 +1017,23 @@ node *copyThing(node *tree) {
     break; 			
   case FLOATASSIGNMENTININDEXING:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
+    break; 	
+  case ASSIGNMENTINSTRUCTURE:
+    copy->child1 = copyThing(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
     break; 			
+  case FLOATASSIGNMENTINSTRUCTURE:
+    copy->child1 = copyThing(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
+    break; 				
+  case PROTOASSIGNMENTINSTRUCTURE:
+    copy->child1 = copyThing(tree->child1);
+    copy->child2 = copyThing(tree->child2);
+    break; 			
+  case PROTOFLOATASSIGNMENTINSTRUCTURE:
+    copy->child1 = copyThing(tree->child1);
+    copy->child2 = copyThing(tree->child2);
+    break; 				
   case DIRTYFINDZEROS:
     copy->child1 = copyThing(tree->child1);
     copy->child2 = copyThing(tree->child2);
@@ -1796,7 +1812,19 @@ char *getTimingStringForThing(node *tree) {
     break; 			
   case FLOATASSIGNMENTININDEXING:
     constString = "assigning a floating-point value to an indexed element of a list";
-    break; 			
+    break; 	
+  case ASSIGNMENTINSTRUCTURE:
+    constString = "assigning an element to a structure";
+    break; 					
+  case FLOATASSIGNMENTINSTRUCTURE:
+    constString = "assigning a floating-point valued element to a structure";
+    break; 	
+  case PROTOASSIGNMENTINSTRUCTURE:
+    constString = NULL;
+    break; 					
+  case PROTOFLOATASSIGNMENTINSTRUCTURE:
+    constString = NULL;
+    break; 					
   case DIRTYFINDZEROS:
     constString = "searching zeros dirtily";
     break; 			
@@ -4634,7 +4662,41 @@ char *sRawPrintThing(node *tree) {
     res = concatAndFree(res, newString("] := "));
     curr = curr->next;
     res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
-    break; 			
+    break; 	
+  case ASSIGNMENTINSTRUCTURE:
+    curr = tree->arguments;
+    res = newString((char *) (curr->value));
+    curr = curr->next;
+    while (curr != NULL) {
+      res = concatAndFree(res, newString("."));
+      res = concatAndFree(res, newString((char *) (curr->value)));
+      curr = curr->next;
+    }
+    res = concatAndFree(res, newString(" = "));
+    res = concatAndFree(res, sRawPrintThing(tree->child1));
+    break; 					
+  case FLOATASSIGNMENTINSTRUCTURE:
+    curr = tree->arguments;
+    res = newString((char *) (curr->value));
+    curr = curr->next;
+    while (curr != NULL) {
+      res = concatAndFree(res, newString("."));
+      res = concatAndFree(res, newString((char *) (curr->value)));
+      curr = curr->next;
+    }
+    res = concatAndFree(res, newString(" := "));
+    res = concatAndFree(res, sRawPrintThing(tree->child1));
+    break; 					
+  case PROTOASSIGNMENTINSTRUCTURE:
+    res = sRawPrintThing(tree->child1);
+    res = concatAndFree(res, newString(" = "));
+    res = concatAndFree(res, sRawPrintThing(tree->child2));
+    break; 					
+  case PROTOFLOATASSIGNMENTINSTRUCTURE:
+    res = sRawPrintThing(tree->child1);
+    res = concatAndFree(res, newString(" := "));
+    res = concatAndFree(res, sRawPrintThing(tree->child2));
+    break; 					
   case DIRTYFINDZEROS:
     res = newString("dirtyfindzeros(");
     res = concatAndFree(res, sRawPrintThing(tree->child1));
@@ -7071,6 +7133,18 @@ int executeCommandInner(node *tree) {
       printMessage(1,"This command will have no effect.\n");
       considerDyingOnError();
     }
+    break;
+  case ASSIGNMENTINSTRUCTURE:
+    // TODO
+    break;
+  case FLOATASSIGNMENTINSTRUCTURE:
+    // TODO
+    break;
+  case PROTOASSIGNMENTINSTRUCTURE:
+    // TODO
+    break;
+  case PROTOFLOATASSIGNMENTINSTRUCTURE:
+    // TODO
     break;
   case LIBRARYBINDING:
     if ((variablename != NULL) && (strcmp(variablename,tree->string) == 0)) {
@@ -9935,6 +10009,49 @@ node *makeFloatAssignmentInIndexing(node *thing1, node *thing2, node *thing3) {
   return res;
 }
 
+node *makeAssignmentInStructure(chain *idents, node *thing) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = ASSIGNMENTINSTRUCTURE;
+  res->arguments = idents;
+  res->child1 = thing;
+
+  return res;
+}
+
+node *makeFloatAssignmentInStructure(chain *idents, node *thing) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = FLOATASSIGNMENTINSTRUCTURE;
+  res->arguments = idents;
+  res->child1 = thing;
+
+  return res;
+}
+
+node *makeProtoAssignmentInStructure(node *thing1, node *thing2) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = PROTOASSIGNMENTINSTRUCTURE;
+  res->child1 = thing1;
+  res->child2 = thing2;
+
+  return res;
+}
+
+node *makeProtoFloatAssignmentInStructure(node *thing1, node *thing2) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = PROTOFLOATASSIGNMENTINSTRUCTURE;
+  res->child1 = thing1;
+  res->child2 = thing2;
+
+  return res;
+}
 
 void freeThingOnVoid(void *tree) {
   freeThing((node *) tree);
@@ -10836,7 +10953,27 @@ void freeThing(node *tree) {
   case FLOATASSIGNMENTININDEXING:
     freeChain(tree->arguments, freeThingOnVoid);
     free(tree);
-    break; 			
+    break; 	
+  case ASSIGNMENTINSTRUCTURE:
+    freeChain(tree->arguments, freeStringPtr);
+    freeThing(tree->child1);
+    free(tree);
+    break; 				
+  case FLOATASSIGNMENTINSTRUCTURE:
+    freeChain(tree->arguments, freeStringPtr);
+    freeThing(tree->child1);
+    free(tree);
+    break; 					
+  case PROTOASSIGNMENTINSTRUCTURE:
+    freeThing(tree->child1);
+    freeThing(tree->child2);
+    free(tree);
+    break; 				
+  case PROTOFLOATASSIGNMENTINSTRUCTURE:
+    freeThing(tree->child1);
+    freeThing(tree->child2);
+    free(tree);
+    break; 					
   case DIRTYFINDZEROS:
     freeThing(tree->child1);
     freeThing(tree->child2);
@@ -11656,6 +11793,22 @@ int isEqualThing(node *tree, node *tree2) {
     break; 			
   case FLOATASSIGNMENTININDEXING:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
+    break; 	
+  case ASSIGNMENTINSTRUCTURE:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
+    break; 					
+  case FLOATASSIGNMENTINSTRUCTURE:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
+    break; 					
+  case PROTOASSIGNMENTINSTRUCTURE:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThing(tree->child2,tree2->child2)) return 0;
+    break; 			
+  case PROTOFLOATASSIGNMENTINSTRUCTURE:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThing(tree->child2,tree2->child2)) return 0;
     break; 			
   case DIRTYFINDZEROS:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
