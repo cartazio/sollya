@@ -5845,6 +5845,49 @@ int tryToRewriteLeftHandStructAccess(chain **idents, node *thing) {
   return 0;
 }
 
+node *createNestedStructure(node *value, chain *idents) {
+  node *structure;
+  chain *curr;
+  chain *assoclist;
+  entry *structEntry;
+  chain *revertedIdents;
+
+  revertedIdents = NULL;
+  for (curr=idents;curr!=NULL;curr=curr->next) {
+    revertedIdents = addElement(revertedIdents,curr->value);
+  }
+
+  curr = revertedIdents;
+  structEntry = (entry *) safeMalloc(sizeof(entry));
+  structEntry->name = (char *) safeCalloc(strlen((char *) (curr->value))+1,sizeof(char));
+  strcpy(structEntry->name,(char *) (curr->value));
+  structEntry->value = copyThing(value);
+  assoclist = addElement(NULL,(void *) structEntry);
+  structure = makeStructure(assoclist);
+  curr = curr->next;
+  while (curr != NULL) {
+    structEntry = (entry *) safeMalloc(sizeof(entry));
+    structEntry->name = (char *) safeCalloc(strlen((char *) (curr->value))+1,sizeof(char));
+    strcpy(structEntry->name,(char *) (curr->value));
+    structEntry->value = structure;
+    assoclist = addElement(NULL,(void *) structEntry);
+    structure = makeStructure(assoclist);
+    curr = curr->next;
+  }
+
+  freeChain(revertedIdents, freeDoNothing);
+
+  return structure;
+}
+
+node *recomputeLeftHandSideForAssignmentInStructure(node *oldValue, node *newValue, chain *idents) {
+
+  if ((oldValue == NULL) || (isError(oldValue))) 
+    return createNestedStructure(newValue, idents); 
+
+  return NULL;
+}
+
 int executeCommandInner(node *tree) {
   int result, res, intTemp, resA, resB, resC, resD, resE, resF, defaultVal, i;  
   chain *curr, *tempList, *tempList2, *tempChain; 
@@ -7185,10 +7228,58 @@ int executeCommandInner(node *tree) {
     }
     break;
   case ASSIGNMENTINSTRUCTURE:
-    // TODO 
-    break;
+    tempNode = evaluateThing(tree->child1);
+    tempNode2 = getThingFromTable((char *) (tree->arguments->value));
+    tempNode3 = recomputeLeftHandSideForAssignmentInStructure(tempNode2, tempNode, tree->arguments->next);
+    if (tempNode3 != NULL) {
+      if (!assignThingToTable((char *) (tree->arguments->value), tempNode3)) {
+	freeThing(tempNode);
+	if (tempNode2 != NULL) freeThing(tempNode2);
+	freeThing(tempNode3);
+	printMessage(1,"Warning: the last assignment will have no effect.\n");
+	considerDyingOnError();
+      } else {
+	freeThing(tempNode);
+	if (tempNode2 != NULL) freeThing(tempNode2);
+	freeThing(tempNode3);
+      }
+    } else {
+      freeThing(tempNode);
+      if (tempNode2 != NULL) freeThing(tempNode2);
+      printMessage(1,"Warning: the last assignment will have no effect.\n");
+      considerDyingOnError();
+    }
+    break; 	
   case FLOATASSIGNMENTINSTRUCTURE:
-    // TODO
+    tempNode = evaluateThing(tree->child1);
+    if (isPureTree(tempNode) && isConstant(tempNode)) {
+      mpfr_init2(a, tools_precision);
+      if (evaluateThingToConstant(a, tempNode, NULL,1))  {
+	freeThing(tempNode);
+	tempNode = makeConstant(a);
+      }
+      mpfr_clear(a);
+    }
+    tempNode2 = getThingFromTable((char *) (tree->arguments->value));
+    tempNode3 = recomputeLeftHandSideForAssignmentInStructure(tempNode2, tempNode, tree->arguments->next);
+    if (tempNode3 != NULL) {
+      if (!assignThingToTable((char *) (tree->arguments->value), tempNode3)) {
+	freeThing(tempNode);
+	if (tempNode2 != NULL) freeThing(tempNode2);
+	freeThing(tempNode3);
+	printMessage(1,"Warning: the last assignment will have no effect.\n");
+	considerDyingOnError();
+      } else {
+	freeThing(tempNode);
+	if (tempNode2 != NULL) freeThing(tempNode2);
+	freeThing(tempNode3);
+      }
+    } else {
+      freeThing(tempNode);
+      if (tempNode2 != NULL) freeThing(tempNode2);
+      printMessage(1,"Warning: the last assignment will have no effect.\n");
+      considerDyingOnError();
+    }
     break;
   case PROTOASSIGNMENTINSTRUCTURE:
     if (tryToRewriteLeftHandStructAccess(&tempChain,tree->child1)) {
