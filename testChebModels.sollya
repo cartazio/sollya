@@ -1,0 +1,15 @@
+restart;
+verbosity = 1!;
+
+midpointmode = on!;
+
+f = sin(cos(x));
+I = [3;4];
+deg = 5;
+mode=0;
+
+externalproc(CM, "./chebModels", (function, range, integer,integer) ->list of function);
+L=CM(f,I,deg,mode);
+p=L[0];
+
+plot(f-p,I);
