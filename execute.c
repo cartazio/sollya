@@ -5881,11 +5881,90 @@ node *createNestedStructure(node *value, chain *idents) {
 }
 
 node *recomputeLeftHandSideForAssignmentInStructure(node *oldValue, node *newValue, chain *idents) {
+  chain *currentIdent;
+  node *currentStruct;
+  int okay, found;
+  node *res;
+  char *myIdent;
+  chain *currentAssoc;
+  char *otherIdent;
+  node *nextStruct;
+  entry *newEntry;
 
   if ((oldValue == NULL) || (isError(oldValue))) 
     return createNestedStructure(newValue, idents); 
 
-  return NULL;
+  if (!isStructure(oldValue)) {
+    printMessage(1,"Warning: cannot modify an element of something that is not a structure.\n");
+    return NULL;
+  }
+
+  okay = 1;
+  res = copyThing(oldValue);
+  currentStruct = res;
+  currentIdent = idents;
+  while (okay && (currentIdent != NULL)) {
+    myIdent = (char *) (currentIdent->value);
+    currentAssoc = currentStruct->arguments;
+    found = 0;
+    while (!found && (currentAssoc != NULL)) {
+      otherIdent = (char *) (((entry *) (currentAssoc->value))->name);
+      if (!strcmp(otherIdent,myIdent)) {
+	found = 1;
+      } else {
+	currentAssoc = currentAssoc->next;
+      }
+    }
+    if (found) {
+      nextStruct = (node *) (((entry *) (currentAssoc->value))->value);
+      if (isError(nextStruct)) {
+	freeThing(nextStruct);
+	if (currentIdent->next == NULL) {
+	  ((entry *) (currentAssoc->value))->value = copyThing(newValue);
+	} else {
+	  ((entry *) (currentAssoc->value))->value = createNestedStructure(newValue, currentIdent->next); 
+	}
+	break;
+      } else {
+	if (isStructure(nextStruct)) {
+	  if (currentIdent->next == NULL) {
+	    freeThing(nextStruct);
+	    ((entry *) (currentAssoc->value))->value = copyThing(newValue);
+	  } else {
+	    currentStruct = nextStruct;
+	  }
+	} else {
+	  if (currentIdent->next == NULL) {
+	    freeThing(nextStruct);
+	    ((entry *) (currentAssoc->value))->value = copyThing(newValue);
+	  } else {
+	    okay = 0;
+	    printMessage(1,"Warning: cannot modify an element of something that is not a structure.\n");
+	    break;
+	  }
+	}
+      }
+    } else {
+      newEntry = (entry *) safeMalloc(sizeof(entry));
+      newEntry->name = (char *) safeCalloc(strlen(myIdent)+1,sizeof(char));
+      strcpy(newEntry->name,myIdent);
+      if (currentIdent->next == NULL) {
+	newEntry->value = copyThing(newValue);
+      } else {
+	newEntry->value = createNestedStructure(newValue, currentIdent->next); 
+      }
+      currentStruct->arguments = addElement(currentStruct->arguments,newEntry);
+      break;
+    }
+    currentIdent = currentIdent->next;
+  }
+
+  if (!okay) {
+    freeThing(res);
+    res = NULL;
+  }
+
+  return res;
 }
 
 int executeCommandInner(node *tree) {
@@ -12126,7 +12205,7 @@ int isCorrectlyTyped(node *tree) {
   if (isPureList(tree)) {
     curr = tree->arguments;
     while (curr != NULL) {
-      if (!isCorrectlyTyped((node *) (curr->value))) return 0;
+      if ((!isCorrectlyTyped((node *) (curr->value))) && (!isError((node *) (curr->value)))) return 0;
       curr = curr->next;
     }
     return 1;
@@ -12135,7 +12214,7 @@ int isCorrectlyTyped(node *tree) {
     if (associationContainsDoubleEntries(tree->arguments)) return 0;
     curr = tree->arguments;
     while (curr != NULL) {
-      if (!isCorrectlyTyped((node *) (((entry *) (curr->value))->value))) return 0;
+      if ((!isCorrectlyTyped((node *) (((entry *) (curr->value))->value))) && (!isError((node *) (((entry *) (curr->value))->value)))) return 0;
       curr = curr->next;
     }
     return 1;
@@ -12143,7 +12222,7 @@ int isCorrectlyTyped(node *tree) {
   if (isPureFinalEllipticList(tree)) {
     curr = tree->arguments;
     while (curr != NULL) {
-      if (!isCorrectlyTyped((node *) (curr->value))) return 0;
+      if ((!isCorrectlyTyped((node *) (curr->value))) && (!isError((node *) (curr->value)))) return 0;
       curr = curr->next;
     }
     return 1;
