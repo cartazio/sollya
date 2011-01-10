@@ -257,11 +257,18 @@ void ctMultiplication_CM(chebModel*d, chebModel*s, sollya_mpfi_t c){
 }
 
 /*This function computes the cm for multiplication of two 
-given cm's 
+given cm's;
+
+-- the parameter tightBounds =0 means that we are interested in speed, and we will use a simple algo
+for bounding, otherwise we use tightbounding
+
+-- the parameter forComposition=1 means that we are using the multiplication inside a composition,
+so we suppose that the bounds for the models are already computed inside the models.
+
 */
 
 
-void  multiplication_CM(chebModel *t,chebModel *c1, chebModel *c2, int tightBounds){
+void  multiplication_CM(chebModel *t,chebModel *c1, chebModel *c2, int tightBounds, int forComposition){
   //we will multiply two cheby models of order n; and obtain a new cheby model of order n;
   int n,i,j;
   mp_prec_t prec;
@@ -302,10 +309,16 @@ void  multiplication_CM(chebModel *t,chebModel *c1, chebModel *c2, int tightBoun
     
    /*compute in temp1 r1*r2*/ 
    sollya_mpfi_mul(temp1, c1->rem_bound, c2->rem_bound);
+   printf("r1:=");
+   printInterval(temp1);
+   printf("\n");
    
-   /*if we need tight bounds, we will try to refine them,
+   if (forComposition==0){
+   
+   /*if we need tight bounds (level is greater than 1), we will try to refine them,
    else, we will compute the basic ones*/
-   if (tightBounds) {
+   if (tightBounds>1) {
+   printf("tightBounds in multiplication");
     chebPolynomialBoundRefined(c1->poly_bound, n, c1->poly_array);
     chebPolynomialBoundRefined(c2->poly_bound, n, c2->poly_array);
    }
@@ -313,16 +326,25 @@ void  multiplication_CM(chebModel *t,chebModel *c1, chebModel *c2, int tightBoun
     chebPolynomialBoundDefault(c1->poly_bound, n, c1->poly_array); 
     chebPolynomialBoundDefault(c2->poly_bound, n, c2->poly_array); 
    }
-   
+   }//if we wanted to make a composition, we suppose the the bound are already computed
    /*compute in temp2 delta1*B(C2)*/
    
    sollya_mpfi_mul(temp2, c1->rem_bound, c2->poly_bound);
+   printf("r2:=");
+   printInterval(temp2);
+   printf("\n");
    
    sollya_mpfi_add(tt->rem_bound, temp2, temp1);
+   printf("r3:=");
+   printInterval(tt->rem_bound);
+   printf("\n");
   
   /*compute in temp2 delta2*B(C1)*/
    sollya_mpfi_mul(temp2, c2->rem_bound, c1->poly_bound);
    sollya_mpfi_add(tt->rem_bound, tt->rem_bound,temp2);
+   printf("r3:=");
+   printInterval(tt->rem_bound);
+   printf("\n");
   
    /*compute the product of the two polynomials*/
    /*the product has degree 2n-2=> we have to store 2n-1 coeffs*/
@@ -354,13 +376,17 @@ void  multiplication_CM(chebModel *t,chebModel *c1, chebModel *c2, int tightBoun
     sollya_mpfi_div_ui(tt->poly_array[i], tt->poly_array[i], 2);
     sollya_mpfi_div_ui(r[i+n], r[i+n], 2);
   }
-  if (tightBounds) {
+  if (tightBounds>1) {
+    printf("tightBounds in multiplication");
     chebPolynomialBoundRefined(temp1, 2*n-1, r);
   }
   else {
     chebPolynomialBoundDefault(temp1, 2*n-1, r);
   }
   sollya_mpfi_add(tt->rem_bound, tt->rem_bound,temp1);
+  printf("r5:=");
+   printInterval(tt->rem_bound);
+   printf("\n");
   
   /*chebPolynomialBoundSimple(temp1,n, tt->poly_array);
   sollya_mpfi_set(tt->poly_bound,temp1);
@@ -391,6 +417,7 @@ void composition_CM(chebModel *t,chebModel *g, chebModel *f, int tightBounding, 
 
 /*TODO: deal with tight bounding, and with target remainder*/
 /*It is ideal to bound f tightly before, such that the image over which g is computed is small*/
+/*!!!!!!!!We will suppose here that the image for f is already computed tightly. Please make sure that this is the case!!!!!*/
   int i;
   int n,m;
   chebModel *tt,*tinterm,*tadd, *tcheb0,*tcheb1 ;
@@ -439,6 +466,10 @@ void composition_CM(chebModel *t,chebModel *g, chebModel *f, int tightBounding, 
   sollya_mpfi_sub(tinterm->poly_array[0],tinterm->poly_array[0],zz);
   sollya_mpfi_sub(tinterm->poly_bound,tinterm->poly_bound,zz);
   
+  printf("\nThe constants to be used are: \n");
+  printInterval(z);
+  printInterval(zz);
+  
   
   tt=createEmptycModelPrecomp(m,f->x,f->cheb_array, f->cheb_matrix);
   constcModel(tt,g->poly_array[0]);
@@ -457,16 +488,26 @@ void composition_CM(chebModel *t,chebModel *g, chebModel *f, int tightBounding, 
     
     /*tinterm becomes 2*x*/
     ctMultiplication_CM(tinterm, tinterm, doi);
-    
+    /*tinterm is already bounded*/
     
     for (i=2;i<n;i++){
       /*2xT_i(x)*/
       printf("\nstep %d in composition computation : ",i);
-      multiplication_CM(tcheb1,tinterm,tcheb1,tightBounding);
+      if (tightBounding>1){//only if level is 2 we bound this also tightly
+        chebPolynomialBoundRefined(tcheb1->poly_bound, m, tcheb1->poly_array);
+      }
+      else{
+        chebPolynomialBoundDefault(tcheb1->poly_bound, m, tcheb1->poly_array);
+      }
+      multiplication_CM(tadd,tinterm,tcheb1,tightBounding,1);//2x*t_i(x)
+      printcModel(tadd);
       ctMultiplication_CM(tcheb0, tcheb0,minusOne);
-      addition_CM(tadd,tcheb1,tcheb0);
-      copycModel(tcheb0,tcheb1);
-      copycModel(tcheb1,tadd);
+      addition_CM(tadd,tadd,tcheb0);//t_{i+1}=2x*t_i(x)-t_{i-1}(x)
+      printf("\n tcheb2 = \n");
+      printcModel(tadd);
+      printf("\n^^^^^^^  ^^  ^^^^^^\n");
+      copycModel(tcheb0,tcheb1); //t_{i-1}:=t_i
+      copycModel(tcheb1,tadd); //t_i = t_{i+1}
       ctMultiplication_CM(tadd,tadd,g->poly_array[i]);
       addition_CM(tt,tt,tadd);
     }
@@ -893,7 +934,7 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int tightBounding
      //do the necessary chages from children to parent
      tt=createEmptycModelPrecomp(n,child1_tm->x, child1_tm->cheb_array,  child1_tm->cheb_matrix);
      //pushTimeCounter();
-     multiplication_CM(tt,child1_tm, child2_tm,tightBounding);
+     multiplication_CM(tt,child1_tm, child2_tm,tightBounding,0);
      //popTimeCounter("Multipling 2 CMs");
      copycModel(t,tt);
      if (verbosity>10) {
@@ -909,9 +950,7 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int tightBounding
 
     case DIV:
   
-      //child1 * inverse(child2)
-      tt=createEmptycModelPrecomp(n,child1_tm->x, child1_tm->cheb_array,  child1_tm->cheb_matrix);
-    
+          
       //create a new empty cheby model the child
       child1_tm=createEmptycModelPrecomp(n,t->x, t->cheb_array, t->cheb_matrix);
       //call cheb_model on the child
@@ -922,7 +961,7 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int tightBounding
       cheb_model(child2_tm, f->child2,n,x,tightBounding, verbosity);
       //compute cm for the basic case
       sollya_mpfi_init2(rangeg, getToolPrecision());
-      if (tightBounding!=0){
+      if (tightBounding>0){ //tightBounding level can be 0 ->everything default, 1 - composition image refined, 2- everything refined
         chebPolynomialBoundRefined(child2_tm->poly_bound, n, child2_tm->poly_array);
       }
       else{
@@ -935,12 +974,15 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int tightBounding
       printf("We compose");
       ttt=createEmptycModelPrecomp(n,child2_tm->x, child2_tm->cheb_array,child2_tm->cheb_matrix);
       composition_CM(ttt,inv_tm, child2_tm, tightBounding, NULL);
+      
       if (verbosity>10) {
         printf("\nIn inverse Composition model\n");
         printcModel(ttt);
         printf("\n****************\n");
       }
-      multiplication_CM(tt, ttt, child1_tm, tightBounding);
+      //child1 * inverse(child2)
+      tt=createEmptycModelPrecomp(n,child1_tm->x, child1_tm->cheb_array,  child1_tm->cheb_matrix);
+      multiplication_CM(tt, ttt, child1_tm, tightBounding,0);
       
       //clear old children
       clearcModel(child1_tm);
@@ -1018,7 +1060,7 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int tightBounding
       }
       sollya_mpfi_init2(rangeg, getToolPrecision());
       
-      if (tightBounding!=0){
+      if (tightBounding>0){
         chebPolynomialBoundRefined(child1_tm->poly_bound, n, child1_tm->poly_array);
       }
       else{
@@ -1062,7 +1104,7 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int tightBounding
    
     case POW:
   
-      tt=createEmptycModelPrecomp(n,child1_tm->x, child1_tm->cheb_array, child1_tm->cheb_matrix);
+     
   
       simplifiedChild2=simplifyTreeErrorfree(f->child2);
       simplifiedChild1=simplifyTreeErrorfree(f->child1);
@@ -1089,7 +1131,7 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int tightBounding
                       
         sollya_mpfi_init2(rangeg, getToolPrecision());
          
-        if (tightBounding!=0){
+        if (tightBounding>0){
           chebPolynomialBoundRefined(child1_tm->poly_bound, n, child1_tm->poly_array);
         }
         else{
@@ -1106,7 +1148,7 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int tightBounding
         //printtModel(ctPowVar_tm);
         //printf("-----------------------------\n");
         
-        
+        tt=createEmptycModelPrecomp(n,child1_tm->x, child1_tm->cheb_array, child1_tm->cheb_matrix);
         composition_CM(tt,ctPowVar_tm,child1_tm, tightBounding, NULL);
     
         //clear old child
@@ -1118,8 +1160,7 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int tightBounding
        
       } 
       else if (simplifiedChild1->nodeType==CONSTANT) { //we have the p^f case
-        
-         tt=createEmptycModelPrecomp(n,t->x,t->cheb_array, t->cheb_matrix);       
+             
                   
          //create a new empty cheby model for the child
         child2_tm=createEmptycModelPrecomp(n,t->x,t->cheb_array, t->cheb_matrix);
@@ -1127,7 +1168,7 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int tightBounding
         cheb_model(child2_tm, f->child2,n,x, tightBounding, verbosity);
                       
         sollya_mpfi_init2(rangeg, getToolPrecision());
-        if (tightBounding!=0){
+        if (tightBounding>0){
           chebPolynomialBoundRefined(child1_tm->poly_bound, n, child1_tm->poly_array);
         }
         else{
@@ -1140,6 +1181,8 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int tightBounding
         
         
         base_CMAux(varCtPower_tm, MONOTONE_REMAINDER_VARCONSTPOWER, 0, NULL, *(simplifiedChild1->value), n,rangeg, verbosity);
+        
+         tt=createEmptycModelPrecomp(n,t->x,t->cheb_array, t->cheb_matrix);  
         composition_CM(tt,ctPowVar_tm,child2_tm, tightBounding, NULL);
     
         //clear old child
@@ -1168,7 +1211,7 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int tightBounding
                 
         /*log f*/
        sollya_mpfi_init2(rangef, getToolPrecision());
-       if (tightBounding!=0){
+       if (tightBounding>0){
           chebPolynomialBoundRefined(child1_tm->poly_bound, n, child1_tm->poly_array);
         }
         else{
@@ -1184,12 +1227,12 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int tightBounding
         
         /*glog f*/
        ttt=createEmptycModelPrecomp(n,t->x,t->cheb_array, t->cheb_matrix);       
-       multiplication_CM(ttt,logf_tm,child2_tm, tightBounding);
+       multiplication_CM(ttt,logf_tm,child2_tm, tightBounding,0);
        
        
        /*exp(g log f)*/
        
-       if (tightBounding!=0){
+       if (tightBounding>0){
           chebPolynomialBoundRefined(ttt->poly_bound, n,ttt->poly_array);
         }
         else{
@@ -1238,7 +1281,7 @@ int CM(chain**resP, void **args) {
   chebModel *t, *tt, *ttt;
   chain *ch;
   chain *err;
-  sollya_mpfi_t *coeffsErrors, *rest;
+  sollya_mpfi_t *coeffsErrors, *rest, *c;
   node **T;
   
   mpfr_t *coeffsMpfr;
@@ -1283,7 +1326,7 @@ int CM(chain**resP, void **args) {
   //multiplication_CM(t, ttt, tt, 0);
   cheb_model(t, f, n, x, tightBounding, verbosity);
   printcModel(t);
-  printf("\nThe model is computed\n");
+  printf("\nThe model is computed with bounding level %d \n", tightBounding);
    /*zz = (sollya_mpfi_t*)safeMalloc(sizeof(sollya_mpfi_t));
   sollya_mpfi_init2(*zz, getToolPrecision());
   sollya_mpfi_set(*zz, t->rem_bound);
@@ -1328,9 +1371,26 @@ int CM(chain**resP, void **args) {
   
    ch=addElement(ch,*T);
   
-  *resP=ch;
+ 
+  c=(sollya_mpfi_t *)safeMalloc((n-1)*sizeof(sollya_mpfi_t));
+  for (i=0;i<n-1;i++){
+      sollya_mpfi_init2(c[i],getToolPrecision());
+  
+   }
+  getChebCoeffsDerivativePolynomial(c, t->poly_array, n, x);
+  printf("\nBefore getCoeffsFromChebPolynomial\n");
+  getCoeffsFromChebPolynomial(coeffs, c, n-1, x);
+  printf("\nTgetCoeffsFromChebPolynomial works\n");
+  printf("\n Before mpfr get poly\n");
+  mpfr_get_poly(coeffsMpfr, coeffsErrors, *rest, n-2,*coeffs, zero,x);
+  printf("\n After mpfr get poly\n");
+  T=(node**)safeMalloc(sizeof(node*));
+  *T=makePolynomial(coeffsMpfr, (t->n)-2);
+  printf("\n After make poly\n");
+  ch=addElement(ch,*T);
   
   
+   *resP=ch;
   clearcModel(t);
      
   return 1;

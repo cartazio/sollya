@@ -156,10 +156,17 @@ void addition_CM(chebModel *t,chebModel *child1_tm, chebModel *child2_tm);
 void ctMultiplication_CM(chebModel*d, chebModel*s, sollya_mpfi_t c);
 
 
-/*This function computes the tm for multiplication of two 
-given cm's 
+/*This function computes the cm for multiplication of two 
+given cm's;
+
+-- the parameter tightBounds =0 means that we are interested in speed, and we will use a simple algo
+for bounding, otherwise we use tightbounding
+
+-- the parameter forComposition=1 means that we are using the multiplication inside a composition,
+so we suppose that the bounds for the models are already computed inside the models.
+
 */
-void  multiplication_CM(chebModel *t,chebModel *c1, chebModel *c2, int tightBounding);
+void  multiplication_CM(chebModel *t,chebModel *c1, chebModel *c2, int tightBounds, int forComposition);
 
 
 void composition_CM(chebModel *t,chebModel *g, chebModel *f, int tightBounding, mpfr_t targetRem);

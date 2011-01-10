@@ -1,15 +1,42 @@
 restart;
 verbosity = 1!;
-
+prec=300!;
 midpointmode = on!;
+externalproc(CM, "./chebModels", (function, range, integer,integer) ->list of function);
 
-f = sin(cos(x));
-I = [3;4];
-deg = 5;
+
+//f = sin(2*x-1);
+
+//f = exp(cos(x));
+
+f=2*x^7+4*x^3-2*x-1;
+I = [0.5;1];
+deg = 8;
 mode=0;
 
-externalproc(CM, "./chebModels", (function, range, integer,integer) ->list of function);
 L=CM(f,I,deg,mode);
 p=L[0];
 
 plot(f-p,I);
+
+/*
+f=x;
+I = [0.5;1];
+deg = 10;
+mode=2;
+
+L=CM(f,I,deg,mode);
+p=L[0];
+
+plot(f-p,I);
+
+
+f=x^(-3/2);
+I = [0.5;1];
+deg = 10;
+mode=2;
+
+L=CM(f,I,deg,mode);
+p=L[0];
+
+plot(f-p,I);*/

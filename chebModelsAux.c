@@ -614,7 +614,179 @@ void getNChebCoeffsFromPolynomial(sollya_mpfi_t *coeffs, sollya_mpfi_t bound, no
     chebPolynomialBoundSimple(bound, d-n, (&(*c)[n]));
   }
   
-} 
+}
+
+
+/********************************Functions related to derivation and integration of polynomials in cheb basis*************************/
+
+void getChebCoeffsDerivativePolynomial(sollya_mpfi_t*coeffs, sollya_mpfi_t *chebCoeffs, int n, sollya_mpfi_t x){
+  sollya_mpfi_t z1, z2, ui, vi, temp;
+ 
+  int i;
+  sollya_mpfi_t *c;
+  mpfr_t u,v;
+  int verbosity =12;
+ 
+    c=(sollya_mpfi_t *)safeMalloc((n-1)*sizeof(sollya_mpfi_t));
+    sollya_mpfi_init2(temp, getToolPrecision());
+   
+  
+   for (i=0;i<n-1;i++){
+      sollya_mpfi_init2(c[i],getToolPrecision());
+      sollya_mpfi_set_ui(c[i],0);
+   }
+    
+   if(n>1) {
+    sollya_mpfi_mul_ui(c[n-2],chebCoeffs[n-1],2*(n-1));
+   }
+   if(n>2) {
+    sollya_mpfi_mul_ui(c[n-3],chebCoeffs[n-2],2*(n-2));
+   }
+   for (i=n-3;i>0;i--){
+     sollya_mpfi_mul_ui(c[i-1],chebCoeffs[i],2*i);
+     sollya_mpfi_add(c[i-1],c[i-1],c[i+1]);
+   }
+   sollya_mpfi_div_ui(c[0],c[0],2);
+   
+   
+   /*we have in c_i the values of the coefs of P'(y) = \sum c_i T_i(x)*/   
+   /*we have to multiply by y'(x), which is z1=2/(b-a) */
+    
+    /*we compute z1=2/(b-a)*/
+   
+    sollya_mpfi_init2(ui, getToolPrecision());
+    sollya_mpfi_init2(vi, getToolPrecision());
+    
+    
+    mpfr_init2(u, getToolPrecision());
+    mpfr_init2(v, getToolPrecision());
+    
+    sollya_mpfi_init2(z1, getToolPrecision());
+    sollya_mpfi_init2(z2, getToolPrecision());
+    
+    sollya_mpfi_get_left(u,x);
+    sollya_mpfi_get_right(v,x);
+
+    sollya_mpfi_set_fr(ui,u);
+    sollya_mpfi_set_fr(vi,v);
+    
+    sollya_mpfi_sub(z2,vi,ui);
+        
+    sollya_mpfi_ui_div(z1,2,z2);
+   
+     for (i=0;i<n-1;i++){
+      sollya_mpfi_mul(c[i], c[i],z1);
+     }
+    
+    if (verbosity>10) {
+    printf("\nThe %d coefficients of the derivated polynomial are :\n ",n-1);
+      for (i=0;i<n-1;i++){
+      printInterval(c[i]);
+      }
+    }
+    for (i=0;i<n-1;i++){
+      sollya_mpfi_set(coeffs[i], c[i]);
+    }
+    for (i=0;i<n-1;i++){
+      sollya_mpfi_clear(c[i]);
+    }
+    free(c);
+    sollya_mpfi_clear(z1);
+    sollya_mpfi_clear(z2);
+    sollya_mpfi_clear(ui);
+    sollya_mpfi_clear(vi);
+    mpfr_clear(u);
+    mpfr_clear(v);
+}
+
+
+void getChebCoeffsIntegrationPolynomial(sollya_mpfi_t*coeffs, sollya_mpfi_t *chebCoeffs, int n, sollya_mpfi_t x){
+  sollya_mpfi_t z1, z2, ui, vi, temp;
+ 
+  int i;
+  sollya_mpfi_t *c;
+  mpfr_t u,v;
+  int verbosity =0;
+ 
+    c=(sollya_mpfi_t *)safeMalloc((n+1)*sizeof(sollya_mpfi_t));
+    sollya_mpfi_init2(temp, getToolPrecision());
+   
+  
+   for (i=0;i<n+1;i++){
+      sollya_mpfi_init2(c[i],getToolPrecision());
+      sollya_mpfi_set_ui(c[i],0);
+   }
+    
+   for (i=1;i<n-1;i++){
+     sollya_mpfi_sub(c[i],chebCoeffs[i-1],chebCoeffs[i+1]);
+     sollya_mpfi_div_ui(c[i],c[i],2*i);
+    
+   }
+   
+   if(n>1){
+   sollya_mpfi_set(c[n-1],chebCoeffs[n-2]);
+   sollya_mpfi_div_ui(c[n-1],c[n-1],2*(n-1));
+   }
+   
+   if(n>0){
+   sollya_mpfi_set(c[n],chebCoeffs[n-1]);
+   sollya_mpfi_div_ui(c[n],c[n],2*(n));
+   }
+   
+   
+   
+   /*we have in c_i the values of the coefs of \int P(y) = \sum c_i T_i(x) (the constant of integration in c_0 is not computed*/   
+   /*we have to multiply by 1/y'(x), which is z1=(b-a)/2 */
+    
+    /*we compute z1=(b-a)/2*/
+   
+    sollya_mpfi_init2(ui, getToolPrecision());
+    sollya_mpfi_init2(vi, getToolPrecision());
+    
+    
+    mpfr_init2(u, getToolPrecision());
+    mpfr_init2(v, getToolPrecision());
+    
+    sollya_mpfi_init2(z1, getToolPrecision());
+    sollya_mpfi_init2(z2, getToolPrecision());
+    
+    sollya_mpfi_get_left(u,x);
+    sollya_mpfi_get_right(v,x);
+
+    sollya_mpfi_set_fr(ui,u);
+    sollya_mpfi_set_fr(vi,v);
+    
+    sollya_mpfi_sub(z2,vi,ui);
+        
+    sollya_mpfi_div_ui(z1,z2,2);
+   
+     for (i=0;i<n-1;i++){
+      sollya_mpfi_mul(c[i], c[i],z1);
+     }
+    
+    if (verbosity>10) {
+    printf("\nThe %d coefficients of the integrated polynomial are :\n ",n+1);
+      for (i=0;i<n+1;i++){
+      printInterval(c[i]);
+      }
+    }
+    for (i=0;i<n+1;i++){
+      sollya_mpfi_set(coeffs[i], c[i]);
+    }
+    for (i=0;i<n+1;i++){
+      sollya_mpfi_clear(c[i]);
+    }
+    free(c);
+    sollya_mpfi_clear(z1);
+    sollya_mpfi_clear(z2);
+    sollya_mpfi_clear(ui);
+    sollya_mpfi_clear(vi);
+    mpfr_clear(u);
+    mpfr_clear(v);
+}
+
+
+ 
 /*****************************************************************************/
 /*************Functions related to bounding polynomials in ChebBasis**********/
 /*****************************************************************************/
