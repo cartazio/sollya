@@ -353,8 +353,9 @@ void  multiplication_CM(chebModel *t,chebModel *c1, chebModel *c2, int tightBoun
    /*r = [0, 0 ...., 0, r0, ..., r(n-2)]                          */
   /* it represents the polynomial T1*T2|[n....2n-2]*/
    r = (sollya_mpfi_t *)safeMalloc((2*n-1)*sizeof(sollya_mpfi_t));
+  
    for(i=0; i < 2*n-1; i++){
-     sollya_mpfi_init2(r[i], prec);
+     sollya_mpfi_init2(r[i], getToolPrecision());
      sollya_mpfi_set_ui(r[i],0);
    }
    
@@ -375,8 +376,11 @@ void  multiplication_CM(chebModel *t,chebModel *c1, chebModel *c2, int tightBoun
   
   for(i=0; i<n; i++) {
     sollya_mpfi_div_ui(tt->poly_array[i], tt->poly_array[i], 2);
-    sollya_mpfi_div_ui(r[i+n], r[i+n], 2);
   }
+  for(i=n; i<2*n-1; i++) {
+    sollya_mpfi_div_ui(r[i], r[i], 2);
+  }
+  
   if (tightBounds>1) {
     //printf("tightBounds in multiplication");
     chebPolynomialBoundRefined(temp1, 2*n-1, r);
@@ -386,15 +390,15 @@ void  multiplication_CM(chebModel *t,chebModel *c1, chebModel *c2, int tightBoun
   }
   sollya_mpfi_add(tt->rem_bound, tt->rem_bound,temp1);
   //printf("r5:=");
-   //printInterval(tt->rem_bound);
-   //printf("\n");
+  //printInterval(tt->rem_bound);
+  //printf("\n");
   
   /*chebPolynomialBoundSimple(temp1,n, tt->poly_array);
   sollya_mpfi_set(tt->poly_bound,temp1);
   */
   
-  //for(i=0;i<2*n-2;i++) { sollya_mpfi_clear(r[i]);}
-  //free(r); 
+  for(i=0;i<2*n-1;i++) { sollya_mpfi_clear(r[i]);}
+  free(r); 
   
   sollya_mpfi_clear(temp1);
   sollya_mpfi_clear(temp2);
@@ -1422,7 +1426,9 @@ int CertifiedIntegral(chain**resP, void **args) {
   } 
 
   ch=NULL;
- 
+ if (verbosity>0) {
+  printf("In certified integral");
+  }
   
   t=createEmptycModelCompute(n,x,1,1);
  

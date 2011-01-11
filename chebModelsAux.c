@@ -809,8 +809,8 @@ void chebPolynomialBoundSimple(sollya_mpfi_t bound, int n, sollya_mpfi_t *coeffs
   int i;
   //printf("\nin chebPolynomialBoundSimple\n");
   //for(i=0;i<n;i++) {
-  //  printInterval(coeffs[i]);
-  //}
+   // printInterval(coeffs[i]);
+ // }
   prec = getToolPrecision();
   sollya_mpfi_init2(temp, prec);
   sollya_mpfi_init2(temp2, prec);
@@ -826,6 +826,7 @@ void chebPolynomialBoundSimple(sollya_mpfi_t bound, int n, sollya_mpfi_t *coeffs
   sollya_mpfi_clear(temp);
   sollya_mpfi_clear(temp2);
   sollya_mpfi_clear(intrval);
+  //printf("out of chebPolynomail bound simple");
 }
 
 /* This function computes an interval bound for a polynomial in cheb basis. */

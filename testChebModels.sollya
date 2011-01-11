@@ -1,56 +1,26 @@
 restart;
 verbosity = 1!;
-prec=200!;
+prec=1000!;
 midpointmode = on!;
 externalproc(CM, "./chebModels", (function, range, integer,integer, integer) ->list of function);
 externalproc(CertifiedIntegral, "./chebModels", (function, range, integer,integer, integer) ->list of function);
-
-//f = sin(2*x-1);
-
-f = exp(cos(x));
-
-//f=2*x^7+4*x^3-2*x-1;
 r=3/2;
+f=sin(1/((10^(-3)+(1-x)^2))^r);
+/*between 27/32+ 1/64  +*/
 
-//Example 1
+step=2^10;
 
-//f=sin(1/((10^(-3)+(1-x)^2))^r);
-I1 = [0.75;0.8];
-deg = 10;
+initialVal=940/1024;
+
+L=[||];
+for i from 40 to 40 do {
+
+smallInt=[initialVal+(i-1)/step,initialVal+i/step];
+deg = 200;
 mode=0;
-verb=0;
-
-//L=CM(f,I,deg,mode, verb);
-
-//Example 2
-
-I2 = [0.8;0.9];
-L=CM(f,I2,deg,mode, verb);
-I=CertifiedIntegral(f,I2,deg,mode, verb);
-//p=L[2];
-
-//R=[L[1],L[0]];
-
-//plot(f-p,I);
-
-/*
-f=x;
-I = [0.5;1];
-deg = 10;
-mode=2;
-
-L=CM(f,I,deg,mode, verb);
-p=L[0];
-
-plot(f-p,I);
-
-
-f=x^(-3/2);
-I = [0.5;1];
-deg = 10;
-mode=2;
-
-L=CM(f,I,deg,mode,verb);
-p=L[0];
-
-plot(f-p,I);*/
+verb=16;
+I=CertifiedIntegral(f,smallInt,deg,mode, verb);
+II=[I[0], I[1]];
+print(II);
+L=L:.II;
+};
