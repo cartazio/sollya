@@ -1,9 +1,9 @@
 restart;
 verbosity = 1!;
-prec=1000!;
+prec=200!;
 midpointmode = on!;
 externalproc(CM, "./chebModels", (function, range, integer,integer, integer) ->list of function);
-
+externalproc(CertifiedIntegral, "./chebModels", (function, range, integer,integer, integer) ->list of function);
 
 //f = sin(2*x-1);
 
@@ -11,13 +11,22 @@ f = exp(cos(x));
 
 //f=2*x^7+4*x^3-2*x-1;
 r=3/2;
-f=sin(1/((10^(-3)+(1-x)^2))^r);
-I = [0.75;0.8];
-deg = 200;
+
+//Example 1
+
+//f=sin(1/((10^(-3)+(1-x)^2))^r);
+I1 = [0.75;0.8];
+deg = 10;
 mode=0;
 verb=0;
 
-L=CM(f,I,deg,mode, verb);
+//L=CM(f,I,deg,mode, verb);
+
+//Example 2
+
+I2 = [0.8;0.9];
+L=CM(f,I2,deg,mode, verb);
+I=CertifiedIntegral(f,I2,deg,mode, verb);
 //p=L[2];
 
 //R=[L[1],L[0]];

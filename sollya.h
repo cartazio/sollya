@@ -187,6 +187,7 @@ extern void restoreMode();
 
 extern node *makeVariable();
 extern node *makeConstant(mpfr_t x);
+extern node *makeRange(node *thing1, node *thing2);
 extern node *makeConstantDouble(double d);
 extern node *makeAdd(node *op1, node *op2);
 extern node *makeSub(node *op1, node *op2);

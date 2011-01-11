@@ -4,6 +4,7 @@
     
     From sollya:
     externalproc(CM, "./chebModels", (function, range, integer,integer, integer) ->list of function);
+    externalproc(CertifiedIntegral, "./chebModels", (function, range, integer,integer, integer) ->list of function);
 
 */
 
@@ -1276,13 +1277,13 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int tightBounding
 
 int CM(chain**resP, void **args) {
   node *f;
-  sollya_mpfi_t x, zero, ui, vi, temp;
+  sollya_mpfi_t x, zero;
   sollya_mpfi_t **coeffs;
   int n,i,tightBounding, verbosity;
-  chebModel *t, *tt, *ttt;
+  chebModel *t;
   chain *ch;
   chain *err;
-  sollya_mpfi_t *coeffsErrors, *rest, *c;
+  sollya_mpfi_t *coeffsErrors, *rest;
   node **T, **T1, **T2;
   
   mpfr_t *coeffsMpfr;
@@ -1291,8 +1292,7 @@ int CM(chain**resP, void **args) {
   sollya_mpfi_init2(zero, getToolPrecision());
   sollya_mpfi_set_ui(zero,0);
   
-  sollya_mpfi_t *zz;
-  //sollya_mpfi_t *ptr;
+  
   
   f = (node *)args[0];
   n = *( (int *)args[2] );
@@ -1303,72 +1303,22 @@ int CM(chain**resP, void **args) {
   
   /* Check if degree is at least 1, once it has been adjusted */
   if (n < 1) {
-    printMessage(1,"Warning: the degree of a Taylor Model must be at least 0.\n");
+    printMessage(1,"Warning: the degree of a Cheb Model must be at least 0.\n");
     *T = NULL;
     return 0;
   } 
 
   ch=NULL;
-//  tt=createEmptycModelCompute(n,x,1,1);
-  
-  //cheb_model(t, f, n, x, tightBounding, verbosity);
-  //printf("BEFORE BASE CM");
-//  base_CMAux(tt, 0, SIN, NULL, NULL, n, x,verbosity);
-//  printcModel(tt);
-  
- // ttt=createEmptycModelCompute(n,x,1,1);
-  
-  
-  //base_CMAux(ttt, 0, COS, NULL, NULL, n, x,verbosity);
-  //printcModel(ttt);
-  
-  pushTimeCounter();
+
   
   t=createEmptycModelCompute(n,x,1,1);
-  //multiplication_CM(t, ttt, tt, 0);
+ 
   cheb_model(t, f, n, x, tightBounding, verbosity);
+  if (verbosity>0){
   printcModel(t);
   printf("\nThe model is computed with bounding level %d \n", tightBounding);
-  
-  
-   c=(sollya_mpfi_t *)safeMalloc((n+1)*sizeof(sollya_mpfi_t));
-  for (i=0;i<n+1;i++){
-      sollya_mpfi_init2(c[i],getToolPrecision());
   }
-  getChebCoeffsIntegrationPolynomial(c, t->poly_array, n, x);
   
-  mpfr_init2(u, getToolPrecision());
-  mpfr_init2(v, getToolPrecision());
-  sollya_mpfi_get_left(u,x);
-  sollya_mpfi_get_right(v,x);
-  
-  sollya_mpfi_init2(ui, getToolPrecision());
-  sollya_mpfi_init2(vi, getToolPrecision());
-  sollya_mpfi_set_fr(ui,u);
-  sollya_mpfi_set_fr(vi,v);
- 
-  
-  sollya_mpfi_init2(temp, getToolPrecision());
-  
-  mpfi_sub(temp, vi, ui);
-  mpfi_abs(t->rem_bound, t->rem_bound);
-  mpfi_mul(temp, temp, t->rem_bound);
-  printf("\nConstant part of the integral:");
-   printInterval(temp);
-  evaluateChebPolynomialClenshaw(ui, n+1, c, x,ui );
-   printf("\nevaluation to the left:");
-   printInterval(ui);
-
-   
-  evaluateChebPolynomialClenshaw(vi, n+1, c, x,vi );
-  printf("\nevaluation to the right:");
-   printInterval(vi);
-  mpfi_sub(ui, vi, ui);
-  mpfi_add(temp, temp, ui);
-  printf("\nfinal bound:");
-   printInterval(temp);  
-  
-   popTimeCounter("integral comp");
    
    /*zz = (sollya_mpfi_t*)safeMalloc(sizeof(sollya_mpfi_t));
   sollya_mpfi_init2(*zz, getToolPrecision());
@@ -1415,10 +1365,10 @@ int CM(chain**resP, void **args) {
   ch=addElement(ch,*T);
   
   mpfi_add(t->rem_bound, t->rem_bound,*rest);
-  //mpfr_init2(u, getToolPrecision());
-  //mpfr_init2(v, getToolPrecision());
+  mpfr_init2(u, getToolPrecision());
+  mpfr_init2(v, getToolPrecision());
   sollya_mpfi_get_left(u,t->rem_bound);
-  printInterval(t->rem_bound);
+  
   sollya_mpfi_get_right(v,t->rem_bound);
   
   T1=(node**)safeMalloc(sizeof(node*));
@@ -1430,46 +1380,131 @@ int CM(chain**resP, void **args) {
   *T2=makeConstant(v);
   
   ch=addElement(ch,*T2);
-
-  
- /*
-  c=(sollya_mpfi_t *)safeMalloc((n)*sizeof(sollya_mpfi_t));
-  for (i=0;i<n;i++){
-      sollya_mpfi_init2(c[i],getToolPrecision());
-  
-   }
-  getChebCoeffsDerivativePolynomial(c, t->poly_array, n, x);
-  //printf("\nBefore getCoeffsFromChebPolynomial2\n");
-  getCoeffsFromChebPolynomial(coeffs, c, n-1, x);
-  //printf("\nTgetCoeffsFromChebPolynomial works2\n");
-  //printf("\n Before mpfr get poly2\n");
-  mpfr_get_poly(coeffsMpfr, coeffsErrors, *rest, n-2,*coeffs, zero,x);
-  //printf("\n After mpfr get poly2\n");
-  T=(node**)safeMalloc(sizeof(node*));
-  *T=makePolynomial(coeffsMpfr, (t->n)-2);
-  //printf("\n After make poly2\n");
-  ch=addElement(ch,*T);
-  
-  
-  getChebCoeffsIntegrationPolynomial(c, c, n-1, x);
-  
-  getCoeffsFromChebPolynomial(coeffs, c, n, x);
-  //printf("\nTgetCoeffsFromChebPolynomial works3\n");
-  //printf("\n Before mpfr get poly3\n");
-  mpfr_get_poly(coeffsMpfr, coeffsErrors, *rest, n-1,*coeffs, zero,x);
-  //printf("\n After mpfr get poly3\n");
-  T=(node**)safeMalloc(sizeof(node*));
-  *T=makePolynomial(coeffsMpfr, (t->n)-1);
-  //printf("\n After make poly3\n");
-  
-  ch=addElement(ch,*T);
-  */
-  
-   *resP=ch;
+  *resP=ch;
   clearcModel(t);
      
   return 1;
 }
+
+int CertifiedIntegral(chain**resP, void **args) {
+  node *f;
+  sollya_mpfi_t x, zero,ui,vi,temp;
+  sollya_mpfi_t *c;
+  int n,i,tightBounding, verbosity;
+  chebModel *t;
+  chain *ch;
+  
+  
+  node  **T1, **T2;
+  
+  
+  mpfr_t u,v;
+
+  sollya_mpfi_init2(zero, getToolPrecision());
+  sollya_mpfi_set_ui(zero,0);
+  
+ 
+  
+  f = (node *)args[0];
+  n = *( (int *)args[2] );
+  tightBounding=*( (int *)args[3] );
+   verbosity=*( (int *)args[4] );
+  sollya_mpfi_init2(x, getToolPrecision());
+  sollya_mpfi_set(x, *( (sollya_mpfi_t *)args[1] ));
+  
+  /* Check if degree is at least 1, once it has been adjusted */
+  if (n < 1) {
+    printMessage(1,"Warning: the degree of a Cheb Model must be at least 0.\n");
+     ch=NULL;
+    return 0;
+  } 
+
+  ch=NULL;
+ 
+  
+  t=createEmptycModelCompute(n,x,1,1);
+ 
+  cheb_model(t, f, n, x, tightBounding, verbosity);
+  if (verbosity>0){
+  printcModel(t);
+  printf("\nThe model is computed with bounding level %d \n", tightBounding);
+  }
+  
+   c=(sollya_mpfi_t *)safeMalloc((n+1)*sizeof(sollya_mpfi_t));
+  for (i=0;i<n+1;i++){
+      sollya_mpfi_init2(c[i],getToolPrecision());
+  }
+  getChebCoeffsIntegrationPolynomial(c, t->poly_array, n, x);
+  
+  mpfr_init2(u, getToolPrecision());
+  mpfr_init2(v, getToolPrecision());
+  sollya_mpfi_get_left(u,x);
+  sollya_mpfi_get_right(v,x);
+  
+  sollya_mpfi_init2(ui, getToolPrecision());
+  sollya_mpfi_init2(vi, getToolPrecision());
+  sollya_mpfi_set_fr(ui,u);
+  sollya_mpfi_set_fr(vi,v);
+ 
+  
+  sollya_mpfi_init2(temp, getToolPrecision());
+  
+  mpfi_sub(temp, vi, ui);
+  mpfi_abs(t->rem_bound, t->rem_bound);
+  mpfi_mul(temp, temp, t->rem_bound);
+  if (verbosity>0){
+    printf("\nConstant part of the integral:");
+    printInterval(temp);
+  } 
+  evaluateChebPolynomialClenshaw(ui, n+1, c, x,ui );
+  if (verbosity>0){
+    printf("\nevaluation to the left:");
+    printInterval(ui);
+  }
+   
+  evaluateChebPolynomialClenshaw(vi, n+1, c, x,vi );
+  if (verbosity>0){
+    printf("\nevaluation to the right:");
+    printInterval(vi);
+  }
+  mpfi_sub(ui, vi, ui);
+  mpfi_add(temp, temp, ui);
+  
+  if (verbosity>0){
+    printf("\nfinal bound:");
+    printInterval(temp);  
+  }
+ 
+ 
+ 
+  mpfr_init2(u, getToolPrecision());
+  mpfr_init2(v, getToolPrecision());
+  sollya_mpfi_get_left(u,temp);
+  sollya_mpfi_get_right(v,temp);
+  
+  T2=(node**)safeMalloc(sizeof(node*));
+  *T2=makeConstant(v);
+  
+  ch=addElement(ch,*T2);
+  
+  T1=(node**)safeMalloc(sizeof(node*));
+  *T1=makeConstant(u);
+  
+  ch=addElement(ch,*T1);
+  
+ 
+  
+   *resP=ch;
+  clearcModel(t);
+  mpfi_clear(temp);  
+  for (i=0;i<n+1;i++){
+      sollya_mpfi_clear(c[i]);
+  } 
+  return 1;
+}
+
+
+
 
 
 
