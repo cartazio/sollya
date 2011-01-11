@@ -57,7 +57,7 @@ extern "C" {
 #include <mpfr.h>
 #include "mpfi-compat.h"
 #include <setjmp.h>
-
+#include <stdio.h>
 typedef struct chainStruct chain;
 struct chainStruct 
 {

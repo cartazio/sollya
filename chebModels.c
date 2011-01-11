@@ -677,7 +677,7 @@ void base_CMAux(chebModel *t, int typeOfFunction, int nodeType, node *f, mpfr_t 
   chebModel *tt;
   sollya_mpfi_t *nDeriv;
   sollya_mpfi_t temp, pow;
-  mpfr_t minusOne, a,b,fac;
+  mpfr_t minusOne, a,b;
   mp_prec_t prec;
   sollya_mpfi_t *fValues;
  
@@ -816,7 +816,7 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int tightBounding
   sollya_mpfi_t temp1,temp2;
   
   
-  chebModel *tt, *child1_tm, *child2_tm, *ctPowVar_tm, *varCtPower_tm, *logx_tm, *expx_tm, *logf_tm;
+  chebModel *tt, *child1_tm, *child2_tm, *ctPowVar_tm, *logx_tm, *expx_tm, *logf_tm;
   
   /*used by division*/
   sollya_mpfi_t rangeg;
@@ -1118,6 +1118,7 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int tightBounding
          sollya_mpfi_init2(temp2, getToolPrecision());
          sollya_mpfi_set_fr(temp2, *(simplifiedChild2->value));
          sollya_mpfi_pow(temp1,temp1,temp2);
+         tt=createEmptycModelPrecomp(n,t->x,t->cheb_array, t->cheb_matrix); 
          constcModel(tt,temp1);
          copycModel(t,tt);
          clearcModel(tt);
@@ -1171,10 +1172,10 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int tightBounding
                       
         sollya_mpfi_init2(rangeg, getToolPrecision());
         if (tightBounding>0){
-          chebPolynomialBoundRefined(child1_tm->poly_bound, n, child1_tm->poly_array);
+          chebPolynomialBoundRefined(child2_tm->poly_bound, n, child2_tm->poly_array);
         }
         else{
-          chebPolynomialBoundDefault(child1_tm->poly_bound, n, child1_tm->poly_array); 
+          chebPolynomialBoundDefault(child2_tm->poly_bound, n, child2_tm->poly_array); 
         }
         sollya_mpfi_add(rangeg,child2_tm->rem_bound, child2_tm->poly_bound);
         
@@ -1182,14 +1183,14 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int tightBounding
         ctPowVar_tm=createEmptycModelCompute(n,rangeg,1,1);
         
         
-        base_CMAux(varCtPower_tm, MONOTONE_REMAINDER_VARCONSTPOWER, 0, NULL, *(simplifiedChild1->value), n,rangeg, verbosity);
+        base_CMAux(ctPowVar_tm, MONOTONE_REMAINDER_VARCONSTPOWER, 0, NULL, *(simplifiedChild1->value), n,rangeg, verbosity);
         
          tt=createEmptycModelPrecomp(n,t->x,t->cheb_array, t->cheb_matrix);  
         composition_CM(tt,ctPowVar_tm,child2_tm, tightBounding, NULL);
     
         //clear old child
         clearcModel(child2_tm);
-        clearcModel(varCtPower_tm);
+        clearcModel(ctPowVar_tm);
         copycModel(t,tt);
         clearcModel(tt);
         sollya_mpfi_clear(rangeg);
@@ -1304,7 +1305,8 @@ int CM(chain**resP, void **args) {
   /* Check if degree is at least 1, once it has been adjusted */
   if (n < 1) {
     printMessage(1,"Warning: the degree of a Cheb Model must be at least 0.\n");
-    *T = NULL;
+	ch=NULL;
+	 *resP=ch;
     return 0;
   } 
 

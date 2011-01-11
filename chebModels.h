@@ -1,5 +1,5 @@
 #include "sollya.h"
-
+#include "stdio.h"
 
 extern void pushTimeCounter(void);
 extern void popTimeCounter(char *s);
