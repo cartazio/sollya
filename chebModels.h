@@ -1,8 +1,8 @@
 #include "sollya.h"
 
 
-//extern void pushTimeCounter(void);
-//extern void popTimeCounter(char *s);
+extern void pushTimeCounter(void);
+extern void popTimeCounter(char *s);
 
  extern void mpfr_get_poly(mpfr_t *rc, sollya_mpfi_t *errors_array, sollya_mpfi_t rest, int n, sollya_mpfi_t *p, sollya_mpfi_t x0, sollya_mpfi_t x);
  extern chain *constructChain(sollya_mpfi_t *err, int n);

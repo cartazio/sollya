@@ -47,6 +47,14 @@ void getChebCoeffsFromPolynomial(sollya_mpfi_t**coeffs, int*n, node *f, sollya_m
 /*wrapper to get directly the coeffs in the chebyshev basis up to degree n-1 (first n coeffs) and a bound for the remaining polynomial, from a polynomial in the monomial basis(given a pointer to node, over a given interval x*/
 void getNChebCoeffsFromPolynomial(sollya_mpfi_t *coeffs, sollya_mpfi_t bound, node *f, sollya_mpfi_t x, int n);
 
+/********************************Functions related to derivation and integration of polynomials in cheb basis*************************/
+void getChebCoeffsDerivativePolynomial(sollya_mpfi_t*coeffs, sollya_mpfi_t *chebCoeffs, int n, sollya_mpfi_t x);
+
+/*Computes the antiderivative of a polynomial in Chebyshev basis.
+NOTE: the constant coefficient is set to zero, but it should be viewed as a constant*/
+void getChebCoeffsIntegrationPolynomial(sollya_mpfi_t*coeffs, sollya_mpfi_t *chebCoeffs, int n, sollya_mpfi_t x);
+/*************************************************************************************************************************************/
+
 /*****************************************************************************/
 /*************Functions related to bounding polynomials in ChebBasis**********/
 /*****************************************************************************/

@@ -3,7 +3,7 @@
     gcc -fPIC -shared -o chebModels chebModels.o
     
     From sollya:
-    externalproc(CM, "./chebModels", (function, range, integer,integer) ->list of function);
+    externalproc(CM, "./chebModels", (function, range, integer,integer, integer) ->list of function);
 
 */
 
@@ -50,7 +50,7 @@ and the chebMatrix in function of the two flags points, matrix(1= compute, 0=do 
 chebModel* createEmptycModelCompute(int n,sollya_mpfi_t x, int flag_points, int flag_matrix){
   chebModel* t;
   int i;
-  printf("In create cheb model compute");
+  //printf("In create cheb model compute");
   t= (chebModel *)safeMalloc(sizeof(chebModel));
   sollya_mpfi_init2(t->rem_bound, getToolPrecision());
   sollya_mpfi_init2(t->poly_bound,getToolPrecision());
@@ -74,7 +74,7 @@ chebModel* createEmptycModelCompute(int n,sollya_mpfi_t x, int flag_points, int 
   if (flag_points!=0) getChebyshevPoints(t->cheb_array,n,x);
 
   if (flag_matrix!=0) getChebMatrix(t->cheb_matrix,n);
-  printf("Out of create cheb model compute");
+  //printf("Out of create cheb model compute");
   return t;
 }
 
@@ -283,12 +283,12 @@ void  multiplication_CM(chebModel *t,chebModel *c1, chebModel *c2, int tightBoun
   }
   n=t->n;
   
-  printf("Entering multiplication CM");
-  printf("\n\nc1=");
-  printcModel(c1);
-  printf("\n\nc2=");
-  printcModel(c2);
-  printf("**************************************\n");
+  //printf("Entering multiplication CM");
+  //printf("\n\nc1=");
+  //printcModel(c1);
+  //printf("\n\nc2=");
+  //printcModel(c2);
+  //printf("**************************************\n");
   
   
   /*aux cm for doing the multiplications*/
@@ -309,16 +309,16 @@ void  multiplication_CM(chebModel *t,chebModel *c1, chebModel *c2, int tightBoun
     
    /*compute in temp1 r1*r2*/ 
    sollya_mpfi_mul(temp1, c1->rem_bound, c2->rem_bound);
-   printf("r1:=");
-   printInterval(temp1);
-   printf("\n");
+   //printf("r1:=");
+   //printInterval(temp1);
+   //printf("\n");
    
    if (forComposition==0){
    
    /*if we need tight bounds (level is greater than 1), we will try to refine them,
    else, we will compute the basic ones*/
    if (tightBounds>1) {
-   printf("tightBounds in multiplication");
+   //printf("tightBounds in multiplication");
     chebPolynomialBoundRefined(c1->poly_bound, n, c1->poly_array);
     chebPolynomialBoundRefined(c2->poly_bound, n, c2->poly_array);
    }
@@ -330,21 +330,21 @@ void  multiplication_CM(chebModel *t,chebModel *c1, chebModel *c2, int tightBoun
    /*compute in temp2 delta1*B(C2)*/
    
    sollya_mpfi_mul(temp2, c1->rem_bound, c2->poly_bound);
-   printf("r2:=");
-   printInterval(temp2);
-   printf("\n");
+   //printf("r2:=");
+   //printInterval(temp2);
+   //printf("\n");
    
    sollya_mpfi_add(tt->rem_bound, temp2, temp1);
-   printf("r3:=");
-   printInterval(tt->rem_bound);
-   printf("\n");
+   //printf("r3:=");
+   //printInterval(tt->rem_bound);
+   //printf("\n");
   
   /*compute in temp2 delta2*B(C1)*/
    sollya_mpfi_mul(temp2, c2->rem_bound, c1->poly_bound);
    sollya_mpfi_add(tt->rem_bound, tt->rem_bound,temp2);
-   printf("r3:=");
-   printInterval(tt->rem_bound);
-   printf("\n");
+   //printf("r3:=");
+   //printInterval(tt->rem_bound);
+   //printf("\n");
   
    /*compute the product of the two polynomials*/
    /*the product has degree 2n-2=> we have to store 2n-1 coeffs*/
@@ -377,16 +377,16 @@ void  multiplication_CM(chebModel *t,chebModel *c1, chebModel *c2, int tightBoun
     sollya_mpfi_div_ui(r[i+n], r[i+n], 2);
   }
   if (tightBounds>1) {
-    printf("tightBounds in multiplication");
+    //printf("tightBounds in multiplication");
     chebPolynomialBoundRefined(temp1, 2*n-1, r);
   }
   else {
     chebPolynomialBoundDefault(temp1, 2*n-1, r);
   }
   sollya_mpfi_add(tt->rem_bound, tt->rem_bound,temp1);
-  printf("r5:=");
-   printInterval(tt->rem_bound);
-   printf("\n");
+  //printf("r5:=");
+   //printInterval(tt->rem_bound);
+   //printf("\n");
   
   /*chebPolynomialBoundSimple(temp1,n, tt->poly_array);
   sollya_mpfi_set(tt->poly_bound,temp1);
@@ -401,7 +401,7 @@ void  multiplication_CM(chebModel *t,chebModel *c1, chebModel *c2, int tightBoun
   copycModel(t,tt);
   /*clear the aux tm*/
   clearcModel(tt);
-  printf("Out of multiplication");
+  //printf("Out of multiplication");
 }
 
 /* composition: g o f
@@ -423,7 +423,7 @@ void composition_CM(chebModel *t,chebModel *g, chebModel *f, int tightBounding, 
   chebModel *tt,*tinterm,*tadd, *tcheb0,*tcheb1 ;
   sollya_mpfi_t z, zz, z1,doi,minusOne, one;
   mpfr_t a, b;
-  printf("in composition_CM\n");
+  //printf("in composition_CM\n");
   sollya_mpfi_init2(z,getToolPrecision()); 
   sollya_mpfi_init2(zz,getToolPrecision()); 
   sollya_mpfi_init2(z1,getToolPrecision()); 
@@ -466,9 +466,9 @@ void composition_CM(chebModel *t,chebModel *g, chebModel *f, int tightBounding, 
   sollya_mpfi_sub(tinterm->poly_array[0],tinterm->poly_array[0],zz);
   sollya_mpfi_sub(tinterm->poly_bound,tinterm->poly_bound,zz);
   
-  printf("\nThe constants to be used are: \n");
-  printInterval(z);
-  printInterval(zz);
+  //printf("\nThe constants to be used are: \n");
+  //printInterval(z);
+  //printInterval(zz);
   
   
   tt=createEmptycModelPrecomp(m,f->x,f->cheb_array, f->cheb_matrix);
@@ -492,7 +492,8 @@ void composition_CM(chebModel *t,chebModel *g, chebModel *f, int tightBounding, 
     
     for (i=2;i<n;i++){
       /*2xT_i(x)*/
-      printf("\nstep %d in composition computation : ",i);
+      //printf("*%d*",i);
+      //printf("\nstep %d in composition computation : ",i);
       if (tightBounding>1){//only if level is 2 we bound this also tightly
         chebPolynomialBoundRefined(tcheb1->poly_bound, m, tcheb1->poly_array);
       }
@@ -500,12 +501,12 @@ void composition_CM(chebModel *t,chebModel *g, chebModel *f, int tightBounding, 
         chebPolynomialBoundDefault(tcheb1->poly_bound, m, tcheb1->poly_array);
       }
       multiplication_CM(tadd,tinterm,tcheb1,tightBounding,1);//2x*t_i(x)
-      printcModel(tadd);
+      //printcModel(tadd);
       ctMultiplication_CM(tcheb0, tcheb0,minusOne);
       addition_CM(tadd,tadd,tcheb0);//t_{i+1}=2x*t_i(x)-t_{i-1}(x)
-      printf("\n tcheb2 = \n");
-      printcModel(tadd);
-      printf("\n^^^^^^^  ^^  ^^^^^^\n");
+      //printf("\n tcheb2 = \n");
+      //printcModel(tadd);
+      //printf("\n^^^^^^^  ^^  ^^^^^^\n");
       copycModel(tcheb0,tcheb1); //t_{i-1}:=t_i
       copycModel(tcheb1,tadd); //t_i = t_{i+1}
       ctMultiplication_CM(tadd,tadd,g->poly_array[i]);
@@ -534,8 +535,8 @@ void composition_CM(chebModel *t,chebModel *g, chebModel *f, int tightBounding, 
   sollya_mpfi_clear(one); 
   mpfr_clear(a);
   mpfr_clear(b);
-  printf("\nOut of composition\n");
-  printf("**********************\n");
+  //printf("\nOut of composition\n");
+  //printf("**********************\n");
   
 }
 
@@ -606,10 +607,10 @@ void computeMonotoneRemainderCheb(sollya_mpfi_t *bound, int typeOfFunction, int 
   sollya_mpfi_set_fr(xinf, xinfFr);  sollya_mpfi_set_fr(xsup, xsupFr);  
   
   evaluateChebPolynomialClenshaw(bound1, n, poly_array, x,xinf); /* enclosure of p(xinf) */
-  printf("\nthe value in xinf is:"); printInterval(bound1);
+  //printf("\nthe value in xinf is:"); printInterval(bound1);
   
   evaluateChebPolynomialClenshaw(bound2, n, poly_array, x,xsup); /* enclosure of p(xsup) */
-  printf("\nthe value in xsup is:"); printInterval(bound2); 
+  //printf("\nthe value in xsup is:"); printInterval(bound2); 
   /* enclosure of f(xinf) and f(xsup) */
   switch(typeOfFunction) {
   case MONOTONE_REMAINDER_BASE_FUNCTION:
@@ -679,7 +680,7 @@ void base_CMAux(chebModel *t, int typeOfFunction, int nodeType, node *f, mpfr_t 
   mp_prec_t prec;
   sollya_mpfi_t *fValues;
  
-  printf("\n In baseCMAUx\n"); 
+  //printf("\n In baseCMAUx\n"); 
   int silent;
   silent=1; 
   prec = getToolPrecision();
@@ -971,7 +972,7 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int tightBounding
       //printInterval(rangeg);
       inv_tm=createEmptycModelCompute(n,rangeg,1,1);
       base_CMAux(inv_tm, MONOTONE_REMAINDER_INV, 0, NULL, NULL, n, rangeg,verbosity);
-      printf("We compose");
+      //printf("We compose");
       ttt=createEmptycModelPrecomp(n,child2_tm->x, child2_tm->cheb_array,child2_tm->cheb_matrix);
       composition_CM(ttt,inv_tm, child2_tm, tightBounding, NULL);
       
@@ -1032,7 +1033,7 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int tightBounding
       
       if (((f->child1)->nodeType)==VARIABLE) {
          child1_tm=createEmptycModelPrecomp(n,t->x, t->cheb_array,t->cheb_matrix);
-         printf("\n************* cheby model for elementary function************\n");
+         //printf("\n************* cheby model for elementary function************\n");
          if (f->nodeType == LIBRARYFUNCTION)
           base_CMAux(child1_tm, MONOTONE_REMAINDER_LIBRARY_FUNCTION, 0, f, NULL, n, x, verbosity);
          else
@@ -1074,11 +1075,11 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int tightBounding
        }
       child2_tm=createEmptycModelCompute(n,rangeg,1,1);
       
-      printf("\n************* cheby model for elementary function************\n");
+      //printf("\n************* cheby model for elementary function************\n");
       if (f->nodeType == LIBRARYFUNCTION)
         base_CMAux(child2_tm, MONOTONE_REMAINDER_LIBRARY_FUNCTION, 0, f, NULL, n, rangeg, verbosity);
       else
-        printf("Before Base function");
+        //printf("Before Base function");
         base_CMAux(child2_tm, MONOTONE_REMAINDER_BASE_FUNCTION, f->nodeType, NULL, NULL, n,rangeg, verbosity);
 
        if (verbosity>10) {
@@ -1275,18 +1276,18 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int tightBounding
 
 int CM(chain**resP, void **args) {
   node *f;
-  sollya_mpfi_t x, zero;
+  sollya_mpfi_t x, zero, ui, vi, temp;
   sollya_mpfi_t **coeffs;
   int n,i,tightBounding, verbosity;
   chebModel *t, *tt, *ttt;
   chain *ch;
   chain *err;
   sollya_mpfi_t *coeffsErrors, *rest, *c;
-  node **T;
+  node **T, **T1, **T2;
   
   mpfr_t *coeffsMpfr;
- 
-  verbosity=13;
+  mpfr_t u,v;
+
   sollya_mpfi_init2(zero, getToolPrecision());
   sollya_mpfi_set_ui(zero,0);
   
@@ -1296,7 +1297,7 @@ int CM(chain**resP, void **args) {
   f = (node *)args[0];
   n = *( (int *)args[2] );
   tightBounding=*( (int *)args[3] );
-  
+   verbosity=*( (int *)args[4] );
   sollya_mpfi_init2(x, getToolPrecision());
   sollya_mpfi_set(x, *( (sollya_mpfi_t *)args[1] ));
   
@@ -1321,12 +1322,54 @@ int CM(chain**resP, void **args) {
   //base_CMAux(ttt, 0, COS, NULL, NULL, n, x,verbosity);
   //printcModel(ttt);
   
+  pushTimeCounter();
   
   t=createEmptycModelCompute(n,x,1,1);
   //multiplication_CM(t, ttt, tt, 0);
   cheb_model(t, f, n, x, tightBounding, verbosity);
   printcModel(t);
   printf("\nThe model is computed with bounding level %d \n", tightBounding);
+  
+  
+   c=(sollya_mpfi_t *)safeMalloc((n+1)*sizeof(sollya_mpfi_t));
+  for (i=0;i<n+1;i++){
+      sollya_mpfi_init2(c[i],getToolPrecision());
+  }
+  getChebCoeffsIntegrationPolynomial(c, t->poly_array, n, x);
+  
+  mpfr_init2(u, getToolPrecision());
+  mpfr_init2(v, getToolPrecision());
+  sollya_mpfi_get_left(u,x);
+  sollya_mpfi_get_right(v,x);
+  
+  sollya_mpfi_init2(ui, getToolPrecision());
+  sollya_mpfi_init2(vi, getToolPrecision());
+  sollya_mpfi_set_fr(ui,u);
+  sollya_mpfi_set_fr(vi,v);
+ 
+  
+  sollya_mpfi_init2(temp, getToolPrecision());
+  
+  mpfi_sub(temp, vi, ui);
+  mpfi_abs(t->rem_bound, t->rem_bound);
+  mpfi_mul(temp, temp, t->rem_bound);
+  printf("\nConstant part of the integral:");
+   printInterval(temp);
+  evaluateChebPolynomialClenshaw(ui, n+1, c, x,ui );
+   printf("\nevaluation to the left:");
+   printInterval(ui);
+
+   
+  evaluateChebPolynomialClenshaw(vi, n+1, c, x,vi );
+  printf("\nevaluation to the right:");
+   printInterval(vi);
+  mpfi_sub(ui, vi, ui);
+  mpfi_add(temp, temp, ui);
+  printf("\nfinal bound:");
+   printInterval(temp);  
+  
+   popTimeCounter("integral comp");
+   
    /*zz = (sollya_mpfi_t*)safeMalloc(sizeof(sollya_mpfi_t));
   sollya_mpfi_init2(*zz, getToolPrecision());
   sollya_mpfi_set(*zz, t->rem_bound);
@@ -1346,9 +1389,9 @@ int CM(chain**resP, void **args) {
   */
   
   coeffs = (sollya_mpfi_t**)safeMalloc(sizeof(sollya_mpfi_t*));
-  printf("\nBefore getCoeffsFromChebPolynomial\n");
+  //printf("\nBefore getCoeffsFromChebPolynomial1\n");
   getCoeffsFromChebPolynomial(coeffs, t->poly_array, n, x);
-  printf("\nTgetCoeffsFromChebPolynomial works\n");
+  //printf("\nTgetCoeffsFromChebPolynomial works1\n");
   coeffsMpfr= (mpfr_t *)safeCalloc((n),sizeof(mpfr_t));
   coeffsErrors = (sollya_mpfi_t *)safeCalloc((n),sizeof(sollya_mpfi_t));
 
@@ -1359,36 +1402,68 @@ int CM(chain**resP, void **args) {
     sollya_mpfi_init2(coeffsErrors[i],getToolPrecision());
     mpfr_init2(coeffsMpfr[i],getToolPrecision());
   }
-  printf("\n Before mpfr get poly\n");
+  //printf("\n Before mpfr get poly1\n");
   mpfr_get_poly(coeffsMpfr, coeffsErrors, *rest, n-1,*coeffs, zero,x);
-  printf("\n After mpfr get poly\n");
+  //printf("\n After mpfr get poly1\n");
   //create T; 
   T=(node**)safeMalloc(sizeof(node*));
   *T=makePolynomial(coeffsMpfr, (t->n)-1);
- printf("\n After make poly\n");
+ //printf("\n After make poly1\n");
   //create errors;
   err=constructChain(coeffsErrors,t->n-1);
   
-   ch=addElement(ch,*T);
+  ch=addElement(ch,*T);
   
- 
-  c=(sollya_mpfi_t *)safeMalloc((n-1)*sizeof(sollya_mpfi_t));
-  for (i=0;i<n-1;i++){
+  mpfi_add(t->rem_bound, t->rem_bound,*rest);
+  //mpfr_init2(u, getToolPrecision());
+  //mpfr_init2(v, getToolPrecision());
+  sollya_mpfi_get_left(u,t->rem_bound);
+  printInterval(t->rem_bound);
+  sollya_mpfi_get_right(v,t->rem_bound);
+  
+  T1=(node**)safeMalloc(sizeof(node*));
+  *T1=makeConstant(u);
+  
+  ch=addElement(ch,*T1);
+  
+  T2=(node**)safeMalloc(sizeof(node*));
+  *T2=makeConstant(v);
+  
+  ch=addElement(ch,*T2);
+
+  
+ /*
+  c=(sollya_mpfi_t *)safeMalloc((n)*sizeof(sollya_mpfi_t));
+  for (i=0;i<n;i++){
       sollya_mpfi_init2(c[i],getToolPrecision());
   
    }
   getChebCoeffsDerivativePolynomial(c, t->poly_array, n, x);
-  printf("\nBefore getCoeffsFromChebPolynomial\n");
+  //printf("\nBefore getCoeffsFromChebPolynomial2\n");
   getCoeffsFromChebPolynomial(coeffs, c, n-1, x);
-  printf("\nTgetCoeffsFromChebPolynomial works\n");
-  printf("\n Before mpfr get poly\n");
+  //printf("\nTgetCoeffsFromChebPolynomial works2\n");
+  //printf("\n Before mpfr get poly2\n");
   mpfr_get_poly(coeffsMpfr, coeffsErrors, *rest, n-2,*coeffs, zero,x);
-  printf("\n After mpfr get poly\n");
+  //printf("\n After mpfr get poly2\n");
   T=(node**)safeMalloc(sizeof(node*));
   *T=makePolynomial(coeffsMpfr, (t->n)-2);
-  printf("\n After make poly\n");
+  //printf("\n After make poly2\n");
   ch=addElement(ch,*T);
   
+  
+  getChebCoeffsIntegrationPolynomial(c, c, n-1, x);
+  
+  getCoeffsFromChebPolynomial(coeffs, c, n, x);
+  //printf("\nTgetCoeffsFromChebPolynomial works3\n");
+  //printf("\n Before mpfr get poly3\n");
+  mpfr_get_poly(coeffsMpfr, coeffsErrors, *rest, n-1,*coeffs, zero,x);
+  //printf("\n After mpfr get poly3\n");
+  T=(node**)safeMalloc(sizeof(node*));
+  *T=makePolynomial(coeffsMpfr, (t->n)-1);
+  //printf("\n After make poly3\n");
+  
+  ch=addElement(ch,*T);
+  */
   
    *resP=ch;
   clearcModel(t);

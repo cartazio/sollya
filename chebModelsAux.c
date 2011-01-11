@@ -339,8 +339,8 @@ int i;
     sollya_mpfi_set(pAux[i], p[i]);
   }
   
-  printInterval(a);
-  printInterval(b);  
+  //printInterval(a);
+  //printInterval(b);  
   /*do the transformation : P(a*x+b) = \sum p_i*a^i *(x+b/a)^i*/
   for (i=0;i<n;i++){
     sollya_mpfi_set_ui(pow,i);
@@ -609,7 +609,7 @@ void getNChebCoeffsFromPolynomial(sollya_mpfi_t *coeffs, sollya_mpfi_t bound, no
   else{
      for(i=0;i<n;i++)
        sollya_mpfi_set(coeffs[i],(*c)[i]);
-    printf("before bounding");
+    //printf("before bounding");
     
     chebPolynomialBoundSimple(bound, d-n, (&(*c)[n]));
   }
@@ -625,7 +625,7 @@ void getChebCoeffsDerivativePolynomial(sollya_mpfi_t*coeffs, sollya_mpfi_t *cheb
   int i;
   sollya_mpfi_t *c;
   mpfr_t u,v;
-  int verbosity =12;
+  int verbosity=0;
  
     c=(sollya_mpfi_t *)safeMalloc((n-1)*sizeof(sollya_mpfi_t));
     sollya_mpfi_init2(temp, getToolPrecision());
@@ -699,14 +699,15 @@ void getChebCoeffsDerivativePolynomial(sollya_mpfi_t*coeffs, sollya_mpfi_t *cheb
     mpfr_clear(v);
 }
 
-
+/*Computes the antiderivative of a polynomial in Chebyshev basis.
+NOTE: the constant coefficient is set to zero, but it should be viewed as a constant*/
 void getChebCoeffsIntegrationPolynomial(sollya_mpfi_t*coeffs, sollya_mpfi_t *chebCoeffs, int n, sollya_mpfi_t x){
   sollya_mpfi_t z1, z2, ui, vi, temp;
  
   int i;
   sollya_mpfi_t *c;
   mpfr_t u,v;
-  int verbosity =0;
+  int verbosity=0;
  
     c=(sollya_mpfi_t *)safeMalloc((n+1)*sizeof(sollya_mpfi_t));
     sollya_mpfi_init2(temp, getToolPrecision());
@@ -716,12 +717,19 @@ void getChebCoeffsIntegrationPolynomial(sollya_mpfi_t*coeffs, sollya_mpfi_t *che
       sollya_mpfi_init2(c[i],getToolPrecision());
       sollya_mpfi_set_ui(c[i],0);
    }
+   
+   if(n>0){
+   sollya_mpfi_div_ui(c[1],chebCoeffs[2],2);
+   sollya_mpfi_sub(c[1],chebCoeffs[0], c[1]);
+   }
+   
     
-   for (i=1;i<n-1;i++){
+   for (i=2;i<n-1;i++){
      sollya_mpfi_sub(c[i],chebCoeffs[i-1],chebCoeffs[i+1]);
      sollya_mpfi_div_ui(c[i],c[i],2*i);
     
    }
+   
    
    if(n>1){
    sollya_mpfi_set(c[n-1],chebCoeffs[n-2]);
@@ -760,7 +768,7 @@ void getChebCoeffsIntegrationPolynomial(sollya_mpfi_t*coeffs, sollya_mpfi_t *che
         
     sollya_mpfi_div_ui(z1,z2,2);
    
-     for (i=0;i<n-1;i++){
+     for (i=1;i<n+1;i++){
       sollya_mpfi_mul(c[i], c[i],z1);
      }
     
@@ -830,7 +838,7 @@ void chebPolynomialBoundRefined(sollya_mpfi_t bound, int n, sollya_mpfi_t *coeff
   int i;
   //printf("\nin chebPolynomialBoundSimple\n");
   for(i=0;i<n;i++) {
-    printInterval(coeffs[i]);
+    //printInterval(coeffs[i]);
   }
   prec = getToolPrecision();
   sollya_mpfi_init2(temp, prec);
