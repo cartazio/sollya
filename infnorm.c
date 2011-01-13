@@ -5204,7 +5204,7 @@ int evaluateSignTrigoUnsafe(int *s, node *child, int nodeType) {
 int evaluateSign(int *s, node *rawFunc) {
   int sign, okay, okayA, okayB, okayC;
   mpfr_t value, dummyX;
-  mpfi_t valueI;
+  sollya_mpfi_t valueI;
   int signA, signB, signC;
   node *tempNode, *tempNode2;
   node *func, *rawFunc2;
@@ -5491,20 +5491,20 @@ int evaluateSign(int *s, node *rawFunc) {
         /* By defininition, a library constant is known with a relative error
            smaller that ~ 2^(-prec). So we can decide the sign, based on low
            approximation of the constant. */
-        mpfi_init2(valueI, 12); 
+        sollya_mpfi_init2(valueI, 12); 
         libraryConstantToInterval(valueI, func);
-        if (mpfi_is_zero(valueI)) {
+        if (sollya_mpfi_is_zero(valueI)) {
           okay = 1;
           sign = 0;
         }
         else {
-          if (mpfi_has_zero(valueI)) {
+          if (sollya_mpfi_has_zero(valueI)) {
             okay = 0;
             sign = 0;
           }
           else {
             okay = 1;
-            sign = (mpfi_is_pos(valueI))?1:(-1);
+            sign = (sollya_mpfi_is_pos(valueI))?1:(-1);
           }
         }
         break;

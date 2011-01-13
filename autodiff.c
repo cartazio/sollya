@@ -1472,7 +1472,7 @@ void auto_diff_scaled(sollya_mpfi_t* res, node *f, sollya_mpfi_t x0, int n) {
 
   case LIBRARYCONSTANT:
     libraryConstantToInterval(res[0], f);
-    for(i=1; i<=n; i++) mpfi_set_ui(res[i], 0);
+    for(i=1; i<=n; i++) sollya_mpfi_set_ui(res[i], 0);
     break;
 
   case CONSTANT:

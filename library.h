@@ -106,7 +106,7 @@ libraryProcedure *getProcedure(char *procedureName);
    hence a circular definition problem. I do not see how to solve the
    problem yet. 
 */
-/* void libraryConstantToInterval(mpfi_t res, node *tree); */
+/* void libraryConstantToInterval(sollya_mpfi_t res, node *tree); */
 
 void freeFunctionLibraries();
 void freeConstantLibraries();

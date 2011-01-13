@@ -599,17 +599,17 @@ int ceil_log2n(int p) {
 }
 
 /* Returns the maximal exponent of a number among those contained in x */
-mp_exp_t mpfi_max_exp(mpfi_t x) {
+mp_exp_t sollya_mpfi_max_exp(sollya_mpfi_t x) {
   mpfr_t u,v;
   mp_exp_t Eu, Ev, E;
   mp_prec_t prec;
 
-  prec = mpfi_get_prec(x);
+  prec = sollya_mpfi_get_prec(x);
   mpfr_init2(u, prec);
   mpfr_init2(v, prec);
 
-  mpfi_get_left(u, x);
-  mpfi_get_right(v, x);
+  sollya_mpfi_get_left(u, x);
+  sollya_mpfi_get_right(v, x);
   
   if (mpfr_zero_p(u)) E = mpfr_get_exp(v);
   else {
@@ -628,18 +628,18 @@ mp_exp_t mpfi_max_exp(mpfi_t x) {
 /* Return the smallest exponent among the exponents of the numbers contained
    in x. If 0 \in x, it returns NULL, else it returns a valid pointer E such
    that *E is the minimal exponent. */
-mp_exp_t *mpfi_min_exp(mpfi_t x) {
+mp_exp_t *sollya_mpfi_min_exp(sollya_mpfi_t x) {
   mpfr_t u,v;
   mp_exp_t Eu, Ev;
   mp_exp_t *E = NULL;
   mp_prec_t prec;
 
-  prec = mpfi_get_prec(x);
+  prec = sollya_mpfi_get_prec(x);
   mpfr_init2(u, prec);
   mpfr_init2(v, prec);
 
-  mpfi_get_left(u, x);
-  mpfi_get_right(v, x);
+  sollya_mpfi_get_left(u, x);
+  sollya_mpfi_get_right(v, x);
   
   if (mpfr_sgn(u)*mpfr_sgn(v)>0) {
     E = safeMalloc(sizeof(mp_exp_t));
@@ -657,18 +657,18 @@ mp_exp_t *mpfi_min_exp(mpfi_t x) {
 /* node type nodeType. This functions generates code for the implementation   */
 /* of f(a) in precision prec+gamma0, the result being stored in resName.      */
 int unaryFunctionCase(int nodeType, node *cste, char *functionName, int gamma0, struct implementCsteProgram *program) {
-  mpfi_t a, b, u, v, tmp;
+  sollya_mpfi_t a, b, u, v, tmp;
   mpfr_t alpha, beta;
   mp_prec_t prec = getToolPrecision();
   node *func, *deriv;
   int gamma;
   int counter;
 
-  mpfi_init2(a, prec);
-  mpfi_init2(b, prec);
-  mpfi_init2(u, prec);
-  mpfi_init2(v, prec);
-  mpfi_init2(tmp, prec);
+  sollya_mpfi_init2(a, prec);
+  sollya_mpfi_init2(b, prec);
+  sollya_mpfi_init2(u, prec);
+  sollya_mpfi_init2(v, prec);
+  sollya_mpfi_init2(tmp, prec);
   mpfr_init2(alpha, prec);
   mpfr_init2(beta, prec);
 
@@ -677,7 +677,7 @@ int unaryFunctionCase(int nodeType, node *cste, char *functionName, int gamma0, 
   
   evaluateInterval(a, cste, NULL, a);
   evaluateInterval(b, func, deriv, a);
-  if (mpfi_has_zero(b)) {
+  if (sollya_mpfi_has_zero(b)) {
     changeToWarningMode();
     sollyaFprintf(stderr, "Error in implementconstant: the following expression seems to be exactly zero:\n");
     fprintTree(stderr, makeUnary(copyTree(cste), nodeType));
@@ -686,23 +686,23 @@ int unaryFunctionCase(int nodeType, node *cste, char *functionName, int gamma0, 
     recoverFromError();
   }
 
-  mpfi_div(u, a, b);
+  sollya_mpfi_div(u, a, b);
   evaluateInterval(tmp, deriv, NULL, a); 
-  mpfi_mul(v, u, tmp);
+  sollya_mpfi_mul(v, u, tmp);
 
-  gamma = 2+mpfi_max_exp(v)-1;
+  gamma = 2+sollya_mpfi_max_exp(v)-1;
   do {
     gamma++;
     mpfr_set_ui(beta, 1, GMP_RNDU);
     mpfr_div_2si(beta, beta, gamma+gamma0, GMP_RNDU);
     mpfr_ui_sub(alpha, 1, beta, GMP_RNDD);
     mpfr_add_ui(beta, beta, 1, GMP_RNDU);
-    mpfi_interv_fr(tmp, alpha, beta);
+    sollya_mpfi_interv_fr(tmp, alpha, beta);
 
-    mpfi_mul(tmp, a, tmp);
+    sollya_mpfi_mul(tmp, a, tmp);
     evaluateInterval(tmp, deriv, NULL, tmp);
-    mpfi_mul(v, u, tmp);
-  } while (gamma < 2+mpfi_max_exp(v));
+    sollya_mpfi_mul(v, u, tmp);
+  } while (gamma < 2+sollya_mpfi_max_exp(v));
   
   counter = program->counter;
   incrementProgramCounter(program);
@@ -711,11 +711,11 @@ int unaryFunctionCase(int nodeType, node *cste, char *functionName, int gamma0, 
   appendSetprecProg(counter, gamma0+2, program);
   appendUnaryfuncProg(functionName, counter, counter+1, program);
 
-  mpfi_clear(a);
-  mpfi_clear(b);
-  mpfi_clear(u);
-  mpfi_clear(v);
-  mpfi_clear(tmp);
+  sollya_mpfi_clear(a);
+  sollya_mpfi_clear(b);
+  sollya_mpfi_clear(u);
+  sollya_mpfi_clear(v);
+  sollya_mpfi_clear(tmp);
   mpfr_clear(alpha);
   mpfr_clear(beta);
   free_memory(func);
@@ -839,7 +839,7 @@ int summation_weight(node *c) {
 }
 
 int implementAddSub(node *c, int gamma0, struct implementCsteProgram *program) {
-  mpfi_t y, a, b, tmp, tmp2;
+  sollya_mpfi_t y, a, b, tmp, tmp2;
   mp_exp_t *Ea, *Eb, *Ey;
   int na, nb, n;
   int tmpa, tmpb;
@@ -849,15 +849,15 @@ int implementAddSub(node *c, int gamma0, struct implementCsteProgram *program) {
   char *str;
 
   prec = getToolPrecision();
-  mpfi_init2(y, prec);
-  mpfi_init2(a, prec);
-  mpfi_init2(b, prec);
-  mpfi_init2(tmp, prec);
-  mpfi_init2(tmp2, prec);
+  sollya_mpfi_init2(y, prec);
+  sollya_mpfi_init2(a, prec);
+  sollya_mpfi_init2(b, prec);
+  sollya_mpfi_init2(tmp, prec);
+  sollya_mpfi_init2(tmp2, prec);
 
   
   evaluateInterval(y, c, NULL, y);
-  if (mpfi_has_zero(y)) {
+  if (sollya_mpfi_has_zero(y)) {
     changeToWarningMode();
     sollyaFprintf(stderr, "Error in implementconstant: the following expression seems to be exactly zero:\n");
     fprintTree(stderr, c);
@@ -872,26 +872,26 @@ int implementAddSub(node *c, int gamma0, struct implementCsteProgram *program) {
   nb = summation_weight(c->child2);
   n = na+nb+1;
 
-  mpfi_div(tmp, y, a); mpfi_mul_ui(tmp, tmp, na); mpfi_div_ui(tmp, tmp, n);
-  Ea = mpfi_min_exp(tmp);
+  sollya_mpfi_div(tmp, y, a); sollya_mpfi_mul_ui(tmp, tmp, na); sollya_mpfi_div_ui(tmp, tmp, n);
+  Ea = sollya_mpfi_min_exp(tmp);
   if (Ea==NULL) {
     printMessage(0, "Unexpected error. Aborting\n");
     recoverFromError();
   }
 
-  mpfi_div(tmp, y, b); mpfi_mul_ui(tmp, tmp, nb); mpfi_div_ui(tmp, tmp, n);
-  Eb = mpfi_min_exp(tmp);
+  sollya_mpfi_div(tmp, y, b); sollya_mpfi_mul_ui(tmp, tmp, nb); sollya_mpfi_div_ui(tmp, tmp, n);
+  Eb = sollya_mpfi_min_exp(tmp);
   if (Eb==NULL) {
     printMessage(0, "Unexpected error. Aborting\n");
     recoverFromError();
   }
 
-  mpfi_abs(tmp, a);
-  mpfi_abs(tmp2, b);
-  mpfi_add(tmp, tmp, tmp2);
-  mpfi_div(tmp, y, tmp);
-  mpfi_div_ui(tmp, tmp, n);
-  Ey = mpfi_min_exp(tmp);
+  sollya_mpfi_abs(tmp, a);
+  sollya_mpfi_abs(tmp2, b);
+  sollya_mpfi_add(tmp, tmp, tmp2);
+  sollya_mpfi_div(tmp, y, tmp);
+  sollya_mpfi_div_ui(tmp, tmp, n);
+  Ey = sollya_mpfi_min_exp(tmp);
   if (Ey==NULL) {
     printMessage(0, "Unexpected error. Aborting\n");
     recoverFromError();
@@ -982,11 +982,11 @@ int implementAddSub(node *c, int gamma0, struct implementCsteProgram *program) {
   free(Ea);
   free(Eb);
   free(Ey);
-  mpfi_clear(y);
-  mpfi_clear(a);
-  mpfi_clear(b);
-  mpfi_clear(tmp);
-  mpfi_clear(tmp2);
+  sollya_mpfi_clear(y);
+  sollya_mpfi_clear(a);
+  sollya_mpfi_clear(b);
+  sollya_mpfi_clear(tmp);
+  sollya_mpfi_clear(tmp2);
   return;
 }
 

@@ -5776,7 +5776,7 @@ node* differentiate(node *tree) {
 
 int evaluateConstantExpression(mpfr_t result, node *tree, mp_prec_t prec) {
   mpfr_t stack1, stack2;
-  mpfi_t stackI;
+  sollya_mpfi_t stackI;
   int isConstant;
 
   mpfr_init2(stack1, prec);
@@ -5994,10 +5994,10 @@ int evaluateConstantExpression(mpfr_t result, node *tree, mp_prec_t prec) {
     isConstant = 1;
     break;
   case LIBRARYCONSTANT:
-    mpfi_init2(stackI, mpfr_get_prec(result));
+    sollya_mpfi_init2(stackI, mpfr_get_prec(result));
     libraryConstantToInterval(stackI, tree);
-    mpfi_get_fr(result, stackI);
-    mpfi_clear(stackI);
+    sollya_mpfi_get_fr(result, stackI);
+    sollya_mpfi_clear(stackI);
     isConstant = 1;
     break;
   default:
@@ -6014,7 +6014,7 @@ node* simplifyTreeInner(node *tree) {
   node *simplChild1, *simplChild2, *simplified;
   mpfr_t *value;
   mpfr_t temp;
-  mpfi_t tempI;
+  sollya_mpfi_t tempI;
   int numberChilds;
 
   if ((tree->nodeType == CONSTANT) && (mpfr_nan_p(*(tree->value)))) return copyTree(tree);
@@ -6735,10 +6735,10 @@ node* simplifyTreeInner(node *tree) {
     simplified->nodeType = CONSTANT;
     value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
     mpfr_init2(*value,tools_precision);
-    mpfi_init2(tempI, tools_precision);
+    sollya_mpfi_init2(tempI, tools_precision);
     libraryConstantToInterval(tempI, tree);
-    mpfi_get_fr(*value, tempI);
-    mpfi_clear(tempI);
+    sollya_mpfi_get_fr(*value, tempI);
+    sollya_mpfi_clear(tempI);
     simplified->value = value;
     break;
   default:
@@ -6753,7 +6753,7 @@ node* simplifyAllButDivisionInner(node *tree) {
   node *simplChild1, *simplChild2, *simplified;
   mpfr_t *value;
   mpfr_t temp;
-  mpfi_t tempI;
+  sollya_mpfi_t tempI;
 
   switch (tree->nodeType) {
   case VARIABLE:
@@ -7416,10 +7416,10 @@ node* simplifyAllButDivisionInner(node *tree) {
     simplified->nodeType = CONSTANT;
     value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
     mpfr_init2(*value,tools_precision);
-    mpfi_init2(tempI, tools_precision);
+    sollya_mpfi_init2(tempI, tools_precision);
     libraryConstantToInterval(tempI, tree);
-    mpfi_get_fr(*value, tempI);
-    mpfi_clear(tempI);
+    sollya_mpfi_get_fr(*value, tempI);
+    sollya_mpfi_clear(tempI);
     simplified->value = value;
     break;
   default:
@@ -7453,7 +7453,7 @@ node *simplifyAllButDivision(node *tree) {
 
 void evaluate(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
   mpfr_t stack1, stack2;
-  mpfi_t stackI;
+  sollya_mpfi_t stackI;
 
   mpfr_init2(stack1, prec);
   mpfr_init2(stack2, prec);
@@ -7626,10 +7626,10 @@ void evaluate(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
     mpfr_const_pi(result, GMP_RNDN);
     break;
   case LIBRARYCONSTANT:
-    mpfi_init2(stackI, mpfr_get_prec(result));
+    sollya_mpfi_init2(stackI, mpfr_get_prec(result));
     libraryConstantToInterval(stackI, tree);
-    mpfi_get_fr(result, stackI);
-    mpfi_clear(stackI);
+    sollya_mpfi_get_fr(result, stackI);
+    sollya_mpfi_clear(stackI);
   default:
     sollyaFprintf(stderr,"Error: evaluate: unknown identifier in the tree\n");
     exit(1);

@@ -324,9 +324,9 @@ void freeConstantLibraries() {
 }
 
 /* Evaluate a library constant function into an interval */
-void libraryConstantToInterval(mpfi_t res, node *tree) {
+void libraryConstantToInterval(sollya_mpfi_t res, node *tree) {
   mpfr_t approx, lbound, rbound;
-  mp_prec_t prec = mpfi_get_prec(res);
+  mp_prec_t prec = sollya_mpfi_get_prec(res);
 
   mpfr_init2(approx, prec + 20); /* some guard bits may avoid reinit in tree->libFun */
   tree->libFun->constant_code(approx, prec);
@@ -337,7 +337,7 @@ void libraryConstantToInterval(mpfi_t res, node *tree) {
   mpfr_nextbelow(lbound);
   mpfr_nextabove(rbound);
   
-  mpfi_interv_fr(res, lbound, rbound);
+  sollya_mpfi_interv_fr(res, lbound, rbound);
   return;
 }
 
