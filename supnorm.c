@@ -1,19 +1,13 @@
 /*
 
-Copyright 2010 by 
+Copyright 2010-2011 by 
 
 Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
 UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.
 
-and
-
-Laboratoire de l'Informatique du Parallélisme, 
-UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
-
-Contributors Ch. Lauter, M. Joldes
+Contributors Ch. Lauter
 
 christoph.lauter@ens-lyon.org
-mioara.joldes@ens-lyon.fr
 
 This software is a computer program whose purpose is to provide an
 environment for safe floating-point code development. It is
@@ -76,32 +70,18 @@ knowledge of the CeCILL-C license and that you accept its terms.
    a precise understanding which phase failed is available.
 
 */
-#define SUPNORM_NO_ERROR                       0  /* No error */
-#define SUPNORM_SOME_ERROR                    -1  /* Some default error, don't know what caused it */
-#define SUPNORM_NO_TAYLOR                      1  /* Couldn't compute a Taylor */
-#define SUPNORM_NOT_ENOUGH_WORKING_PRECISION   2  /* Got the impression the precision was not enough */
-#define SUPNORM_SINGULARITY_NOT_REMOVED        3  /* Could not correctly determine the order of the pole (error intervals not [0]) */
-#define SUPNORM_COULD_NOT_SHOW_POSITIVITY      4  /* Could not validate everything by showing positivity */ 
-#define SUPNORM_SINGULARITY_NOT_DETECTED       5  /* Failed to compute an approximate value to a singularity */
-#define SUPNORM_ANOTHER_SINGULARITY_IN_DOM     6  /* There's at least two singularities, more bisection needed */
-#define SUPNORM_CANNOT_COMPUTE_LOWER_BOUND     7  /* For some reason, we cannot compute a valid lower bound */
-#define SUPNORM_CANNOT_COMPUTE_ABSOLUTE_INF    8  /* For some reason, we cannot compute a valid lower bound on the absolute value of func */
-#define SUPNORM_CANNOT_DETERMINE_SIGN_OF_T     9  /* For some reason, we cannot determine the sign of the Taylor polynomial at a point */
-
-/* General remarks:
-
-   (i) We will not handle removable singularities inside the
-   expression tree for func right now. However, as we might in the
-   future, it might be good idea not to use the Taylor form functions
-   from taylorform.h directly but to wrap them into a function, which,
-   in the future, may take these singularities into account.
-
-   (ii) Do not use getToolPrecision(). Use the precision given in
-   argument to the functions and propagate it as needed. Or: perform
-   exact operations that determine their precision on their own.
-
- */
-
+#define SUPNORM_NO_ERROR                         0  /* No error */
+#define SUPNORM_SOME_ERROR                      -1  /* Some default error, don't know what caused it */
+#define SUPNORM_NO_TAYLOR                        1  /* Couldn't compute a Taylor */
+#define SUPNORM_NOT_ENOUGH_WORKING_PRECISION     2  /* Got the impression the precision was not enough */
+#define SUPNORM_SINGULARITY_NOT_REMOVED          3  /* Couldn't divide poly by (x-x0)^k */
+#define SUPNORM_COULD_NOT_SHOW_POSITIVITY        4  /* Could not validate everything by showing positivity */ 
+#define SUPNORM_SINGULARITY_NOT_DETECTED         5  /* Failed to compute an approximate value to a singularity */
+#define SUPNORM_ANOTHER_SINGULARITY_IN_DOM       6  /* There's at least two singularities, more bisection needed */
+#define SUPNORM_CANNOT_COMPUTE_LOWER_BOUND       7  /* For some reason, we cannot compute a valid lower bound */
+#define SUPNORM_CANNOT_COMPUTE_ABSOLUTE_INF      8  /* For some reason, we cannot compute a valid lower bound on the absolute value of func */
+#define SUPNORM_CANNOT_DETERMINE_SIGN_OF_T       9  /* For some reason, we cannot determine the sign of the Taylor polynomial at a point */
+#define SUPNORM_CANNOT_DETERMINE_ORDER_OF_SINGU 10  /* Could not correctly determine the order of the pole (error intervals not [0]) */
 
 /* Exactly add two polynomials
 
@@ -209,6 +189,88 @@ node *scalePolynomialExactly(node *poly, mpfr_t scale) {
   return res;
 }
 
+/* TODO: Doc */
+int dividePolyByXMinusX0ToTheK(node **pTilde, node *poly, mpfr_t x0, int k, mp_prec_t prec) {
+  int okay, degPoly, degQuotient;
+  node *myPTilde;
+  node *shifterForth, *shifterBack, *pShifted, *xToK, *pShiftedHorner, *quotient;
+  node *quotientSimplified, *quotientShifted, *quotientShiftedHorner;
+  mpfr_t kAsMpfr;
+
+  /* Determine the degree of poly and, at the same time, if 
+     it really is a polynomial 
+  */
+  degPoly = getDegree(poly);
+  
+  /* We can't do anything if poly isn't a polynomial */
+  if (degPoly < 0) return 0;
+
+  /* The division will fail if k is greater than the degree of poly */
+  if (k > degPoly) return 0;
+
+  /* Cannot divide if (x-x0)^k is not a polynomial */
+  if (k < 0) return 0;
+  
+  /* Division by (x-x0)^0 = 1 is trivial */
+  if (k == 0) {
+    *pTilde = copyTree(poly);
+    return 1;
+  }
+
+  /* Here we know that degPoly >= k >= 1 */
+  okay = 0;
+  myPTilde = NULL;
+
+  /* We shift poly: pShifted(x) = poly(x + x0) */
+  shifterForth = makeAdd(makeVariable(),makeConstant(x0));
+  pShifted = substitute(poly,shifterForth);
+  pShiftedHorner = horner(pShifted);
+  
+  /* Now build x^k */
+  mpfr_init2(kAsMpfr,5 + 8 * sizeof(k));
+  mpfr_set_si(kAsMpfr,k,GMP_RNDN); /* exact as per what precedes */
+  xToK = makePow(makeVariable(),makeConstant(kAsMpfr));
+
+  /* Now build quotient = pShifted/xToK */
+  quotient = makeDiv(pShifted,xToK);
+
+  /* Now simplify quotient */
+  quotientSimplified = simplifyRationalErrorfree(quotient);
+
+  /* Now shift the quotient back: quotientShifted(x) = quotientSimplified(x - x0) */
+  shifterBack = makeSub(makeVariable(),makeConstant(x0));
+  quotientShifted = substitute(quotientSimplified,shifterBack);
+  quotientShiftedHorner = horner(quotientShifted);
+  
+  /* Try to get the degree of quotientShiftedHorner
+     If it is non-negative, quotientShiftedHorner is a polynomial
+     If it is equal to degPoly - k, the division worked
+  */
+  degQuotient = getDegree(quotientShiftedHorner);
+  
+  if ((degQuotient >= 0) && (degQuotient == (degPoly - k))) {
+    okay = 1;
+    myPTilde = copyTree(quotientShiftedHorner);
+  }
+
+
+  /* Free all locally used memory */
+  free_memory(shifterForth);
+  free_memory(pShifted);
+  /* pSHiftedHorner gets freed by freeing quotient */
+  /* xToK gets freed by freeing quotient */
+  free_memory(quotient);
+  free_memory(quotientSimplified);
+  free_memory(shifterBack);
+  free_memory(quotientShifted);
+  free_memory(quotientShiftedHorner);
+  mpfr_clear(kAsMpfr);
+
+  /* Set result if appropriate and return */
+  if (myPTilde == NULL) okay = 0;
+  if (okay) *pTilde = myPTilde;
+  return okay;
+}
 
 /* Show positivity of a polynomial using the Sturm algorithm 
 
@@ -588,7 +650,7 @@ int computeTaylorModel(node **poly, sollya_mpfi_t delta,
   setToolPrecision(prec);
   
   if (singu == NULL) {
-    mpfr_init2(x0,mpfi_get_prec(dom) + 1);
+    mpfr_init2(x0,sollya_mpfi_get_prec(dom) + 1);
     sollya_mpfi_mid(x0,dom);
     mode = ABSOLUTE;
   } else {
@@ -1420,8 +1482,11 @@ int supnormAbsolute(sollya_mpfi_t result, node *poly, node *func, sollya_mpfi_t 
    expression of func. In such a case, the relative supnorm may simply
    fail for now.
 
+   The singularity parameter is just to be passed on to the 
+   Taylor Form code.
+
 */
-int supnormRelativeNoSingularity(sollya_mpfi_t result, node *poly, node *func, sollya_mpfi_t dom, mpfr_t accuracy, mp_prec_t prec, mpfr_t bisectPoint) {
+int supnormRelativeNoSingularity(sollya_mpfi_t result, node *poly, node *func, sollya_mpfi_t dom, mpfr_t accuracy, mp_prec_t prec, mpfr_t *singularity, mpfr_t bisectPoint) {
   mpfr_t F, ell, gamma, thirtyoneThirtySecond, u, errMax, midDom, signT, bound;
   mp_prec_t pr;
   sollya_mpfi_t ellInterval, accuracyInterval, fifthteenThirtySecondInterval, FInterval, errMaxInterval, onePlusUInterval, uInterval;
@@ -1536,7 +1601,7 @@ int supnormRelativeNoSingularity(sollya_mpfi_t result, node *poly, node *func, s
   maximumAllowedN = 16 * getDegree(poly);
   if (maximumAllowedN < 32) maximumAllowedN = 32;
   T = NULL;
-  if (!computeTaylorModelOfLeastDegree(&T, func, dom, errMax, maximumAllowedN, NULL, prec)) {
+  if (!computeTaylorModelOfLeastDegree(&T, func, dom, errMax, maximumAllowedN, singularity, prec)) {
     mpfr_clear(F);
     mpfr_clear(ell);
     mpfr_clear(gamma);
@@ -1693,10 +1758,69 @@ int supnormRelativeNoSingularity(sollya_mpfi_t result, node *poly, node *func, s
 
 */
 int supnormRelativeSingularity(sollya_mpfi_t result, node *poly, node *func, sollya_mpfi_t dom, mpfr_t accuracy, mpfr_t singularity, mp_prec_t prec, mpfr_t bisectPoint) {
+  int deg, k, n, res;
+  node *pTilde, *fTilde;
+  mpfr_t kAsMpfr, mySingularity;
 
-  /* TODO */
+  /* Determine the degree of poly */
+  deg = getDegree(poly);
+  if (deg < 0) {
+    /* Strange things are happening, we return an error */
+    return SUPNORM_SOME_ERROR;
+  }
+  
+  /* Determine a maximum order */
+  n = deg; 
+  if (n < 2) n = 2;
 
-  return SUPNORM_SOME_ERROR;
+  if (!determineOrderOfZero(&k, func, singularity, n, prec)) {
+    /* We couldn't determine the order of the presumed singularity.
+       Hence we fail with the appropriate error code.
+    */
+    return SUPNORM_CANNOT_DETERMINE_ORDER_OF_SINGU;
+  }
+
+  /* Now we know that func has a singularity at singularity of order k 
+     We have to check now if we can divide poly by (x-singularity)^k
+  */
+  pTilde = NULL;
+  if (!dividePolyByXMinusX0ToTheK(&pTilde,poly,singularity,k,prec)) {
+    /* Here, we couldn't divide poly by (x-singularity)^k 
+       We return the appropriate error code.
+    */
+    return SUPNORM_SINGULARITY_NOT_REMOVED;
+  }
+
+  /* If we are here, we know that pTilde = poly/((x-singularity)^k) 
+
+     We now build fTilde = func/(x-singularity)^k
+
+   */
+  mpfr_init2(kAsMpfr,5 + 8 * sizeof(k));
+  mpfr_set_si(kAsMpfr,k,GMP_RNDN); /* exact as per what precedes */
+  fTilde = makeDiv(copyTree(func),
+		   makePow(makeSub(makeVariable(),makeConstant(singularity)),
+			   makeConstant(kAsMpfr)));
+
+  /* Now copy singularity into a local variable ('cause that stupid C,
+     in some versions, prohibits taking a pointer on an argument)
+  */
+  mpfr_init2(mySingularity,mpfr_get_prec(singularity));
+  mpfr_set(mySingularity,singularity,GMP_RNDN); /* exact, the precision is the same */
+
+  /* Now call the relative supremum norm with pTilde and fTilde, passing on 
+     the singularity as the development point for fTilde.
+  */
+  res = supnormRelativeNoSingularity(result, pTilde, fTilde, dom, accuracy, prec, &mySingularity, bisectPoint);
+
+  /* Free all locally used memory */
+  free_memory(pTilde);
+  free_memory(fTilde);
+  mpfr_clear(kAsMpfr);
+  mpfr_clear(mySingularity);
+
+  /* Return the result obtained */
+  return res;
 }
 
 
@@ -1781,7 +1905,7 @@ int supnormRelative(sollya_mpfi_t result, node *poly, node *func, sollya_mpfi_t 
     mpfr_clear(myBisect);
 
     /* Launch computation with the conviction that there is no singularity */
-    res = supnormRelativeNoSingularity(result, poly, func, dom, accuracy, prec, bisectPoint);
+    res = supnormRelativeNoSingularity(result, poly, func, dom, accuracy, prec, NULL, bisectPoint);
 
     if ((res == SUPNORM_SOME_ERROR) && (numberOfSingularities == -1)) res = SUPNORM_SINGULARITY_NOT_DETECTED;
   } else {
@@ -2041,7 +2165,7 @@ int supremumNormBisect(sollya_mpfi_t result, node *poly, node *func, mpfr_t a, m
   mp_prec_t prec, p;
 
   prec = getToolPrecision() + 25;
-  p = mpfi_get_prec(result);
+  p = sollya_mpfi_get_prec(result);
   if (p > prec) prec = p;
 
   res = supremumNormBisectInner(result, poly, func, a, b, mode, accuracy, diameter, prec);
@@ -2076,6 +2200,9 @@ int supremumNormBisect(sollya_mpfi_t result, node *poly, node *func, mpfr_t a, m
     break;
   case SUPNORM_CANNOT_DETERMINE_SIGN_OF_T:
     printMessage(1,"Warning: during supnorm computation, it was not possible to safely determine the sign of the Taylor polynomial.\n");
+    break;
+  case SUPNORM_CANNOT_DETERMINE_ORDER_OF_SINGU:
+    printMessage(1,"Warning: during supnorm computation, it was not possible to safely determine the order of a presume zero of the given function.\n");
     break;    
   default:
     printMessage(1,"Warning: during supnorm computation, some generic error occured. No further description is available.\n");
