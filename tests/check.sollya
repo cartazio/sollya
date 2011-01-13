@@ -2263,10 +2263,6 @@ execute("checkTMandAD.sollya");
 
 restart;
 print("=============== Test number 255 ================");
-{ .a = 5; .b = exp(x) };
-{ .a = 5; .b = exp(x) }.a;
-{ .a = 5; .b = exp(x) }.b;
-{ .a = 5; .b = exp(x) }.b(5);
 { .a = 5, .b = exp(x) };
 { .a = 5, .b = exp(x) }.a;
 { .a = 5, .b = exp(x) }.b;
@@ -2303,4 +2299,10 @@ h = { .b = exp(x) };
 h.a = 17;
 f;
 h;
-
+a = { .u=1};
+b = { .toto = a };
+b;
+a = { .toto = .25};
+a = { .a = a };
+a;
+t = { .b = 1; .b = 2};
