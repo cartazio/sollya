@@ -244,7 +244,7 @@ libraryFunction *bindConstantFunction(char* libraryName, char *functionName) {
   libHandle = getConstantLibraryHandle(libraryName);
   if (libHandle == NULL) {
     changeToWarningMode();
-    fprintf(stderr,"Error: could not open library \"%s\" for binding \"%s\": %s\n",libraryName,functionName,dlerror());
+    sollyaFprintf(stderr,"Error: could not open library \"%s\" for binding \"%s\": %s\n",libraryName,functionName,dlerror());
     restoreMode();
     return NULL;
   }
@@ -253,7 +253,7 @@ libraryFunction *bindConstantFunction(char* libraryName, char *functionName) {
   myFunction = (void (*)(mpfr_t, mp_prec_t)) dlsym(libHandle->libraryDescriptor, functionName);
   if ((error = dlerror()) != NULL) {
     changeToWarningMode();
-    fprintf(stderr, "Error: could not find function \"%s\" in library \"%s\" for binding: %s\n",functionName,libraryName,error);
+    sollyaFprintf(stderr, "Error: could not find function \"%s\" in library \"%s\" for binding: %s\n",functionName,libraryName,error);
     restoreMode();
     return NULL;
   }

@@ -193,67 +193,67 @@ void fprintInstruction(FILE *output, struct implementCsteInstruction instr, int 
     else ptr = instr.strval;
 
     if (instr.prec > 0)
-      fprintf(output, "%s%s (%s, prec+%d);\n", indent, ptr, instr.var1, instr.prec);
+      sollyaFprintf(output, "%s%s (%s, prec+%d);\n", indent, ptr, instr.var1, instr.prec);
     else if (instr.prec == 0)
-      fprintf(output, "%s%s (%s, prec);\n", indent, ptr, instr.var1);
+      sollyaFprintf(output, "%s%s (%s, prec);\n", indent, ptr, instr.var1);
     else {
-      fprintf(output, "%sif (prec >= %d+MPFR_PREC_MIN)\n", indent, -instr.prec);
-      fprintf(output, "%s{\n", indent);
-      fprintf(output, "%s  %s (%s, prec-%d);\n", indent, ptr, instr.var1, -instr.prec);
-      fprintf(output, "%s}\n", indent);
-      fprintf(output, "%selse\n", indent);
-      fprintf(output, "%s{\n", indent);
-      fprintf(output, "%s  %s (%s, MPFR_PREC_MIN);\n", indent, ptr, instr.var1);
-      fprintf(output, "%s}\n", indent);
+      sollyaFprintf(output, "%sif (prec >= %d+MPFR_PREC_MIN)\n", indent, -instr.prec);
+      sollyaFprintf(output, "%s{\n", indent);
+      sollyaFprintf(output, "%s  %s (%s, prec-%d);\n", indent, ptr, instr.var1, -instr.prec);
+      sollyaFprintf(output, "%s}\n", indent);
+      sollyaFprintf(output, "%selse\n", indent);
+      sollyaFprintf(output, "%s{\n", indent);
+      sollyaFprintf(output, "%s  %s (%s, MPFR_PREC_MIN);\n", indent, ptr, instr.var1);
+      sollyaFprintf(output, "%s}\n", indent);
     }
     break;
   case CONSTANTFUNC:
-    fprintf(output, "%s%s (%s, MPFR_RNDN);\n", indent, instr.name, instr.var1);
+    sollyaFprintf(output, "%s%s (%s, MPFR_RNDN);\n", indent, instr.name, instr.var1);
     break;
   case UNARYFUNC:
-    fprintf(output, "%s%s (%s, %s, MPFR_RNDN);\n", indent, instr.name, instr.var1, instr.var2);
+    sollyaFprintf(output, "%s%s (%s, %s, MPFR_RNDN);\n", indent, instr.name, instr.var1, instr.var2);
     break;
   case BINARYFUNC:
-    fprintf(output, "%s%s (%s, %s, %s, MPFR_RNDN);\n", indent, instr.name, instr.var1, instr.var2, instr.var3);
+    sollyaFprintf(output, "%s%s (%s, %s, %s, MPFR_RNDN);\n", indent, instr.name, instr.var1, instr.var2, instr.var3);
     break;
   case SETUI:
-    fprintf(output, "%smpfr_set_ui (%s, %lu, MPFR_RNDN);\n", indent, instr.var1, instr.uival);
+    sollyaFprintf(output, "%smpfr_set_ui (%s, %lu, MPFR_RNDN);\n", indent, instr.var1, instr.uival);
     break;
   case SETSI:
-    fprintf(output, "%smpfr_set_si (%s, %ld, MPFR_RNDN);\n", indent, instr.var1, instr.sival);
+    sollyaFprintf(output, "%smpfr_set_si (%s, %ld, MPFR_RNDN);\n", indent, instr.var1, instr.sival);
     break;
   case SETSTR:
-    fprintf(output, "%smpfr_set_str (%s, \"%s\", 2, MPFR_RNDN);\n", indent, instr.var1, instr.strval);
+    sollyaFprintf(output, "%smpfr_set_str (%s, \"%s\", 2, MPFR_RNDN);\n", indent, instr.var1, instr.strval);
     break;
   case UIPOWUI:
-    fprintf(output, "%smpfr_ui_pow_ui (%s, %lu, %lu, MPFR_RNDN);\n", indent, instr.var1, instr.uival, instr.uival2);
+    sollyaFprintf(output, "%smpfr_ui_pow_ui (%s, %lu, %lu, MPFR_RNDN);\n", indent, instr.var1, instr.uival, instr.uival2);
     break;
   case POWUI:
-    fprintf(output, "%smpfr_pow_ui (%s, %s, %lu, MPFR_RNDN);\n", indent, instr.var1, instr.var2, instr.uival);
+    sollyaFprintf(output, "%smpfr_pow_ui (%s, %s, %lu, MPFR_RNDN);\n", indent, instr.var1, instr.var2, instr.uival);
     break;
   case ROOT:
-    fprintf(output, "%smpfr_root (%s, %s, %lu, MPFR_RNDN);\n", indent, instr.var1, instr.var2, instr.uival);
+    sollyaFprintf(output, "%smpfr_root (%s, %s, %lu, MPFR_RNDN);\n", indent, instr.var1, instr.var2, instr.uival);
     break;
   case IFTHENELSE:
-    fprintf(output, "%sif (%s)\n", indent, instr.strval);
-    fprintf(output, "%s{\n", indent);
+    sollyaFprintf(output, "%sif (%s)\n", indent, instr.strval);
+    sollyaFprintf(output, "%s{\n", indent);
     curr = instr.prog1.instructions;
     while(curr!=NULL) {
       fprintInstruction(output, *(struct implementCsteInstruction *)(curr->value), indentlevel+1);
       curr = curr->next;
     }
-    fprintf(output, "%s}\n", indent);
-    fprintf(output, "%selse\n", indent);
-    fprintf(output, "%s{\n", indent);
+    sollyaFprintf(output, "%s}\n", indent);
+    sollyaFprintf(output, "%selse\n", indent);
+    sollyaFprintf(output, "%s{\n", indent);
     curr = instr.prog2.instructions;
     while(curr!=NULL) {
       fprintInstruction(output, *(struct implementCsteInstruction *)(curr->value), indentlevel+1);
       curr = curr->next;
     }
-    fprintf(output, "%s}\n", indent);
+    sollyaFprintf(output, "%s}\n", indent);
     break;
   default: 
-    fprintf(stderr, "Unknown instruction %d\n", instr.type);
+    sollyaFprintf(stderr, "Unknown instruction %d\n", instr.type);
   }
 
   free(indent);
@@ -511,7 +511,7 @@ void appendIfThenElseProg(char *cond, struct implementCsteProgram prog1, struct 
   program->maxcounter = (prog1.maxcounter > prog2.maxcounter)?prog1.maxcounter:prog2.maxcounter; 
   if(prog1.precisions != prog2.precisions) {
     changeToWarningMode();
-    fprintf(stderr, "Unexpected error: in an if-then-else statement, both branches must share the same pointer of precisions\n");
+    sollyaFprintf(stderr, "Unexpected error: in an if-then-else statement, both branches must share the same pointer of precisions\n");
     restoreMode();
     recoverFromError();
   }
@@ -551,13 +551,13 @@ void implementCste(node *c) {
     curr = curr->next;
   }
 
-  fprintf(output, "void\n");
-  fprintf(output, "mpfr_const_%s (mpfr_ptr y, mp_prec_t prec)\n", name);
-  fprintf(output, "{\n");
-  if(program.maxcounter>=2) fprintf(output, "  /* Declarations */\n");
-  for(i=1; i<=program.maxcounter-1; i++) fprintf(output, "  mpfr_t tmp%d;\n", i);
-  if(program.maxcounter>=2) fprintf(output, "\n");
-  fprintf(output, "  /* Initializations */\n");
+  sollyaFprintf(output, "void\n");
+  sollyaFprintf(output, "mpfr_const_%s (mpfr_ptr y, mp_prec_t prec)\n", name);
+  sollyaFprintf(output, "{\n");
+  if(program.maxcounter>=2) sollyaFprintf(output, "  /* Declarations */\n");
+  for(i=1; i<=program.maxcounter-1; i++) sollyaFprintf(output, "  mpfr_t tmp%d;\n", i);
+  if(program.maxcounter>=2) sollyaFprintf(output, "\n");
+  sollyaFprintf(output, "  /* Initializations */\n");
 
   test = 1;
   curr=program.instructions;
@@ -565,8 +565,8 @@ void implementCste(node *c) {
     if (test 
         && ( ((struct implementCsteInstruction *)(curr->value))->type != INIT2 )
         ) {
-      fprintf(output, "\n");
-      fprintf(output, "  /* Core */\n");
+      sollyaFprintf(output, "\n");
+      sollyaFprintf(output, "  /* Core */\n");
       test = 0;
     }
     fprintInstruction(output, *(struct implementCsteInstruction *)(curr->value), 1);
@@ -574,11 +574,11 @@ void implementCste(node *c) {
   }
 
   if(program.maxcounter>=2) {
-    fprintf(output, "\n");
-    fprintf(output, "  /* Cleaning stuff */\n");
+    sollyaFprintf(output, "\n");
+    sollyaFprintf(output, "  /* Cleaning stuff */\n");
   }
-  for(i=1; i<=program.maxcounter-1; i++) fprintf(output, "  mpfr_clear(tmp%d);\n", i);
-  fprintf(output, "}\n");
+  for(i=1; i<=program.maxcounter-1; i++) sollyaFprintf(output, "  mpfr_clear(tmp%d);\n", i);
+  sollyaFprintf(output, "}\n");
 
   freeChain(program.instructions, free_implementCsteInstruction);
   freeChain(program.precisions, free);
@@ -679,9 +679,9 @@ int unaryFunctionCase(int nodeType, node *cste, char *functionName, int gamma0, 
   evaluateInterval(b, func, deriv, a);
   if (mpfi_has_zero(b)) {
     changeToWarningMode();
-    fprintf(stderr, "Error in implementconstant: the following expression seems to be exactly zero:\n");
+    sollyaFprintf(stderr, "Error in implementconstant: the following expression seems to be exactly zero:\n");
     fprintTree(stderr, makeUnary(copyTree(cste), nodeType));
-    fprintf(stderr, "\nIf it is not exactly zero, increasing prec should solve the issue.\nAbort.\n");
+    sollyaFprintf(stderr, "\nIf it is not exactly zero, increasing prec should solve the issue.\nAbort.\n");
     restoreMode();
     recoverFromError();
   }
@@ -859,9 +859,9 @@ int implementAddSub(node *c, int gamma0, struct implementCsteProgram *program) {
   evaluateInterval(y, c, NULL, y);
   if (mpfi_has_zero(y)) {
     changeToWarningMode();
-    fprintf(stderr, "Error in implementconstant: the following expression seems to be exactly zero:\n");
+    sollyaFprintf(stderr, "Error in implementconstant: the following expression seems to be exactly zero:\n");
     fprintTree(stderr, c);
-    fprintf(stderr, "\nIf it is not exactly zero, increasing prec should solve the issue.\nAbort.\n");
+    sollyaFprintf(stderr, "\nIf it is not exactly zero, increasing prec should solve the issue.\nAbort.\n");
     restoreMode();
     recoverFromError();
   }
@@ -973,7 +973,7 @@ int implementAddSub(node *c, int gamma0, struct implementCsteProgram *program) {
     appendBinaryfuncProg("mpfr_sub", counter, tmpa, tmpb, program);
   else {
     changeToWarningMode();
-    fprintf(stderr, "Unexpected error: an addition/subtraction must have nodeType=ADD or nodeType=SUB\n");
+    sollyaFprintf(stderr, "Unexpected error: an addition/subtraction must have nodeType=ADD or nodeType=SUB\n");
     restoreMode();
     recoverFromError();
   }

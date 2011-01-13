@@ -459,7 +459,7 @@ void fprintHeadFunction(FILE *fd,node *tree, char *x, char *y) {
     sollyaFprintf(fd,"pi");
     break;
   case LIBRARYCONSTANT:
-    fprintf(fd,"%s",tree->libFun->functionName);
+    sollyaFprintf(fd,"%s",tree->libFun->functionName);
     break;
   default:
    sollyaFprintf(stderr,"fprintHeadFunction: unknown identifier (%d) in the tree\n",tree->nodeType);
@@ -1400,7 +1400,7 @@ void fprintTreeWithPrintMode(FILE *fd, node *tree) {
     sollyaFprintf(fd,"pi");
     break;
   case LIBRARYCONSTANT:
-    fprintf(fd,"%s",tree->libFun->functionName);
+    sollyaFprintf(fd,"%s",tree->libFun->functionName);
     break;
   default:
    sollyaFprintf(stderr,"Error: fprintTreeWithPrintMode: unknown identifier in the tree\n");
@@ -1860,7 +1860,7 @@ void printTree(node *tree) {
     sollyaPrintf("pi");
     break;
   case LIBRARYCONSTANT:
-    printf("%s",tree->libFun->functionName);
+    sollyaPrintf("%s",tree->libFun->functionName);
     break;
   default:
    sollyaFprintf(stderr,"Error: printTree: unknown identifier in the tree\n");
@@ -2548,7 +2548,7 @@ void fprintTree(FILE *fd, node *tree) {
     sollyaFprintf(fd,"pi");
     break;
   case LIBRARYCONSTANT:
-    fprintf(fd,"%s",tree->libFun->functionName);
+    sollyaFprintf(fd,"%s",tree->libFun->functionName);
     break;
   default:
    sollyaFprintf(stderr,"Error: fprintTree: unknown identifier in the tree\n");
