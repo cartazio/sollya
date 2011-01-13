@@ -151,11 +151,11 @@ void *copyRangetypePtr(void *ptr) {
 }
 
 void *copyMpfiPtr(void *ptr) {
-  mpfi_t *newMpfi;
+  sollya_mpfi_t *newMpfi;
 
-  newMpfi = (mpfi_t *) safeMalloc(sizeof(mpfi_t));
-  mpfi_init2(*newMpfi,mpfi_get_prec(*((mpfi_t *) ptr)));
-  mpfi_set(*newMpfi,*((mpfi_t *) ptr));
+  newMpfi = (sollya_mpfi_t *) safeMalloc(sizeof(sollya_mpfi_t));
+  sollya_mpfi_init2(*newMpfi,sollya_mpfi_get_prec(*((sollya_mpfi_t *) ptr)));
+  sollya_mpfi_set(*newMpfi,*((sollya_mpfi_t *) ptr));
   return (void *) newMpfi;
 }
 
@@ -230,7 +230,7 @@ void freeMpfrPtr(void *ptr) {
 
 void freeMpfiPtr(void *i) {
   if (i == NULL) return;
-  mpfi_clear(*((mpfi_t *) i));
+  sollya_mpfi_clear(*((sollya_mpfi_t *) i));
   free(i);
 }
 
@@ -329,12 +329,12 @@ int cmpMpfrPtr(void *a, void *b) {
 
 void printIntChain(chain *c) {
   chain *curr=c;
-  printf("[");
+  sollyaPrintf("[");
   while(curr!=NULL) {
-    printf(" %d ", *(int *)(curr->value));
+    sollyaPrintf(" %d ", *(int *)(curr->value));
     curr=curr->next;
   }
-  printf("]\n");
+  sollyaPrintf("]\n");
   return;
 }
 
@@ -382,7 +382,7 @@ chain *copyChainAndReplaceNth(chain *c, int k, void *obj, void * (*f) (void *)) 
 }
 
 int isEqualStringOnVoid(void *s, void *s2) {
-  if (strcmp((char *) s, (char *) s2)) return 1; else return 0;
+  if (strcmp((char *) s, (char *) s2) == 0) return 1; else return 0;
 }
 
 int isEqualIntPtrOnVoid(void *a, void *b) {

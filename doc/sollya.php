@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-<title>Users' manual for the Sollya tool - Release 2.0</title>
+<title>Users' manual for the Sollya tool - Release 2.1-alpha</title>
 <meta name="author" content="Sylvain Chevillard, Christoph Lauter">
 <meta name="copyright" content="2009 Laboratoire de l'Informatique du Parallélisme - UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668">
 <meta name="keywords" content="help, sollya, User's Manual">
@@ -20,7 +20,7 @@ h2 { font-size: large;}
 <body>
 
 <p>
-<h1 style="text-align:center">Users' manual for the <span class="sollya">Sollya</span> tool - Release 2.0</h1>
+<h1 style="text-align:center">Users' manual for the <span class="sollya">Sollya</span> tool - Release 2.1-alpha</h1>
 <div style="text-align:center; line-height: 1.5em;">Sylvain Chevillard (<a href="sylvain.chevillard@ens-lyon.org">sylvain.chevillard@ens-lyon.org</a>),</div>
 <div style="text-align:center; line-height: 1.5em;">Christoph Lauter (<a href="christoph.lauter@ens-lyon.org; line-height: 1.5em;">christoph.lauter@ens-lyon.org</a>)</div>
 <div style="text-align:center">and Mioara Joldes (<a href="mioara.joldes@ens-lyon.fr">mioara.joldes@ens-lyon.fr</a>).</div>
@@ -28,8 +28,9 @@ h2 { font-size: large;}
 <h2 style="margin-top: 3em;">License</h2>
 <p style="font-size:small;">
 The <span class="sollya">Sollya</span> tool is Copyright &copy;&nbsp;2006-2010 by<br>
-<span style="text-indent:3em; display:block;">Laboratoire de l'Informatique du Parallélisme - UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668, Lyon, France, and by</span>
-<span style="text-indent:3em;display:block;">LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2) Nancy, France.</span>
+<span style="text-indent:3em; display:block;">Laboratoire de l'Informatique du Parallélisme - UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668, Lyon, France, </span>
+<span style="text-indent:3em;display:block;">LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2) Nancy, France, and by</span>
+<span style="text-indent:3em;display:block;">Laboratoire d'Informatique de Paris 6, Équipe PEQUAN, UPMC Université Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.</span>
 All rights reserved.
 <p style="font-size:small;">
 The <span class="sollya">Sollya</span> tool is open software. It is distributed and can be used,
@@ -40,7 +41,7 @@ parts of other libraries as a support for but not integral part of
 <span class="sollya">Sollya</span>. These libraries are reigned by the GNU Lesser General Public
 License that is available at <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a> and
 reproduced in the <code>COPYING</code> file of the distribution.
-<h1><a href="#commandsAndFunctions">Go directly to the list of available commands</a></h1>
+<h1><a href="#commandsAndFunctions">Direct access to the list of available commands</a></h1>
 
 <h1>1 - Compilation and installation of the <span class="sollya">Sollya</span> tool</h1>
 <p>
@@ -121,7 +122,30 @@ nevertheless, use this deprecated option.
   that do not support the <code>-A</code> option. The option is considered
   a hack since it is known to garble the output of the tool under
   some particular circumstances.
-</li></ul>
+</li><li> <code>--warninfile[append] &lt;file&gt;</code>: Normally, <span class="sollya">Sollya</span> emits
+  warning and information messages together with all other displayed
+  information on either standard output or standard error. This option
+  allows all warning and information messages to get redirected to a
+  file. The filename to be used must be given after the option.  When
+  <code>--warninfile</code> is used, the existing content (if any) of the
+  file is first removed before writing to the file. With
+  <code>--warninfileappend</code>, the messages are appended to an
+  existing file. Even if coloring is used for the displaying all other
+  <span class="sollya">Sollya</span> output, no coloring sequences are ever written to the
+  file. Let us emphasize on the fact that any file of a unixoid system
+  can be used for output, for instance also a named pipe. This allows
+  for error messaging to be performed on a separate terminal. The use
+  of this option is mutually exclusive with the
+  <code>--warnonstderr</code> option.
+</li><li> <code>--warnonstderr</code>: Normally, <span class="sollya">Sollya</span> prints warning and
+  information messages on standard output, using a warning color 
+  when coloring is activated. When this option is given, <span class="sollya">Sollya</span> will 
+  output all warning and information messages on standard error. Coloring
+  will be used even on standard error, when activated. The use of 
+  this option is mutually exclusive with the <code>--warninfile[append]</code>
+  option.
+</li>
+</ul>
 <p>
 <p>
 <h1>2 - Introduction</h1>
@@ -589,6 +613,45 @@ following examples:
 <p>
 <?php include("introExample24.php"); ?>
 <p>
+
+<h2>5.9 - Structures</h2>
+<p>
+In a similar way as in lists, <span class="sollya">Sollya</span>
+allows data to be grouped in - untyped - structures. A structure forms
+an object to which other objects can be added as elements and
+identified by their names. The elements of a structure can be
+retrieved under their name and used as usual. The following sequence
+shows that point:
+<p>
+<?php include("introExample46.php"); ?>
+
+<p>
+Structures can also be defined literally using the syntax illustrated
+in the next example. They will also be printed in that syntax.
+<p>
+<?php include("introExample47.php"); ?>
+
+<p>
+It is possible to assign to new, undefined (sub-)elements identified by names that have not yet 
+created in a structure or to change (sub-)elements in (nested) structures. However it is not 
+possible to replace a variable or (sub-)element of a structure previously assigned to 
+an object that is not a structure by a structure with just one element:
+<p>
+<?php include("introExample48.php"); ?>
+
+<p>
+When printed, the elements of a structure are not sorted in any
+manner. They get printed in an arbitrary order that just maintains the
+order given in the definition of literate structures. That said, when
+compared, two structures compare equal iff they contain the same
+number of identifiers, with the same names and iff the elements of
+corresponding names all compare equal. This means the order does
+not matter in comparisons and otherwise does only for printing.
+
+<p>The following example illustrates this matter:
+<p>
+<?php include("introExample49.php"); ?>
+
 <h1>6 - Iterative language elements: assignments, conditional statements and loops</h1>
 <p>
 <h2>6.1 - Blocks</h2>

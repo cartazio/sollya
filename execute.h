@@ -5,6 +5,11 @@ Copyright 2007-2010 by
 Laboratoire de l'Informatique du Parallélisme,
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
 
+and
+
+Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
+UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.
+
 Contributors Ch. Lauter, S. Chevillard
 
 christoph.lauter@ens-lyon.org
@@ -260,8 +265,17 @@ extern void endBuffer(void);
 #define DIEONERRORMODEDEREF 250
 #define COMPAREIN 251
 #define AUTODIFF 252
-#define IMPLEMENTCSTE 253
-#define LIBRARYCONSTANTBINDING 254
+#define MIN 253
+#define MAX 254
+#define SUPNORM 255
+#define STRUCTACCESS 256
+#define STRUCTURE 257
+#define ASSIGNMENTINSTRUCTURE 258
+#define FLOATASSIGNMENTINSTRUCTURE 259
+#define PROTOASSIGNMENTINSTRUCTURE 260
+#define PROTOFLOATASSIGNMENTINSTRUCTURE 261
+#define IMPLEMENTCSTE 262
+#define LIBRARYCONSTANTBINDING 263
 
 int executeCommand(node *);
 
@@ -276,7 +290,6 @@ node *makeWhile(node *thing1, node *thing2);
 node *makeIfElse(node *thing1, node *thing2, node *thing3);
 node *makeIf(node *thing1, node *thing2);
 node *makeFor(char *string, node *thing1, node *thing2, node *thing3, node *thing4);
-node *makeConstantDouble(double d);
 node *makeForIn(char *string, node *thing1, node *thing2);
 node *makeQuit();
 node *makeFalseQuit();
@@ -304,6 +317,7 @@ node *makeFloatAssignment(char *string, node *thing);
 node *makeLibraryBinding(char *string, node *thing);
 node *makeLibraryConstantBinding(char *string, node *thing);
 node *makePrecAssign(node *thing);
+node *makeProcedureFunction(node *thing);
 node *makePointsAssign(node *thing);
 node *makeDiamAssign(node *thing);
 node *makeDisplayAssign(node *thing);
@@ -383,6 +397,7 @@ node *makeString(char *string);
 node *makeTableAccess(char *string);
 node *makeIsBound(char *string);
 node *makeTableAccessWithSubstitute(char *string, chain *thinglist);
+node *makeStructAccess(node *thing, char *string);
 node *makeDecimalConstant(char *string);
 node *makeMidpointConstant(char *string);
 node *makeDyadicConstant(char *string);
@@ -391,6 +406,8 @@ node *makeHexadecimalConstant(char *string);
 node *makeBinaryConstant(char *string);
 node *makeEmptyList();
 node *makeList(chain *thinglist);
+node *makeStructure(chain *assoclist);
+node *makeRevertedStructure(chain *assoclist);
 node *makeFinalEllipticList(chain *thinglist);
 node *makeRevertedList(chain *thinglist);
 node *makeRevertedFinalEllipticList(chain *thinglist);
@@ -404,6 +421,8 @@ node *makeDiff(node *thing);
 node *makeSimplify(node *thing);
 node *makeSimplifySafe(node *thing);
 node *makeRemez(chain *thinglist);
+node *makeMin(chain *thinglist);
+node *makeMax(chain *thinglist);
 node *makeFPminimax(chain *thinglist);
 node *makeHorner(node *thing);
 node *makeCanonicalThing(node *thing);
@@ -424,6 +443,7 @@ node *makeRoundToFormat(node *thing1, node *thing2, node *thing3);
 node *makeEvaluate(node *thing1, node *thing2);
 node *makeParse(node *thing);
 node *makeInfnorm(chain *thinglist);
+node *makeSupnorm(chain *thinglist);
 node *makeFindZeros(node *thing1, node *thing2);
 node *makeFPFindZeros(node *thing1, node *thing2);
 node *makeDirtyInfnorm(node *thing1, node *thing2);
@@ -466,6 +486,10 @@ node *makeSuppressWarningsDeref();
 node *makeHopitalRecursDeref();
 node *makeAssignmentInIndexing(node *, node *, node *);
 node *makeFloatAssignmentInIndexing(node *, node *, node *);
+node *makeAssignmentInStructure(chain *, node *);
+node *makeFloatAssignmentInStructure(chain *, node *);
+node *makeProtoAssignmentInStructure(node *, node *);
+node *makeProtoFloatAssignmentInStructure(node *, node *);
 node *makeDoubleextendedSymbol();
 node *makePrintXml(node *);
 node *makePrintXmlNewFile(node *, node *);
@@ -480,5 +504,12 @@ node *makeProcIllim(char *arg, node *body, node *returnVal);
 node *makeApply(node *thing, chain *thinglist);
 
 node *parseString(char *str);
+
+void computeFunctionWithProcedure(sollya_mpfi_t y, node *proc, sollya_mpfi_t x, unsigned int derivN);
+void computeFunctionWithProcedureMpfr(mpfr_t rop, node *proc, mpfr_t op, unsigned int derivN);
+int isEqualThing(node *tree, node *tree2);
+void fPrintThing(FILE *fd, node *thing);
+void printThing(node *thing);
+char *sPrintThing(node *thing);
 
 #endif /* ifdef EXECUTE_H*/

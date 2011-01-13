@@ -97,6 +97,7 @@ knowledge of the CeCILL-C license and that you accept its terms.
 #define SINGLE 39
 #define NEARESTINT 40
 #define LIBRARYCONSTANT 41
+#define PROCEDUREFUNCTION 42
 
 typedef struct nodeStruct node;
 
@@ -159,6 +160,7 @@ void fprintHeadFunction(FILE *fd,node *tree, char *x, char *y);
 int isConstant(node *tree);
 void getCoefficients(int *degree, node ***coefficients, node *poly);
 node *makePolynomial(mpfr_t *coefficients, int degree);
+node *makePolynomialConstantExpressions(node **coeffs, int deg);
 int treeSize(node *tree);
 void printMpfr(mpfr_t x);
 int highestDegreeOfPolynomialSubexpression(node *tree);
@@ -185,6 +187,7 @@ mp_prec_t getMpzPrecision(mpz_t x);
 
 node *makeVariable();
 node *makeConstant(mpfr_t x);
+node *makeConstantDouble(double x);
 node *makeAdd(node *op1, node *op2);
 node *makeSub(node *op1, node *op2);
 node *makeMul(node *op1, node *op2);

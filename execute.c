@@ -3,11 +3,14 @@
 Copyright 2007-2010 by 
 
 Laboratoire de l'Informatique du Parallélisme, 
-UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
-
-and by
+UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
 
 LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2)
+
+and
+
+Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
+UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.
 
 Contributors Ch. Lauter, S. Chevillard
 
@@ -50,7 +53,7 @@ knowledge of the CeCILL-C license and that you accept its terms.
 */
 
 #include <mpfr.h>
-#include <mpfi.h>
+#include "mpfi-compat.h"
 #include <gmp.h>
 #include "execute.h"
 #include <stdio.h> 
@@ -77,6 +80,7 @@ knowledge of the CeCILL-C license and that you accept its terms.
 #include "implement-cste.h"
 #include "taylor.h"
 #include "taylorform.h"
+#include "supnorm.h"
 #include "xml.h"
 #include "miniparser.h"
 #include <setjmp.h>
@@ -100,6 +104,73 @@ node *copyThing(node *);
 node *evaluateThingInner(node *);
 node *evaluateThing(node *);
 void *copyThingOnVoid(void *);
+void *copyEntryOnVoid(void *ptr);
+void *evaluateEntryOnVoid(void *ptr);
+void freeEntryOnVoid(void *ptr);
+
+void freeDoNothing(void *ptr) {
+  UNUSED_PARAM(ptr); 
+  return;
+}
+
+// Performs a fast check if a < b or a > b 
+//
+// Returns 1 on success, 0 on failure
+//
+// Sets res to -1 if a < b and to +1 if a > b
+// 
+//
+int checkInequalityFast(int *res, node *a, node *b) {
+  sollya_mpfi_t aI, bI;
+  mpfr_t ahi, alo, bhi, blo;
+  int okay;
+
+  if (!(isConstant(a) && isConstant(b))) return 0;
+
+  sollya_mpfi_init2(aI, 12);
+  sollya_mpfi_init2(bI, 12);
+  mpfr_init2(ahi, 12);
+  mpfr_init2(alo, 12);
+  mpfr_init2(bhi, 12);
+  mpfr_init2(blo, 12);
+
+  okay = 0;
+
+  evaluateConstantExpressionToInterval(aI, a);
+  evaluateConstantExpressionToInterval(bI, b);
+
+  sollya_mpfi_revert_if_needed(aI);
+  sollya_mpfi_revert_if_needed(bI);
+
+  sollya_mpfi_get_left(alo, aI);
+  sollya_mpfi_get_right(ahi, aI);
+  sollya_mpfi_get_left(blo, bI);
+  sollya_mpfi_get_right(bhi, bI);
+
+  if (mpfr_number_p(alo) && 
+      mpfr_number_p(ahi) && 
+      mpfr_number_p(blo) &&
+      mpfr_number_p(bhi)) {
+    if (mpfr_cmp(ahi,blo) < 0) {
+      okay = 1;
+      *res = -1;
+    } else {
+      if (mpfr_cmp(bhi,alo) < 0) {
+        okay = 1;
+        *res = 1;
+      }
+    }
+  }
+
+  mpfr_clear(blo);
+  mpfr_clear(bhi);
+  mpfr_clear(alo);
+  mpfr_clear(ahi);
+  sollya_mpfi_clear(bI);
+  sollya_mpfi_clear(aI);
+
+  return okay;
+}
 
 node *parseString(char *str) {
   node *result;
@@ -373,6 +444,11 @@ node *copyThing(node *tree) {
     break;
   case LIBRARYCONSTANT:
     copy->libFun = tree->libFun;
+    break;
+  case PROCEDUREFUNCTION:
+    copy->libFunDeriv = tree->libFunDeriv;
+    copy->child1 = copyThing(tree->child1);
+    copy->child2 = copyThing(tree->child2);
     break;
   case CEIL:
     copy->child1 = copyThing(tree->child1);
@@ -747,6 +823,11 @@ node *copyThing(node *tree) {
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     break;  	
+  case STRUCTACCESS:
+    copy->child1 = copyThing(tree->child1);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;  	
   case APPLY:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     copy->child1 = copyThing(tree->child1);
@@ -779,6 +860,9 @@ node *copyThing(node *tree) {
     break; 			
   case LIST:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
+    break; 	
+  case STRUCTURE:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyEntryOnVoid);
     break; 			 	
   case FINALELLIPTICLIST:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
@@ -814,6 +898,12 @@ node *copyThing(node *tree) {
     copy->child1 = copyThing(tree->child1);
     break;  			
   case REMEZ:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
+    break; 			 	
+  case MIN:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
+    break; 			 	
+  case MAX:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 			 	
   case FPMINIMAX:
@@ -888,6 +978,9 @@ node *copyThing(node *tree) {
   case INFNORM:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 			
+  case SUPNORM:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
+    break; 			
   case FINDZEROS:
     copy->child1 = copyThing(tree->child1);
     copy->child2 = copyThing(tree->child2);
@@ -940,7 +1033,23 @@ node *copyThing(node *tree) {
     break; 			
   case FLOATASSIGNMENTININDEXING:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
+    break; 	
+  case ASSIGNMENTINSTRUCTURE:
+    copy->child1 = copyThing(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
     break; 			
+  case FLOATASSIGNMENTINSTRUCTURE:
+    copy->child1 = copyThing(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
+    break; 				
+  case PROTOASSIGNMENTINSTRUCTURE:
+    copy->child1 = copyThing(tree->child1);
+    copy->child2 = copyThing(tree->child2);
+    break; 			
+  case PROTOFLOATASSIGNMENTINSTRUCTURE:
+    copy->child1 = copyThing(tree->child1);
+    copy->child2 = copyThing(tree->child2);
+    break; 				
   case DIRTYFINDZEROS:
     copy->child1 = copyThing(tree->child1);
     copy->child2 = copyThing(tree->child2);
@@ -1019,7 +1128,7 @@ node *copyThing(node *tree) {
   case HOPITALRECURSDEREF:
     break;  	       
   default:
-    fprintf(stderr,"Error: copyThing: unknown identifier (%d) in the tree\n",tree->nodeType);
+    sollyaFprintf(stderr,"Error: copyThing: unknown identifier (%d) in the tree\n",tree->nodeType);
     exit(1);
   }
 
@@ -1031,6 +1140,31 @@ node *copyThing(node *tree) {
 void *copyThingOnVoid(void *tree) {
   return (void *) copyThing((node *) tree);
 }
+
+void *copyEntryOnVoid(void *ptr) {
+  entry *copy;
+  copy = (entry *) safeMalloc(sizeof(entry));
+  copy->name = (char *) safeCalloc(strlen(((entry *) ptr)->name)+1,sizeof(char));
+  strcpy(copy->name,((entry *) ptr)->name);
+  copy->value = copyThing((node *) (((entry *) ptr)->value));
+  return copy;
+}
+
+void *evaluateEntryOnVoid(void *ptr) {
+  entry *copy;
+  copy = (entry *) safeMalloc(sizeof(entry));
+  copy->name = (char *) safeCalloc(strlen(((entry *) ptr)->name)+1,sizeof(char));
+  strcpy(copy->name,((entry *) ptr)->name);
+  copy->value = evaluateThing((node *) (((entry *) ptr)->value));
+  return copy;
+}
+
+void freeEntryOnVoid(void *ptr) {
+  free(((entry *) ptr)->name);
+  freeThing((node *) (((entry *) ptr)->value));
+  free(ptr);
+}
+
 
 char *getTimingStringForThing(node *tree) {
   char *constString, *newString;
@@ -1147,6 +1281,9 @@ char *getTimingStringForThing(node *tree) {
     constString = NULL;
     break;
   case LIBRARYCONSTANT:
+    constString = NULL;
+    break;
+  case PROCEDUREFUNCTION:
     constString = NULL;
     break;
   case CEIL:
@@ -1512,6 +1649,9 @@ char *getTimingStringForThing(node *tree) {
   case TABLEACCESSWITHSUBSTITUTE:
     constString = "dereferencing an identifier and substituting";
     break;  	
+  case STRUCTACCESS:
+    constString = "accessing a member of a structure";
+    break;  	
   case APPLY:
     constString = "applying something to something";
     break;  	
@@ -1538,6 +1678,9 @@ char *getTimingStringForThing(node *tree) {
     break; 			
   case LIST:
     constString = "handling a list";
+    break; 
+  case STRUCTURE:
+    constString = "handling a structure";
     break; 			 	
   case FINALELLIPTICLIST:
     constString = "handling a finally elliptic list";
@@ -1574,6 +1717,12 @@ char *getTimingStringForThing(node *tree) {
     break;  			
   case REMEZ:
     constString = "computing a minimax approximation";
+    break; 			 	
+  case MIN:
+    constString = "computing a minimum";
+    break; 			 	
+  case MAX:
+    constString = "computing a maximum";
     break; 			 	
   case FPMINIMAX:
     constString = "computing a fpminimax approximation";
@@ -1641,6 +1790,9 @@ char *getTimingStringForThing(node *tree) {
   case INFNORM:
     constString = "computing an infinity norm";
     break; 			
+  case SUPNORM:
+    constString = "computing a supremum norm";
+    break; 			
   case FINDZEROS:
     constString = "bounding zeros";
     break; 			
@@ -1685,7 +1837,19 @@ char *getTimingStringForThing(node *tree) {
     break; 			
   case FLOATASSIGNMENTININDEXING:
     constString = "assigning a floating-point value to an indexed element of a list";
-    break; 			
+    break; 	
+  case ASSIGNMENTINSTRUCTURE:
+    constString = "assigning an element to a structure";
+    break; 					
+  case FLOATASSIGNMENTINSTRUCTURE:
+    constString = "assigning a floating-point valued element to a structure";
+    break; 	
+  case PROTOASSIGNMENTINSTRUCTURE:
+    constString = NULL;
+    break; 					
+  case PROTOFLOATASSIGNMENTINSTRUCTURE:
+    constString = NULL;
+    break; 					
   case DIRTYFINDZEROS:
     constString = "searching zeros dirtily";
     break; 			
@@ -1774,7 +1938,7 @@ char *getTimingStringForThing(node *tree) {
     constString = "dereferencing the numbers of recursions for Hopital";
     break;  	       
   default:
-    fprintf(stderr,"Error: getTimingStringForThing: unknown identifier (%d) in the tree\n",tree->nodeType);
+    sollyaFprintf(stderr,"Error: getTimingStringForThing: unknown identifier (%d) in the tree\n",tree->nodeType);
     exit(1);
   }
 
@@ -1901,6 +2065,9 @@ int isPureTree(node *tree) {
   case LIBRARYCONSTANT:
     return 1;
     break;
+  case PROCEDUREFUNCTION:
+    return isPureTree(tree->child1);
+    break;
   case CEIL:
     return isPureTree(tree->child1);
     break;
@@ -1928,6 +2095,10 @@ int isString(node *tree) {
 
 int isList(node *tree) {
   return (tree->nodeType == LIST);
+}
+
+int isStructure(node *tree) {
+  return (tree->nodeType == STRUCTURE);
 }
 
 int isEmptyList(node *tree) {
@@ -2966,42 +3137,42 @@ void printThingWithFullStrings(node *thing) {
       if (midpointMode && (dyadic == 0)) {
 	temp = sprintMidpointMode(*(thing->child1->value), *(thing->child2->value));
 	if (temp != NULL) {
-	  printf("%s",temp);
+	  sollyaPrintf("%s",temp);
 	  free(temp);
 	} else {
-	  printf("[");
+	  sollyaPrintf("[");
 	  printValue(thing->child1->value);
-	  printf(";");
+	  sollyaPrintf(";");
 	  printValue(thing->child2->value);
-	  printf("]");
+	  sollyaPrintf("]");
 	}
       } else {
-	printf("[");
+	sollyaPrintf("[");
 	printValue(thing->child1->value);
-	printf(";");
+	sollyaPrintf(";");
 	printValue(thing->child2->value);
-	printf("]");
+	sollyaPrintf("]");
       }
     } else {
       if (isList(thing)) {
 	curr = thing->arguments;
-	printf("[|");
+	sollyaPrintf("[|");
 	while (curr != NULL) {
 	  printThingWithFullStrings((node *) (curr->value));
-	  if (curr->next != NULL) printf(", ");
+	  if (curr->next != NULL) sollyaPrintf(", ");
 	  curr = curr->next;
 	}
-	printf("|]");
+	sollyaPrintf("|]");
       } else {
 	if (isFinalEllipticList(thing)) {
 	  curr = thing->arguments;
-	  printf("[|");
+	  sollyaPrintf("[|");
 	  while (curr != NULL) {
 	    printThingWithFullStrings((node *) (curr->value));
-	    if (curr->next != NULL) printf(", ");
+	    if (curr->next != NULL) sollyaPrintf(", ");
 	    curr = curr->next;
 	  }
-	  printf("...|]");
+	  sollyaPrintf("...|]");
 	} else {
 	  rawPrintThing(thing);
 	}
@@ -3022,45 +3193,45 @@ void printThing(node *thing) {
       if (midpointMode && (dyadic == 0)) {
 	temp = sprintMidpointMode(*(thing->child1->value), *(thing->child2->value));
 	if (temp != NULL) {
-	  printf("%s",temp);
+	  sollyaPrintf("%s",temp);
 	  free(temp);
 	} else {
-	  printf("[");
+	  sollyaPrintf("[");
 	  printValue(thing->child1->value);
-	  printf(";");
+	  sollyaPrintf(";");
 	  printValue(thing->child2->value);
-	  printf("]");
+	  sollyaPrintf("]");
 	}
       } else {
-	printf("[");
+	sollyaPrintf("[");
 	printValue(thing->child1->value);
-	printf(";");
+	sollyaPrintf(";");
 	printValue(thing->child2->value);
-	printf("]");
+	sollyaPrintf("]");
       }
     } else {
       if (isList(thing)) {
 	curr = thing->arguments;
-	printf("[|");
+	sollyaPrintf("[|");
 	while (curr != NULL) {
 	  printThingWithFullStrings((node *) (curr->value));
-	  if (curr->next != NULL) printf(", ");
+	  if (curr->next != NULL) sollyaPrintf(", ");
 	  curr = curr->next;
 	}
-	printf("|]");
+	sollyaPrintf("|]");
       } else {
 	if (isFinalEllipticList(thing)) {
 	  curr = thing->arguments;
-	  printf("[|");
+	  sollyaPrintf("[|");
 	  while (curr != NULL) {
 	    printThingWithFullStrings((node *) (curr->value));
-	    if (curr->next != NULL) printf(", ");
+	    if (curr->next != NULL) sollyaPrintf(", ");
 	    curr = curr->next;
 	  }
-	  printf("...|]");
+	  sollyaPrintf("...|]");
 	} else {
 	  if (isString(thing)) {
-	    printf("%s",thing->string);
+	    sollyaPrintf("%s",thing->string);
 	  } else {
 	    rawPrintThing(thing);
 	  }
@@ -3104,10 +3275,13 @@ char *sRawPrintThing(node *tree) {
 
   switch (tree->nodeType) {
   case VARIABLE:
-    if (variablename != NULL) 
-      res = newString(variablename);
-    else 
-      res = newString("undefined");
+    if (variablename == NULL) {
+      printMessage(1,"Warning: the global free variable has not been bound before being printed.\n");
+      printMessage(1,"As such a binding is required, the variable will now be bound to \"x\"\n");
+      variablename = (char *) safeCalloc(2,sizeof(char));
+      variablename[0] = 'x';
+    }
+    res = newString(variablename);
     break;
   case CONSTANT:
     res = sprintValue(tree->value);
@@ -3289,16 +3463,72 @@ char *sRawPrintThing(node *tree) {
     break;
   case LIBRARYFUNCTION:
     {
-      res = newString("");
-      for (i=1;i<=tree->libFunDeriv;i++) {
-	res = concatAndFree(res,newString("diff("));
+      if (isPureTree(tree->child1) && (tree->child1->nodeType == VARIABLE)) {
+        res = newString("");
+        for (i=1;i<=tree->libFunDeriv;i++) {
+          res = concatAndFree(res,newString("diff("));
+        }
+        res = concatAndFree(res, newString(tree->libFun->functionName));
+        for (i=1;i<=tree->libFunDeriv;i++) {
+          res = concatAndFree(res, newString(")"));
+        }
+      } else {
+	if (tree->libFunDeriv == 0) {
+	  res = newString(tree->libFun->functionName);
+	  res = concatAndFree(res, newString("("));
+	  res = concatAndFree(res, sRawPrintThing(tree->child1));
+	  res = concatAndFree(res, newString(")"));
+	} else {
+	  res = newString("(");
+	  for (i=1;i<=tree->libFunDeriv;i++) {
+	    res = concatAndFree(res,newString("diff("));
+	  }
+	  res = concatAndFree(res,newString(tree->libFun->functionName));
+	  for (i=1;i<=tree->libFunDeriv;i++) {
+	    res = concatAndFree(res, newString(")"));
+	  }
+	  res = concatAndFree(res, newString(")("));
+	  res = concatAndFree(res, sRawPrintThing(tree->child1));
+	  res = concatAndFree(res, newString(")"));
+	}
       }
-      res = concatAndFree(res,newString(tree->libFun->functionName));
-      res = concatAndFree(res, newString(")"));
-      res = concatAndFree(res, sRawPrintThing(tree->child1));
-      res = concatAndFree(res, newString(")"));
-      for (i=1;i<=tree->libFunDeriv;i++) {
-	res = concatAndFree(res, newString(")"));
+    }
+    break;
+  case PROCEDUREFUNCTION:
+    {
+      if (isPureTree(tree->child1) && (tree->child1->nodeType == VARIABLE)) {
+        res = newString("");
+        for (i=1;i<=tree->libFunDeriv;i++) {
+          res = concatAndFree(res,newString("diff("));
+        }
+        res = concatAndFree(res, newString("function("));
+        res = concatAndFree(res, sRawPrintThing(tree->child2));
+        res = concatAndFree(res, newString(")"));
+        for (i=1;i<=tree->libFunDeriv;i++) {
+          res = concatAndFree(res, newString(")"));
+        }
+      } else {
+	if (tree->libFunDeriv == 0) {
+	  res = newString("(function(");
+	  res = concatAndFree(res, sRawPrintThing(tree->child2));
+	  res = concatAndFree(res, newString("))("));
+	  res = concatAndFree(res, sRawPrintThing(tree->child1));
+	  res = concatAndFree(res, newString(")"));
+	} else {
+	  res = newString("(");
+	  for (i=1;i<=tree->libFunDeriv;i++) {
+	    res = concatAndFree(res,newString("diff("));
+	  }
+	  res = concatAndFree(res,newString("function("));
+	  res = concatAndFree(res, sRawPrintThing(tree->child2));
+	  res = concatAndFree(res,newString(")"));
+	  for (i=1;i<=tree->libFunDeriv;i++) {
+	    res = concatAndFree(res, newString(")"));
+	  }
+	  res = concatAndFree(res, newString(")("));
+	  res = concatAndFree(res, sRawPrintThing(tree->child1));
+	  res = concatAndFree(res, newString(")"));
+	}
       }
     }
     break;
@@ -3601,7 +3831,7 @@ char *sRawPrintThing(node *tree) {
 	  break;
 	case CONSTANT_TYPE:
 	  res = concatAndFree(res, newString("constant"));
-	  printf("constant");
+	  sollyaPrintf("constant");
 	  break;
 	case FUNCTION_TYPE:
 	  res = concatAndFree(res, newString("function"));
@@ -4029,7 +4259,7 @@ char *sRawPrintThing(node *tree) {
     res = newString("tripledouble");
     break; 		
   case STRING:
-    res = concatAndFree(newString("\""),concatAndFree(newString(tree->string),newString("\"")));
+    res = concatAndFree(newString("\""),concatAndFree(maskString(tree->string),newString("\"")));
     break; 			 	
   case TABLEACCESS:
     res = newString(tree->string);
@@ -4046,6 +4276,10 @@ char *sRawPrintThing(node *tree) {
       curr = curr->next;
     }
     res = concatAndFree(res, newString(")"));
+    break;  	
+  case STRUCTACCESS:
+    res = concatAndFree(sRawPrintThing(tree->child1),newString("."));
+    res = concatAndFree(res, newString(tree->string));
     break;  	
   case APPLY:
     res = concatAndFree(concatAndFree(concatAndFree(newString("("),sRawPrintThing(tree->child1)), newString(")")),newString("("));
@@ -4087,6 +4321,18 @@ char *sRawPrintThing(node *tree) {
       curr = curr->next;
     }
     res = concatAndFree(res, newString("|]"));
+    break; 			 	
+  case STRUCTURE:
+    res = newString("{ ");
+    curr = tree->arguments;
+    while (curr != NULL) {
+      res = concatAndFree(res,concatAndFree(newString("."),newString(((entry *) (curr->value))->name)));
+      res = concatAndFree(res,newString(" = "));
+      res = concatAndFree(res,sRawPrintThing((node *) (((entry *) (curr->value))->value)));
+      if (curr->next != NULL) res = concatAndFree(res, newString(", "));
+      curr = curr->next;
+    }
+    res = concatAndFree(res, newString(" }"));
     break; 			 	
   case FINALELLIPTICLIST:
     res = newString("[|");
@@ -4148,6 +4394,26 @@ char *sRawPrintThing(node *tree) {
     break;  			
   case REMEZ:
     res = newString("remez(");
+    curr = tree->arguments;
+    while (curr != NULL) {
+      res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
+      if (curr->next != NULL) res = concatAndFree(res, newString(", ")); 
+      curr = curr->next;
+    }
+    res = concatAndFree(res, newString(")"));
+    break; 			 	
+  case MIN:
+    res = newString("min(");
+    curr = tree->arguments;
+    while (curr != NULL) {
+      res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
+      if (curr->next != NULL) res = concatAndFree(res, newString(", ")); 
+      curr = curr->next;
+    }
+    res = concatAndFree(res, newString(")"));
+    break; 			 	
+  case MAX:
+    res = newString("max(");
     curr = tree->arguments;
     while (curr != NULL) {
       res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
@@ -4313,6 +4579,16 @@ char *sRawPrintThing(node *tree) {
     }
     res = concatAndFree(res, newString(")"));
     break; 			
+  case SUPNORM:
+    res = newString("supnorm(");
+    curr = tree->arguments;
+    while (curr != NULL) {
+      res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
+      if (curr->next != NULL) res = concatAndFree(res, newString(", ")); 
+      curr = curr->next;
+    }
+    res = concatAndFree(res, newString(")"));
+    break; 			
   case FINDZEROS:
     res = newString("findzeros(");
     res = concatAndFree(res, sRawPrintThing(tree->child1));
@@ -4431,7 +4707,41 @@ char *sRawPrintThing(node *tree) {
     res = concatAndFree(res, newString("] := "));
     curr = curr->next;
     res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
-    break; 			
+    break; 	
+  case ASSIGNMENTINSTRUCTURE:
+    curr = tree->arguments;
+    res = newString((char *) (curr->value));
+    curr = curr->next;
+    while (curr != NULL) {
+      res = concatAndFree(res, newString("."));
+      res = concatAndFree(res, newString((char *) (curr->value)));
+      curr = curr->next;
+    }
+    res = concatAndFree(res, newString(" = "));
+    res = concatAndFree(res, sRawPrintThing(tree->child1));
+    break; 					
+  case FLOATASSIGNMENTINSTRUCTURE:
+    curr = tree->arguments;
+    res = newString((char *) (curr->value));
+    curr = curr->next;
+    while (curr != NULL) {
+      res = concatAndFree(res, newString("."));
+      res = concatAndFree(res, newString((char *) (curr->value)));
+      curr = curr->next;
+    }
+    res = concatAndFree(res, newString(" := "));
+    res = concatAndFree(res, sRawPrintThing(tree->child1));
+    break; 					
+  case PROTOASSIGNMENTINSTRUCTURE:
+    res = sRawPrintThing(tree->child1);
+    res = concatAndFree(res, newString(" = "));
+    res = concatAndFree(res, sRawPrintThing(tree->child2));
+    break; 					
+  case PROTOFLOATASSIGNMENTINSTRUCTURE:
+    res = sRawPrintThing(tree->child1);
+    res = concatAndFree(res, newString(" := "));
+    res = concatAndFree(res, sRawPrintThing(tree->child2));
+    break; 					
   case DIRTYFINDZEROS:
     res = newString("dirtyfindzeros(");
     res = concatAndFree(res, sRawPrintThing(tree->child1));
@@ -4572,7 +4882,7 @@ char *sRawPrintThing(node *tree) {
     res = newString("hopitalrecursions");
     break;  	       
   default:
-    fprintf(stderr,"Error: sRawPrintThing: unknown identifier (%d) in the tree\n",tree->nodeType);
+    sollyaFprintf(stderr,"Error: sRawPrintThing: unknown identifier (%d) in the tree\n",tree->nodeType);
     exit(1);
   }
   return res;
@@ -4781,42 +5091,42 @@ void fPrintThingWithFullStrings(FILE *fd, node *thing) {
       if (midpointMode && (dyadic == 0)) {
 	temp = sprintMidpointMode(*(thing->child1->value), *(thing->child2->value));
 	if (temp != NULL) {
-	  fprintf(fd,"%s",temp);
+	  sollyaFprintf(fd,"%s",temp);
 	  free(temp);
 	} else {
-	  fprintf(fd,"[");
+	  sollyaFprintf(fd,"[");
 	  fprintValueWithPrintMode(fd,*(thing->child1->value));
-	  fprintf(fd,";");
+	  sollyaFprintf(fd,";");
 	  fprintValueWithPrintMode(fd,*(thing->child2->value));
-	  fprintf(fd,"]");
+	  sollyaFprintf(fd,"]");
 	}
       } else {
-	fprintf(fd,"[");
+	sollyaFprintf(fd,"[");
 	fprintValueWithPrintMode(fd,*(thing->child1->value));
-	fprintf(fd,";");
+	sollyaFprintf(fd,";");
 	fprintValueWithPrintMode(fd,*(thing->child2->value));
-	fprintf(fd,"]");
+	sollyaFprintf(fd,"]");
       }
     } else {
       if (isList(thing)) {
 	curr = thing->arguments;
-	fprintf(fd,"[|");
+	sollyaFprintf(fd,"[|");
 	while (curr != NULL) {
 	  fPrintThingWithFullStrings(fd,(node *) (curr->value));
-	  if (curr->next != NULL) fprintf(fd,", ");
+	  if (curr->next != NULL) sollyaFprintf(fd,", ");
 	  curr = curr->next;
 	}
-	fprintf(fd,"|]");
+	sollyaFprintf(fd,"|]");
       } else {
 	if (isFinalEllipticList(thing)) {
 	  curr = thing->arguments;
-	  fprintf(fd,"[|");
+	  sollyaFprintf(fd,"[|");
 	  while (curr != NULL) {
 	    fPrintThingWithFullStrings(fd,(node *) (curr->value));
-	    if (curr->next != NULL) fprintf(fd,", ");
+	    if (curr->next != NULL) sollyaFprintf(fd,", ");
 	    curr = curr->next;
 	  }
-	  fprintf(fd,"...|]");
+	  sollyaFprintf(fd,"...|]");
 	} else {
 	  fRawPrintThing(fd,thing);
 	}
@@ -4837,45 +5147,45 @@ void fPrintThing(FILE *fd, node *thing) {
       if (midpointMode && (dyadic == 0)) {
 	temp = sprintMidpointMode(*(thing->child1->value), *(thing->child2->value));
 	if (temp != NULL) {
-	  fprintf(fd,"%s",temp);
+	  sollyaFprintf(fd,"%s",temp);
 	  free(temp);
 	} else {
-	  fprintf(fd,"[");
+	  sollyaFprintf(fd,"[");
 	  fprintValueWithPrintMode(fd,*(thing->child1->value));
-	  fprintf(fd,";");
+	  sollyaFprintf(fd,";");
 	  fprintValueWithPrintMode(fd,*(thing->child2->value));
-	  fprintf(fd,"]");
+	  sollyaFprintf(fd,"]");
 	}
       } else {
-	fprintf(fd,"[");
+	sollyaFprintf(fd,"[");
 	fprintValueWithPrintMode(fd,*(thing->child1->value));
-	fprintf(fd,";");
+	sollyaFprintf(fd,";");
 	fprintValueWithPrintMode(fd,*(thing->child2->value));
-	fprintf(fd,"]");
+	sollyaFprintf(fd,"]");
       }
     } else {
       if (isList(thing)) {
 	curr = thing->arguments;
-	fprintf(fd,"[|");
+	sollyaFprintf(fd,"[|");
 	while (curr != NULL) {
 	  fPrintThingWithFullStrings(fd,(node *) (curr->value));
-	  if (curr->next != NULL) fprintf(fd,", ");
+	  if (curr->next != NULL) sollyaFprintf(fd,", ");
 	  curr = curr->next;
 	}
-	fprintf(fd,"|]");
+	sollyaFprintf(fd,"|]");
       } else {
 	if (isFinalEllipticList(thing)) {
 	  curr = thing->arguments;
-	  fprintf(fd,"[|");
+	  sollyaFprintf(fd,"[|");
 	  while (curr != NULL) {
 	    fPrintThingWithFullStrings(fd,(node *) (curr->value));
-	    if (curr->next != NULL) fprintf(fd,", ");
+	    if (curr->next != NULL) sollyaFprintf(fd,", ");
 	    curr = curr->next;
 	  }
-	  fprintf(fd,"...|]");
+	  sollyaFprintf(fd,"...|]");
 	} else {
 	  if (isString(thing)) {
-	    fprintf(fd,"%s",thing->string);
+	    sollyaFprintf(fd,"%s",thing->string);
 	  } else {
 	    fRawPrintThing(fd,thing);
 	  }
@@ -4959,98 +5269,98 @@ node *getThingFromTable(char *identifier) {
 void printExternalProcedureUsage(node *tree) {
   chain *curr;
   if (isExternalProcedureUsage(tree)) {
-    printf("%s(",tree->libProc->procedureName);
+    sollyaPrintf("%s(",tree->libProc->procedureName);
     curr = tree->libProc->signature->next;
     while (curr != NULL) {
       switch (*((int *) (curr->value))) {
       case VOID_TYPE:
-	printf("void");
+	sollyaPrintf("void");
 	break;
       case CONSTANT_TYPE:
-	printf("constant");
+	sollyaPrintf("constant");
 	break;
       case FUNCTION_TYPE:
-	printf("function");
+	sollyaPrintf("function");
 	break;
       case RANGE_TYPE:
-	printf("range");
+	sollyaPrintf("range");
 	break;
       case INTEGER_TYPE:
-	printf("integer");
+	sollyaPrintf("integer");
 	break;
       case STRING_TYPE:
-	printf("string");
+	sollyaPrintf("string");
 	break;
       case BOOLEAN_TYPE:
-	printf("boolean");
+	sollyaPrintf("boolean");
 	break;
       case CONSTANT_LIST_TYPE:
-	printf("list of constant");
+	sollyaPrintf("list of constant");
 	break;
       case FUNCTION_LIST_TYPE:
-	printf("list of function");
+	sollyaPrintf("list of function");
 	break;
       case RANGE_LIST_TYPE:
-	printf("list of range");
+	sollyaPrintf("list of range");
 	break;
       case INTEGER_LIST_TYPE:
-	printf("list of integer");
+	sollyaPrintf("list of integer");
 	break;
       case STRING_LIST_TYPE:
-	printf("list of string");
+	sollyaPrintf("list of string");
 	break;
       case BOOLEAN_LIST_TYPE:
-	printf("list of boolean");
+	sollyaPrintf("list of boolean");
 	break;
       default:
-	printf("unknown type");
+	sollyaPrintf("unknown type");
       }
-      if (curr->next != NULL) printf(", ");
+      if (curr->next != NULL) sollyaPrintf(", ");
       curr = curr->next;
     }
-    printf(") -> ");
+    sollyaPrintf(") -> ");
     switch (*((int *) (tree->libProc->signature->value))) {
     case VOID_TYPE:
-      printf("void");
+      sollyaPrintf("void");
       break;
     case CONSTANT_TYPE:
-      printf("constant");
+      sollyaPrintf("constant");
       break;
     case FUNCTION_TYPE:
-      printf("function");
+      sollyaPrintf("function");
       break;
     case RANGE_TYPE:
-      printf("range");
+      sollyaPrintf("range");
       break;
     case INTEGER_TYPE:
-      printf("integer");
+      sollyaPrintf("integer");
       break;
     case STRING_TYPE:
-      printf("string");
+      sollyaPrintf("string");
       break;
     case BOOLEAN_TYPE:
-      printf("boolean");
+      sollyaPrintf("boolean");
       break;
     case CONSTANT_LIST_TYPE:
-      printf("list of constant");
+      sollyaPrintf("list of constant");
       break;
     case FUNCTION_LIST_TYPE:
-      printf("list of function");
+      sollyaPrintf("list of function");
       break;
     case RANGE_LIST_TYPE:
-      printf("list of range");
+      sollyaPrintf("list of range");
       break;
     case INTEGER_LIST_TYPE:
-      printf("list of integer");
+      sollyaPrintf("list of integer");
       break;
     case STRING_LIST_TYPE:
-      printf("list of string");
+      sollyaPrintf("list of string");
       break;
     case BOOLEAN_LIST_TYPE:
-      printf("list of boolean");
+      sollyaPrintf("list of boolean");
       break;
     default:
-      printf("unknown type");
+      sollyaPrintf("unknown type");
     }
   }
 }
@@ -5171,6 +5481,7 @@ void autoprint(node *thing, int inList) {
 	tempNode3 = simplifyAllButDivision(tempNode2); 
       else 
 	tempNode3 = simplifyTree(tempNode2); 
+
       if (!isSyntacticallyEqual(tempNode3,tempNode2)) {
 	if (!noRoundingWarnings) {
 	  if (!shown) printMessage(1,"Warning: rounding may have happened.\n");
@@ -5225,29 +5536,41 @@ void autoprint(node *thing, int inList) {
     if (freeThingAfterwards) free_memory(tempNode2);
   } else {
     if (isList(thing)) {
-      printf("[|");
+      sollyaPrintf("[|");
       curr = thing->arguments;
       while (curr != NULL) {
 	autoprint((node *) (curr->value),1);
-	if (curr->next != NULL) printf(", ");
+	if (curr->next != NULL) sollyaPrintf(", ");
 	curr = curr->next;
       }
-      printf("|]");
+      sollyaPrintf("|]");
     } else {
       if (isFinalEllipticList(thing)) {
-	printf("[|");
+	sollyaPrintf("[|");
 	curr = thing->arguments;
 	while (curr != NULL) {
 	  autoprint((node *) (curr->value),1);
-	  if (curr->next != NULL) printf(", ");
+	  if (curr->next != NULL) sollyaPrintf(", ");
 	  curr = curr->next;
 	}
-	printf("...|]");
+	sollyaPrintf("...|]");
       } else {
-	if (inList) 
-	  printThingWithFullStrings(thing);
-	else 
-	  printThing(thing);
+	if (isStructure(thing)) {
+	  sollyaPrintf("{ ");
+	  curr = thing->arguments;
+	  while (curr != NULL) {
+	    sollyaPrintf(".%s = ", ((entry *) (curr->value))->name);
+	    autoprint((node *) (((entry *) (curr->value))->value),1);
+	    if (curr->next != NULL) sollyaPrintf(", ");
+	    curr = curr->next;
+	  }
+	  sollyaPrintf(" }");
+	} else {
+	  if (inList) 
+	    printThingWithFullStrings(thing);
+	  else 
+	    printThing(thing);
+	}
       }
     }
   }
@@ -5345,7 +5668,7 @@ int evaluateThingToRangeList(chain **ch, node *tree) {
   chain *newChain;
   int i, number, k;
   node *evaluated;
-  mpfi_t **arrayMpfi;
+  sollya_mpfi_t **arrayMpfi;
   mpfr_t a,b;
 
   evaluated = evaluateThing(tree);
@@ -5354,16 +5677,16 @@ int evaluateThingToRangeList(chain **ch, node *tree) {
     mpfr_init2(a, tools_precision);
     mpfr_init2(b, tools_precision);
     evaluateThingListToThingArray(&number, &arrayTrees, evaluated->arguments); 
-    arrayMpfi = (mpfi_t **) safeCalloc(number,sizeof(mpfi_t *));
+    arrayMpfi = (sollya_mpfi_t **) safeCalloc(number,sizeof(sollya_mpfi_t *));
     for (i=0;i<number;i++) {
-      arrayMpfi[i] = (mpfi_t *) safeMalloc(sizeof(mpfi_t));
-      mpfi_init2(*(arrayMpfi[i]),tools_precision);
+      arrayMpfi[i] = (sollya_mpfi_t *) safeMalloc(sizeof(sollya_mpfi_t));
+      sollya_mpfi_init2(*(arrayMpfi[i]),tools_precision);
     }
     for (i=0;i<number;i++) {
       if (!evaluateThingToRange(a,b,arrayTrees[i])) {
 	for (k=0;k<number;k++) {
 	  freeThing(arrayTrees[k]);
-	  mpfi_clear(*(arrayMpfi[k]));
+	  sollya_mpfi_clear(*(arrayMpfi[k]));
 	  free(arrayMpfi[k]);
 	}
 	free(arrayTrees);
@@ -5373,7 +5696,7 @@ int evaluateThingToRangeList(chain **ch, node *tree) {
 	mpfr_clear(b);
 	return 0;
       } else {
-	mpfi_interv_fr(*(arrayMpfi[i]),a,b);
+	sollya_mpfi_interv_fr(*(arrayMpfi[i]),a,b);
       }
     }
     newChain = NULL;
@@ -5525,9 +5848,177 @@ void doNothing(int n) {
   }
 }
 
+int tryToRewriteLeftHandStructAccessInner(chain **idents, node *thing) {
+  int okay;
+  char *buf;
+  chain *tempChain;
+
+  okay = 0;
+
+  switch (thing->nodeType) {
+  case TABLEACCESS:
+    buf = (char *) safeCalloc(strlen(thing->string)+1,sizeof(char));
+    strcpy(buf,thing->string);
+    *idents = addElement(NULL,buf);
+    okay = 1;
+    break;
+  case STRUCTACCESS:
+    if (tryToRewriteLeftHandStructAccessInner(&tempChain,thing->child1)) {
+      buf = (char *) safeCalloc(strlen(thing->string)+1,sizeof(char));
+      strcpy(buf,thing->string);
+      *idents = addElement(tempChain,buf);
+      okay = 1;
+    } else {
+      okay = 0;
+    }
+    break;
+  default:
+    okay = 0;
+  }
+    
+  return okay;
+}
+
+int tryToRewriteLeftHandStructAccess(chain **idents, node *thing) {
+  chain *tempChain, *curr;
+
+  if (tryToRewriteLeftHandStructAccessInner(&tempChain, thing)) {
+    *idents = NULL;
+    for (curr=tempChain;curr!=NULL;curr=curr->next) {
+      *idents = addElement(*idents,curr->value);
+    }
+    freeChain(tempChain, freeDoNothing);
+    return 1;
+  }
+  
+  return 0;
+}
+
+node *createNestedStructure(node *value, chain *idents) {
+  node *structure;
+  chain *curr;
+  chain *assoclist;
+  entry *structEntry;
+  chain *revertedIdents;
+
+  revertedIdents = NULL;
+  for (curr=idents;curr!=NULL;curr=curr->next) {
+    revertedIdents = addElement(revertedIdents,curr->value);
+  }
+
+  curr = revertedIdents;
+  structEntry = (entry *) safeMalloc(sizeof(entry));
+  structEntry->name = (char *) safeCalloc(strlen((char *) (curr->value))+1,sizeof(char));
+  strcpy(structEntry->name,(char *) (curr->value));
+  structEntry->value = copyThing(value);
+  assoclist = addElement(NULL,(void *) structEntry);
+  structure = makeStructure(assoclist);
+  curr = curr->next;
+  while (curr != NULL) {
+    structEntry = (entry *) safeMalloc(sizeof(entry));
+    structEntry->name = (char *) safeCalloc(strlen((char *) (curr->value))+1,sizeof(char));
+    strcpy(structEntry->name,(char *) (curr->value));
+    structEntry->value = structure;
+    assoclist = addElement(NULL,(void *) structEntry);
+    structure = makeStructure(assoclist);
+    curr = curr->next;
+  }
+
+  freeChain(revertedIdents, freeDoNothing);
+
+  return structure;
+}
+
+node *recomputeLeftHandSideForAssignmentInStructure(node *oldValue, node *newValue, chain *idents) {
+  chain *currentIdent;
+  node *currentStruct;
+  int okay, found;
+  node *res;
+  char *myIdent;
+  chain *currentAssoc;
+  char *otherIdent;
+  node *nextStruct;
+  entry *newEntry;
+
+  if ((oldValue == NULL) || (isError(oldValue))) 
+    return createNestedStructure(newValue, idents); 
+
+  if (!isStructure(oldValue)) {
+    printMessage(1,"Warning: cannot modify an element of something that is not a structure.\n");
+    return NULL;
+  }
+
+  okay = 1;
+  res = copyThing(oldValue);
+  currentStruct = res;
+  currentIdent = idents;
+  while (okay && (currentIdent != NULL)) {
+    myIdent = (char *) (currentIdent->value);
+    currentAssoc = currentStruct->arguments;
+    found = 0;
+    while (!found && (currentAssoc != NULL)) {
+      otherIdent = (char *) (((entry *) (currentAssoc->value))->name);
+      if (!strcmp(otherIdent,myIdent)) {
+	found = 1;
+      } else {
+	currentAssoc = currentAssoc->next;
+      }
+    }
+    if (found) {
+      nextStruct = (node *) (((entry *) (currentAssoc->value))->value);
+      if (isError(nextStruct)) {
+	freeThing(nextStruct);
+	if (currentIdent->next == NULL) {
+	  ((entry *) (currentAssoc->value))->value = copyThing(newValue);
+	} else {
+	  ((entry *) (currentAssoc->value))->value = createNestedStructure(newValue, currentIdent->next); 
+	}
+	break;
+      } else {
+	if (isStructure(nextStruct)) {
+	  if (currentIdent->next == NULL) {
+	    freeThing(nextStruct);
+	    ((entry *) (currentAssoc->value))->value = copyThing(newValue);
+	  } else {
+	    currentStruct = nextStruct;
+	  }
+	} else {
+	  if (currentIdent->next == NULL) {
+	    freeThing(nextStruct);
+	    ((entry *) (currentAssoc->value))->value = copyThing(newValue);
+	  } else {
+	    okay = 0;
+	    printMessage(1,"Warning: cannot modify an element of something that is not a structure.\n");
+	    break;
+	  }
+	}
+      }
+    } else {
+      newEntry = (entry *) safeMalloc(sizeof(entry));
+      newEntry->name = (char *) safeCalloc(strlen(myIdent)+1,sizeof(char));
+      strcpy(newEntry->name,myIdent);
+      if (currentIdent->next == NULL) {
+	newEntry->value = copyThing(newValue);
+      } else {
+	newEntry->value = createNestedStructure(newValue, currentIdent->next); 
+      }
+      currentStruct->arguments = addElement(currentStruct->arguments,newEntry);
+      break;
+    }
+    currentIdent = currentIdent->next;
+  }
+
+  if (!okay) {
+    freeThing(res);
+    res = NULL;
+  }
+
+  return res;
+}
+
 int executeCommandInner(node *tree) {
   int result, res, intTemp, resA, resB, resC, resD, resE, resF, defaultVal, i;  
-  chain *curr, *tempList, *tempList2; 
+  chain *curr, *tempList, *tempList2, *tempChain; 
   mpfr_t a, b, c, d, e;
   node *tempNode, *tempNode2, *tempNode3, *tempNode4;
   libraryFunction *tempLibraryFunction;
@@ -5740,7 +6231,7 @@ int executeCommandInner(node *tree) {
   case RESTART:
     restartTool();
     outputMode();
-    printf("The tool has been restarted.\n");
+    sollyaPrintf("The tool has been restarted.\n");
     result = 0;
     break;  	
   case VARIABLEDECLARATION:
@@ -5789,10 +6280,10 @@ int executeCommandInner(node *tree) {
       tempNode = evaluateThing((node *) (curr->value));
       printThing(tempNode);
       freeThing(tempNode);
-      if (curr->next != NULL) printf(" ");
+      if (curr->next != NULL) sollyaPrintf(" ");
       curr = curr->next;
     }
-    printf("\n");
+    sollyaPrintf("\n");
     break; 				
   case NEWFILEPRINT:
     if (evaluateThingToString(&tempString, tree->child1)) {
@@ -5803,10 +6294,10 @@ int executeCommandInner(node *tree) {
 	  tempNode = evaluateThing((node *) (curr->value));
 	  fPrintThing(fd,tempNode);
 	  freeThing(tempNode);
-	  if (curr->next != NULL) fprintf(fd," ");
+	  if (curr->next != NULL) sollyaFprintf(fd," ");
 	  curr = curr->next;
 	}
-	fprintf(fd,"\n");
+	sollyaFprintf(fd,"\n");
 	fclose(fd);
       } else {
 	printMessage(1,"Warning: the file \"%s\" could not be opened for writing.\n",tempString);
@@ -5829,10 +6320,10 @@ int executeCommandInner(node *tree) {
 	  tempNode = evaluateThing((node *) (curr->value));
 	  fPrintThing(fd,tempNode);
 	  freeThing(tempNode);
-	  if (curr->next != NULL) fprintf(fd," ");
+	  if (curr->next != NULL) sollyaFprintf(fd," ");
 	  curr = curr->next;
 	}
-	fprintf(fd,"\n");
+	sollyaFprintf(fd,"\n");
 	fclose(fd);
       } else {
 	printMessage(1,"Warning: the file \"%s\" could not be opened for writing.\n",tempString);
@@ -5956,7 +6447,7 @@ int executeCommandInner(node *tree) {
     mpfr_init2(a,tools_precision);
     if (evaluateThingToConstant(a, tree->child1, NULL, 0)) {
       outputMode();
-      printBinary(a); printf("\n");
+      printBinary(a); sollyaPrintf("\n");
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a constant value.\n");
       printMessage(1,"This command will have no effect.\n");
@@ -5972,7 +6463,7 @@ int executeCommandInner(node *tree) {
 	  printMessage(1,"\nWarning: rounding occurred while printing.");
 	}
       }
-      printf("\n");
+      sollyaPrintf("\n");
       freeThing(tempNode);
     } else {
       printMessage(1,"Warning: the given expression does not evaluate to a function.\n");
@@ -6180,7 +6671,7 @@ int executeCommandInner(node *tree) {
     break;			
   case PRINTXML:
     if (evaluateThingToPureTree(&tempNode, tree->child1)) {
-      printf("\n");
+      sollyaPrintf("\n");
       outputMode();
       printXml(tempNode);
       freeThing(tempNode);
@@ -6333,7 +6824,7 @@ int executeCommandInner(node *tree) {
     for (i=0;i<resA;i++)
       freeThing(array[i]);
     free(array);
-    printf("\n");
+    sollyaPrintf("\n");
     break; 			
   case RENAME:
     if (variablename == NULL) {
@@ -6366,7 +6857,7 @@ int executeCommandInner(node *tree) {
 	  outputMode();
 	  printExternalProcedureUsage(tempNode);
 	}
-	printf("\n");
+	sollyaPrintf("\n");
       } 
       freeThing(tempNode);
     } else {
@@ -6379,11 +6870,11 @@ int executeCommandInner(node *tree) {
 	  printExternalProcedureUsage(tempNode);
 	freeThing(tempNode);
 	if (oldAutoPrint) {
-	  if (curr->next != NULL) printf(", ");
+	  if (curr->next != NULL) sollyaPrintf(", ");
 	}
 	curr = curr->next;
       }
-      printf("\n");
+      sollyaPrintf("\n");
     }
     break;  		
   case EXTERNALPROC:
@@ -6648,7 +7139,7 @@ int executeCommandInner(node *tree) {
         considerDyingOnError();
       }
     } else {
-      printMessage(1,"Warning: the first element is not an identifier.\n");
+      printMessage(1,"Warning: the first element of the left-hand side is not an identifier.\n");
       printMessage(1,"This command will have no effect.\n");
       considerDyingOnError();
     }
@@ -6885,7 +7376,85 @@ int executeCommandInner(node *tree) {
         considerDyingOnError();
       }
     } else {
-      printMessage(1,"Warning: the first element is not an identifier.\n");
+      printMessage(1,"Warning: the first element of the left-hand side is not an identifier.\n");
+      printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
+    }
+    break;
+  case ASSIGNMENTINSTRUCTURE:
+    tempNode = evaluateThing(tree->child1);
+    tempNode2 = getThingFromTable((char *) (tree->arguments->value));
+    tempNode3 = recomputeLeftHandSideForAssignmentInStructure(tempNode2, tempNode, tree->arguments->next);
+    if (tempNode3 != NULL) {
+      if (!assignThingToTable((char *) (tree->arguments->value), tempNode3)) {
+	freeThing(tempNode);
+	if (tempNode2 != NULL) freeThing(tempNode2);
+	freeThing(tempNode3);
+	printMessage(1,"Warning: the last assignment will have no effect.\n");
+	considerDyingOnError();
+      } else {
+	freeThing(tempNode);
+	if (tempNode2 != NULL) freeThing(tempNode2);
+	freeThing(tempNode3);
+      }
+    } else {
+      freeThing(tempNode);
+      if (tempNode2 != NULL) freeThing(tempNode2);
+      printMessage(1,"Warning: the last assignment will have no effect.\n");
+      considerDyingOnError();
+    }
+    break; 	
+  case FLOATASSIGNMENTINSTRUCTURE:
+    tempNode = evaluateThing(tree->child1);
+    if (isPureTree(tempNode) && isConstant(tempNode)) {
+      mpfr_init2(a, tools_precision);
+      if (evaluateThingToConstant(a, tempNode, NULL,1))  {
+	freeThing(tempNode);
+	tempNode = makeConstant(a);
+      }
+      mpfr_clear(a);
+    }
+    tempNode2 = getThingFromTable((char *) (tree->arguments->value));
+    tempNode3 = recomputeLeftHandSideForAssignmentInStructure(tempNode2, tempNode, tree->arguments->next);
+    if (tempNode3 != NULL) {
+      if (!assignThingToTable((char *) (tree->arguments->value), tempNode3)) {
+	freeThing(tempNode);
+	if (tempNode2 != NULL) freeThing(tempNode2);
+	freeThing(tempNode3);
+	printMessage(1,"Warning: the last assignment will have no effect.\n");
+	considerDyingOnError();
+      } else {
+	freeThing(tempNode);
+	if (tempNode2 != NULL) freeThing(tempNode2);
+	freeThing(tempNode3);
+      }
+    } else {
+      freeThing(tempNode);
+      if (tempNode2 != NULL) freeThing(tempNode2);
+      printMessage(1,"Warning: the last assignment will have no effect.\n");
+      considerDyingOnError();
+    }
+    break;
+  case PROTOASSIGNMENTINSTRUCTURE:
+    if (tryToRewriteLeftHandStructAccess(&tempChain,tree->child1)) {
+      tempNode = makeAssignmentInStructure(tempChain,copyThing(tree->child2));
+      res = executeCommand(tempNode);
+      if (res) result = 1;
+      freeThing(tempNode);
+    } else {
+      printMessage(1,"Warning: the left-hand side is not an access to an element of a structured type.\n");
+      printMessage(1,"This command will have no effect.\n");
+      considerDyingOnError();
+    }
+    break;
+  case PROTOFLOATASSIGNMENTINSTRUCTURE:
+    if (tryToRewriteLeftHandStructAccess(&tempChain,tree->child1)) {
+      tempNode = makeFloatAssignmentInStructure(tempChain,copyThing(tree->child2));
+      res = executeCommand(tempNode);
+      if (res) result = 1;
+      freeThing(tempNode);
+    } else {
+      printMessage(1,"Warning: the left-hand side is not an access to an element of a structured type.\n");
       printMessage(1,"This command will have no effect.\n");
       considerDyingOnError();
     }
@@ -6989,7 +7558,7 @@ int executeCommandInner(node *tree) {
       defaultprecision = resA;
       tools_precision = resA;
       outputMode();
-      printf("The precision has been set to %d bits.\n",resA);
+      sollyaPrintf("The precision has been set to %d bits.\n",resA);
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
       printMessage(1,"This command will have no effect.\n");
@@ -7005,7 +7574,7 @@ int executeCommandInner(node *tree) {
       }
       defaultpoints = resA;
       outputMode();
-      printf("The number of points has been set to %d.\n",resA);
+      sollyaPrintf("The number of points has been set to %d.\n",resA);
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
       printMessage(1,"This command will have no effect.\n");
@@ -7021,7 +7590,7 @@ int executeCommandInner(node *tree) {
       mpfr_init2(statediam,mpfr_get_prec(a));
       mpfr_set(statediam,a,GMP_RNDN);
       outputMode();
-      printf("The diameter has been set to ");
+      sollyaPrintf("The diameter has been set to ");
       printMpfr(a);
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
@@ -7038,22 +7607,22 @@ int executeCommandInner(node *tree) {
       outputMode();
       switch (dyadic) {	     
       case 0:
-	printf("Display mode is decimal numbers.\n");
+	sollyaPrintf("Display mode is decimal numbers.\n");
 	break;
       case 1:
-	printf("Display mode is dyadic numbers.\n");
+	sollyaPrintf("Display mode is dyadic numbers.\n");
 	break;
       case 2:
-	printf("Display mode is dyadic numbers in integer-power-of-2 notation.\n");
+	sollyaPrintf("Display mode is dyadic numbers in integer-power-of-2 notation.\n");
 	break;
       case 3:
-	printf("Display mode is binary numbers.\n");
+	sollyaPrintf("Display mode is binary numbers.\n");
 	break;
       case 4:
-	printf("Display mode is hexadecimal numbers.\n");
+	sollyaPrintf("Display mode is hexadecimal numbers.\n");
 	break;
       default:
-	printf("Display mode in unknown state.\n");
+	sollyaPrintf("Display mode in unknown state.\n");
       }
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to default, dyadic, powers, hexadecimal or binary.\n");
@@ -7070,7 +7639,7 @@ int executeCommandInner(node *tree) {
       }
       verbosity = resA;
       outputMode();
-      printf("The verbosity level has been set to %d.\n",resA);
+      sollyaPrintf("The verbosity level has been set to %d.\n",resA);
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
       printMessage(1,"This command will have no effect.\n");
@@ -7083,9 +7652,9 @@ int executeCommandInner(node *tree) {
       canonical = resA;
       outputMode();
       if (canonical) 
-	printf("Canonical automatic printing output has been activated.\n");
+	sollyaPrintf("Canonical automatic printing output has been activated.\n");
       else 
-	printf("Canonical automatic printing output has been deactivated.\n");
+	sollyaPrintf("Canonical automatic printing output has been deactivated.\n");
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
       printMessage(1,"This command will have no effect.\n");
@@ -7098,9 +7667,9 @@ int executeCommandInner(node *tree) {
       autosimplify = resA;
       outputMode();
       if (autosimplify) 
-	printf("Automatic pure tree simplification has been activated.\n");
+	sollyaPrintf("Automatic pure tree simplification has been activated.\n");
       else 
-	printf("Automatic pure tree simplification has been deactivated.\n");
+	sollyaPrintf("Automatic pure tree simplification has been deactivated.\n");
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
       printMessage(1,"This command will have no effect.\n");
@@ -7115,7 +7684,7 @@ int executeCommandInner(node *tree) {
 	printMessage(1,"Warning: the number of recursions for Taylor evaluation must not be negative.\n");
       }
       taylorrecursions = resA;     outputMode();
-      printf("The number of recursions for Taylor evaluation has been set to %d.\n",resA);
+      sollyaPrintf("The number of recursions for Taylor evaluation has been set to %d.\n",resA);
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
       printMessage(1,"This command will have no effect.\n");
@@ -7127,9 +7696,9 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToOnOff(&resA, tree->child1, &defaultVal)) {
       timecounting = resA;     outputMode();
       if (timecounting) 
-	printf("Timing has been activated.\n");
+	sollyaPrintf("Timing has been activated.\n");
       else 
-	printf("Timing has been deactivated.\n");
+	sollyaPrintf("Timing has been deactivated.\n");
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
       printMessage(1,"This command will have no effect.\n");
@@ -7141,9 +7710,9 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToOnOff(&resA, tree->child1, &defaultVal)) {
       fullParentheses = resA;     outputMode();
       if (fullParentheses) 
-	printf("Full parentheses mode has been activated.\n");
+	sollyaPrintf("Full parentheses mode has been activated.\n");
       else 
-	printf("Full parentheses mode has been deactivated.\n");
+	sollyaPrintf("Full parentheses mode has been deactivated.\n");
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
       printMessage(1,"This command will have no effect.\n");
@@ -7155,9 +7724,9 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToOnOff(&resA, tree->child1, &defaultVal)) {
       midpointMode = resA;     outputMode();
       if (midpointMode) 
-	printf("Midpoint mode has been activated.\n");
+	sollyaPrintf("Midpoint mode has been activated.\n");
       else 
-	printf("Midpoint mode has been deactivated.\n");
+	sollyaPrintf("Midpoint mode has been deactivated.\n");
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
       printMessage(1,"This command will have no effect.\n");
@@ -7169,9 +7738,9 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToOnOff(&resA, tree->child1, &defaultVal)) {
       dieOnErrorMode = resA;     outputMode();
       if (dieOnErrorMode) 
-	printf("Die-on-error mode has been activated.\n");
+	sollyaPrintf("Die-on-error mode has been activated.\n");
       else 
-	printf("Die-on-error mode has been deactivated.\n");
+	sollyaPrintf("Die-on-error mode has been deactivated.\n");
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
       printMessage(1,"This command will have no effect.\n");
@@ -7183,9 +7752,9 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToOnOff(&resA, tree->child1, &defaultVal)) {
       rationalMode = resA;     outputMode();
       if (rationalMode) 
-	printf("Rational mode has been activated.\n");
+	sollyaPrintf("Rational mode has been activated.\n");
       else 
-	printf("Rational mode has been deactivated.\n");
+	sollyaPrintf("Rational mode has been deactivated.\n");
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
       printMessage(1,"This command will have no effect.\n");
@@ -7197,9 +7766,9 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToOnOff(&resA, tree->child1, &defaultVal)) {
       noRoundingWarnings = !resA;     outputMode();
       if (noRoundingWarnings) 
-	printf("Rounding warning mode has been deactivated.\n");
+	sollyaPrintf("Rounding warning mode has been deactivated.\n");
       else 
-	printf("Rounding warning mode has been activated.\n");
+	sollyaPrintf("Rounding warning mode has been activated.\n");
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
       printMessage(1,"This command will have no effect.\n");
@@ -7214,7 +7783,7 @@ int executeCommandInner(node *tree) {
 	printMessage(1,"Warning: the number of recursions for Hopital's rule must not be negative.\n");
       }
       hopitalrecursions = resA;     outputMode();
-      printf("The number of recursions for Hopital's rule has been set to %d.\n",resA);
+      sollyaPrintf("The number of recursions for Hopital's rule has been set to %d.\n",resA);
     } else {
       printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
       printMessage(1,"This command will have no effect.\n");
@@ -7399,7 +7968,7 @@ int executeCommandInner(node *tree) {
     }
     break;  	
   default:
-    fprintf(stderr,"Error: executeCommand: unknown identifier (%d) in the tree\n",tree->nodeType);
+    sollyaFprintf(stderr,"Error: executeCommand: unknown identifier (%d) in the tree\n",tree->nodeType);
     exit(1);
   }
   
@@ -7471,19 +8040,6 @@ node *makeFor(char *string, node *thing1, node *thing2, node *thing3, node *thin
   return res;
 
 }
-
-node *makeConstantDouble(double d) {
-  node *res;
-  
-  res = (node *) safeMalloc(sizeof(node));
-  res->nodeType = CONSTANT;
-  res->value = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-  mpfr_init2(*(res->value),53);
-  mpfr_set_d(*(res->value),d,GMP_RNDN);
-
-  return res;
-}
-
 
 node *makeForIn(char *string, node *thing1, node *thing2) {
   node *res;
@@ -7882,6 +8438,19 @@ node *makePrecAssign(node *thing) {
   res = (node *) safeMalloc(sizeof(node));
   res->nodeType = PRECASSIGN;
   res->child1 = thing;
+
+  return res;
+
+}
+
+node *makeProcedureFunction(node *thing) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = PROCEDUREFUNCTION;
+  res->libFunDeriv = 0;
+  res->child2 = thing;
+  res->child1 = makeVariable();
 
   return res;
 
@@ -8757,6 +9326,19 @@ node *makeTableAccessWithSubstitute(char *string, chain *thinglist) {
 
 }
 
+node *makeStructAccess(node *thing, char *string) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = STRUCTACCESS;
+  res->string = (char *) safeCalloc(strlen(string) + 1, sizeof(char));
+  strcpy(res->string, string);
+  res->child1 = thing;
+
+  return res;
+
+}
+
 node *makeApply(node *thing, chain *thinglist) {
   node *res;
 
@@ -8860,6 +9442,28 @@ node *makeList(chain *thinglist) {
   res = (node *) safeMalloc(sizeof(node));
   res->nodeType = LIST;
   res->arguments = thinglist;
+
+  return res;
+
+}
+
+node *makeStructure(chain *assoclist) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = STRUCTURE;
+  res->arguments = assoclist;
+
+  return res;
+}
+
+node *makeRevertedStructure(chain *assoclist) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = STRUCTURE;
+  res->arguments = copyChain(assoclist,copyEntryOnVoid);
+  freeChain(assoclist,freeEntryOnVoid);
 
   return res;
 
@@ -9000,6 +9604,28 @@ node *makeRemez(chain *thinglist) {
 
   res = (node *) safeMalloc(sizeof(node));
   res->nodeType = REMEZ;
+  res->arguments = thinglist;
+
+  return res;
+
+}
+
+node *makeMax(chain *thinglist) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = MAX;
+  res->arguments = thinglist;
+
+  return res;
+
+}
+
+node *makeMin(chain *thinglist) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = MIN;
   res->arguments = thinglist;
 
   return res;
@@ -9260,6 +9886,17 @@ node *makeInfnorm(chain *thinglist) {
 
   res = (node *) safeMalloc(sizeof(node));
   res->nodeType = INFNORM;
+  res->arguments = thinglist;
+
+  return res;
+
+}
+
+node *makeSupnorm(chain *thinglist) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = SUPNORM;
   res->arguments = thinglist;
 
   return res;
@@ -9759,6 +10396,49 @@ node *makeFloatAssignmentInIndexing(node *thing1, node *thing2, node *thing3) {
   return res;
 }
 
+node *makeAssignmentInStructure(chain *idents, node *thing) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = ASSIGNMENTINSTRUCTURE;
+  res->arguments = idents;
+  res->child1 = thing;
+
+  return res;
+}
+
+node *makeFloatAssignmentInStructure(chain *idents, node *thing) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = FLOATASSIGNMENTINSTRUCTURE;
+  res->arguments = idents;
+  res->child1 = thing;
+
+  return res;
+}
+
+node *makeProtoAssignmentInStructure(node *thing1, node *thing2) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = PROTOASSIGNMENTINSTRUCTURE;
+  res->child1 = thing1;
+  res->child2 = thing2;
+
+  return res;
+}
+
+node *makeProtoFloatAssignmentInStructure(node *thing1, node *thing2) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = PROTOFLOATASSIGNMENTINSTRUCTURE;
+  res->child1 = thing1;
+  res->child2 = thing2;
+
+  return res;
+}
 
 void freeThingOnVoid(void *tree) {
   freeThing((node *) tree);
@@ -9917,6 +10597,11 @@ void freeThing(node *tree) {
     free(tree);
     break;
   case LIBRARYCONSTANT:
+    free(tree);
+    break;
+  case PROCEDUREFUNCTION:
+    freeThing(tree->child1);
+    freeThing(tree->child2);
     free(tree);
     break;
   case CEIL:
@@ -10401,6 +11086,11 @@ void freeThing(node *tree) {
     freeChain(tree->arguments, freeThingOnVoid);
     free(tree);
     break;  	
+  case STRUCTACCESS:
+    free(tree->string);
+    freeThing(tree->child1);
+    free(tree);
+    break;  	
   case APPLY:
     freeThing(tree->child1);
     freeChain(tree->arguments, freeThingOnVoid);
@@ -10435,6 +11125,10 @@ void freeThing(node *tree) {
     break; 			
   case LIST:
     freeChain(tree->arguments, freeThingOnVoid);
+    free(tree);
+    break; 			 	
+  case STRUCTURE:
+    freeChain(tree->arguments, freeEntryOnVoid);
     free(tree);
     break; 			 	
   case FINALELLIPTICLIST:
@@ -10482,6 +11176,14 @@ void freeThing(node *tree) {
     free(tree);
     break;  			
   case REMEZ:
+    freeChain(tree->arguments, freeThingOnVoid);
+    free(tree);
+    break; 			 	
+  case MIN:
+    freeChain(tree->arguments, freeThingOnVoid);
+    free(tree);
+    break; 			 	
+  case MAX:
     freeChain(tree->arguments, freeThingOnVoid);
     free(tree);
     break; 			 	
@@ -10579,6 +11281,10 @@ void freeThing(node *tree) {
     freeChain(tree->arguments, freeThingOnVoid);
     free(tree);
     break; 			
+  case SUPNORM:
+    freeChain(tree->arguments, freeThingOnVoid);
+    free(tree);
+    break; 			
   case FINDZEROS:
     freeThing(tree->child1);
     freeThing(tree->child2);
@@ -10646,7 +11352,27 @@ void freeThing(node *tree) {
   case FLOATASSIGNMENTININDEXING:
     freeChain(tree->arguments, freeThingOnVoid);
     free(tree);
-    break; 			
+    break; 	
+  case ASSIGNMENTINSTRUCTURE:
+    freeChain(tree->arguments, freeStringPtr);
+    freeThing(tree->child1);
+    free(tree);
+    break; 				
+  case FLOATASSIGNMENTINSTRUCTURE:
+    freeChain(tree->arguments, freeStringPtr);
+    freeThing(tree->child1);
+    free(tree);
+    break; 					
+  case PROTOASSIGNMENTINSTRUCTURE:
+    freeThing(tree->child1);
+    freeThing(tree->child2);
+    free(tree);
+    break; 				
+  case PROTOFLOATASSIGNMENTINSTRUCTURE:
+    freeThing(tree->child1);
+    freeThing(tree->child2);
+    free(tree);
+    break; 					
   case DIRTYFINDZEROS:
     freeThing(tree->child1);
     freeThing(tree->child2);
@@ -10753,7 +11479,7 @@ void freeThing(node *tree) {
     free(tree);
     break;  	       
   default:
-    fprintf(stderr,"Error: freeThing: unknown identifier (%d) in the tree\n",tree->nodeType);
+    sollyaFprintf(stderr,"Error: freeThing: unknown identifier (%d) in the tree\n",tree->nodeType);
     exit(1);
   }
   return;
@@ -10766,7 +11492,7 @@ void fRawPrintThing(FILE *fd, node *tree) {
   
   if (tree == NULL) return;
   str = sRawPrintThing(tree);
-  fprintf(fd,"%s",str);
+  sollyaFprintf(fd,"%s",str);
   free(str);
   return;
 }
@@ -10784,6 +11510,8 @@ int isEqualThingOnVoid(void *tree, void *tree2) {
 }
 
 int isEqualThing(node *tree, node *tree2) {
+  chain *curri, *currj;
+  int found;
   
   if (tree == NULL) return 0;
   if (tree2 == NULL) return 0;
@@ -10907,6 +11635,11 @@ int isEqualThing(node *tree, node *tree2) {
     break;
   case LIBRARYCONSTANT:
     if (tree->libFun != tree2->libFun) return 0;
+    break;
+  case PROCEDUREFUNCTION:
+    if (tree->libFunDeriv != tree2->libFunDeriv) return 0;
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThing(tree->child2,tree2->child2)) return 0;
     break;
   case CEIL:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
@@ -11258,6 +11991,9 @@ int isEqualThing(node *tree, node *tree2) {
   case TABLEACCESSWITHSUBSTITUTE:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
     if (strcmp(tree->string,tree2->string) != 0) return 0;    break;  	
+  case STRUCTACCESS:
+    if (!isEqualThing(tree->child1,tree2->child2)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;  	
   case APPLY:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
@@ -11277,6 +12013,24 @@ int isEqualThing(node *tree, node *tree2) {
     break; 			
   case LIST:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
+    break; 			 	
+  case STRUCTURE:
+    if (lengthChain(tree->arguments) != lengthChain(tree2->arguments)) return 0;
+    for (curri=tree->arguments;curri!=NULL;curri=curri->next) {
+      found = 0;
+      currj = tree2->arguments;
+      while ((!found) && 
+	     (currj != NULL)) {
+	if ((!strcmp(((entry *) (curri->value))->name,
+		     ((entry *) (currj->value))->name)) &&
+	    (isEqualThing(((node *) ((entry *) (curri->value))->value),
+			  ((node *) ((entry *) (currj->value))->value)))) {
+	  found = 1;
+	}
+	currj = currj->next;
+      }
+      if (!found) return 0;
+    }
     break; 			 	
   case FINALELLIPTICLIST:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
@@ -11312,6 +12066,12 @@ int isEqualThing(node *tree, node *tree2) {
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break;  			
   case REMEZ:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
+    break; 			 	
+  case MIN:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
+    break; 			 	
+  case MAX:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
     break; 			 	
   case FPMINIMAX:
@@ -11386,6 +12146,9 @@ int isEqualThing(node *tree, node *tree2) {
   case INFNORM:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
     break; 			
+  case SUPNORM:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
+    break; 			
   case FINDZEROS:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     if (!isEqualThing(tree->child2,tree2->child2)) return 0;
@@ -11438,6 +12201,22 @@ int isEqualThing(node *tree, node *tree2) {
     break; 			
   case FLOATASSIGNMENTININDEXING:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
+    break; 	
+  case ASSIGNMENTINSTRUCTURE:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
+    break; 					
+  case FLOATASSIGNMENTINSTRUCTURE:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
+    break; 					
+  case PROTOASSIGNMENTINSTRUCTURE:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThing(tree->child2,tree2->child2)) return 0;
+    break; 			
+  case PROTOFLOATASSIGNMENTINSTRUCTURE:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThing(tree->child2,tree2->child2)) return 0;
     break; 			
   case DIRTYFINDZEROS:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
@@ -11517,7 +12296,7 @@ int isEqualThing(node *tree, node *tree2) {
   case HOPITALRECURSDEREF:
     break;  	       
   default:
-    fprintf(stderr,"Error: isEqualThing: unknown identifier (%d) in the tree\n",tree->nodeType);
+    sollyaFprintf(stderr,"Error: isEqualThing: unknown identifier (%d) in the tree\n",tree->nodeType);
     exit(1);
   }
 
@@ -11572,6 +12351,19 @@ int isCorrectlyTypedBaseSymbol(node *tree) {
   return 0;
 }
 
+int associationContainsDoubleEntries(chain *assoc) {
+  chain *curri, *currj;
+
+  for (curri=assoc;curri!=NULL;curri=curri->next) {
+    for (currj=assoc;currj!=NULL;currj=currj->next) {
+      if ((curri != currj) &&
+	  (!strcmp(((entry *) (curri->value))->name,
+		   ((entry *) (currj->value))->name))) return 1;
+    }
+  }
+
+  return 0;
+}
 
 int isCorrectlyTyped(node *tree) {
   chain *curr;
@@ -11583,7 +12375,16 @@ int isCorrectlyTyped(node *tree) {
   if (isPureList(tree)) {
     curr = tree->arguments;
     while (curr != NULL) {
-      if (!isCorrectlyTyped((node *) (curr->value))) return 0;
+      if ((!isCorrectlyTyped((node *) (curr->value))) && (!isError((node *) (curr->value)))) return 0;
+      curr = curr->next;
+    }
+    return 1;
+  }
+  if (isStructure(tree)) {
+    if (associationContainsDoubleEntries(tree->arguments)) return 0;
+    curr = tree->arguments;
+    while (curr != NULL) {
+      if ((!isCorrectlyTyped((node *) (((entry *) (curr->value))->value))) && (!isError((node *) (((entry *) (curr->value))->value)))) return 0;
       curr = curr->next;
     }
     return 1;
@@ -11591,7 +12392,7 @@ int isCorrectlyTyped(node *tree) {
   if (isPureFinalEllipticList(tree)) {
     curr = tree->arguments;
     while (curr != NULL) {
-      if (!isCorrectlyTyped((node *) (curr->value))) return 0;
+      if ((!isCorrectlyTyped((node *) (curr->value))) && (!isError((node *) (curr->value)))) return 0;
       curr = curr->next;
     }
     return 1;
@@ -11621,7 +12422,7 @@ node *evaluateThing(node *tree) {
 	changeToWarningMode();
 	printMessage(2,"Information: the expression or a partial evaluation of it has been the following:\n");
 	printThing(evaluated);
-	printf("\n");     
+	sollyaPrintf("\n");     
 	restoreMode();
       }
       freeThing(evaluated);
@@ -11722,9 +12523,9 @@ int evaluateArgumentForExternalProc(void **res, node *argument, int type) {
     mpfr_init2(b,tools_precision);
     retVal = evaluateThingToRange(a, b, argument);
     if (retVal) {
-      *res = safeMalloc(sizeof(mpfi_t));
-      mpfi_init2(*((mpfi_t *) (*res)), tools_precision);
-      mpfi_interv_fr(*((mpfi_t *) (*res)), a, b);
+      *res = safeMalloc(sizeof(sollya_mpfi_t));
+      sollya_mpfi_init2(*((sollya_mpfi_t *) (*res)), tools_precision);
+      sollya_mpfi_interv_fr(*((sollya_mpfi_t *) (*res)), a, b);
     }
     mpfr_clear(a);
     mpfr_clear(b);
@@ -11789,7 +12590,7 @@ int evaluateArgumentForExternalProc(void **res, node *argument, int type) {
       retVal = evaluateThingToBooleanList((chain **) res, argument);    
     break;
   default:
-    fprintf(stderr, "Error in evaluateArgumentForExternalProc: unknown type.\n");
+    sollyaFprintf(stderr, "Error in evaluateArgumentForExternalProc: unknown type.\n");
     exit(1);
   }
 
@@ -11809,7 +12610,7 @@ void freeArgumentForExternalProc(void* arg, int type) {
     freeThing((node *) arg);
     break;
   case RANGE_TYPE:
-    mpfi_clear(*((mpfi_t *) arg));
+    sollya_mpfi_clear(*((sollya_mpfi_t *) arg));
     free(arg);
     break;
   case INTEGER_TYPE:
@@ -11840,7 +12641,7 @@ void freeArgumentForExternalProc(void* arg, int type) {
     freeChain((chain *) arg, freeIntPtr);
     break;
   default:
-    fprintf(stderr, "Error in freeArgumentForExternalProc: unknown type.\n");
+    sollyaFprintf(stderr, "Error in freeArgumentForExternalProc: unknown type.\n");
     exit(1);
   }
 
@@ -12013,7 +12814,77 @@ int executeProcedure(node **resultThing, node *proc, chain *args, int elliptic) 
   return res;
 }
 
+void computeFunctionWithProcedure(sollya_mpfi_t y, node *proc, sollya_mpfi_t x, unsigned int derivN) {
+  mpfr_t derivNAsMpfr, xleft, xright, precAsMpfr;
+  chain *args;
+  int res;
+  node *resThing;
 
+  if (isProcedure(proc)) {
+
+    mpfr_init2(precAsMpfr,8 * sizeof(mp_prec_t) + 10);
+    mpfr_set_ui(precAsMpfr,(unsigned int) sollya_mpfi_get_prec(y),GMP_RNDU);
+
+    mpfr_init2(derivNAsMpfr,8 * sizeof(derivN) + 10);
+    mpfr_set_ui(derivNAsMpfr,derivN,GMP_RNDN);
+
+    mpfr_init2(xleft,sollya_mpfi_get_prec(x));
+    mpfr_init2(xright,sollya_mpfi_get_prec(x));
+    sollya_mpfi_get_left(xleft,x);
+    sollya_mpfi_get_right(xright,x);
+
+    args = addElement(addElement(addElement(NULL,makeConstant(precAsMpfr)),
+				 makeConstant(derivNAsMpfr)),
+		      makeRange(makeConstant(xleft),makeConstant(xright)));
+
+    res = executeProcedure(&resThing, proc, args, 0);
+
+    if (res) {
+      if (resThing != NULL) {
+	if (isRange(resThing)) {
+	  sollya_mpfi_interv_fr(y,*(resThing->child1->value),*(resThing->child2->value));
+	} else {
+	  mpfr_set_nan(xleft);
+	  sollya_mpfi_interv_fr(y,xleft,xleft);
+	}
+	freeThing(resThing);
+      } else {
+	mpfr_set_nan(xleft);
+	sollya_mpfi_interv_fr(y,xleft,xleft);
+      }
+    } else {
+      mpfr_set_nan(xleft);
+      sollya_mpfi_interv_fr(y,xleft,xleft);
+    }
+
+    freeChain(args, freeThingOnVoid);
+
+    mpfr_clear(xright);
+    mpfr_clear(xleft);
+    mpfr_clear(derivNAsMpfr);
+    mpfr_clear(precAsMpfr);
+  } else {
+    mpfr_init2(xleft,sollya_mpfi_get_prec(y));
+    mpfr_set_nan(xleft);
+    sollya_mpfi_interv_fr(y,xleft,xleft);
+    mpfr_clear(xleft);
+  }
+}
+
+void computeFunctionWithProcedureMpfr(mpfr_t rop, node *proc, mpfr_t op, unsigned int derivN) {
+  sollya_mpfi_t opI, ropI;
+
+  sollya_mpfi_init2(opI,mpfr_get_prec(op));
+  sollya_mpfi_init2(ropI,mpfr_get_prec(rop)+2);
+  sollya_mpfi_set_fr(opI,op);
+
+  computeFunctionWithProcedure(ropI,proc,opI,derivN);
+  
+  sollya_mpfi_mid(rop,ropI);
+
+  sollya_mpfi_clear(opI);
+  sollya_mpfi_clear(ropI);
+}
 
 int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, chain *args) {
   chain *myArgs, *myArgSignature, *curr, *curr2;
@@ -12094,19 +12965,19 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       }
       break;
     case RANGE_TYPE:
-      resultSpace = safeMalloc(sizeof(mpfi_t));
-      mpfi_init2(*((mpfi_t *) resultSpace),tools_precision);
-      externalResult = ((int (*)(mpfi_t *, void **))(proc->code))((mpfi_t *) resultSpace,arguments);
+      resultSpace = safeMalloc(sizeof(sollya_mpfi_t));
+      sollya_mpfi_init2(*((sollya_mpfi_t *) resultSpace),tools_precision);
+      externalResult = ((int (*)(sollya_mpfi_t *, void **))(proc->code))((sollya_mpfi_t *) resultSpace,arguments);
       if (externalResult) {
 	mpfr_init2(a,tools_precision);
 	mpfr_init2(b,tools_precision);
-	mpfi_get_left(a, *((mpfi_t *) resultSpace));
-	mpfi_get_right(b, *((mpfi_t *) resultSpace));
+	sollya_mpfi_get_left(a, *((sollya_mpfi_t *) resultSpace));
+	sollya_mpfi_get_right(b, *((sollya_mpfi_t *) resultSpace));
 	*resultThing = makeRange(makeConstant(a), makeConstant(b));
 	mpfr_clear(b);
 	mpfr_clear(a);
       }
-      mpfi_clear(*((mpfi_t *) resultSpace));
+      sollya_mpfi_clear(*((sollya_mpfi_t *) resultSpace));
       free(resultSpace);
       break;
     case INTEGER_TYPE:
@@ -12176,11 +13047,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	} else {
 	  curr2 = NULL;
 	  while (curr != NULL) {
-	    pr = mpfi_get_prec(*((mpfi_t *) (curr->value)));
+	    pr = sollya_mpfi_get_prec(*((sollya_mpfi_t *) (curr->value)));
 	    mpfr_init2(a, pr);
 	    mpfr_init2(b, pr);
-	    mpfi_get_left(a, *((mpfi_t *) (curr->value)));
-	    mpfi_get_right(b, *((mpfi_t *) (curr->value)));
+	    sollya_mpfi_get_left(a, *((sollya_mpfi_t *) (curr->value)));
+	    sollya_mpfi_get_right(b, *((sollya_mpfi_t *) (curr->value)));
 	    curr2 = addElement(curr2, makeRange(makeConstant(a), makeConstant(b)));
 	    mpfr_clear(a);
 	    mpfr_clear(b);
@@ -12255,7 +13126,7 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       }
       break;
     default:
-      fprintf(stderr, "Error in executeExternalProcedure: unknown type.\n");
+      sollyaFprintf(stderr, "Error in executeExternalProcedure: unknown type.\n");
       exit(1);
     }
   } else {
@@ -12287,19 +13158,19 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       }
       break;
     case RANGE_TYPE:
-      resultSpace = safeMalloc(sizeof(mpfi_t));
-      mpfi_init2(*((mpfi_t *) resultSpace),tools_precision);
-      externalResult = ((int (*)(mpfi_t *))(proc->code))((mpfi_t *) resultSpace);
+      resultSpace = safeMalloc(sizeof(sollya_mpfi_t));
+      sollya_mpfi_init2(*((sollya_mpfi_t *) resultSpace),tools_precision);
+      externalResult = ((int (*)(sollya_mpfi_t *))(proc->code))((sollya_mpfi_t *) resultSpace);
       if (externalResult) {
 	mpfr_init2(a,tools_precision);
 	mpfr_init2(b,tools_precision);
-	mpfi_get_left(a, *((mpfi_t *) resultSpace));
-	mpfi_get_right(b, *((mpfi_t *) resultSpace));
+	sollya_mpfi_get_left(a, *((sollya_mpfi_t *) resultSpace));
+	sollya_mpfi_get_right(b, *((sollya_mpfi_t *) resultSpace));
 	*resultThing = makeRange(makeConstant(a), makeConstant(b));
 	mpfr_clear(b);
 	mpfr_clear(a);
       }
-      mpfi_clear(*((mpfi_t *) resultSpace));
+      sollya_mpfi_clear(*((sollya_mpfi_t *) resultSpace));
       free(resultSpace);
       break;
     case INTEGER_TYPE:
@@ -12365,11 +13236,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	} else {
 	  curr2 = NULL;
 	  while (curr != NULL) {
-	    pr = mpfi_get_prec(*((mpfi_t *) (curr->value)));
+	    pr = sollya_mpfi_get_prec(*((sollya_mpfi_t *) (curr->value)));
 	    mpfr_init2(a, pr);
 	    mpfr_init2(b, pr);
-	    mpfi_get_left(a, *((mpfi_t *) (curr->value)));
-	    mpfi_get_right(b, *((mpfi_t *) (curr->value)));
+	    sollya_mpfi_get_left(a, *((sollya_mpfi_t *) (curr->value)));
+	    sollya_mpfi_get_right(b, *((sollya_mpfi_t *) (curr->value)));
 	    curr2 = addElement(curr2, makeRange(makeConstant(a), makeConstant(b)));
 	    mpfr_clear(a);
 	    mpfr_clear(b);
@@ -12444,7 +13315,7 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       }
       break;
     default:
-      fprintf(stderr, "Error in executeExternalProcedure: unknown type.\n");
+      sollyaFprintf(stderr, "Error in executeExternalProcedure: unknown type.\n");
       exit(1);
     }
   }
@@ -12498,10 +13369,10 @@ void *evaluateThingOnVoid(void *tree) {
 node *evaluateThingInner(node *tree) {
   node *copy, *tempNode, *tempNode2, *tempNode3;
   int *intptr;
-  int resA, resB, i, resC, resD, resE;
+  int resA, resB, i, resC, resD, resE, resF;
   char *tempString, *tempString2, *timingString, *tempString3, *tempString4, *tempString5;
   char *str1, *str2, *str3;
-  mpfr_t a, b, c, d;
+  mpfr_t a, b, c, d, e;
   chain *tempChain, *curr, *newChain, *tempChain2, *tempChain3, *curr2, *tempChain4;
   rangetype yrange, xrange, yrange2;
   node *firstArg, *secondArg, *thirdArg, *fourthArg, *fifthArg, *sixthArg, *seventhArg, *eighthArg;
@@ -12511,12 +13382,14 @@ node *evaluateThingInner(node *tree) {
   mp_exp_t expo;
   mp_prec_t pTemp, pTemp2;
   int undoVariableTrick;
-  mpfi_t tempIA, tempIB, tempIC;
+  sollya_mpfi_t tempIA, tempIB, tempIC;
   int alreadyDisplayed;
-  mpfi_t *tmpInterv1, *tmpInterv2;
-  mpfi_t *tmpInterv11;
+  sollya_mpfi_t *tmpInterv1, *tmpInterv2;
+  sollya_mpfi_t *tmpInterv11;
   mpfr_t bb,cc;
-  mpfi_t tempIA2;
+  sollya_mpfi_t tempIA2;
+  unsigned int tempUI;
+
   if (tree == NULL) return NULL;
 
   timingString = NULL;
@@ -12542,26 +13415,26 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
       pTemp = mpfr_get_prec(*(copy->child2->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child2->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIB,pTemp);
-      mpfi_interv_fr(tempIB,*(copy->child2->child1->value),*(copy->child2->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_add(tempIC,tempIA,tempIB);
+      sollya_mpfi_init2(tempIB,pTemp);
+      sollya_mpfi_interv_fr(tempIB,*(copy->child2->child1->value),*(copy->child2->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_add(tempIC,tempIA,tempIB);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIB);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIB);
+      sollya_mpfi_clear(tempIC);
     } else {
       if (isRange(copy->child1) && 
 	  isPureTree(copy->child2) && 
@@ -12627,26 +13500,26 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
       pTemp = mpfr_get_prec(*(copy->child2->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child2->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIB,pTemp);
-      mpfi_interv_fr(tempIB,*(copy->child2->child1->value),*(copy->child2->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_sub(tempIC,tempIA,tempIB);
+      sollya_mpfi_init2(tempIB,pTemp);
+      sollya_mpfi_interv_fr(tempIB,*(copy->child2->child1->value),*(copy->child2->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_sub(tempIC,tempIA,tempIB);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIB);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIB);
+      sollya_mpfi_clear(tempIC);
     } else {
       if (isRange(copy->child1) && 
 	  isPureTree(copy->child2) && 
@@ -12712,26 +13585,26 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
       pTemp = mpfr_get_prec(*(copy->child2->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child2->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIB,pTemp);
-      mpfi_interv_fr(tempIB,*(copy->child2->child1->value),*(copy->child2->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      special_mpfi_mul(tempIC,tempIA,tempIB);
+      sollya_mpfi_init2(tempIB,pTemp);
+      sollya_mpfi_interv_fr(tempIB,*(copy->child2->child1->value),*(copy->child2->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_mul(tempIC,tempIA,tempIB);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIB);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIB);
+      sollya_mpfi_clear(tempIC);
     } else {
       if (isRange(copy->child1) && 
 	  isPureTree(copy->child2) && 
@@ -12797,26 +13670,26 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
       pTemp = mpfr_get_prec(*(copy->child2->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child2->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIB,pTemp);
-      mpfi_interv_fr(tempIB,*(copy->child2->child1->value),*(copy->child2->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      special_mpfi_div(tempIC,tempIA,tempIB);
+      sollya_mpfi_init2(tempIB,pTemp);
+      sollya_mpfi_interv_fr(tempIB,*(copy->child2->child1->value),*(copy->child2->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_div(tempIC,tempIA,tempIB);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIB);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIB);
+      sollya_mpfi_clear(tempIC);
     } else {
       if (isRange(copy->child1) && 
 	  isPureTree(copy->child2) && 
@@ -12881,20 +13754,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_sqrt(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_sqrt(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case EXP:
@@ -12903,20 +13776,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_exp(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_exp(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case LOG:
@@ -12925,20 +13798,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_log(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_log(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case LOG_2:
@@ -12947,20 +13820,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_log2(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_log2(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case LOG_10:
@@ -12969,20 +13842,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_log10(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_log10(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case SIN:
@@ -12991,20 +13864,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_sin(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_sin(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case COS:
@@ -13013,20 +13886,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_cos(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_cos(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case TAN:
@@ -13035,20 +13908,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_tan(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_tan(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case ASIN:
@@ -13057,20 +13930,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_asin(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_asin(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case ACOS:
@@ -13079,20 +13952,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_acos(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_acos(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case ATAN:
@@ -13101,20 +13974,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_atan(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_atan(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case SINH:
@@ -13123,20 +13996,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_sinh(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_sinh(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case COSH:
@@ -13145,20 +14018,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_cosh(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_cosh(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case TANH:
@@ -13167,20 +14040,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_tanh(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_tanh(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case ASINH:
@@ -13189,20 +14062,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_asinh(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_asinh(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case ACOSH:
@@ -13211,20 +14084,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_acosh(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_acosh(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case ATANH:
@@ -13233,20 +14106,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_atanh(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_atanh(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case POW:
@@ -13256,26 +14129,26 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
       pTemp = mpfr_get_prec(*(copy->child2->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child2->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIB,pTemp);
-      mpfi_interv_fr(tempIB,*(copy->child2->child1->value),*(copy->child2->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_pow(tempIC,tempIA,tempIB);
+      sollya_mpfi_init2(tempIB,pTemp);
+      sollya_mpfi_interv_fr(tempIB,*(copy->child2->child1->value),*(copy->child2->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_pow(tempIC,tempIA,tempIB);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIB);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIB);
+      sollya_mpfi_clear(tempIC);
     } else {
       if (isRange(copy->child1) && 
 	  isPureTree(copy->child2) && 
@@ -13340,20 +14213,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_neg(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_neg(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case ABS:
@@ -13362,20 +14235,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_abs(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_abs(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case DOUBLE:
@@ -13384,20 +14257,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_round_to_double(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_round_to_double(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case SINGLE:
@@ -13406,20 +14279,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_round_to_single(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_round_to_single(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case DOUBLEDOUBLE:
@@ -13428,20 +14301,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_round_to_doubledouble(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_round_to_doubledouble(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case TRIPLEDOUBLE:
@@ -13450,20 +14323,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_round_to_tripledouble(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_round_to_tripledouble(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case ERF: 
@@ -13472,20 +14345,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_erf(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_erf(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case ERFC:
@@ -13494,20 +14367,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_erfc(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_erfc(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case LOG_1P:
@@ -13516,20 +14389,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_log1p(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_log1p(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case EXP_M1:
@@ -13538,20 +14411,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_expm1(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_expm1(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case DOUBLEEXTENDED:
@@ -13560,20 +14433,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_round_to_doubleextended(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_round_to_doubleextended(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case LIBRARYFUNCTION:
@@ -13584,20 +14457,44 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
       copy->libFun->code(tempIC, tempIA, copy->libFunDeriv);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
+    }
+    break;
+  case PROCEDUREFUNCTION:
+    copy->libFunDeriv = tree->libFunDeriv;
+    copy->child1 = evaluateThingInner(tree->child1);
+    copy->child2 = evaluateThingInner(tree->child2);
+    if (isRange(copy->child1)) {
+      pTemp = mpfr_get_prec(*(copy->child1->child1->value));
+      pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
+      if (pTemp2 > pTemp) pTemp = pTemp2;
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      computeFunctionWithProcedure(tempIC, copy->child2, tempIA, (unsigned int) copy->libFunDeriv);
+      freeThing(copy);
+      mpfr_init2(a,tools_precision);
+      mpfr_init2(b,tools_precision);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
+      copy = makeRange(makeConstant(a),makeConstant(b));
+      mpfr_clear(a);
+      mpfr_clear(b);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case LIBRARYCONSTANT:
@@ -13609,20 +14506,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_ceil(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_ceil(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case FLOOR:
@@ -13631,20 +14528,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_floor(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_floor(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case NEARESTINT:
@@ -13653,20 +14550,20 @@ node *evaluateThingInner(node *tree) {
       pTemp = mpfr_get_prec(*(copy->child1->child1->value));
       pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
       if (pTemp2 > pTemp) pTemp = pTemp2;
-      mpfi_init2(tempIA,pTemp);
-      mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      mpfi_init2(tempIC,tools_precision);
-      mpfi_nearestint(tempIC,tempIA);
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_nearestint(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
-      mpfi_get_left(a,tempIC);
-      mpfi_get_right(b,tempIC);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
       copy = makeRange(makeConstant(a),makeConstant(b));
       mpfr_clear(a);
       mpfr_clear(b);
-      mpfi_clear(tempIA);
-      mpfi_clear(tempIC);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
     }
     break;
   case PI_CONST:
@@ -13827,53 +14724,58 @@ node *evaluateThingInner(node *tree) {
 	  isPureTree(copy->child2) && 
 	  isConstant(copy->child1) &&
 	  isConstant(copy->child2)) {
-	mpfr_init2(a,tools_precision);
-	mpfr_init2(b,tools_precision);
-	if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
-	    (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
-	  if ((resA == 3) || (resB == 3)) 
-	    printMessage(1,"Warning: equality test relies on floating-point result that is not faithfully evaluated.\n");
-	  resC = mpfr_equal_p(a,b);
-	  if ((resA == 1) || (resB == 1)) {
-	    if (mpfr_number_p(a) && mpfr_number_p(b)) {
-	      resE = 0;
-	      if (resC) {
-		/* a == b */
-		resE = 1;
-	      } else {
-		/* a != b */
-		if (mpfr_cmp(a,b) < 0) {
-		  /* a < b */
-		  if (resA == 1) mpfr_nextabove(a);
-		  if (resB == 1) mpfr_nextbelow(b);
-		  resE = (mpfr_cmp(a,b) >= 0);
-		} else {
-		  /* b < a */
-		  if (resA == 1) mpfr_nextbelow(a);
-		  if (resB == 1) mpfr_nextabove(b);
-		  resE = (mpfr_cmp(a,b) <= 0);
-		}
-	      }
-	      if (resE) {
-		if (compareConstant(&resD, copy->child1, copy->child2)) {
-		  resC = (resD == 0);
-		} else 
-		  printMessage(1,"Warning: equality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
-	      } else 
-		printMessage(2,"Information: equality test relies on floating-point result.\n");
-	    } else 
-	      printMessage(1,"Warning: equality test relies on floating-point result that is faithfully evaluated and at least one of the sides is not a real number.\n");
-	  }
-	  if (resC) {
-	    freeThing(copy);
-	    copy = makeTrue();		    
-	  } else {
-	    freeThing(copy);
-	    copy = makeFalse();		    
-	  }
-	}
-	mpfr_clear(a);
-	mpfr_clear(b);
+        if (checkInequalityFast(&resF, copy->child1, copy->child2)) {
+          freeThing(copy);
+          copy = makeFalse();
+        } else {
+          mpfr_init2(a,tools_precision);
+          mpfr_init2(b,tools_precision);
+          if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
+              (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
+            if ((resA == 3) || (resB == 3)) 
+              printMessage(1,"Warning: equality test relies on floating-point result that is not faithfully evaluated.\n");
+            resC = mpfr_equal_p(a,b);
+            if ((resA == 1) || (resB == 1)) {
+              if (mpfr_number_p(a) && mpfr_number_p(b)) {
+                resE = 0;
+                if (resC) {
+                  /* a == b */
+                  resE = 1;
+                } else {
+                  /* a != b */
+                  if (mpfr_cmp(a,b) < 0) {
+                    /* a < b */
+                    if (resA == 1) mpfr_nextabove(a);
+                    if (resB == 1) mpfr_nextbelow(b);
+                    resE = (mpfr_cmp(a,b) >= 0);
+                  } else {
+                    /* b < a */
+                    if (resA == 1) mpfr_nextbelow(a);
+                    if (resB == 1) mpfr_nextabove(b);
+                    resE = (mpfr_cmp(a,b) <= 0);
+                  }
+                }
+                if (resE) {
+                  if (compareConstant(&resD, copy->child1, copy->child2)) {
+                    resC = (resD == 0);
+                  } else 
+                    printMessage(1,"Warning: equality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+                } else 
+                  printMessage(2,"Information: equality test relies on floating-point result.\n");
+              } else 
+                printMessage(1,"Warning: equality test relies on floating-point result that is faithfully evaluated and at least one of the sides is not a real number.\n");
+            }
+            if (resC) {
+              freeThing(copy);
+              copy = makeTrue();		    
+            } else {
+              freeThing(copy);
+              copy = makeFalse();		    
+            }
+          }
+          mpfr_clear(a);
+          mpfr_clear(b);
+        }
       } else {
 	freeThing(copy);
 	copy = makeFalse();
@@ -13998,44 +14900,352 @@ node *evaluateThingInner(node *tree) {
 	isConstant(copy->child1) && 
 	isConstant(copy->child2)) {
       if (timingString != NULL) pushTimeCounter();
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
-	  (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
-	if ((resA == 3) || (resB == 3)) 
-	  printMessage(1,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
-	resC = ((mpfr_cmp(a,b) < 0) && (!mpfr_unordered_p(a,b)));
-	if ((resA == 1) || (resB == 1)) {
-	  if (resC) {
-	    /* a < b */
-	    if (resA == 1) mpfr_nextabove(a);
-	    if (resB == 1) mpfr_nextbelow(b);
-	  } else {
-	    /* a >= b */
-	    if (resA == 1) mpfr_nextbelow(a);
-	    if (resB == 1) mpfr_nextabove(b);
-	  }
-	  if ((mpfr_cmp(a,b) < 0) != resC) {
-	    if (compareConstant(&resD, copy->child1, copy->child2)) {
-	      resC = (resD < 0);
-	    } else 
-	      printMessage(1,"Warning: inequality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
-	  } else 
-	    printMessage(2,"Information: inequality test relies on floating-point result.\n");
-	}
-	if (resC) {
-	  freeThing(copy);
-	  copy = makeTrue();		    
-	} else {
-	  freeThing(copy);
-	  copy = makeFalse();		    
-	}
+      if (checkInequalityFast(&resF, copy->child1, copy->child2)) {
+          if (resF < 0) {
+            freeThing(copy);
+            copy = makeTrue();		    
+          } else {
+            freeThing(copy);
+            copy = makeFalse();		    
+          }
+      } else {
+        mpfr_init2(a,tools_precision);
+        mpfr_init2(b,tools_precision);
+        if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
+            (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
+          if ((resA == 3) || (resB == 3)) 
+            printMessage(1,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
+          resC = ((mpfr_cmp(a,b) < 0) && (!mpfr_unordered_p(a,b)));
+          if ((resA == 1) || (resB == 1)) {
+            if (resC) {
+              /* a < b */
+              if (resA == 1) mpfr_nextabove(a);
+              if (resB == 1) mpfr_nextbelow(b);
+            } else {
+              /* a >= b */
+              if (resA == 1) mpfr_nextbelow(a);
+              if (resB == 1) mpfr_nextabove(b);
+            }
+            if ((mpfr_cmp(a,b) < 0) != resC) {
+              if (compareConstant(&resD, copy->child1, copy->child2)) {
+                resC = (resD < 0);
+              } else 
+                printMessage(1,"Warning: inequality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+            } else 
+              printMessage(2,"Information: inequality test relies on floating-point result.\n");
+          }
+          if (resC) {
+            freeThing(copy);
+            copy = makeTrue();		    
+          } else {
+            freeThing(copy);
+            copy = makeFalse();		    
+          }
+        }
+        mpfr_clear(a);
+        mpfr_clear(b);
       }
-      mpfr_clear(a);
-      mpfr_clear(b);
       if (timingString != NULL) popTimeCounter(timingString);
     }
     break; 			
+  case MIN:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateThingInnerOnVoid);
+    curr = copy->arguments;
+    if (isList((node *) (curr->value))) {
+      curr = ((node *) (curr->value))->arguments;
+      resE = 1;
+      while (curr != NULL) {
+        if (!(isPureTree((node *) (curr->value)) && 
+              isConstant((node *) (curr->value)))) {
+          resE = 0;
+          break;
+        }
+        curr = curr->next;
+      }
+      if (resE) {
+        if (timingString != NULL) pushTimeCounter();
+        curr = copy->arguments;
+        curr = ((node *) (curr->value))->arguments;
+        if (curr->next == NULL) {
+          tempNode = copyThing((node *) (curr->value));
+          freeThing(copy);
+          copy = tempNode;
+        } else {
+          tempNode = (node *) (curr->value);
+          curr = curr->next;
+          while (curr != NULL) {
+            tempNode2 = (node *) (curr->value);
+            if (checkInequalityFast(&resF, tempNode, tempNode2)) {
+              if (resF > 0) {
+                tempNode = tempNode2;
+              } 
+            } else {
+              mpfr_init2(a,tools_precision);
+              mpfr_init2(b,tools_precision);
+              if ((resA = evaluateThingToConstant(a,tempNode,NULL,1)) && 
+                  (resB = evaluateThingToConstant(b,tempNode2,NULL,1))) {
+                if ((resA == 3) || (resB == 3)) 
+                  printMessage(1,"Warning: minimum computation relies on floating-point result that is not faithfully evaluated.\n");
+                resC = ((mpfr_cmp(a,b) < 0) && (!mpfr_unordered_p(a,b)));
+                if ((resA == 1) || (resB == 1)) {
+                  if (resC) {
+                    /* a < b */
+                    if (resA == 1) mpfr_nextabove(a);
+                    if (resB == 1) mpfr_nextbelow(b);
+                  } else {
+                    /* a >= b */
+                    if (resA == 1) mpfr_nextbelow(a);
+                    if (resB == 1) mpfr_nextabove(b);
+                  }
+                  if ((mpfr_cmp(a,b) < 0) != resC) {
+                    if (compareConstant(&resD, tempNode, tempNode2)) {
+                      resC = (resD < 0);
+                    } else 
+                      printMessage(1,"Warning: minimum computation relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+                  } else 
+                    printMessage(2,"Information: minimum computation relies on floating-point result.\n");
+                }
+                if (!resC) {
+                  tempNode = tempNode2;
+                } 
+              } else {
+                resE = 0;
+              }
+              mpfr_clear(a);
+              mpfr_clear(b);
+            }
+            curr = curr->next;
+          }
+          if (resE) {
+            tempNode3 = copyThing(tempNode);
+            freeThing(copy);
+            copy = tempNode3;
+          }
+        }
+        if (timingString != NULL) popTimeCounter(timingString);
+      }
+    } else {
+      resE = 1;
+      while (curr != NULL) {
+        if (!(isPureTree((node *) (curr->value)) && 
+              isConstant((node *) (curr->value)))) {
+          resE = 0;
+          break;
+        }
+        curr = curr->next;
+      }
+      if (resE) {
+        if (timingString != NULL) pushTimeCounter();
+        curr = copy->arguments;
+        if (curr->next == NULL) {
+          tempNode = copyThing((node *) (curr->value));
+          freeThing(copy);
+          copy = tempNode;
+        } else {
+          tempNode = (node *) (curr->value);
+          curr = curr->next;
+          while (curr != NULL) {
+            tempNode2 = (node *) (curr->value);
+            if (checkInequalityFast(&resF, tempNode, tempNode2)) {
+              if (resF > 0) {
+                tempNode = tempNode2;
+              } 
+            } else {
+              mpfr_init2(a,tools_precision);
+              mpfr_init2(b,tools_precision);
+              if ((resA = evaluateThingToConstant(a,tempNode,NULL,1)) && 
+                  (resB = evaluateThingToConstant(b,tempNode2,NULL,1))) {
+                if ((resA == 3) || (resB == 3)) 
+                  printMessage(1,"Warning: minimum computation relies on floating-point result that is not faithfully evaluated.\n");
+                resC = ((mpfr_cmp(a,b) < 0) && (!mpfr_unordered_p(a,b)));
+                if ((resA == 1) || (resB == 1)) {
+                  if (resC) {
+                    /* a < b */
+                    if (resA == 1) mpfr_nextabove(a);
+                    if (resB == 1) mpfr_nextbelow(b);
+                  } else {
+                    /* a >= b */
+                    if (resA == 1) mpfr_nextbelow(a);
+                    if (resB == 1) mpfr_nextabove(b);
+                  }
+                  if ((mpfr_cmp(a,b) < 0) != resC) {
+                    if (compareConstant(&resD, tempNode, tempNode2)) {
+                      resC = (resD < 0);
+                    } else 
+                      printMessage(1,"Warning: minimum computation relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+                  } else 
+                    printMessage(2,"Information: minimum computation relies on floating-point result.\n");
+                }
+                if (!resC) {
+                  tempNode = tempNode2;
+                } 
+              } else {
+                resE = 0;
+              }
+              mpfr_clear(a);
+              mpfr_clear(b);
+            }
+            curr = curr->next;
+          }
+          if (resE) {
+            tempNode3 = copyThing(tempNode);
+            freeThing(copy);
+            copy = tempNode3;
+          }
+        }
+        if (timingString != NULL) popTimeCounter(timingString);
+      }
+    }
+    break;
+  case MAX:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateThingInnerOnVoid);
+    curr = copy->arguments;
+    if (isList((node *) (curr->value))) {
+      curr = ((node *) (curr->value))->arguments;
+      resE = 1;
+      while (curr != NULL) {
+        if (!(isPureTree((node *) (curr->value)) && 
+              isConstant((node *) (curr->value)))) {
+          resE = 0;
+          break;
+        }
+        curr = curr->next;
+      }
+      if (resE) {
+        if (timingString != NULL) pushTimeCounter();
+        curr = copy->arguments;
+        curr = ((node *) (curr->value))->arguments;
+        if (curr->next == NULL) {
+          tempNode = copyThing((node *) (curr->value));
+          freeThing(copy);
+          copy = tempNode;
+        } else {
+          tempNode = (node *) (curr->value);
+          curr = curr->next;
+          while (curr != NULL) {
+            tempNode2 = (node *) (curr->value);
+            if (checkInequalityFast(&resF, tempNode, tempNode2)) {
+              if (resF < 0) {
+                tempNode = tempNode2;
+              } 
+            } else {
+              mpfr_init2(a,tools_precision);
+              mpfr_init2(b,tools_precision);
+              if ((resA = evaluateThingToConstant(a,tempNode,NULL,1)) && 
+                  (resB = evaluateThingToConstant(b,tempNode2,NULL,1))) {
+                if ((resA == 3) || (resB == 3)) 
+                  printMessage(1,"Warning: minimum computation relies on floating-point result that is not faithfully evaluated.\n");
+                resC = ((mpfr_cmp(a,b) < 0) && (!mpfr_unordered_p(a,b)));
+                if ((resA == 1) || (resB == 1)) {
+                  if (resC) {
+                    /* a < b */
+                    if (resA == 1) mpfr_nextabove(a);
+                    if (resB == 1) mpfr_nextbelow(b);
+                  } else {
+                    /* a >= b */
+                    if (resA == 1) mpfr_nextbelow(a);
+                    if (resB == 1) mpfr_nextabove(b);
+                  }
+                  if ((mpfr_cmp(a,b) < 0) != resC) {
+                    if (compareConstant(&resD, tempNode, tempNode2)) {
+                      resC = (resD < 0);
+                    } else 
+                      printMessage(1,"Warning: minimum computation relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+                  } else 
+                    printMessage(2,"Information: minimum computation relies on floating-point result.\n");
+                }
+                if (resC) {
+                  tempNode = tempNode2;
+                } 
+              } else {
+                resE = 0;
+              }
+              mpfr_clear(a);
+              mpfr_clear(b);
+            }
+            curr = curr->next;
+          }
+          if (resE) {
+            tempNode3 = copyThing(tempNode);
+            freeThing(copy);
+            copy = tempNode3;
+          }
+        }
+        if (timingString != NULL) popTimeCounter(timingString);
+      }
+    } else {
+      resE = 1;
+      while (curr != NULL) {
+        if (!(isPureTree((node *) (curr->value)) && 
+              isConstant((node *) (curr->value)))) {
+          resE = 0;
+          break;
+        }
+        curr = curr->next;
+      }
+      if (resE) {
+        if (timingString != NULL) pushTimeCounter();
+        curr = copy->arguments;
+        if (curr->next == NULL) {
+          tempNode = copyThing((node *) (curr->value));
+          freeThing(copy);
+          copy = tempNode;
+        } else {
+          tempNode = (node *) (curr->value);
+          curr = curr->next;
+          while (curr != NULL) {
+            tempNode2 = (node *) (curr->value);
+            if (checkInequalityFast(&resF, tempNode, tempNode2)) {
+              if (resF < 0) {
+                tempNode = tempNode2;
+              } 
+            } else {
+              mpfr_init2(a,tools_precision);
+              mpfr_init2(b,tools_precision);
+              if ((resA = evaluateThingToConstant(a,tempNode,NULL,1)) && 
+                  (resB = evaluateThingToConstant(b,tempNode2,NULL,1))) {
+                if ((resA == 3) || (resB == 3)) 
+                  printMessage(1,"Warning: minimum computation relies on floating-point result that is not faithfully evaluated.\n");
+                resC = ((mpfr_cmp(a,b) < 0) && (!mpfr_unordered_p(a,b)));
+                if ((resA == 1) || (resB == 1)) {
+                  if (resC) {
+                    /* a < b */
+                    if (resA == 1) mpfr_nextabove(a);
+                    if (resB == 1) mpfr_nextbelow(b);
+                  } else {
+                    /* a >= b */
+                    if (resA == 1) mpfr_nextbelow(a);
+                    if (resB == 1) mpfr_nextabove(b);
+                  }
+                  if ((mpfr_cmp(a,b) < 0) != resC) {
+                    if (compareConstant(&resD, tempNode, tempNode2)) {
+                      resC = (resD < 0);
+                    } else 
+                      printMessage(1,"Warning: minimum computation relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+                  } else 
+                    printMessage(2,"Information: minimum computation relies on floating-point result.\n");
+                }
+                if (resC) {
+                  tempNode = tempNode2;
+                } 
+              } else {
+                resE = 0;
+              }
+              mpfr_clear(a);
+              mpfr_clear(b);
+            }
+            curr = curr->next;
+          }
+          if (resE) {
+            tempNode3 = copyThing(tempNode);
+            freeThing(copy);
+            copy = tempNode3;
+          }
+        }
+        if (timingString != NULL) popTimeCounter(timingString);
+      }
+    }
+    break;
   case COMPAREGREATER:
     copy->child1 = evaluateThing(tree->child1);
     copy->child2 = evaluateThing(tree->child2);
@@ -14044,41 +15254,51 @@ node *evaluateThingInner(node *tree) {
 	isConstant(copy->child1) && 
 	isConstant(copy->child2)) {
       if (timingString != NULL) pushTimeCounter();
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
-	  (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
-	if ((resA == 3) || (resB == 3)) 
-	  printMessage(1,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
-	resC = ((mpfr_cmp(a,b) > 0) && (!mpfr_unordered_p(a,b)));
-	if ((resA == 1) || (resB == 1)) {
-	  if (resC) {
-	    /* a > b */
-	    if (resA == 1) mpfr_nextbelow(a);
-	    if (resB == 1) mpfr_nextabove(b);
-	  } else {
-	    /* a <= b */
-	    if (resA == 1) mpfr_nextabove(a);
-	    if (resB == 1) mpfr_nextbelow(b);
-	  }
-	  if ((mpfr_cmp(a,b) > 0) != resC) {
-	    if (compareConstant(&resD, copy->child1, copy->child2)) {
-	      resC = (resD > 0);
-	    } else 
-	      printMessage(1,"Warning: inequality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
-	  } else 
-	    printMessage(2,"Information: inequality test relies on floating-point result.\n");
-	}
-	if (resC) {
-	  freeThing(copy);
-	  copy = makeTrue();		    
-	} else {
-	  freeThing(copy);
-	  copy = makeFalse();		    
-	}
+      if (checkInequalityFast(&resF, copy->child1, copy->child2)) {
+          if (resF > 0) {
+            freeThing(copy);
+            copy = makeTrue();		    
+          } else {
+            freeThing(copy);
+            copy = makeFalse();		    
+          }
+      } else {
+        mpfr_init2(a,tools_precision);
+        mpfr_init2(b,tools_precision);
+        if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
+            (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
+          if ((resA == 3) || (resB == 3)) 
+            printMessage(1,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
+          resC = ((mpfr_cmp(a,b) > 0) && (!mpfr_unordered_p(a,b)));
+          if ((resA == 1) || (resB == 1)) {
+            if (resC) {
+              /* a > b */
+              if (resA == 1) mpfr_nextbelow(a);
+              if (resB == 1) mpfr_nextabove(b);
+            } else {
+              /* a <= b */
+              if (resA == 1) mpfr_nextabove(a);
+              if (resB == 1) mpfr_nextbelow(b);
+            }
+            if ((mpfr_cmp(a,b) > 0) != resC) {
+              if (compareConstant(&resD, copy->child1, copy->child2)) {
+                resC = (resD > 0);
+              } else 
+                printMessage(1,"Warning: inequality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+            } else 
+              printMessage(2,"Information: inequality test relies on floating-point result.\n");
+          }
+          if (resC) {
+            freeThing(copy);
+            copy = makeTrue();		    
+          } else {
+            freeThing(copy);
+            copy = makeFalse();		    
+          }
+        }
+        mpfr_clear(a);
+        mpfr_clear(b);
       }
-      mpfr_clear(a);
-      mpfr_clear(b);
       if (timingString != NULL) popTimeCounter(timingString);
     }
     break; 			
@@ -14090,41 +15310,51 @@ node *evaluateThingInner(node *tree) {
 	isConstant(copy->child1) && 
 	isConstant(copy->child2)) {
       if (timingString != NULL) pushTimeCounter();
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
-	  (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
-	if ((resA == 3) || (resB == 3)) 
-	  printMessage(1,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
-	resC = ((mpfr_cmp(a,b) <= 0) && (!mpfr_unordered_p(a,b)));
-	if ((resA == 1) || (resB == 1)) {
-	  if (resC) {
-	    /* a <= b */
-	    if (resA == 1) mpfr_nextabove(a);
-	    if (resB == 1) mpfr_nextbelow(b);
-	  } else {
-	    /* a > b */
-	    if (resA == 1) mpfr_nextbelow(a);
-	    if (resB == 1) mpfr_nextabove(b);
-	  }
-	  if ((mpfr_cmp(a,b) <= 0) != resC) {
-	    if (compareConstant(&resD, copy->child1, copy->child2)) {
-	      resC = (resD <= 0);
-	    } else 
-	      printMessage(1,"Warning: inequality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
-	  } else 
-	    printMessage(2,"Information: inequality test relies on floating-point result.\n");
-	}
-	if (resC) {
-	  freeThing(copy);
-	  copy = makeTrue();		    
-	} else {
-	  freeThing(copy);
-	  copy = makeFalse();		    
-	}
+      if (checkInequalityFast(&resF, copy->child1, copy->child2)) {
+          if (resF < 0) {
+            freeThing(copy);
+            copy = makeTrue();		    
+          } else {
+            freeThing(copy);
+            copy = makeFalse();		    
+          }
+      } else {
+        mpfr_init2(a,tools_precision);
+        mpfr_init2(b,tools_precision);
+        if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
+            (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
+          if ((resA == 3) || (resB == 3)) 
+            printMessage(1,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
+          resC = ((mpfr_cmp(a,b) <= 0) && (!mpfr_unordered_p(a,b)));
+          if ((resA == 1) || (resB == 1)) {
+            if (resC) {
+              /* a <= b */
+              if (resA == 1) mpfr_nextabove(a);
+              if (resB == 1) mpfr_nextbelow(b);
+            } else {
+              /* a > b */
+              if (resA == 1) mpfr_nextbelow(a);
+              if (resB == 1) mpfr_nextabove(b);
+            }
+            if ((mpfr_cmp(a,b) <= 0) != resC) {
+              if (compareConstant(&resD, copy->child1, copy->child2)) {
+                resC = (resD <= 0);
+              } else 
+                printMessage(1,"Warning: inequality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+            } else 
+              printMessage(2,"Information: inequality test relies on floating-point result.\n");
+          }
+          if (resC) {
+            freeThing(copy);
+            copy = makeTrue();		    
+          } else {
+            freeThing(copy);
+            copy = makeFalse();		    
+          }
+        }
+        mpfr_clear(a);
+        mpfr_clear(b);
       }
-      mpfr_clear(a);
-      mpfr_clear(b);
       if (timingString != NULL) popTimeCounter(timingString);
     }
     break; 		
@@ -14136,41 +15366,51 @@ node *evaluateThingInner(node *tree) {
 	isConstant(copy->child1) && 
 	isConstant(copy->child2)) {
       if (timingString != NULL) pushTimeCounter();
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
-	  (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
-	if ((resA == 3) || (resB == 3)) 
-	  printMessage(1,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
-	resC = ((mpfr_cmp(a,b) >= 0) && (!mpfr_unordered_p(a,b)));
-	if ((resA == 1) || (resB == 1)) {
-	  if (resC) {
-	    /* a >= b */
-	    if (resA == 1) mpfr_nextbelow(a);
-	    if (resB == 1) mpfr_nextabove(b);
-	  } else {
-	    /* a < b */
-	    if (resA == 1) mpfr_nextabove(a);
-	    if (resB == 1) mpfr_nextbelow(b);
-	  }
-	  if ((mpfr_cmp(a,b) >= 0) != resC) {
-	    if (compareConstant(&resD, copy->child1, copy->child2)) {
-	      resC = (resD >= 0);
-	    } else  
-	      printMessage(1,"Warning: inequality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
-	  } else 
-	    printMessage(2,"Information: inequality test relies on floating-point result.\n");
-	}
-	if (resC) {
-	  freeThing(copy);
-	  copy = makeTrue();		    
-	} else {
-	  freeThing(copy);
-	  copy = makeFalse();		    
-	}
+      if (checkInequalityFast(&resF, copy->child1, copy->child2)) {
+          if (resF > 0) {
+            freeThing(copy);
+            copy = makeTrue();		    
+          } else {
+            freeThing(copy);
+            copy = makeFalse();		    
+          }
+      } else {
+        mpfr_init2(a,tools_precision);
+        mpfr_init2(b,tools_precision);
+        if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
+            (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
+          if ((resA == 3) || (resB == 3)) 
+            printMessage(1,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
+          resC = ((mpfr_cmp(a,b) >= 0) && (!mpfr_unordered_p(a,b)));
+          if ((resA == 1) || (resB == 1)) {
+            if (resC) {
+              /* a >= b */
+              if (resA == 1) mpfr_nextbelow(a);
+              if (resB == 1) mpfr_nextabove(b);
+            } else {
+              /* a < b */
+              if (resA == 1) mpfr_nextabove(a);
+              if (resB == 1) mpfr_nextbelow(b);
+            }
+            if ((mpfr_cmp(a,b) >= 0) != resC) {
+              if (compareConstant(&resD, copy->child1, copy->child2)) {
+                resC = (resD >= 0);
+              } else  
+                printMessage(1,"Warning: inequality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+            } else 
+              printMessage(2,"Information: inequality test relies on floating-point result.\n");
+          }
+          if (resC) {
+            freeThing(copy);
+            copy = makeTrue();		    
+          } else {
+            freeThing(copy);
+            copy = makeFalse();		    
+          }
+        }
+        mpfr_clear(a);
+        mpfr_clear(b);
       }
-      mpfr_clear(a);
-      mpfr_clear(b);
       if (timingString != NULL) popTimeCounter(timingString);
     }
     break;		
@@ -14195,53 +15435,58 @@ node *evaluateThingInner(node *tree) {
 	  isPureTree(copy->child2) && 
 	  isConstant(copy->child1) &&
 	  isConstant(copy->child2)) {
-	mpfr_init2(a,tools_precision);
-	mpfr_init2(b,tools_precision);
-	if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
-	    (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
-	  if ((resA == 3) || (resB == 3)) 
-	    printMessage(1,"Warning: equality test relies on floating-point result that is not faithfully evaluated.\n");
-	  resC = !(mpfr_equal_p(a,b) || mpfr_unordered_p(a,b));
-	  if ((resA == 1) || (resB == 1)) {
-	    if (mpfr_number_p(a) && mpfr_number_p(b)) {
-	      resE = 0;
-	      if (!resC) {
-		/* a == b */
-		resE = 1;
-	      } else {
-		/* a != b */
-		if (mpfr_cmp(a,b) < 0) {
-		  /* a < b */
-		  if (resA == 1) mpfr_nextabove(a);
-		  if (resB == 1) mpfr_nextbelow(b);
-		  resE = (mpfr_cmp(a,b) >= 0);
-		} else {
-		  /* b < a */
-		  if (resA == 1) mpfr_nextbelow(a);
-		  if (resB == 1) mpfr_nextabove(b);
-		  resE = (mpfr_cmp(a,b) <= 0);
-		}
-	      }
-	      if (resE) {
-		if (compareConstant(&resD, copy->child1, copy->child2)) {
-		  resC = (resD != 0);
-		} else 
-		  printMessage(1,"Warning: equality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
-	      } else 
-		printMessage(2,"Information: equality test relies on floating-point result.\n");
-	    } else 
-	      printMessage(1,"Warning: equality test relies on floating-point result that is faithfully evaluated and at least one of the sides is not a real number.\n");
-	  }
-	  if (resC) {
-	    freeThing(copy);
-	    copy = makeTrue();		    
-	  } else {
-	    freeThing(copy);
-	    copy = makeFalse();		    
-	  }
-	}
-	mpfr_clear(a);
-	mpfr_clear(b);
+        if (checkInequalityFast(&resF, copy->child1, copy->child2)) {
+          freeThing(copy);
+          copy = makeTrue();
+        } else {
+          mpfr_init2(a,tools_precision);
+          mpfr_init2(b,tools_precision);
+          if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
+              (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
+            if ((resA == 3) || (resB == 3)) 
+              printMessage(1,"Warning: equality test relies on floating-point result that is not faithfully evaluated.\n");
+            resC = !(mpfr_equal_p(a,b) || mpfr_unordered_p(a,b));
+            if ((resA == 1) || (resB == 1)) {
+              if (mpfr_number_p(a) && mpfr_number_p(b)) {
+                resE = 0;
+                if (!resC) {
+                  /* a == b */
+                  resE = 1;
+                } else {
+                  /* a != b */
+                  if (mpfr_cmp(a,b) < 0) {
+                    /* a < b */
+                    if (resA == 1) mpfr_nextabove(a);
+                    if (resB == 1) mpfr_nextbelow(b);
+                    resE = (mpfr_cmp(a,b) >= 0);
+                  } else {
+                    /* b < a */
+                    if (resA == 1) mpfr_nextbelow(a);
+                    if (resB == 1) mpfr_nextabove(b);
+                    resE = (mpfr_cmp(a,b) <= 0);
+                  }
+                }
+                if (resE) {
+                  if (compareConstant(&resD, copy->child1, copy->child2)) {
+                    resC = (resD != 0);
+                  } else 
+                    printMessage(1,"Warning: equality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+                } else 
+                  printMessage(2,"Information: equality test relies on floating-point result.\n");
+              } else 
+                printMessage(1,"Warning: equality test relies on floating-point result that is faithfully evaluated and at least one of the sides is not a real number.\n");
+            }
+            if (resC) {
+              freeThing(copy);
+              copy = makeTrue();		    
+            } else {
+              freeThing(copy);
+              copy = makeFalse();		    
+            }
+          }
+          mpfr_clear(a);
+          mpfr_clear(b);
+        }
       } else {
 	if (!(isError(copy->child1) || isError(copy->child2))) {
 	  freeThing(copy);
@@ -14642,6 +15887,12 @@ node *evaluateThingInner(node *tree) {
 	    variablename = (char *) safeCalloc(2, sizeof(char));
 	    variablename[0] = 'x';
 	  }
+	  if ((tempNode->nodeType == PROCEDUREFUNCTION) && (variablename == NULL)) {
+	    printMessage(1,"Warning: the current free variable is not bound to an identifier. Dereferencing a procedure-based function requires this binding.\n");
+	    printMessage(1,"Will bind the current free variable to the identifier \"x\"\n");
+	    variablename = (char *) safeCalloc(2, sizeof(char));
+	    variablename[0] = 'x';
+	  }
 	  free(copy);
 	  if (tempNode->nodeType == VARIABLE) {
 	    printMessage(1,"Warning: the identifier \"%s\" is bound to the current free variable. In a functional context it will be considered as the identity function.\n",
@@ -14739,6 +15990,49 @@ node *evaluateThingInner(node *tree) {
     freeThing(tempNode);
     if (timingString != NULL) popTimeCounter(timingString);
     break;
+  case STRUCTACCESS:
+    if (isStructure(tree->child1) && 
+	(!associationContainsDoubleEntries(tree->child1->arguments))) {
+      tempChain = tree->child1->arguments;
+      resA = 0; tempNode = NULL;
+      while ((!resA) && (tempChain != NULL)) {
+	if (!strcmp(tree->string,((entry *) (tempChain->value))->name)) {
+	  resA = 1;
+	  tempNode = (node *) (((entry *) (tempChain->value))->value);
+	}
+	tempChain = tempChain->next;
+      }
+      if ((resA) && (tempNode != NULL)) {
+	free(copy);
+	copy = evaluateThing(tempNode);
+      } else {
+	  copy->child1 = evaluateThingInner(tree->child1);
+	  copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+	  strcpy(copy->string,tree->string);
+      }
+    } else {
+      copy->child1 = evaluateThingInner(tree->child1);
+      copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+      strcpy(copy->string,tree->string);
+      if (isStructure(copy->child1) && 
+	  (!associationContainsDoubleEntries(copy->child1->arguments))) {
+	tempChain = copy->child1->arguments;
+	resA = 0; tempNode = NULL;
+	while ((!resA) && (tempChain != NULL)) {
+	  if (!strcmp(copy->string,((entry *) (tempChain->value))->name)) {
+	    resA = 1;
+	    tempNode = (node *) (((entry *) (tempChain->value))->value);
+	  }
+	  tempChain = tempChain->next;
+	}
+	if ((resA) && (tempNode != NULL)) {
+	  tempNode2 = evaluateThing(tempNode);
+	  freeThing(copy);
+	  copy = tempNode2;
+	} 
+      } 
+    }
+    break;
   case EXTERNALPROCEDUREUSAGE:
     copy->libProc = tree->libProc;
     break;
@@ -14750,6 +16044,12 @@ node *evaluateThingInner(node *tree) {
 	if (evaluateThingToPureTree(&tempNode2,(node *) (tree->arguments->value))) {
 	  if ( ((tempNode->nodeType == LIBRARYFUNCTION) && (variablename == NULL)) ) {
 	    printMessage(1,"Warning: the current free variable is not bound to an identifier. Dereferencing library function \"%s\" requires this binding.\n",tempNode->libFun->functionName);
+	    printMessage(1,"Will bind the current free variable to the identifier \"x\"\n");
+	    variablename = (char *) safeCalloc(2, sizeof(char));
+	    variablename[0] = 'x';
+	  }
+	  if ((tempNode->nodeType == PROCEDUREFUNCTION) && (variablename == NULL)) {
+	    printMessage(1,"Warning: the current free variable is not bound to an identifier. Dereferencing a procedure-based function requires this binding.\n");
 	    printMessage(1,"Will bind the current free variable to the identifier \"x\"\n");
 	    variablename = (char *) safeCalloc(2, sizeof(char));
 	    variablename[0] = 'x';
@@ -15116,7 +16416,17 @@ node *evaluateThingInner(node *tree) {
       copy = tempNode;
     }
     if (timingString != NULL) popTimeCounter(timingString);
-    break; 			 	
+    break; 	
+  case STRUCTURE:
+    if (!associationContainsDoubleEntries(tree->arguments)) {
+      if (timingString != NULL) pushTimeCounter();
+      copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateEntryOnVoid);
+      if (timingString != NULL) popTimeCounter(timingString);
+    } else {
+      printMessage(1,"Warning: a literal structure contains at least one entry twice. This is not allowed.\n");
+      copy->arguments = copyChainWithoutReversal(tree->arguments, copyEntryOnVoid);
+    }
+    break;
   case FINALELLIPTICLIST:
     tempChain = copyChain(tree->arguments, evaluateThingInnerOnVoid);
     if (timingString != NULL) pushTimeCounter();
@@ -15337,8 +16647,8 @@ node *evaluateThingInner(node *tree) {
 	    if (!noRoundingWarnings) {
 	      printMessage(1,"Warning: inclusion property is satisfied but the diameter may be greater than the least possible.\n");
 	    }
-	    mpfr_min(a,*(yrange.a),*(yrange2.a),GMP_RNDD);
-	    mpfr_max(b,*(yrange.b),*(yrange2.b),GMP_RNDU);
+	    sollya_mpfr_min(a,*(yrange.a),*(yrange2.a),GMP_RNDD);
+	    sollya_mpfr_max(b,*(yrange.b),*(yrange2.b),GMP_RNDU);
 	    mpfr_clear(*(xrange.a));
 	    mpfr_clear(*(xrange.b));
 	    free(xrange.a);
@@ -15364,6 +16674,11 @@ node *evaluateThingInner(node *tree) {
 	    }
 	    copy->child1 = makeConstant(b);
 	    copy->child2 = makeConstant(a);
+	    if (!(!((!(!(mpfr_nan_p(*(copy->child1->value))))) ^ (!(!(mpfr_nan_p(*(copy->child2->value)))))))) {
+	      printMessage(1,"Warning: one bound of a range is NaN while the other is not. Will normalize the range to have two NaN endpoints.\n");
+	      mpfr_set_nan(*(copy->child1->value));
+	      mpfr_set_nan(*(copy->child2->value));
+	    }
 	  } else {
 	    if (resA != 2) {
 	      mpfr_nextbelow(a);
@@ -15373,6 +16688,11 @@ node *evaluateThingInner(node *tree) {
 	    }
 	    copy->child1 = makeConstant(a);
 	    copy->child2 = makeConstant(b);
+	    if (!(!((!(!(mpfr_nan_p(*(copy->child1->value))))) ^ (!(!(mpfr_nan_p(*(copy->child2->value)))))))) {
+	      printMessage(1,"Warning: one bound of a range is NaN while the other is not. Will normalize the range to have two NaN endpoints.\n");
+	      mpfr_set_nan(*(copy->child1->value));
+	      mpfr_set_nan(*(copy->child2->value));
+	    }
 	  }
 	}      
 	mpfr_clear(b);
@@ -15634,7 +16954,7 @@ node *evaluateThingInner(node *tree) {
     }
     else{
       if( (!evaluateThingToIntegerList(&tempChain, &resA, secondArg)) ||
-	  (resA=0) ) {
+	  (resA==0) ) {
 	printMessage(1, "The second argument of fpminimax must be either an integer or a finite list of integers.\n");
       }
     }
@@ -15841,8 +17161,8 @@ node *evaluateThingInner(node *tree) {
                 pTemp = mpfr_get_prec(bb);
                 pTemp2 = mpfr_get_prec(cc);
                 if (pTemp2 > pTemp) pTemp = pTemp2;
-                mpfi_init2(tempIA2,pTemp);
-                mpfi_interv_fr(tempIA2,bb,cc);
+                sollya_mpfi_init2(tempIA2,pTemp);
+                sollya_mpfi_interv_fr(tempIA2,bb,cc);
                 tmpInterv11 = &tempIA2;
               } else { 
                 resB = 0;
@@ -15853,8 +17173,8 @@ node *evaluateThingInner(node *tree) {
               if (isPureTree((node *) (curr->value))) {
                 mpfr_init2(bb,tools_precision);
                 if (evaluateThingToConstant(bb,(node *) (curr->value),NULL,0)) {
-                  mpfi_init2(tempIA2,tools_precision);
-                  mpfi_interv_fr(tempIA2,bb,bb);
+                  sollya_mpfi_init2(tempIA2,tools_precision);
+                  sollya_mpfi_interv_fr(tempIA2,bb,bb);
                   tmpInterv11 = &tempIA2;
                 } else {
                   resB = 0;
@@ -15876,8 +17196,8 @@ node *evaluateThingInner(node *tree) {
                   pTemp = mpfr_get_prec(b);
                   pTemp2 = mpfr_get_prec(c);
                   if (pTemp2 > pTemp) pTemp = pTemp2;
-                  mpfi_init2(tempIA,pTemp);
-                  mpfi_interv_fr(tempIA,b,c);
+                  sollya_mpfi_init2(tempIA,pTemp);
+                  sollya_mpfi_interv_fr(tempIA,b,c);
                   tmpInterv1 = &tempIA;
                 } else {
                   resB = 0;
@@ -15935,11 +17255,11 @@ node *evaluateThingInner(node *tree) {
                 tempChain3 = NULL;
                 curr2 = tempChain2;
                 while (curr2 != NULL) {
-                  pTemp = mpfi_get_prec(*((mpfi_t *) (curr2->value)));
+                  pTemp = sollya_mpfi_get_prec(*((sollya_mpfi_t *) (curr2->value)));
                   mpfr_init2(b,pTemp);
                   mpfr_init2(c,pTemp);
-                  mpfi_get_left(b,*((mpfi_t *) (curr2->value)));
-                  mpfi_get_right(c,*((mpfi_t *) (curr2->value)));
+                  sollya_mpfi_get_left(b,*((sollya_mpfi_t *) (curr2->value)));
+                  sollya_mpfi_get_right(c,*((sollya_mpfi_t *) (curr2->value)));
                   tempChain3 = addElement(tempChain3,makeRange(makeConstant(b),
                                                                makeConstant(c)));
                   mpfr_clear(b);
@@ -15950,11 +17270,11 @@ node *evaluateThingInner(node *tree) {
                 freeChain(tempChain3,freeThingOnVoid);
                 tempChain3 = addElement(addElement(NULL,tempNode2),makeList(tempChain4));
                 if (tmpInterv2 != NULL) {
-                  pTemp = mpfi_get_prec(*tmpInterv2);
+                  pTemp = sollya_mpfi_get_prec(*tmpInterv2);
                   mpfr_init2(b,pTemp);
                   mpfr_init2(c,pTemp);
-                  mpfi_get_left(b,*tmpInterv2);
-                  mpfi_get_right(c,*tmpInterv2);
+                  sollya_mpfi_get_left(b,*tmpInterv2);
+                  sollya_mpfi_get_right(c,*tmpInterv2);
                   tempChain3 = addElement(tempChain3,makeRange(makeConstant(b),
                                                                makeConstant(c)));
                   mpfr_clear(b);
@@ -15970,14 +17290,14 @@ node *evaluateThingInner(node *tree) {
                 freeChain(tempChain2, freeMpfiPtr);
               }
               if (tmpInterv2 != NULL) {
-                mpfi_clear(*tmpInterv2);
+                sollya_mpfi_clear(*tmpInterv2);
                 free(tmpInterv2);
               }
             }
-            if (tmpInterv1 != NULL) mpfi_clear(*tmpInterv1);
+            if (tmpInterv1 != NULL) sollya_mpfi_clear(*tmpInterv1);
           }
         }
-	if (tmpInterv11 != NULL) mpfi_clear(*tmpInterv11);
+	if (tmpInterv11 != NULL) sollya_mpfi_clear(*tmpInterv11);
       }
     }
     break; 			 	
@@ -16004,20 +17324,20 @@ node *evaluateThingInner(node *tree) {
             if (timingString != NULL) pushTimeCounter();
             pTemp = mpfr_get_prec(a);
             if (mpfr_get_prec(b) > pTemp) pTemp = mpfr_get_prec(b);
-            mpfi_init2(tempIA,pTemp);
-            mpfi_interv_fr(tempIA,a,b);
-            tmpInterv1 = (mpfi_t *) safeCalloc(resA + 1, sizeof(mpfi_t));
+            sollya_mpfi_init2(tempIA,pTemp);
+            sollya_mpfi_interv_fr(tempIA,a,b);
+            tmpInterv1 = (sollya_mpfi_t *) safeCalloc(resA + 1, sizeof(sollya_mpfi_t));
             for (resB=0;resB<resA+1;resB++) {
-              mpfi_init2(tmpInterv1[resB],tools_precision);
+              sollya_mpfi_init2(tmpInterv1[resB],tools_precision);
             }
             auto_diff(tmpInterv1, (node *) (copy->arguments->value), tempIA, resA);
             curr = NULL;
             for (resB=resA;resB>=0;resB--) {
-              pTemp = mpfi_get_prec(tmpInterv1[resB]);
+              pTemp = sollya_mpfi_get_prec(tmpInterv1[resB]);
               mpfr_init2(c,pTemp);
               mpfr_init2(d,pTemp);
-              mpfi_get_left(c,tmpInterv1[resB]);
-              mpfi_get_right(d,tmpInterv1[resB]);
+              sollya_mpfi_get_left(c,tmpInterv1[resB]);
+              sollya_mpfi_get_right(d,tmpInterv1[resB]);
               curr = addElement(curr,makeRange(makeConstant(c), makeConstant(d)));
               mpfr_clear(c);
               mpfr_clear(d);
@@ -16026,10 +17346,10 @@ node *evaluateThingInner(node *tree) {
             freeThing(copy);
             copy = tempNode;
             for (resB=0;resB<resA+1;resB++) {
-              mpfi_clear(tmpInterv1[resB]);
+              sollya_mpfi_clear(tmpInterv1[resB]);
             }
             free(tmpInterv1);
-            mpfi_clear(tempIA);
+            sollya_mpfi_clear(tempIA);
             if (timingString != NULL) popTimeCounter(timingString);
           } 
           mpfr_clear(a);
@@ -16564,6 +17884,77 @@ node *evaluateThingInner(node *tree) {
       mpfr_clear(b);
     } 
     break; 			
+  case SUPNORM:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateThingInnerOnVoid);
+    /* supnorm(poly,func,range,mode,accuracy) 
+       The parser ensures that we have exactly five arguments
+    */
+    curr = copy->arguments;
+    firstArg = (node *) (curr->value);
+    curr = curr->next;
+    secondArg = (node *) (curr->value);
+    curr = curr->next;
+    thirdArg = (node *) (curr->value);
+    curr = curr->next;
+    fourthArg = (node *) (curr->value);
+    curr = curr->next;
+    fifthArg = (node *) (curr->value);
+    if (isPureTree(firstArg) &&
+	isPureTree(secondArg) &&
+	isPureTree(fifthArg) &&
+	isRange(thirdArg) &&
+	isExternalPlotMode(fourthArg)) {
+      if (isConstant(fifthArg)) {
+	mpfr_init2(a,tools_precision);
+	mpfr_init2(b,tools_precision);
+	if (evaluateThingToRange(a,b,thirdArg)) {
+	  mpfr_init2(c,tools_precision);
+	  if (evaluateThingToConstant(c,fifthArg,NULL,0)) {
+	    if (evaluateThingToExternalPlotMode(&resA, fourthArg, NULL)) {
+	      pTemp = mpfr_get_prec(a);
+	      pTemp2 = mpfr_get_prec(b);
+	      if (pTemp2 > pTemp) pTemp = pTemp2;
+	      sollya_mpfi_init2(tempIA,pTemp2);
+	      sollya_mpfi_interv_fr(tempIA,a,b);
+	      mpfr_init2(bb,8 * sizeof(mp_prec_t) + 10);
+	      mpfr_abs(bb,c,GMP_RNDN);
+	      mpfr_log2(bb,bb,GMP_RNDN);
+	      mpfr_floor(bb,bb);
+	      mpfr_neg(bb,bb,GMP_RNDN);
+	      tempUI = mpfr_get_ui(bb,GMP_RNDN);
+	      tempUI += 10;
+	      if ((tempUI < tools_precision) || (tempUI > 2048 * tools_precision)) pTemp = tools_precision + 10; else pTemp = tempUI;
+	      sollya_mpfi_init2(tempIB,pTemp);
+	      resB = supremumnorm(tempIB, firstArg, secondArg, tempIA, (resA == ABSOLUTE) ? 0 : 1, c);
+	      if (resB) {
+		pTemp = sollya_mpfi_get_prec(tempIB);
+		mpfr_init2(d,pTemp);
+		mpfr_init2(e,pTemp);
+		sollya_mpfi_get_left(d,tempIB);
+		sollya_mpfi_get_right(e,tempIB);
+		tempNode = makeRange(makeConstant(d),makeConstant(e));
+		freeThing(copy);
+		copy = tempNode;
+		mpfr_clear(d);
+		mpfr_clear(e);
+	      } else {
+		printMessage(1,"Warning: the supremum norm on the error function between the given polynomial and the given function could not be computed.\n");
+		considerDyingOnError();
+		tempNode = makeError();
+		freeThing(copy);
+		copy = tempNode;
+	      }
+	      sollya_mpfi_clear(tempIA);
+	      sollya_mpfi_clear(tempIB);
+	    }
+	  }
+	  mpfr_clear(c);
+	}
+	mpfr_clear(a);
+	mpfr_clear(b);
+      }
+    }
+    break;
   case FINDZEROS:
     copy->child1 = evaluateThingInner(tree->child1);
     copy->child2 = evaluateThingInner(tree->child2);
@@ -16659,12 +18050,12 @@ node *evaluateThingInner(node *tree) {
       mpfr_init2(b,tools_precision);
       if (evaluateThingToRange(a,b,copy->child2)) {
 	mpfr_init2(c,tools_precision);
-        mpfi_init2(tempIA,tools_precision);
-        mpfi_interv_fr(tempIA,a,b);
+        sollya_mpfi_init2(tempIA,tools_precision);
+        sollya_mpfi_interv_fr(tempIA,a,b);
 	if (timingString != NULL) pushTimeCounter(); 
-	resA = getNrRoots(c, copy->child1, tempIA);
+	resA = getNrRoots(c, copy->child1, tempIA, tools_precision);
 	if (timingString != NULL) popTimeCounter(timingString);
-        mpfi_clear(tempIA);
+        sollya_mpfi_clear(tempIA);
         if (resA) {
             tempNode = makeConstant(c);
             freeThing(copy);
@@ -17433,7 +18824,7 @@ node *evaluateThingInner(node *tree) {
       copy = makeHexadecimalThing();
       break;
     default:
-      fprintf(stderr,"Error: display mode in unknown state.\n");
+      sollyaFprintf(stderr,"Error: display mode in unknown state.\n");
       exit(1);
     }
     if (timingString != NULL) popTimeCounter(timingString);
@@ -17554,7 +18945,7 @@ node *evaluateThingInner(node *tree) {
     copy = copyThing(tree);
     break;
   default:
-    fprintf(stderr,"Error: evaluateThingInner: unknown identifier (%d) in the tree\n",tree->nodeType);
+    sollyaFprintf(stderr,"Error: evaluateThingInner: unknown identifier (%d) in the tree\n",tree->nodeType);
     exit(1);
   }
 

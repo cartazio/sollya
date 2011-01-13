@@ -5,6 +5,11 @@ Copyright 2006-2010 by
 Laboratoire de l'Informatique du Parallélisme,
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
 
+and
+
+Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
+UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.
+
 Contributors Ch. Lauter, S. Chevillard
 
 christoph.lauter@ens-lyon.org
@@ -89,6 +94,8 @@ MIDPOINTCONSTANT         (({AMIDPOINTCONSTANT})|(("-")((" ")*)({AMIDPOINTCONSTAN
 
 IDENTIFIER        ({CHAR}|{SPECIAL})({CHAR}|{NUMBER}|{SPECIAL})*
 
+DOT             "."    
+
 LPAR            "("
 RPAR            ")"
 
@@ -146,6 +153,7 @@ PLOT            "plot"
 REMEZ           "remez"
 FPMINIMAX       "fpminimax"
 INFNORM         "infnorm"
+SUPNORM         "supnorm"
 DIAM            "diam"
 
 DOUBLELONG       "double"
@@ -337,12 +345,10 @@ FROM            "from"
 TO              "to"
 BY              "by"
 DO              "do"
-BEGINLONG       "begin"
-ENDLONG         "end"
-BEGINSHORT      "{"
-ENDSHORT        "}"
-BEGIN           ({BEGINSHORT}|{BEGINLONG})
-END             ({ENDSHORT}|{ENDLONG})
+BEGIN           "begin"
+END             "end"
+LBRACE          "{"
+RBRACE          "}"
 
 WHILEDEF        "while"
 
@@ -367,6 +373,9 @@ PRINTXML        "printxml"
 INF             "inf"
 MID             "mid"
 SUP             "sup"
+
+MIN             "min"
+MAX             "max"
 
 READXML         "readxml"
 
@@ -460,9 +469,9 @@ NOP             "nop"
 		      if (temp_fd == NULL) {
                         if (verbosity >= 1) {
                            changeToWarningMode();
-                           printf("Warning: the file \"%s\" could not be opened for reading: ",newReadFilenameTemp);
-                           printf("\"%s\".\n",strerror(errno));
-			   printf("The last command will have no effect. No memory will be lost.\n");
+                           sollyaPrintf("Warning: the file \"%s\" could not be opened for reading: ",newReadFilenameTemp);
+                           sollyaPrintf("\"%s\".\n",strerror(errno));
+			   sollyaPrintf("The last command will have no effect. No memory will be lost.\n");
                            considerDyingOnError();
                            restoreMode();
                         }
@@ -492,7 +501,7 @@ NOP             "nop"
 
 <<EOF>>         {
                       if (readStack == NULL) {
-			if (!eliminatePromptBackup) printf("\n");
+			if (!eliminatePromptBackup) sollyaPrintf("\n");
 			yyterminate();
 		      } else {
 			fclose(yyin);
@@ -571,6 +580,7 @@ NOP             "nop"
 {RIGHTANGLESTAR}			    { newTokenLexed(); return RIGHTANGLESTARTOKEN; }
 {RIGHTANGLE}      			    { newTokenLexed(); return RIGHTANGLETOKEN; }
 {DOTS}            			    { newTokenLexed(); return DOTSTOKEN; }
+{DOT}            			    { newTokenLexed(); return DOTTOKEN; }
 {QUESTIONMARK}				    { newTokenLexed(); return QUESTIONMARKTOKEN; }
 {AND}         				    { newTokenLexed(); return ANDTOKEN; }
 {OR}         				    { newTokenLexed(); return ORTOKEN; }
@@ -669,6 +679,8 @@ NOP             "nop"
 {INF}   				    { newTokenLexed(); return INFTOKEN; }
 {MID}   				    { newTokenLexed(); return MIDTOKEN; }
 {SUP}   				    { newTokenLexed(); return SUPTOKEN; }
+{MIN}   				    { newTokenLexed(); return MINTOKEN; }
+{MAX}   				    { newTokenLexed(); return MAXTOKEN; }
 {READXML}   				    { newTokenLexed(); return READXMLTOKEN; }
 {LENGTH}   				    { newTokenLexed(); return LENGTHTOKEN; }
 {ABSOLUTE}   				    { newTokenLexed(); return ABSOLUTETOKEN; }
@@ -734,6 +746,7 @@ NOP             "nop"
 
 
 {INFNORM}         			    { newTokenLexed(); return INFNORMTOKEN; }
+{SUPNORM}         			    { newTokenLexed(); return SUPNORMTOKEN; }
 {FINDZEROS}       			    { newTokenLexed(); return FINDZEROSTOKEN; }
 {FPFINDZEROS}     			    { newTokenLexed(); return FPFINDZEROSTOKEN; }
 {DIRTYINFNORM}    			    { newTokenLexed(); return DIRTYINFNORMTOKEN; }
@@ -761,6 +774,8 @@ NOP             "nop"
 {DO}					    { newTokenLexed(); return DOTOKEN; }
 {BEGIN}					    { newTokenLexed(); return BEGINTOKEN; }
 {END}					    { newTokenLexed(); return ENDTOKEN; }
+{LBRACE}				    { newTokenLexed(); return LEFTCURLYBRACETOKEN; }
+{RBRACE}				    { newTokenLexed(); return RIGHTCURLYBRACETOKEN; }
 {WHILEDEF}				    { newTokenLexed(); return WHILETOKEN; }
 
 {EXTERNALPROC}                              { newTokenLexed(); return EXTERNALPROCTOKEN; }

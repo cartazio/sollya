@@ -16,6 +16,8 @@ internlexer.c
 
 bin_PROGRAMS = sollya
 sollya_SOURCES = \
+mpfi-compat.c \
+mpfi-compat.h \
 internparser.y \
 miniparser.y \
 parser.y \
@@ -63,6 +65,8 @@ taylor.c \
 taylor.h \
 taylorform.c \
 taylorform.h \
+supnorm.c \
+supnorm.h \
 sturm.c \
 sturm.h \
 worstcase.c \
@@ -72,11 +76,13 @@ xml.h
 sollya_CFLAGS = $(AM_CFLAGS)
 sollya_CXXFLAGS = $(AM_CXXFLAGS)
 
-include_HEADERS = sollya.h
+include_HEADERS = sollya.h mpfi-compat.h
 
 lib_LTLIBRARIES     = libsollya.la
 libsollya_la_SOURCES = \
 sollya.h \
+mpfi-compat.h \
+mpfi-compat.c \
 internparser.y \
 miniparser.y \
 parser.y \
@@ -120,6 +126,8 @@ remez.c \
 remez.h \
 taylorform.c \
 taylorform.h \
+supnorm.c \
+supnorm.h \
 sturm.c \
 sturm.h \
 taylor.c \

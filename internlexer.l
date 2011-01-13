@@ -5,6 +5,11 @@ Copyright 2007-2010 by
 Laboratoire de l'Informatique du Parallélisme,
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
 
+and
+
+Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
+UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.
+
 Contributors Ch. Lauter, S. Chevillard
 
 christoph.lauter@ens-lyon.org
@@ -87,6 +92,8 @@ MIDPOINTCONSTANT         (({AMIDPOINTCONSTANT})|(("-")((" ")*)({AMIDPOINTCONSTAN
 
 IDENTIFIER        ({CHAR}|{SPECIAL})({CHAR}|{NUMBER}|{SPECIAL})*
 
+DOT             "."
+
 LPAR            "("
 RPAR            ")"
 
@@ -144,6 +151,7 @@ PLOT            "plot"
 REMEZ           "remez"
 FPMINIMAX       "fpminimax"
 INFNORM         "infnorm"
+SUPNORM         "supnorm"
 DIAM            "diam"
 
 DOUBLELONG       "double"
@@ -335,12 +343,10 @@ FROM            "from"
 TO              "to"
 BY              "by"
 DO              "do"
-BEGINLONG       "begin"
-ENDLONG         "end"
-BEGINSHORT      "{"
-ENDSHORT        "}"
-BEGIN           ({BEGINSHORT}|{BEGINLONG})
-END             ({ENDSHORT}|{ENDLONG})
+BEGIN           "begin"
+END             "end"
+LBRACE          "{"
+RBRACE          "}"
 
 WHILEDEF        "while"
 
@@ -365,6 +371,9 @@ PRINTXML        "printxml"
 INF             "inf"
 MID             "mid"
 SUP             "sup"
+
+MIN             "min"
+MAX             "max"
 
 READXML         "readxml"
 
@@ -493,6 +502,7 @@ NOP             "nop"
 {RIGHTANGLESTAR}			    {  return RIGHTANGLESTARTOKEN; }
 {RIGHTANGLE}      			    {  return RIGHTANGLETOKEN; }
 {DOTS}            			    {  return DOTSTOKEN; }
+{DOT}            			    {  return DOTTOKEN; }
 {QUESTIONMARK}				    {  return QUESTIONMARKTOKEN; }
 {AND}         				    {  return ANDTOKEN; }
 {OR}         				    {  return ORTOKEN; }
@@ -591,6 +601,8 @@ NOP             "nop"
 {INF}   				    {  return INFTOKEN; }
 {MID}   				    {  return MIDTOKEN; }
 {SUP}   				    {  return SUPTOKEN; }
+{MIN}   				    {  return MINTOKEN; }
+{MAX}   				    {  return MAXTOKEN; }
 {READXML}   				    {  return READXMLTOKEN; }
 {LENGTH}   				    {  return LENGTHTOKEN; }
 {ABSOLUTE}   				    {  return ABSOLUTETOKEN; }
@@ -652,6 +664,7 @@ NOP             "nop"
 
 
 {INFNORM}         			    {  return INFNORMTOKEN; }
+{SUPNORM}         			    {  return SUPNORMTOKEN; }
 {FINDZEROS}       			    {  return FINDZEROSTOKEN; }
 {FPFINDZEROS}     			    {  return FPFINDZEROSTOKEN; }
 {DIRTYINFNORM}    			    {  return DIRTYINFNORMTOKEN; }
@@ -679,6 +692,8 @@ NOP             "nop"
 {DO}					    {  return DOTOKEN; }
 {BEGIN}					    {  return BEGINTOKEN; }
 {END}					    {  return ENDTOKEN; }
+{LBRACE}				    {  return LEFTCURLYBRACETOKEN; }
+{RBRACE}				    {  return RIGHTCURLYBRACETOKEN; }
 {WHILEDEF}				    {  return WHILETOKEN; }
 
 {EXTERNALPROC}                              {  return EXTERNALPROCTOKEN; }
@@ -705,6 +720,7 @@ NOP             "nop"
 					      strncpy(constBuffer,yytext,yyleng);
 					      yylval->value = constBuffer;
 					       return IDENTIFIERTOKEN; }
+
 
 .		{ /* otherwise */
 			printMessage(1,"The character \"%s\" cannot be recognized. Will ignore it.\n",
