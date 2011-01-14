@@ -232,7 +232,7 @@ int dividePolyByXMinusX0ToTheK(node **pTilde, node *poly, mpfr_t x0, int k, mp_p
   xToK = makePow(makeVariable(),makeConstant(kAsMpfr));
 
   /* Now build quotient = pShifted/xToK */
-  quotient = makeDiv(pShifted,xToK);
+  quotient = makeDiv(pShiftedHorner,xToK);
 
   /* Now simplify quotient */
   quotientSimplified = simplifyRationalErrorfree(quotient);
@@ -1095,7 +1095,7 @@ int determinePossibleZeroAndBisectPoint(mpfr_t zero, mpfr_t bisect,
     mpfr_init2(a,pp);
     mpfr_init2(b,pp);
     sollya_mpfi_get_left(a,dom);
-    sollya_mpfi_get_left(b,dom);
+    sollya_mpfi_get_right(b,dom);
     if (mpfr_number_p(a) && mpfr_number_p(b)) {
       /* Try to compute a list of zeros */
       pp = mpfr_get_prec(zero);
@@ -1104,7 +1104,6 @@ int determinePossibleZeroAndBisectPoint(mpfr_t zero, mpfr_t bisect,
 
       if (possibleZeros != NULL) {
 	/* We found at least one zero */
-
 	/* If there is just one zero, this is our only zero and least zero to return */
 	if (possibleZeros->next == NULL) {
 	  /* Here, we have exactly one zero.
@@ -1759,9 +1758,9 @@ int supnormRelativeNoSingularity(sollya_mpfi_t result, node *poly, node *func, s
 */
 int supnormRelativeSingularity(sollya_mpfi_t result, node *poly, node *func, sollya_mpfi_t dom, mpfr_t accuracy, mpfr_t singularity, mp_prec_t prec, mpfr_t bisectPoint) {
   int deg, k, n, res;
-  node *pTilde, *fTilde;
+  node *pTilde, *fTilde, *fTildeUnsimplified;
   mpfr_t kAsMpfr, mySingularity;
-
+  
   /* Determine the degree of poly */
   deg = getDegree(poly);
   if (deg < 0) {
@@ -1798,9 +1797,11 @@ int supnormRelativeSingularity(sollya_mpfi_t result, node *poly, node *func, sol
    */
   mpfr_init2(kAsMpfr,5 + 8 * sizeof(k));
   mpfr_set_si(kAsMpfr,k,GMP_RNDN); /* exact as per what precedes */
-  fTilde = makeDiv(copyTree(func),
-		   makePow(makeSub(makeVariable(),makeConstant(singularity)),
-			   makeConstant(kAsMpfr)));
+  fTildeUnsimplified = makeDiv(copyTree(func),
+			       makePow(makeSub(makeVariable(),makeConstant(singularity)),
+				       makeConstant(kAsMpfr)));
+  fTilde = simplifyTreeErrorfree(fTildeUnsimplified);
+  free_memory(fTildeUnsimplified);
 
   /* Now copy singularity into a local variable ('cause that stupid C,
      in some versions, prohibits taking a pointer on an argument)
