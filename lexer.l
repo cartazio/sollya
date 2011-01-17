@@ -1,6 +1,6 @@
 /*
 
-Copyright 2006-2010 by
+Copyright 2006-2011 by
 
 Laboratoire de l'Informatique du Parallélisme,
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
@@ -185,6 +185,7 @@ SIMPLIFYSAFE    ({SIMPLIFYSAFE1}|{SIMPLIFYSAFE2})
 
 TAYLOR          "taylor"
 TAYLORFORM      "taylorform"
+CHEBYSHEVFORM   "chebyshevform"
 AUTODIFF        "autodiff"
 
 FINDZEROS       "findzeros"
@@ -711,6 +712,7 @@ NOP             "nop"
 {SIMPLIFYSAFE}				    { newTokenLexed(); return SIMPLIFYSAFETOKEN; }
 {TAYLOR}         			    { newTokenLexed(); return TAYLORTOKEN; }
 {TAYLORFORM}         			    { newTokenLexed(); return TAYLORFORMTOKEN; }
+{CHEBYSHEVFORM}         		    { newTokenLexed(); return CHEBYSHEVFORMTOKEN; }
 {AUTODIFF}         			    { newTokenLexed(); return AUTODIFFTOKEN; }
 {DEGREE}          			    { newTokenLexed(); return DEGREETOKEN; }
 {NUMERATOR}       			    { newTokenLexed(); return NUMERATORTOKEN; }

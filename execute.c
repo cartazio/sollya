@@ -1,6 +1,6 @@
 /*
 
-Copyright 2007-2010 by 
+Copyright 2007-2011 by 
 
 Laboratoire de l'Informatique du Parallélisme, 
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
@@ -79,6 +79,7 @@ knowledge of the CeCILL-C license and that you accept its terms.
 #include "implement.h"
 #include "taylor.h"
 #include "taylorform.h"
+#include "chebyshevform.h"
 #include "supnorm.h"
 #include "xml.h"
 #include "miniparser.h"
@@ -899,7 +900,10 @@ node *copyThing(node *tree) {
     break; 			 	
   case TAYLORFORM:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
-    break; 			 	
+    break; 	
+  case CHEBYSHEVFORM:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
+    break; 			 			 	
   case AUTODIFF:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 			 	
@@ -1661,6 +1665,9 @@ char *getTimingStringForThing(node *tree) {
     break; 			 	
   case TAYLORFORM:
     constString = "taylorform";
+    break; 			 	
+  case CHEBYSHEVFORM:
+    constString = "chebyshevform";
     break; 			 	
   case AUTODIFF:
     constString = "autodiff";
@@ -4329,6 +4336,16 @@ char *sRawPrintThing(node *tree) {
     break; 			 	
   case TAYLORFORM:
     res = newString("taylorform(");
+    curr = tree->arguments;
+    while (curr != NULL) {
+      res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
+      if (curr->next != NULL) res = concatAndFree(res, newString(", ")); 
+      curr = curr->next;
+    }
+    res = concatAndFree(res, newString(")"));
+    break; 			 	
+  case CHEBYSHEVFORM:
+    res = newString("chebyshevform(");
     curr = tree->arguments;
     while (curr != NULL) {
       res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
@@ -9150,6 +9167,17 @@ node *makeTaylorform(chain *thinglist) {
 
 }
 
+node *makeChebyshevform(chain *thinglist) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = CHEBYSHEVFORM;
+  res->arguments = thinglist;
+
+  return res;
+
+}
+
 node *makeAutodiff(chain *thinglist) {
   node *res;
 
@@ -10581,6 +10609,10 @@ void freeThing(node *tree) {
     freeChain(tree->arguments, freeThingOnVoid);
     free(tree);
     break; 			 	
+  case CHEBYSHEVFORM:
+    freeChain(tree->arguments, freeThingOnVoid);
+    free(tree);
+    break; 			 	
   case AUTODIFF:
     freeChain(tree->arguments, freeThingOnVoid);
     free(tree);
@@ -11407,6 +11439,9 @@ int isEqualThing(node *tree, node *tree2) {
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
     break; 			 	
   case TAYLORFORM:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
+    break; 			 	
+  case CHEBYSHEVFORM:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
     break; 			 	
   case AUTODIFF:
@@ -12636,13 +12671,13 @@ void *evaluateThingOnVoid(void *tree) {
 }
 
 node *evaluateThingInner(node *tree) {
-  node *copy, *tempNode, *tempNode2, *tempNode3;
+  node *copy, *tempNode, *tempNode2, *tempNode3, *tempNode4, *tempNode5, *tempNode6;
   int *intptr;
   int resA, resB, i, resC, resD, resE, resF;
   char *tempString, *tempString2, *timingString, *tempString3, *tempString4, *tempString5;
   char *str1, *str2, *str3;
   mpfr_t a, b, c, d, e;
-  chain *tempChain, *curr, *newChain, *tempChain2, *tempChain3, *curr2, *tempChain4;
+  chain *tempChain, *curr, *newChain, *tempChain2, *tempChain3, *curr2, *tempChain4, *tempChain5;
   rangetype yrange, xrange, yrange2;
   node *firstArg, *secondArg, *thirdArg, *fourthArg, *fifthArg, *sixthArg, *seventhArg, *eighthArg;
   rangetype *rangeTempPtr;
@@ -16514,6 +16549,102 @@ node *evaluateThingInner(node *tree) {
       }
     }
     break; 			 	
+  case CHEBYSHEVFORM:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateThingInnerOnVoid);
+    curr = copy->arguments;
+    firstArg = (node *) curr->value;
+    curr = curr->next;
+    secondArg = (node *) curr->value;
+    curr = curr->next;
+    thirdArg = (node *) curr->value;
+    if (isPureTree(firstArg)) {
+      if (isPureTree(secondArg) &&
+	  evaluateThingToInteger(&resA, secondArg, NULL)) {
+	if (resA >= 0) {
+	  mpfr_init2(a,tools_precision);
+          mpfr_init2(b,tools_precision);
+          resC = (isRange(thirdArg) &&
+                  evaluateThingToRange(a,b,thirdArg));
+          if (resC || 
+              (isPureTree(thirdArg) && 
+               evaluateThingToConstant(a,thirdArg,NULL,0))) {
+            if (!resC) {
+              mpfr_set_prec(b,mpfr_get_prec(a));
+              mpfr_set(b,a,GMP_RNDN);
+            }
+            if (timingString != NULL) pushTimeCounter();
+            pTemp = mpfr_get_prec(a);
+            if (mpfr_get_prec(b) > pTemp) pTemp = mpfr_get_prec(b);
+            sollya_mpfi_init2(tempIA,pTemp);
+            sollya_mpfi_interv_fr(tempIA,a,b);
+	    sollya_mpfi_init2(tempIA2,tools_precision);
+	    if (timingString != NULL) pushTimeCounter();
+	    tempNode = NULL;
+	    tempChain2 = NULL;
+	    tempChain3 = NULL;
+	    chebyshevform(&tempNode, &tempChain2, tempIA2, &tempChain3, firstArg, resA, tempIA, tools_precision);
+	    if (timingString != NULL) popTimeCounter(timingString);
+	    sollya_mpfi_clear(tempIA);
+	    mpfr_clear(a);
+	    mpfr_clear(b);
+	    if ((tempNode != NULL) && (tempChain2 != NULL) && (tempChain3 != NULL)) {
+	      tempChain4 = NULL;
+	      curr2 = tempChain3;
+	      while (curr2 != NULL) {
+		pTemp = sollya_mpfi_get_prec(*((sollya_mpfi_t *) (curr2->value)));
+		mpfr_init2(a,pTemp);
+		mpfr_init2(b,pTemp);
+		sollya_mpfi_get_left(a,*((sollya_mpfi_t *) (curr2->value)));
+		sollya_mpfi_get_right(b,*((sollya_mpfi_t *) (curr2->value)));
+		tempChain4 = addElement(tempChain4, makeRange(makeConstant(a),makeConstant(b)));
+		mpfr_clear(a);
+		mpfr_clear(b);
+		curr2 = curr2->next;
+	      }
+	      tempChain5 = copyChain(tempChain4, copyThingOnVoid);
+	      tempNode3 = makeList(tempChain5);
+	      freeChain(tempChain4, freeThingOnVoid);
+	      tempChain4 = NULL;
+	      curr2 = tempChain2;
+	      while (curr2 != NULL) {
+		pTemp = sollya_mpfi_get_prec(*((sollya_mpfi_t *) (curr2->value)));
+		mpfr_init2(a,pTemp);
+		mpfr_init2(b,pTemp);
+		sollya_mpfi_get_left(a,*((sollya_mpfi_t *) (curr2->value)));
+		sollya_mpfi_get_right(b,*((sollya_mpfi_t *) (curr2->value)));
+		tempChain4 = addElement(tempChain4, makeRange(makeConstant(a),makeConstant(b)));
+		mpfr_clear(a);
+		mpfr_clear(b);
+		curr2 = curr2->next;
+	      }
+	      tempChain5 = copyChain(tempChain4, copyThingOnVoid);
+	      tempNode4 = makeList(tempChain5);
+	      freeChain(tempChain4, freeThingOnVoid);
+	      pTemp = sollya_mpfi_get_prec(tempIA2);
+	      mpfr_init2(a,pTemp);
+	      mpfr_init2(b,pTemp);
+	      sollya_mpfi_get_left(a,tempIA2);
+	      sollya_mpfi_get_right(b,tempIA2);
+	      tempNode5 = makeRange(makeConstant(a),makeConstant(b));
+	      mpfr_clear(a);
+	      mpfr_clear(b);
+	      tempChain4 = addElement(addElement(addElement(addElement(NULL, tempNode3), tempNode5), tempNode4), tempNode);
+	      tempNode6 = makeList(tempChain4);
+	      freeChain(tempChain2, freeMpfiPtr);	      
+	      freeChain(tempChain3, freeMpfiPtr);
+	      freeThing(copy);
+	      copy = tempNode6;
+	    } else {
+	      printMessage(1,"Warning: an error occurred during computation of a Chebyshev form.\n");
+	    }
+	    sollya_mpfi_clear(tempIA2);
+	  }
+	} else {
+          printMessage(1,"Warning: the degree of a Chebyshev form must not be negative.\n");
+	}
+      }
+    }
+    break;
   case AUTODIFF:
     copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateThingInnerOnVoid);
     curr = copy->arguments;

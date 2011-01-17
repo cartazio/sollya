@@ -1,6 +1,6 @@
 /*
 
-Copyright 2007-2010 by 
+Copyright 2007-2011 by 
 
 Laboratoire de l'Informatique du Parallélisme, 
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
@@ -268,6 +268,7 @@ extern void endBuffer(void);
 #define MIN 253
 #define MAX 254
 #define SUPNORM 255
+#define CHEBYSHEVFORM 262
 
 
 int executeCommand(node *);
@@ -418,6 +419,7 @@ node *makeCanonicalThing(node *thing);
 node *makeExpand(node *thing);
 node *makeTaylor(node *thing1, node *thing2, node *thing3);
 node *makeTaylorform(chain *thinglist);
+node *makeChebyshevform(chain *thinglist);
 node *makeAutodiff(chain *thinglist);
 node *makeDegree(node *thing);
 node *makeNumerator(node *thing);

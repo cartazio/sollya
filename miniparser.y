@@ -1,6 +1,6 @@
 /*
 
-Copyright 2007-2010 by
+Copyright 2007-2011 by
 
 Laboratoire de l'Informatique du Parallélisme,
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
@@ -232,6 +232,7 @@ void miniyyerror(void *myScanner, char *message) {
 %token  SIMPLIFYSAFETOKEN;
 %token  TAYLORTOKEN;
 %token  TAYLORFORMTOKEN;
+%token  CHEBYSHEVFORMTOKEN;
 %token  AUTODIFFTOKEN;
 %token  DEGREETOKEN;
 %token  NUMERATORTOKEN;
@@ -1420,6 +1421,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | TAYLORFORMTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thinglist RPARTOKEN
                           {
                             $$ = makeTaylorform(addElement(addElement($7, $5), $3));
+			  }
+                      | CHEBYSHEVFORMTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thing RPARTOKEN
+                          {
+                            $$ = makeChebyshevform(addElement(addElement(addElement(NULL, $7), $5), $3));
 			  }
                       | AUTODIFFTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thing RPARTOKEN
                           {

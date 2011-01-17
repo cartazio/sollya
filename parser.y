@@ -1,6 +1,6 @@
 /*
 
-Copyright 2006-2010 by
+Copyright 2006-2011 by
 
 Laboratoire de l'Informatique du Parallélisme,
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
@@ -253,6 +253,7 @@ void yyerror(char *message) {
 %token  SIMPLIFYSAFETOKEN;
 %token  TAYLORTOKEN;
 %token  TAYLORFORMTOKEN;
+%token  CHEBYSHEVFORMTOKEN;
 %token  AUTODIFFTOKEN;
 %token  DEGREETOKEN;
 %token  NUMERATORTOKEN;
@@ -1478,6 +1479,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | TAYLORFORMTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thinglist RPARTOKEN
                           {
                             $$ = makeTaylorform(addElement(addElement($7, $5), $3));
+			  }
+                      | CHEBYSHEVFORMTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thing RPARTOKEN
+                          {
+                            $$ = makeChebyshevform(addElement(addElement(addElement(NULL, $7), $5), $3));
 			  }
                       | AUTODIFFTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thing RPARTOKEN
                           {
@@ -3270,6 +3275,17 @@ help:                   CONSTANTTOKEN
 			    outputMode(); sollyaPrintf("Taylor form computation.\n");
 #if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
 #warning "No help text for TAYLORFORM"
+#endif
+#endif
+                          }
+                      | CHEBYSHEVFORMTOKEN
+                          {
+#ifdef HELP_CHEBYSHEVFORM_TEXT
+			    outputMode(); sollyaPrintf(HELP_CHEBYSHEVFORM_TEXT);
+#else
+			    outputMode(); sollyaPrintf("Chebyshev form computation.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for CHEBYSHEVFORM"
 #endif
 #endif
                           }

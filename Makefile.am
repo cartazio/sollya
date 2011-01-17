@@ -63,6 +63,8 @@ taylor.c \
 taylor.h \
 taylorform.c \
 taylorform.h \
+chebyshevform.c \
+chebyshevform.h \
 supnorm.c \
 supnorm.h \
 sturm.c \
@@ -122,6 +124,8 @@ remez.c \
 remez.h \
 taylorform.c \
 taylorform.h \
+chebyshevform.c \
+chebyshevform.h \
 supnorm.c \
 supnorm.h \
 sturm.c \
