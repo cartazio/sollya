@@ -94,6 +94,8 @@ MIDPOINTCONSTANT         (({AMIDPOINTCONSTANT})|(("-")((" ")*)({AMIDPOINTCONSTAN
 
 IDENTIFIER        ({CHAR}|{SPECIAL})({CHAR}|{NUMBER}|{SPECIAL})*
 
+DOT             "."    
+
 LPAR            "("
 RPAR            ")"
 
@@ -342,12 +344,10 @@ FROM            "from"
 TO              "to"
 BY              "by"
 DO              "do"
-BEGINLONG       "begin"
-ENDLONG         "end"
-BEGINSHORT      "{"
-ENDSHORT        "}"
-BEGIN           ({BEGINSHORT}|{BEGINLONG})
-END             ({ENDSHORT}|{ENDLONG})
+BEGIN           "begin"
+END             "end"
+LBRACE          "{"
+RBRACE          "}"
 
 WHILEDEF        "while"
 
@@ -579,6 +579,7 @@ NOP             "nop"
 {RIGHTANGLESTAR}			    { newTokenLexed(); return RIGHTANGLESTARTOKEN; }
 {RIGHTANGLE}      			    { newTokenLexed(); return RIGHTANGLETOKEN; }
 {DOTS}            			    { newTokenLexed(); return DOTSTOKEN; }
+{DOT}            			    { newTokenLexed(); return DOTTOKEN; }
 {QUESTIONMARK}				    { newTokenLexed(); return QUESTIONMARKTOKEN; }
 {AND}         				    { newTokenLexed(); return ANDTOKEN; }
 {OR}         				    { newTokenLexed(); return ORTOKEN; }
@@ -771,6 +772,8 @@ NOP             "nop"
 {DO}					    { newTokenLexed(); return DOTOKEN; }
 {BEGIN}					    { newTokenLexed(); return BEGINTOKEN; }
 {END}					    { newTokenLexed(); return ENDTOKEN; }
+{LBRACE}				    { newTokenLexed(); return LEFTCURLYBRACETOKEN; }
+{RBRACE}				    { newTokenLexed(); return RIGHTCURLYBRACETOKEN; }
 {WHILEDEF}				    { newTokenLexed(); return WHILETOKEN; }
 
 

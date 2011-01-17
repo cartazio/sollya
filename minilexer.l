@@ -92,6 +92,8 @@ MIDPOINTCONSTANT         (({AMIDPOINTCONSTANT})|(("-")((" ")*)({AMIDPOINTCONSTAN
 
 IDENTIFIER        ({CHAR}|{SPECIAL})({CHAR}|{NUMBER}|{SPECIAL})*
 
+DOT             "."
+
 LPAR            "("
 RPAR            ")"
 
@@ -340,12 +342,10 @@ FROM            "from"
 TO              "to"
 BY              "by"
 DO              "do"
-BEGINLONG       "begin"
-ENDLONG         "end"
-BEGINSHORT      "{"
-ENDSHORT        "}"
-BEGIN           ({BEGINSHORT}|{BEGINLONG})
-END             ({ENDSHORT}|{ENDLONG})
+BEGIN           "begin" 
+END             "end"
+LBRACE          "{"
+RBRACE          "}"
 
 WHILEDEF        "while"
 
@@ -501,6 +501,7 @@ NOP             "nop"
 {RIGHTANGLESTAR}			    {  return RIGHTANGLESTARTOKEN; }
 {RIGHTANGLE}      			    {  return RIGHTANGLETOKEN; }
 {DOTS}            			    {  return DOTSTOKEN; }
+{DOT}            			    {  return DOTTOKEN; }
 {QUESTIONMARK}				    {  return QUESTIONMARKTOKEN; }
 {AND}         				    {  return ANDTOKEN; }
 {OR}         				    {  return ORTOKEN; }
@@ -688,6 +689,8 @@ NOP             "nop"
 {DO}					    {  return DOTOKEN; }
 {BEGIN}					    {  return BEGINTOKEN; }
 {END}					    {  return ENDTOKEN; }
+{LBRACE}				    {  return LEFTCURLYBRACETOKEN; }
+{RBRACE}				    {  return RIGHTCURLYBRACETOKEN; }
 {WHILEDEF}				    {  return WHILETOKEN; }
 
 {EXTERNALPROC}                              {  return EXTERNALPROCTOKEN; }
@@ -714,6 +717,7 @@ NOP             "nop"
 					      strncpy(constBuffer,yytext,yyleng);
 					      yylval->value = constBuffer;
 					       return IDENTIFIERTOKEN; }
+
 
 .		{ /* otherwise */
 			printMessage(1,"The character \"%s\" cannot be recognized. Will ignore it.\n",
