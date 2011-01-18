@@ -23,7 +23,10 @@ implements a constant in arbitrary precision\\
    $$|y-c| \le c\,2^{1-\mathrm{prec}}.$$
 
 \item If \emph{expr} refers to a constant defined with \textbf{libraryconstant}, the produced
-   code uses the external code implementing this constant.
+   code uses the external code implementing this constant. The user should
+   keep in mind that it is up to them to make sure the symbol for that 
+   external code can get resolved when the newly generated code is to 
+   be loaded.
 
 \item Currently, \textbf{implementconstant} makes the assumption that none of the
    non-trivial subexpressions of \emph{expr} evaluates to $0$. If \emph{expr} contains
@@ -52,7 +55,6 @@ mpfr_const_something (mpfr_ptr y, mp_prec_t prec)
   mpfr_init2 (tmp6, prec+11);
   mpfr_init2 (tmp7, prec+11);
   mpfr_init2 (tmp5, prec+11);
-  mpfr_init2 (y, prec+3);
 
   /* Core */
   mpfr_set_prec (tmp2, prec+4);
@@ -103,7 +105,6 @@ mpfr_const_something (mpfr_ptr y, mp_prec_t prec)
 
   /* Initializations */
   mpfr_init2 (tmp1, prec+1);
-  mpfr_init2 (y, prec+2);
 
   /* Core */
   euler_gamma (tmp1, prec+1);
