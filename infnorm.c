@@ -5488,7 +5488,7 @@ int evaluateSign(int *s, node *rawFunc) {
 	sign = 1;
 	break;
       case LIBRARYCONSTANT:
-        /* By defininition, a library constant is known with a relative error
+        /* By definition, a library constant is known with a relative error
            smaller that ~ 2^(-prec). So we can decide the sign, based on low
            approximation of the constant. */
         sollya_mpfi_init2(valueI, 12); 

@@ -235,7 +235,7 @@ libraryFunction *bindConstantFunction(char* libraryName, char *functionName) {
   char *error;
   mpfr_t op;
 
-  currFunct = getFunction(functionName);
+  currFunct = getConstantFunction(functionName);
   if (currFunct != NULL) {
     printMessage(1,"Warning: a function named \"%s\" has already been bound.\n",functionName);
     return currFunct;
@@ -350,7 +350,7 @@ libraryProcedure *bindProcedure(char* libraryName, char *procedureName, chain *s
 
   currProc = getProcedure(procedureName);
   if (currProc != NULL) {
-    printMessage(1,"Warning: a procedure named \"%s\" has already been bound.\n",procedureName);
+    printMessage(1,"Warning: a function named \"%s\" has already been bound.\n",procedureName);
     return currProc;
   }
 
@@ -366,7 +366,7 @@ libraryProcedure *bindProcedure(char* libraryName, char *procedureName, chain *s
   myFunction = dlsym(libHandle->libraryDescriptor, procedureName);
   if ((error = dlerror()) != NULL) {
     changeToWarningMode();
-    sollyaFprintf(stderr, "Error: could not find procedure \"%s\" in library \"%s\" for binding: %s\n",procedureName,libraryName,error);
+    sollyaFprintf(stderr, "Error: could not find function \"%s\" in library \"%s\" for binding: %s\n",procedureName,libraryName,error);
     restoreMode();
     return NULL;
   }

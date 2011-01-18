@@ -9274,6 +9274,7 @@ int isConstant(node *tree) {
   case SUB:
   case MUL:
   case DIV:
+  case POW:
     return (isConstant(tree->child1) & isConstant(tree->child2));
     break;
 
@@ -9307,16 +9308,10 @@ int isConstant(node *tree) {
   case DOUBLEEXTENDED:
   case LIBRARYFUNCTION:
   case PROCEDUREFUNCTION:
-    return isConstant(tree->child1);
-    break;
   case CEIL:
   case FLOOR:
   case NEARESTINT:
     return isConstant(tree->child1);
-    break;
-
-  case POW:
-    return (isConstant(tree->child1) & isConstant(tree->child2));
     break;
   default:
    sollyaFprintf(stderr,"Error: isConstant: unknown identifier in the tree\n");
@@ -11502,8 +11497,6 @@ int treeSize(node *tree) {
   case DOUBLEEXTENDED:
   case LIBRARYFUNCTION:    
   case PROCEDUREFUNCTION:    
-    return treeSize(tree->child1) + 1;
-    break;
   case CEIL:
   case FLOOR:
   case NEARESTINT:
