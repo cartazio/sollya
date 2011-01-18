@@ -1,6 +1,6 @@
 /*
 
-Copyright 2007-2010 by 
+Copyright 2007-2011 by 
 
 Laboratoire de l'Informatique du Parallélisme, 
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
@@ -77,7 +77,7 @@ knowledge of the CeCILL-C license and that you accept its terms.
 #include "double.h"
 #include "worstcase.h"
 #include "implement.h"
-#include "implement-cste.h"
+#include "implementconst.h"
 #include "taylor.h"
 #include "taylorform.h"
 #include "supnorm.h"
@@ -1008,7 +1008,7 @@ node *copyThing(node *tree) {
   case IMPLEMENTPOLY:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 			
-  case IMPLEMENTCSTE:
+  case IMPLEMENTCONST:
     copy->child1 = copyThing(tree->child1);
     break; 			
   case CHECKINFNORM:
@@ -1814,7 +1814,7 @@ char *getTimingStringForThing(node *tree) {
   case IMPLEMENTPOLY:
     constString = "implementing a polynomial";
     break; 			
-  case IMPLEMENTCSTE:
+  case IMPLEMENTCONST:
     constString = "implementing a constant";
     break; 			
   case CHECKINFNORM:
@@ -4638,7 +4638,7 @@ char *sRawPrintThing(node *tree) {
     }
     res = concatAndFree(res, newString(")"));
     break; 
-  case IMPLEMENTCSTE:
+  case IMPLEMENTCONST:
     res = newString("implementcste(");
     res = concatAndFree(res, sRawPrintThing(tree->child1));
     res = concatAndFree(res, newString(")"));
@@ -6402,14 +6402,17 @@ int executeCommandInner(node *tree) {
       freeThing(array[i]);
     free(array);
     break;			
-  case IMPLEMENTCSTE:
+  case IMPLEMENTCONST:
     tempNode = evaluateThing(tree->child1);
     if (isPureTree(tempNode) && isConstant(tempNode)) {
       if (timingString != NULL) pushTimeCounter();      
-      implementCste(tempNode);
+      resC = implementconst(tempNode, stdout, "some_constant");
       if (timingString != NULL) popTimeCounter(timingString);
-    }
-    else {
+      if (!resC) {
+	printMessage(1,"Warning: the implementation has not succeeded. The command could be executed.\n");
+	considerDyingOnError();
+      }
+    } else {
       printMessage(1, "Warning: the expression given does not evaluate to a constant value.\n");
       printMessage(1, "This command will have no effect.\n");
       considerDyingOnError();
@@ -9987,7 +9990,7 @@ node *makeImplementCste(node *thing1) {
   node *res;
 
   res = (node *) safeMalloc(sizeof(node));
-  res->nodeType = IMPLEMENTCSTE;
+  res->nodeType = IMPLEMENTCONST;
   res->child1 = thing1;
 
   return res;
@@ -11316,7 +11319,7 @@ void freeThing(node *tree) {
     freeChain(tree->arguments, freeThingOnVoid);
     free(tree);
     break; 			
-  case IMPLEMENTCSTE:
+  case IMPLEMENTCONST:
     freeThing(tree->child1);
     free(tree);
     break; 			
@@ -12173,7 +12176,7 @@ int isEqualThing(node *tree, node *tree2) {
    case IMPLEMENTPOLY:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
     break; 			
-  case IMPLEMENTCSTE:
+  case IMPLEMENTCONST:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break;  			
   case CHECKINFNORM:

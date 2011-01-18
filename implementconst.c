@@ -525,7 +525,7 @@ void appendIfThenElseProg(char *cond, struct implementCsteProgram prog1, struct 
 void constantImplementer(node *c, int gamma0, struct implementCsteProgram *program);
 
 /* Main function */
-void implementCste(node *c) {
+int implementconst(node *c, FILE *fd, char *funcName) {
   int i, test;
   const char name[] = "something";
   FILE *output = stdout;
@@ -582,7 +582,7 @@ void implementCste(node *c) {
 
   freeChain(program.instructions, free_implementCsteInstruction);
   freeChain(program.precisions, free);
-  return;
+  return 1; // TODO
 }
 
 int ceil_log2n(int p) {
