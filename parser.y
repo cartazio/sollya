@@ -1,6 +1,6 @@
 /*
 
-Copyright 2006-2010 by
+Copyright 2006-2011 by
 
 Laboratoire de l'Informatique du Parallélisme,
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
@@ -303,7 +303,7 @@ void yyerror(char *message) {
 %token  DIRTYINTEGRALTOKEN;
 %token  WORSTCASETOKEN;
 %token  IMPLEMENTPOLYTOKEN;
-%token  IMPLEMENTCSTETOKEN;
+%token  IMPLEMENTCONSTTOKEN;
 %token  CHECKINFNORMTOKEN;
 %token  ZERODENOMINATORSTOKEN;
 %token  ISEVALUABLETOKEN;
@@ -726,9 +726,9 @@ simplecommand:          QUITTOKEN
                           {
 			    $$ = makePrintExpansion($3);
 			  }
-                      | IMPLEMENTCSTETOKEN LPARTOKEN thing RPARTOKEN
+                      | IMPLEMENTCONSTTOKEN LPARTOKEN thing RPARTOKEN
                           {
-			    $$ = makeImplementCste($3);
+			    $$ = makeImplementConst($3);
 			  }
                       | BASHEXECUTETOKEN LPARTOKEN thing RPARTOKEN
                           {
@@ -3795,7 +3795,7 @@ help:                   CONSTANTTOKEN
 #endif
 #endif
                           }
-                      | IMPLEMENTCSTETOKEN
+                      | IMPLEMENTCONSTTOKEN
                           {
 #ifdef HELP_IMPLEMENTCONSTANT_TEXT
 			    outputMode(); sollyaPrintf(HELP_IMPLEMENTCONSTANT_TEXT);
@@ -3803,7 +3803,7 @@ help:                   CONSTANTTOKEN
 			    outputMode(); sollyaPrintf("Implement a constant expression in arbitrary precision with MPFR: implementconstant(constant)\n");
 			    outputMode(); sollyaPrintf("Generates code able to evaluate the given constant at any precision, with a guaranteed error.\n");
 #if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
-#warning "No help text for IMPLEMENTCSTE"
+#warning "No help text for IMPLEMENTCONST"
 #endif
 #endif
                           }

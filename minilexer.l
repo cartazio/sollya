@@ -1,6 +1,6 @@
 /*
 
-Copyright 2007-2010 by
+Copyright 2007-2011 by
 
 Laboratoire de l'Informatique du Parallélisme,
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
@@ -239,6 +239,7 @@ SUBSTITUTE      "substitute"
 DOTS            "..."
 
 IMPLEMENTPOLY   "implementpoly"
+IMPLEMENTCONST  "implementconstant"
 
 CHECKINFNORM    "checkinfnorm"
 
@@ -669,6 +670,7 @@ NOP             "nop"
 {DIRTYINTEGRAL}				    {  return DIRTYINTEGRALTOKEN; }
 {WORSTCASE}       			    {  return WORSTCASETOKEN; }
 {IMPLEMENTPOLY}				    {  return IMPLEMENTPOLYTOKEN; }
+{IMPLEMENTCONST}                            {  return IMPLEMENTCONSTTOKEN; }
 {CHECKINFNORM}    			    {  return CHECKINFNORMTOKEN; }
 {ZERODENOMINATORS}			    {  return ZERODENOMINATORSTOKEN; }
 {ISEVALUABLE}     			    {  return ISEVALUABLETOKEN; }

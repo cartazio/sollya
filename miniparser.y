@@ -1,6 +1,6 @@
 /*
 
-Copyright 2007-2010 by
+Copyright 2007-2011 by
 
 Laboratoire de l'Informatique du Parallélisme,
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
@@ -281,6 +281,7 @@ void miniyyerror(void *myScanner, char *message) {
 %token  DIRTYINTEGRALTOKEN;
 %token  WORSTCASETOKEN;
 %token  IMPLEMENTPOLYTOKEN;
+%token  IMPLEMENTCONSTTOKEN;
 %token  CHECKINFNORMTOKEN;
 %token  ZERODENOMINATORSTOKEN;
 %token  ISEVALUABLETOKEN;
@@ -1601,6 +1602,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | IMPLEMENTPOLYTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thing COMMATOKEN thing COMMATOKEN thing COMMATOKEN thinglist RPARTOKEN
                           {
 			    $$ = makeImplementPoly(addElement(addElement(addElement(addElement(addElement($13, $11), $9), $7), $5), $3));
+			  }
+                      | IMPLEMENTCONSTTOKEN LPARTOKEN thing RPARTOKEN
+                          {
+			    $$ = makeImplementConst($3);
 			  }
                       | CHECKINFNORMTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thing RPARTOKEN
                           {

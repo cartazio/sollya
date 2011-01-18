@@ -9986,7 +9986,7 @@ node *makeImplementPoly(chain *thinglist) {
 
 }
 
-node *makeImplementCste(node *thing1) {
+node *makeImplementConst(node *thing1) {
   node *res;
 
   res = (node *) safeMalloc(sizeof(node));

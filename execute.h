@@ -1,6 +1,6 @@
 /*
 
-Copyright 2007-2010 by
+Copyright 2007-2011 by
 
 Laboratoire de l'Informatique du Parallélisme,
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
@@ -451,7 +451,7 @@ node *makeNumberRoots(node *thing1, node *thing2);
 node *makeIntegral(node *thing1, node *thing2);
 node *makeDirtyIntegral(node *thing1, node *thing2);
 node *makeImplementPoly(chain *thinglist);
-node *makeImplementCste(node *thing1);
+node *makeImplementConst(node *thing1);
 node *makeNewCommand(node *thing1);
 node *makeCheckInfnorm(node *thing1, node *thing2, node *thing3);
 node *makeZeroDenominators(node *thing1, node *thing2);
