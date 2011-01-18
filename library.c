@@ -1,9 +1,14 @@
 /*
 
-Copyright 2007-2009 by 
+Copyright 2007-2011 by 
 
 Laboratoire de l'Informatique du Parallélisme, 
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
+
+and
+
+Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
+UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.
 
 Contributors Ch. Lauter, S. Chevillard
 
@@ -321,24 +326,6 @@ void freeConstantLibraries() {
     free(prevLibList);
   }
   openedConstantLibraries = NULL;
-}
-
-/* Evaluate a library constant function into an interval */
-void libraryConstantToInterval(sollya_mpfi_t res, node *tree) {
-  mpfr_t approx, lbound, rbound;
-  mp_prec_t prec = sollya_mpfi_get_prec(res);
-
-  mpfr_init2(approx, prec + 20); /* some guard bits may avoid reinit in tree->libFun */
-  tree->libFun->constant_code(approx, prec);
-  mpfr_init2(lbound, prec-2);
-  mpfr_init2(rbound, prec-2);
-  mpfr_set(lbound, approx, GMP_RNDD);
-  mpfr_set(rbound, approx, GMP_RNDU);
-  mpfr_nextbelow(lbound);
-  mpfr_nextabove(rbound);
-  
-  sollya_mpfi_interv_fr(res, lbound, rbound);
-  return;
 }
 
 /* Functions related to external procedures */

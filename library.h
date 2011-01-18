@@ -1,9 +1,14 @@
 /*
 
-Copyright 2007-2009 by 
+Copyright 2007-2011 by 
 
 Laboratoire de l'Informatique du Parallélisme, 
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
+
+and
+
+Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
+UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.
 
 Contributor Ch. Lauter
 
@@ -96,18 +101,9 @@ struct libraryProcedureStruct
 libraryFunction *bindFunction(char* libraryName, char *functionName);
 libraryFunction *bindConstantFunction(char* libraryName, char *functionName);
 libraryProcedure *bindProcedure(char* libraryName, char *procedureName, chain *signature);
-
 libraryFunction *getFunction(char *functionName);
 libraryFunction *getConstantFunction(char *functionName);
 libraryProcedure *getProcedure(char *procedureName);
-
-/* FIXME: it is impossible to export this prototype here because 
-   expression.h refers to library.h for the definition of the type node,
-   hence a circular definition problem. I do not see how to solve the
-   problem yet. 
-*/
-/* void libraryConstantToInterval(sollya_mpfi_t res, node *tree); */
-
 void freeFunctionLibraries();
 void freeConstantLibraries();
 void freeProcLibraries();

@@ -470,6 +470,23 @@ void sollya_mpfi_nearestint(sollya_mpfi_t rop, sollya_mpfi_t op) {
   mpfr_clear(ropr);
 }
 
+/* Evaluate a library constant function into an interval */
+void libraryConstantToInterval(sollya_mpfi_t res, node *tree) {
+  mpfr_t approx, lbound, rbound;
+  mp_prec_t prec = sollya_mpfi_get_prec(res);
+
+  mpfr_init2(approx, prec + 20); /* some guard bits may avoid reinit in tree->libFun */
+  tree->libFun->constant_code(approx, prec);
+  mpfr_init2(lbound, prec-2);
+  mpfr_init2(rbound, prec-2);
+  mpfr_set(lbound, approx, GMP_RNDD);
+  mpfr_set(rbound, approx, GMP_RNDU);
+  mpfr_nextbelow(lbound);
+  mpfr_nextabove(rbound);
+  
+  sollya_mpfi_interv_fr(res, lbound, rbound);
+  return;
+}
 
 int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, mpfr_t b, mpfr_t start, mp_prec_t prec) {
   mpfr_t x, x2, temp1, temp2, am, bm;

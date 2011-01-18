@@ -99,5 +99,7 @@ void sollya_mpfi_erfc(sollya_mpfi_t rop, sollya_mpfi_t op);
 void sollya_mpfi_ceil(sollya_mpfi_t rop, sollya_mpfi_t op);
 void sollya_mpfi_floor(sollya_mpfi_t rop, sollya_mpfi_t op);
 void sollya_mpfi_nearestint(sollya_mpfi_t rop, sollya_mpfi_t op);
+void libraryConstantToInterval(sollya_mpfi_t res, node *tree); 
+
 
 #endif /* ifdef INFNORM_H*/
