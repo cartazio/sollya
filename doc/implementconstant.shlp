@@ -4,7 +4,7 @@
 #TYPE $CONSTANT_TYPE -> $VOID_TYPE
 
 #DESCRIPTION 
-The command $COMMAND implements the constant expresion <expr> in 
+The command $COMMAND implements the constant expression <expr> in 
 arbitrary precision. More precisely, it generates the source code (written
 in C, and using MPFR) of a function §§mpfr_const_something§\texttt{mpfr\_const\_something}§§ with the following
 signature:
