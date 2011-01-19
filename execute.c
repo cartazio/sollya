@@ -1009,7 +1009,7 @@ node *copyThing(node *tree) {
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 			
   case IMPLEMENTCONST:
-    copy->child1 = copyThing(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 			
   case CHECKINFNORM:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
@@ -2556,6 +2556,29 @@ int evaluateThingToString(char **result, node *tree) {
   if (isString(evaluatedResult)) {
     *result = (char *) safeCalloc(strlen(evaluatedResult->string)+1,sizeof(char));
     strcpy(*result,evaluatedResult->string);
+    freeThing(evaluatedResult);
+    return 1;
+  }
+  
+  freeThing(evaluatedResult);
+  return 0;
+}
+
+int evaluateThingToStringWithDefault(char **result, node *tree, char *defaultVal) {
+  node *evaluatedResult;
+
+  evaluatedResult = evaluateThing(tree);
+
+  if (isString(evaluatedResult)) {
+    *result = (char *) safeCalloc(strlen(evaluatedResult->string)+1,sizeof(char));
+    strcpy(*result,evaluatedResult->string);
+    freeThing(evaluatedResult);
+    return 1;
+  } 
+
+  if (isDefault(evaluatedResult)) {
+    *result = (char *) safeCalloc(strlen(defaultVal)+1,sizeof(char));
+    strcpy(*result,defaultVal);
     freeThing(evaluatedResult);
     return 1;
   }
@@ -4639,8 +4662,13 @@ char *sRawPrintThing(node *tree) {
     res = concatAndFree(res, newString(")"));
     break; 
   case IMPLEMENTCONST:
-    res = newString("implementcste(");
-    res = concatAndFree(res, sRawPrintThing(tree->child1));
+    res = newString("implementconstant(");
+    curr = tree->arguments;
+    while (curr != NULL) {
+      res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
+      if (curr->next != NULL) res = concatAndFree(res, newString(", ")); 
+      curr = curr->next;
+    }
     res = concatAndFree(res, newString(")"));
     break;
   case CHECKINFNORM:
@@ -6014,7 +6042,7 @@ node *recomputeLeftHandSideForAssignmentInStructure(node *oldValue, node *newVal
 }
 
 int executeCommandInner(node *tree) {
-  int result, res, intTemp, resA, resB, resC, resD, resE, resF, defaultVal, i;  
+  int result, res, intTemp, resA, resB, resC, resD, resE, resF, resG, defaultVal, i;  
   chain *curr, *tempList, *tempList2, *tempChain; 
   mpfr_t a, b, c, d, e;
   node *tempNode, *tempNode2, *tempNode3, *tempNode4;
@@ -6403,21 +6431,133 @@ int executeCommandInner(node *tree) {
     free(array);
     break;			
   case IMPLEMENTCONST:
-    tempNode = evaluateThing(tree->child1);
-    if (isPureTree(tempNode) && isConstant(tempNode)) {
-      if (timingString != NULL) pushTimeCounter();      
-      resC = implementconst(tempNode, stdout, "some_constant");
-      if (timingString != NULL) popTimeCounter(timingString);
-      if (!resC) {
-	printMessage(1,"Warning: the implementation has not succeeded. The command could be executed.\n");
-	considerDyingOnError();
+    evaluateThingListToThingArray(&resA, &array, tree->arguments);
+    resG = 1;
+    resD = 1;
+    if (evaluateThingToPureTree(&tempNode, array[0])) {
+      if (isConstant(tempNode)) {
+	resB = 0;
+	resC = 1;
+	resE = 0;
+	if (resA > 1) {
+	  if (evaluateThingToString(&tempString2, array[1])) {
+	    fd = fopen(tempString2,"w");
+	    if (fd != NULL) {
+	      free(tempString2);
+	      resB = 1;
+	    } else {
+	      if (resD) { freeThing(tempNode); resD = 0; }
+	      if (resG) {
+		for (i=0;i<resA;i++)
+		  freeThing(array[i]);
+		free(array);
+		resG = 0;
+	      }
+	      printMessage(1,"Warning: the file \"%s\" could not be opened for writing.\n",tempString2);
+	      printMessage(1,"This command will have no effect.\n");
+	      free(tempString2);
+	      considerDyingOnError();
+	      resC = 0;
+	    }
+	  } else {
+	    if (isDefault(array[1])) {
+	      fd = stdout;
+	      resB = 0;
+	    } else {
+	      if (resD) { freeThing(tempNode); resD = 0; }
+	      if (resG) {
+		for (i=0;i<resA;i++)
+		  freeThing(array[i]);
+		free(array);
+		resG = 0;
+	      }
+	      printMessage(1,"Warning: the expression given does not evaluate to a string nor to a default value.\n");
+	      printMessage(1,"This command will have no effect.\n");
+	      considerDyingOnError();
+	      resC = 0;
+	    }
+	  }
+	  if (resC && (resA > 2)) {
+	    if (evaluateThingToStringWithDefault(&tempString, array[2], "const_something")) {
+	      resE = 1;
+	    } else {
+	      if (resD) { freeThing(tempNode); resD = 0; }
+	      if (resB) { fclose(fd); resB = 0; }
+	      if (resG) {
+		for (i=0;i<resA;i++)
+		  freeThing(array[i]);
+		free(array);
+		resG = 0;
+	      }
+	      printMessage(1,"Warning: the expression given does not evaluate to a string nor to a default value.\n");
+	      printMessage(1,"This command will have no effect.\n");
+	      considerDyingOnError();
+	      resC = 0;
+	    } 
+	  } else {
+	    tempString2 = "const_something";
+	    tempString = (char *) safeCalloc(strlen(tempString2) + 1, sizeof(char));
+	    strcpy(tempString, tempString2);
+	    resE = 1;
+	  } 
+	} else {
+	  tempString2 = "const_something";
+	  tempString = (char *) safeCalloc(strlen(tempString2) + 1, sizeof(char));
+	  strcpy(tempString, tempString2);
+	  resE = 1;
+	  fd = stdout;
+	  resB = 0;
+	}
+	if (resC) {
+	  if (timingString != NULL) pushTimeCounter();
+	  outputMode();
+	  resF = implementconst(tempNode, fd, tempString);
+	  if (timingString != NULL) popTimeCounter(timingString);
+	  if (!resF) {
+	    if (resB) { fclose(fd); resB = 0; }
+	    if (resE) { free(tempString); resE = 0; }
+	    if (resD) { freeThing(tempNode); resD = 0; }
+	    if (resG) {
+	      for (i=0;i<resA;i++)
+		freeThing(array[i]);
+	      free(array);
+	      resG = 0;
+	    }
+	    printMessage(1,"Warning: the implementation has not succeeded. The command could be executed.\n");
+	    considerDyingOnError();
+	  }
+	}
+	if (resB) { fclose(fd); resB = 0; }
+	if (resE) { free(tempString); resE = 0; }
+	if (resD) { freeThing(tempNode); resD = 0; }
+      } else {
+	if (resD) { freeThing(tempNode); resD = 0; }
+	if (resG) {
+	  for (i=0;i<resA;i++)
+	    freeThing(array[i]);
+	  free(array);
+	  resG = 0;
+	}
+	printMessage(1,"Warning: the expression given does not evaluate to a constant expression.\n");
+	printMessage(1,"This command will have no effect.\n");
+        considerDyingOnError();
       }
     } else {
-      printMessage(1, "Warning: the expression given does not evaluate to a constant value.\n");
-      printMessage(1, "This command will have no effect.\n");
+      if (resG) {
+	for (i=0;i<resA;i++)
+	  freeThing(array[i]);
+	free(array);
+	resG = 0;
+      }
+      printMessage(1,"Warning: the expression given does not evaluate to an expression.\n");
+      printMessage(1,"This command will have no effect.\n");
       considerDyingOnError();
     }
-    freeThing(tempNode);
+    if (resG) {
+      for (i=0;i<resA;i++)
+	freeThing(array[i]);
+      free(array);
+    }
     break;
   case PRINTHEXA:
     mpfr_init2(a,tools_precision);
@@ -9986,12 +10126,12 @@ node *makeImplementPoly(chain *thinglist) {
 
 }
 
-node *makeImplementConst(node *thing1) {
+node *makeImplementConst(chain *thinglist) {
   node *res;
 
   res = (node *) safeMalloc(sizeof(node));
   res->nodeType = IMPLEMENTCONST;
-  res->child1 = thing1;
+  res->arguments = thinglist;
 
   return res;
 
@@ -11320,7 +11460,7 @@ void freeThing(node *tree) {
     free(tree);
     break; 			
   case IMPLEMENTCONST:
-    freeThing(tree->child1);
+    freeChain(tree->arguments, freeThingOnVoid);
     free(tree);
     break; 			
   case CHECKINFNORM:
@@ -12177,7 +12317,7 @@ int isEqualThing(node *tree, node *tree2) {
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
     break; 			
   case IMPLEMENTCONST:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
     break;  			
   case CHECKINFNORM:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;

@@ -527,12 +527,16 @@ void constantImplementer(node *c, int gamma0, struct implementCsteProgram *progr
 /* Main function */
 int implementconst(node *c, FILE *fd, char *funcName) {
   int i, test;
-  const char name[] = "something";
-  FILE *output = stdout;
+  char *name = funcName; // TODO Sylvain: I removed a const here and changed the char[] to char *, to be checked
+  FILE *output = fd;
   struct implementCsteProgram program;
   chain *curr;
-  
-  program.instructions = NULL;
+
+  // TODO Sylvain: Make the name of the function choosable, i.e. currently we get a mpfr_const_const_something by default,
+  // as mpfr_const_ is always prefixed to the name chosen by the user. (see line 559 below)
+
+
+  program.instructions = NULL; // TODO Sylvain: tip: you know that if you create structures with calloc (not malloc), they contain all NULL's everywhere (the proof for infnorm is done like that)...
   program.counter = 0;
   program.maxcounter = 0;
   program.precisions = NULL;
@@ -582,7 +586,7 @@ int implementconst(node *c, FILE *fd, char *funcName) {
 
   freeChain(program.instructions, free_implementCsteInstruction);
   freeChain(program.precisions, free);
-  return 1; // TODO
+  return 1; // TODO Sylvain: check how a correct value could be computed (may the sollyaFprintf's fail?)
 }
 
 int ceil_log2n(int p) {

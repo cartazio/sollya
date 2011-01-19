@@ -1618,7 +1618,7 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeImplementPoly(addElement(addElement(addElement(addElement(addElement($13, $11), $9), $7), $5), $3));
 			  }
-                      | IMPLEMENTCONSTTOKEN LPARTOKEN thing RPARTOKEN
+                      | IMPLEMENTCONSTTOKEN LPARTOKEN thinglist RPARTOKEN
                           {
 			    $$ = makeImplementConst($3);
 			  }

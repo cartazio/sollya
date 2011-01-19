@@ -726,7 +726,7 @@ simplecommand:          QUITTOKEN
                           {
 			    $$ = makePrintExpansion($3);
 			  }
-                      | IMPLEMENTCONSTTOKEN LPARTOKEN thing RPARTOKEN
+                      | IMPLEMENTCONSTTOKEN LPARTOKEN thinglist RPARTOKEN
                           {
 			    $$ = makeImplementConst($3);
 			  }
