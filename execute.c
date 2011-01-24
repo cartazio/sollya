@@ -6513,7 +6513,7 @@ int executeCommandInner(node *tree) {
 	  outputMode();
 	  resF = implementconst(tempNode, fd, tempString);
 	  if (timingString != NULL) popTimeCounter(timingString);
-	  if (!resF) {
+	  if (resF) {
 	    if (resB) { fclose(fd); resB = 0; }
 	    if (resE) { free(tempString); resE = 0; }
 	    if (resD) { freeThing(tempNode); resD = 0; }
