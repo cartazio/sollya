@@ -1222,6 +1222,11 @@ int determineOrderOfZero(int *k, node *func, mpfr_t x0, int n, mp_prec_t prec) {
   chain *curr;
   sollya_mpfi_t **errorsAsArray;
 
+  /* Make compiler happy: */
+  res = 0;
+  myK = -1;
+  /* End of compiler happiness */
+
   sollya_mpfi_init2(x0AsInterval,mpfr_get_prec(x0));
   sollya_mpfi_set_fr(x0AsInterval,x0);
 
