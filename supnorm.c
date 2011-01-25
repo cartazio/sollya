@@ -2179,11 +2179,14 @@ int supremumNormBisectInner(sollya_mpfi_t result, node *poly, node *func, mpfr_t
 int supremumNormBisect(sollya_mpfi_t result, node *poly, node *func, mpfr_t a, mpfr_t b, int mode, mpfr_t accuracy, mpfr_t diameter) {
   int res;
   mp_prec_t prec, p;
-
   prec = getToolPrecision() + 25;
   p = sollya_mpfi_get_prec(result);
-  if (p > prec) prec = p;
 
+  /*if the requested accuracy (p) is close to prec, increase prec*/
+  if (abs(p-prec)<70) {
+    if (p>prec)  prec = p + 70;
+    if (p<=prec)  prec = prec + 70;
+  }
   res = supremumNormBisectInner(result, poly, func, a, b, mode, accuracy, diameter, prec);
 
   if (res == 0) return 1; /* everything's fine */
