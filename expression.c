@@ -1,9 +1,14 @@
 /*
 
-Copyright 2006-2010 by 
+Copyright 2006-2011 by 
 
 Laboratoire de l'Informatique du Parallélisme, 
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
+
+and by
+
+Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
+UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.
 
 Contributors Ch. Lauter, S. Chevillard
 
@@ -43,6 +48,9 @@ same conditions as regards security.
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
 
+This program is distributed WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
 */
 
 #include <mpfr.h>
@@ -57,6 +65,7 @@ knowledge of the CeCILL-C license and that you accept its terms.
 #include "double.h"
 #include "chain.h"
 #include "execute.h"
+#include "infnorm.h"
 
 #define MAXDIFFSIMPLSIZE 100
 #define MAXDIFFSIMPLDEGREE 25
@@ -8137,7 +8146,7 @@ node* makeBinomial(node *a, node *b, int n, int s) {
 	printMessage(1,"Try to increase the working precision.\n");
       }
     }
-    if ((s < 0) && (((((unsigned int) n) - i) & 1) != 0)) {
+    if ((s < 0) && (((((unsigned int) n) - i) & 1) != 0)) { /* This is a modulo 2 to determine eveness */
       mpfr_neg(*coeffVal,*coeffVal,GMP_RNDN);
     }
     coeff = (node*) safeMalloc(sizeof(node));
@@ -8334,7 +8343,7 @@ node* expandPowerInPolynomialUnsafe(node *tree) {
 	  tempTree->child2 = tempTree2;
 	  break;
 	case NEG:
-	  if (r & 1) {
+	  if (r & 1) { /* This is a modulo 2 to determine eveness, not a logical test */
 	    /* r is odd */
 	    tempTree = (node *) safeMalloc(sizeof(node));
 	    tempTree->nodeType = NEG;
@@ -9325,7 +9334,7 @@ int isMonomial(node *tree) {
 
   switch (tree->nodeType) {
   case MUL:
-    return (isMonomial(tree->child1) & isMonomial(tree->child2));
+    return (isMonomial(tree->child1) && isMonomial(tree->child2));
     break;
   case NEG:
     return isMonomial(tree->child1);
@@ -9334,7 +9343,7 @@ int isMonomial(node *tree) {
     return 1;
     break;
   case DIV:
-    return (isConstant(tree->child2)) & isMonomial(tree->child1);
+    return (isConstant(tree->child2)) && isMonomial(tree->child1);
   default: 
     return isConstant(tree);
   }

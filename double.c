@@ -43,6 +43,9 @@ same conditions as regards security.
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
 
+This program is distributed WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
 */
 
 #include <gmp.h>
@@ -1453,6 +1456,7 @@ node *rationalApprox(mpfr_t x, unsigned int n) {
   mpfr_t *numerator;
   mpfr_t *denominator;
 
+  if ( (!mpfr_number_p(x)) || mpfr_zero_p(x) )  return makeConstant(x);
   mpq_init(q);
   mpz_init(u);
   sollya_mpfi_init2(xprime,(mp_prec_t)n);

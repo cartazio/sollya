@@ -47,6 +47,9 @@ same conditions as regards security.
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
 
+This program is distributed WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
 */
 
 #include <mpfr.h>
@@ -104,47 +107,25 @@ void sollya_mpfi_pow(sollya_mpfi_t z, sollya_mpfi_t x, sollya_mpfi_t y) {
   int must_divide;
   sollya_mpfi_t res;
 
+  if (sollya_mpfi_has_nan(x) ||sollya_mpfi_has_nan(y)) { sollya_mpfi_set_nan(z); return; }
+    if (sollya_mpfi_is_empty(x) || sollya_mpfi_is_empty(y)) { sollya_mpfi_set_empty(z); return; }
+
   prec = sollya_mpfi_get_prec(y);
+  mpfr_init2(l,prec); sollya_mpfi_get_left(l,y);
+  mpfr_init2(r,prec); sollya_mpfi_get_right(r,y);
 
   sollya_mpfi_init2(res,sollya_mpfi_get_prec(z) + 10);
 
-  mpfr_init2(l,prec);
-  mpfr_init2(r,prec);
-
-  sollya_mpfi_get_right(r,y);
-  sollya_mpfi_get_left(l,y);
-
+  /* Case x^k, k an integer */
   if ((mpfr_cmp(l,r) == 0) && (mpfr_integer_p(l))) {
-    if (mpfr_zero_p(l)) {
-      if (!sollya_mpfi_bounded_p(x)) {
-        precx = sollya_mpfi_get_prec(x);
-
-        mpfr_init2(lx,precx);
-        mpfr_init2(rx,precx);
-
-        sollya_mpfi_get_right(rx,x);
-        sollya_mpfi_get_left(lx,x);
-
-        if (mpfr_number_p(lx)) { 
-          mpfr_set_d(lx,1.0,GMP_RNDN);
-        } else {
-          mpfr_set_nan(lx);
-        }
-
-        if (mpfr_number_p(rx)) {
-          mpfr_set_d(rx,1.0,GMP_RNDN);
-        } else {
-          mpfr_set_nan(rx);
-        }
-
-        sollya_mpfi_interv_fr(res,lx,rx);
-        sollya_mpfi_revert_if_needed(res);
-
-        mpfr_clear(lx);
-        mpfr_clear(rx);
-      } else {
-        sollya_mpfi_set_d(res,1.0);
-      }
+    if (mpfr_zero_p(l)) { /* Case k=0 -> 1 except if x=+/-Inf */
+                          /* Note, if x contains an infinity, but is not equal to infinity,
+                             we return 1 also, by continuity */
+      if (sollya_mpfi_is_infinity(x)) sollya_mpfi_set_nan(z);
+      else sollya_mpfi_set_d(z,1.0);
+    
+      mpfr_clear(l); mpfr_clear(r); sollya_mpfi_clear(res);
+      return;
     } else {
       precx = sollya_mpfi_get_prec(x);
       if (sollya_mpfi_get_prec(res) > precx) 
@@ -162,45 +143,28 @@ void sollya_mpfi_pow(sollya_mpfi_t z, sollya_mpfi_t x, sollya_mpfi_t y) {
       } else {
 	must_divide = 0;
       }
-      if (sollya_mpfi_has_zero(x)) {
-        mpfr_div_2ui(r,l,1,GMP_RNDN);
-	if (mpfr_integer_p(r)) {   /* l is even */
-	  mpfr_pow(lx,lx,l,GMP_RNDU);
-	  mpfr_pow(rx,rx,l,GMP_RNDU);
-	  sollya_mpfr_max(rx,lx,rx,GMP_RNDU);
-	  mpfr_set_d(lx,0.0,GMP_RNDD);
-	  sollya_mpfi_interv_fr(res,lx,rx);
-	  sollya_mpfi_revert_if_needed(res);
-	} else { /* l is odd */
-	  mpfr_pow(lx,lx,l,GMP_RNDD);
-	  mpfr_pow(rx,rx,l,GMP_RNDU);
-	  sollya_mpfi_interv_fr(res,lx,rx);
-	  sollya_mpfi_revert_if_needed(res);
-	}
-      } else {
-	mpfr_div_2ui(r,l,1,GMP_RNDN);
-	if (mpfr_integer_p(r)) {   /* l is even */
-	  if (mpfr_sgn(lx) > 0) {
-	    mpfr_pow(lx,lx,l,GMP_RNDD);
-	    mpfr_pow(rx,rx,l,GMP_RNDU);
-	    sollya_mpfi_interv_fr(res,lx,rx);
-	    sollya_mpfi_revert_if_needed(res);
-	  } else {
-	    mpfr_pow(lx,lx,l,GMP_RNDU);
-	    mpfr_pow(rx,rx,l,GMP_RNDD);
-	    sollya_mpfi_interv_fr(res,lx,rx);
-	    sollya_mpfi_revert_if_needed(res);
-	  }
-	} else { /* l is odd */
-	  mpfr_pow(lx,lx,l,GMP_RNDD);
-	  mpfr_pow(rx,rx,l,GMP_RNDU);
-	  sollya_mpfi_interv_fr(res,lx,rx);
-	  sollya_mpfi_revert_if_needed(res);
-	}
+      
+      mpfr_div_2ui(r,l,1,GMP_RNDN);
+      if (sollya_mpfi_is_nonneg(x) || (!mpfr_integer_p(r))) { /* x-> x^k is increasing monotonic when x>=0
+                                                               or when k is odd */
+        mpfr_pow(lx,lx,l,GMP_RNDD);
+        mpfr_pow(rx,rx,l,GMP_RNDU);
+        sollya_mpfi_interv_fr(res,lx,rx);
       }
-      if (must_divide) {
-	sollya_mpfi_inv(res,res);
+      else if (sollya_mpfi_is_nonpos(x)) { /* x^k is decreasing when x<=0 and k is even */
+        mpfr_pow(rx,rx,l,GMP_RNDD);
+        mpfr_pow(lx,lx,l,GMP_RNDU);
+        sollya_mpfi_interv_fr(res,rx,lx);
       }
+      else { /* when x contains 0 and k is even, return [0, max(lx^k, rx^k)] */
+        mpfr_pow(lx,lx,l,GMP_RNDU);
+        mpfr_pow(rx,rx,l,GMP_RNDU);
+        sollya_mpfr_max(rx,lx,rx,GMP_RNDU);
+        mpfr_set_d(lx,0.0,GMP_RNDD);
+        sollya_mpfi_interv_fr(res,lx,rx);
+      }
+
+      if (must_divide) sollya_mpfi_inv(res,res);
 
       mpfr_clear(lx);
       mpfr_clear(rx);
@@ -208,17 +172,7 @@ void sollya_mpfi_pow(sollya_mpfi_t z, sollya_mpfi_t x, sollya_mpfi_t y) {
   } else {
     sollya_mpfi_log(res,x);
     sollya_mpfi_mul(res,res,y);
-    sollya_mpfi_get_right(r,res);
-    sollya_mpfi_get_left(l,res);
-    if (!(mpfr_inf_p(l) &&
-          mpfr_inf_p(r) &&
-          (mpfr_sgn(l) < 0) &&
-          (mpfr_sgn(r) < 0))) {
-      sollya_mpfi_exp(res,res);
-    } else {
-      mpfr_set_nan(l);
-      sollya_mpfi_interv_fr(res,l,l);
-    }
+    sollya_mpfi_exp(res,res);
   }
   mpfr_clear(l);
   mpfr_clear(r);
@@ -366,7 +320,6 @@ void sollya_mpfi_erf(sollya_mpfi_t rop, sollya_mpfi_t op) {
   mpfr_erf(ropr,opr,GMP_RNDU);
 
   sollya_mpfi_interv_fr(rop,ropl,ropr);
-  sollya_mpfi_revert_if_needed(rop);
 
   mpfr_clear(opl);
   mpfr_clear(opr);
@@ -390,7 +343,6 @@ void sollya_mpfi_erfc(sollya_mpfi_t rop, sollya_mpfi_t op) {
   mpfr_erfc(ropr,opl,GMP_RNDU);
 
   sollya_mpfi_interv_fr(rop,ropl,ropr);
-  sollya_mpfi_revert_if_needed(rop);
 
   mpfr_clear(opl);
   mpfr_clear(opr);
@@ -414,7 +366,6 @@ void sollya_mpfi_ceil(sollya_mpfi_t rop, sollya_mpfi_t op) {
   mpfr_ceil(ropr,opl);
 
   sollya_mpfi_interv_fr(rop,ropl,ropr);
-  sollya_mpfi_revert_if_needed(rop);
 
   mpfr_clear(opl);
   mpfr_clear(opr);
@@ -438,7 +389,6 @@ void sollya_mpfi_floor(sollya_mpfi_t rop, sollya_mpfi_t op) {
   mpfr_floor(ropr,opl);
 
   sollya_mpfi_interv_fr(rop,ropl,ropr);
-  sollya_mpfi_revert_if_needed(rop);
 
   mpfr_clear(opl);
   mpfr_clear(opr);
@@ -462,7 +412,6 @@ void sollya_mpfi_nearestint(sollya_mpfi_t rop, sollya_mpfi_t op) {
   mpfr_nearestint(ropr,opl);
 
   sollya_mpfi_interv_fr(rop,ropl,ropr);
-  sollya_mpfi_revert_if_needed(rop);
 
   mpfr_clear(opl);
   mpfr_clear(opr);
@@ -818,8 +767,6 @@ void makeMpfiAroundMpfr(sollya_mpfi_t res, mpfr_t x, unsigned int thousandUlps) 
 
   sollya_mpfi_interv_fr(xI,xp,xs);
   
-  sollya_mpfi_revert_if_needed(xI);
-  
   sollya_mpfi_blow(xI,xI,(((double) thousandUlps) * 250.0));
 
   sollya_mpfi_set(res,xI);
@@ -838,7 +785,6 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
   sollya_mpfi_t leftConstantTerm, rightConstantTerm;
   sollya_mpfi_t leftLinearTerm, rightLinearTerm;
   mpfr_t al, ar, bl, br, xl, xr, z, z2;
-  mpfr_t temph;
   mpfr_t *newHopitalPoint;
   node *derivNumerator, *derivDenominator, *tempNode;
   node *derivLeft, *derivRight;
@@ -1678,10 +1624,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
     excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
     sollya_mpfi_sin(stack3, stack1);
     if (sollya_mpfi_inf_p(stack1)) {
-      mpfr_init2(temph,12);
-      mpfr_set_nan(temph);
-      sollya_mpfi_interv_fr(stack3,temph,temph);
-      mpfr_clear(temph);      
+      sollya_mpfi_set_nan(stack3);
     }
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
@@ -1700,10 +1643,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
     excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
     sollya_mpfi_cos(stack3, stack1);
     if (sollya_mpfi_inf_p(stack1)) {
-      mpfr_init2(temph,12);
-      mpfr_set_nan(temph);
-      sollya_mpfi_interv_fr(stack3,temph,temph);
-      mpfr_clear(temph);      
+      sollya_mpfi_set_nan(stack3);
     }
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
@@ -1924,7 +1864,6 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
   }
 
   sollya_mpfi_set(result,stack3);
-  sollya_mpfi_revert_if_needed(result);
 
   if (theo != NULL) {
     theo->y = (sollya_mpfi_t *) safeMalloc(sizeof(sollya_mpfi_t));
@@ -1975,10 +1914,7 @@ chain* evaluateITaylorOnDiv(sollya_mpfi_t result, node *func, sollya_mpfi_t x, m
     sollya_mpfi_div(resultIndirect, resultNumerator, resultDenominator);
     if (sollya_mpfi_bounded_p(resultIndirect)) {
       sollya_mpfi_set(result, resultIndirect);
-      if (sollya_mpfi_nan_p(result)) {
-	mpfr_set_nan(tempNaN);
-	sollya_mpfi_interv_fr(result, tempNaN, tempNaN);
-      }
+      sollya_mpfi_nan_normalize(result);
 
       if (theo != NULL) {
 	theo->functionType = func->nodeType;
@@ -2003,10 +1939,7 @@ chain* evaluateITaylorOnDiv(sollya_mpfi_t result, node *func, sollya_mpfi_t x, m
 	freeExprBoundTheo(denominatorTheo);
       }
       excludes = evaluateI(result, func, x, prec, 0, hopitalrecursions+1, NULL, theo,noExcludes);
-      if (sollya_mpfi_nan_p(result)) {
-	mpfr_set_nan(tempNaN);
-	sollya_mpfi_interv_fr(result, tempNaN, tempNaN);
-      }
+      sollya_mpfi_nan_normalize(result);
     }
     
     sollya_mpfi_clear(resultNumerator);
@@ -2019,10 +1952,7 @@ chain* evaluateITaylorOnDiv(sollya_mpfi_t result, node *func, sollya_mpfi_t x, m
   }
   else {
     excludes = evaluateI(result, func, x, prec, 0, hopitalrecursions+1, NULL, theo,noExcludes);
-    if (sollya_mpfi_nan_p(result)) {
-      mpfr_set_nan(tempNaN);
-      sollya_mpfi_interv_fr(result, tempNaN, tempNaN);
-    }
+    sollya_mpfi_nan_normalize(result);
     mpfr_clear(tempNaN);
     return excludes;
   }
@@ -2049,10 +1979,7 @@ chain* evaluateITaylor(sollya_mpfi_t result, node *func, node *deriv, sollya_mpf
       printMessage(25,"Warning: no Taylor evaluation is possible because no derivative has been given.\n");
     
     excludes = evaluateI(result, func, x, prec, 1, hopitalrecursions+1, NULL, theo,noExcludes);
-    if(sollya_mpfi_nan_p(result)) {
-      mpfr_set_nan(leftX);
-      sollya_mpfi_interv_fr(result, leftX, leftX);
-    }
+    sollya_mpfi_nan_normalize(result);
 
     mpfr_clear(leftX);
     mpfr_clear(rightX);
@@ -2260,11 +2187,7 @@ chain* evaluateITaylor(sollya_mpfi_t result, node *func, node *deriv, sollya_mpf
     }
   }
 
-  sollya_mpfi_revert_if_needed(result);
-  if(sollya_mpfi_nan_p(result)) {
-    mpfr_set_nan(leftX);
-    sollya_mpfi_interv_fr(result, leftX, leftX);
-  }
+  sollya_mpfi_nan_normalize(result);
 
   if (theo != NULL) sollya_mpfi_set(*(theo->y),result);
 
@@ -2308,7 +2231,6 @@ chain *findZerosUnsimplified(node *func, node *deriv, sollya_mpfi_t range, mp_pr
     theo = NULL;
   }
 
-  sollya_mpfi_revert_if_needed(range);
   mpfr_init2(rangeDiam,prec);
   sollya_mpfi_diam_abs(rangeDiam,range);
 
@@ -2324,7 +2246,6 @@ chain *findZerosUnsimplified(node *func, node *deriv, sollya_mpfi_t range, mp_pr
     temp = (sollya_mpfi_t *) safeMalloc(sizeof(sollya_mpfi_t));
     sollya_mpfi_init2(*temp,prec);
     sollya_mpfi_set(*temp,range);
-    sollya_mpfi_revert_if_needed(*temp);
     res->value = temp;
     if (theo != NULL) freeExprBoundTheo(theo);
   } else {
@@ -2343,10 +2264,12 @@ chain *findZerosUnsimplified(node *func, node *deriv, sollya_mpfi_t range, mp_pr
       sollya_mpfi_mid(m,range);
       sollya_mpfi_init2(lI,prec);
       sollya_mpfi_init2(rI,prec);
-      sollya_mpfi_interv_fr(lI,l,m);
-      sollya_mpfi_revert_if_needed(lI);
-      sollya_mpfi_interv_fr(rI,m,r);
-      sollya_mpfi_revert_if_needed(rI);
+
+      if (mpfr_cmp(l, m)<=0) sollya_mpfi_interv_fr(lI,l,m);
+      else sollya_mpfi_interv_fr(lI,m,l);
+
+      if (mpfr_cmp(m, r)<=0) sollya_mpfi_interv_fr(rI,m,r);
+      else sollya_mpfi_interv_fr(rI,r,m);
 
       if (theo != NULL) freeExprBoundTheo(theo);
    
@@ -2627,17 +2550,15 @@ chain *excludeIntervals(chain *mainIntervals, chain *excludeIntervals) {
   curr2 = excludeIntervals;
   while (curr2 != NULL) {
     exclude = (sollya_mpfi_t *) (curr2->value);
-    sollya_mpfi_revert_if_needed(*exclude);
     sollya_mpfi_get_left(el,*exclude);
     sollya_mpfi_get_right(er,*exclude);
     curr = mainIntervals;
     previous = NULL;
     while (curr != NULL) {
       interval = (sollya_mpfi_t *) (curr->value);
-      sollya_mpfi_revert_if_needed(*interval);
       sollya_mpfi_get_left(il,*interval);
       sollya_mpfi_get_right(ir,*interval);
-      if ((mpfr_cmp(el,ir) < 0) && (mpfr_cmp(il,er) < 0)) {
+      if ((mpfr_cmp(el,ir) < 0) && (mpfr_cmp(il,er) < 0)) { /* [il;ir] inter [el;er] != empty */
 	if ((mpfr_cmp(il,el) < 0) && (mpfr_cmp(er,ir) < 0)) {
 	  /* We must produce two intervals [il;el] and [er;ir] */
 	  sollya_mpfi_interv_fr(*interval,il,el);
@@ -2865,15 +2786,17 @@ void infnormI(sollya_mpfi_t infnormval, node *func, node *deriv,
     mpfr_neg(outerLeft,outerLeft,GMP_RNDN);
     sollya_mpfr_max(tr,outerLeft,outerRight,GMP_RNDU);
     mpfr_set_d(tl,0.0,GMP_RNDD);
-    sollya_mpfi_interv_fr(infnormval,tl,tr);
-    sollya_mpfi_revert_if_needed(infnormval);
+
+    if (mpfr_cmp(tl, tr)<=0) sollya_mpfi_interv_fr(infnormval,tl,tr);
+    else sollya_mpfi_interv_fr(infnormval,tr,tl);
+
   } else {
     mpfr_neg(innerLeft,innerLeft,GMP_RNDN);
     mpfr_neg(outerLeft,outerLeft,GMP_RNDN);
     sollya_mpfr_max(tl,innerLeft,innerRight,GMP_RNDD);
     sollya_mpfr_max(tr,outerLeft,outerRight,GMP_RNDU);
-    sollya_mpfi_interv_fr(infnormval,tl,tr);
-    sollya_mpfi_revert_if_needed(infnormval);
+    if (mpfr_cmp(tl, tr)<=0) sollya_mpfi_interv_fr(infnormval,tl,tr);
+    else sollya_mpfi_interv_fr(infnormval,tr,tl);
   }
 
   if (mightExcludes == NULL) {
@@ -3451,7 +3374,6 @@ rangetype infnorm(node *func, rangetype range, chain *excludes,
   freeChain(mightExcludes,freeMpfiPtr);
   freeChain(secondMightExcludes,freeMpfiPtr);
   if (freeInitialExcludes) freeChain(initialExcludes,freeMpfiPtr);
-  sollya_mpfi_revert_if_needed(resI);
   sollya_mpfi_get_left(*(res.a),resI);
   sollya_mpfi_get_right(*(res.b),resI);
   free_memory(deriv);
@@ -3698,7 +3620,7 @@ int checkInfnormI(node *func, node *deriv, sollya_mpfi_t infnormval, sollya_mpfi
   }
 
   mpfr_init2(diamRange,prec);
-  sollya_mpfi_diam(diamRange,range);
+  sollya_mpfi_diam_abs(diamRange,range);
 
   if (mpfr_cmp(diamRange,diam) <= 0) {
     /* Simple end case: the range to test is already smaller than diam but we could not check */
@@ -3745,7 +3667,7 @@ int checkInfnormI(node *func, node *deriv, sollya_mpfi_t infnormval, sollya_mpfi
   sollya_mpfi_clear(evaluateOnRange);
   mpfr_clear(diamRange);
 
-  return (resultLeft & resultRight);
+  return (resultLeft && resultRight);
 }
 
 
@@ -4661,7 +4583,6 @@ int accurateInfnorm(mpfr_t result, node *func, rangetype range, chain *excludes,
       infnormI(resI,func,deriv,numeratorDeriv,derivNumeratorDeriv,rangeI,
 	       prec,currDiameter,initialExcludes,NULL,NULL);
     
-      sollya_mpfi_revert_if_needed(resI);
       sollya_mpfi_get_left(resultDown,resI);
       sollya_mpfi_get_right(resultUp,resI);
 

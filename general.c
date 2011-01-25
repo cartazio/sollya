@@ -1,6 +1,6 @@
 /*
 
-Copyright 2007-2010 by 
+Copyright 2007-2011 by 
 
 Laboratoire de l'Informatique du Parallélisme, 
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
@@ -47,6 +47,9 @@ same conditions as regards security.
 
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
+
+This program is distributed WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 */
 
@@ -165,6 +168,8 @@ extern int yyparse();
 extern void yylex_destroy(void *);
 extern int yylex_init(void **);
 extern int yylex(void *);
+extern void yyset_in(FILE *, void *);
+
 
 #define BACKTRACELENGTH 100
 
@@ -928,6 +933,7 @@ void initTool() {
   blockSignals();
   mp_set_memory_functions(safeMalloc,wrapSafeRealloc,NULL);
   initToolDefaults();
+  noColor = 1;
 }
 
 void finishTool() {
@@ -985,6 +991,102 @@ void setToolDiameter(mpfr_t op) {
   mpfr_set(statediam,op,GMP_RNDN);
 }
 
+/* NEW */
+
+int getDisplayMode() {
+  return dyadic;
+}
+
+int setDisplayMode(int newMode) {
+  if ((0 <= newMode) && (newMode <= 4)) {
+    dyadic = newMode;
+    return 1;
+  } else {
+    dyadic = 0;
+    return 0;
+  }
+}
+
+int getVerbosity() {
+  return verbosity;
+}
+
+int setVerbosity(int newVerbosity) {
+  if (newVerbosity >= 0) {
+    verbosity = newVerbosity;
+    return 1;
+  } else {
+    verbosity = 0;
+    return 0;
+  }
+}
+
+int getCanonical() {
+  return canonical;
+}
+
+void setCanonical(int newCanonical) {
+  canonical = (!(!newCanonical));
+}
+
+int getAutosimplify() {
+  return autosimplify;
+}
+
+void setAutosimplify(int newAutosimplify) {
+  autosimplify = (!(!newAutosimplify));
+}
+
+int getFullParentheses() {
+  return fullParentheses;
+}
+
+void setFullParentheses(int newFullParentheses) {
+  fullParentheses = (!(!newFullParentheses));
+}
+
+int getMidpointMode() {
+  return midpointMode;
+}
+
+void setMidpointMode(int newMidpointMode) {
+  midpointMode = (!(!newMidpointMode));
+}
+
+int getDieOnErrorMode() {
+  return dieOnErrorMode;
+}
+
+void setDieOnErrorMode(int newDieOnErrorMode) {
+  dieOnErrorMode = (!(!newDieOnErrorMode));
+}
+
+int getTimecounting() {
+  return timecounting;
+}
+
+void setTimecounting(int newTimecounting) {
+  timecounting = (!(!newTimecounting));
+}
+
+int getRoundingWarnings() {
+  return (!noRoundingWarnings);
+}
+
+void setRoundingWarnings(int newRoundingWarnings) {
+  noRoundingWarnings = (!newRoundingWarnings);
+}
+
+int getRationalMode() {
+  return rationalMode;
+}
+
+void setRationalMode(int newRationalMode) {
+  rationalMode = (!(!newRationalMode));
+}
+
+/* END NEW */
+
 void setRecoverEnvironment(jmp_buf *env) {
   memmove(&recoverEnvironment,env,sizeof(recoverEnvironment));
   memmove(&recoverEnvironmentError,env,sizeof(recoverEnvironmentError));
@@ -1037,7 +1139,7 @@ int general(int argc, char *argv[]) {
       sollyaPrintf("--warnonstderr : print warning messages on error output instead on the standard output\n");
       sollyaPrintf("\nFor help on %s commands type \"help;\" on the %s prompt\n",PACKAGE_NAME,PACKAGE_NAME);
       sollyaPrintf("More documentation on %s is available on the %s website http://sollya.gforge.inria.fr/.\nFor bug reports send an email to %s.\n",PACKAGE_NAME,PACKAGE_NAME,PACKAGE_BUGREPORT);
-      sollyaPrintf("\n%s is Copyright 2006-2010 by\n\n    Laboratoire de l'Informatique du Parallelisme,\n    UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668, Lyon, France,\n\n    LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2), Nancy, France\n\nand by\n\n    Laboratoire d'Informatique de Paris 6, equipe PEQUAN,\n    UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.\n\nAll rights reserved.\n\nContributors are S. Chevillard, N. Jourdan, M. Joldes and Chr. Lauter.\n\nThis software is governed by the CeCILL-C license under French law and\nabiding by the rules of distribution of free software.  You can  use,\nmodify and/ or redistribute the software under the terms of the CeCILL-C\nlicense as circulated by CEA, CNRS and INRIA at the following URL\n\"http://www.cecill.info\".\n\nThis build of %s is based on GMP %s, MPFR %s and MPFI %s.\n\n",PACKAGE_STRING,PACKAGE_STRING,gmp_version,mpfr_get_version(),sollya_mpfi_get_version());
+      sollyaPrintf("\n%s is Copyright 2006-2011 by\n\n    Laboratoire de l'Informatique du Parallelisme,\n    UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668, Lyon, France,\n\n    LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2), Nancy, France\n\n    Laboratoire d'Informatique de Paris 6, equipe PEQUAN,\n    UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France,\n\nand by\n\n    INRIA Sophia-Antipolis Mediterranee, APICS Team,\n    Sophia-Antipolis, France.\n\nAll rights reserved.\n\nContributors are S. Chevillard, N. Jourdan, M. Joldes and Chr. Lauter.\n\nThis software is governed by the CeCILL-C license under French law and\nabiding by the rules of distribution of free software.  You can  use,\nmodify and/ or redistribute the software under the terms of the CeCILL-C\nlicense as circulated by CEA, CNRS and INRIA at the following URL\n\"http://www.cecill.info\".\n\nThis program is distributed WITHOUT ANY WARRANTY; without even the\nimplied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\nThis build of %s is based on GMP %s, MPFR %s and MPFI %s.\n\n",PACKAGE_STRING,PACKAGE_STRING,gmp_version,mpfr_get_version(),sollya_mpfi_get_version());
       return 1;
     } else 
       if (strcmp(argv[i],"--nocolor") == 0) noColor = 1; else

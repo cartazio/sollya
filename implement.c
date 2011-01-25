@@ -43,6 +43,9 @@ same conditions as regards security.
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
 
+This program is distributed WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
 */
 
 #include <mpfr.h>
@@ -212,8 +215,9 @@ int determinePrecisionsHelper(mpfr_t *coefficients, int degree,
 
   mulPrec[0] = precOfAccur;
   
-  res = res & determinePrecisionsHelper(coefficients+1, degree-1, addPrec+1, mulPrec+1, 
-					temp2, range, prec);
+  /* We really do want to have a non-lazy evaluation here, so we use & and not && */
+  res = (!(!res)) & (!(!(determinePrecisionsHelper(coefficients+1, degree-1, addPrec+1, mulPrec+1, 
+						   temp2, range, prec))));
   
   mpfr_clear(temp);
   mpfr_clear(temp2);

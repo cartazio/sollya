@@ -29,8 +29,9 @@ h2 { font-size: large;}
 <p style="font-size:small;">
 The <span class="sollya">Sollya</span> tool is Copyright &copy;&nbsp;2006-2010 by<br>
 <span style="text-indent:3em; display:block;">Laboratoire de l'Informatique du Parallélisme - UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668, Lyon, France, </span>
-<span style="text-indent:3em;display:block;">LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2) Nancy, France, and by</span>
-<span style="text-indent:3em;display:block;">Laboratoire d'Informatique de Paris 6, Équipe PEQUAN, UPMC Université Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.</span>
+<span style="text-indent:3em;display:block;">LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2), Nancy, France, </span>
+<span style="text-indent:3em;display:block;">Laboratoire d'Informatique de Paris 6, Équipe PEQUAN, UPMC Université Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France, and by</span>
+<span style="text-indent:3em;display:block;">INRIA Sophia-Antipolis Méditerranée, APICS Team, Sophia-Antipolis, France.</span>
 All rights reserved.
 <p style="font-size:small;">
 The <span class="sollya">Sollya</span> tool is open software. It is distributed and can be used,
@@ -41,6 +42,9 @@ parts of other libraries as a support for but not integral part of
 <span class="sollya">Sollya</span>. These libraries are reigned by the GNU Lesser General Public
 License that is available at <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a> and
 reproduced in the <code>COPYING</code> file of the distribution.
+<p style="font-size:small;">
+This software (<span class="sollya">Sollya</span>) is distributed WITHOUT ANY WARRANTY; without even the 
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 <h1><a href="#commandsAndFunctions">Direct access to the list of available commands</a></h1>
 
 <h1>1 - Compilation and installation of the <span class="sollya">Sollya</span> tool</h1>
@@ -49,7 +53,7 @@ reproduced in the <code>COPYING</code> file of the distribution.
 <p>
 The <span class="sollya">Sollya</span> distribution can be compiled and installed using the usual
 <code>./configure</code>, <code>make</code>, <code>make install</code>
-procedure. Besides a <code>C</code> compiler, <span class="sollya">Sollya</span> needs the following
+procedure. Besides a <code>C</code> and a <code>C++</code> compiler, <span class="sollya">Sollya</span> needs the following
 software libraries and tools to be installed. The <code>./configure</code>
 script checks for the installation of the libraries. However <span class="sollya">Sollya</span>
 will build without error if some of its external tools are not
@@ -191,9 +195,9 @@ Let us finish this Section with a small complete example that shows a bit of wha
 <!--  Warning: this file must be manually corrected: delete the extra ">" -->
 <?php include("introExample8.php"); ?>
 <p>
-In this example, we define a function f, an interval d and we compute the best degree-4 polynomial approximation of f on d with respect to the infinity norm. In other words, max {|p(x)-f(x)|, x in d} is minimal amongst polynomials with degree not greater than 4. Then, we compute the list of the zeros of the derivative of p-f and add the bounds of d to this list. Finally, we evaluate |p-f| for each point in the list and store the maximum and the point where it is reached. We conclude by printing the result in a formatted way.
+In this example, we define a function f, an interval d and we compute the best degree-2 polynomial approximation of f on d with respect to the infinity norm. In other words, max {|p(x)-f(x)|, x in d} is minimal amongst polynomials with degree not greater than 2. Then, we compute the list of the zeros of the derivative of p-f and add the bounds of d to this list. Finally, we evaluate |p-f| for each point in the list and store the maximum and the point where it is reached. We conclude by printing the result in a formatted way.
 <p>
-Note that you do not really need to use such a script for computing an infinity norm; as we will see, the command <code class="com">dirtyinfnorm</code> does this for you.
+Let us mention as a sidenote that you do not really need to use such a script for computing an infinity norm; as we will see, the command <code class="com">dirtyinfnorm</code> does this for you.
 
 <a name="sec:general_principles"></a>
 <h1>3 - General principles</h1>
@@ -202,13 +206,13 @@ The first purpose of <span class="sollya">Sollya</span> is to help people using 
 <p>
 One of the particularities of <span class="sollya">Sollya</span> is to work with multi-precision arithmetic (it uses the <code>MPFR</code> library). For safety purposes, <span class="sollya">Sollya</span> knows how to use interval arithmetic. It uses interval arithmetic to produce tight and safe results with the precision required by the user.
 <p>
-The general philosophy of <span class="sollya">Sollya</span> is: <em>When you can make a computation exactly and sufficiently quickly, do it; when you cannot, do not, unless you have been explicitly asked for.</em>
+The general philosophy of <span class="sollya">Sollya</span> is: <em>When you can perform a computation exactly and sufficiently quickly, do it; when you cannot, do not, unless you have been explicitly asked for.</em>
 <p>
 The precision of the tool is set by the global variable <code class="key">prec</code>. In general, the variable <code class="key">prec</code> determines the precision of the outputs of commands: more precisely, the command will internally determine how much precision should be used during the computations in order to ensure that the output is a faithfully rounded result with <code class="key">prec</code> bits.
 <p>
 For decidability and efficiency reasons, this general principle cannot be applied every time, so be careful. Moreover certain commands are known to be unsafe: they give in general excellent results and give almost <code class="key">prec</code> correct bits in output for everyday examples. However they are merely based on heuristics and should not be used when the result must be safe. See the documentation of each command to know precisely how confident you can be with their result.
 <p>
-A second principle (that comes together with the first one) is the following one: <em>When a computation leads to inexact results, inform the user with a warning</em>. This can be quite irritating in some circumstances: in particular if you are using <span class="sollya">Sollya</span> within other scripts. The global variable <code class="key">verbosity</code> lets you change the level of verbosity of <span class="sollya">Sollya</span>. When the variable is set to 0, <span class="sollya">Sollya</span> becomes completely silent on standard output and prints only very important messages on standard error. Increase <code class="key">verbosity</code> if you want more information about what <span class="sollya">Sollya</span> is doing. Note that when you affect a value to a global variable, a message is always printed even if <code class="com">verbosity</code> is set to 0. In order to silently affect a global variable, use&nbsp;<code>!</code>:
+A second principle (that comes together with the first one) is the following one: <em>When a computation leads to inexact results, inform the user with a warning</em>. This can be quite irritating in some circumstances: in particular if you are using <span class="sollya">Sollya</span> within other scripts. The global variable <code class="key">verbosity</code> lets you change the level of verbosity of <span class="sollya">Sollya</span>. When the variable is set to 0, <span class="sollya">Sollya</span> becomes completely silent on standard output and prints only very important messages on standard error. Increase <code class="key">verbosity</code> if you want more information about what <span class="sollya">Sollya</span> is doing. Please keep in mind that when you affect a value to a global variable, a message is always printed even if <code class="com">verbosity</code> is set to 0. In order to silently affect a global variable, use&nbsp;<code>!</code>:
 <p>
 <?php include("introExample9.php"); ?>
 <p>
@@ -216,7 +220,7 @@ For conviviality reasons, values are displayed in decimal by default. This lets 
 <p>
 <?php include("introExample10.php"); ?>
 <p>
-Please note that it is possible to maintain the general verbosity level at
+Please keep in mind that it is possible to maintain the general verbosity level at
 some higher setting while deactivating all warnings on roundings. This
 feature is controlled using the <code class="key">roundingwarnings</code> global
 variable. It may be set to <code class="key">on</code> or <code class="key">off</code>. By default, the
@@ -268,17 +272,17 @@ structure builds scopes for declared variables. Declared variables in
 inner scopes shadow (global and declared) variables of outer
 scopes. The global free variable, i.e. the mathematical variable for
 variate functional expressions in one variable, cannot be shadowed. Variables are
-declared using <code class="key">var</code> keyword. See section <a href="help.php?name=var&goBack=none">var</a> for details
+declared using the <code class="key">var</code> keyword. See section <a href="help.php?name=var&goBack=none">var</a> for details
 on its usage and semantic.
 <p>
-The following code examples illustrate the usage of variables.
+The following code examples illustrate the use of variables.
 <p>
 <p>
 <?php include("introExample12.php"); ?>
 <p>
 Let us state that a variable identifier, just as every identifier in
 <span class="sollya">Sollya</span>, contains at least one character, starts with a ASCII letter
-and continuing with ASCII letters or numerical digits.
+and continues with ASCII letters or numerical digits.
 <p>
 <p>
 <p>
@@ -290,7 +294,7 @@ There are two special values <code class="key">true</code> and <code class="key"
 <p>
 The comparison operators <code class="key"><</code>, <code class="key"><=</code>, <code class="key">></code> and <code class="key">>=</code> can only be used between two numbers or constant expressions.
 <p>
-The comparison operators <code class="key">==</code> and <code class="key">!=</code> are polymorphic. You can use them to compare any two objects, like two strings, two intervals, etc. As a matter of fact, polymorphism is allowed on both sides: it is possible to compare objects of different type. Such objects of different type, as they can never be syntactically equal, will always compare unequal (see exception for <code class="key">error</code>, section <a href="help.php?name=error&goBack=none">error</a>) and never equal. Note that testing the equality between two functions will return <code class="key">true</code> if and only if the expression trees representing the two functions are exactly the same. See <a href="help.php?name=error&goBack=none">error</a> for an exception concerning the special object <code class="key">error</code>. Example:
+The comparison operators <code class="key">==</code> and <code class="key">!=</code> are polymorphic. You can use them to compare any two objects, like two strings, two intervals, etc. As a matter of fact, polymorphism is allowed on both sides: it is possible to compare objects of different type. Such objects of different type, as they can never be syntactically equal, will always compare unequal (see exception for <code class="key">error</code>, section <a href="help.php?name=error&goBack=none">error</a>) and never equal. It is important to remember that testing the equality between two functions will return <code class="key">true</code> if and only if the expression trees representing the two functions are exactly the same. See <a href="help.php?name=error&goBack=none">error</a> for an exception concerning the special object <code class="key">error</code>. Example:
 <p>
 <?php include("introExample13.php"); ?>
 
@@ -304,7 +308,7 @@ small that they are less than 10^999. Otherwise the values are represented with 
 <p>
 <?php include("introExample14.php"); ?>
 <p>
-Note that each variable has its own precision that corresponds to its intrinsic precision or, if it cannot be represented, to the value of <code class="com">prec</code> when the variable was set. Thus you can work with variables having a precision higher than the current precision.
+As a matter of fact, each variable has its own precision that corresponds to its intrinsic precision or, if it cannot be represented, to the value of <code class="com">prec</code> when the variable was set. Thus you can work with variables having a precision higher than the current precision.
 <p>
 The same way, if you define a function that refers to some constant, this constant is stored in the function with the current precision and will keep this value in the future, even if <code class="com">prec</code> becomes smaller.
 <p>
@@ -425,7 +429,7 @@ their bounds have a number of decimal digits in common when
 printed. That mode is called <code class="com">midpointmode</code>; see below for an
 introduction and section <a href="help.php?name=midpointmode&goBack=none">midpointmode</a> for details. As <span class="sollya">Sollya</span>
 must be able to parse back its own output, a syntax is provided to
-input intervals in midpoint&nbsp;mode. However, please note that the
+input intervals in midpoint&nbsp;mode. However, please pay attention to the fact that the
 notation used in midpoint&nbsp;mode generally increases the width of
 intervals: hence when an interval is displayed in midpoint&nbsp;mode and
 read again, the resulting interval may be wider than the original
@@ -460,13 +464,13 @@ variables containing numbers keep their precision for the interval
 bounds.
 <p>
 Constant expressions get evaluated to floating-point values
-immediately; this includes pi and rational numbers, even in when
+immediately; this includes pi and rational numbers, even when
 <code class="com">rationalmode</code> is <code class="com">on</code> (see section <a href="#sec:rationalmode">Rational numbers and rational arithmetic</a> for
 this mode).
 <p>
 <?php include("introExample17.php"); ?>
 <p>
-You can get the upper-bound (respectively the lower-bound) of an interval with the command <code class="com">sup</code> (respectively <code class="com">inf</code>). The middle of the interval can be computed with the command <code class="com">mid</code>. Note that these commands can also be used on numbers (in that case, the number is interpreted as an interval containing only one single point. In that case the commands <code class="com">inf</code>, <code class="com">mid</code> and <code class="com">sup</code> are just the identity):
+You can get the upper-bound (respectively the lower-bound) of an interval with the command <code class="com">sup</code> (respectively <code class="com">inf</code>). The middle of the interval can be computed with the command <code class="com">mid</code>. Let us also mention that these commands can also be used on numbers (in that case, the number is interpreted as an interval containing only one single point. In that case the commands <code class="com">inf</code>, <code class="com">mid</code> and <code class="com">sup</code> are just the identity):
 <p>
 <?php include("introExample18.php"); ?>
 <p>
@@ -538,6 +542,7 @@ The constant pi is available through the keyword <code class="key">pi</code> as 
 <p>
 <?php include("introExample19.php"); ?>
 <p>
+The reader may wish to see Sections <a href="help.php?name=library&goBack=none">library</a> and <a href="help.php?name=function&goBack=none">function</a> for ways of dynamically adding other base functions to Sollya.
 <h2>5.6 - Strings</h2>
 Anything written between quotes is interpreted as a string. The infix operator <code class="com">@</code> concatenates two strings. To get the length of a string, use the <code class="com">length</code> function. You can access the i-th character of a string using brackets (see the example below). There is no character type in <span class="sollya">Sollya</span>: the i-th character of a string is returned as a string itself.
 <p>
@@ -632,10 +637,14 @@ in the next example. They will also be printed in that syntax.
 <?php include("introExample47.php"); ?>
 
 <p>
-It is possible to assign to new, undefined (sub-)elements identified by names that have not yet 
-created in a structure or to change (sub-)elements in (nested) structures. However it is not 
-possible to replace a variable or (sub-)element of a structure previously assigned to 
-an object that is not a structure by a structure with just one element:
+If the variable <code class="com">a</code> is bound to an existing structure, it is possible to use the ``dot notation'' <code class="com">a.b</code> to assign the value of the field <code class="com">b</code> of the structure <code class="com">a</code>. This works even if <code class="com">b</code> is not yet a field of <code class="com">a</code>: in this case a new field is created inside the structure <code class="com">a</code>. 
+
+<p>
+Besides, the dot notation can be used even when <code class="com">a</code> is unassigned. In this case a new structure is created with a field <code class="com">b</code>, and this structure is bound to <code class="com">a</code>. However, the dot notation cannot be used if <code class="com">a</code> is already bound to something that is not a structure.
+
+<p>
+These principles apply recursively: for instance, if <code class="com">a</code> is a structure that contains only one field <code class="com">d</code>, the command <code class="com">a.b.c = 3</code> creates a new field named <code class="com">b</code> inside the structure <code class="com">a</code>; this field itself is a structure containing the field <code class="com">c</code>. The command <code class="com">a.d.c = 3</code> is allowed if <code class="com">a.d</code> is already a structure, but forbidden otherwise (e.g. if <code class="com">a.d</code> was equal to <code class="com">sin(x)</code>). This is summed up in the following example.
+
 <p>
 <?php include("introExample48.php"); ?>
 
