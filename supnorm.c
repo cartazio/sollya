@@ -978,6 +978,12 @@ int computeTaylorModelOfLeastDegree(node **poly, node *func, sollya_mpfi_t dom, 
     /*byMioara: Here, we know that the bound is ok, 
     ***BUT WE HAVE TO TRANSLATE the polynomial****, 
     so we set the translation parameter to 1*/
+    /*by Christoph: this means we have to free the polynomial first */
+
+    if (myPoly != NULL) {
+      free_memory(myPoly);
+      myPoly = NULL;
+    }
 
     resCompute = checkDegreeTaylorModel(&myPoly, func, dom, delta, nMax, singu, prec,1);
     if ((myPoly != NULL) && resCompute) {
@@ -1401,7 +1407,6 @@ int supnormAbsolute(sollya_mpfi_t result, node *poly, node *func, sollya_mpfi_t 
        We clear the used memory and return the appropriate failure code.
 
      */
-    printMessage(1,"Error: we enter in an impossible case.\n");
     mpfr_clear(ell);
     mpfr_clear(gamma);
     mpfr_clear(errMax);
