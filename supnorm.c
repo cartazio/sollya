@@ -2227,17 +2227,6 @@ int supremumNormBisect(sollya_mpfi_t result, node *poly, node *func, mpfr_t a, m
   return 0;
 }
 
-/* Assigns [NaN;NaN] to an interval 
-*/
-void assignNaNInterval(sollya_mpfi_t rop) {
-  mpfr_t temp;
-  
-  mpfr_init2(temp,12);
-  mpfr_set_nan(temp);
-  sollya_mpfi_interv_fr(rop,temp,temp);
-  mpfr_clear(temp);
-}
-
 /* Compute the supremum norm on eps = p - f resp. eps = p/f - 1 at a,
    i.e. evaluate abs(eps) at a.
 
@@ -2297,7 +2286,7 @@ int supremumNormDegenerate(sollya_mpfi_t result, node *poly, node *func, mpfr_t 
   if (pr > 2048 * prec) {
     printMessage(1,"Warning: the given accuracy depasses the current maximum precision of %d bits.\n",2048 * prec);
     printMessage(1,"Try to increase the precision of the tool.\n");
-    assignNaNInterval(result);
+    sollya_mpfi_set_nan(result);
     free_memory(absEps);
     return 0;
   }
@@ -2331,7 +2320,7 @@ int supremumNormDegenerate(sollya_mpfi_t result, node *poly, node *func, mpfr_t 
     mpfr_clear(yb);
   } else {
     printMessage(1,"Warning: could not perform a faithful evaluation of the error function between the given polynomial and the given function at the given point.\n");
-    assignNaNInterval(result);
+    sollya_mpfi_set_nan(result);
   }
 
   free_memory(absEps);
@@ -2415,7 +2404,7 @@ int supremumnorm(sollya_mpfi_t result, node *poly, node *func, sollya_mpfi_t dom
 
   if (!isPolynomial(poly)) {
     printMessage(1,"Warning: the given expression is not a polynomial.\n");
-    assignNaNInterval(result);
+    sollya_mpfi_set_nan(result);
     return 0;
   }
 
@@ -2427,7 +2416,7 @@ int supremumnorm(sollya_mpfi_t result, node *poly, node *func, sollya_mpfi_t dom
 
   if (!(mpfr_number_p(a) && mpfr_number_p(b))) {
     printMessage(1,"Warning: the given domain is not a closed interval on the reals.\n");
-    assignNaNInterval(result);
+    sollya_mpfi_set_nan(result);
     mpfr_clear(a);
     mpfr_clear(b);
     return 0;
@@ -2435,7 +2424,7 @@ int supremumnorm(sollya_mpfi_t result, node *poly, node *func, sollya_mpfi_t dom
 
   if (mpfr_cmp(a,b) > 0) {
     printMessage(1,"Warning: the given domain is empty.\n");
-    assignNaNInterval(result);
+    sollya_mpfi_set_nan(result);
     mpfr_clear(a);
     mpfr_clear(b);
     return 0;
@@ -2446,7 +2435,7 @@ int supremumnorm(sollya_mpfi_t result, node *poly, node *func, sollya_mpfi_t dom
     res = supremumNormDegenerate(result,poly,func,a,mode,accuracy);
     if (!res) {
       printMessage(1,"Warning: could not evaluate the error function between the given polynomial and the given function at this point.\n");
-      assignNaNInterval(result);
+      sollya_mpfi_set_nan(result);
     } 
     mpfr_clear(a);
     mpfr_clear(b);
@@ -2455,7 +2444,7 @@ int supremumnorm(sollya_mpfi_t result, node *poly, node *func, sollya_mpfi_t dom
 
   if (!mpfr_number_p(accuracy)) {
     printMessage(1,"Warning: the given accuracy is not a real number.\n");
-    assignNaNInterval(result);
+    sollya_mpfi_set_nan(result);
     mpfr_clear(a);
     mpfr_clear(b);
     return 0;
@@ -2463,7 +2452,7 @@ int supremumnorm(sollya_mpfi_t result, node *poly, node *func, sollya_mpfi_t dom
 
   if (mpfr_zero_p(accuracy)) {
     printMessage(1,"Warning: the given accuracy is zero. In order to ensure the termination of the supremum norm algorithm, the accuracy parameter must be non-zero.\n");
-    assignNaNInterval(result);
+    sollya_mpfi_set_nan(result);
     mpfr_clear(a);
     mpfr_clear(b);
     return 0;
@@ -2471,7 +2460,7 @@ int supremumnorm(sollya_mpfi_t result, node *poly, node *func, sollya_mpfi_t dom
 
   if (!hasOnlyMpqCoefficients(poly)) {
     printMessage(1,"Warning: the coefficients of the given polynomial cannot all be written as ratios of floating-point numbers.\nSupremum norm computation is only possible on such polynomials. Try to use roundcoefficients().\n");
-    assignNaNInterval(result);
+    sollya_mpfi_set_nan(result);
     mpfr_clear(a);
     mpfr_clear(b);
     return 0;
@@ -2500,7 +2489,7 @@ int supremumnorm(sollya_mpfi_t result, node *poly, node *func, sollya_mpfi_t dom
   res = supremumNormBisect(result,poly,func,a,b,mode,absAccuracy,diameter);
   if (!res) {
     printMessage(1,"Warning: an error occured during supremum norm computation. A safe enclosure of the supremum norm could not be computed.\n");
-    assignNaNInterval(result);
+    sollya_mpfi_set_nan(result);
   } 
 
   mpfr_clear(a);
