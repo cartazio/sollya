@@ -5,6 +5,11 @@ Copyright 2010-2011 by
 Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
 UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.
 
+and by
+
+Laboratoire de l'Informatique du Parallélisme, 
+UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
+
 Contributors Ch. Lauter, M. Joldes
 
 christoph.lauter@ens-lyon.org
@@ -2017,7 +2022,7 @@ int supremumNormInner(sollya_mpfi_t result, node *poly, node *func, sollya_mpfi_
 
 */
 int supremumNormBisectInner(sollya_mpfi_t result, node *poly, node *func, mpfr_t a, mpfr_t b, int mode, mpfr_t accuracy, mpfr_t diameter, mp_prec_t prec) {
-  int resFirst, res, resLeft, resRight;
+  int resFirst, resLeft, resRight;
   mp_prec_t p1, p2;
   sollya_mpfi_t dom, resultLeft, resultRight;
   mpfr_t c, width;
