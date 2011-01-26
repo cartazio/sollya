@@ -26,7 +26,7 @@ binds an external mathematical constant to a variable in \sollya\\
    assumed to be already initialized) and store in result an approximate value
    of the constant with a relative error not greater than $2^{1-\mathrm{prec}}$.
    More precisely, if $c$ is the exact value of the constant, the value stored
-   in result should satisfy $$|\mathrm{result}-c| \le c\,2^{1-\mathrm{prec}}.$$
+   in result should satisfy $$|\mathrm{result}-c| \le |c|\,2^{1-\mathrm{prec}}.$$
 
 \item You can include sollya.h in your implementation and use library 
    functionnalities of \sollya for your implementation. However, this requires to
