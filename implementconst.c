@@ -608,6 +608,7 @@ int implementconst(node *c, FILE *fd, char *name) {
     curr = curr->next;
   }
 
+  sollyaFprintf(output, "#include <mpfr.h>\n\n");
   sollyaFprintf(output, "void\n");
   sollyaFprintf(output, "%s (mpfr_ptr y, mp_prec_t prec)\n", name);
   sollyaFprintf(output, "{\n");
