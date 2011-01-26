@@ -6547,7 +6547,7 @@ int executeCommandInner(node *tree) {
 	      free(array);
 	      resG = 0;
 	    }
-	    printMessage(1,"Warning: the implementation has not succeeded. The command could be executed.\n");
+	    printMessage(1,"Warning: the implementation has not succeeded. The command could not be executed.\n");
 	    considerDyingOnError();
 	  }
 	}
@@ -18394,7 +18394,7 @@ node *evaluateThingInner(node *tree) {
 	  free(xrange.a);
 	  free(xrange.b);
 	  if (tempNode == NULL) {
-	    printMessage(1,"Warning: the implementation has not succeeded. The command could be executed.\n");
+	    printMessage(1,"Warning: the implementation has not succeeded. The command could not be executed.\n");
             considerDyingOnError();
 	    tempNode = makeError();
 	  }
