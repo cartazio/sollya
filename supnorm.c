@@ -2179,13 +2179,24 @@ int supremumNormBisectInner(sollya_mpfi_t result, node *poly, node *func, mpfr_t
 int supremumNormBisect(sollya_mpfi_t result, node *poly, node *func, mpfr_t a, mpfr_t b, int mode, mpfr_t accuracy, mpfr_t diameter) {
   int res;
   mp_prec_t prec, p;
+  mpfr_t temp;
   prec = getToolPrecision() + 25;
-  p = sollya_mpfi_get_prec(result);
-
+  //p = sollya_mpfi_get_prec(result);
+ 
+  /* Compute p = -floor(log2(accuracy)) to get the number of bits we need
+     in the end
+  */
+  mpfr_init2(temp, 8 * sizeof(mp_prec_t) + 10);
+  mpfr_log2(temp,accuracy,GMP_RNDD);
+  mpfr_floor(temp,temp);
+  mpfr_neg(temp,temp,GMP_RNDU);
+  p = mpfr_get_ui(temp,GMP_RNDD);
+  mpfr_clear(temp);
+  
   /*if the requested accuracy (p) is close to prec, increase prec*/
-  if (abs(p-prec)<70) {
-    if (p>prec)  prec = p + 70;
-    if (p<=prec)  prec = prec + 70;
+  if (abs(p-prec)<(p/2)) {
+    if (p>prec)  prec = p + (p/2);
+    if (p<=prec)  prec = prec + (p/2);
   }
   res = supremumNormBisectInner(result, poly, func, a, b, mode, accuracy, diameter, prec);
 
