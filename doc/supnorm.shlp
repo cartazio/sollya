@@ -20,13 +20,14 @@ Please find a complete description in the following article:§§§\\§§
    Sylvain Chevillard, John Harrison, Mioara Joldes, Christoph Lauter§§§\\§§
    Efficient and accurate computation of upper bounds of approximation errors§§§\\§§
    Journal of Theoretical Computer Science (TCS)(2010)§§§\\§§
+   LIP Research Report number RRLIP2010-2§§§\\§§
    http://prunel.ccsd.cnrs.fr/ensl-00445343/fr/§§§\\§§
 
 #DESCRIPTION
-Roughly speaking, $COMMAND is based on using $TAYLORFORM to obtain a higher degree polynomial approximation for <f> and since $TAYLORFORM does not guarantee that by increasing the degree of the aproximation, the remainder bound will become smaller, hence we can not guarantee that the supremum norm can get as accurate as desired by the user. However, by splitting the interval over which the approximation is considered, a potential better eclosure of the remainder is obtained, so, we make use of that by splitting into smaller and smaller intervals depending on the global variable $DIAM. The smaller $DIAM, the more time $SOLLYA will spend on the evaluation of $COMMAND in order to try to find a Taylor approximation that satisfy the required bound. An approximation of at most §§16§$16$§§ times the degree of <p> is considered for each interval. If the remainder bound is not successful a splitting occurs.   
+Roughly speaking, $COMMAND is based on using $TAYLORFORM to obtain a higher degree polynomial approximation for <f>. Since $TAYLORFORM does not guarantee that by increasing the degree of the aproximation, the remainder bound will become smaller, we can not guarantee that the supremum norm can get as accurate as desired by the user. However, by splitting the initial interval <I> a potential better eclosure of the remainder is obtained. We do the splitting until the remainder is sufficiently small or the width of the resulting interval is too small, depending on the global variable $DIAM. An approximation of at most §§16§$16$§§ times the degree of <p> is considered for each interval.
 
 #DESCRIPTION
-In practical cases, the algorithm should be able to automatically handle removable discontinuities that relative errors might have. This means that usually, if <f> vanishes at a point $x_0$ in the interval considered, the approximation polynomial <p> is designed such that it vanishes also at the same point with a multiplicity large enough. Hence, although <f> vanishes, §§epsilon_relative=p/f-1 §$\varepsilon_{relative}=p/f-1$§§ may be defined by continuous extension at such points $x_0$, called removable discontinuities (see example §§3§$3$§§).
+In practical cases, the algorithm should be able to automatically handle removable discontinuities that relative errors might have. This means that usually, if <f> vanishes at a point $x_0$ in the interval considered, the approximation polynomial <p> is designed such that it vanishes also at the same point with a multiplicity large enough. Hence, although <f> vanishes, §§epsilon_relative=p/f-1 §$\varepsilon_{relative}=p/f-1$§§ may be defined by continuous extension at such points $x_0$, called removable discontinuities (see Example §§3§$3$§§).
 
 #EXAMPLE
 p = remez(exp(x), 5, [-1;1]);
