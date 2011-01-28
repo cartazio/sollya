@@ -448,7 +448,7 @@ int determineSignAtPoint(int *sign, node *func, mpfr_t x, mp_prec_t prec) {
   sollya_mpfi_clear(yAsInterv);
 
   /* Return the result */
-  if (mySign = 0) okay = 0;
+  if (mySign == 0) okay = 0;
   if (okay) *sign = mySign; else *sign = 0;
   return okay;
 }
@@ -974,7 +974,7 @@ int computeTaylorModelOfLeastDegree(node **poly, node *func, sollya_mpfi_t dom, 
     }
 
     /* Here, we know that nMin == nMax or nMin = nMax-1 and we know that for 
-       degree nMax, we get a polynomial that satisfies the bound.
+       degree nMax, we get a polynomial that satisfies the bound. */
 
        /*byMioara: Here, we know that the bound is ok, 
        ***BUT WE HAVE TO TRANSLATE the polynomial****, 
