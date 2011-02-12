@@ -1,13 +1,19 @@
 /*
 
-Copyright 2008-2010 by 
+Copyright 2008-2011 by 
 
-Laboratoire de l'Informatique du Parallélisme, 
-UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
+Laboratoire de l'Informatique du Parallelisme, 
+UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
+
+LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2),
+
+Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
+UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France
 
 and by
 
-LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2)
+Centre de recherche INRIA Sophia-Antipolis Mediterranee, equipe APICS,
+Sophia Antipolis, France.
 
 Contributors S. Chevillard, M. Joldes, Ch. Lauter
 
@@ -48,10 +54,15 @@ same conditions as regards security.
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
 
+This program is distributed WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
 */
 
 #include "autodiff.h"
 #include "general.h"
+#include "infnorm.h"
+#include "execute.h"
 #include <stdlib.h>
 
 /* The functions in AD manipulate arrays of size (n+1): [u0...un] */
@@ -1118,18 +1129,16 @@ void erfc_diff(sollya_mpfi_t *res, sollya_mpfi_t x, int n, int *silent) {
 }
 
 void abs_diff(sollya_mpfi_t *res, sollya_mpfi_t x, int n, int *silent) {
-  int s, i;
-  sollya_mpfi_t temp;
+  int i;
   mpfr_t temp2;
   mp_prec_t prec;
 
   prec = getToolPrecision();
-  sollya_mpfi_init2(temp, prec);
 
   sollya_mpfi_abs(res[0], x);
   if(n >= 1) {
     if (sollya_mpfi_has_zero(x))  sollya_mpfi_interv_si(res[1], -1, 1);
-    else sollya_mpfi_set_si(res[1], sollya_mpfi_is_pos(x) ? 1 : (-1));
+    else sollya_mpfi_set_si(res[1], sollya_mpfi_is_nonneg(x) ? 1 : (-1));
   }
 
   if(n >= 2) {
@@ -1449,7 +1458,6 @@ void baseFunction_diff(sollya_mpfi_t *res, int nodeType, sollya_mpfi_t x, int n,
 void auto_diff_scaled(sollya_mpfi_t* res, node *f, sollya_mpfi_t x0, int n) {
   int i;
   sollya_mpfi_t *res1, *res2;
-  mpfr_t minusOne;
   node *simplifiedChild1, *simplifiedChild2, *tempTree;
   sollya_mpfi_t temp1, temp2;
   mp_prec_t prec;
@@ -1467,6 +1475,11 @@ void auto_diff_scaled(sollya_mpfi_t* res, node *f, sollya_mpfi_t x0, int n) {
 
   case PI_CONST:
     sollya_mpfi_const_pi(res[0]);
+    for(i=1; i<=n; i++) sollya_mpfi_set_ui(res[i], 0);
+    break;
+
+  case LIBRARYCONSTANT:
+    libraryConstantToInterval(res[0], f);
     for(i=1; i<=n; i++) sollya_mpfi_set_ui(res[i], 0);
     break;
 

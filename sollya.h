@@ -1,9 +1,16 @@
 /*
 
-Copyright 2007-2010 by 
+Copyright 2007-2011 by 
 
-Laboratoire de l'Informatique du Parallélisme, 
-UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
+Laboratoire de l'Informatique du Parallelisme, 
+UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
+
+LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2)
+
+and by
+
+Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
+UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.
 
 Contributors Ch. Lauter, S. Chevillard, M. Joldes
 
@@ -44,6 +51,9 @@ same conditions as regards security.
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
 
+This program is distributed WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
 */
 
 #ifndef SOLLYA_H
@@ -78,15 +88,8 @@ typedef struct libraryFunctionStruct libraryFunction;
 struct libraryFunctionStruct 
 {
   char *functionName;
-  int (*code)(sollya_mpfi_t, sollya_mpfi_t, int);
-};
-
-typedef struct procLibraryHandleStruct procLibraryHandle;
-struct procLibraryHandleStruct 
-{
-  char *procLibraryName;
-  void *procLibraryDescriptor;
-  chain *procedureList;
+  int (*code)(sollya_mpfi_t, sollya_mpfi_t, int); /* used for LIBRARYFUNCTION */
+  void (*constant_code)(mpfr_t, mp_prec_t); /* used for LIBRARYCONSTANT */
 };
 
 typedef struct libraryProcedureStruct libraryProcedure;
@@ -137,12 +140,14 @@ struct libraryProcedureStruct
 #define CEIL 36
 #define FLOOR 37
 #define PI_CONST 38
+#define SINGLE 39
+#define NEARESTINT 40
+#define LIBRARYCONSTANT 41
+
 #define FIXED 236
 #define FLOATING 237
 #define ABSOLUTESYM 197
 #define RELATIVESYM 198
-#define SINGLE 39
-#define NEARESTINT 40
 
 typedef struct nodeStruct node;
 struct nodeStruct 
@@ -165,6 +170,13 @@ struct rangetypeStruct
   mpfr_t *b;
 };
 
+#define DISPLAY_MODE_DECIMAL     0
+#define DISPLAY_MODE_DYADIC      1
+#define DISPLAY_MODE_POWERS      2
+#define DISPLAY_MODE_BINARY      3
+#define DISPLAY_MODE_HEXADECIMAL 4
+
+
 extern char *getNameOfVariable();
 extern int setNameOfVariable(char *);
 extern mp_prec_t getToolPrecision();
@@ -177,6 +189,26 @@ extern int getToolHopitalRecursions();
 extern void setToolHopitalRecursions(int);
 extern int getToolDiameter(mpfr_t);
 extern void setToolDiameter(mpfr_t);
+extern int getDisplayMode();
+extern int setDisplayMode(int);
+extern int getVerbosity();
+extern int setVerbosity(int);
+extern int getCanonical();
+extern void setCanonical(int);
+extern int getAutosimplify();
+extern void setAutosimplify(int);
+extern int getFullParentheses();
+extern void setFullParentheses(int);
+extern int getMidpointMode();
+extern void setMidpointMode(int);
+extern int getDieOnErrorMode();
+extern void setDieOnErrorMode(int);
+extern int getTimecounting();
+extern void setTimecounting(int);
+extern int getRoundingWarnings();
+extern void setRoundingWarnings(int);
+extern int getRationalMode();
+extern void setRationalMode(int);
 
 extern void initTool();
 extern void finishTool();
@@ -275,6 +307,7 @@ extern rangetype guessDegree(node *func, node *weight, mpfr_t a, mpfr_t b, mpfr_
 
 extern node *FPminimax(node *f,	chain *monomials, chain *formats, chain *points, mpfr_t a, mpfr_t b, int fp, int absrel, node *consPart, node *minimax);
 
+extern int implementconst(node *, FILE *, char *);
 extern void freeChain(chain *c, void (*f) (void *));
 extern chain *addElement(chain *c, void *elem);
 extern void *first(chain *c);

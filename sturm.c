@@ -1,15 +1,23 @@
 /*
 
-Copyright 2008 by 
+Copyright 2008-2011 by 
 
-Laboratoire de l'Informatique du Parallélisme, 
-UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
+Laboratoire de l'Informatique du Parallelisme, 
+UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
 
-Contributors Ch. Lauter, S. Chevillard, N. Jourdan
+Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
+UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France,
 
+and by
+
+Centre de recherche INRIA Sophia-Antipolis Mediterranee, equipe APICS,
+Sophia Antipolis, France.
+
+Contributors M. Joldes, Ch. Lauter, S. Chevillard
+
+mioara.joldes@ens-lyon.fr
 christoph.lauter@ens-lyon.org
 sylvain.chevillard@ens-lyon.org
-nicolas.jourdan@ens-lyon.fr
 
 This software is a computer program whose purpose is to provide an
 environment for safe floating-point code development. It is
@@ -43,6 +51,9 @@ same conditions as regards security.
 
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
+
+This program is distributed WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 */
 
@@ -602,11 +613,11 @@ int sturm_mpfi(int *n, mpq_t *pMpq, int p_degree, sollya_mpfi_t x, mp_prec_t pre
   
   varSignA=0;
   for (i=1; i<na; i++){
-    if (sollya_mpfi_is_pos(evalResA[i-1]) ^ sollya_mpfi_is_pos(evalResA[i])) varSignA++;    
+    if ((!(!sollya_mpfi_is_nonneg(evalResA[i-1]))) ^ (!(!sollya_mpfi_is_nonneg(evalResA[i])))) varSignA++;    
   } 
   varSignB=0;
   for (i=1; i<nb; i++){
-    if (sollya_mpfi_is_pos(evalResB[i-1]) ^ sollya_mpfi_is_pos(evalResB[i])) varSignB++;    
+    if ((!(!sollya_mpfi_is_nonneg(evalResB[i-1]))) ^ (!(!sollya_mpfi_is_nonneg(evalResB[i])))) varSignB++;    
   }
 
   *n=(((varSignA-varSignB)>0)?(varSignA-varSignB+nrRoots):(varSignB-varSignA+nrRoots) );

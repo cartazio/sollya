@@ -1,18 +1,22 @@
 /*
 
-Copyright 2009-2010 by 
+Copyright 2009-2011 by 
 
-Laboratoire de l'Informatique du Parallélisme, 
+Laboratoire de l'Informatique du Parallelisme, 
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
-
-and by
 
 LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2)
 
-Contributors S. Chevillard, M. Joldes
+and by
+
+Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
+UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.
+
+Contributors S. Chevillard, M. Joldes, Ch. Lauter
 
 sylvain.chevillard@ens-lyon.fr
 mioara.joldes@ens-lyon.fr
+christoph.lauter@ens-lyon.org
 
 This software is a computer program whose purpose is to provide an
 environment for safe floating-point code development. It is
@@ -46,6 +50,9 @@ same conditions as regards security.
 
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
+
+This program is distributed WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 */
 
@@ -499,7 +506,7 @@ void computeMonotoneRemainder(sollya_mpfi_t *bound, int typeOfFunction, int node
 void base_TMAux(tModel *t, int typeOfFunction, int nodeType, node *f, mpfr_t p, int n, sollya_mpfi_t x0, sollya_mpfi_t x, int mode, int *silent){
   int i;
   tModel *tt;
-  sollya_mpfi_t *nDeriv, *nDeriv2;
+  sollya_mpfi_t *nDeriv;
   sollya_mpfi_t temp, pow;
   mpfr_t minusOne;
   mp_prec_t prec;
@@ -732,19 +739,15 @@ void taylor_model(tModel *t, node *f, int n, sollya_mpfi_t x0, sollya_mpfi_t x, 
   
   node *simplifiedChild1, *simplifiedChild2;
   sollya_mpfi_t temp1,temp2;
-  node **coefficients;
-  sollya_mpfi_t *rpoly, *boundRpoly;
-  tModel *tt,*tPoly, *child1_tm, *child2_tm, *ctPowVar_tm, *varCtPower_tm, *logx_tm, *expx_tm, *logf_tm;
+  tModel *tt, *child1_tm, *child2_tm, *ctPowVar_tm, *varCtPower_tm, *logx_tm, *expx_tm, *logf_tm;
   
   /*used by division*/
   sollya_mpfi_t gx0,rangeg;
   tModel *ttt, *inv_tm, *child1Extended_tm, *child2Extended_tm, *child1RemoveCoeffs_tm,*child2RemoveCoeffs_tm; 
   int orderUpperBound;  
-  int d;
   int silent = 0;
-  sollya_mpfi_t powx,powy;
+  sollya_mpfi_t powx;
   sollya_mpfi_t ct, minusOne;
-  mpfr_t zero;
   /*used by base functions*/
   sollya_mpfi_t fx0,rangef,pow;
   
@@ -778,10 +781,12 @@ void taylor_model(tModel *t, node *f, int n, sollya_mpfi_t x0, sollya_mpfi_t x, 
   
   case PI_CONST:
   case CONSTANT:
-  
+  case LIBRARYCONSTANT:
+
   sollya_mpfi_init2(ct, getToolPrecision());
   tt=createEmptytModel(n,x0,x); 
   if (f->nodeType == PI_CONST) sollya_mpfi_const_pi(ct);
+  else if (f->nodeType == LIBRARYCONSTANT) libraryConstantToInterval(ct, f);
   else sollya_mpfi_set_fr(ct, *(f->value));
 
   consttModel(tt,ct);
@@ -1274,11 +1279,8 @@ void taylorform(node **T, chain **errors, sollya_mpfi_t **delta,
   mpfr_t *coeffsMpfr;
   sollya_mpfi_t *coeffsErrors;
   int i;
-  node *z;
   chain *err;
   sollya_mpfi_t *rest;
-  sollya_mpfi_t temp;
-  sollya_mpfi_t pow;
   sollya_mpfi_t myD;
 
   /* Adjust n to the notion of degree in the taylor command */

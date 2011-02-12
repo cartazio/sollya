@@ -2,7 +2,7 @@
 
 Copyright 2007-2011 by
 
-Laboratoire de l'Informatique du Parallélisme,
+Laboratoire de l'Informatique du Parallelisme,
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
 
 and
@@ -47,6 +47,9 @@ same conditions as regards security.
 
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
+
+This program is distributed WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 */
 
@@ -240,6 +243,7 @@ SUBSTITUTE      "substitute"
 DOTS            "..."
 
 IMPLEMENTPOLY   "implementpoly"
+IMPLEMENTCONST  "implementconstant"
 
 CHECKINFNORM    "checkinfnorm"
 
@@ -671,6 +675,7 @@ NOP             "nop"
 {DIRTYINTEGRAL}				    {  return DIRTYINTEGRALTOKEN; }
 {WORSTCASE}       			    {  return WORSTCASETOKEN; }
 {IMPLEMENTPOLY}				    {  return IMPLEMENTPOLYTOKEN; }
+{IMPLEMENTCONST}                            {  return IMPLEMENTCONSTTOKEN; }
 {CHECKINFNORM}    			    {  return CHECKINFNORMTOKEN; }
 {ZERODENOMINATORS}			    {  return ZERODENOMINATORSTOKEN; }
 {ISEVALUABLE}     			    {  return ISEVALUABLETOKEN; }
@@ -731,6 +736,8 @@ void *startMiniparser(void *scanner, char *str) {
 
   buf = miniyy_scan_string(str, scanner);
   miniyy_switch_to_buffer(buf, scanner);
+
+  return NULL;
 }
 
 void endMiniparser(void *buf, void *scanner) {

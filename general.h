@@ -1,9 +1,17 @@
 /*
 
-Copyright 2007-2010 by 
+Copyright 2007-2011 by 
 
-Laboratoire de l'Informatique du Parallélisme, 
-UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
+Laboratoire de l'Informatique du Parallelisme, 
+UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
+
+Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
+UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France,
+
+and by
+
+Centre de recherche INRIA Sophia-Antipolis Mediterranee, equipe APICS,
+Sophia Antipolis, France.
 
 Contributors Ch. Lauter, S. Chevillard
 
@@ -42,6 +50,9 @@ same conditions as regards security.
 
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
+
+This program is distributed WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 */
 
@@ -143,6 +154,7 @@ void *safeMalloc (size_t size);
 int printMessage(int verb, const char *format, ...);
 int sollyaPrintf(const char *format, ...);
 int sollyaFprintf(FILE *fd, const char *format, ...);
+char *mpfr_to_binary_str(mpfr_t x);
 int removeSpaces(char *outbuf, char *inbuf);
 int removeMidpointMode(char *outbuf, char *inbuf);
 void cutMidpointStringIntoTwo(char *str1, char *str2, char *str);
@@ -177,5 +189,26 @@ int getToolHopitalRecursions();
 void setToolHopitalRecursions(int i);
 int getToolDiameter(mpfr_t rop);
 void setToolDiameter(mpfr_t op);
+int getDisplayMode();
+int setDisplayMode(int);
+int getVerbosity();
+int setVerbosity(int);
+int getCanonical();
+void setCanonical(int);
+int getAutosimplify();
+void setAutosimplify(int);
+int getFullParentheses();
+void setFullParentheses(int);
+int getMidpointMode();
+void setMidpointMode(int);
+int getDieOnErrorMode();
+void setDieOnErrorMode(int);
+int getTimecounting();
+void setTimecounting(int);
+int getRoundingWarnings();
+void setRoundingWarnings(int);
+int getRationalMode();
+void setRationalMode(int);
+
 
 #endif /* ifdef GENERAL_H*/

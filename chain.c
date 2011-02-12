@@ -1,9 +1,14 @@
 /*
 
-Copyright 2006-2009 by 
+Copyright 2006-2011 by 
 
-Laboratoire de l'Informatique du Parallélisme, 
+Laboratoire de l'Informatique du Parallelisme, 
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
+
+and by
+
+Centre de recherche INRIA Sophia-Antipolis Mediterranee, equipe APICS,
+Sophia Antipolis, France.
 
 Contributors Ch. Lauter, S. Chevillard
 
@@ -42,6 +47,9 @@ same conditions as regards security.
 
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
+
+This program is distributed WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 */
 
@@ -254,6 +262,14 @@ void freeStringPtr(void *aString) {
 void freeMemoryOnVoid(void *tree) {
   free_memory((node *) tree);
 }
+
+/* A function that does nothing but that has the 
+   right signature for freeChain
+*/
+void freeNoPointer(void *thing) {
+  UNUSED_PARAM(thing); return;
+}
+
 
 
 chain *makeIntPtrChain(int n) {

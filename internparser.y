@@ -2,10 +2,12 @@
 
 Copyright 2007-2011 by
 
-Laboratoire de l'Informatique du Parallélisme,
-UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
+Laboratoire de l'Informatique du Parallelisme,
+UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
 
-and
+LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2)
+
+and by
 
 Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
 UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.
@@ -47,6 +49,9 @@ same conditions as regards security.
 
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
+
+This program is distributed WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 */
 
@@ -234,6 +239,7 @@ extern FILE *internyyget_in(void *scanner);
 %token  ERRORTOKEN;
 
 %token  LIBRARYTOKEN;
+%token  LIBRARYCONSTANTTOKEN;
 
 %token  DIFFTOKEN;
 %token  SIMPLIFYTOKEN;
@@ -280,7 +286,6 @@ extern FILE *internyyget_in(void *scanner);
 %token  ASCIIPLOTTOKEN;
 %token  RENAMETOKEN;
 
-
 %token  INFNORMTOKEN;
 %token  SUPNORMTOKEN;
 %token  FINDZEROSTOKEN;
@@ -291,6 +296,7 @@ extern FILE *internyyget_in(void *scanner);
 %token  DIRTYINTEGRALTOKEN;
 %token  WORSTCASETOKEN;
 %token  IMPLEMENTPOLYTOKEN;
+%token  IMPLEMENTCONSTTOKEN;
 %token  CHECKINFNORMTOKEN;
 %token  ZERODENOMINATORSTOKEN;
 %token  ISEVALUABLETOKEN;
@@ -780,6 +786,11 @@ simpleassignment:       IDENTIFIERTOKEN EQUALTOKEN thing
                       | IDENTIFIERTOKEN EQUALTOKEN LIBRARYTOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeLibraryBinding($1, $5);
+			    free($1);
+			  }
+                      | IDENTIFIERTOKEN EQUALTOKEN LIBRARYCONSTANTTOKEN LPARTOKEN thing RPARTOKEN
+                          {
+			    $$ = makeLibraryConstantBinding($1, $5);
 			    free($1);
 			  }
                       | indexing EQUALTOKEN thing
@@ -1615,6 +1626,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | IMPLEMENTPOLYTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thing COMMATOKEN thing COMMATOKEN thing COMMATOKEN thinglist RPARTOKEN
                           {
 			    $$ = makeImplementPoly(addElement(addElement(addElement(addElement(addElement($13, $11), $9), $7), $5), $3));
+			  }
+                      | IMPLEMENTCONSTTOKEN LPARTOKEN thinglist RPARTOKEN
+                          {
+			    $$ = makeImplementConst($3);
 			  }
                       | CHECKINFNORMTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thing RPARTOKEN
                           {

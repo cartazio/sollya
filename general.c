@@ -1,14 +1,17 @@
 /*
 
-Copyright 2007-2010 by 
+Copyright 2007-2011 by 
 
-Laboratoire de l'Informatique du Parallélisme, 
-UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
-
-and
+Laboratoire de l'Informatique du Parallelisme, 
+UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
 
 Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
-UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.
+UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France
+
+and by
+
+Centre de recherche INRIA Sophia-Antipolis Mediterranee, equipe APICS,
+Sophia Antipolis, France.
 
 Contributors Ch. Lauter, S. Chevillard
 
@@ -47,6 +50,9 @@ same conditions as regards security.
 
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
+
+This program is distributed WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 */
 
@@ -165,6 +171,8 @@ extern int yyparse();
 extern void yylex_destroy(void *);
 extern int yylex_init(void **);
 extern int yylex(void *);
+extern void yyset_in(FILE *, void *);
+
 
 #define BACKTRACELENGTH 100
 
@@ -640,6 +648,54 @@ int sollyaFprintf(FILE *fd, const char *format, ...) {
   return res;
 }
 
+/* Returns a string representing x written in binary, such
+   that it can be read back by mpfr_set_str.
+   x must be a valid number. If x is an Inf or NaN, NULL is
+   returned.
+   Note: the string must be freed afterwards, of course. */
+char *mpfr_to_binary_str(mpfr_t x) {
+  char *s;
+  char *ptr;
+  mp_exp_t e;
+  mp_prec_t prec = mpfr_get_prec(x);
+
+  if (!mpfr_number_p(x)) return NULL;
+
+  if (mpfr_zero_p(x)) {
+    s = calloc(5, sizeof(char));
+    s[0] = '0';
+    s[1] = 'p';
+    s[2] = '+';
+    s[3] = '0';
+    return s;
+  }
+    
+  /* The documentation of mpfr_get_str explains that it needs
+     max ( mpfr_get_prec(x)+2, 7 ). This is achieved by
+     mpfr_get_prec(x)+7. We must add 4 chars for "0." and "p+".
+     Finally, 20 extra bits are sufficient to write a 64-bit 
+     exponent in base 10 */
+  s = (char *)calloc(prec+7+4+20, sizeof(char)); 
+  mpfr_get_str(s+2, &e, 2, 0, x, GMP_RNDN);
+  if ( s[2] == '-' ) {
+    s[0] = '-';
+    ptr = s+1;
+  }
+  else ptr = s;
+
+  ptr[0] = '0';
+  ptr[1] = '.';
+  ptr[prec+2] = 'p';
+  if (e>=0) {
+    ptr[prec+3] = '+';
+    ptr = ptr + prec + 4;
+  }
+  else ptr = ptr + prec + 3;
+  sprintf(ptr, "%ld", (long)e);
+
+  return s;
+}
+
 void freeCounter(void) {
   freeChain(timeStack, free);
   timeStack=NULL;
@@ -848,7 +904,8 @@ void freeTool() {
     readStack = readStackTemp;
   }
   yylex_destroy(scanner);
-  freeLibraries();
+  freeFunctionLibraries();
+  freeConstantLibraries();
   freeProcLibraries();
   freeCounter();
   freeSymbolTable(symbolTable, freeThingOnVoid);
@@ -893,8 +950,10 @@ void restartTool() {
   symbolTable = NULL;
   freeDeclaredSymbolTable(declaredSymbolTable, freeThingOnVoid);
   declaredSymbolTable = NULL;
-  freeLibraries();
+  freeFunctionLibraries();
+  freeConstantLibraries();
   freeProcLibraries();
+  mpfr_free_cache();
   initToolDefaults();
   parseMode();
 }
@@ -926,6 +985,7 @@ void initTool() {
   blockSignals();
   mp_set_memory_functions(safeMalloc,wrapSafeRealloc,NULL);
   initToolDefaults();
+  noColor = 1;
 }
 
 void finishTool() {
@@ -983,6 +1043,102 @@ void setToolDiameter(mpfr_t op) {
   mpfr_set(statediam,op,GMP_RNDN);
 }
 
+/* NEW */
+
+int getDisplayMode() {
+  return dyadic;
+}
+
+int setDisplayMode(int newMode) {
+  if ((0 <= newMode) && (newMode <= 4)) {
+    dyadic = newMode;
+    return 1;
+  } else {
+    dyadic = 0;
+    return 0;
+  }
+}
+
+int getVerbosity() {
+  return verbosity;
+}
+
+int setVerbosity(int newVerbosity) {
+  if (newVerbosity >= 0) {
+    verbosity = newVerbosity;
+    return 1;
+  } else {
+    verbosity = 0;
+    return 0;
+  }
+}
+
+int getCanonical() {
+  return canonical;
+}
+
+void setCanonical(int newCanonical) {
+  canonical = (!(!newCanonical));
+}
+
+int getAutosimplify() {
+  return autosimplify;
+}
+
+void setAutosimplify(int newAutosimplify) {
+  autosimplify = (!(!newAutosimplify));
+}
+
+int getFullParentheses() {
+  return fullParentheses;
+}
+
+void setFullParentheses(int newFullParentheses) {
+  fullParentheses = (!(!newFullParentheses));
+}
+
+int getMidpointMode() {
+  return midpointMode;
+}
+
+void setMidpointMode(int newMidpointMode) {
+  midpointMode = (!(!newMidpointMode));
+}
+
+int getDieOnErrorMode() {
+  return dieOnErrorMode;
+}
+
+void setDieOnErrorMode(int newDieOnErrorMode) {
+  dieOnErrorMode = (!(!newDieOnErrorMode));
+}
+
+int getTimecounting() {
+  return timecounting;
+}
+
+void setTimecounting(int newTimecounting) {
+  timecounting = (!(!newTimecounting));
+}
+
+int getRoundingWarnings() {
+  return (!noRoundingWarnings);
+}
+
+void setRoundingWarnings(int newRoundingWarnings) {
+  noRoundingWarnings = (!newRoundingWarnings);
+}
+
+int getRationalMode() {
+  return rationalMode;
+}
+
+void setRationalMode(int newRationalMode) {
+  rationalMode = (!(!newRationalMode));
+}
+
+/* END NEW */
+
 void setRecoverEnvironment(jmp_buf *env) {
   memmove(&recoverEnvironment,env,sizeof(recoverEnvironment));
   memmove(&recoverEnvironmentError,env,sizeof(recoverEnvironmentError));
@@ -1035,7 +1191,7 @@ int general(int argc, char *argv[]) {
       sollyaPrintf("--warnonstderr : print warning messages on error output instead on the standard output\n");
       sollyaPrintf("\nFor help on %s commands type \"help;\" on the %s prompt\n",PACKAGE_NAME,PACKAGE_NAME);
       sollyaPrintf("More documentation on %s is available on the %s website http://sollya.gforge.inria.fr/.\nFor bug reports send an email to %s.\n",PACKAGE_NAME,PACKAGE_NAME,PACKAGE_BUGREPORT);
-      sollyaPrintf("\n%s is Copyright 2006-2010 by\n\n    Laboratoire de l'Informatique du Parallelisme,\n    UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668, Lyon, France,\n\n    LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2), Nancy, France\n\nand by\n\n    Laboratoire d'Informatique de Paris 6, equipe PEQUAN,\n    UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.\n\nAll rights reserved.\n\nContributors are S. Chevillard, N. Jourdan, M. Joldes and Chr. Lauter.\n\nThis software is governed by the CeCILL-C license under French law and\nabiding by the rules of distribution of free software.  You can  use,\nmodify and/ or redistribute the software under the terms of the CeCILL-C\nlicense as circulated by CEA, CNRS and INRIA at the following URL\n\"http://www.cecill.info\".\n\nThis build of %s is based on GMP %s, MPFR %s and MPFI %s.\n\n",PACKAGE_STRING,PACKAGE_STRING,gmp_version,mpfr_get_version(),sollya_mpfi_get_version());
+      sollyaPrintf("\n%s is Copyright 2006-2011 by\n\n    Laboratoire de l'Informatique du Parallelisme,\n    UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668, Lyon, France,\n\n    LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2), Nancy, France,\n\n    Laboratoire d'Informatique de Paris 6, equipe PEQUAN,\n    UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France,\n\nand by\n\n    INRIA Sophia-Antipolis Mediterranee, APICS Team,\n    Sophia-Antipolis, France.\n\nAll rights reserved.\n\nContributors are S. Chevillard, N. Jourdan, M. Joldes and Ch. Lauter.\n\nThis software is governed by the CeCILL-C license under French law and\nabiding by the rules of distribution of free software.  You can  use,\nmodify and/ or redistribute the software under the terms of the CeCILL-C\nlicense as circulated by CEA, CNRS and INRIA at the following URL\n\"http://www.cecill.info\".\n\nThis program is distributed WITHOUT ANY WARRANTY; without even the\nimplied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\nThis build of %s is based on GMP %s, MPFR %s and MPFI %s.\n\n",PACKAGE_STRING,PACKAGE_STRING,gmp_version,mpfr_get_version(),sollya_mpfi_get_version());
       return 1;
     } else 
       if (strcmp(argv[i],"--nocolor") == 0) noColor = 1; else

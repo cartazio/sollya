@@ -2,7 +2,7 @@
 
 Copyright 2007-2011 by
 
-Laboratoire de l'Informatique du Parallélisme,
+Laboratoire de l'Informatique du Parallelisme,
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
 
 and
@@ -47,6 +47,9 @@ same conditions as regards security.
 
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
+
+This program is distributed WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 */
 %{
@@ -282,6 +285,7 @@ void miniyyerror(void *myScanner, char *message) {
 %token  DIRTYINTEGRALTOKEN;
 %token  WORSTCASETOKEN;
 %token  IMPLEMENTPOLYTOKEN;
+%token  IMPLEMENTCONSTTOKEN;
 %token  CHECKINFNORMTOKEN;
 %token  ZERODENOMINATORSTOKEN;
 %token  ISEVALUABLETOKEN;
@@ -1606,6 +1610,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | IMPLEMENTPOLYTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thing COMMATOKEN thing COMMATOKEN thing COMMATOKEN thinglist RPARTOKEN
                           {
 			    $$ = makeImplementPoly(addElement(addElement(addElement(addElement(addElement($13, $11), $9), $7), $5), $3));
+			  }
+                      | IMPLEMENTCONSTTOKEN LPARTOKEN thinglist RPARTOKEN
+                          {
+			    $$ = makeImplementConst($3);
 			  }
                       | CHECKINFNORMTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thing RPARTOKEN
                           {

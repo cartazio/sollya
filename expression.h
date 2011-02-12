@@ -2,8 +2,15 @@
 
 Copyright 2006-2010 by 
 
-Laboratoire de l'Informatique du Parallélisme, 
-UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
+Laboratoire de l'Informatique du Parallelisme, 
+UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
+
+Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
+UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France
+
+and by
+
+LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2).
 
 Contributors Ch. Lauter, S. Chevillard
 
@@ -42,6 +49,9 @@ same conditions as regards security.
 
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
+
+This program is distributed WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 */
 
@@ -96,7 +106,9 @@ knowledge of the CeCILL-C license and that you accept its terms.
 #define PI_CONST 38
 #define SINGLE 39
 #define NEARESTINT 40
-#define PROCEDUREFUNCTION 41
+#define LIBRARYCONSTANT 41
+#define PROCEDUREFUNCTION 42
+
 
 typedef struct nodeStruct node;
 
@@ -224,6 +236,7 @@ node *makeTanh(node *op1);
 node *makeAsinh(node *op1);
 node *makeAcosh(node *op1);
 node *makeAtanh(node *op1);
+node *makeUnary(node *op1, int nodeType);
 int mpfr_nearestint(mpfr_t rop, mpfr_t op);
 
 

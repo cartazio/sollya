@@ -1,9 +1,16 @@
 /*
 
-Copyright 2007-2009 by 
+Copyright 2007-2011 by 
 
-Laboratoire de l'Informatique du Parallélisme, 
-UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
+Laboratoire de l'Informatique du Parallelisme, 
+UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
+
+LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2)
+
+and by
+
+Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
+UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.
 
 Contributor Ch. Lauter
 
@@ -42,6 +49,9 @@ same conditions as regards security.
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
 
+This program is distributed WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
 */
 
 #ifndef LIBRARY_H
@@ -65,15 +75,8 @@ typedef struct libraryFunctionStruct libraryFunction;
 struct libraryFunctionStruct 
 {
   char *functionName;
-  int (*code)(sollya_mpfi_t, sollya_mpfi_t, int);
-};
-
-typedef struct procLibraryHandleStruct procLibraryHandle;
-struct procLibraryHandleStruct 
-{
-  char *procLibraryName;
-  void *procLibraryDescriptor;
-  chain *procedureList;
+  int (*code)(sollya_mpfi_t, sollya_mpfi_t, int); /* used for LIBRARYFUNCTION */
+  void (*constant_code)(mpfr_t, mp_prec_t); /* used for LIBRARYCONSTANT */
 };
 
 typedef struct libraryProcedureStruct libraryProcedure;
@@ -101,11 +104,13 @@ struct libraryProcedureStruct
 
 
 libraryFunction *bindFunction(char* libraryName, char *functionName);
-libraryFunction *getFunction(char *functionName);
-void freeLibraries();
-
+libraryFunction *bindConstantFunction(char* libraryName, char *functionName);
 libraryProcedure *bindProcedure(char* libraryName, char *procedureName, chain *signature);
+libraryFunction *getFunction(char *functionName);
+libraryFunction *getConstantFunction(char *functionName);
 libraryProcedure *getProcedure(char *procedureName);
+void freeFunctionLibraries();
+void freeConstantLibraries();
 void freeProcLibraries();
 
 #endif /* ifdef LIBRARY_H*/

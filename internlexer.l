@@ -2,10 +2,12 @@
 
 Copyright 2007-2011 by
 
-Laboratoire de l'Informatique du Parallélisme,
-UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
+Laboratoire de l'Informatique du Parallelisme,
+UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
 
-and
+LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2)
+
+and by
 
 Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
 UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.
@@ -47,6 +49,9 @@ same conditions as regards security.
 
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
+
+This program is distributed WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 */
 
@@ -240,6 +245,7 @@ SUBSTITUTE      "substitute"
 DOTS            "..."
 
 IMPLEMENTPOLY   "implementpoly"
+IMPLEMENTCONST  "implementconstant"
 
 CHECKINFNORM    "checkinfnorm"
 
@@ -316,6 +322,7 @@ SUPPRESSWARNINGS "roundingwarnings"
 RATIONALMODE    "rationalmode"
 
 LIBRARY         "library"
+LIBRARYCONSTANT "libraryconstant"
 
 HOPITALRECURSIONS "hopitalrecursions"
 
@@ -618,9 +625,8 @@ NOP             "nop"
 			                        return FALSEQUITTOKEN;
                                             }
 {RESTART}         			    { return FALSERESTARTTOKEN; }
-
 {LIBRARY}         			    {  return LIBRARYTOKEN; }
-
+{LIBRARYCONSTANT}         		    {  return LIBRARYCONSTANTTOKEN; }
 {DIFF}            			    {  return DIFFTOKEN; }
 {SIMPLIFY}				    {  return SIMPLIFYTOKEN; }
 {REMEZ}           			    {  return REMEZTOKEN; }
@@ -644,9 +650,7 @@ NOP             "nop"
 {ACCURATEINFNORM}  			    {  return ACCURATEINFNORMTOKEN; }
 {ROUNDTOFORMAT}   			    {  return ROUNDTOFORMATTOKEN; }
 {EVALUATE}        			    {  return EVALUATETOKEN; }
-
 {PARSE}           			    {  return PARSETOKEN; }
-
 {PRINT}           			    {  return PRINTTOKEN; }
 {PRINTXML}           			    {  return PRINTXMLTOKEN; }
 {EXECUTE}           			    {  return EXECUTETOKEN; }
@@ -672,6 +676,7 @@ NOP             "nop"
 {DIRTYINTEGRAL}				    {  return DIRTYINTEGRALTOKEN; }
 {WORSTCASE}       			    {  return WORSTCASETOKEN; }
 {IMPLEMENTPOLY}				    {  return IMPLEMENTPOLYTOKEN; }
+{IMPLEMENTCONST}                            {  return IMPLEMENTCONSTTOKEN; }
 {CHECKINFNORM}    			    {  return CHECKINFNORMTOKEN; }
 {ZERODENOMINATORS}			    {  return ZERODENOMINATORSTOKEN; }
 {ISEVALUABLE}     			    {  return ISEVALUABLETOKEN; }

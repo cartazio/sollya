@@ -2,7 +2,7 @@
 
 Copyright 2006-2011 by
 
-Laboratoire de l'Informatique du Parallélisme,
+Laboratoire de l'Informatique du Parallelisme,
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
 
 and
@@ -47,6 +47,9 @@ same conditions as regards security.
 
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
+
+This program is distributed WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 */
 
@@ -246,6 +249,7 @@ void yyerror(char *message) {
 %token  RESTARTTOKEN;
 
 %token  LIBRARYTOKEN;
+%token  LIBRARYCONSTANTTOKEN;
 
 %token  DIFFTOKEN;
 %token  SIMPLIFYTOKEN;
@@ -254,6 +258,7 @@ void yyerror(char *message) {
 %token  HORNERTOKEN;
 %token  EXPANDTOKEN;
 %token  SIMPLIFYSAFETOKEN;
+
 %token  TAYLORTOKEN;
 %token  TAYLORFORMTOKEN;
 %token  CHEBYSHEVFORMTOKEN;
@@ -303,6 +308,7 @@ void yyerror(char *message) {
 %token  DIRTYINTEGRALTOKEN;
 %token  WORSTCASETOKEN;
 %token  IMPLEMENTPOLYTOKEN;
+%token  IMPLEMENTCONSTTOKEN;
 %token  CHECKINFNORMTOKEN;
 %token  ZERODENOMINATORSTOKEN;
 %token  ISEVALUABLETOKEN;
@@ -429,7 +435,7 @@ startsymbol:            command SEMICOLONTOKEN
                       | VERSIONTOKEN SEMICOLONTOKEN
                           {
 			    outputMode();
-			    sollyaPrintf("This is\n\n\t%s.\n\nCopyright 2006-2010 by\n\n    Laboratoire de l'Informatique du Parallelisme,\n    UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668, Lyon, France,\n\n    LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2), Nancy, France\n\nand by\n\n    Laboratoire d'Informatique de Paris 6, equipe PEQUAN,\n    UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.\n\nAll rights reserved.\n\nContributors are S. Chevillard, N. Jourdan, M. Joldes and Chr. Lauter.\n\nThis software is governed by the CeCILL-C license under French law and\nabiding by the rules of distribution of free software.  You can  use,\nmodify and/ or redistribute the software under the terms of the CeCILL-C\nlicense as circulated by CEA, CNRS and INRIA at the following URL\n\"http://www.cecill.info\".\n\nPlease send bug reports to %s.\n\nThis build of %s is based on GMP %s, MPFR %s and MPFI %s.\n\n",PACKAGE_STRING,PACKAGE_BUGREPORT,PACKAGE_STRING,gmp_version,mpfr_get_version(),sollya_mpfi_get_version());
+			    sollyaPrintf("This is\n\n\t%s.\n\nCopyright 2006-2011 by\n\n    Laboratoire de l'Informatique du Parallelisme,\n    UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668, Lyon, France,\n\n    LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2), Nancy, France,\n\n    Laboratoire d'Informatique de Paris 6, equipe PEQUAN,\n    UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France,\n\nand by\n\n    INRIA Sophia-Antipolis Mediterranee, APICS Team,\n    Sophia-Antipolis, France.\n\nAll rights reserved.\n\nContributors are S. Chevillard, N. Jourdan, M. Joldes and Ch. Lauter.\n\nThis software is governed by the CeCILL-C license under French law and\nabiding by the rules of distribution of free software.  You can  use,\nmodify and/ or redistribute the software under the terms of the CeCILL-C\nlicense as circulated by CEA, CNRS and INRIA at the following URL\n\"http://www.cecill.info\".\n\nPlease send bug reports to %s.\n\nThis program is distributed WITHOUT ANY WARRANTY; without even the\nimplied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\nThis build of %s is based on GMP %s, MPFR %s and MPFI %s.\n\n",PACKAGE_STRING,PACKAGE_BUGREPORT,PACKAGE_STRING,gmp_version,mpfr_get_version(),sollya_mpfi_get_version());
 			    parsedThing = NULL;
 			    $$ = NULL;
 			    YYACCEPT;
@@ -725,6 +731,10 @@ simplecommand:          QUITTOKEN
                           {
 			    $$ = makePrintExpansion($3);
 			  }
+                      | IMPLEMENTCONSTTOKEN LPARTOKEN thinglist RPARTOKEN
+                          {
+			    $$ = makeImplementConst($3);
+			  }
                       | BASHEXECUTETOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeBashExecute($3);
@@ -826,6 +836,11 @@ simpleassignment:       IDENTIFIERTOKEN EQUALTOKEN thing
                       | IDENTIFIERTOKEN EQUALTOKEN LIBRARYTOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeLibraryBinding($1, $5);
+			    free($1);
+			  }
+                      | IDENTIFIERTOKEN EQUALTOKEN LIBRARYCONSTANTTOKEN LPARTOKEN thing RPARTOKEN
+                          {
+			    $$ = makeLibraryConstantBinding($1, $5);
 			    free($1);
 			  }
                       | indexing EQUALTOKEN thing
@@ -3251,6 +3266,17 @@ help:                   CONSTANTTOKEN
 #endif
 #endif
                           }
+                      | LIBRARYCONSTANTTOKEN
+                          {
+#ifdef HELP_LIBRARYCONSTANT_TEXT
+			    outputMode(); sollyaPrintf(HELP_LIBRARYCONSTANT_TEXT);
+#else
+			    outputMode(); sollyaPrintf("Library constant binding dereferencer.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for LIBRARYCONSTANT"
+#endif
+#endif
+                          }
                       | DIFFTOKEN
                           {
 #ifdef HELP_DIFF_TEXT
@@ -3788,6 +3814,18 @@ help:                   CONSTANTTOKEN
 #warning "No help text for IMPLEMENTPOLY"
 #endif
 #endif
+			  }
+                      | IMPLEMENTCONSTTOKEN
+                          {
+#ifdef HELP_IMPLEMENTCONSTANT_TEXT
+			    outputMode(); sollyaPrintf(HELP_IMPLEMENTCONSTANT_TEXT);
+#else
+			    outputMode(); sollyaPrintf("Implement a constant expression in arbitrary precision with MPFR: implementconstant(constant)\n");
+			    outputMode(); sollyaPrintf("Generates code able to evaluate the given constant at any precision, with a guaranteed error.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for IMPLEMENTCONST"
+#endif
+#endif
                           }
                       | CHECKINFNORMTOKEN
                           {
@@ -4167,6 +4205,7 @@ help:                   CONSTANTTOKEN
 			    sollyaPrintf("- +\n");
 			    sollyaPrintf("- ,\n");
 			    sollyaPrintf("- -\n");
+			    sollyaPrintf("- .\n");
 			    sollyaPrintf("- ...\n");
 			    sollyaPrintf("- .:\n");
 			    sollyaPrintf("- /\n");
@@ -4269,6 +4308,7 @@ help:                   CONSTANTTOKEN
 			    sollyaPrintf("- horner\n");
 			    sollyaPrintf("- if\n");
 			    sollyaPrintf("- implementpoly\n");
+			    sollyaPrintf("- implementconstant\n");
 			    sollyaPrintf("- in\n");
 			    sollyaPrintf("- inf\n");
 			    sollyaPrintf("- infnorm\n");
@@ -4278,14 +4318,17 @@ help:                   CONSTANTTOKEN
 			    sollyaPrintf("- isevaluable\n");
 			    sollyaPrintf("- length\n");
 			    sollyaPrintf("- library\n");
+			    sollyaPrintf("- libraryconstant\n");
 			    sollyaPrintf("- list\n");
 			    sollyaPrintf("- log\n");
 			    sollyaPrintf("- log10\n");
 			    sollyaPrintf("- log1p\n");
 			    sollyaPrintf("- log2\n");
 			    sollyaPrintf("- mantissa\n");
+			    sollyaPrintf("- max\n");
 			    sollyaPrintf("- mid\n");
 			    sollyaPrintf("- midpointmode\n");
+			    sollyaPrintf("- min\n");
 			    sollyaPrintf("- nearestint\n");
 			    sollyaPrintf("- numberroots\n");
 			    sollyaPrintf("- nop\n");
@@ -4342,6 +4385,7 @@ help:                   CONSTANTTOKEN
 			    sollyaPrintf("- subpoly\n");
 			    sollyaPrintf("- substitute\n");
 			    sollyaPrintf("- sup\n");
+			    sollyaPrintf("- supnorm\n");
 			    sollyaPrintf("- tail\n");
 			    sollyaPrintf("- tan\n");
 			    sollyaPrintf("- tanh\n");
