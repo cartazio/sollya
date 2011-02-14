@@ -4,7 +4,15 @@ extern int polynomialDivide_mpfi(sollya_mpfi_t *quotient, int *quotient_degree, 
 /* Evaluates a symbolic polynomial at point x by Horner scheme */
 extern void symbolic_poly_evaluation_horner(sollya_mpfi_t res, sollya_mpfi_t *coeffs_array, sollya_mpfi_t x, int degree);
 extern void symbolic_poly_diff(sollya_mpfi_t *res, sollya_mpfi_t *coeff_array, int degree);
+extern int showPositivity(node * poly, sollya_mpfi_t dom, mp_prec_t prec);
 
+extern void mpfr_get_poly(mpfr_t *rc, sollya_mpfi_t *errors_array, sollya_mpfi_t rest, int n, sollya_mpfi_t *p, sollya_mpfi_t x0, sollya_mpfi_t x);
+extern node *subPolynomialsExactly(node *p1, node *p2);
+extern node *makePolynomial(mpfr_t *coefficients, int degree) ;
+
+extern chain *uncertifiedFindZeros(node *tree, mpfr_t a, mpfr_t b, unsigned long int points, mp_prec_t prec);
+extern void freeMpfrPtr(void *ptr);
+extern void printMpfr(mpfr_t x);
 int mpfi_set_node( sollya_mpfi_t *r, node * c);
 
 /*returns n chebyshev points in x*/
@@ -69,7 +77,7 @@ void chebPolynomialBoundSimple(sollya_mpfi_t bound, int n, sollya_mpfi_t *coeffs
 /* This function computes an interval bound for a polynomial in cheb basis. */
 /*The coefficients are given in coeffs. We have n coeffs*/
 /* we will use a refined method for this        */
-void chebPolynomialBoundRefined(sollya_mpfi_t bound, int n, sollya_mpfi_t *coeffs);
+int chebPolynomialBoundRefined(sollya_mpfi_t bound, int n, sollya_mpfi_t *coeffs);
 
 /* This function computes an interval bound for a polynomial in cheb basis. */
 /*One day this function may become more complex*/

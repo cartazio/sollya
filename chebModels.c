@@ -5,7 +5,7 @@
     From sollya:
     externalproc(CM, "./chebModels", (function, range, integer,integer, integer) ->list of function);
     externalproc(CertifiedIntegral, "./chebModels", (function, range, integer,integer, integer) ->list of function);
-
+    externalproc(TB, "./chebModels", (function, range, constant) ->list of function);
 */
 
 
@@ -260,8 +260,8 @@ void ctMultiplication_CM(chebModel*d, chebModel*s, sollya_mpfi_t c){
 /*This function computes the cm for multiplication of two 
 given cm's;
 
--- the parameter tightBounds =0 means that we are interested in speed, and we will use a simple algo
-for bounding, otherwise we use tightbounding
+-- the parameter tightBounds>1 we use tightbounding, otherwise it means
+that we are interested in speed, and we will use a simple algo for bounding
 
 -- the parameter forComposition=1 means that we are using the multiplication inside a composition,
 so we suppose that the bounds for the models are already computed inside the models.
@@ -1511,7 +1511,25 @@ int CertifiedIntegral(chain**resP, void **args) {
   return 1;
 }
 
-
+int TB(chain**resP, void **args){
+  node *f;
+  sollya_mpfi_t x, bound;
+  mpfr_t gamma;
+  chain *ch;
+  f = (node *)args[0];
+  sollya_mpfi_init2(x, getToolPrecision());
+  sollya_mpfi_set(x, *( (sollya_mpfi_t *)args[1] ));
+  mpfr_init2(gamma, getToolPrecision());
+  mpfr_set(gamma, *( (mpfr_t *)args[2]),GMP_RNDN);
+  sollya_mpfi_init2(bound, getToolPrecision());
+  polynomialBoundRefined(bound,f,x,gamma, getToolPrecision());
+  printInterval(bound);
+   ch=NULL;
+    ch=addElement(ch,f);
+   *resP=ch;
+   
+  return 1; 
+}
 
 
 

@@ -513,7 +513,7 @@ void getChebCoeffsFromPolynomial(sollya_mpfi_t**coeffs, int*n, node *f, sollya_m
 }
 
 
-/*wrapper to get directly the coeffs in the monomial basis from a polynomial in the chebBasis basis(given a pointer to node, over a given interval x*/
+/*wrapper to get directly the coeffs in the monomial basis from a polynomial in the Chebyshev basis, over a given interval x*/
 void getCoeffsFromChebPolynomial(sollya_mpfi_t**coeffs, sollya_mpfi_t *chebCoeffs, int n, sollya_mpfi_t x){
   sollya_mpfi_t z1, z2, ui, vi, temp;
  
@@ -828,34 +828,395 @@ void chebPolynomialBoundSimple(sollya_mpfi_t bound, int n, sollya_mpfi_t *coeffs
   sollya_mpfi_clear(intrval);
   //printf("out of chebPolynomail bound simple");
 }
+/*additional function for computing a certified "interior" range evaluation for a polynomial poly*/
+/*Compute a range [ell,u] such that forall x in dom, [ell,u]  in poly(x) and
 
-/* This function computes an interval bound for a polynomial in cheb basis. */
-/*The coefficients are given in coeffs. We have n coeffs*/
-/* TODO      */
+   Additionally, if things are pretty, make sure that 
 
-void chebPolynomialBoundRefined(sollya_mpfi_t bound, int n, sollya_mpfi_t *coeffs){
-  sollya_mpfi_t temp, temp2, intrval;
+   poly(x) in  [ell * (1-abs(gamma)) , u * (1 + abs(gamma))].
+
+   If everything works fine, set ell to the computed value, ADAPTING
+   THE PRECISION OF THE mpfr_t VARIABLE ell IF NECESSARY and return a
+   non-zero value.
+
+   Otherwise, set do not touch ell and u and return zero. This case happens
+   when gamma is not a non-zero number.
+
+   The function assumes that poly is a polynomial but will work even
+   if poly is not a polynomial. However, it will not try to ensure
+   that ell approximates ||eps|| up to a relative error of abs(gamma).
+
+   The procedure determines its working precision itself where
+   possible. It hence disregards the prec parameter unless the
+   determination of the working precision fails.
+*/
+int computeInteriorPolyRange(mpfr_t ell, mpfr_t ull, node *poly, sollya_mpfi_t dom, mpfr_t gamma, mp_prec_t prec) {
+  node *polyPrime;
+  int res;
+  mpfr_t l,u, y,yAbs;
+  mpfr_t temp, absGamma;
+  mp_prec_t pp, pr;
+  int deg;
+  chain *possibleExtrema;
+  mpfr_t a, b, lMinusUlp, uMinusUlp;
+  unsigned long int samplePoints;
+  mpfr_t *aBound, *bBound;
+  chain *curr;
+  int resEval;
+  int s;
+  if (mpfr_zero_p(gamma) || (!mpfr_number_p(gamma))) {
+    return 0;
+  }
+
+  pr = sollya_mpfi_get_prec(dom);
+  mpfr_init2(a,pr);
+  mpfr_init2(b,pr);
+  sollya_mpfi_get_left(a,dom);
+  sollya_mpfi_get_right(b,dom);  
+
+  if (!(mpfr_number_p(a) && mpfr_number_p(b))) {
+    mpfr_clear(a);
+    mpfr_clear(b);
+    return 0;
+  }
+
+  polyPrime = differentiate(poly);
+ 
+
+  mpfr_init2(temp,10 + 8 * ((sizeof(unsigned int) > sizeof(mp_prec_t)) ? sizeof(unsigned int) : sizeof(mp_prec_t)));
+  mpfr_init2(absGamma,mpfr_get_prec(gamma));
+  mpfr_abs(absGamma,gamma,GMP_RNDN);
+  mpfr_log2(temp,absGamma,GMP_RNDD);
+  mpfr_neg(temp,temp,GMP_RNDU);
+  mpfr_ceil(temp,temp);
+  if (mpfr_sgn(temp) > 0) {
+    pp = 10 + mpfr_get_ui(temp,GMP_RNDU);
+    if (pp < 12) pp = 12;
+  } else {
+    pp = prec;
+    if (pp < 12) pp = 12;
+  }
+  
+  deg = getDegree(poly);
+  if (deg >= 0) {
+    samplePoints = 4 * deg + 1;
+  } else {
+    samplePoints = getToolPoints();
+  }
+  
+  possibleExtrema = uncertifiedFindZeros(polyPrime, a, b, samplePoints, 6 + (pp / 2));
+
+
+  aBound = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+  bBound = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+  
+  /*DO NOT ADD a to the list, and to the first evaluation here, to have some max and min already*/
+  /*mpfr_init2(*aBound,pr);
+  mpfr_set(*aBound,a,GMP_RNDD); 
+  */
+  mpfr_init2(*bBound,pr);
+  mpfr_set(*bBound,b,GMP_RNDU); /* exact */
+
+  possibleExtrema = addElement(possibleExtrema,bBound);
+
+  mpfr_init2(l,pp + 5);
+  mpfr_init2(lMinusUlp,pp);
+  mpfr_init2(u,pp + 5);
+  mpfr_init2(uMinusUlp,pp);
+  mpfr_init2(y,pp + 10);
+  mpfr_init2(yAbs,pp + 10);
+  mpfr_set_si(l,0,GMP_RNDN);
+  mpfr_set_si(u,0,GMP_RNDN);
+  res = 1;
+
+  /*DO an initial evaluation in a*/
+
+  mpfr_set(uMinusUlp,u,GMP_RNDD); /* Take latest maximum minus a couple ulps as a cut off for evaluation */
+  if (!mpfr_zero_p(uMinusUlp)) mpfr_nextbelow(uMinusUlp);
+  resEval = evaluateFaithfulWithCutOffFast(y, poly, polyPrime, a, uMinusUlp, pp + 10);
+    if ((resEval != 0) && (resEval != 3) && (mpfr_number_p(y))) { /* Evaluation okay ? */
+      //printf("\n");
+      //printMpfr(y);
+      mpfr_abs(yAbs,y,GMP_RNDN); /* exact */
+      if (mpfr_sgn(yAbs) > 0) {
+      	mpfr_nextbelow(yAbs);  /* Compensate for faithful rounding */
+	      mpfr_nextbelow(yAbs);
+        s=mpfr_sgn(y);
+        mpfr_mul_si(y,yAbs,s,GMP_RNDN);
+      }
+       /* Initial maximum */
+	      mpfr_set(u,y,GMP_RNDD); /* Round down because we produce a lower bound */
+     
+      /* Initial minimum */
+	      mpfr_set(l,y,GMP_RNDU); /* Round up because we produce a lower bound */
+     
+      
+    } else { /* Here, something went wrong with the evaluation */
+      res = 0;
+      printf("Here, something went wrong with the evaluation ");
+      
+    }
+
+
+  
+
+  for (curr=possibleExtrema;((curr!=NULL) && (res!=0));curr=curr->next) {
+    mpfr_set(uMinusUlp,u,GMP_RNDD); /* Take latest maximum minus a couple ulps as a cut off for evaluation */
+    if (!mpfr_zero_p(uMinusUlp)) mpfr_nextbelow(uMinusUlp);
+    resEval = evaluateFaithfulWithCutOffFast(y, poly, polyPrime, *((mpfr_t *) (curr->value)), uMinusUlp, pp + 10);
+    if ((resEval != 0) && (resEval != 3) && (mpfr_number_p(y))) { /* Evaluation okay ? */
+      //printf("\n");
+      //printMpfr(y);
+      mpfr_abs(yAbs,y,GMP_RNDN); /* exact */
+      if (mpfr_sgn(yAbs) > 0) {
+      	mpfr_nextbelow(yAbs);  /* Compensate for faithful rounding */
+	      mpfr_nextbelow(yAbs);
+        s=mpfr_sgn(y);
+        mpfr_mul_si(y,yAbs,s,GMP_RNDN);
+      }
+      
+      if (mpfr_cmp(y,u) > 0) { /* New maximum */
+	      mpfr_set(u,y,GMP_RNDD); /* Round down because we produce a lower bound */
+      }
+      if (mpfr_cmp(y,l) < 0) { /* New minimum */
+	      mpfr_set(l,y,GMP_RNDU); /* Round up because we produce a lower bound */
+      }
+      
+    } else { /* Here, something went wrong with the evaluation */
+      res = 0;
+      printf("Here, something went wrong with the evaluation ");
+      break;
+    }
+  }
+
+  if (res) {
+    if (mpfr_get_prec(ell) < mpfr_get_prec(l)) {
+      mpfr_set_prec(ell,mpfr_get_prec(l));
+    }
+    mpfr_set(ell,l,GMP_RNDN); /* exact */
+    if (mpfr_get_prec(ull) < mpfr_get_prec(u)) {
+      mpfr_set_prec(ull,mpfr_get_prec(u));
+    }
+    mpfr_set(ull,u,GMP_RNDN); /* exact */
+  } 
+
+  freeChain(possibleExtrema, freeMpfrPtr);
+  mpfr_clear(l);
+  mpfr_clear(lMinusUlp);
+  mpfr_clear(u);
+  mpfr_clear(uMinusUlp);
+  mpfr_clear(y);
+  mpfr_clear(yAbs);
+  mpfr_clear(a);
+  mpfr_clear(b);
+  mpfr_clear(absGamma);
+  mpfr_clear(temp);
+  free_memory(polyPrime);
+   //printf("We return from interior range, with res = %d ", res);
+  return res;
+}
+
+/* This function computes a refined interval bound for a polynomial in monomial basis. */
+/* It returns a value different from zero if everything is ok, if something went wrong, 
+it returns 0;
+*/
+/* TODO IN WORK      */
+
+int polynomialBoundRefined(sollya_mpfi_t bound,node *T, sollya_mpfi_t dom, mpfr_t gamma, mp_prec_t prec){
+  
+
+  int res;
+  node *UminusT, *TminusL, *LAsNode, *UAsNode;
+  mpfr_t ell, ull, U,L, mu,mu2,mu3;
+  
+  res=1;
+
+  mpfr_init2(ell, prec);
+  mpfr_init2(ull, prec);
+  mpfr_init2(U, prec);
+  mpfr_init2(L, prec);  
+  
+  mpfr_init2(mu, prec); 
+  mpfr_init2(mu2, prec); 
+  mpfr_init2(mu3, prec);
+  mpfr_div_ui(mu, gamma, 32,GMP_RNDN);
+ 
+ //printf("gamma=");
+  //printMpfr(gamma);
+  //printf("\n");
+  
+  //compute an interior min and a max
+  if((computeInteriorPolyRange(ell, ull, T, dom, mu, prec))!=0){
+    mpfr_add_ui(mu2,mu,1,GMP_RNDU); 
+    mpfr_si_sub(mu3,1,mu,GMP_RNDN);
+    
+    if (mpfr_sgn(ell)<0) {
+      mpfr_abs(L,ell, GMP_RNDU);//exact
+      mpfr_mul(L, L, mu2, GMP_RNDU);
+      mpfr_mul_si(L, L,-1, GMP_RNDD); 
+    }
+    else{
+     mpfr_mul(L, ell, mu3, GMP_RNDD);
+    } 
+  
+    if (mpfr_sgn(ull)<0) {
+      mpfr_abs(U,ull, GMP_RNDU);//exact
+      mpfr_mul(U, U, mu3, GMP_RNDD);
+      mpfr_mul_si(U, U,-1, GMP_RNDU); 
+    }
+    else{
+     mpfr_mul(U, ull, mu2, GMP_RNDU);
+    } 
+  
+  
+  LAsNode = makeConstant(L); 
+  UAsNode = makeConstant(U); 
+   /*printf("Lower and upper:\n");
+   printTree(LAsNode);
+   printf("\n vs. \n");
+   printMpfr(ell);
+   printTree(UAsNode);
+   printf("\n vs. \n");
+   printMpfr(ull);
+   printf("\n");*/
+  TminusL = subPolynomialsExactly( T,LAsNode);
+  UminusT = subPolynomialsExactly(UAsNode, T); 
+   /*printTree(TminusL);
+   printf("\n");
+   printTree(UminusT);
+    printf("\n");*/
+  //show positivity
+  if ((! showPositivity(TminusL,dom, prec)) ||
+      (! showPositivity(UminusT,dom, prec))) {
+    printf("Warning: during polynomial bound computation, the positivity of a polynomial could not be established.\n");
+    res=0;
+  }
+  else{
+    sollya_mpfi_interv_fr(bound, L,U);
+  }
+  free_memory(LAsNode);
+  free_memory(UAsNode);
+  free_memory(TminusL);
+  free_memory(UminusT);
+ }
+ else{
+   printf("Warning: during polynomial bound computation, we could not compute an interior range.\n");
+   res=0;
+ }
+
+  mpfr_clear(ell);
+  mpfr_clear(ull);
+  mpfr_clear(U);
+  mpfr_clear(L);
+  mpfr_clear(mu);
+  mpfr_clear(mu2);
+  mpfr_clear(mu3);
+  /*printf("we return from monomial poly bound refined:");
+  printInterval(bound);
+  printf("\n with %d\n",res);*/
+  return res;
+}
+
+/* This function computes a refined interval bound for a polynomial in cheb basis. */
+/*The coefficients are given in coeffs. We have n coeffs
+It returns a value different from zero if everything is ok, if something went wrong, 
+it returns 0;
+*/
+/* TODO IN WORK      */
+
+int chebPolynomialBoundRefinedBetaTesting(sollya_mpfi_t bound, int n, sollya_mpfi_t *coeffs){
+  sollya_mpfi_t intrval,zero;
   mp_prec_t prec;
-  int i;
-  //printf("\nin chebPolynomialBoundSimple\n");
-  for(i=0;i<n;i++) {
-    //printInterval(coeffs[i]);
-  }
+  int i,res;
+  sollya_mpfi_t **monomialCoeffs;
+  mpfr_t *coeffsMpfr;
+  sollya_mpfi_t *coeffsErrors;
+  sollya_mpfi_t rest, boundPoly;
+  node *T;
+
+  mpfr_t gamma;
+  int pow;  
+  res=1;
   prec = getToolPrecision();
-  sollya_mpfi_init2(temp, prec);
-  sollya_mpfi_init2(temp2, prec);
+  mpfr_init2(gamma, prec); 
+  pow=prec/5; 
+  //printf("-prec/5= %d\n",pow );
+  /*TODO: Set gamma to something*/
+  mpfr_set_ui(gamma,2, GMP_RNDN);
+  mpfr_pow_si(gamma,gamma,-pow, GMP_RNDN); 
+  /*printf("gamma=");
+  printMpfr(gamma);
+  printf("\n");*/
   sollya_mpfi_init2(intrval, prec);
-  sollya_mpfi_set_ui(temp, 0);
   sollya_mpfi_interv_si(intrval, -1,1);
-  if (n>0) sollya_mpfi_set(temp, coeffs[0]);
-  for(i=1;i<n;i++) {
-  sollya_mpfi_mul(temp2,coeffs[i], intrval);
-  sollya_mpfi_add(temp, temp,temp2);
+  
+  sollya_mpfi_init2(zero, prec);
+  sollya_mpfi_set_ui(zero,0);
+  /*Compute the coeffs in monomial basis*/ 
+  monomialCoeffs=(sollya_mpfi_t **)safeMalloc(sizeof(sollya_mpfi_t*));
+  getCoeffsFromChebPolynomial(monomialCoeffs, coeffs, n, intrval);
+
+  /*construct a polynomial with mpfr_coeffs and an error chain*/
+  coeffsMpfr= (mpfr_t *)safeCalloc((n),sizeof(mpfr_t));
+  coeffsErrors = (sollya_mpfi_t *)safeCalloc((n),sizeof(sollya_mpfi_t));
+
+  
+  sollya_mpfi_init2(rest,prec);
+  sollya_mpfi_init2(boundPoly,prec);
+
+  for(i=0;i<n;i++){
+    sollya_mpfi_init2(coeffsErrors[i],prec);
+    mpfr_init2(coeffsMpfr[i],prec);
   }
-  sollya_mpfi_set(bound, temp);
-  sollya_mpfi_clear(temp);
-  sollya_mpfi_clear(temp2);
+  
+  mpfr_get_poly(coeffsMpfr, coeffsErrors, rest, n-1, *monomialCoeffs, zero, intrval);
+ 
+  /*create T*/ 
+  T=makePolynomial(coeffsMpfr, n-1);
+  
+  /*printf("\nT=\n");
+  printTree(T);
+ printf(" \n");*/
+ 
+  if((polynomialBoundRefined( boundPoly, T,intrval, gamma, prec))!=0) {
+    sollya_mpfi_add(bound, boundPoly,rest); 
+  } 
+  else{
+   res=0; 
+  } 
+  free_memory(T);
+  
+  sollya_mpfi_clear(zero);
   sollya_mpfi_clear(intrval);
+  sollya_mpfi_clear(rest);
+  sollya_mpfi_clear(boundPoly); 
+  
+  mpfr_clear(gamma);
+  
+  for(i=0;i<n;i++){
+    sollya_mpfi_clear(coeffsErrors[i]);
+    sollya_mpfi_clear((*monomialCoeffs)[i]);
+    mpfr_clear(coeffsMpfr[i]);
+  }
+  free(coeffsErrors);
+  free(coeffsMpfr);
+  free(monomialCoeffs);
+  /*printf("We return from chebBound refined, ");
+  printInterval(bound);
+  printf(" with %d\n",res); */
+  return res;
+}
+
+int chebPolynomialBoundRefined(sollya_mpfi_t bound, int n, sollya_mpfi_t *coeffs){
+
+  if (chebPolynomialBoundRefinedBetaTesting(bound, n, coeffs)==0) {
+
+    printf("Falling back to default version for bounding....");
+    chebPolynomialBoundSimple(bound, n,coeffs);
+    return 0;
+  }
+  else return 1;
+
 }
 
 

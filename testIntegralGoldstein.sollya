@@ -10,7 +10,7 @@ f=sin(1/((10^(-3)+(1-x)^2))^r);
 
 I2 = [0.81; 0.82];
 deg = 200;
-mode=0;
+mode=1;
 verb=12;
 //L=CM(f,I2,deg,mode, verb);
 I=CertifiedIntegral(f,I2,deg,mode, verb);

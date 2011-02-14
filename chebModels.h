@@ -73,7 +73,7 @@ void chebPolynomialBoundSimple(sollya_mpfi_t bound, int n, sollya_mpfi_t *coeffs
 /* This function computes an interval bound for a polynomial in cheb basis. */
 /*The coefficients are given in coeffs. We have n coeffs*/
 /* we will use a refined method for this        */
-void chebPolynomialBoundRefined(sollya_mpfi_t bound, int n, sollya_mpfi_t *coeffs);
+int chebPolynomialBoundRefined(sollya_mpfi_t bound, int n, sollya_mpfi_t *coeffs);
 
 /* This function computes an interval bound for a polynomial in cheb basis. */
 /*One day this function may become more complex*/
