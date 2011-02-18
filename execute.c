@@ -720,7 +720,7 @@ node *copyThing(node *tree) {
   case INDEX:
     copy->child1 = copyThing(tree->child1);
     copy->child2 = copyThing(tree->child2);
-    break; 				
+    break; 
   case COMPAREEQUAL:
     copy->child1 = copyThing(tree->child1);
     copy->child2 = copyThing(tree->child2);
@@ -917,6 +917,15 @@ node *copyThing(node *tree) {
     copy->child1 = copyThing(tree->child1);
     break;  			
   case REMEZ:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
+    break; 			 	
+  case MATCH:
+    copy->child1 = copyThing(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
+    break; 			 	
+  case MATCHELEMENT:
+    copy->child1 = copyThing(tree->child1);
+    copy->child2 = copyThing(tree->child2);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 			 	
   case MIN:
@@ -1736,6 +1745,11 @@ char *getTimingStringForThing(node *tree) {
     break;  			
   case REMEZ:
     constString = "computing a minimax approximation";
+    break; 
+  case MATCH:
+    constString = "matching an expression";
+  case MATCHELEMENT:
+    constString = NULL;
     break; 			 	
   case MIN:
     constString = "computing a minimum";
@@ -2104,6 +2118,147 @@ int isPureTree(node *tree) {
   }
 }
 
+int isExtendedPureTree(node *tree) {
+  if (tree->nodeType == DEFAULT) return 1;
+  return isExtendedPureTreeInner(tree);
+}
+
+int isExtendedPureTreeInner(node *tree) {
+  switch (tree->nodeType) {
+  case VARIABLE:
+    return 1;
+    break;
+  case TABLEACCESS:
+    return 1;
+    break;
+  case CONSTANT:
+    return 1;
+    break;
+  case ADD:
+    return (isExtendedPureTreeInner(tree->child1) && isExtendedPureTreeInner(tree->child2));
+    break;
+  case SUB:
+    return (isExtendedPureTreeInner(tree->child1) && isExtendedPureTreeInner(tree->child2));
+    break;
+  case MUL:
+    return (isExtendedPureTreeInner(tree->child1) && isExtendedPureTreeInner(tree->child2));
+    break;
+  case DIV:
+    return (isExtendedPureTreeInner(tree->child1) && isExtendedPureTreeInner(tree->child2));
+    break;
+  case SQRT:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case EXP:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case LOG:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case LOG_2:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case LOG_10:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case SIN:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case COS:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case TAN:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case ASIN:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case ACOS:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case ATAN:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case SINH:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case COSH:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case TANH:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case ASINH:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case ACOSH:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case ATANH:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case POW:
+    return (isExtendedPureTreeInner(tree->child1) && isExtendedPureTreeInner(tree->child2));
+    break;
+  case NEG:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case ABS:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case DOUBLE:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case SINGLE:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case DOUBLEDOUBLE:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case TRIPLEDOUBLE:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case ERF: 
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case ERFC:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case LOG_1P:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case EXP_M1:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case DOUBLEEXTENDED:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case LIBRARYFUNCTION:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case LIBRARYCONSTANT:
+    return 1;
+    break;
+  case PROCEDUREFUNCTION:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case CEIL:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case FLOOR:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case NEARESTINT:
+    return isExtendedPureTreeInner(tree->child1);
+    break;
+  case PI_CONST:
+    return 1;
+    break;
+  default:
+    return 0;
+  }
+}
+
 int isDefault(node *tree) {
   return (tree->nodeType == DEFAULT);
 }
@@ -2114,6 +2269,10 @@ int isString(node *tree) {
 
 int isList(node *tree) {
   return (tree->nodeType == LIST);
+}
+
+int isMatchElement(node *tree) {
+  return (tree->nodeType == MATCHELEMENT);
 }
 
 int isStructure(node *tree) {
@@ -4449,6 +4608,28 @@ char *sRawPrintThing(node *tree) {
       curr = curr->next;
     }
     res = concatAndFree(res, newString(")"));
+    break; 			 	
+  case MATCH:
+    res = newString("match ");
+    res = concatAndFree(res, sRawPrintThing(tree->child1));
+    res = concatAndFree(res, newString(" with\n"));
+    curr = tree->arguments;
+    while (curr != NULL) {
+      res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
+      curr = curr->next;
+    }
+    break; 			 	
+  case MATCHELEMENT:
+    res = concatAndFree(sRawPrintThing(tree->child1),newString(" : {\n"));
+    curr = ((node *) (tree->arguments->value))->arguments;
+    while (curr != NULL) {
+      res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
+      res = concatAndFree(res, newString(";\n")); 
+      curr = curr->next;
+    }
+    res = concatAndFree(res, newString("return "));     
+    res = concatAndFree(res, sRawPrintThing(tree->child2));
+    res = concatAndFree(res, newString(";\n}\n")); 
     break; 			 	
   case MIN:
     res = newString("min(");
@@ -9010,6 +9191,17 @@ node *makeIndex(node *thing1, node *thing2) {
 
 }
 
+node *makeMatch(node *thing, chain *matchlist) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = MATCH;
+  res->child1 = thing;
+  res->arguments = matchlist;
+
+  return res;
+}
+
 node *makeCompareEqual(node *thing1, node *thing2) {
   node *res;
 
@@ -10373,6 +10565,18 @@ node *makeProc(chain *stringlist, node *body, node *returnVal) {
   return res;
 }
 
+node *makeMatchElement(node *matcher, node *commands, node *returnVal) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = MATCHELEMENT;
+  res->arguments = addElement(NULL,commands);
+  res->child1 = matcher;
+  res->child2 = returnVal;
+
+  return res;
+}
+
 node *makeProcIllim(char *arg, node *body, node *returnVal) {
   node *res;
   chain *argList;
@@ -11350,6 +11554,17 @@ void freeThing(node *tree) {
   case REMEZ:
     freeChain(tree->arguments, freeThingOnVoid);
     free(tree);
+    break; 
+  case MATCH:
+    freeThing(tree->child1);
+    freeChain(tree->arguments, freeThingOnVoid);
+    free(tree);
+    break; 		
+  case MATCHELEMENT:
+    freeThing(tree->child1);
+    freeThing(tree->child2);
+    freeChain(tree->arguments, freeThingOnVoid);
+    free(tree);
     break; 			 	
   case MIN:
     freeChain(tree->arguments, freeThingOnVoid);
@@ -12239,7 +12454,16 @@ int isEqualThing(node *tree, node *tree2) {
     break;  			
   case REMEZ:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
-    break; 			 	
+    break; 
+  case MATCH:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
+    break; 
+  case MATCHELEMENT:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThing(tree->child2,tree2->child2)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
+    break; 
   case MIN:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
     break; 			 	
@@ -12818,6 +13042,13 @@ void freeArgumentForExternalProc(void* arg, int type) {
   }
 
 }
+
+int executeMatch(node **result, node *thingToMatch, node **matchers, node **codesToRun, node **thingsToReturn) {
+  sollyaPrintf("Expression matching has not been implemented, yet.\n");
+  // TODO
+  return 0;
+}
+
 
 int executeProcedureInner(node **resultThing, node *proc, chain *args, int elliptic) {
   int result, res, noError;
@@ -13555,6 +13786,7 @@ node *evaluateThingInner(node *tree) {
   mpfr_t bb,cc;
   sollya_mpfi_t tempIA2;
   unsigned int tempUI;
+  node **thingArray1, **thingArray2, **thingArray3;
 
   /* Make compiler happy: */
   pTemp = 12;
@@ -17083,7 +17315,55 @@ node *evaluateThingInner(node *tree) {
     freeThing(thirdArg);
     freeThing(fourthArg);
     if (fifthArg != NULL) freeThing(fifthArg);
-    break; 			 	
+    break; 
+  case MATCH:
+    copy->child1 = evaluateThingInner(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateThingInnerOnVoid);
+    if (isPureTree(copy->child1)) {
+      resA = 1;
+      for (curr = copy->arguments; curr != NULL; curr=curr->next) {
+	if (!isMatchElement((node *) (curr->value))) {
+	  resA = 0;
+	  break;
+	}
+      }
+      if (resA) {
+	resB = lengthChain(copy->arguments);
+	thingArray1 = (node **) safeCalloc(resB, sizeof(node *)); 
+	thingArray2 = (node **) safeCalloc(resB, sizeof(node *)); 
+	thingArray3 = (node **) safeCalloc(resB, sizeof(node *)); 
+	resC = 0;
+	for (curr = copy->arguments; curr != NULL; curr=curr->next) {
+	  thingArray1[resC] = ((node *) (curr->value))->child1;
+	  thingArray3[resC] = ((node *) (curr->value))->child2;
+	  thingArray2[resC] = (node *) (((node *) (curr->value))->arguments->value);
+	  resC++;
+	}
+	resD = 1;
+	for (resC=0;resC<resB;resC++) {
+	  if (!isExtendedPureTree(thingArray1[resC])) {
+	    resD = 0;
+	    break;
+	  }
+	}
+	if (resD) {
+	  tempNode = NULL;
+	  if ((executeMatch(&tempNode,copy->child1,thingArray1,thingArray2,thingArray3)) && (tempNode != NULL)) {
+	    freeThing(copy);
+	    copy = tempNode;
+	  }
+	}
+	free(thingArray1);
+	free(thingArray2);
+	free(thingArray3);
+      }
+    }
+    break;
+  case MATCHELEMENT:
+    copy->child1 = copyThing(tree->child1);
+    copy->child2 = copyThing(tree->child2);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
+    break;
   case FPMINIMAX:
     copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateThingInnerOnVoid);
     curr = copy->arguments;
