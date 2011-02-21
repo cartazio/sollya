@@ -13043,10 +13043,161 @@ void freeArgumentForExternalProc(void* arg, int type) {
 
 }
 
-int executeMatch(node **result, node *thingToMatch, node **matchers, node **codesToRun, node **thingsToReturn) {
-  sollyaPrintf("Expression matching has not been implemented, yet.\n");
-  // TODO
-  return 0;
+int executeMatchBodyInner(node **resultThing, node *body, node *thingToReturn, chain *associations) {
+  int okay, failure;
+  chain *curr;
+
+  curr = body->arguments;
+  okay = 1;
+  while (curr != NULL) {
+    if (isQuit((node *) (curr->value)) ||
+	isFalseQuit((node *) (curr->value)) ||
+	isRestart((node *) (curr->value)) ||
+	isFalseRestart((node *) (curr->value))) {
+      printMessage(1,"Warning: a quit or restart command may not be part of the body of a match-with construct.\n");
+      printMessage(1,"The match-with construct will not be executed.\n");
+      considerDyingOnError();
+      okay = 0;
+      break;
+    } 
+    curr = curr->next;
+  }
+
+  if (!okay) {
+    *resultThing = NULL;
+    return 0;
+  }
+
+  declaredSymbolTable = pushFrame(declaredSymbolTable);
+
+  okay = 1;
+  curr = associations;
+  while (curr != NULL) {
+    failure = 1;
+    if ((variablename != NULL) && (strcmp(variablename, ((entry *) (curr->value))->name) == 0)) {
+      printMessage(1,"Warning: the identifier \"%s\" is already bound to the current free variable.\nIt cannot be used as a match variable. The match-with construct cannot be executed.\n",
+		   ((entry *) (curr->value))->name);
+      considerDyingOnError();
+    } else {
+      if (getFunction(((entry *) (curr->value))->name) != NULL) {
+	printMessage(1,"Warning: the identifier \"%s\" is already bound to a library function.\nIt cannot be used as a match variable. The match-with construct cannot be executed.\n",
+		     ((entry *) (curr->value))->name);
+        considerDyingOnError();
+      } else {
+        if (getConstantFunction(((entry *) (curr->value))->name) != NULL) {
+          printMessage(1,"Warning: the identifier \"%s\" is already bound to a library constant.\nIt cannot be used as a match variable. The match-with construct cannot be executed.\n",
+                       ((entry *) (curr->value))->name);
+          considerDyingOnError();
+        } else {
+          if (getProcedure(((entry *) (curr->value))->name) != NULL) {
+            printMessage(1,"Warning: the identifier \"%s\" is already bound to an external procedure.\nIt cannot be used as a match variable. The match-with cannot be executed.\n",
+                         ((entry *) (curr->value))->name);
+            considerDyingOnError();
+          } else {
+            if (declaredSymbolTable != NULL) {
+              failure = 0;
+	      declaredSymbolTable = declareNewEntry(declaredSymbolTable, ((entry *) (curr->value))->name, (node *) (((entry *) (curr->value))->value), copyThingOnVoid);
+            } else {
+              printMessage(1,"Warning: previous command interruptions have corrupted the frame system.\n");
+              printMessage(1,"The match variable \"%s\" cannot be bound to its actual value.\nThe match-with cannot be executed.\n",((entry *) (curr->value))->name);      
+              considerDyingOnError();
+            }
+          }
+	}
+      }
+    }
+    if (failure) {
+      okay = 0;
+      break;
+    }
+    curr = curr->next;
+  }
+
+  if (!okay) {
+    declaredSymbolTable = popFrame(declaredSymbolTable,freeThingOnVoid);
+    *resultThing = NULL;
+    return 0;
+  }
+
+  declaredSymbolTable = pushFrame(declaredSymbolTable);
+
+  curr = body->arguments;
+  okay = 1;
+  while (curr != NULL) {
+    if (isQuit((node *) (curr->value)) ||
+	isFalseQuit((node *) (curr->value)) ||
+	isRestart((node *) (curr->value)) ||
+	isRestart((node *) (curr->value))) {
+      printMessage(1,"Warning: a quit or restart command may not be part of the body of a match-with construct.\n");
+      printMessage(1,"The match-with construct will no longer be executed.\n");
+      failure = 1;
+    } else {
+      failure = executeCommand((node *) (curr->value));
+    }
+    if (failure) {
+      okay = 0;
+      break;
+    }
+    curr = curr->next;
+  }
+
+  if (!okay) {
+    declaredSymbolTable = popFrame(declaredSymbolTable,freeThingOnVoid);
+    declaredSymbolTable = popFrame(declaredSymbolTable,freeThingOnVoid);
+    *resultThing = NULL;
+    return 0;
+  }
+
+  *resultThing = evaluateThing(thingToReturn);
+
+  declaredSymbolTable = popFrame(declaredSymbolTable,freeThingOnVoid);
+  declaredSymbolTable = popFrame(declaredSymbolTable,freeThingOnVoid);
+
+  return 1;
+}
+
+int executeMatchBody(node **resultThing, node *body, node *thingToReturn, chain *associations) {
+  jmp_buf *oldEnvironment;
+  int res;
+
+  pushTimeCounter();  
+  
+  oldEnvironment = (jmp_buf *) safeMalloc(sizeof(jmp_buf));
+  memmove(oldEnvironment,&recoverEnvironmentError,sizeof(oldEnvironment));
+  if (!setjmp(recoverEnvironmentError)) {
+    res = executeMatchBodyInner(resultThing, body, thingToReturn, associations);
+  } else {
+    printMessage(1,"Warning: the last command could not be executed. May leak memory.\n");
+    considerDyingOnError();
+    res = 0;
+  }
+  memmove(&recoverEnvironmentError,oldEnvironment,sizeof(recoverEnvironmentError));
+  free(oldEnvironment);
+
+  popTimeCounter("executing the body of a match-with construct");
+
+  return res;
+}
+
+int executeMatch(node **result, node *thingToMatch, node **matchers, node **codesToRun, node **thingsToReturn, int numberMatchers) {
+  int i, okay;
+  chain *associations;
+
+  okay = 0;
+  associations = NULL;
+  for (i=0;i<numberMatchers;i++) {
+    if (tryMatch(&associations, thingToMatch, matchers[i])) {
+      okay = 1;
+      break;
+    }
+  }
+
+  if (okay && (associations != NULL)) {
+    okay = executeMatchBody(result, codesToRun[i], thingsToReturn[i], associations);
+    freeChain(associations, freeEntryOnVoid);
+  }
+
+  return okay;
 }
 
 
@@ -17348,7 +17499,7 @@ node *evaluateThingInner(node *tree) {
 	}
 	if (resD) {
 	  tempNode = NULL;
-	  if ((executeMatch(&tempNode,copy->child1,thingArray1,thingArray2,thingArray3)) && (tempNode != NULL)) {
+	  if ((executeMatch(&tempNode,copy->child1,thingArray1,thingArray2,thingArray3,resB)) && (tempNode != NULL)) {
 	    freeThing(copy);
 	    copy = tempNode;
 	  }
