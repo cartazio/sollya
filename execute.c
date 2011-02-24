@@ -13195,6 +13195,10 @@ int executeMatch(node **result, node *thingToMatch, node **matchers, node **code
   if (okay && (associations != NULL)) {
     okay = executeMatchBody(result, codesToRun[i], thingsToReturn[i], associations);
     freeChain(associations, freeEntryOnVoid);
+  } else {
+    printMessage(1,"Warning: no matching expression found in a match-with construct and no default case given.\n");
+    *result = makeError();
+    okay = 1;
   }
 
   return okay;
