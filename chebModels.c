@@ -129,7 +129,7 @@ void clearcModel(chebModel *t){
   sollya_mpfi_clear(t->poly_bound);  
    
   sollya_mpfi_clear(t->x);
-  
+  //free(t->cheb_matrix);
   free(t);
 }
 
@@ -1444,6 +1444,7 @@ int CertifiedIntegral(chain**resP, void **args) {
   }
   getChebCoeffsIntegrationPolynomial(c, t->poly_array, n, x);
   
+  /*Compute a bound for the integration of the remainder |R|*(x_right-x_left)*/
   mpfr_init2(u, getToolPrecision());
   mpfr_init2(v, getToolPrecision());
   sollya_mpfi_get_left(u,x);
@@ -1457,13 +1458,15 @@ int CertifiedIntegral(chain**resP, void **args) {
   
   sollya_mpfi_init2(temp, getToolPrecision());
   
-  mpfi_sub(temp, vi, ui);
-  mpfi_abs(t->rem_bound, t->rem_bound);
-  mpfi_mul(temp, temp, t->rem_bound);
+  sollya_mpfi_sub(temp, vi, ui);
+  sollya_mpfi_abs(t->rem_bound, t->rem_bound);
+  sollya_mpfi_mul(temp, temp, t->rem_bound);
   if (verbosity>0){
     printf("\nConstant part of the integral:");
     printInterval(temp);
   } 
+  
+  /*Compute P_integrated(x_right) - P_integrated(x_left)*/
   evaluateChebPolynomialClenshaw(ui, n+1, c, x,ui );
   if (verbosity>0){
     printf("\nevaluation to the left:");
@@ -1475,8 +1478,8 @@ int CertifiedIntegral(chain**resP, void **args) {
     printf("\nevaluation to the right:");
     printInterval(vi);
   }
-  mpfi_sub(ui, vi, ui);
-  mpfi_add(temp, temp, ui);
+  sollya_mpfi_sub(ui, vi, ui);
+  sollya_mpfi_add(temp, temp, ui);
   
   if (verbosity>0){
     printf("\nfinal bound:");
@@ -1504,11 +1507,18 @@ int CertifiedIntegral(chain**resP, void **args) {
   
    *resP=ch;
   clearcModel(t);
-  mpfi_clear(temp);  
+  sollya_mpfi_clear(temp); 
+  mpfr_clear(u); 
+  mpfr_clear(v); 
+  sollya_mpfi_clear(ui);  
+  sollya_mpfi_clear(vi); 
   for (i=0;i<n+1;i++){
       sollya_mpfi_clear(c[i]);
   } 
-  return 1;
+ free(c);
+ sollya_mpfi_clear(x);
+ //free_memory(f);
+ return 1;
 }
 
 int TB(chain**resP, void **args){
