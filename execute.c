@@ -2259,6 +2259,25 @@ int isExtendedPureTreeInner(node *tree) {
   }
 }
 
+int isMatchableList(node *tree) {
+  // TODO
+  return 0;
+}
+
+
+int isMatchable(node *tree) {
+  if (isExtendedPureTree(tree)) return 1;
+  if (isCorrectlyTypedBaseSymbol(tree)) return 1;
+  if ((tree->nodeType == RANGE) && 
+      ((tree->child1->nodeType == CONSTANT) || 
+       (tree->child1->nodeType == TABLEACCESS)) &&
+      ((tree->child2->nodeType == CONSTANT) || 
+       (tree->child2->nodeType == TABLEACCESS))) return 1;
+  if (isMatchableList(tree)) return 1;
+  // TODO: Operations @, .:, :. on strings (where appropriate) and lists
+  return 0;
+}
+
 int isDefault(node *tree) {
   return (tree->nodeType == DEFAULT);
 }
@@ -17474,7 +17493,7 @@ node *evaluateThingInner(node *tree) {
   case MATCH:
     copy->child1 = evaluateThingInner(tree->child1);
     copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateThingInnerOnVoid);
-    if (isPureTree(copy->child1)) {
+    if (isCorrectlyTyped(copy->child1)) {
       resA = 1;
       for (curr = copy->arguments; curr != NULL; curr=curr->next) {
 	if (!isMatchElement((node *) (curr->value))) {
@@ -17496,7 +17515,7 @@ node *evaluateThingInner(node *tree) {
 	}
 	resD = 1;
 	for (resC=0;resC<resB;resC++) {
-	  if (!isExtendedPureTree(thingArray1[resC])) {
+	  if (!isMatchable(thingArray1[resC])) {
 	    resD = 0;
 	    break;
 	  }
