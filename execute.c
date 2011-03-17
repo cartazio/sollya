@@ -2260,8 +2260,13 @@ int isExtendedPureTreeInner(node *tree) {
 }
 
 int isMatchableList(node *tree) {
-  // TODO
-  return 0;
+  chain *curr;
+  if (isEmptyList(tree)) return 1;
+  if (!(isPureList(tree) || isPureFinalEllipticList(tree))) return 0;
+  for (curr=tree->arguments;curr!=NULL;curr=curr->next) {
+    if (!isMatchable((node *) (curr->value))) return 0;
+  }
+  return 1;
 }
 
 
@@ -2274,6 +2279,7 @@ int isMatchable(node *tree) {
       ((tree->child2->nodeType == CONSTANT) || 
        (tree->child2->nodeType == TABLEACCESS))) return 1;
   if (isMatchableList(tree)) return 1;
+  
   // TODO: Operations @, .:, :. on strings (where appropriate) and lists
   return 0;
 }
