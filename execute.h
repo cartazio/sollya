@@ -522,4 +522,10 @@ void fPrintThing(FILE *fd, node *thing);
 void printThing(node *thing);
 char *sPrintThing(node *thing);
 
+void freeEntryOnVoid(void *ptr);
+void *copyEntryOnVoid(void *ptr);
+int isCorrectlyTypedBaseSymbol(node *tree);
+int isExtendedPureTree(node *tree);
+int isPureTree(node *tree);
+
 #endif /* ifdef EXECUTE_H*/

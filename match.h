@@ -56,7 +56,7 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include "chain.h"
 #include "assignment.h"
 
-int tryMatch(chain *associations, node *thingToMatch, node *possibleMatcher);
+int tryMatch(chain **associations, node *thingToMatch, node *possibleMatcher);
 
 
 #endif /* ifdef MATCH_H*/
