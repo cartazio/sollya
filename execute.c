@@ -2130,6 +2130,11 @@ int isExtendedPureTreeInner(node *tree) {
   case TABLEACCESS:
     return 1;
     break;
+  case TABLEACCESSWITHSUBSTITUTE:
+    if (tree->arguments == NULL) return 0;
+    if (tree->arguments->next != NULL) return 0;
+    return 1;
+    break;
   case CONSTANT:
     return 1;
     break;
@@ -13970,7 +13975,8 @@ void *evaluateConstantsOnVoid(void *tree) {
 }
 
 node *evaluateConstants(node *tree) {
-  node *copy;
+  node *copy, *tempNode1, *tempNode2, *simplifiedCopy;
+  int rangeEvaluateLeft, rangeEvaluateRight;
 
   if (tree == NULL) return NULL;
 
@@ -13984,8 +13990,72 @@ node *evaluateConstants(node *tree) {
   case HEXCONSTANT:
   case HEXADECIMALCONSTANT:
   case BINARYCONSTANT:
+    free(copy);
     copy = evaluateThing(tree);
     break; 			
+  case RANGE:
+    rangeEvaluateLeft = 0;
+    switch (tree->child1->nodeType) {
+    case DECIMALCONSTANT:
+    case MIDPOINTCONSTANT:
+    case DYADICCONSTANT:
+    case HEXCONSTANT:
+    case HEXADECIMALCONSTANT:
+    case BINARYCONSTANT:
+      rangeEvaluateLeft = 1;
+      break; 	
+    default:
+      rangeEvaluateLeft = 0;
+      break;
+    }
+    rangeEvaluateRight = 0;
+    switch (tree->child2->nodeType) {
+    case DECIMALCONSTANT:
+    case MIDPOINTCONSTANT:
+    case DYADICCONSTANT:
+    case HEXCONSTANT:
+    case HEXADECIMALCONSTANT:
+    case BINARYCONSTANT:
+      rangeEvaluateRight = 1;
+      break; 	
+    default:
+      rangeEvaluateRight = 0;
+      break;
+    }
+    if (rangeEvaluateLeft && rangeEvaluateRight) {
+      free(copy);
+      copy = evaluateThing(tree);
+    } else {
+      if (rangeEvaluateLeft) {
+	copy->child2 = evaluateConstants(tree->child2);
+	tempNode = (node *) safeMalloc(sizeof(node));
+	tempNode->nodeType = RANGE;
+	tempNode->child1 = copyThing(tree->child1);
+	tempNode->child2 = copyThing(tree->child1);
+	tempNode2 = evaluateThing(tempNode);
+	copy->child1 = tempNode2->child1;
+	freeThing(tempNode2->child2);
+	free(tempNode2);
+	freeThing(tempNode);
+      } else {
+	if (rangeEvaluateRight) {
+	  copy->child1 = evaluateConstants(tree->child1);
+	  tempNode = (node *) safeMalloc(sizeof(node));
+	  tempNode->nodeType = RANGE;
+	  tempNode->child1 = copyThing(tree->child2);
+	  tempNode->child2 = copyThing(tree->child2);
+	  tempNode2 = evaluateThing(tempNode);
+	  copy->child2 = tempNode2->child2;
+	  freeThing(tempNode2->child1);
+	  free(tempNode2);
+	  freeThing(tempNode);
+	} else {
+	  copy->child1 = evaluateConstants(tree->child1);
+	  copy->child2 = evaluateConstants(tree->child2);
+	}
+      }
+    }
+    break; 			 	
   case VARIABLE:
     break;
   case CONSTANT:
@@ -14505,10 +14575,6 @@ node *evaluateConstants(node *tree) {
     break; 		
   case ELLIPTIC:
     break; 			
-  case RANGE:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
-    break; 			 	
   case DEBOUNDMAX:
     copy->child1 = evaluateConstants(tree->child1);
     break;  			
@@ -14775,6 +14841,14 @@ node *evaluateConstants(node *tree) {
   default:
     sollyaFprintf(stderr,"Error: evaluateConstants: unknown identifier (%d) in the tree\n",tree->nodeType);
     exit(1);
+  }
+
+  if (isPureTree(copy) && isConstant(copy)) {
+    tempNode = simplifyRationalErrorfree(copy);
+    freeThing(copy);
+    simplifiedCopy = simplifyTreeErrorfree(tempNode);
+    freeThing(tempNode);
+    copy = simplifiedCopy;
   }
 
   return copy;
@@ -18367,7 +18441,6 @@ node *evaluateThingInner(node *tree) {
 	resD = 1;
 	for (resC=0;resC<resB;resC++) {
 	  if (!isMatchable(thingArray1[resC])) {
-	    sollyaPrintf("Caca!\n");
 	    resD = 0;
 	    break;
 	  }

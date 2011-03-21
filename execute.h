@@ -527,5 +527,11 @@ void *copyEntryOnVoid(void *ptr);
 int isCorrectlyTypedBaseSymbol(node *tree);
 int isExtendedPureTree(node *tree);
 int isPureTree(node *tree);
+int isRange(node *tree);
+int isMatchableList(node *tree);
+int isPureFinalEllipticList(node *);
+int isPureList(node *);
+int isEmptyList(node *);
+int evaluateThingToConstant(mpfr_t result, node *tree, mpfr_t *defaultVal, int silent);
 
 #endif /* ifdef EXECUTE_H*/
