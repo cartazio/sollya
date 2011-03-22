@@ -2277,14 +2277,19 @@ int isMatchableConcat(node *tree) {
   if (tree->nodeType != CONCAT) return 0;
   if ((tree->child1->nodeType == TABLEACCESS) && 
       (tree->child2->nodeType == TABLEACCESS)) return 0;
+
   if (((isMatchableList(tree->child1) && (!isPureFinalEllipticList(tree->child1))) || 
-       (tree->child1->nodeType == TABLEACCESS) || isString(tree->child1)) && 
+       (tree->child1->nodeType == TABLEACCESS) || isString(tree->child1) ||
+       isMatchablePrepend(tree->child1) || isMatchableAppend(tree->child1) ||
+       isMatchableConcat(tree->child1)) && 
       (isMatchableList(tree->child2) || 
-       (tree->child2->nodeType == TABLEACCESS) || isString(tree->child2))) {
+       (tree->child2->nodeType == TABLEACCESS) || isString(tree->child2) ||
+       isMatchablePrepend(tree->child2) || isMatchableAppend(tree->child2) ||
+       isMatchableConcat(tree->child2))) {
     if (isString(tree->child1) && 
-	(!((tree->child2->nodeType == TABLEACCESS) || isString(tree->child2)))) return 0;
+	(!((tree->child2->nodeType == TABLEACCESS) || isString(tree->child2) || isMatchableConcat(tree->child2)))) return 0;
     if (isString(tree->child2) && 
-	(!((tree->child1->nodeType == TABLEACCESS) || isString(tree->child1)))) return 0;
+	(!((tree->child1->nodeType == TABLEACCESS) || isString(tree->child1) || isMatchableConcat(tree->child1)))) return 0;
     return 1;
   }
   return 0;
@@ -2294,7 +2299,10 @@ int isMatchablePrepend(node *tree) {
   if (tree->nodeType != PREPEND) return 0;
   if (isMatchable(tree->child1) && 
       (isMatchableList(tree->child2) || 
-       (tree->child2->nodeType == TABLEACCESS))) return 1;
+       (tree->child2->nodeType == TABLEACCESS) ||
+       isMatchablePrepend(tree->child2) ||
+       isMatchableAppend(tree->child2) ||
+       isMatchableConcat(tree->child2))) return 1;
   return 0;
 }
 
@@ -2302,7 +2310,10 @@ int isMatchableAppend(node *tree) {
   if (tree->nodeType != APPEND) return 0;
   if (isMatchable(tree->child2) && 
       ((isMatchableList(tree->child1) && (!isPureFinalEllipticList(tree->child1))) || 
-       (tree->child1->nodeType == TABLEACCESS))) return 1;
+       (tree->child1->nodeType == TABLEACCESS) ||
+       isMatchablePrepend(tree->child1) ||
+       isMatchableAppend(tree->child1) ||
+       isMatchableConcat(tree->child1))) return 1;
   return 0;
 }
 

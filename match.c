@@ -649,6 +649,10 @@ int tryMatchList(chain **associations, node *thingToMatch, node *possibleMatcher
   int okay, freeLists, lenPossibleMatcherList, lenThingToMatchList;
   chain *currThingToMatch, *currPossibleMatcher, *thingToMatchList, *possibleMatcherList;
   chain *myAssociations, *elementAssociations, *myNewAssociations;
+  chain *lastThingToMatch;
+  mpfr_t c, d;
+  int i, integerBase, integerSequence;
+  node *implicitElement;
 
   /* All possibilities for empty lists */
   if (isEmptyList(possibleMatcher)) {
@@ -705,6 +709,7 @@ int tryMatchList(chain **associations, node *thingToMatch, node *possibleMatcher
     for (currThingToMatch = thingToMatchList, currPossibleMatcher = possibleMatcherList;
 	 (currThingToMatch != NULL) && (currPossibleMatcher != NULL);
 	 currThingToMatch = currThingToMatch->next, currPossibleMatcher = currPossibleMatcher->next) {
+      lastThingToMatch = currThingToMatch;
       elementAssociations = NULL;
       okay = tryMatch(&elementAssociations, (node *) (currThingToMatch->value), (node *) (currPossibleMatcher->value));
       if (okay) {
@@ -719,11 +724,72 @@ int tryMatchList(chain **associations, node *thingToMatch, node *possibleMatcher
   }
 
   if (okay && isPureFinalEllipticList(thingToMatch) && (currPossibleMatcher != NULL)) {
-    /* Here, the explicit possible matcher list is longer and both list are final 
-       elliptic.
+    /* Here, the explicit possible matcher list is longer and both
+       list are final elliptic.
+
+       We have to continue on the possible matcher list until it is
+       empty (explicitly speaking). For each of its elements, we have
+       to "invent", i.e.  generate, an implicit element of the
+       thing-to-match list. This generation is based on the type of
+       the last explicit element in the thing-to-match list, stored
+       on variable lastThingToMatch->value.
+       
+       We start by performing a test that allows us to decide if 
+       we have a sequence of integers or another type continued to 
+       infinity.
     */
-    // TODO: the next line is a stub
-    okay = 0;
+    integerSequence = 0;
+    integerBase = 0;
+    mpfr_init2(c, tools_precision);
+    if (evaluateThingToConstant(c, (node *) (lastThingToMatch->value), NULL, 0)) {
+      if (mpfr_integer_p(c)) {
+	integerBase = mpfr_get_si(c, GMP_RNDN);
+	mpfr_init2(d, 8 * sizeof(i) + 5);
+	mpfr_set_si(d, integerBase, GMP_RNDN);
+	if (mpfr_cmp(c, d) == 0) {
+	  integerSequence = 1;
+	}
+	mpfr_clear(d);
+      }
+    }
+    mpfr_clear(c);
+
+    /* Now check all remaining elements of the possible matcher */
+    for (i = 1; (currPossibleMatcher != NULL); currPossibleMatcher = currPossibleMatcher->next, i++) {
+      /* Start by generating the implicit element of the sequence */
+      if (integerSequence) {
+	mpfr_init2(c, 8 * sizeof(int) + 1 + 5);
+	mpfr_set_si(c,integerBase,GMP_RNDN); /* exact */
+	mpfr_add_si(c,c,i,GMP_RNDN); /* exact */
+	implicitElement = makeConstant(c);
+	mpfr_clear(c);
+      } else {
+	/* We just have to repeat the last element of the sequence 
+	   
+	   We avoid mallocs here. We'll have to account for that later.
+	 */
+	implicitElement = (node *) (lastThingToMatch->value);
+      }
+
+      /* Now perform the match check */
+      elementAssociations = NULL;
+      okay = tryMatch(&elementAssociations, implicitElement, (node *) (currPossibleMatcher->value));
+      if (okay) {
+	myNewAssociations = NULL;
+	okay = tryCombineAssociations(&myNewAssociations, myAssociations, elementAssociations);
+	if (myAssociations != NULL) freeChain(myAssociations, freeEntryOnVoid);
+	myAssociations = myNewAssociations;
+      } 
+      if (elementAssociations != NULL) freeChain(elementAssociations, freeEntryOnVoid);
+
+      /* If we have an integer sequence, we malloc'ed for the
+	 implicit element. So we have to free it.
+      */
+      if (integerSequence) {
+	freeThing(implicitElement);
+      }
+      if (!okay) break;
+    }
   }
 
   /* Free the list if it was us who allocated them */
@@ -738,6 +804,243 @@ int tryMatchList(chain **associations, node *thingToMatch, node *possibleMatcher
     if (myAssociations != NULL) freeChain(myAssociations, freeEntryOnVoid);
   }  
   return okay;
+}
+
+int tryMatchPrepend(chain **associations, node *thingToMatch, node *possibleMatcher) {
+  int okay;
+  chain *myAssociations, *headAssoc, *tailAssoc;
+  node *tailList, *tempNode;
+
+  if ((thingToMatch->nodeType != LIST) && (thingToMatch->nodeType != FINALELLIPTICLIST)) return 0;
+  
+  myAssociations = NULL;
+  
+  headAssoc = NULL;
+  okay = tryMatch(&headAssoc, (node *) (thingToMatch->arguments->value), possibleMatcher->child1);
+  if (okay) {
+    tempNode = makeTail(copyThing(thingToMatch));
+    tailList = evaluateThing(tempNode);
+    freeThing(tempNode);
+    tailAssoc = NULL;
+    okay = tryMatch(&tailAssoc, tailList, possibleMatcher->child2);
+    if (okay) {
+	okay = tryCombineAssociations(&myAssociations, headAssoc, tailAssoc);
+    }
+    if (tailAssoc != NULL) freeChain(tailAssoc, freeEntryOnVoid);
+    freeThing(tailList);
+  }
+  if (headAssoc != NULL) freeChain(headAssoc, freeEntryOnVoid);
+
+  if (okay) {
+    *associations = myAssociations;
+  } else {
+    if (myAssociations != NULL) freeChain(myAssociations, freeEntryOnVoid);
+  }  
+  return okay;
+}
+
+int tryMatchAppend(chain **associations, node *thingToMatch, node *possibleMatcher) {
+  int okay, len, i;
+  chain *myAssociations, *headAssoc, *tailAssoc, *curr;
+  node *headList, *tailElement, **elementArray;
+
+  if (thingToMatch->nodeType != LIST) return 0;
+  
+  myAssociations = NULL;
+
+  if (thingToMatch->arguments->next != NULL) {
+    /* The list of things to match has more than one element. Its is
+       easy to compute the head list and the tailElement.
+    */
+    len = lengthChain(thingToMatch->arguments);
+    elementArray = (node **) safeCalloc(len,sizeof(node *));
+    for (i=0, curr=thingToMatch->arguments; curr != NULL; curr = curr->next, i++) {
+      elementArray[i] = (node *) (curr->value);
+    }
+    tailElement = elementArray[len-1];
+    curr = NULL;
+    for (i=len-2;i>=0;i--) {
+      curr = addElement(curr,copyThing(elementArray[i]));
+    }
+    headList = makeList(curr);
+    free(elementArray);
+  } else {
+    /* The list of things to match has only one element, so the head
+       list is the empty list. The tail element is easy to get, too. 
+    */
+    tailElement = (node *) (thingToMatch->arguments->value);
+    headList = makeEmptyList();
+  }
+
+  headAssoc = NULL;
+  okay = tryMatch(&headAssoc, headList, possibleMatcher->child1);
+  if (okay) {
+    tailAssoc = NULL;
+    okay = tryMatch(&tailAssoc, tailElement, possibleMatcher->child2);
+    if (okay) {
+	okay = tryCombineAssociations(&myAssociations, headAssoc, tailAssoc);
+    }
+    if (tailAssoc != NULL) freeChain(tailAssoc, freeEntryOnVoid);
+  }
+  if (headAssoc != NULL) freeChain(headAssoc, freeEntryOnVoid);
+   
+  freeThing(headList);
+
+  if (okay) {
+    *associations = myAssociations;
+  } else {
+    if (myAssociations != NULL) freeChain(myAssociations, freeEntryOnVoid);
+  }  
+  return okay;
+}
+
+int tryEvaluateRecursiveConcatMatcherToString(char **concatenatedString, node *tree) {
+  char *buf, *bufLeft, *bufRight, *curr;
+  int okayLeft, okayRight, okay;
+
+  if (tree->nodeType == STRING) {
+    buf = (char *) safeCalloc(strlen(tree->string) + 1, sizeof(char));
+    strcpy(buf,tree->string);
+    *concatenatedString = buf;
+    return 1;
+  }
+  
+  if (tree->nodeType == CONCAT) {
+    okayLeft = tryEvaluateRecursiveConcatMatcherToString(&bufLeft, tree->child1);
+    okayRight = tryEvaluateRecursiveConcatMatcherToString(&bufRight, tree->child2);
+    
+    okay = 0;
+    if (okayLeft && okayRight) {
+      buf = (char *) safeCalloc(strlen(bufLeft) + strlen(bufRight) + 1, sizeof(char));
+      *concatenatedString = buf;
+      for (curr=bufLeft; *curr != '\0'; curr++, buf++) {
+	*buf = *curr;
+      }
+      for (curr=bufRight; *curr != '\0'; curr++, buf++) {
+	*buf = *curr;
+      }
+      okay = 1;
+    }
+    if (okayLeft) free(bufLeft);
+    if (okayRight) free(bufRight);
+
+    return okay;
+  }
+
+  return 0;
+}
+
+int tryCutPrefix(char **rest, char *mainString, char *prefix) {
+  int okay;
+  char *ptrStr, *ptrPref, *buf;
+
+  okay = 1;
+  for (ptrStr = mainString, ptrPref = prefix;
+       (*ptrStr != '\0') && (*ptrPref != '\0');
+       ptrStr++, ptrPref++) {
+    if (*ptrStr != *ptrPref) {
+      okay = 0;
+      break;
+    }
+  }
+  if ((*ptrStr == '\0') && (*ptrPref != '\0')) {
+    okay = 0;
+  }
+
+  if (okay) {
+    buf = (char *) safeCalloc(strlen(ptrStr) + 1, sizeof(char));
+    strcpy(buf, ptrStr);
+    *rest = buf;
+  }
+
+  return okay;
+}
+
+char *revertString(char *buf) {
+  char *revBuf;
+  int len, i;
+
+  len = strlen(buf);
+  revBuf = (char *) safeCalloc(len + 1, sizeof(char));
+  for (i=0;i<len;i++) {
+    revBuf[len - 1 - i] = buf[i];
+  }
+  
+  return revBuf;
+}
+
+int tryCutPostfix(char **rest, char *mainString, char *postfix) {
+  char *revMainString, *revPostfix, *revRest;
+  int okay;
+  
+  revMainString = revertString(mainString);
+  revPostfix = revertString(postfix);
+  okay = tryCutPrefix(&revRest, revMainString, revPostfix);
+  if (okay) {
+    *rest = revertString(revRest);
+    free(revRest);
+  }
+  
+  free(revMainString);
+  free(revPostfix);
+
+  return okay;
+}
+
+int tryMatchConcatOnString(chain **associations, char *stringToMatch, node *possibleMatcher) {
+  int okayFullEvaluate, okay, okayLeftEvaluate, okayRightEvaluate, okayCut;
+  char *stringFullEvaluate, *stringLeftEvaluate, *stringRightEvaluate, *restString;
+  chain *myAssociations;
+  node *restStringThing;
+
+  myAssociations = NULL;
+
+  okayFullEvaluate = tryEvaluateRecursiveConcatMatcherToString(&stringFullEvaluate, possibleMatcher);
+  if (okayFullEvaluate) {
+    okay = !strcmp(stringToMatch,stringFullEvaluate);
+    free(stringFullEvaluate);
+    return okay;
+  }
+
+  if (possibleMatcher->nodeType != CONCAT) return 0;
+
+  okayLeftEvaluate = tryEvaluateRecursiveConcatMatcherToString(&stringLeftEvaluate, possibleMatcher->child1);
+  okayRightEvaluate = tryEvaluateRecursiveConcatMatcherToString(&stringRightEvaluate, possibleMatcher->child2);
+
+  if (okayLeftEvaluate || okayRightEvaluate) {
+    okay = 0;
+    if (okayLeftEvaluate) {
+      okayCut = tryCutPrefix(&restString,stringToMatch,stringLeftEvaluate);
+    } else {
+      okayCut = tryCutPostfix(&restString,stringToMatch,stringRightEvaluate);
+    }
+    if (okayCut) {
+      restStringThing = makeString(restString);
+      myAssociations = NULL;
+      if (okayLeftEvaluate) {
+	okay = tryMatch(&myAssociations,restStringThing,possibleMatcher->child2);
+      } else {
+	okay = tryMatch(&myAssociations,restStringThing,possibleMatcher->child1);
+      }
+      freeThing(restStringThing);
+      free(restString);
+    }
+    if (okayLeftEvaluate) free(stringLeftEvaluate);
+    if (okayRightEvaluate) free(stringRightEvaluate);
+    if (okay) {
+      *associations = myAssociations;
+    } else {
+      if (myAssociations != NULL) freeChain(myAssociations, freeEntryOnVoid);
+    }  
+    return okay;
+  } 
+
+  return 0;
+}
+
+int tryMatchConcatOnList(chain **associations, node *thingToMatch, node *possibleMatcher) {
+  // TODO
+  return 0;
 }
 
 int tryMatchInner(chain **associations, node *thingToMatch, node *possibleMatcher) {
@@ -777,7 +1080,30 @@ int tryMatchInner(chain **associations, node *thingToMatch, node *possibleMatche
     return tryMatchList(associations, thingToMatch, possibleMatcher);
   }
 
-  // TODO
+  /* Match the prepend operator .: */
+  if (isMatchablePrepend(possibleMatcher)) {
+    if (!(isPureList(thingToMatch) || isPureFinalEllipticList(thingToMatch))) return 0;
+    return tryMatchPrepend(associations, thingToMatch, possibleMatcher);
+  }
+
+  /* Match the append operator :. */
+  if (isMatchableAppend(possibleMatcher)) {
+    if (!isPureList(thingToMatch)) return 0;
+    return tryMatchAppend(associations, thingToMatch, possibleMatcher);
+  }
+
+  /* Match the concat operator @ for strings and lists */
+  if (isMatchableConcat(possibleMatcher)) {
+    if (!(isPureList(thingToMatch) || 
+	  isPureFinalEllipticList(thingToMatch) ||
+	  isEmptyList(thingToMatch) ||
+	  isString(thingToMatch))) return 0;
+    if (isString(thingToMatch)) {
+      return tryMatchConcatOnString(associations, thingToMatch->string, possibleMatcher);
+    } else {
+      return tryMatchConcatOnList(associations, thingToMatch, possibleMatcher);
+    }
+  }
 
   return 0;
 }
