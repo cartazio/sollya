@@ -13979,15 +13979,18 @@ int executeExternalProcedure(node **resultThing, libraryProcedure *proc, chain *
   return res;
 }
 
-node *evaluateConstants(node *tree);
+node *preevaluateMatcher(node *tree);
 
-void *evaluateConstantsOnVoid(void *tree) {
-  return (void *) evaluateConstants((node *) tree);
+void *preevaluateMatcherOnVoid(void *tree) {
+  return (void *) preevaluateMatcher((node *) tree);
 }
 
-node *evaluateConstants(node *tree) {
+node *preevaluateMatcher(node *tree) {
   node *copy, *tempNode1, *tempNode2, *simplifiedCopy;
   int rangeEvaluateLeft, rangeEvaluateRight;
+  chain *tempChain, *curr, *newChain;
+  int resA, resB, resC, i;
+  mpfr_t a;
 
   if (tree == NULL) return NULL;
 
@@ -14038,7 +14041,7 @@ node *evaluateConstants(node *tree) {
       copy = evaluateThing(tree);
     } else {
       if (rangeEvaluateLeft) {
-	copy->child2 = evaluateConstants(tree->child2);
+	copy->child2 = preevaluateMatcher(tree->child2);
 	tempNode = (node *) safeMalloc(sizeof(node));
 	tempNode->nodeType = RANGE;
 	tempNode->child1 = copyThing(tree->child1);
@@ -14050,7 +14053,7 @@ node *evaluateConstants(node *tree) {
 	freeThing(tempNode);
       } else {
 	if (rangeEvaluateRight) {
-	  copy->child1 = evaluateConstants(tree->child1);
+	  copy->child1 = preevaluateMatcher(tree->child1);
 	  tempNode = (node *) safeMalloc(sizeof(node));
 	  tempNode->nodeType = RANGE;
 	  tempNode->child1 = copyThing(tree->child2);
@@ -14061,12 +14064,101 @@ node *evaluateConstants(node *tree) {
 	  free(tempNode2);
 	  freeThing(tempNode);
 	} else {
-	  copy->child1 = evaluateConstants(tree->child1);
-	  copy->child2 = evaluateConstants(tree->child2);
+	  copy->child1 = preevaluateMatcher(tree->child1);
+	  copy->child2 = preevaluateMatcher(tree->child2);
 	}
       }
     }
     break; 			 	
+  case DIFF:
+    switch (tree->child1->nodeType) {
+    case LIBRARYFUNCTION:
+    case PROCEDUREFUNCTION:
+      if ((tree->child1->child1->nodeType == VARIABLE) ||
+	  ((variablename != NULL) && 
+	   ((tree->child1->child1->nodeType == TABLEACCESS) && 
+	    (!strcmp(variablename,tree->child1->child1->string))))) {
+	free(copy);
+	copy = evaluateThing(tree);
+      } else {
+	copy->child1 = preevaluateMatcher(tree->child1);
+      }
+      break;
+    default:
+      copy->child1 = preevaluateMatcher(tree->child1);
+      break;
+    }
+    break; 			 	
+  case LIST:
+    tempChain = copyChain(tree->arguments, preevaluateMatcherOnVoid);
+    curr = tempChain; newChain = NULL; resC = 0;
+    while (curr != NULL) {
+      if ((curr->next != NULL) &&
+	  (curr->next->next != NULL) &&
+	  isElliptic((node *) (curr->next->value)) &&
+	  isPureTree((node *) (curr->value)) &&
+	  isPureTree((node *) (curr->next->next->value)) &&
+	  isConstant((node *) (curr->value)) &&
+	  isConstant((node *) (curr->next->next->value)) &&
+	  evaluateThingToInteger(&resA,(node *) (curr->value), NULL) &&
+	  evaluateThingToInteger(&resB,(node *) (curr->next->next->value),NULL) &&
+	  (resA >= resB)) {
+	mpfr_init2(a,sizeof(int) * 8);
+	resC = 1;
+	for (i=resA;i>=resB;i--) {
+	  mpfr_set_si(a,i,GMP_RNDN);
+	  newChain = addElement(newChain,makeConstant(a));
+	}
+	mpfr_clear(a);
+	curr = curr->next->next;
+      } else {
+	newChain = addElement(newChain,copyThing((node *) (curr->value)));
+      }
+      curr = curr->next;
+    }
+    freeChain(tempChain, freeThingOnVoid);
+    copy->arguments = newChain;
+    if (resC && (!isPureList(copy))) {
+      tempNode = preevaluateMatcher(copy);
+      freeThing(copy);
+      copy = tempNode;
+    }
+    break; 	
+  case FINALELLIPTICLIST:
+        tempChain = copyChain(tree->arguments, preevaluateMatcherOnVoid);
+    curr = tempChain; newChain = NULL; resC = 0;
+    while (curr != NULL) {
+      if ((curr->next != NULL) &&
+	  (curr->next->next != NULL) &&
+	  isElliptic((node *) (curr->next->value)) &&
+	  isPureTree((node *) (curr->value)) &&
+	  isPureTree((node *) (curr->next->next->value)) &&
+	  isConstant((node *) (curr->value)) &&
+	  isConstant((node *) (curr->next->next->value)) &&
+	  evaluateThingToInteger(&resA,(node *) (curr->value), NULL) &&
+	  evaluateThingToInteger(&resB,(node *) (curr->next->next->value),NULL) &&
+	  (resA >= resB)) {
+	mpfr_init2(a,sizeof(int) * 8);
+	resC = 1;
+	for (i=resA;i>=resB;i--) {
+	  mpfr_set_si(a,i,GMP_RNDN);
+	  newChain = addElement(newChain,makeConstant(a));
+	}
+	mpfr_clear(a);
+	curr = curr->next->next;
+      } else {
+	newChain = addElement(newChain,copyThing((node *) (curr->value)));
+      }
+      curr = curr->next;
+    }
+    freeChain(tempChain, freeThingOnVoid);
+    copy->arguments = newChain;
+    if (resC && (!isPureFinalEllipticList(copy))) {
+      tempNode = preevaluateMatcher(copy);
+      freeThing(copy);
+      copy = tempNode;
+    }
+    break; 		
   case VARIABLE:
     break;
   case CONSTANT:
@@ -14075,155 +14167,155 @@ node *evaluateConstants(node *tree) {
     mpfr_set(*(copy->value),*(tree->value),GMP_RNDN);
     break;
   case ADD:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break;
   case SUB:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break;
   case MUL:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break;
   case DIV:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break;
   case SQRT:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case EXP:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case LOG:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case LOG_2:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case LOG_10:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case SIN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case COS:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case TAN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case ASIN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case ACOS:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case ATAN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case SINH:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case COSH:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case TANH:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case ASINH:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case ACOSH:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case ATANH:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case POW:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break;
   case NEG:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case ABS:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case DOUBLE:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case SINGLE:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case DOUBLEDOUBLE:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case TRIPLEDOUBLE:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case ERF: 
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case ERFC:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case LOG_1P:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case EXP_M1:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case DOUBLEEXTENDED:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case LIBRARYFUNCTION:
     copy->libFun = tree->libFun;
     copy->libFunDeriv = tree->libFunDeriv;
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case LIBRARYCONSTANT:
     copy->libFun = tree->libFun;
     break;
   case PROCEDUREFUNCTION:
     copy->libFunDeriv = tree->libFunDeriv;
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break;
   case CEIL:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case FLOOR:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case NEARESTINT:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case PI_CONST:
     break;
   case COMMANDLIST:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break;			
   case WHILE:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break;				
   case IFELSE:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 				
   case IF:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 				
   case FOR:
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 				
   case FORIN:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     break;  				
@@ -14236,7 +14328,7 @@ node *evaluateConstants(node *tree) {
   case RESTART:
     break;  			
   case PRINT:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 	
   case VARIABLEDECLARATION:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
@@ -14244,65 +14336,65 @@ node *evaluateConstants(node *tree) {
   case NOP:
     break;
   case NOPARG:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case NEWFILEPRINT:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			
   case APPENDFILEPRINT:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 			
   case PLOT:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break;			
   case PRINTHEXA:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 
   case PRINTFLOAT:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 
   case PRINTBINARY:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			
   case PRINTEXPANSION:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case BASHEXECUTE:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			
   case EXTERNALPLOT:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 
   case WRITE:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 			
   case NEWFILEWRITE:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break;
   case APPENDFILEWRITE:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 
   case ASCIIPLOT:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break;			
   case PRINTXML:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;			
   case PRINTXMLNEWFILE:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break;			
   case PRINTXMLAPPENDFILE:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break;			
   case WORSTCASE:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 			
   case RENAME:
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
@@ -14310,182 +14402,182 @@ node *evaluateConstants(node *tree) {
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
     break; 				
   case AUTOPRINT:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 
   case EXTERNALPROC:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyIntPtrOnVoid);
     break;
   case ASSIGNMENT:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     break; 			
   case FLOATASSIGNMENT:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     break; 			
   case LIBRARYBINDING:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     break;  			
   case LIBRARYCONSTANTBINDING:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     break;  			
   case PRECASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			
   case POINTSASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			
   case DIAMASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;			
   case DISPLAYASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			
   case VERBOSITYASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;  		
   case CANONICALASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 		
   case AUTOSIMPLIFYASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;  		
   case TAYLORRECURSASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 		
   case TIMINGASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			
   case FULLPARENASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;  		
   case MIDPOINTASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case DIEONERRORMODEASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case RATIONALMODEASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			 			
   case SUPPRESSWARNINGSASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			
   case HOPITALRECURSASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 		
   case PRECSTILLASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 		
   case POINTSSTILLASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 		
   case DIAMSTILLASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 		
   case DISPLAYSTILLASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;  		
   case VERBOSITYSTILLASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 		
   case CANONICALSTILLASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 		
   case AUTOSIMPLIFYSTILLASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;  	
   case TAYLORRECURSSTILLASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 	
   case TIMINGSTILLASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 		
   case FULLPARENSTILLASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;  		
   case MIDPOINTSTILLASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case DIEONERRORMODESTILLASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case RATIONALMODESTILLASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 		 		
   case SUPPRESSWARNINGSSTILLASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 		
   case HOPITALRECURSSTILLASSIGN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;  	
   case AND:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 				
   case OR:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break;				
   case NEGATION:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			
   case INDEX:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 
   case COMPAREEQUAL:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 			
   case COMPAREIN:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 			
   case COMPARELESS:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 			
   case COMPAREGREATER:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 			
   case COMPARELESSEQUAL:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 		
   case COMPAREGREATEREQUAL:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break;		
   case COMPARENOTEQUAL:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break;		
   case CONCAT:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 			
   case ADDTOLIST:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 			
   case PREPEND:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 			
   case APPEND:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 			
   case ON:
     break; 				
@@ -14560,263 +14652,254 @@ node *evaluateConstants(node *tree) {
     strcpy(copy->string,tree->string);
     break;  			
   case TABLEACCESSWITHSUBSTITUTE:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     break;  	
   case STRUCTACCESS:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     break;  	
   case APPLY:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;  	
   case EMPTYLIST:
     break; 			
-  case LIST:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
-    break; 	
   case STRUCTURE:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyEntryOnVoid);
     break; 			 	
-  case FINALELLIPTICLIST:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
-    break; 		
   case ELLIPTIC:
     break; 			
   case DEBOUNDMAX:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;  			
   case DEBOUNDMIN:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			
   case DEBOUNDMID:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			
   case EVALCONST:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			
-  case DIFF:
-    copy->child1 = evaluateConstants(tree->child1);
-    break; 			 	
   case SIMPLIFY:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;  			
   case SIMPLIFYSAFE:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;  			
   case TIME:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break;  			
   case REMEZ:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 			 	
   case MATCH:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 			 	
   case MATCHELEMENT:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 			 	
   case MIN:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 			 	
   case MAX:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 			 	
   case FPMINIMAX:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 			 	
   case HORNER:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			 	
   case CANONICAL:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			
   case EXPAND:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			 	
   case TAYLOR:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 			 	
   case TAYLORFORM:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 			 	
   case AUTODIFF:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 			 	
   case DEGREE:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			 	
   case NUMERATOR:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			
   case DENOMINATOR:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			
   case SUBSTITUTE:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break;			
   case COEFF:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 			 	
   case SUBPOLY:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 			
   case ROUNDCOEFFICIENTS:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 		
   case RATIONALAPPROX:    
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 			
   case ACCURATEINFNORM:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 		
   case ROUNDTOFORMAT:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break;			
   case EVALUATE:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 			
   case PARSE:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			 	
   case READXML:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			 	
   case EXECUTE:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			 	
   case INFNORM:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 			
   case SUPNORM:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 			
   case FINDZEROS:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 			
   case FPFINDZEROS:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 			
   case DIRTYINFNORM:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 			
   case NUMBERROOTS:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 			
   case INTEGRAL:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 			
   case DIRTYINTEGRAL:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break;  			
   case IMPLEMENTPOLY:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 			
   case IMPLEMENTCONST:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 			
   case CHECKINFNORM:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 			
   case ZERODENOMINATORS:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break;  		
   case ISEVALUABLE:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 			
   case SEARCHGAL:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 			
   case GUESSDEGREE:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 			
   case ASSIGNMENTININDEXING:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 			
   case FLOATASSIGNMENTININDEXING:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateConstantsOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 	
   case ASSIGNMENTINSTRUCTURE:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
     break; 			
   case FLOATASSIGNMENTINSTRUCTURE:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
     break; 				
   case PROTOASSIGNMENTINSTRUCTURE:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 			
   case PROTOFLOATASSIGNMENTINSTRUCTURE:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 				
   case DIRTYFINDZEROS:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     break; 			
   case HEAD:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			 	
   case ROUNDCORRECTLY:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			 	
   case READFILE:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			 	
   case REVERT:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 	
   case SORT:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			 			 	
   case MANTISSA:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			 	
   case EXPONENT:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			 	
   case PRECISION:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			 	
   case TAIL:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 			 	
   case LENGTH:
-    copy->child1 = evaluateConstants(tree->child1);
+    copy->child1 = preevaluateMatcher(tree->child1);
     break; 	
   case EXTERNALPROCEDUREUSAGE:
     copy->libProc = tree->libProc;
     break;
   case PROC:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
     break;
   case PROCILLIM:
-    copy->child1 = evaluateConstants(tree->child1);
-    copy->child2 = evaluateConstants(tree->child2);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
     break;
   case PRECDEREF:
@@ -14850,7 +14933,7 @@ node *evaluateConstants(node *tree) {
   case HOPITALRECURSDEREF:
     break;  	       
   default:
-    sollyaFprintf(stderr,"Error: evaluateConstants: unknown identifier (%d) in the tree\n",tree->nodeType);
+    sollyaFprintf(stderr,"Error: preevaluateMatcher: unknown identifier (%d) in the tree\n",tree->nodeType);
     exit(1);
   }
 
@@ -18444,7 +18527,7 @@ node *evaluateThingInner(node *tree) {
 	thingArray3 = (node **) safeCalloc(resB, sizeof(node *)); 
 	resC = 0;
 	for (curr = copy->arguments; curr != NULL; curr=curr->next) {
-	  thingArray1[resC] = evaluateConstants(((node *) (curr->value))->child1);
+	  thingArray1[resC] = preevaluateMatcher(((node *) (curr->value))->child1);
 	  thingArray3[resC] = ((node *) (curr->value))->child2;
 	  thingArray2[resC] = (node *) (((node *) (curr->value))->arguments->value);
 	  resC++;

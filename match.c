@@ -1038,8 +1038,359 @@ int tryMatchConcatOnString(chain **associations, char *stringToMatch, node *poss
   return 0;
 }
 
+int tryEvaluateRecursiveConcatMatcherToList(node **concatenatedList, node *tree) {
+  node *evalLeft, *evalRight;
+  int okayLeft, okayRight, okay;
+  chain *tempChain, *tempChain2;
+
+  switch (tree->nodeType) {
+  case EMPTYLIST:
+  case LIST:
+  case FINALELLIPTICLIST:
+    *concatenatedList = copyThing(tree);
+    return 1;
+    break;
+  case PREPEND:
+    evalRight = NULL;
+    okayRight = tryEvaluateRecursiveConcatMatcherToList(&evalRight, tree->child2);
+    if (okayRight) {
+      okay = 0;
+      switch (evalRight->nodeType) {
+      case EMPTYLIST:
+	*concatenatedList = makeList(addElement(NULL, copyThing(tree->child1)));
+	okay = 1;
+	break;
+      case LIST:
+	tempChain = copyChainWithoutReversal(evalRight->arguments, copyThingOnVoid);
+	tempChain = addElement(tempChain, copyThing(tree->child1));
+	*concatenatedList = makeList(tempChain);
+	okay = 1;
+	break;	
+      case FINALELLIPTICLIST:
+	tempChain = copyChainWithoutReversal(evalRight->arguments, copyThingOnVoid);
+	tempChain = addElement(tempChain, copyThing(tree->child1));
+	*concatenatedList = makeFinalEllipticList(tempChain);
+	okay = 1;
+	break;
+      default:
+	okay = 0;
+      }
+      freeThing(evalRight);
+      return okay;
+    }
+    return 0;
+    break;
+  case APPEND:
+    evalLeft = NULL;
+    okayLeft = tryEvaluateRecursiveConcatMatcherToList(&evalLeft, tree->child1);
+    if (okayLeft) {
+      okay = 0;
+      switch (evalLeft->nodeType) {
+      case EMPTYLIST:
+	*concatenatedList = makeList(addElement(NULL, copyThing(tree->child2)));
+	okay = 1;
+	break;
+      case LIST:
+	tempChain = copyChain(evalLeft->arguments, copyThingOnVoid);
+	tempChain = addElement(tempChain, copyThing(tree->child2));
+	tempChain2 = copyChain(tempChain, copyThingOnVoid);
+	freeChain(tempChain, freeThingOnVoid);
+	*concatenatedList = makeList(tempChain2);
+	okay = 1;
+	break;	
+      default:
+	okay = 0;
+      }
+      freeThing(evalLeft);
+      return okay;
+    }
+    return 0;
+    break;
+  case CONCAT:
+    evalLeft = NULL;
+    okayLeft = tryEvaluateRecursiveConcatMatcherToList(&evalLeft, tree->child1);
+    if (okayLeft) {
+      okay = 0;
+      evalRight = NULL;
+      okayRight = tryEvaluateRecursiveConcatMatcherToList(&evalRight, tree->child2);
+      if (okayRight) {
+	switch (evalLeft->nodeType) {
+	case EMPTYLIST:
+	  switch (evalRight->nodeType) {
+	  case EMPTYLIST:
+	  case LIST:
+	  case FINALELLIPTICLIST:
+	    *concatenatedList = copyThing(evalRight);
+	    okay = 1;
+	    break;
+	  default:
+	    okay = 0;
+	    break;
+	  }
+	  break;
+	case LIST:
+	  switch (evalRight->nodeType) {
+	  case EMPTYLIST:
+	    *concatenatedList = copyThing(evalLeft);
+	    okay = 1;
+	    break;
+	  case LIST:
+	    tempChain = concatChains(copyChainWithoutReversal(evalLeft->arguments, copyThingOnVoid),
+				     copyChainWithoutReversal(evalRight->arguments, copyThingOnVoid));
+	    *concatenatedList = makeList(tempChain);
+	    okay = 1;
+	    break;
+	  case FINALELLIPTICLIST:
+	    tempChain = concatChains(copyChainWithoutReversal(evalLeft->arguments, copyThingOnVoid),
+				     copyChainWithoutReversal(evalRight->arguments, copyThingOnVoid));
+	    *concatenatedList = makeFinalEllipticList(tempChain);
+	    okay = 1;	    
+	    break;
+	  default:
+	    okay = 0;
+	    break;
+	  }
+	  break;
+	default:
+	  okay = 0;
+	  break;
+	}
+	freeThing(evalRight);
+      }
+      freeThing(evalLeft);
+      return okay;
+    }
+    return 0;
+    break;
+  default:
+    return 0;
+  }
+
+  return 0;
+}
+
+int tryCutPostfixList(chain **associations, node **restList, node *mainList, node *postfix) {
+  int lenMainList, lenPostfix, i, k, okay;
+  node **mainListArray;
+  chain *curr, *possibleMatchList, *possibleRestList;
+  node *possibleThingToMatch, *possibleRest, *tempNode, *myMainList;
+  chain *myAssociations;
+
+  if ((mainList->nodeType == FINALELLIPTICLIST) && 
+      (postfix->nodeType != FINALELLIPTICLIST)) return 0;
+  if ((postfix->nodeType == FINALELLIPTICLIST) && 
+      (mainList->nodeType != FINALELLIPTICLIST)) return 0;
+
+  switch (postfix->nodeType) {
+  case EMPTYLIST:
+    *restList = copyThing(mainList);
+    *associations = NULL;
+    return 1;
+    break;
+  case LIST:
+    if (mainList->nodeType == LIST) {
+      lenMainList = lengthChain(mainList->arguments);
+      lenPostfix = lengthChain(postfix->arguments);
+      if (lenMainList >= lenPostfix) {
+	mainListArray = (node **) safeCalloc(lenMainList, sizeof(node *));
+	for (i=0, curr = mainList->arguments; curr != NULL; curr = curr->next, i++) {
+	  mainListArray[i] = (node *) (curr->value);
+	}
+	possibleMatchList = NULL;
+	for (i=lenMainList-1, k=0; (i >= 0) && (k < lenPostfix); i--, k++) {
+	  possibleMatchList = addElement(possibleMatchList, copyThing(mainListArray[i]));
+	}
+	possibleThingToMatch = makeList(possibleMatchList);
+	if (lenMainList == lenPostfix) {
+	  possibleRest = makeEmptyList();
+	} else {
+	  possibleRestList = NULL;
+	  for (i=lenMainList-lenPostfix-1;i>=0;i--) {
+	    possibleRestList = addElement(possibleRestList, copyThing(mainListArray[i]));
+	  }
+	  possibleRest = makeList(possibleRestList);
+	}
+	free(mainListArray);
+
+	okay = tryMatch(associations, possibleThingToMatch, postfix); 
+	freeThing(possibleThingToMatch);
+	if (okay) {
+	  *restList = possibleRest;
+	} else {
+	  freeThing(possibleRest);
+	}
+	return okay;
+      } else {
+	return 0;
+      }
+    } else {
+      return 0;
+    }
+    break;
+  case FINALELLIPTICLIST:
+    if (mainList->nodeType == FINALELLIPTICLIST) {
+      lenMainList = lengthChain(mainList->arguments);
+      possibleRest = makeEmptyList();
+      myMainList = copyThing(mainList);
+      okay = 0;
+      for (i=1; i<=lenMainList+1; i++) {
+	myAssociations = NULL;
+	okay = tryMatch(&myAssociations, myMainList, postfix);
+	if (okay) {
+	  *associations = myAssociations;
+	  *restList = copyThing(possibleRest);
+	} else {
+	  if (myAssociations != NULL) freeChain(myAssociations, freeEntryOnVoid);
+	  tempNode = makeAppend(possibleRest, makeHead(copyThing(myMainList)));
+	  possibleRest = evaluateThing(tempNode);
+	  freeThing(tempNode);
+	  tempNode = makeTail(myMainList);
+	  myMainList = evaluateThing(tempNode);
+	  freeThing(tempNode);
+	}
+      }
+      freeThing(possibleRest);
+      freeThing(myMainList);
+      return okay;
+    } else {
+      return 0;
+    }
+    break;
+  default:
+    return 0;
+    break;
+  }
+  
+  return 0;
+}
+
+int tryCutPrefixList(chain **associations, node **restList, node *mainList, node *prefix) {
+  node *myRestList, *possibleMatchingPrefix, *tempNode;
+  int lenPrefix, i, okay;
+
+  switch (prefix->nodeType) {
+  case EMPTYLIST:
+    *restList = copyThing(mainList);
+    *associations = NULL;
+    return 1;
+    break;
+  case LIST:
+    switch (mainList->nodeType) {
+    case LIST:
+    case FINALELLIPTICLIST:
+      lenPrefix = lengthChain(prefix->arguments);
+      possibleMatchingPrefix = makeEmptyList();
+      myRestList = copyThing(mainList);
+      for (i=0; i<lenPrefix; i++) {
+	  tempNode = makeAppend(possibleMatchingPrefix, makeHead(copyThing(myRestList)));
+	  possibleMatchingPrefix = evaluateThing(tempNode);
+	  freeThing(tempNode);
+	  tempNode = makeTail(myRestList);
+	  myRestList = evaluateThing(tempNode);
+	  freeThing(tempNode);
+      }
+      okay = tryMatch(associations, possibleMatchingPrefix, prefix);
+      if (okay) {
+	*restList = myRestList;
+      } else {
+	freeThing(myRestList);
+      }
+      freeThing(possibleMatchingPrefix);
+      return okay;
+      break;
+    default:
+      return 0;
+      break;
+    }
+    return 0;
+    break;
+  default:
+    return 0;
+  }
+
+  return 0;
+}
+
 int tryMatchConcatOnList(chain **associations, node *thingToMatch, node *possibleMatcher) {
-  // TODO
+  int okayFullEvaluate, okay, okayLeft, okayRight;
+  node *listFullEvaluate, *leftEval, *rightEval;
+  chain *myAssociations;
+  node *restList;
+  chain *cutAssociations, *restAssociations;
+
+  myAssociations = NULL;
+
+  listFullEvaluate = NULL;
+  okayFullEvaluate = tryEvaluateRecursiveConcatMatcherToList(&listFullEvaluate, possibleMatcher); 
+  if (okayFullEvaluate) {
+    myAssociations = NULL;
+    okay = tryMatch(&myAssociations, thingToMatch, listFullEvaluate);
+    freeThing(listFullEvaluate);
+    if (okay) {
+      *associations = myAssociations;
+    } else {
+      if (myAssociations != NULL) freeChain(myAssociations, freeEntryOnVoid);
+    }  
+    return okay;    
+  }
+
+  if (possibleMatcher->nodeType != CONCAT) return 0;
+
+  leftEval = NULL;
+  rightEval = NULL;
+  okayLeft = tryEvaluateRecursiveConcatMatcherToList(&leftEval, possibleMatcher->child1);
+  okayRight = tryEvaluateRecursiveConcatMatcherToList(&rightEval, possibleMatcher->child2);
+  
+  if (okayLeft || okayRight) {
+    myAssociations = NULL;
+    okay = 1;
+    
+    if (okayLeft && (leftEval->nodeType == FINALELLIPTICLIST)) okay = 0;
+    
+    if (okay) {
+      if (okayRight) {
+	cutAssociations = NULL;
+	restList = NULL;
+	okay = tryCutPostfixList(&cutAssociations, &restList, thingToMatch, rightEval);
+	if (okay) {
+	  restAssociations = NULL;
+	  okay = tryMatch(&restAssociations,restList,possibleMatcher->child1);
+	  if (okay) {
+	    myAssociations = NULL;
+	    okay = tryCombineAssociations(&myAssociations, restAssociations, cutAssociations);
+	    if (restAssociations != NULL) freeChain(restAssociations, freeEntryOnVoid);
+	  }
+	  if (cutAssociations != NULL) freeChain(cutAssociations, freeEntryOnVoid);
+	  freeThing(restList);
+	}
+      } else {
+	cutAssociations = NULL;
+	restList = NULL;
+	okay = tryCutPrefixList(&cutAssociations, &restList, thingToMatch, leftEval);
+	if (okay) {
+	  restAssociations = NULL;
+	  okay = tryMatch(&restAssociations,restList,possibleMatcher->child2);
+	  if (okay) {
+	    myAssociations = NULL;
+	    okay = tryCombineAssociations(&myAssociations, restAssociations, cutAssociations);
+	    if (restAssociations != NULL) freeChain(restAssociations, freeEntryOnVoid);
+	  }
+	  if (cutAssociations != NULL) freeChain(cutAssociations, freeEntryOnVoid);
+	  freeThing(restList);
+	}
+      }
+    }
+
+    if (okayLeft) freeThing(leftEval);
+    if (okayRight) freeThing(rightEval);
+    if (okay) {
+      *associations = myAssociations;
+    } else {
+      if (myAssociations != NULL) freeChain(myAssociations, freeEntryOnVoid);
+    }  
+    return okay;        
+  }
+
   return 0;
 }
 
@@ -1114,15 +1465,7 @@ int tryMatch(chain **associations, node *thingToMatch, node *possibleMatcher) {
   int okay;
   chain *myAssociations = NULL;
 
-  sollyaPrintf("Trying to match ");
-  rawPrintThing(thingToMatch);
-  sollyaPrintf(" with ");
-  rawPrintThing(possibleMatcher);
-  sollyaPrintf("\n");
-
   okay = tryMatchInner(&myAssociations, thingToMatch, possibleMatcher);
-
-  sollyaPrintf("okay = %d\n",okay);
 
   if (okay) {
     *associations = myAssociations;
