@@ -1440,7 +1440,6 @@ basicthing:             ONTOKEN
                           }
 ;
 
-
 matchlist:              matchelement
                           {
 			    $$ = addElement(NULL,$1);
