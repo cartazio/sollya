@@ -2317,6 +2317,17 @@ int isMatchableAppend(node *tree) {
   return 0;
 }
 
+int isMatchableStructure(node *tree) {
+  chain *curr;
+
+  if (tree->nodeType != STRUCTURE) return 0;
+  if (associationContainsDoubleEntries(tree->arguments)) return 0;
+  for (curr=tree->arguments; curr != NULL; curr = curr->next) {
+    if (!isMatchable((node *) (((entry *) (curr->value))->value))) return 0;
+  }
+  return 1;
+}
+
 int isMatchable(node *tree) {
   if (isExtendedPureTree(tree)) return 1;
   if (isCorrectlyTypedBaseSymbol(tree)) return 1;
@@ -2329,6 +2340,7 @@ int isMatchable(node *tree) {
   if (isMatchableConcat(tree)) return 1;
   if (isMatchablePrepend(tree)) return 1;
   if (isMatchableAppend(tree)) return 1;
+  if (isMatchableStructure(tree)) return 1;
   return 0;
 }
 
