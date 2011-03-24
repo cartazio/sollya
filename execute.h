@@ -532,10 +532,14 @@ int isMatchableList(node *tree);
 int isPureFinalEllipticList(node *);
 int isPureList(node *);
 int isEmptyList(node *);
+int isStructure(node *tree);
 int evaluateThingToConstant(mpfr_t result, node *tree, mpfr_t *defaultVal, int silent);
 int isMatchablePrepend(node *tree);
 int isMatchableAppend(node *tree);
 int isMatchableConcat(node *tree);
+int isMatchableStructure(node *tree);
+int associationContainsDoubleEntries(chain *assoc);
 node *evaluateThing(node *tree);
+
 
 #endif /* ifdef EXECUTE_H*/

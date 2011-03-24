@@ -1394,6 +1394,59 @@ int tryMatchConcatOnList(chain **associations, node *thingToMatch, node *possibl
   return 0;
 }
 
+int tryMatchStructure(chain **associations, node *thingToMatch, node *possibleMatcher) {
+  int okay, found, okayRecurse, okayCombine;
+  chain *myAssociations, *currPossibleMatcher, *currThingToMatch, *recurseAssoc, *myCombinedAssoc;
+  char *currPossibleMatcherName, *currThingToMatchName;
+  node *currPossibleMatcherMatcher, *currThingToMatchThing;
+
+  if (thingToMatch->nodeType != STRUCTURE) return 0;
+  if (possibleMatcher->nodeType != STRUCTURE) return 0;
+
+  okay = 1;
+  myAssociations = NULL;
+
+  for (currPossibleMatcher=possibleMatcher->arguments;
+       currPossibleMatcher != NULL;
+       currPossibleMatcher=currPossibleMatcher->next) {
+    currPossibleMatcherName = (char *) (((entry *) (currPossibleMatcher->value))->name);
+    currPossibleMatcherMatcher = (node *) (((entry *) (currPossibleMatcher->value))->value);
+    for (found = 0, currThingToMatch=thingToMatch->arguments;
+	 (!found) && (currThingToMatch != NULL);
+	 currThingToMatch=currThingToMatch->next) {
+      currThingToMatchName = (char *) (((entry *) (currThingToMatch->value))->name);
+      currThingToMatchThing = (node *) (((entry *) (currThingToMatch->value))->value);
+      if (!strcmp(currThingToMatchName,currPossibleMatcherName)) found = 1;
+    }
+    if (found) {
+      recurseAssoc = NULL;
+      okayRecurse = tryMatch(&recurseAssoc, currThingToMatchThing, currPossibleMatcherMatcher);
+      if (okayRecurse) {
+	myCombinedAssoc = NULL;
+	okayCombine = tryCombineAssociations(&myCombinedAssoc, recurseAssoc, myAssociations);
+	if (okayCombine) {
+	  if (myAssociations != NULL) freeChain(myAssociations, freeEntryOnVoid);
+	  myAssociations = myCombinedAssoc;
+	} else {
+	  okay = 0;
+	}
+      } else {
+	okay = 0;
+      }
+    } else {
+      okay = 0;
+    }
+    if (!okay) break;
+  }
+  
+  if (okay) {
+    *associations = myAssociations;
+  } else {
+    if (myAssociations != NULL) freeChain(myAssociations, freeEntryOnVoid);
+  }  
+  return okay;
+}
+
 int tryMatchInner(chain **associations, node *thingToMatch, node *possibleMatcher) {
 
   /* Default case: a match for everything, no association to perform */
@@ -1454,6 +1507,13 @@ int tryMatchInner(chain **associations, node *thingToMatch, node *possibleMatche
     } else {
       return tryMatchConcatOnList(associations, thingToMatch, possibleMatcher);
     }
+  }
+
+  /* Match literate structures */
+  if (isMatchableStructure(possibleMatcher)) {
+    if (!isStructure(thingToMatch)) return 0;
+    if (associationContainsDoubleEntries(thingToMatch->arguments)) return 0;
+    return tryMatchStructure(associations, thingToMatch, possibleMatcher);
   }
 
   return 0;
