@@ -14023,7 +14023,6 @@ node *preevaluateMatcher(node *tree) {
     rangeEvaluateLeft = 0;
     switch (tree->child1->nodeType) {
     case DECIMALCONSTANT:
-    case MIDPOINTCONSTANT:
     case DYADICCONSTANT:
     case HEXCONSTANT:
     case HEXADECIMALCONSTANT:
@@ -14037,7 +14036,6 @@ node *preevaluateMatcher(node *tree) {
     rangeEvaluateRight = 0;
     switch (tree->child2->nodeType) {
     case DECIMALCONSTANT:
-    case MIDPOINTCONSTANT:
     case DYADICCONSTANT:
     case HEXCONSTANT:
     case HEXADECIMALCONSTANT:
