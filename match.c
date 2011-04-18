@@ -210,6 +210,14 @@ int tryMatchExtendedPureTree(chain **associations, node *thingToMatch, node *pos
   node *currentThingToMatch, *currentPossibleMatcher, *headSymbol, *newHeadSymbol, *tempNode;
   char *currentIdentifier;
   
+  /* Special case: possibleMatcher is default.
+     Everthing that is correctly typed (and we know it is) matches
+     without creating any binding.
+  */
+  if (possibleMatcher->nodeType == DEFAULT) {
+    return 1;
+  }
+
   /* Special case: possibleMatcher is a free variable to bind
      Check if it is possible equal to the mathematical free 
      variable. If not, create an association 
@@ -556,6 +564,35 @@ int tryMatchRange(chain **associations, mpfr_t a, mpfr_t b, node *possibleMatche
   }  
   return okay;
 }
+
+int isIntegerElement(int *res, node *thing) {
+  mpfr_t a, b;
+  int i, okay;
+
+  if (!isPureTree(thing)) return 0;
+  if (!isConstant(thing)) return 0;
+
+  okay = 0; i = 0;
+  mpfr_init2(a, tools_precision);
+  if (evaluateThingToConstant(a, thing, NULL, 0)) {
+    if (mpfr_integer_p(a)) {
+      i = mpfr_get_si(a, GMP_RNDN);
+      mpfr_init2(b, 8 * sizeof(i) + 5);
+      mpfr_set_si(b, i, GMP_RNDN);
+      if (mpfr_cmp(a, b) == 0) {
+	okay = 1;
+      }
+      mpfr_clear(b);
+    }
+  }
+  mpfr_clear(a);
+
+  if (okay) {
+    *res = i;
+  }
+  return okay;
+}
+
 
 int formConsecutiveIntegers(node *thing1, node *thing2) {
   mpfr_t a, b, c, d;
@@ -1170,11 +1207,14 @@ int tryEvaluateRecursiveConcatMatcherToList(node **concatenatedList, node *tree)
 }
 
 int tryCutPostfixList(chain **associations, node **restList, node *mainList, node *postfix) {
-  int lenMainList, lenPostfix, i, k, okay;
+  int lenMainList, lenPostfix, i, k, okay, offset;
   node **mainListArray;
   chain *curr, *possibleMatchList, *possibleRestList;
   node *possibleThingToMatch, *possibleRest, *tempNode, *myMainList;
   chain *myAssociations;
+  node *postfixFirstElem, *mainListLastElem;
+  chain *mainListCurr;
+  int mainListInt, postfixInt;
 
   if ((mainList->nodeType == FINALELLIPTICLIST) && 
       (postfix->nodeType != FINALELLIPTICLIST)) return 0;
@@ -1232,8 +1272,19 @@ int tryCutPostfixList(chain **associations, node **restList, node *mainList, nod
       lenMainList = lengthChain(mainList->arguments);
       possibleRest = makeEmptyList();
       myMainList = copyThing(mainList);
+      offset = 1;
+      postfixFirstElem = (node *) (((chain *) (postfix->arguments))->value);
+      for (mainListCurr = mainList->arguments;
+	   mainListCurr->next != NULL;
+	   mainListCurr = mainListCurr->next);
+      mainListLastElem = (node *) (mainListCurr->value);
+      if (isIntegerElement(&mainListInt, mainListLastElem) &&
+	  isIntegerElement(&postfixInt, postfixFirstElem) &&
+	  (postfixInt > mainListInt)) {
+	offset = postfixInt - mainListInt + 2;
+      }
       okay = 0;
-      for (i=1; i<=lenMainList+1; i++) {
+      for (i=1; i<=lenMainList+offset; i++) {
 	myAssociations = NULL;
 	okay = tryMatch(&myAssociations, myMainList, postfix);
 	if (okay) {

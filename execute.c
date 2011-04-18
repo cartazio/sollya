@@ -2118,12 +2118,10 @@ int isPureTree(node *tree) {
 }
 
 int isExtendedPureTree(node *tree) {
-  if (tree->nodeType == DEFAULT) return 1;
-  return isExtendedPureTreeInner(tree);
-}
-
-int isExtendedPureTreeInner(node *tree) {
   switch (tree->nodeType) {
+  case DEFAULT:
+    return 1;
+    break;
   case VARIABLE:
     return 1;
     break;
@@ -2139,121 +2137,121 @@ int isExtendedPureTreeInner(node *tree) {
     return 1;
     break;
   case ADD:
-    return (isExtendedPureTreeInner(tree->child1) && isExtendedPureTreeInner(tree->child2));
+    return (isExtendedPureTree(tree->child1) && isExtendedPureTree(tree->child2));
     break;
   case SUB:
-    return (isExtendedPureTreeInner(tree->child1) && isExtendedPureTreeInner(tree->child2));
+    return (isExtendedPureTree(tree->child1) && isExtendedPureTree(tree->child2));
     break;
   case MUL:
-    return (isExtendedPureTreeInner(tree->child1) && isExtendedPureTreeInner(tree->child2));
+    return (isExtendedPureTree(tree->child1) && isExtendedPureTree(tree->child2));
     break;
   case DIV:
-    return (isExtendedPureTreeInner(tree->child1) && isExtendedPureTreeInner(tree->child2));
+    return (isExtendedPureTree(tree->child1) && isExtendedPureTree(tree->child2));
     break;
   case SQRT:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case EXP:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case LOG:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case LOG_2:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case LOG_10:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case SIN:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case COS:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case TAN:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case ASIN:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case ACOS:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case ATAN:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case SINH:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case COSH:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case TANH:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case ASINH:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case ACOSH:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case ATANH:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case POW:
-    return (isExtendedPureTreeInner(tree->child1) && isExtendedPureTreeInner(tree->child2));
+    return (isExtendedPureTree(tree->child1) && isExtendedPureTree(tree->child2));
     break;
   case NEG:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case ABS:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case DOUBLE:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case SINGLE:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case DOUBLEDOUBLE:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case TRIPLEDOUBLE:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case ERF: 
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case ERFC:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case LOG_1P:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case EXP_M1:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case DOUBLEEXTENDED:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case LIBRARYFUNCTION:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case LIBRARYCONSTANT:
     return 1;
     break;
   case PROCEDUREFUNCTION:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case CEIL:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case FLOOR:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case NEARESTINT:
-    return isExtendedPureTreeInner(tree->child1);
+    return isExtendedPureTree(tree->child1);
     break;
   case PI_CONST:
     return 1;
