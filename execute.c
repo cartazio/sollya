@@ -13995,6 +13995,324 @@ void *preevaluateMatcherOnVoid(void *tree) {
   return (void *) preevaluateMatcher((node *) tree);
 }
 
+
+int variableUsePreventsPreevaluation(node *tree) {
+  chain *curr;
+
+  switch (tree->nodeType) {
+  case RENAME:
+  case ASSIGNMENT:
+  case FLOATASSIGNMENT:
+  case EXTERNALPROC:
+  case LIBRARYBINDING:
+  case LIBRARYCONSTANTBINDING:
+  case DEFAULT:
+  case ISBOUND:
+  case STRUCTACCESS:
+  case MATCH:
+  case MATCHELEMENT:
+  case VARIABLEDECLARATION:
+  case ASSIGNMENTINSTRUCTURE:
+  case FLOATASSIGNMENTINSTRUCTURE:
+  case PROTOASSIGNMENTINSTRUCTURE:
+  case PROTOFLOATASSIGNMENTINSTRUCTURE:
+  case FOR:
+    return 1;
+    break;  	
+  case TABLEACCESS:
+    if ((variablename != NULL) &&
+	(!strcmp(variablename, tree->string))) {
+      return 0;
+    } else {
+      return 1;
+    }
+    break;
+  case TABLEACCESSWITHSUBSTITUTE:
+    if ((variablename != NULL) &&
+	(!strcmp(variablename, tree->string))) {
+      return variableUsePreventsPreevaluation(tree->child1);
+    } else {
+      return 1;
+    }    
+    break;
+  case VARIABLE:
+  case CONSTANT:
+  case LIBRARYCONSTANT:
+  case PI_CONST:
+  case QUIT:
+  case NOP:
+  case FALSEQUIT:
+  case FALSERESTART:
+  case RESTART:
+  case ON:
+  case OFF:
+  case DYADIC:
+  case POWERS:
+  case BINARY:
+  case HEXADECIMAL:
+  case FILESYM:
+  case POSTSCRIPT:
+  case POSTSCRIPTFILE:
+  case PERTURB:
+  case ROUNDDOWN:
+  case ROUNDUP:
+  case ROUNDTOZERO:
+  case ROUNDTONEAREST:
+  case HONORCOEFF:
+  case TRUE:
+  case UNIT:
+  case FALSE:
+  case DECIMAL:
+  case ABSOLUTESYM:
+  case RELATIVESYM:
+  case FIXED:
+  case FLOATING:
+  case ERRORSPECIAL:
+  case DOUBLESYMBOL:
+  case SINGLESYMBOL:
+  case DOUBLEEXTENDEDSYMBOL:
+  case DOUBLEDOUBLESYMBOL:
+  case TRIPLEDOUBLESYMBOL:
+  case STRING:
+  case DECIMALCONSTANT:
+  case MIDPOINTCONSTANT:
+  case DYADICCONSTANT:
+  case HEXCONSTANT:
+  case HEXADECIMALCONSTANT:
+  case BINARYCONSTANT:
+  case EMPTYLIST:
+  case ELLIPTIC:
+  case EXTERNALPROCEDUREUSAGE:
+  case PRECDEREF:
+  case POINTSDEREF:
+  case DIAMDEREF:
+  case DISPLAYDEREF:
+  case VERBOSITYDEREF:
+  case CANONICALDEREF:
+  case AUTOSIMPLIFYDEREF:
+  case TAYLORRECURSDEREF:
+  case TIMINGDEREF:
+  case FULLPARENDEREF:
+  case MIDPOINTDEREF:
+  case DIEONERRORMODEDEREF:
+  case RATIONALMODEDEREF:
+  case SUPPRESSWARNINGSDEREF:
+  case HOPITALRECURSDEREF:
+    return 0;
+    break;
+  case ADD:
+  case SUB:
+  case MUL:
+  case DIV:
+  case POW:
+  case PROCEDUREFUNCTION:
+  case WHILE:
+  case IF:
+  case FORIN:
+  case ASCIIPLOT:
+  case PRINTXMLNEWFILE:
+  case PRINTXMLAPPENDFILE:
+  case AND:
+  case OR:
+  case INDEX:
+  case COMPAREEQUAL:
+  case COMPAREIN:
+  case COMPARELESS:
+  case COMPAREGREATER:
+  case COMPARELESSEQUAL:
+  case COMPAREGREATEREQUAL:
+  case COMPARENOTEQUAL:
+  case CONCAT:
+  case ADDTOLIST:
+  case PREPEND:
+  case APPEND:
+  case RANGE:
+  case SUBSTITUTE:
+  case COEFF:
+  case SUBPOLY:
+  case ROUNDCOEFFICIENTS:
+  case RATIONALAPPROX:    
+  case EVALUATE:
+  case FINDZEROS:
+  case FPFINDZEROS:
+  case DIRTYINFNORM:
+  case NUMBERROOTS:
+  case INTEGRAL:
+  case DIRTYINTEGRAL:
+  case ZERODENOMINATORS:
+  case ISEVALUABLE:
+  case DIRTYFINDZEROS:
+    return (variableUsePreventsPreevaluation(tree->child1) && variableUsePreventsPreevaluation(tree->child2));
+    break;
+  case SQRT:
+  case EXP:
+  case LOG:
+  case LOG_2:
+  case LOG_10:
+  case SIN:
+  case COS:
+  case TAN:
+  case ASIN:
+  case ACOS:
+  case ATAN:
+  case SINH:
+  case COSH:
+  case TANH:
+  case ASINH:
+  case ACOSH:
+  case ATANH:
+  case NEG:
+  case ABS:
+  case DOUBLE:
+  case SINGLE:
+  case DOUBLEDOUBLE:
+  case TRIPLEDOUBLE:
+  case ERF: 
+  case ERFC:
+  case LOG_1P:
+  case EXP_M1:
+  case DOUBLEEXTENDED:
+  case LIBRARYFUNCTION:
+  case CEIL:
+  case FLOOR:
+  case NEARESTINT:
+  case NOPARG:
+  case PRINTHEXA:
+  case PRINTFLOAT:
+  case PRINTBINARY:
+  case PRINTEXPANSION:
+  case BASHEXECUTE:
+  case PRINTXML:
+  case PRECASSIGN:
+  case POINTSASSIGN:
+  case DIAMASSIGN:
+  case DISPLAYASSIGN:
+  case VERBOSITYASSIGN:
+  case CANONICALASSIGN:
+  case AUTOSIMPLIFYASSIGN:
+  case TAYLORRECURSASSIGN:
+  case TIMINGASSIGN:
+  case FULLPARENASSIGN:
+  case MIDPOINTASSIGN:
+  case DIEONERRORMODEASSIGN:
+  case RATIONALMODEASSIGN:
+  case SUPPRESSWARNINGSASSIGN:
+  case HOPITALRECURSASSIGN:
+  case PRECSTILLASSIGN:
+  case POINTSSTILLASSIGN:
+  case DIAMSTILLASSIGN:
+  case DISPLAYSTILLASSIGN:
+  case VERBOSITYSTILLASSIGN:
+  case CANONICALSTILLASSIGN:
+  case AUTOSIMPLIFYSTILLASSIGN:
+  case TAYLORRECURSSTILLASSIGN:
+  case TIMINGSTILLASSIGN:
+  case FULLPARENSTILLASSIGN:
+  case MIDPOINTSTILLASSIGN:
+  case DIEONERRORMODESTILLASSIGN:
+  case RATIONALMODESTILLASSIGN:
+  case SUPPRESSWARNINGSSTILLASSIGN:
+  case HOPITALRECURSSTILLASSIGN:
+  case NEGATION:
+  case HORNER:
+  case CANONICAL:
+  case EXPAND:
+  case DEGREE:
+  case NUMERATOR:
+  case DENOMINATOR:
+  case PARSE:
+  case READXML:
+  case EXECUTE:
+  case HEAD:
+  case ROUNDCORRECTLY:
+  case READFILE:
+  case REVERT:
+  case SORT:
+  case MANTISSA:
+  case EXPONENT:
+  case PRECISION:
+  case TAIL:
+  case LENGTH:
+  case DEBOUNDMAX:
+  case EVALCONST:
+  case DEBOUNDMIN:
+  case DEBOUNDMID:
+  case DIFF:
+  case SIMPLIFY:
+  case SIMPLIFYSAFE:
+  case TIME:
+    return variableUsePreventsPreevaluation(tree->child1);
+    break;
+  case PROC:
+  case PROCILLIM:
+    return ((tree->arguments == NULL) && 
+	    variableUsePreventsPreevaluation(tree->child1) && variableUsePreventsPreevaluation(tree->child2));
+    break;
+  case COMMANDLIST:
+  case IFELSE:
+  case PRINT:
+  case PLOT:
+  case EXTERNALPLOT:
+  case WRITE:
+  case WORSTCASE:
+  case AUTOPRINT:
+  case LIST:
+  case FINALELLIPTICLIST:
+  case REMEZ:
+  case MIN:
+  case MAX:
+  case FPMINIMAX:
+  case TAYLOR:
+  case TAYLORFORM:
+  case AUTODIFF:
+  case ACCURATEINFNORM:
+  case ROUNDTOFORMAT:
+  case INFNORM:
+  case SUPNORM:
+  case IMPLEMENTPOLY:
+  case IMPLEMENTCONST:
+  case CHECKINFNORM:
+  case SEARCHGAL:
+  case GUESSDEGREE:
+  case ASSIGNMENTININDEXING:
+  case FLOATASSIGNMENTININDEXING:
+    for (curr = tree->arguments;
+	 curr != NULL;
+	 curr = curr->next) {
+      if (variableUsePreventsPreevaluation((node *) (curr->value))) return 1;
+    }
+    return 0;
+    break;
+  case NEWFILEPRINT:
+  case NEWFILEWRITE:
+  case APPENDFILEWRITE:
+  case APPENDFILEPRINT:
+  case APPLY:
+    for (curr = tree->arguments;
+	 curr != NULL;
+	 curr = curr->next) {
+      if (variableUsePreventsPreevaluation((node *) (curr->value))) return 1;
+    }
+    if (variableUsePreventsPreevaluation(tree->child1)) return 1;
+    return 0;
+    break; 			
+  case STRUCTURE:
+    for (curr = tree->arguments;
+	 curr != NULL;
+	 curr = curr->next) {
+      if (variableUsePreventsPreevaluation((node *) (((entry *) (curr->value))->value))) return 1;
+    }
+    return 0;
+    break; 			
+  default:
+    sollyaFprintf(stderr,"Error: variableUsePreventsPreevaluation: unknown identifier (%d) in the tree\n",tree->nodeType);
+    exit(1);
+  }
+  return 1;
+}
+
+
+
 node *preevaluateMatcher(node *tree) {
   node *copy, *tempNode1, *tempNode2, *simplifiedCopy;
   int rangeEvaluateLeft, rangeEvaluateRight;
@@ -14018,32 +14336,8 @@ node *preevaluateMatcher(node *tree) {
     copy = evaluateThing(tree);
     break; 			
   case RANGE:
-    rangeEvaluateLeft = 0;
-    switch (tree->child1->nodeType) {
-    case DECIMALCONSTANT:
-    case DYADICCONSTANT:
-    case HEXCONSTANT:
-    case HEXADECIMALCONSTANT:
-    case BINARYCONSTANT:
-      rangeEvaluateLeft = 1;
-      break; 	
-    default:
-      rangeEvaluateLeft = 0;
-      break;
-    }
-    rangeEvaluateRight = 0;
-    switch (tree->child2->nodeType) {
-    case DECIMALCONSTANT:
-    case DYADICCONSTANT:
-    case HEXCONSTANT:
-    case HEXADECIMALCONSTANT:
-    case BINARYCONSTANT:
-      rangeEvaluateRight = 1;
-      break; 	
-    default:
-      rangeEvaluateRight = 0;
-      break;
-    }
+    rangeEvaluateLeft = !variableUsePreventsPreevaluation(tree->child1);
+    rangeEvaluateRight = !variableUsePreventsPreevaluation(tree->child2);
     if (rangeEvaluateLeft && rangeEvaluateRight) {
       free(copy);
       copy = evaluateThing(tree);
@@ -14055,9 +14349,15 @@ node *preevaluateMatcher(node *tree) {
 	tempNode->child1 = copyThing(tree->child1);
 	tempNode->child2 = copyThing(tree->child1);
 	tempNode2 = evaluateThing(tempNode);
-	copy->child1 = tempNode2->child1;
-	freeThing(tempNode2->child2);
-	free(tempNode2);
+	if (tempNode2->nodeType == RANGE) {
+	  sollyaPrintf("Hallo");
+	  copy->child1 = tempNode2->child1;
+	  freeThing(tempNode2->child2);
+	  free(tempNode2);
+	} else {
+	  copy->child1 = preevaluateMatcher(tree->child1);
+	  freeThing(tempNode2);
+	}
 	freeThing(tempNode);
       } else {
 	if (rangeEvaluateRight) {
@@ -14067,9 +14367,15 @@ node *preevaluateMatcher(node *tree) {
 	  tempNode->child1 = copyThing(tree->child2);
 	  tempNode->child2 = copyThing(tree->child2);
 	  tempNode2 = evaluateThing(tempNode);
-	  copy->child2 = tempNode2->child2;
-	  freeThing(tempNode2->child1);
-	  free(tempNode2);
+	  if (tempNode2->nodeType == RANGE) {
+	    sollyaPrintf("Hallo 2");
+	    copy->child2 = tempNode2->child2;
+	    freeThing(tempNode2->child1);
+	    free(tempNode2);
+	  } else {
+	    copy->child2 = preevaluateMatcher(tree->child2);
+	    freeThing(tempNode2);
+	  }
 	  freeThing(tempNode);
 	} else {
 	  copy->child1 = preevaluateMatcher(tree->child1);
