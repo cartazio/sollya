@@ -14314,11 +14314,11 @@ int variableUsePreventsPreevaluation(node *tree) {
 
 
 node *preevaluateMatcher(node *tree) {
-  node *copy, *tempNode1, *tempNode2, *simplifiedCopy;
+  node *copy, *tempNode1, *tempNode2, *simplifiedCopy, *tempNode;
   int rangeEvaluateLeft, rangeEvaluateRight;
   chain *tempChain, *curr, *newChain;
   int resA, resB, resC, i;
-  mpfr_t a;
+  mpfr_t a, infinity;
 
   if (tree == NULL) return NULL;
 
@@ -14341,16 +14341,25 @@ node *preevaluateMatcher(node *tree) {
     if (rangeEvaluateLeft && rangeEvaluateRight) {
       free(copy);
       copy = evaluateThing(tree);
+      if (copy->nodeType != RANGE) {
+	freeThing(copy);
+	copy = (node *) safeMalloc(sizeof(node));
+	copy->nodeType = tree->nodeType;
+	copy->child1 = preevaluateMatcher(tree->child1);
+	copy->child2 = preevaluateMatcher(tree->child2);
+      }
     } else {
       if (rangeEvaluateLeft) {
 	copy->child2 = preevaluateMatcher(tree->child2);
 	tempNode = (node *) safeMalloc(sizeof(node));
 	tempNode->nodeType = RANGE;
 	tempNode->child1 = copyThing(tree->child1);
-	tempNode->child2 = copyThing(tree->child1);
+	mpfr_init2(infinity,12);
+	mpfr_set_inf(infinity,1);
+	tempNode->child2 = makeConstant(infinity);
+	mpfr_clear(infinity);
 	tempNode2 = evaluateThing(tempNode);
 	if (tempNode2->nodeType == RANGE) {
-	  sollyaPrintf("Hallo");
 	  copy->child1 = tempNode2->child1;
 	  freeThing(tempNode2->child2);
 	  free(tempNode2);
@@ -14364,11 +14373,13 @@ node *preevaluateMatcher(node *tree) {
 	  copy->child1 = preevaluateMatcher(tree->child1);
 	  tempNode = (node *) safeMalloc(sizeof(node));
 	  tempNode->nodeType = RANGE;
-	  tempNode->child1 = copyThing(tree->child2);
+	  mpfr_init2(infinity,12);
+	  mpfr_set_inf(infinity,-1);
+	  tempNode->child1 = makeConstant(infinity);
 	  tempNode->child2 = copyThing(tree->child2);
+	  mpfr_clear(infinity);
 	  tempNode2 = evaluateThing(tempNode);
 	  if (tempNode2->nodeType == RANGE) {
-	    sollyaPrintf("Hallo 2");
 	    copy->child2 = tempNode2->child2;
 	    freeThing(tempNode2->child1);
 	    free(tempNode2);
