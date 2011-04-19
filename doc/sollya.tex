@@ -889,6 +889,42 @@ In the case when no return statement is indicated for a
 statement-block in a \key{match \dots~with} construct, the construct
 evaluates to the special value \key{void} if that pattern matches. 
 
+In order to well understand pattern matching in \sollya, it is
+important to understand the meaning of programming-language-level
+variables in patterns. This meaning is different from the one usually
+found for variables. In a pattern, variables are never evaluate to
+whatever they might have when the pattern is executed. In contrast,
+all variables in patterns are new, free variables that will freshly be
+bound to subexpressions of the matching expression. If a variable of
+the same name exists already, it will be shadowed during the
+evaluation of the statement block and return expression that get
+executed for the matching expression. This type of semantic implies
+that patterns can never be computed at run-time, they must always be
+hard-coded beforehand. This is necessary to make pattern matching
+context-free.
+
+As a matter of course, all variables figuring in the expression {\it
+  expr} to be matched (using {\it \key{match expr with}}) are
+evaluated before pattern matching is attempted.
+
+In \sollya, the use of variables in patterns does not need to be
+linear, i.e.  the same variable might appear twice or more times in a
+pattern. Such a pattern will only match an expression if it contains
+they same subexpression, associated with the variable, in all places 
+indicated by the variable in the pattern.
+
+The following examples illustrate the use of variables in patterns in
+detail:
+
+\input{introExample52}
+
+\input{introExample53}
+
+
+TODO: no evaluation of constant expressions in pattern but in
+bounds of ranges, possible expressions to match (functions, ranges,
+lists, strings, structs and operations on them).
+
 
 
 \section{Commands and functions}

@@ -11,7 +11,7 @@ match exp(sin(x)) with
               }
     default : {
                  write("Something else\n");
-                 bashexecute("date");
+                 bashexecute("LANG=C date");
                  return true;
               };
 
@@ -45,7 +45,6 @@ match acos(17 * pi * x) with
               }
     default : {
                  write("Something else\n");
-                 bashexecute("date");
+                 bashexecute("LANG=C date");
                  return true;
               };
-

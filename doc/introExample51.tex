@@ -12,7 +12,7 @@
 >               }
 >     default : {
 >                  write("Something else\n");
->                  bashexecute("date");
+>                  bashexecute("LANG=C date");
 >                  return true;
 >               };
 Exponential of sin(x)
@@ -50,12 +50,11 @@ Sine of x
 >               }
 >     default : {
 >                  write("Something else\n");
->                  bashexecute("date");
+>                  bashexecute("LANG=C date");
 >                  return true;
 >               };
 17
 Something else
 true
-> 
 \end{Verbatim}
 \end{minipage}\end{center}
