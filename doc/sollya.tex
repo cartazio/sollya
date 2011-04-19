@@ -27,7 +27,7 @@
 
 \newcommand{\ligne}[1]{\texttt{#1}\\}
 
-\title{Users' manual for the \sollya tool \\ {\large Release 2.9}}
+\title{Users' manual for the \sollya tool \\ {\large Release 3.0-alpha}}
 
 \author{Sylvain Chevillard \\ \small{\url{sylvain.chevillard@ens-lyon.org}} \and Christoph Lauter \\ \small{\url{christoph.lauter@ens-lyon.org}} \and Mioara Jolde\c{s} \\ \small{\url{mioara.joldes@ens-lyon.fr}} }
 
@@ -763,8 +763,9 @@ following examples:
 
 \input{introExample30}
 
-\section{Functional language elements: procedures}
+\section{Functional language elements: procedures and pattern matching}
 
+\subsection{Procedures}
 \sollya has some elements of functional languages. In order to 
 avoid confusion with mathematical functions, the associated 
 programming objects are called \emph{procedures} in \sollya. 
@@ -816,6 +817,79 @@ precision valid at this moment.
 \sollya also supports external procedures, i.e. procedures written in
 \texttt{C} (or some other language) and dynamically bound to \sollya
 identifiers. See \ref{labexternalproc} for details.
+
+\subsection{Pattern matching}
+
+Starting with version 3.0, \sollya supports matching expressions using
+expression patterns. This features is important for an extended
+functional programming style. Further, and most importantly, it allows
+the expression trees that functions form in \sollya to be recursively
+decomposed using native constructs of the \sollya language. This means
+no help from external procedures or other compiled-language mechanisms
+is needed here anymore.
+
+Basically, pattern matching supports relies on one \sollya construct: 
+\begin{center}
+\begin{minipage}{0.8\textwidth}
+\key{match {\it expr} with \\
+{\it pattern1} : ({\it return-expr1}) \\
+{\it pattern2} : ({\it return-expr2}) \\
+\dots \\
+{\it patternN} : ({\it return-exprN}) }
+\end{minipage}
+\end{center} 
+That construct has the following meaning: try to match the given
+expression {\it expr} with the patterns {\it pattern1} through {\it
+  patternN} that are given, proceeding in natural order. If a pattern
+{\it patternI} is found that matches, evaluate the whole \key{match
+  \dots~with} construct to the return expression {\it return-exprI}
+associated with the matching pattern {\it patternI}. If no matching
+pattern is found, indicate an error warning and return \key{error}.
+
+Matching a pattern means the following: 
+\begin{itemize}
+  \item If a pattern does not contain any programming-language-level
+    variables (different from the free mathematical variable), it
+    matches expressions that are syntactically equal to itself. For
+    instance, the pattern \key{exp(sin(3 * x))} will match the
+    expression \key{exp(sin(3 * x))}.
+  \item If a pattern does contain variables, it matches an expression
+    {\it expr} if these variables can be bound to subexpressions of
+    {\it expr} such that once the pattern is evaluated with that
+    variable binding, it becomes syntactically equal to the expression
+    {\it expr}. For instance, the pattern \key{exp(sin(a * x))} will
+    match the expression \key{exp(sin(3 * x))} as it is possible to
+    bind \key{a} to \key{3} such that \key{exp(sin(a~*~x))} evaluates
+    to \key{exp(sin(3~*~x))}.
+\end{itemize}
+
+If a pattern {\it patternI} with variables is matched in a \key{match
+  \dots~with} construct, the variables in the pattern stay bound
+during the evaluation of the corresponding return expression {\it
+  return-exprI}. This allows subexpressions to be extracted from
+expressions and/or recursively handled as needed.
+
+The following examples illustrate the basic principles of pattern
+matching in \sollya:
+
+\input{introExample50}
+
+As \sollya is not a pure functional language, the \key{match
+  \dots~with} construct can also be used in a more imperative style,
+which makes it become closer to constructs like \key{switch} in {\tt
+  C} or {\tt Perl}. In lieu of a simple return expression, a whole
+block of imperative statements can be given. The expression to be
+returned by that block is indicated in the end of a the block, using
+the \key{return} keyword. That syntax is illustrated in the next
+example:
+
+\input{introExample51}
+
+In the case when no return statement is indicated for a
+statement-block in a \key{match \dots~with} construct, the construct
+evaluates to the special value \key{void} if that pattern matches. 
+
+
 
 \section{Commands and functions}
 
