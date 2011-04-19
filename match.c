@@ -494,7 +494,7 @@ int tryMatchExtendedPureTree(chain **associations, node *thingToMatch, node *pos
     return (possibleMatcher->libFun == thingToMatch->libFun);
     break;
   case PROCEDUREFUNCTION:
-    /* Procedure functions to not match if they are not based on the same
+    /* Procedure functions do not match if they are not based on the same
        procedure or if they are at different differentiation levels
     */
     if ((!isEqualThing(possibleMatcher->child2, thingToMatch->child2)) ||
@@ -1290,6 +1290,7 @@ int tryCutPostfixList(chain **associations, node **restList, node *mainList, nod
 	if (okay) {
 	  *associations = myAssociations;
 	  *restList = copyThing(possibleRest);
+	  break;
 	} else {
 	  if (myAssociations != NULL) freeChain(myAssociations, freeEntryOnVoid);
 	  tempNode = makeAppend(possibleRest, makeHead(copyThing(myMainList)));
@@ -1481,6 +1482,7 @@ int tryMatchStructure(chain **associations, node *thingToMatch, node *possibleMa
 	} else {
 	  okay = 0;
 	}
+	if (recurseAssoc != NULL) freeChain(recurseAssoc, freeEntryOnVoid);
       } else {
 	okay = 0;
       }
