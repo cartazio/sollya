@@ -14311,10 +14311,8 @@ int variableUsePreventsPreevaluation(node *tree) {
   return 1;
 }
 
-
-
 node *preevaluateMatcher(node *tree) {
-  node *copy, *tempNode1, *tempNode2, *simplifiedCopy, *tempNode;
+  node *copy, *tempNode1, *tempNode2, *tempNode;
   int rangeEvaluateLeft, rangeEvaluateRight;
   chain *tempChain, *curr, *newChain;
   int resA, resB, resC, i;
@@ -15260,14 +15258,6 @@ node *preevaluateMatcher(node *tree) {
   default:
     sollyaFprintf(stderr,"Error: preevaluateMatcher: unknown identifier (%d) in the tree\n",tree->nodeType);
     exit(1);
-  }
-
-  if (isPureTree(copy) && isConstant(copy)) {
-    tempNode = simplifyRationalErrorfree(copy);
-    freeThing(copy);
-    simplifiedCopy = simplifyTreeErrorfree(tempNode);
-    freeThing(tempNode);
-    copy = simplifiedCopy;
   }
 
   return copy;
