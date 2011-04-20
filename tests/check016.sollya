@@ -659,3 +659,318 @@ match [| 1, 2, 3, 19... |] with
 match [| exp(sin(x)), sin(x), 4, DE(x), 9... |] with
       exp(a) .: (a .: (([||] :. 4) @ (b @ [| 13... |]))) : { print("a = ", a, ", b = ", b); };
 
+
+/* The examples from the documentation */
+
+match exp(x) with 
+    exp(x)      : (1) 
+    sin(x)      : (2)
+    default     : (3);
+
+match sin(x) with 
+    exp(x)      : (1) 
+    sin(x)      : (2)
+    default     : (3);
+
+match exp(sin(x)) with
+    exp(x)      : ("Exponential of x")
+    exp(sin(x)) : ("Exponential of sine of x")
+    default     : ("Something else");
+
+match exp(sin(x)) with
+    exp(x)      : ("Exponential of x")
+    exp(a)      : ("Exponential of " @ a)
+    default     : ("Something else");
+
+
+procedure differentiate(f) {
+    return match f with 
+        g + h   : (differentiate(g) + differentiate(h))
+        g * h   : (differentiate(g) * h + differentiate(h) * g)
+        g / h   : ((differentiate(g) * h - differentiate(h) * g) / (h^2))
+        exp(x)  : (exp(x))
+        sin(x)  : (cos(x))
+        cos(x)  : (-sin(x))
+        g(h)    : ((differentiate(g))(h) * differentiate(h))
+        x       : (1)
+        h(x)    : (NaN)
+        c       : (0);
+};
+
+differentiate(exp(sin(x + x)));
+diff(exp(sin(x + x)));
+
+restart;
+match exp(sin(x)) with
+    exp(a)  : { 
+                 write("Exponential of ", a, "\n");
+                 return a;
+              }
+    sin(x)  : {
+                 var foo;
+                 foo = 17;
+                 write("Sine of x\n");
+                 return foo;
+              }
+    default : {
+                 write("Something else\n");
+                 return true;
+              };
+
+match sin(x) with
+    exp(a)  : { 
+                 write("Exponential of ", a, "\n");
+                 return a;
+              }
+    sin(x)  : {
+                 var foo;
+                 foo = 17;
+                 write("Sine of x\n");
+                 return foo;
+              }
+    default : {
+                 write("Something else\n");
+                 return true;
+              };
+
+match acos(17 * pi * x) with
+    exp(a)  : { 
+                 write("Exponential of ", a, "\n");
+                 return a;
+              }
+    sin(x)  : {
+                 var foo;
+                 foo = 17;
+                 write("Sine of x\n");
+                 return foo;
+              }
+    default : {
+                 write("Something else\n");
+                 return true;
+              };
+restart;
+a = 5;
+b = 6;
+match exp(x + 3) with 
+      exp(a + b) : {
+                      print("Exponential");
+                      print("a = ", a);
+                      print("b = ", b);
+                   }
+      sin(x)     : {
+                      print("Sine of x");
+                   };
+print("a = ", a, ", b = ", b);
+
+a = 5;
+b = 6;
+match exp(x + 3) with 
+      exp(a + b) : {
+                      var a, c;
+                      a = 17;
+                      c = "Hallo";
+                      print("Exponential");
+                      print("a = ", a);
+                      print("b = ", b);
+                      print("c = ", c);
+                   }
+      sin(x)     : {
+                      print("Sine of x");
+                   };
+print("a = ", a, ", b = ", b);
+restart;
+match exp(sin(x)) + sin(x) with
+      exp(a) + a : {
+                      print("Winner");
+                      print("a = ", a);
+                   }
+      default    : {
+                      print("Loser");
+                   };
+
+match exp(sin(x)) + sin(3 * x) with
+      exp(a) + a : {
+                      print("Winner");
+                      print("a = ", a);
+                   }
+      default    : {
+                      print("Loser");
+                   };
+
+f = exp(x);
+match f with
+      sin(x) : (1)
+      cos(x) : (2)
+      exp(x) : (3)
+      default : (4);
+restart;
+match 5 + 1 with 
+    1 + 5 : ("One plus five")
+    6     : ("Six")
+    5 + 1 : ("Five plus one");
+
+match 6 with 
+    1 + 5 : ("One plus five")
+    6     : ("Six")
+    5 + 1 : ("Five plus one");
+  
+match 1 + 5 with 
+    1 + 5 : ("One plus five")
+    6     : ("Six")
+    5 + 1 : ("Five plus one");
+
+match [1; 5 + 1] with
+    [1; 1 + 5] : ("Interval from one to one plus five")
+    [1; 6]     : ("Interval from one to six")
+    [1; 5 + 1] : ("Interval from one to five plus one");
+
+match [1; 6] with
+    [1; 1 + 5] : ("Interval from one to one plus five")
+    [1; 6]     : ("Interval from one to six")
+    [1; 5 + 1] : ("Interval from one to five plus one");
+
+restart;
+match exp(x) with 
+    sin(x)    : ("Sine of x")
+    atan(x^2) : ("Arctangent of square of x")
+    default   : ("Something else")
+    exp(x)    : ("Exponential of x");
+
+match atan(x^2) with 
+    sin(x)          : ("Sine of x")
+    atan(default^2) : ("Arctangent of the square of something")
+    default         : ("Something else");
+
+match atan(exp(x)^2) with 
+    sin(x)          : ("Sine of x")
+    atan(default^2) : ("Arctangent of the square of something")
+    default         : ("Something else");
+
+match exp("Hello world") with 
+    exp(default)    : ("A miracle has happened")
+    default         : ("Something else");
+restart;
+procedure detector(obj) {
+    match obj with 
+        exp(a * x)            : { "Exponential of ", a, " times x"; }
+        [ a; 17 ]             : { "An interval from ", a, " to 17"; }
+        [| |]                 : { "Empty list"; }
+        [| a, b, 2, exp(c) |] : { "A list of ", a, ", ", b, ", 2 and ",
+                                  "exponential of ", c; }
+        a @ [| 2, 3 |]        : { "Concatenation of the list ", a, " and ",
+                                  "the list of 2 and 3"; }
+        a .: [| 9 ... |]      : { a, " prepended to all integers >= 9"; }
+        "Hello" @ w           : { "Hello concatenated with ", w; }
+        { .a = sin(b); 
+          .b = [c;d] }        : { "A structure containing as .a the ",
+                                  "sine of ", b,
+                                  " and as .b the range from ", c, 
+                                  " to ", d; }
+        perturb               : { "The special object perturb"; }
+        default               : { "Something else"; };
+};
+
+detector(exp(5 * x));
+detector([3.25;17]);
+detector([||]);
+detector([| sin(x), nearestint(x), 2, exp(5 * atan(x)) |]);
+detector([| sin(x), cos(5 * x), "foo", 2, 3 |]);
+detector([| DE, 9... |]);
+detector("Hello world");
+detector({ .a = sin(x); .c = "Hello"; .b = [9;10] });
+detector(perturb);
+detector([13;19]);
+restart;
+match exp([1;2]) with 
+      [a;b]              : {
+                              a,", ",b;
+                           }
+      default            : {
+                              "Something else";
+                           };
+
+match exp([1;2]) with 
+      exp([a;b])         : {
+                              a,", ", b;
+                           }
+      default            : {
+                              "Something else";
+                           };
+
+match exp([1;2]) with 
+  exp(a)  : {
+              "Exponential of ", a;
+            }
+  default : {
+              "Something else";
+            };
+restart;
+match [| exp(sin(x)), sin(x), 4, DE(x), 9... |] with
+      exp(a) .: (a .: (([||] :. 4) @ (b @ [| 13... |]))) : 
+                         { "a = ", a, ", b = ", b; };
+
+match [| 1, 2, 3, 4, D... |] with 
+      a @ [| 4, D...|] : (a);
+
+match [| 1, 2, 3, 4, D... |] with 
+      a @ [| D...|] : (a);
+
+match [| 1, 2, 3, 4... |] with 
+      a @ [| 3...|] : (a);
+
+match [| 1, 2, 3, 4... |] with 
+      a @ [| 4...|] : (a);
+
+match [| 1, 2, 3, 4... |] with 
+      a @ [| 17...|] : (a);
+
+match [| 1, 2, 3, 4... |] with 
+      a @ [| 17, 18, 19 |] : (a)
+      default              : ("Something else");
+restart;
+structure.f = exp(x);
+structure.dom = [1;2];
+structure.formats = [| DD, D, D, D |];
+match structure with 
+     { .f = sin(x);
+       .dom = [a;b]
+     }                    : { "Sine, ",a,", ",b; }
+     { .f = exp(c);
+       .dom = [a;b];
+       .point = default 
+     }                    : { "Exponential, ",a, ", ", b, ", ", c; }
+     { .f = exp(x);
+       .dom = [a;b]
+     }                    : { "Exponential, ",a, ", ", b; }
+     default              : { "Something else"; };
+
+structure.f = sin(x);
+match structure with 
+     { .f = sin(x);
+       .dom = [a;b]
+     }                    : { "Sine, ",a,", ",b; }
+     { .f = exp(c);
+       .dom = [a;b];
+       .point = default 
+     }                    : { "Exponential, ",a, ", ", b, ", ", c; }
+     { .f = exp(x);
+       .dom = [a;b]
+     }                    : { "Exponential, ",a, ", ", b; }
+     default              : { "Something else"; };
+
+structure.f = exp(x + 2);
+structure.point = 23;
+match structure with 
+     { .f = sin(x);
+       .dom = [a;b]
+     }                    : { "Sine, ",a,", ",b; }
+     { .f = exp(c);
+       .dom = [a;b];
+       .point = default 
+     }                    : { "Exponential, ",a, ", ", b, ", ", c; }
+     { .f = exp(x);
+       .dom = [a;b]
+     }                    : { "Exponential, ",a, ", ", b; }
+     default              : { "Something else"; };
+restart;
+
