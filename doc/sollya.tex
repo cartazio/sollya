@@ -837,13 +837,13 @@ Basically, pattern matching supports relies on one \sollya construct:
 {\it patternN} : ({\it return-exprN}) }
 \end{minipage}
 \end{center} 
-That construct has the following semantic: try to match the given
+That construct has the following semantic: try to match the
 expression {\it expr} with the patterns {\it pattern1} through {\it
-  patternN} that are given, proceeding in natural order. If a pattern
+  patternN}, proceeding in natural order. If a pattern
 {\it patternI} is found that matches, evaluate the whole \key{match
   \dots~with} construct to the return expression {\it return-exprI}
 associated with the matching pattern {\it patternI}. If no matching
-pattern is found, indicate an error warning and return \key{error}.
+pattern is found, display an error warning and return \key{error}.
 
 Matching a pattern means the following: 
 \begin{itemize}
@@ -889,23 +889,23 @@ statement-block in a \key{match \dots~with} construct, the construct
 evaluates to the special value \key{void} if that pattern matches. 
 
 In order to well understand pattern matching in \sollya, it is
-important to realize the meaning of programming-language-level
-variables in patterns. This meaning is different from the one usually
-found for variables. In a pattern, variables are never evaluated to
-whatever they might have set before the pattern is executed. In
-contrast, all variables in patterns are new, free variables that will
-freshly be bound to subexpressions of the matching expression. If a
-variable of the same name exists already, it will be shadowed during
-the evaluation of the statement block and return expression that get
-executed for the matching expression. This type of semantic implies
-that patterns can never be computed at run-time, they must always be
-hard-coded beforehand. This is necessary to make pattern matching
+important to realize the meaning of variables in patterns. This
+meaning is different from the one usually found for variables. In a
+pattern, variables are never evaluated to whatever they might have set
+before the pattern is executed. In contrast, all variables in patterns
+are new, free variables that will freshly be bound to subexpressions
+of the matching expression. If a variable of the same name already
+exists, it will be shadowed during the evaluation of the statement
+block and the return expression corresponding to the matching
+expression. This type of semantic implies that patterns can never be
+computed at run-time, they must always be hard-coded
+beforehand. However this is necessary to make pattern matching
 context-free.
 
 As a matter of course, all variables figuring in the expression {\it
-  expr} to be matched (indicated as \key{match {\it expr} with}) are
-evaluated before pattern matching is attempted. In fact, {\it expr}
-is a usual \sollya expression, not a pattern.
+  expr} to be matched are evaluated before pattern matching is
+attempted. In fact, {\it expr} is a usual \sollya expression, not a
+pattern.
 
 In \sollya, the use of variables in patterns does not need to be
 linear. This means the same variable might appear twice or more in a
@@ -924,17 +924,18 @@ Pattern matching is meant to be a means to decompose expressions
 structurally. For this reason and in an analogous way to variables, no
 evaluation is performed at all on (sub-)expressions that form constant
 functions. As a consequence, patterns only match constant expressions
-only if they are structurally the same. For example $5 + 1$ only
+only if they are structurally identical. For example $5 + 1$ only
 matches $5 + 1$ and not $1 + 5$, $3 + 3$ or $6$.
 
-This general rule on constant expression admits one exception.
+This general rule on constant expressions admits one exception.
 Intervals in \sollya can be defined using constant expressions as
-bound but these bounds are immediately evaluated to floating-point
-constants. In order to permit pattern matching on intervals, constant
-expressions given as bounds of intervals that form patterns are
-evaluated before pattern matching. However, in order not conflict with
-the rules of no evaluation of variables, these constant expressions as
-bounds of intervals in patterns must not contain free variables.
+bounds. These bounds are immediately evaluated to floating-point
+constants, though. In order to permit pattern matching on intervals,
+constant expressions given as bounds of intervals that form patterns
+are evaluated before pattern matching. However, in order not conflict
+with the rules of no evaluation of variables, these constant
+expressions as bounds of intervals in patterns must not contain free
+variables.
 
 \input{introExample54}
 
@@ -969,15 +970,18 @@ With respect to pattern matching on lists or character sequences
 defined using the \key{@} operator, the following is to be mentionned:
 \begin{itemize}
 \item Patterns like \key{a @ b} are not allowed as they would need to
-  perform an ambigous cut of the list or character sequence to be
+  perform an ambiguous cut of the list or character sequence to be
   matched. This restriction is maintained even if the variables (here
   \key{a} and \key{b}) are constrained by other occurrences in the
-  pattern (for example in a list) that would make the cut unambigous.
+  pattern (for example in a list) which would make the cut
+  unambiguous.
 \item Recursive use of the \key{@} operator (even mixed with the
   operators \key{.:} and \key{:.}) is possible under the condition
   that there must not exist any other parenthezation of the term in
   concatenations (\key{@}) such that the rule of one single variable
-  for \key{@} above get violated.
+  for \key{@} above gets violated. For instance, \key{( [| 1 |] @ a) @
+    (b @ [| 4 |])} is not possible as it can be re-parenthesized \key{
+    [| 1 |] @ (a @ b) @ [| 4 |]}, which exhibits the ambiguous case.
 \item For lists that are end-elliptic, i.e. prolongated to infinity,
   the \key{@} operator does not work for cases that would imply the
   cut of a finite list at the end of an infinite list. It does however
@@ -995,13 +999,14 @@ i.e. using the syntax \key{ \{ .a = {\it exprA}, .b = {\it exprB},
 structure {\it s} iff that structure {\it s} contains at least all the
 elements (like \key{.a}, \key{.b} etc.) of the structure pattern {\it
   sp} and iff each of the elements of the structure {\it s} matches
-the pattern in the corresponding element of the structure pattern. The
-user should be aware that fact that the structure to be matched is
-only supposed to have at least the elements of the pattern but that it
-may contain more elements is a particular \sollya feature. For
-instance with pattern matching, it is hence possible to ensure that
-access to particular elements will be possible in a particular code
-segment. The following example is meant to clarify this point:
+the pattern in the corresponding element of the structure pattern {\it
+  sp}. The user should be aware that fact that the structure to be
+matched is only supposed to have at least the elements of the pattern
+but that it may contain more elements is a particular \sollya
+feature. For instance with pattern matching, it is hence possible to
+ensure that access to particular elements will be possible in a
+particular code segment. The following example is meant to clarify
+this point:
 
 \input{introExample59}
 
