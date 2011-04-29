@@ -825,7 +825,7 @@ or other compiled-language mechanisms is needed here anymore.
 <p>
 Basically, pattern matching supports relies on one <span class="sollya">Sollya</span> construct:
 <div style="margin-left: 50px;">
-  <code class="key">match <em>expr</em>with<br>
+  <code class="key">match <em>expr</em> with<br>
   <em>pattern1</em> : (<em>return-expr1</em>)<br>
   <em>pattern2</em> : (<em>return-expr2</em>)<br>
   ... <br>
@@ -836,7 +836,7 @@ Basically, pattern matching supports relies on one <span class="sollya">Sollya</
 expression <em>expr</em> with the patterns <em>pattern1</em> through <em>patternN</em>,
  proceeding in natural order. If a pattern
 <em>patternI</em> is found that matches, evaluate the whole
-<code class="key">match ...&nbsp;with</code> construct to the return expression <em>return-exprI</em>
+<code class="key">match&nbsp;...&nbsp;with</code> construct to the return expression <em>return-exprI</em>
 associated with the matching pattern <em>patternI</em>. If no matching
 pattern is found, display an error warning and return <code class="key">error</code>.
 <p>
@@ -845,20 +845,20 @@ Matching a pattern means the following:
   <li> If a pattern does not contain any programming-language-level
     variables (different from the free mathematical variable), it
     matches expressions that are syntactically equal to itself. For
-    instance, the pattern <code class="key">exp(sin(3 * x))</code> will match the
-    expression <code class="key">exp(sin(3 * x))</code>.
+    instance, the pattern <code class="key">exp(sin(3&nbsp;*&nbsp;x))</code> will match the
+    expression <code class="key">exp(sin(3&nbsp;*&nbsp;x))</code>.
   </li><li> If a pattern does contain variables, it matches an expression
     <em>expr</em> if these variables can be bound to subexpressions of
     <em>expr</em> such that once the pattern is evaluated with that
     variable binding, it becomes syntactically equal to the expression
-    <em>expr</em>. For instance, the pattern <code class="key">exp(sin(a * x))</code> will
-    match the expression <code class="key">exp(sin(3 * x))</code> as it is possible to
+    <em>expr</em>. For instance, the pattern <code class="key">exp(sin(a&nbsp;*&nbsp;x))</code> will
+    match the expression <code class="key">exp(sin(3&nbsp;*&nbsp;x))</code> as it is possible to
     bind <code class="key">a</code> to <code class="key">3</code> such that <code class="key">exp(sin(a&nbsp;*&nbsp;x))</code> evaluates
     to <code class="key">exp(sin(3&nbsp;*&nbsp;x))</code>.
 </li></ul>
 <p>
 If a pattern <em>patternI</em> with variables is matched in a
-<code class="key">match ...&nbsp;with</code> construct, the variables in the pattern stay bound
+<code class="key">match&nbsp;...&nbsp;with</code> construct, the variables in the pattern stay bound
 during the evaluation of the corresponding return expression <em>return-exprI</em>.
  This allows subexpressions to be extracted from
 expressions and/or recursively handled as needed.
@@ -880,7 +880,7 @@ example:
 <?php include("introExample51.php"); ?>
 <p>
 In the case when no return statement is indicated for a
-statement-block in a <code class="key">match ...&nbsp;with</code> construct, the construct
+statement-block in a <code class="key">match&nbsp;...&nbsp;with</code> construct, the construct
 evaluates to the special value <code class="key">void</code> if that pattern matches. 
 <p>
 In order to well understand pattern matching in <span class="sollya">Sollya</span>, it is
@@ -919,8 +919,8 @@ Pattern matching is meant to be a means to decompose expressions
 structurally. For this reason and in an analogous way to variables, no
 evaluation is performed at all on (sub-)expressions that form constant
 functions. As a consequence, patterns only match constant expressions
-only if they are structurally identical. For example 5+1 only
-matches 5+1 and not 1+5, 3+3 or 6.
+only if they are structurally identical. For example <code class="key">5+1</code> only
+matches <code class="key">5+1</code> and not <code class="key">1+5</code>, <code class="key">3+3</code> nor <code class="key">6</code>.
 <p>
 This general rule on constant expressions admits one exception.
 Intervals in <span class="sollya">Sollya</span> can be defined using constant expressions as
@@ -990,8 +990,7 @@ defined using the <code class="key">@</code> operator, the following is to be me
 <p>
 As mentionned above, pattern matching on <span class="sollya">Sollya</span> structures is
 possible. Patterns for such a match are given in a literately,
-i.e. using the syntax <code class="key">{ .a = <em>exprA</em>, .b =  <em>exprB</em>,
-  ...&nbsp;}</code>. A structure pattern <em>sp</em> will be matched by a
+i.e. using the syntax <code class="key">{ .a&nbsp;=&nbsp;<em>exprA</em>, .b&nbsp;=&nbsp;<em>exprB</em>,&nbsp;...&nbsp;}</code>. A structure pattern <em>sp</em> will be matched by a
 structure <em>s</em> iff that structure <em>s</em> contains at least all the
 elements (like <code class="key">.a</code>, <code class="key">.b</code> etc.) of the structure pattern
 <em>sp</em> and iff each of the elements of the structure <em>s</em> matches
