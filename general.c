@@ -1,8 +1,8 @@
 /*
 
-Copyright 2007-2011 by 
+Copyright 2007-2011 by
 
-Laboratoire de l'Informatique du Parallelisme, 
+Laboratoire de l'Informatique du Parallelisme,
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
 
 Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
@@ -26,16 +26,16 @@ it offers a certified infinity norm, an automatic polynomial
 implementer and a fast Remez algorithm.
 
 This software is governed by the CeCILL-C license under French law and
-abiding by the rules of distribution of free software.  You can  use, 
+abiding by the rules of distribution of free software.  You can  use,
 modify and/ or redistribute the software under the terms of the CeCILL-C
 license as circulated by CEA, CNRS and INRIA at the following URL
-"http://www.cecill.info". 
+"http://www.cecill.info".
 
 As a counterpart to the access to the source code and  rights to copy,
 modify and redistribute granted by the license, users are provided only
 with a limited warranty  and the software's author,  the holder of the
 economic rights,  and the successive licensors  have only  limited
-liability. 
+liability.
 
 In this respect, the user's attention is drawn to the risks associated
 with loading,  using,  modifying and/or developing or reproducing the
@@ -44,9 +44,9 @@ that may mean  that it is complicated to manipulate,  and  that  also
 therefore means  that it is reserved for developers  and  experienced
 professionals having in-depth computer knowledge. Users are therefore
 encouraged to load and test the software's suitability as regards their
-requirements in conditions enabling the security of their systems and/or 
-data to be ensured and,  more generally, to use and operate it in the 
-same conditions as regards security. 
+requirements in conditions enabling the security of their systems and/or
+data to be ensured and,  more generally, to use and operate it in the
+same conditions as regards security.
 
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
@@ -87,6 +87,7 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 /* STATE OF THE TOOL */
 
 int oldAutoPrint = 0;
+int oldVoidPrint = 0;
 int printMode = PRINT_MODE_LEGACY;
 FILE *warnFile = NULL;
 char *variablename = NULL;
@@ -115,6 +116,8 @@ chain *readStackTemp = NULL;
 chain *readStack2 = NULL;
 void *scanner = NULL;
 int promptToBePrinted = 0;
+int lastWasSyntaxError = 0;
+int lastCorrectlyExecuted = 0;
 int helpNotFinished = 0;
 int noColor = 0;
 
@@ -172,7 +175,7 @@ extern void yylex_destroy(void *);
 extern int yylex_init(void **);
 extern int yylex(void *);
 extern void yyset_in(FILE *, void *);
-
+extern int parserCheckEof();
 
 #define BACKTRACELENGTH 100
 
@@ -188,7 +191,7 @@ void makeToolDie() {
     inputFileOpened = 0;
   }
 
-  exit(1);
+  exit(2);
 }
 
 void considerDyingOnError() {
@@ -576,6 +579,7 @@ void carriageReturnLexed() {
 void newTokenLexed() {
   helpNotFinished = 0;
   promptToBePrinted = 0;
+  lastCorrectlyExecuted = 0;
 }
 
 // Precondition: fd can only be one of stdout and stderr
@@ -834,6 +838,7 @@ void signalHandler(int i) {
 
 void recoverFromError(void) {
   displayColor = -1; normalMode();
+  fflush(NULL);
   if (exitInsteadOfRecover) {
     sollyaFprintf(stderr,"Error: the recover environment has not been initialized. Exiting.\n");
     exit(1);
@@ -1160,6 +1165,7 @@ int general(int argc, char *argv[]) {
   int doNotModifyStackSize;
   int repeatSetRLimit;
   int lastWasError;
+  int finishedBeforeParsing;
 
   doNotModifyStackSize = 0;
   inputFileOpened = 0;
@@ -1191,7 +1197,11 @@ int general(int argc, char *argv[]) {
       sollyaPrintf("--warnonstderr : print warning messages on error output instead on the standard output\n");
       sollyaPrintf("\nFor help on %s commands type \"help;\" on the %s prompt\n",PACKAGE_NAME,PACKAGE_NAME);
       sollyaPrintf("More documentation on %s is available on the %s website http://sollya.gforge.inria.fr/.\nFor bug reports send an email to %s.\n",PACKAGE_NAME,PACKAGE_NAME,PACKAGE_BUGREPORT);
-      sollyaPrintf("\n%s is Copyright 2006-2011 by\n\n    Laboratoire de l'Informatique du Parallelisme,\n    UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668, Lyon, France,\n\n    LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2), Nancy, France,\n\n    Laboratoire d'Informatique de Paris 6, equipe PEQUAN,\n    UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France,\n\nand by\n\n    INRIA Sophia-Antipolis Mediterranee, APICS Team,\n    Sophia-Antipolis, France.\n\nAll rights reserved.\n\nContributors are S. Chevillard, N. Jourdan, M. Joldes and Ch. Lauter.\n\nThis software is governed by the CeCILL-C license under French law and\nabiding by the rules of distribution of free software.  You can  use,\nmodify and/ or redistribute the software under the terms of the CeCILL-C\nlicense as circulated by CEA, CNRS and INRIA at the following URL\n\"http://www.cecill.info\".\n\nThis program is distributed WITHOUT ANY WARRANTY; without even the\nimplied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\nThis build of %s is based on GMP %s, MPFR %s and MPFI %s.\n\n",PACKAGE_STRING,PACKAGE_STRING,gmp_version,mpfr_get_version(),sollya_mpfi_get_version());
+      sollyaPrintf("\n%s is Copyright 2006-2011 by\n\n    Laboratoire de l'Informatique du Parallelisme,\n    UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668, Lyon, France,\n\n    LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2), Nancy, France,\n\n    Laboratoire d'Informatique de Paris 6, equipe PEQUAN,\n    UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France,\n\nand by\n\n    INRIA Sophia-Antipolis Mediterranee, APICS Team,\n    Sophia-Antipolis, France.\n\nAll rights reserved.\n\nContributors are S. Chevillard, N. Jourdan, M. Joldes and Ch. Lauter.\n\nThis software is governed by the CeCILL-C license under French law and\nabiding by the rules of distribution of free software.  You can  use,\nmodify and/ or redistribute the software under the terms of the CeCILL-C\nlicense as circulated by CEA, CNRS and INRIA at the following URL\n\"http://www.cecill.info\".\n\nThis program is distributed WITHOUT ANY WARRANTY; without even the\nimplied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\nThis build of %s is based on GMP %s, MPFR %s and MPFI %s.\n",PACKAGE_STRING,PACKAGE_STRING,gmp_version,mpfr_get_version(),sollya_mpfi_get_version());
+#if defined(HAVE_FPLLL_VERSION_STRING)
+      sollyaPrintf("%s uses FPLLL as: \"%s\"\n",PACKAGE_STRING,HAVE_FPLLL_VERSION_STRING);
+#endif
+      sollyaPrintf("\n");
       return 1;
     } else 
       if (strcmp(argv[i],"--nocolor") == 0) noColor = 1; else
@@ -1299,9 +1309,12 @@ int general(int argc, char *argv[]) {
   helpNotFinished = 0;
   printPrompt();
   lastWasError = 0;
+  lastCorrectlyExecuted = 0;
   while (1) {
     executeAbort = 0;
     parsedThing = NULL;
+    lastWasSyntaxError = 0;
+    finishedBeforeParsing = parserCheckEof();
     parseAbort = yyparse(scanner);
     lastWasError = 0;
     if (parsedThing != NULL) {
@@ -1327,6 +1340,7 @@ int general(int argc, char *argv[]) {
         }
 	pushTimeCounter();
 	executeAbort = executeCommand(parsedThing);
+	lastCorrectlyExecuted = 1;
 	popTimeCounter("full execution of the last parse chunk");
 	if((!timecounting) && (timeStack!=NULL)) {
 	  freeCounter();
@@ -1384,7 +1398,15 @@ int general(int argc, char *argv[]) {
     warnFile = NULL;
   }
 
-  if (lastWasError) return 1; else return 0;
+  if (lastWasError) {
+    if (lastCorrectlyExecuted) {
+      return 3;
+    } else {
+      return 4;
+    }
+  } else {
+    return 0;
+  }
 }
 
 #undef malloc

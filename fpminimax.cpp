@@ -1,15 +1,18 @@
 /*
 
-Copyright 2008-2010 by 
+Copyright 2008-2011 by
 
-Laboratoire de l'Informatique du Parallelisme, 
-UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
+Laboratoire de l'Informatique du Parallelisme,
+UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
+
+LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2),
 
 and by
 
-LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2).
+Centre de recherche INRIA Sophia-Antipolis Mediterranee, equipe APICS,
+Sophia Antipolis, France.
 
-Contributors Ch. Lauter, S. Chevillard, N. Jourdan
+Contributors Ch. Lauter, S. Chevillard
 
 christoph.lauter@ens-lyon.org
 sylvain.chevillard@ens-lyon.org
@@ -22,16 +25,16 @@ it offers a certified infinity norm, an automatic polynomial
 implementer and a fast Remez algorithm.
 
 This software is governed by the CeCILL-C license under French law and
-abiding by the rules of distribution of free software.  You can  use, 
+abiding by the rules of distribution of free software.  You can  use,
 modify and/ or redistribute the software under the terms of the CeCILL-C
 license as circulated by CEA, CNRS and INRIA at the following URL
-"http://www.cecill.info". 
+"http://www.cecill.info".
 
 As a counterpart to the access to the source code and  rights to copy,
 modify and redistribute granted by the license, users are provided only
 with a limited warranty  and the software's author,  the holder of the
 economic rights,  and the successive licensors  have only  limited
-liability. 
+liability.
 
 In this respect, the user's attention is drawn to the risks associated
 with loading,  using,  modifying and/or developing or reproducing the
@@ -40,9 +43,9 @@ that may mean  that it is complicated to manipulate,  and  that  also
 herefore means  that it is reserved for developers  and  experienced
 professionals having in-depth computer knowledge. Users are therefore
 encouraged to load and test the software's suitability as regards their
-requirements in conditions enabling the security of their systems and/or 
-data to be ensured and,  more generally, to use and operate it in the 
-same conditions as regards security. 
+requirements in conditions enabling the security of their systems and/or
+data to be ensured and,  more generally, to use and operate it in the
+same conditions as regards security.
 
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
@@ -187,7 +190,7 @@ int exact_system_solve(mpq_t *res, mpq_t *M, mpq_t *b, int p, int n) {
       }
       curri = curri->next;
     }
-    
+
     i_list = removeInt(i_list, i0);
     j_list = removeInt(j_list, j0);
 
@@ -290,7 +293,7 @@ chain *ChebychevPoints(mpfr_t a, mpfr_t b, int n) {
 
   mpfr_sub(u, b, a, GMP_RNDN);
   mpfr_div_2ui(u, u, 1, GMP_RNDN);
-  
+
   for(i=1; i<=n; i++) {
     mpfrptr = (mpfr_t *)safeMalloc(sizeof(mpfr_t));
     mpfr_init2(*mpfrptr, tools_precision);
@@ -320,7 +323,7 @@ chain *computeExponents(chain *formats, chain *monomials, node *poly) {
   mpfr_t tempMpfr;
   int *intptr;
   chain *tempChain;
-  
+
   mpfr_init2(tempMpfr, tools_precision);
 
   curr1 = monomials;
@@ -339,11 +342,11 @@ chain *computeExponents(chain *formats, chain *monomials, node *poly) {
     else *intptr = *(int *)(curr2->value) - mpfr_get_exp(tempMpfr);
     res = addElement(res, intptr);
     freeThing(tempTree);
-    
+
     curr1 = curr1->next;
     curr2 = curr2->next;
   }
-  
+
   tempChain = copyChain(res, copyIntPtrOnVoid);
   freeChain(res, freeIntPtr);
   res = tempChain;
@@ -357,6 +360,7 @@ int fitInFormat(chain *formats, chain *monomials, node *poly) {
   node *tempTree;
   mpfr_t tempMpfr;
   mpfr_t val;
+  int prec;
   int test=1;
   mpfr_init2(tempMpfr, tools_precision);
 
@@ -367,16 +371,26 @@ int fitInFormat(chain *formats, chain *monomials, node *poly) {
     evaluate(tempMpfr, tempTree, NULL, tools_precision);
 
     if(!mpfr_zero_p(tempMpfr)) {
-      mpfr_init2(val, *(int *)(curr2->value));
-      if (mpfr_set(val, tempMpfr, GMP_RNDN)!=0) test=0;
-      mpfr_clear(val);
+      prec = *(int *)(curr2->value);
+      if (prec==1) {
+	mpfr_init2(val, 12);
+	mpfr_set_ui(val, 1, GMP_RNDN);
+	mpfr_mul_2si(val, val, mpfr_get_exp(tempMpfr)-1, GMP_RNDN);
+	if ( !mpfr_equal_p(val, tempMpfr) ) test=0;
+	mpfr_clear(val);
+      }
+      else {
+	mpfr_init2(val, prec);
+	if (mpfr_set(val, tempMpfr, GMP_RNDN)!=0) test=0;
+	mpfr_clear(val);
+      }
     }
     freeThing(tempTree);
-    
+
     curr1 = curr1->next;
     curr2 = curr2->next;
   }
-  
+
   mpfr_clear(tempMpfr);
   return test;
 }
@@ -404,29 +418,32 @@ node *FPminimax(node *f,
   chain *correctedFormats, *newFormats;
   chain *curr;
   int test, count;
+  mpfr_t zero, infinity;
 
   if (absrel== ABSOLUTESYM) {
     tempTree = makeSub(copyTree(f),copyTree(consPart));
     g = simplifyTreeErrorfree(tempTree);
     free_memory(tempTree);
-    
+
     w = makeConstantDouble(1);
   }
   else {
     tempTree = makeSub(makeConstantDouble(1), makeDiv(copyTree(consPart),copyTree(f)));
-    g = simplifyTreeErrorfree(tempTree); 
+    g = simplifyTreeErrorfree(tempTree);
     free_memory(tempTree);
 
     tempTree = makeDiv(makeConstantDouble(1), copyTree(f));
-    w = simplifyTreeErrorfree(tempTree); 
+    w = simplifyTreeErrorfree(tempTree);
     free_memory(tempTree);
   }
 
+  mpfr_init2(zero, 53); mpfr_set_ui(zero, 0, GMP_RNDN);
+  mpfr_init2(infinity, 53); mpfr_set_inf(infinity, 1);
   pstar = NULL;
   if( (fp==FLOATING) || (points==NULL) ) {
     if (minimax == NULL) {
       pushTimeCounter();
-      pstar = remez(g,w, monomials, a, b, NULL, tools_precision);
+      pstar = remez(g,w, monomials, a, b, NULL, zero, infinity, tools_precision);
       popTimeCounter((char *)"FPminimax: computing minimax approximation");
     }
     else pstar = copyTree(minimax);
@@ -447,29 +464,29 @@ node *FPminimax(node *f,
     if(lengthChain(pointslist)<lengthChain(monomials)) {
       printMessage(2, "Information: FPminimax: the minimax does not provide enough points.\n");
       printMessage(2, "Switching to Chebyshev points.\n");
-      
+
       freeChain(pointslist, freeMpfrPtr);
       pointslist = ChebychevPoints(a,b,lengthChain(monomials));
       free_memory(g);
       free_memory(w);
-      
+
       if (absrel== ABSOLUTESYM) {
 	g = copyTree(pstar);
 	w = makeConstantDouble(1);
       }
       else {
 	tempTree = makeSub(makeConstantDouble(1),
-			   makeDiv(copyTree(consPart), 
+			   makeDiv(copyTree(consPart),
 				   makeAdd(copyTree(pstar),copyTree(consPart))
 				   )
 			   );
-	g = simplifyTreeErrorfree(tempTree); 
+	g = simplifyTreeErrorfree(tempTree);
 	free_memory(tempTree);
-	
+
 	tempTree = makeDiv(makeConstantDouble(1),
 			   makeAdd(copyTree(pstar),copyTree(consPart))
 			   );
-	w = simplifyTreeErrorfree(tempTree); 
+	w = simplifyTreeErrorfree(tempTree);
 	free_memory(tempTree);
       }
     }
@@ -495,7 +512,7 @@ node *FPminimax(node *f,
 
   else {   // Floating-point coefficients: we must compute good exponents
     correctedFormats = computeExponents(formats, monomials, pstar);
- 
+
     test=1; count=0;
     while(test) {
       if(verbosity>=3) {
@@ -510,7 +527,7 @@ node *FPminimax(node *f,
 	sollyaPrintf("|]\n");
 	restoreMode();
       }
-    
+
       res = FPminimaxMain(g, monomials, correctedFormats, pointslist, w);
       count++;
 
@@ -521,7 +538,11 @@ node *FPminimax(node *f,
 	else {
 	  if( (count > MAXLOOP) && (fitInFormat(formats, monomials, res)) ) test=0;
 	  else {
-	    if( (count > 2*MAXLOOP) ) { res=NULL; test=0;}
+	    if( (count > 2*MAXLOOP) ) {
+	      res=NULL;
+	      test=0;
+	      printMessage(1,"Warning: fpminimax did not converge.\n");
+	    }
 	    else {
 	      free_memory(res);
 	      freeChain(correctedFormats, freeIntPtr);
@@ -535,7 +556,7 @@ node *FPminimax(node *f,
     if (res!=NULL) freeChain(newFormats, freeIntPtr);
   }
 
-    
+
   free_memory(g);
   free_memory(w);
   if(pstar!=NULL) free_memory(pstar);
@@ -547,7 +568,9 @@ node *FPminimax(node *f,
     res = simplifyTreeErrorfree(tempTree);
     free_memory(tempTree);
   }
-  
+
+  mpfr_clear(zero);
+  mpfr_clear(infinity);
   return res;
 }
 
@@ -562,7 +585,7 @@ node *FPminimaxMain(node *f,
   int nbpoints = lengthChain(points);
   node *res;
   mpfr_t zero_mpfr, var1, var2, var3, max;
-  node * temp_tree, *temp_tree2, *temp_tree3; 
+  node * temp_tree, *temp_tree2, *temp_tree3;
   mpfr_t *ptr;
   mpfr_t *M;
   chain *curr;

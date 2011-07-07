@@ -27,8 +27,8 @@
 
 
 #DESCRIPTION 
-$COMMAND uses a heuristic (but practically efficient) method to find a good
-polynomial approximation of a function <f> on an interval <range>. It 
+$COMMAND uses a heuristic (but practically efficient) method to find a
+good polynomial approximation of a function <f> on an interval <range>. It
 implements the method published in the article:§§ §\\§§
 Efficient polynomial §§L^\infty - approximations§$L^\infty$-approximations\\§§ 
 Nicolas Brisebarre and Sylvain Chevillard§§ §\\§§
@@ -44,8 +44,8 @@ command has its coefficients that fit the formats indications. For
 instance, if formats[0] is 35, the coefficient of degree 0 of the 
 polynomial will fit a floating-point format of 35 bits. If formats[1] 
 is D, the coefficient of degree 1 will be representable by a floating-point
-number with a precision of 53 bits (which is not necessarily an IEEE 754 double
-precision number. See the remark below), etc.
+number with a precision of 53 bits (which is not necessarily an IEEE 754
+double precision number. See the remark below), etc.
 
 #DESCRIPTION
 The second argument may be either an integer or a list of integers
@@ -60,17 +60,19 @@ searched as a floating-point number with precision 161, the coefficient of
 degree 2 is searched as a number of precision 107, and so on.
 
 #DESCRIPTION
-The list of formats may contain either integers or format types ($DOUBLE,
-$DOUBLEDOUBLE, $TRIPLEDOUBLE and $DOUBLEEXTENDED). The list may be too large
-or even infinite. Only the first indications will be considered. For 
-instance, for a degree §§n§$n$§§ polynomial, §§formats[n+1]§$\mathrm{formats}[n+1]$§§ and above will
-be discarded. This lets one use elliptical indications for the last
-coefficients.
+The list of formats may contain either integers or format types
+($HALFPRECISION, $SINGLE, $DOUBLE, $DOUBLEDOUBLE, $TRIPLEDOUBLE, $DOUBLEEXTENDED
+and $QUAD). The list may be too large or even infinite. Only the first
+indications will be considered. For instance, for a degree §§n§$n$§§ polynomial,
+§§formats[n+1]§$\mathrm{formats}[n+1]$§§ and above will be discarded. This lets one use elliptical
+indications for the last coefficients.
 
 #DESCRIPTION
 The floating-point coefficients considered by $COMMAND do not have an
-exponent range. In particular, in the format list, $DOUBLE or 53 does not
-imply that the corresponding coefficient is an IEEE-754 double.
+exponent range. In particular, in the format list, $DOUBLE is an exact synonym
+for 53. Currently, $COMMAND only ensures that the corresponding coefficient
+has at most 53 bits of mantissa. It does not imply that it is an
+IEEE-754 double.
 
 #DESCRIPTION
 By default, the list of formats is interpreted as a list of floating-point
@@ -88,9 +90,10 @@ In this case, $COMMAND will search for a polynomial of degree 2 with a
 constant coefficient of the form §§m/2^25§$m/2^{25}$§§ where §§m§$m$§§ is an
 integer. In other words, it is a fixed-point number with 25 bits after
 the point. Note that even with argument $FIXED, the formats list is 
-allowed to contain $DOUBLE, $DOUBLEDOUBLE or $TRIPLEDOUBLE. In this this
-case, it is just a synonym for 53, 107 or 161. This is deprecated and may
-change in the future.
+allowed to contain $HALFPRECISION, $SINGLE, $DOUBLE, $DOUBLEEXTENDED, 
+$DOUBLEDOUBLE, $QUAD or $TRIPLEDOUBLE. In this this case, it is just 
+a synonym for 11, 24, 53, 64, 107, 113 or 161. This is deprecated and 
+may change in the future.
 
 #DESCRIPTION
 The fourth argument may be a range or a list. Lists are for advanced users
@@ -181,11 +184,13 @@ print("Error of P3:    ", dirtyinfnorm(f-P3, [-1b-7; 1b-7]));
 #SEEALSO $FIXED
 #SEEALSO $FLOATING
 #SEEALSO $DEFAULT
+#SEEALSO $HALFPRECISION
 #SEEALSO $SINGLE
 #SEEALSO $DOUBLE
-#SEEALSO $DOUBLEDOUBLE
-#SEEALSO $TRIPLEDOUBLE
 #SEEALSO $DOUBLEEXTENDED
+#SEEALSO $DOUBLEDOUBLE
+#SEEALSO $QUAD
+#SEEALSO $TRIPLEDOUBLE
 #SEEALSO $IMPLEMENTPOLY
 #SEEALSO $COEFF
 #SEEALSO $DEGREE

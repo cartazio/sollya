@@ -142,6 +142,7 @@ PREC            "prec"
 POINTS          "points"
 EXCLAMATION     "!"
 DOUBLECOLON     "::"
+COLON           ":"
 DOTCOLON        ".:"
 COLONDOT        ":."
 ASSIGNEQUAL     ":="
@@ -161,6 +162,8 @@ DIAM            "diam"
 
 DOUBLELONG       "double"
 SINGLELONG       "single"
+QUADLONG         "quad"
+HALFPRECISIONLONG "halfprecision"
 DOUBLEDOUBLELONG "doubledouble"
 TRIPLEDOUBLELONG "tripledouble"
 DOUBLEEXTENDEDLONG "doubleextended"
@@ -168,6 +171,8 @@ DOUBLEEXTENDEDLONG "doubleextended"
 
 DOUBLESHORT      "D"
 SINGLESHORT      "SG"
+QUADSHORT        "QD"
+HALFPRECISIONSHORT "HP"
 DOUBLEDOUBLESHORT "DD"
 TRIPLEDOUBLESHORT "TD"
 DOUBLEEXTENDEDSHORT "DE"
@@ -175,6 +180,8 @@ DOUBLEEXTENDEDSHORT "DE"
 
 DOUBLE          ({DOUBLELONG}|{DOUBLESHORT})
 SINGLE          ({SINGLELONG}|{SINGLESHORT})
+QUAD            ({QUADLONG}|{QUADSHORT})
+HALFPRECISION   ({HALFPRECISIONLONG}|{HALFPRECISIONSHORT})
 DOUBLEDOUBLE    ({DOUBLEDOUBLELONG}|{DOUBLEDOUBLESHORT})
 TRIPLEDOUBLE    ({TRIPLEDOUBLELONG}|{TRIPLEDOUBLESHORT})
 DOUBLEEXTENDED  ({DOUBLEEXTENDEDLONG}|{DOUBLEEXTENDEDSHORT})
@@ -275,6 +282,7 @@ POSTSCRIPTFILE  "postscriptfile"
 PRINTEXPANSION  "printexpansion"
 
 BASHEXECUTE     "bashexecute"
+BASHEVALUATE    "bashevaluate"
 EXTERNALPLOT    "externalplot"
 PERTURB         "perturb"
 
@@ -359,6 +367,9 @@ WHILEDEF        "while"
 TRUE            "true"
 FALSE           "false"
 DEFAULT         "default"
+
+MATCH           "match"
+WITH            "with"
 
 RENAME          "rename"
 
@@ -520,6 +531,7 @@ NOP             "nop"
 {NOP}	         			    {  return NOPTOKEN; }
 {AT}					    {  return ATTOKEN; }
 {DOUBLECOLON}				    {  return DOUBLECOLONTOKEN; }
+{COLON}  				    {  return COLONTOKEN; }
 {DOTCOLON}				    {  return DOTCOLONTOKEN; }
 {COLONDOT}				    {  return COLONDOTTOKEN; }
 
@@ -554,6 +566,8 @@ NOP             "nop"
 {EXPM1}           			    {  return EXPM1TOKEN; }
 {DOUBLE}          			    {  return DOUBLETOKEN; }
 {SINGLE}          			    {  return SINGLETOKEN; }
+{QUAD}          			    {  return QUADTOKEN; }
+{HALFPRECISION}          		    {  return HALFPRECISIONTOKEN; }
 {DOUBLEDOUBLE}				    {  return DOUBLEDOUBLETOKEN; }
 {TRIPLEDOUBLE}    			    {  return TRIPLEDOUBLETOKEN; }
 {DOUBLEEXTENDED}  			    {  return DOUBLEEXTENDEDTOKEN; }
@@ -596,6 +610,8 @@ NOP             "nop"
 {TRUE}					    {  return TRUETOKEN; }
 {FALSE}					    {  return FALSETOKEN; }
 {DEFAULT}				    {  return DEFAULTTOKEN; }
+{MATCH} 				    {  return MATCHTOKEN; }
+{WITH}  				    {  return WITHTOKEN; }
 {HEAD}   				    {  return HEADTOKEN; }
 {ROUNDCORRECTLY}   		       	    {  return ROUNDCORRECTLYTOKEN; }
 {REVERT}   				    {  return REVERTTOKEN; }
@@ -660,6 +676,7 @@ NOP             "nop"
 {PRINTBINARY}     			    {  return PRINTBINARYTOKEN; }
 {PRINTEXPANSION}  			    {  return PRINTEXPANSIONTOKEN; }
 {BASHEXECUTE}     			    {  return BASHEXECUTETOKEN; }
+{BASHEVALUATE}     			    {  return BASHEVALUATETOKEN; }
 {EXTERNALPLOT}    			    {  return EXTERNALPLOTTOKEN; }
 {WRITE}           			    {  return WRITETOKEN; }
 {ASCIIPLOT}       			    {  return ASCIIPLOTTOKEN; }

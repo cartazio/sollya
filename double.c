@@ -1,9 +1,12 @@
 /*
 
-Copyright 2006-2011 by 
+Copyright 2006-2011 by
 
-Laboratoire de l'Informatique du Parallelisme, 
-UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
+Laboratoire de l'Informatique du Parallelisme,
+UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
+
+Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
+UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France,
 
 and by
 
@@ -23,16 +26,16 @@ it offers a certified infinity norm, an automatic polynomial
 implementer and a fast Remez algorithm.
 
 This software is governed by the CeCILL-C license under French law and
-abiding by the rules of distribution of free software.  You can  use, 
+abiding by the rules of distribution of free software.  You can  use,
 modify and/ or redistribute the software under the terms of the CeCILL-C
 license as circulated by CEA, CNRS and INRIA at the following URL
-"http://www.cecill.info". 
+"http://www.cecill.info".
 
 As a counterpart to the access to the source code and  rights to copy,
 modify and redistribute granted by the license, users are provided only
 with a limited warranty  and the software's author,  the holder of the
 economic rights,  and the successive licensors  have only  limited
-liability. 
+liability.
 
 In this respect, the user's attention is drawn to the risks associated
 with loading,  using,  modifying and/or developing or reproducing the
@@ -41,9 +44,9 @@ that may mean  that it is complicated to manipulate,  and  that  also
 therefore means  that it is reserved for developers  and  experienced
 professionals having in-depth computer knowledge. Users are therefore
 encouraged to load and test the software's suitability as regards their
-requirements in conditions enabling the security of their systems and/or 
-data to be ensured and,  more generally, to use and operate it in the 
-same conditions as regards security. 
+requirements in conditions enabling the security of their systems and/or
+data to be ensured and,  more generally, to use and operate it in the
+same conditions as regards security.
 
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
@@ -972,6 +975,12 @@ node *roundPolynomialCoefficients(node *poly, chain *formats, mp_prec_t prec) {
       mpfr_set_d(fpcoefficients[i],0.0,GMP_RNDN);
     }
     switch (formatsArray[i]) {
+    case 7:
+      if (mpfr_round_to_quad(tempMpfr, fpcoefficients[i]) != 0) res = 1;
+      break;
+    case 6:
+      if (mpfr_round_to_halfprecision(tempMpfr, fpcoefficients[i]) != 0) res = 1;
+      break;
     case 5:
       if (mpfr_round_to_single(tempMpfr, fpcoefficients[i]) != 0) res = 1;
       break;
@@ -1023,47 +1032,6 @@ node *roundPolynomialCoefficients(node *poly, chain *formats, mp_prec_t prec) {
   mpfr_clear(tempMpfr);
   return roundedPoly;
 }
-
-int mpfr_round_to_doubleextended(mpfr_t rop, mpfr_t op) {
-  mpfr_t intermediate;
-  int res;
-
-  mpfr_init2(intermediate,64);
-  mpfr_set(intermediate,op,GMP_RNDN);
-  if (mpfr_set(rop,intermediate,GMP_RNDN) != 0) {
-    if (!noRoundingWarnings) {
-      printMessage(1,"Warning: double rounding occurred on invoking the doubleextended precision rounding operator.\n");
-      printMessage(1,"Try to increase the working precision.\n");
-    }
-  }
-  
-  mpfr_clear(intermediate);
-
-  res = mpfr_cmp(rop,op);
-
-  return res;
-}
-
-int mpfr_round_to_doubleextended_mode(mpfr_t rop, mpfr_t op, mp_rnd_t mode) {
-  mpfr_t intermediate;
-  int res;
-
-  mpfr_init2(intermediate,64);
-  mpfr_set(intermediate,op,mode);
-  if (mpfr_set(rop,intermediate,GMP_RNDN) != 0) {
-    if (!noRoundingWarnings) {
-      printMessage(1,"Warning: double rounding occurred on invoking the doubleextended precision rounding operator.\n");
-      printMessage(1,"Try to increase the working precision.\n");
-    }
-  }
-  
-  mpfr_clear(intermediate);
-
-  res = mpfr_cmp(rop,op);
-
-  return res;
-}
-
 
 int printDoubleExpansion(mpfr_t x) {
   double d;
@@ -1248,6 +1216,12 @@ int printPolynomialAsDoubleExpansion(node *poly, mp_prec_t prec) {
 
 void mpfr_round_to_format(mpfr_t rop, mpfr_t op, int format) {
   switch (format) {
+  case 7:
+    mpfr_round_to_quad(rop, op);
+    break;
+  case 6:
+    mpfr_round_to_halfprecision(rop, op);
+    break;
   case 5:
     mpfr_round_to_single(rop, op);
     break;
@@ -1272,6 +1246,12 @@ void mpfr_round_to_format(mpfr_t rop, mpfr_t op, int format) {
 int round_to_expansion_format(mpfr_t rop, mpfr_t op, int format, mp_rnd_t mode) {
   int res;
   switch (format) {
+  case 7:
+    mpfr_round_to_quad_mode(rop, op, mode);
+    break;
+  case 6:
+    mpfr_round_to_halfprecision_mode(rop, op, mode);
+    break;
   case 5:
     mpfr_round_to_single_mode(rop, op, mode);
     break;
@@ -1494,4 +1474,186 @@ node *rationalApprox(mpfr_t x, unsigned int n) {
   mpq_clear(q);
   mpz_clear(u);
   return tree;
+}
+
+int mpfr_round_to_ieee_format(mpfr_t rop, mpfr_t op, mp_prec_t prec, unsigned int width, mp_rnd_t mode) {
+  int res;
+  mpfr_t result;
+  unsigned int exponent;
+  mpfr_t largest, smallest, temp;
+  mp_prec_t p;
+
+  /* In the case when the function is called with a silly width (less than 3 or larger than 30),
+     we exit from the tool. This case should never happen.
+  */
+  if ((width < 3) || (width > 30)) {
+    sollyaFprintf(stderr,"Error: mpfr_round_to_ieee_format: an exponent width of less than 3 or larger than 30 is not supported\n");
+    exit(1);
+  }
+
+  /* We will first produce an internal result and then write back to rop */
+  mpfr_init2(result,prec);
+
+  /* Handle the special cases: +/- 0, +/- Inf, NaN */
+  if (mpfr_zero_p(op) || (!mpfr_number_p(op))) {
+    /* The result is the input */
+    mpfr_set(result, op, GMP_RNDN); /* exact */
+  } else {
+    /* Here, the input is not zero, nor Inf nor NaN
+
+       We start with the first rounding step with unbounded exponent.
+
+    */
+    mpfr_set(result, op, mode); /* performs a rounding to the desired precision
+                                   but with unbounded exponent
+				*/
+
+    /* Now check if overflow occurs: compare in magnitude with the largest
+       representable number of the format.
+
+       The largest number is 1 ulp (of precision prec) below 2^(2^(width - 1)).
+    */
+    exponent = 1 << (width - 1);
+    mpfr_init2(largest, prec);
+    mpfr_set_ui(largest, 1, GMP_RNDN); /* exact: power of 2 */
+    mpfr_mul_2ui(largest, largest, exponent, GMP_RNDN); /* exact: power of 2 */
+    mpfr_nextbelow(largest); /* exact by specification */
+    if (mpfr_cmpabs(result, largest) > 0) {
+      /* Here, we have an overflow
+
+	 Depending on the rounding mode and the sign of the input
+	 we get the largest representable number or +/- Inf as a result
+
+      */
+      switch (mode) {
+      case GMP_RNDN:
+	/* -Inf, +Inf */
+	if (mpfr_sgn(op) < 0) {
+	  mpfr_set_inf(result, -1);
+	} else {
+	  mpfr_set_inf(result, +1);
+	}
+	break;
+      case GMP_RNDD:
+	/* -Inf, +largest */
+	if (mpfr_sgn(op) < 0) {
+	  mpfr_set_inf(result, -1);
+	} else {
+	  mpfr_set(result, largest, GMP_RNDN); /* exact: same precision */
+	}
+	break;
+      case GMP_RNDU:
+	/* -largest, +Inf */
+	if (mpfr_sgn(op) < 0) {
+	  mpfr_neg(result, largest, GMP_RNDN); /* exact: same precision */
+	} else {
+	  mpfr_set_inf(result, +1);
+	}
+	break;
+      case GMP_RNDZ:
+	/* -largest, +largest */
+	if (mpfr_sgn(op) < 0) {
+	  mpfr_neg(result, largest, GMP_RNDN); /* exact: same precision */
+	} else {
+	  mpfr_set(result, largest, GMP_RNDN); /* exact: same precision */
+	}
+	break;
+      default:
+	sollyaFprintf(stderr,"Error: mpfr_round_to_ieee_format: unknown rounding mode %d\n", (int) mode);
+	exit(1);
+      }
+    } else {
+      /* Here, the result is either a signed 0, denormal or normal
+
+	 We continue by checking if the first rounding is larger
+	 than the least normal.
+
+	 For a format of width bits of exponent, the smallest normal
+	 is 2^(-2^(width - 1) + 2).
+
+      */
+      mpfr_init2(smallest, prec);
+      exponent = 1 << (width - 1);
+      exponent -= 2;
+      mpfr_set_ui(smallest, 1, GMP_RNDN); /* exact: power of 2 */
+      mpfr_div_2ui(smallest, smallest, exponent, GMP_RNDN); /* exact: power of 2 */
+
+      if (mpfr_cmpabs(result, smallest) < 0) {
+	/* Here, we have to emulate denormal rounding
+
+	   Denormal rounding for precision prec and exponent width
+	   width is:
+
+	   result = 2^(-prec - 2^(width - 1) + 3) * round_integer((1/(2^(-prec - 2^(width - 1) + 3))) * op, mode)
+
+           In other words,
+
+           result = smallest * 2^(1-prec) * round_integer( 2^(prec-1)*op/smallest, mode)
+
+           ( the interval [0, smallest) is sent to [0, 2^(prec-1) ) where fixed-point computations at
+             precision prec are exactly integer computations, and then we send it back to [0, smallest)
+           )
+	 */
+	p = mpfr_get_prec(op);
+	mpfr_init2(temp, p);
+	mpfr_set(temp, op, GMP_RNDN); /* exact: precision of temp not less than the one of op */
+	exponent = 1 << (width - 1);
+	exponent -= 3;
+	exponent += prec;
+	mpfr_mul_2ui(temp, temp, exponent, GMP_RNDN); /* exact: power of 2 and same precision */
+	mpfr_rint(result, temp, mode); /* Performs round_integer with mode
+					  no wrong rounding possible as precision of
+					  result is prec and |temp| <= 2^(prec-1)
+				       */
+	mpfr_div_2ui(result, result, exponent, GMP_RNDN); /* exact: power of 2 and same precision */
+	mpfr_clear(temp);
+      }
+      /* Otherwise the first rounding is already
+	 the final result.
+      */
+
+      mpfr_clear(smallest);
+    }
+    mpfr_clear(largest);
+  }
+
+  /* Write back the result, while verifying if we don't get a double rounding there. */
+  /* Double-rounding may occur if the precision of rop is smaller than the prec.     */
+  if (mpfr_set(rop,result,GMP_RNDN) != 0) {
+    if (!noRoundingWarnings) {
+      printMessage(1,"Warning: double rounding occurred on invoking the IEEE 754-2008 general rounding operator.\n");
+      printMessage(1,"Try to increase the working precision.\n");
+    }
+  }
+
+  mpfr_clear(result);
+
+  /* Compute the rounding direction that has finally been chosen */
+  res = mpfr_cmp(rop,op);
+
+  return res;
+}
+
+int mpfr_round_to_quad(mpfr_t rop, mpfr_t x) {
+  return mpfr_round_to_ieee_format(rop, x, 113, 15, GMP_RNDN);
+}
+
+int mpfr_round_to_halfprecision(mpfr_t rop, mpfr_t x) {
+  return mpfr_round_to_ieee_format(rop, x, 11, 5, GMP_RNDN);
+}
+
+int mpfr_round_to_quad_mode(mpfr_t rop, mpfr_t x, mp_rnd_t mode) {
+  return mpfr_round_to_ieee_format(rop, x, 113, 15, mode);
+}
+
+int mpfr_round_to_halfprecision_mode(mpfr_t rop, mpfr_t x, mp_rnd_t mode) {
+  return mpfr_round_to_ieee_format(rop, x, 11, 5, mode);
+}
+
+int mpfr_round_to_doubleextended(mpfr_t rop, mpfr_t op) {
+  return mpfr_round_to_ieee_format(rop, op, 64, 15, GMP_RNDN);
+}
+
+int mpfr_round_to_doubleextended_mode(mpfr_t rop, mpfr_t op, mp_rnd_t mode) {
+  return mpfr_round_to_ieee_format(rop, op, 64, 15, mode);
 }

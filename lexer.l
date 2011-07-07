@@ -144,6 +144,7 @@ PREC            "prec"
 POINTS          "points"
 EXCLAMATION     "!"
 DOUBLECOLON     "::"
+COLON           ":"
 DOTCOLON        ".:"
 COLONDOT        ":."
 ASSIGNEQUAL     ":="
@@ -163,6 +164,8 @@ DIAM            "diam"
 
 DOUBLELONG       "double"
 SINGLELONG       "single"
+QUADLONG         "quad"
+HALFPRECISIONLONG "halfprecision"
 DOUBLEDOUBLELONG "doubledouble"
 TRIPLEDOUBLELONG "tripledouble"
 DOUBLEEXTENDEDLONG "doubleextended"
@@ -170,6 +173,8 @@ DOUBLEEXTENDEDLONG "doubleextended"
 
 DOUBLESHORT      "D"
 SINGLESHORT      "SG"
+QUADSHORT        "QD"
+HALFPRECISIONSHORT "HP"
 DOUBLEDOUBLESHORT "DD"
 TRIPLEDOUBLESHORT "TD"
 DOUBLEEXTENDEDSHORT "DE"
@@ -177,6 +182,8 @@ DOUBLEEXTENDEDSHORT "DE"
 
 DOUBLE          ({DOUBLELONG}|{DOUBLESHORT})
 SINGLE          ({SINGLELONG}|{SINGLESHORT})
+QUAD            ({QUADLONG}|{QUADSHORT})
+HALFPRECISION   ({HALFPRECISIONLONG}|{HALFPRECISIONSHORT})
 DOUBLEDOUBLE    ({DOUBLEDOUBLELONG}|{DOUBLEDOUBLESHORT})
 TRIPLEDOUBLE    ({TRIPLEDOUBLELONG}|{TRIPLEDOUBLESHORT})
 DOUBLEEXTENDED  ({DOUBLEEXTENDEDLONG}|{DOUBLEEXTENDEDSHORT})
@@ -277,6 +284,7 @@ POSTSCRIPTFILE  "postscriptfile"
 PRINTEXPANSION  "printexpansion"
 
 BASHEXECUTE     "bashexecute"
+BASHEVALUATE    "bashevaluate"
 EXTERNALPLOT    "externalplot"
 PERTURB         "perturb"
 
@@ -361,6 +369,9 @@ WHILEDEF        "while"
 TRUE            "true"
 FALSE           "false"
 DEFAULT         "default"
+
+MATCH           "match"
+WITH            "with"
 
 RENAME          "rename"
 
@@ -598,6 +609,7 @@ NOP             "nop"
 {NOP}	         			    { newTokenLexed(); return NOPTOKEN; }
 {AT}					    { newTokenLexed(); return ATTOKEN; }
 {DOUBLECOLON}				    { newTokenLexed(); return DOUBLECOLONTOKEN; }
+{COLON}  				    { newTokenLexed(); return COLONTOKEN; }
 {DOTCOLON}				    { newTokenLexed(); return DOTCOLONTOKEN; }
 {COLONDOT}				    { newTokenLexed(); return COLONDOTTOKEN; }
 
@@ -632,6 +644,8 @@ NOP             "nop"
 {EXPM1}           			    { newTokenLexed(); return EXPM1TOKEN; }
 {DOUBLE}          			    { newTokenLexed(); return DOUBLETOKEN; }
 {SINGLE}          			    { newTokenLexed(); return SINGLETOKEN; }
+{QUAD}          			    { newTokenLexed(); return QUADTOKEN; }
+{HALFPRECISION}          		    { newTokenLexed(); return HALFPRECISIONTOKEN; }
 {DOUBLEDOUBLE}				    { newTokenLexed(); return DOUBLEDOUBLETOKEN; }
 {TRIPLEDOUBLE}    			    { newTokenLexed(); return TRIPLEDOUBLETOKEN; }
 {DOUBLEEXTENDED}  			    { newTokenLexed(); return DOUBLEEXTENDEDTOKEN; }
@@ -674,6 +688,8 @@ NOP             "nop"
 {TRUE}					    { newTokenLexed(); return TRUETOKEN; }
 {FALSE}					    { newTokenLexed(); return FALSETOKEN; }
 {DEFAULT}				    { newTokenLexed(); return DEFAULTTOKEN; }
+{MATCH} 				    { newTokenLexed(); return MATCHTOKEN; }
+{WITH}  				    { newTokenLexed(); return WITHTOKEN; }
 {HEAD}   				    { newTokenLexed(); return HEADTOKEN; }
 {ROUNDCORRECTLY}   		       	    { newTokenLexed(); return ROUNDCORRECTLYTOKEN; }
 {REVERT}   				    { newTokenLexed(); return REVERTTOKEN; }
@@ -746,6 +762,7 @@ NOP             "nop"
 {PRINTBINARY}     			    { newTokenLexed(); return PRINTBINARYTOKEN; }
 {PRINTEXPANSION}  			    { newTokenLexed(); return PRINTEXPANSIONTOKEN; }
 {BASHEXECUTE}     			    { newTokenLexed(); return BASHEXECUTETOKEN; }
+{BASHEVALUATE}     			    { newTokenLexed(); return BASHEVALUATETOKEN; }
 {EXTERNALPLOT}    			    { newTokenLexed(); return EXTERNALPLOTTOKEN; }
 {WRITE}           			    { newTokenLexed(); return WRITETOKEN; }
 {ASCIIPLOT}       			    { newTokenLexed(); return ASCIIPLOTTOKEN; }

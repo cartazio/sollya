@@ -1,8 +1,8 @@
 /*
 
-Copyright 2007-2011 by 
+Copyright 2007-2011 by
 
-Laboratoire de l'Informatique du Parallelisme, 
+Laboratoire de l'Informatique du Parallelisme,
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
 
 LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2),
@@ -29,16 +29,16 @@ it offers a certified infinity norm, an automatic polynomial
 implementer and a fast Remez algorithm.
 
 This software is governed by the CeCILL-C license under French law and
-abiding by the rules of distribution of free software.  You can  use, 
+abiding by the rules of distribution of free software.  You can  use,
 modify and/ or redistribute the software under the terms of the CeCILL-C
 license as circulated by CEA, CNRS and INRIA at the following URL
-"http://www.cecill.info". 
+"http://www.cecill.info".
 
 As a counterpart to the access to the source code and  rights to copy,
 modify and redistribute granted by the license, users are provided only
 with a limited warranty  and the software's author,  the holder of the
 economic rights,  and the successive licensors  have only  limited
-liability. 
+liability.
 
 In this respect, the user's attention is drawn to the risks associated
 with loading,  using,  modifying and/or developing or reproducing the
@@ -47,9 +47,9 @@ that may mean  that it is complicated to manipulate,  and  that  also
 therefore means  that it is reserved for developers  and  experienced
 professionals having in-depth computer knowledge. Users are therefore
 encouraged to load and test the software's suitability as regards their
-requirements in conditions enabling the security of their systems and/or 
-data to be ensured and,  more generally, to use and operate it in the 
-same conditions as regards security. 
+requirements in conditions enabling the security of their systems and/or
+data to be ensured and,  more generally, to use and operate it in the
+same conditions as regards security.
 
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
@@ -91,6 +91,7 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include "supnorm.h"
 #include "xml.h"
 #include "miniparser.h"
+#include "match.h"
 #include <setjmp.h>
 
 #define READBUFFERSIZE 16000
@@ -116,9 +117,8 @@ node *copyThing(node *);
 node *evaluateThingInner(node *);
 node *evaluateThing(node *);
 void *copyThingOnVoid(void *);
-void *copyEntryOnVoid(void *ptr);
 void *evaluateEntryOnVoid(void *ptr);
-void freeEntryOnVoid(void *ptr);
+
 
 void freeDoNothing(void *ptr) {
   UNUSED_PARAM(ptr); 
@@ -225,7 +225,7 @@ node *parseString(char *str) {
   return result;
 }
 
-rangetype guessDegreeWrapper(node *func, node *weight, mpfr_t a, mpfr_t b, mpfr_t eps) {
+rangetype guessDegreeWrapper(node *func, node *weight, mpfr_t a, mpfr_t b, mpfr_t eps, int bound) {
   rangetype result;
   jmp_buf oldEnvironment;
   int oldVerbosity;
@@ -235,7 +235,7 @@ rangetype guessDegreeWrapper(node *func, node *weight, mpfr_t a, mpfr_t b, mpfr_
   oldPoints = defaultpoints;
   memmove(&oldEnvironment,&recoverEnvironmentError,sizeof(oldEnvironment));
   if (!setjmp(recoverEnvironmentError)) {
-    result = guessDegree(func, weight, a, b, eps);
+    result = guessDegree(func, weight, a, b, eps, bound);
   } else {
     verbosity = oldVerbosity;
     defaultpoints = oldPoints;
@@ -434,6 +434,12 @@ node *copyThing(node *tree) {
     copy->child1 = copyThing(tree->child1);
     break;
   case SINGLE:
+    copy->child1 = copyThing(tree->child1);
+    break;
+  case HALFPRECISION:
+    copy->child1 = copyThing(tree->child1);
+    break;
+  case QUAD:
     copy->child1 = copyThing(tree->child1);
     break;
   case DOUBLEDOUBLE:
@@ -721,7 +727,7 @@ node *copyThing(node *tree) {
   case INDEX:
     copy->child1 = copyThing(tree->child1);
     copy->child2 = copyThing(tree->child2);
-    break; 				
+    break; 
   case COMPAREEQUAL:
     copy->child1 = copyThing(tree->child1);
     copy->child2 = copyThing(tree->child2);
@@ -820,6 +826,10 @@ node *copyThing(node *tree) {
     break;  			
   case SINGLESYMBOL:
     break;  			
+  case QUADSYMBOL:
+    break;  			
+  case HALFPRECISIONSYMBOL:
+    break;  			
   case DOUBLEEXTENDEDSYMBOL:
     break;  			
   case DOUBLEDOUBLESYMBOL:
@@ -907,6 +917,9 @@ node *copyThing(node *tree) {
     break; 			
   case DIFF:
     copy->child1 = copyThing(tree->child1);
+    break; 
+  case BASHEVALUATE:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 			 	
   case SIMPLIFY:
     copy->child1 = copyThing(tree->child1);
@@ -918,6 +931,15 @@ node *copyThing(node *tree) {
     copy->child1 = copyThing(tree->child1);
     break;  			
   case REMEZ:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
+    break; 			 	
+  case MATCH:
+    copy->child1 = copyThing(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
+    break; 			 	
+  case MATCHELEMENT:
+    copy->child1 = copyThing(tree->child1);
+    copy->child2 = copyThing(tree->child2);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 			 	
   case MIN:
@@ -1277,6 +1299,12 @@ char *getTimingStringForThing(node *tree) {
     constString = NULL;
     break;
   case SINGLE:
+    constString = NULL;
+    break;
+  case QUAD:
+    constString = NULL;
+    break;
+  case HALFPRECISION:
     constString = NULL;
     break;
   case DOUBLEDOUBLE:
@@ -1651,6 +1679,12 @@ char *getTimingStringForThing(node *tree) {
   case SINGLESYMBOL:
     constString = NULL;
     break;  			
+  case QUADSYMBOL:
+    constString = NULL;
+    break;  			
+  case HALFPRECISIONSYMBOL:
+    constString = NULL;
+    break;  			
   case DOUBLEEXTENDEDSYMBOL:
     constString = NULL;
     break;  			
@@ -1728,6 +1762,9 @@ char *getTimingStringForThing(node *tree) {
     break; 			
   case DIFF:
     constString = "differentiation";
+    break; 
+  case BASHEVALUATE:
+    constString = "evaluating a string as a bash command";
     break; 			 	
   case SIMPLIFY:
     constString = "simplifying";
@@ -1740,6 +1777,11 @@ char *getTimingStringForThing(node *tree) {
     break;  			
   case REMEZ:
     constString = "computing a minimax approximation";
+    break; 
+  case MATCH:
+    constString = "matching an expression";
+  case MATCHELEMENT:
+    constString = NULL;
     break; 			 	
   case MIN:
     constString = "computing a minimum";
@@ -2064,6 +2106,12 @@ int isPureTree(node *tree) {
   case SINGLE:
     return isPureTree(tree->child1);
     break;
+  case QUAD:
+    return isPureTree(tree->child1);
+    break;
+  case HALFPRECISION:
+    return isPureTree(tree->child1);
+    break;
   case DOUBLEDOUBLE:
     return isPureTree(tree->child1);
     break;
@@ -2111,6 +2159,243 @@ int isPureTree(node *tree) {
   }
 }
 
+int isExtendedPureTree(node *tree) {
+  switch (tree->nodeType) {
+  case DEFAULT:
+    return 1;
+    break;
+  case VARIABLE:
+    return 1;
+    break;
+  case TABLEACCESS:
+    return 1;
+    break;
+  case TABLEACCESSWITHSUBSTITUTE:
+    if (tree->arguments == NULL) return 0;
+    if (tree->arguments->next != NULL) return 0;
+    return 1;
+    break;
+  case CONSTANT:
+    return 1;
+    break;
+  case ADD:
+    return (isExtendedPureTree(tree->child1) && isExtendedPureTree(tree->child2));
+    break;
+  case SUB:
+    return (isExtendedPureTree(tree->child1) && isExtendedPureTree(tree->child2));
+    break;
+  case MUL:
+    return (isExtendedPureTree(tree->child1) && isExtendedPureTree(tree->child2));
+    break;
+  case DIV:
+    return (isExtendedPureTree(tree->child1) && isExtendedPureTree(tree->child2));
+    break;
+  case SQRT:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case EXP:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case LOG:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case LOG_2:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case LOG_10:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case SIN:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case COS:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case TAN:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case ASIN:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case ACOS:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case ATAN:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case SINH:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case COSH:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case TANH:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case ASINH:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case ACOSH:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case ATANH:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case POW:
+    return (isExtendedPureTree(tree->child1) && isExtendedPureTree(tree->child2));
+    break;
+  case NEG:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case ABS:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case DOUBLE:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case SINGLE:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case QUAD:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case HALFPRECISION:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case DOUBLEDOUBLE:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case TRIPLEDOUBLE:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case ERF: 
+    return isExtendedPureTree(tree->child1);
+    break;
+  case ERFC:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case LOG_1P:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case EXP_M1:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case DOUBLEEXTENDED:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case LIBRARYFUNCTION:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case LIBRARYCONSTANT:
+    return 1;
+    break;
+  case PROCEDUREFUNCTION:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case CEIL:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case FLOOR:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case NEARESTINT:
+    return isExtendedPureTree(tree->child1);
+    break;
+  case PI_CONST:
+    return 1;
+    break;
+  default:
+    return 0;
+  }
+}
+
+int isMatchable(node *);
+
+int isMatchableList(node *tree) {
+  chain *curr;
+  if (isEmptyList(tree)) return 1;
+  if (!(isPureList(tree) || isPureFinalEllipticList(tree))) return 0;
+  for (curr=tree->arguments;curr!=NULL;curr=curr->next) {
+    if (!isMatchable((node *) (curr->value))) return 0;
+  }
+  return 1;
+}
+
+int isString(node *);
+
+int isMatchableConcat(node *tree) {
+  if (tree->nodeType != CONCAT) return 0;
+  if (((tree->child1->nodeType == TABLEACCESS) || (tree->child1->nodeType == DEFAULT)) && 
+      ((tree->child2->nodeType == TABLEACCESS) || (tree->child2->nodeType == DEFAULT))) return 0;
+
+  if (((isMatchableList(tree->child1) && (!isPureFinalEllipticList(tree->child1))) || 
+       (tree->child1->nodeType == TABLEACCESS) || (tree->child1->nodeType == DEFAULT) || isString(tree->child1) ||
+       isMatchablePrepend(tree->child1) || isMatchableAppend(tree->child1) ||
+       isMatchableConcat(tree->child1)) && 
+      (isMatchableList(tree->child2) || 
+       (tree->child2->nodeType == TABLEACCESS) || (tree->child2->nodeType == DEFAULT) || isString(tree->child2) ||
+       isMatchablePrepend(tree->child2) || isMatchableAppend(tree->child2) ||
+       isMatchableConcat(tree->child2))) {
+    if (isString(tree->child1) && 
+	(!((tree->child2->nodeType == TABLEACCESS) || (tree->child2->nodeType == DEFAULT) || isString(tree->child2) || isMatchableConcat(tree->child2)))) return 0;
+    if (isString(tree->child2) && 
+	(!((tree->child1->nodeType == TABLEACCESS) || (tree->child1->nodeType == DEFAULT) || isString(tree->child1) || isMatchableConcat(tree->child1)))) return 0;
+    return 1;
+  }
+  return 0;
+}
+
+int isMatchablePrepend(node *tree) {
+  if (tree->nodeType != PREPEND) return 0;
+  if (isMatchable(tree->child1) && 
+      (isMatchableList(tree->child2) || 
+       (tree->child2->nodeType == TABLEACCESS) ||
+       isMatchablePrepend(tree->child2) ||
+       isMatchableAppend(tree->child2) ||
+       isMatchableConcat(tree->child2))) return 1;
+  return 0;
+}
+
+int isMatchableAppend(node *tree) {
+  if (tree->nodeType != APPEND) return 0;
+  if (isMatchable(tree->child2) && 
+      ((isMatchableList(tree->child1) && (!isPureFinalEllipticList(tree->child1))) || 
+       (tree->child1->nodeType == TABLEACCESS) ||
+       isMatchablePrepend(tree->child1) ||
+       isMatchableAppend(tree->child1) ||
+       isMatchableConcat(tree->child1))) return 1;
+  return 0;
+}
+
+int isMatchableStructure(node *tree) {
+  chain *curr;
+
+  if (tree->nodeType != STRUCTURE) return 0;
+  if (associationContainsDoubleEntries(tree->arguments)) return 0;
+  for (curr=tree->arguments; curr != NULL; curr = curr->next) {
+    if (!isMatchable((node *) (((entry *) (curr->value))->value))) return 0;
+  }
+  return 1;
+}
+
+int isMatchable(node *tree) {
+  if (isExtendedPureTree(tree)) return 1;
+  if (isCorrectlyTypedBaseSymbol(tree)) return 1;
+  if ((tree->nodeType == RANGE) && 
+      ((tree->child1->nodeType == CONSTANT) || 
+       (tree->child1->nodeType == TABLEACCESS) || 
+       (tree->child1->nodeType == DEFAULT)) &&
+      ((tree->child2->nodeType == CONSTANT) || 
+       (tree->child2->nodeType == TABLEACCESS) ||
+       (tree->child2->nodeType == DEFAULT))) return 1;
+  if (isMatchableList(tree)) return 1;
+  if (isMatchableConcat(tree)) return 1;
+  if (isMatchablePrepend(tree)) return 1;
+  if (isMatchableAppend(tree)) return 1;
+  if (isMatchableStructure(tree)) return 1;
+  return 0;
+}
+
 int isDefault(node *tree) {
   return (tree->nodeType == DEFAULT);
 }
@@ -2121,6 +2406,10 @@ int isString(node *tree) {
 
 int isList(node *tree) {
   return (tree->nodeType == LIST);
+}
+
+int isMatchElement(node *tree) {
+  return (tree->nodeType == MATCHELEMENT);
 }
 
 int isStructure(node *tree) {
@@ -2268,6 +2557,8 @@ int isRoundingSymbol(node *tree) {
 
 int isExpansionFormat(node *tree) {
   if (tree->nodeType == SINGLESYMBOL) return 1;
+  if (tree->nodeType == HALFPRECISIONSYMBOL) return 1;
+  if (tree->nodeType == QUADSYMBOL) return 1;
   if (tree->nodeType == DOUBLESYMBOL) return 1;
   if (tree->nodeType == DOUBLEDOUBLESYMBOL) return 1;
   if (tree->nodeType == TRIPLEDOUBLESYMBOL) return 1;
@@ -2277,6 +2568,8 @@ int isExpansionFormat(node *tree) {
 
 int isExtendedExpansionFormat(node *tree) {
   if (tree->nodeType == SINGLESYMBOL) return 1;
+  if (tree->nodeType == HALFPRECISIONSYMBOL) return 1;
+  if (tree->nodeType == QUADSYMBOL) return 1;
   if (tree->nodeType == DOUBLESYMBOL) return 1;
   if (tree->nodeType == DOUBLEDOUBLESYMBOL) return 1;
   if (tree->nodeType == TRIPLEDOUBLESYMBOL) return 1;
@@ -2811,6 +3104,12 @@ int evaluateThingToExpansionFormat(int *result, node *tree) {
     case SINGLESYMBOL:
       *result = 5;
       break;
+    case HALFPRECISIONSYMBOL:
+      *result = 6;
+      break;
+    case QUADSYMBOL:
+      *result = 7;
+      break;
     }
     freeThing(evaluatedResult);
     return 1;
@@ -2857,6 +3156,12 @@ int evaluateThingToExtendedExpansionFormat(int *result, node *tree) {
       break;
     case SINGLESYMBOL:
       *result = 5;
+      break;
+    case HALFPRECISIONSYMBOL:
+      *result = 6;
+      break;
+    case QUADSYMBOL:
+      *result = 7;
       break;
     }
     freeThing(evaluatedResult);
@@ -3481,6 +3786,16 @@ char *sRawPrintThing(node *tree) {
     break;
   case SINGLE:
     res = concatAndFree(newString("single("),
+			concatAndFree(sRawPrintThing(tree->child1),
+				      newString(")")));
+    break;
+  case HALFPRECISION:
+    res = concatAndFree(newString("halfprecision("),
+			concatAndFree(sRawPrintThing(tree->child1),
+				      newString(")")));
+    break;
+  case QUAD:
+    res = concatAndFree(newString("quad("),
 			concatAndFree(sRawPrintThing(tree->child1),
 				      newString(")")));
     break;
@@ -4304,6 +4619,12 @@ char *sRawPrintThing(node *tree) {
   case SINGLESYMBOL:
     res = newString("single");
     break;  			
+  case HALFPRECISIONSYMBOL:
+    res = newString("halfprecision");
+    break;  			
+  case QUADSYMBOL:
+    res = newString("quad");
+    break;  			
   case DOUBLEEXTENDEDSYMBOL:
     res = newString("doubleextended");
     break;  			
@@ -4432,6 +4753,16 @@ char *sRawPrintThing(node *tree) {
 			concatAndFree(sRawPrintThing(tree->child1),
 				      newString(")")));
     break; 			 	
+  case BASHEVALUATE:
+    res = newString("bashevaluate(");
+    curr = tree->arguments;
+    while (curr != NULL) {
+      res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
+      if (curr->next != NULL) res = concatAndFree(res, newString(", ")); 
+      curr = curr->next;
+    }
+    res = concatAndFree(res, newString(")"));
+    break; 			 	
   case SIMPLIFY:
     res = concatAndFree(newString("simplify("),
 			concatAndFree(sRawPrintThing(tree->child1),
@@ -4456,6 +4787,28 @@ char *sRawPrintThing(node *tree) {
       curr = curr->next;
     }
     res = concatAndFree(res, newString(")"));
+    break; 			 	
+  case MATCH:
+    res = newString("match ");
+    res = concatAndFree(res, sRawPrintThing(tree->child1));
+    res = concatAndFree(res, newString(" with\n"));
+    curr = tree->arguments;
+    while (curr != NULL) {
+      res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
+      curr = curr->next;
+    }
+    break; 			 	
+  case MATCHELEMENT:
+    res = concatAndFree(sRawPrintThing(tree->child1),newString(" : {\n"));
+    curr = ((node *) (tree->arguments->value))->arguments;
+    while (curr != NULL) {
+      res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
+      res = concatAndFree(res, newString(";\n")); 
+      curr = curr->next;
+    }
+    res = concatAndFree(res, newString("return "));     
+    res = concatAndFree(res, sRawPrintThing(tree->child2));
+    res = concatAndFree(res, newString(";\n}\n")); 
     break; 			 	
   case MIN:
     res = newString("min(");
@@ -7038,7 +7391,7 @@ int executeCommandInner(node *tree) {
     curr = tree->arguments;
     if (curr->next == NULL) {
       tempNode = evaluateThing((node *) (curr->value));
-      if ((!isUnit(tempNode)) || (verbosity >= 2)) {
+      if ((!isUnit(tempNode)) || ((verbosity >= 2) && oldVoidPrint)) {
 	if (!isExternalProcedureUsage(tempNode)) {
 	  outputMode();
 	  autoprint(tempNode,0); 
@@ -9027,6 +9380,17 @@ node *makeIndex(node *thing1, node *thing2) {
 
 }
 
+node *makeMatch(node *thing, chain *matchlist) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = MATCH;
+  res->child1 = thing;
+  res->arguments = matchlist;
+
+  return res;
+}
+
 node *makeCompareEqual(node *thing1, node *thing2) {
   node *res;
 
@@ -9433,6 +9797,25 @@ node *makeSingleSymbol() {
 
 }
 
+node *makeHalfPrecisionSymbol() {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = HALFPRECISIONSYMBOL;
+
+  return res;
+
+}
+
+node *makeQuadSymbol() {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = QUADSYMBOL;
+
+  return res;
+
+}
 
 node *makeDoubleextendedSymbol() {
   node *res;
@@ -10300,6 +10683,16 @@ node *makeReadFile(node *thing) {
 
 }
 
+node *makeBashevaluate(chain *thinglist) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = BASHEVALUATE;
+  res->arguments = thinglist;
+
+  return res;
+
+}
 
 node *makeRevert(node *thing) {
   node *res;
@@ -10396,6 +10789,18 @@ node *makeProc(chain *stringlist, node *body, node *returnVal) {
   res->nodeType = PROC;
   res->arguments = stringlist;
   res->child1 = body;
+  res->child2 = returnVal;
+
+  return res;
+}
+
+node *makeMatchElement(node *matcher, node *commands, node *returnVal) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = MATCHELEMENT;
+  res->arguments = addElement(NULL,commands);
+  res->child1 = matcher;
   res->child2 = returnVal;
 
   return res;
@@ -10761,6 +11166,14 @@ void freeThing(node *tree) {
     free(tree);
     break;
   case SINGLE:
+    freeThing(tree->child1);
+    free(tree);
+    break;
+  case HALFPRECISION:
+    freeThing(tree->child1);
+    free(tree);
+    break;  
+  case QUAD:
     freeThing(tree->child1);
     free(tree);
     break;
@@ -11260,6 +11673,12 @@ void freeThing(node *tree) {
   case SINGLESYMBOL:
     free(tree);
     break;  			
+  case HALFPRECISIONSYMBOL:
+    free(tree);
+    break;  			
+  case QUADSYMBOL:
+    free(tree);
+    break;  			
   case DOUBLEEXTENDEDSYMBOL:
     free(tree);
     break;  			
@@ -11363,6 +11782,10 @@ void freeThing(node *tree) {
     freeThing(tree->child1);
     free(tree);
     break; 			 	
+  case BASHEVALUATE:
+    freeChain(tree->arguments, freeThingOnVoid);
+    free(tree);
+    break; 			 	
   case SIMPLIFY:
     freeThing(tree->child1);
     free(tree);
@@ -11376,6 +11799,17 @@ void freeThing(node *tree) {
     free(tree);
     break;  			
   case REMEZ:
+    freeChain(tree->arguments, freeThingOnVoid);
+    free(tree);
+    break; 
+  case MATCH:
+    freeThing(tree->child1);
+    freeChain(tree->arguments, freeThingOnVoid);
+    free(tree);
+    break; 		
+  case MATCHELEMENT:
+    freeThing(tree->child1);
+    freeThing(tree->child2);
     freeChain(tree->arguments, freeThingOnVoid);
     free(tree);
     break; 			 	
@@ -11706,9 +12140,6 @@ void rawPrintThing(node *tree) {
   return;
 }
 
-
-int isEqualThing(node *tree, node *tree2);
-
 int isEqualThingOnVoid(void *tree, void *tree2) {
   return isEqualThing((node *) tree, (node *) tree2);
 }
@@ -11809,6 +12240,12 @@ int isEqualThing(node *tree, node *tree2) {
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break;
   case SINGLE:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    break;
+  case HALFPRECISION:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    break;
+  case QUAD:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break;
   case DOUBLEDOUBLE:
@@ -12180,6 +12617,10 @@ int isEqualThing(node *tree, node *tree2) {
     break;  			
   case SINGLESYMBOL:
     break;  			
+  case HALFPRECISIONSYMBOL:
+    break;  			
+  case QUADSYMBOL:
+    break;  			
   case DOUBLEEXTENDEDSYMBOL:
     break;  			
   case DOUBLEDOUBLESYMBOL:
@@ -12260,6 +12701,9 @@ int isEqualThing(node *tree, node *tree2) {
   case DIFF:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break; 			 	
+  case BASHEVALUATE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
+    break; 			 	
   case SIMPLIFY:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break;  			
@@ -12271,7 +12715,16 @@ int isEqualThing(node *tree, node *tree2) {
     break;  			
   case REMEZ:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
-    break; 			 	
+    break; 
+  case MATCH:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
+    break; 
+  case MATCHELEMENT:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThing(tree->child2,tree2->child2)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
+    break; 
   case MIN:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
     break; 			 	
@@ -12542,6 +12995,8 @@ int isCorrectlyTypedBaseSymbol(node *tree) {
   case FLOATING:
   case DOUBLESYMBOL:
   case SINGLESYMBOL:
+  case HALFPRECISIONSYMBOL:
+  case QUADSYMBOL:
   case DOUBLEEXTENDEDSYMBOL:
   case DOUBLEDOUBLESYMBOL:
   case TRIPLEDOUBLESYMBOL:
@@ -12655,7 +13110,7 @@ node *evaluateThing(node *tree) {
 }
 
 
-int evaluateFormatsListForFPminimax(chain **res, node *list, int n) {
+int evaluateFormatsListForFPminimax(chain **res, node *list, int n, int mode) {
   chain *result=NULL;
   chain *curr;
   int i, a;
@@ -12676,6 +13131,8 @@ int evaluateFormatsListForFPminimax(chain **res, node *list, int n) {
   while(i <= n) {
     switch(((node *)(curr->value))->nodeType) {
     case SINGLESYMBOL: a=24; break;
+    case QUADSYMBOL: a=113; break;
+    case HALFPRECISIONSYMBOL: a=11; break;
     case DOUBLESYMBOL: a=53; break;
     case DOUBLEDOUBLESYMBOL: a=107; break;
     case TRIPLEDOUBLESYMBOL: a=161; break;
@@ -12689,6 +13146,11 @@ int evaluateFormatsListForFPminimax(chain **res, node *list, int n) {
       }
     }
 
+    if ((a <= 0) && (mode == FLOATING)) {
+      printMessage(1, "Warning in fpminimax: a format indication is non-positive while floating-point coefficients are desired.\n");
+      printMessage(1, "The corresponding format is replaced by 1.\n");
+      a = 1;
+    }
     intptr = (int *)safeMalloc(sizeof(int));
     *intptr = a;
     result = addElement(result, intptr);
@@ -12853,6 +13315,168 @@ void freeArgumentForExternalProc(void* arg, int type) {
   }
 
 }
+
+int executeMatchBodyInner(node **resultThing, node *body, node *thingToReturn, chain *associations) {
+  int okay, failure;
+  chain *curr;
+
+  curr = body->arguments;
+  okay = 1;
+  while (curr != NULL) {
+    if (isQuit((node *) (curr->value)) ||
+	isFalseQuit((node *) (curr->value)) ||
+	isRestart((node *) (curr->value)) ||
+	isFalseRestart((node *) (curr->value))) {
+      printMessage(1,"Warning: a quit or restart command may not be part of the body of a match-with construct.\n");
+      printMessage(1,"The match-with construct will not be executed.\n");
+      considerDyingOnError();
+      okay = 0;
+      break;
+    } 
+    curr = curr->next;
+  }
+
+  if (!okay) {
+    *resultThing = NULL;
+    return 0;
+  }
+
+  declaredSymbolTable = pushFrame(declaredSymbolTable);
+
+  okay = 1;
+  curr = associations;
+  while (curr != NULL) {
+    failure = 1;
+    if ((variablename != NULL) && (strcmp(variablename, ((entry *) (curr->value))->name) == 0)) {
+      printMessage(1,"Warning: the identifier \"%s\" is already bound to the current free variable.\nIt cannot be used as a match variable. The match-with construct cannot be executed.\n",
+		   ((entry *) (curr->value))->name);
+      considerDyingOnError();
+    } else {
+      if (getFunction(((entry *) (curr->value))->name) != NULL) {
+	printMessage(1,"Warning: the identifier \"%s\" is already bound to a library function.\nIt cannot be used as a match variable. The match-with construct cannot be executed.\n",
+		     ((entry *) (curr->value))->name);
+        considerDyingOnError();
+      } else {
+        if (getConstantFunction(((entry *) (curr->value))->name) != NULL) {
+          printMessage(1,"Warning: the identifier \"%s\" is already bound to a library constant.\nIt cannot be used as a match variable. The match-with construct cannot be executed.\n",
+                       ((entry *) (curr->value))->name);
+          considerDyingOnError();
+        } else {
+          if (getProcedure(((entry *) (curr->value))->name) != NULL) {
+            printMessage(1,"Warning: the identifier \"%s\" is already bound to an external procedure.\nIt cannot be used as a match variable. The match-with cannot be executed.\n",
+                         ((entry *) (curr->value))->name);
+            considerDyingOnError();
+          } else {
+            if (declaredSymbolTable != NULL) {
+              failure = 0;
+	      declaredSymbolTable = declareNewEntry(declaredSymbolTable, ((entry *) (curr->value))->name, (node *) (((entry *) (curr->value))->value), copyThingOnVoid);
+            } else {
+              printMessage(1,"Warning: previous command interruptions have corrupted the frame system.\n");
+              printMessage(1,"The match variable \"%s\" cannot be bound to its actual value.\nThe match-with cannot be executed.\n",((entry *) (curr->value))->name);      
+              considerDyingOnError();
+            }
+          }
+	}
+      }
+    }
+    if (failure) {
+      okay = 0;
+      break;
+    }
+    curr = curr->next;
+  }
+
+  if (!okay) {
+    declaredSymbolTable = popFrame(declaredSymbolTable,freeThingOnVoid);
+    *resultThing = NULL;
+    return 0;
+  }
+
+  declaredSymbolTable = pushFrame(declaredSymbolTable);
+
+  curr = body->arguments;
+  okay = 1;
+  while (curr != NULL) {
+    if (isQuit((node *) (curr->value)) ||
+	isFalseQuit((node *) (curr->value)) ||
+	isRestart((node *) (curr->value)) ||
+	isRestart((node *) (curr->value))) {
+      printMessage(1,"Warning: a quit or restart command may not be part of the body of a match-with construct.\n");
+      printMessage(1,"The match-with construct will no longer be executed.\n");
+      failure = 1;
+    } else {
+      failure = executeCommand((node *) (curr->value));
+    }
+    if (failure) {
+      okay = 0;
+      break;
+    }
+    curr = curr->next;
+  }
+
+  if (!okay) {
+    declaredSymbolTable = popFrame(declaredSymbolTable,freeThingOnVoid);
+    declaredSymbolTable = popFrame(declaredSymbolTable,freeThingOnVoid);
+    *resultThing = NULL;
+    return 0;
+  }
+
+  *resultThing = evaluateThing(thingToReturn);
+
+  declaredSymbolTable = popFrame(declaredSymbolTable,freeThingOnVoid);
+  declaredSymbolTable = popFrame(declaredSymbolTable,freeThingOnVoid);
+
+  return 1;
+}
+
+int executeMatchBody(node **resultThing, node *body, node *thingToReturn, chain *associations) {
+  jmp_buf *oldEnvironment;
+  int res;
+
+  pushTimeCounter();  
+  
+  oldEnvironment = (jmp_buf *) safeMalloc(sizeof(jmp_buf));
+  memmove(oldEnvironment,&recoverEnvironmentError,sizeof(oldEnvironment));
+  if (!setjmp(recoverEnvironmentError)) {
+    res = executeMatchBodyInner(resultThing, body, thingToReturn, associations);
+  } else {
+    printMessage(1,"Warning: the last command could not be executed. May leak memory.\n");
+    considerDyingOnError();
+    res = 0;
+  }
+  memmove(&recoverEnvironmentError,oldEnvironment,sizeof(recoverEnvironmentError));
+  free(oldEnvironment);
+
+  popTimeCounter("executing the body of a match-with construct");
+
+  return res;
+}
+
+int executeMatch(node **result, node *thingToMatch, node **matchers, node **codesToRun, node **thingsToReturn, int numberMatchers) {
+  int i, okay;
+  chain *associations;
+
+  okay = 0;
+  associations = NULL;
+  for (i=0;i<numberMatchers;i++) {
+    if (tryMatch(&associations, thingToMatch, matchers[i])) {
+      okay = 1;
+      break;
+    }
+  }
+
+  if (okay) {
+    okay = executeMatchBody(result, codesToRun[i], thingsToReturn[i], associations);
+    if (associations != NULL) freeChain(associations, freeEntryOnVoid);
+  } else {
+    printMessage(1,"Warning: no matching expression found in a match-with construct and no default case given.\n");
+    *result = makeError();
+    okay = 1;
+  }
+
+  return okay;
+}
+
 
 int executeProcedureInner(node **resultThing, node *proc, chain *args, int elliptic) {
   int result, res, noError;
@@ -13558,6 +14182,1297 @@ int executeExternalProcedure(node **resultThing, libraryProcedure *proc, chain *
   return res;
 }
 
+node *preevaluateMatcher(node *tree);
+
+void *preevaluateMatcherOnVoid(void *tree) {
+  return (void *) preevaluateMatcher((node *) tree);
+}
+
+
+int variableUsePreventsPreevaluation(node *tree) {
+  chain *curr;
+
+  switch (tree->nodeType) {
+  case RENAME:
+  case ASSIGNMENT:
+  case FLOATASSIGNMENT:
+  case EXTERNALPROC:
+  case LIBRARYBINDING:
+  case LIBRARYCONSTANTBINDING:
+  case DEFAULT:
+  case ISBOUND:
+  case STRUCTACCESS:
+  case MATCH:
+  case MATCHELEMENT:
+  case VARIABLEDECLARATION:
+  case ASSIGNMENTINSTRUCTURE:
+  case FLOATASSIGNMENTINSTRUCTURE:
+  case PROTOASSIGNMENTINSTRUCTURE:
+  case PROTOFLOATASSIGNMENTINSTRUCTURE:
+  case FOR:
+    return 1;
+    break;  	
+  case TABLEACCESS:
+    if ((variablename != NULL) &&
+	(!strcmp(variablename, tree->string))) {
+      return 0;
+    } else {
+      return 1;
+    }
+    break;
+  case TABLEACCESSWITHSUBSTITUTE:
+    if ((variablename != NULL) &&
+	(!strcmp(variablename, tree->string))) {
+      return variableUsePreventsPreevaluation(tree->child1);
+    } else {
+      return 1;
+    }    
+    break;
+  case VARIABLE:
+  case CONSTANT:
+  case LIBRARYCONSTANT:
+  case PI_CONST:
+  case QUIT:
+  case NOP:
+  case FALSEQUIT:
+  case FALSERESTART:
+  case RESTART:
+  case ON:
+  case OFF:
+  case DYADIC:
+  case POWERS:
+  case BINARY:
+  case HEXADECIMAL:
+  case FILESYM:
+  case POSTSCRIPT:
+  case POSTSCRIPTFILE:
+  case PERTURB:
+  case ROUNDDOWN:
+  case ROUNDUP:
+  case ROUNDTOZERO:
+  case ROUNDTONEAREST:
+  case HONORCOEFF:
+  case TRUE:
+  case UNIT:
+  case FALSE:
+  case DECIMAL:
+  case ABSOLUTESYM:
+  case RELATIVESYM:
+  case FIXED:
+  case FLOATING:
+  case ERRORSPECIAL:
+  case DOUBLESYMBOL:
+  case SINGLESYMBOL:
+  case QUADSYMBOL:
+  case HALFPRECISIONSYMBOL:
+  case DOUBLEEXTENDEDSYMBOL:
+  case DOUBLEDOUBLESYMBOL:
+  case TRIPLEDOUBLESYMBOL:
+  case STRING:
+  case DECIMALCONSTANT:
+  case MIDPOINTCONSTANT:
+  case DYADICCONSTANT:
+  case HEXCONSTANT:
+  case HEXADECIMALCONSTANT:
+  case BINARYCONSTANT:
+  case EMPTYLIST:
+  case ELLIPTIC:
+  case EXTERNALPROCEDUREUSAGE:
+  case PRECDEREF:
+  case POINTSDEREF:
+  case DIAMDEREF:
+  case DISPLAYDEREF:
+  case VERBOSITYDEREF:
+  case CANONICALDEREF:
+  case AUTOSIMPLIFYDEREF:
+  case TAYLORRECURSDEREF:
+  case TIMINGDEREF:
+  case FULLPARENDEREF:
+  case MIDPOINTDEREF:
+  case DIEONERRORMODEDEREF:
+  case RATIONALMODEDEREF:
+  case SUPPRESSWARNINGSDEREF:
+  case HOPITALRECURSDEREF:
+    return 0;
+    break;
+  case ADD:
+  case SUB:
+  case MUL:
+  case DIV:
+  case POW:
+  case PROCEDUREFUNCTION:
+  case WHILE:
+  case IF:
+  case FORIN:
+  case ASCIIPLOT:
+  case PRINTXMLNEWFILE:
+  case PRINTXMLAPPENDFILE:
+  case AND:
+  case OR:
+  case INDEX:
+  case COMPAREEQUAL:
+  case COMPAREIN:
+  case COMPARELESS:
+  case COMPAREGREATER:
+  case COMPARELESSEQUAL:
+  case COMPAREGREATEREQUAL:
+  case COMPARENOTEQUAL:
+  case CONCAT:
+  case ADDTOLIST:
+  case PREPEND:
+  case APPEND:
+  case RANGE:
+  case SUBSTITUTE:
+  case COEFF:
+  case SUBPOLY:
+  case ROUNDCOEFFICIENTS:
+  case RATIONALAPPROX:    
+  case EVALUATE:
+  case FINDZEROS:
+  case FPFINDZEROS:
+  case DIRTYINFNORM:
+  case NUMBERROOTS:
+  case INTEGRAL:
+  case DIRTYINTEGRAL:
+  case ZERODENOMINATORS:
+  case ISEVALUABLE:
+  case DIRTYFINDZEROS:
+    return (variableUsePreventsPreevaluation(tree->child1) && variableUsePreventsPreevaluation(tree->child2));
+    break;
+  case SQRT:
+  case EXP:
+  case LOG:
+  case LOG_2:
+  case LOG_10:
+  case SIN:
+  case COS:
+  case TAN:
+  case ASIN:
+  case ACOS:
+  case ATAN:
+  case SINH:
+  case COSH:
+  case TANH:
+  case ASINH:
+  case ACOSH:
+  case ATANH:
+  case NEG:
+  case ABS:
+  case DOUBLE:
+  case SINGLE:
+  case QUAD:
+  case HALFPRECISION:
+  case DOUBLEDOUBLE:
+  case TRIPLEDOUBLE:
+  case ERF: 
+  case ERFC:
+  case LOG_1P:
+  case EXP_M1:
+  case DOUBLEEXTENDED:
+  case LIBRARYFUNCTION:
+  case CEIL:
+  case FLOOR:
+  case NEARESTINT:
+  case NOPARG:
+  case PRINTHEXA:
+  case PRINTFLOAT:
+  case PRINTBINARY:
+  case PRINTEXPANSION:
+  case BASHEXECUTE:
+  case PRINTXML:
+  case PRECASSIGN:
+  case POINTSASSIGN:
+  case DIAMASSIGN:
+  case DISPLAYASSIGN:
+  case VERBOSITYASSIGN:
+  case CANONICALASSIGN:
+  case AUTOSIMPLIFYASSIGN:
+  case TAYLORRECURSASSIGN:
+  case TIMINGASSIGN:
+  case FULLPARENASSIGN:
+  case MIDPOINTASSIGN:
+  case DIEONERRORMODEASSIGN:
+  case RATIONALMODEASSIGN:
+  case SUPPRESSWARNINGSASSIGN:
+  case HOPITALRECURSASSIGN:
+  case PRECSTILLASSIGN:
+  case POINTSSTILLASSIGN:
+  case DIAMSTILLASSIGN:
+  case DISPLAYSTILLASSIGN:
+  case VERBOSITYSTILLASSIGN:
+  case CANONICALSTILLASSIGN:
+  case AUTOSIMPLIFYSTILLASSIGN:
+  case TAYLORRECURSSTILLASSIGN:
+  case TIMINGSTILLASSIGN:
+  case FULLPARENSTILLASSIGN:
+  case MIDPOINTSTILLASSIGN:
+  case DIEONERRORMODESTILLASSIGN:
+  case RATIONALMODESTILLASSIGN:
+  case SUPPRESSWARNINGSSTILLASSIGN:
+  case HOPITALRECURSSTILLASSIGN:
+  case NEGATION:
+  case HORNER:
+  case CANONICAL:
+  case EXPAND:
+  case DEGREE:
+  case NUMERATOR:
+  case DENOMINATOR:
+  case PARSE:
+  case READXML:
+  case EXECUTE:
+  case HEAD:
+  case ROUNDCORRECTLY:
+  case READFILE:
+  case REVERT:
+  case SORT:
+  case MANTISSA:
+  case EXPONENT:
+  case PRECISION:
+  case TAIL:
+  case LENGTH:
+  case DEBOUNDMAX:
+  case EVALCONST:
+  case DEBOUNDMIN:
+  case DEBOUNDMID:
+  case DIFF:
+  case SIMPLIFY:
+  case SIMPLIFYSAFE:
+  case TIME:
+    return variableUsePreventsPreevaluation(tree->child1);
+    break;
+  case PROC:
+  case PROCILLIM:
+    return ((tree->arguments == NULL) && 
+	    variableUsePreventsPreevaluation(tree->child1) && variableUsePreventsPreevaluation(tree->child2));
+    break;
+  case COMMANDLIST:
+  case IFELSE:
+  case PRINT:
+  case PLOT:
+  case EXTERNALPLOT:
+  case WRITE:
+  case WORSTCASE:
+  case AUTOPRINT:
+  case LIST:
+  case FINALELLIPTICLIST:
+  case REMEZ:
+  case BASHEVALUATE:
+  case MIN:
+  case MAX:
+  case FPMINIMAX:
+  case TAYLOR:
+  case TAYLORFORM:
+  case AUTODIFF:
+  case ACCURATEINFNORM:
+  case ROUNDTOFORMAT:
+  case INFNORM:
+  case SUPNORM:
+  case IMPLEMENTPOLY:
+  case IMPLEMENTCONST:
+  case CHECKINFNORM:
+  case SEARCHGAL:
+  case GUESSDEGREE:
+  case ASSIGNMENTININDEXING:
+  case FLOATASSIGNMENTININDEXING:
+    for (curr = tree->arguments;
+	 curr != NULL;
+	 curr = curr->next) {
+      if (variableUsePreventsPreevaluation((node *) (curr->value))) return 1;
+    }
+    return 0;
+    break;
+  case NEWFILEPRINT:
+  case NEWFILEWRITE:
+  case APPENDFILEWRITE:
+  case APPENDFILEPRINT:
+  case APPLY:
+    for (curr = tree->arguments;
+	 curr != NULL;
+	 curr = curr->next) {
+      if (variableUsePreventsPreevaluation((node *) (curr->value))) return 1;
+    }
+    if (variableUsePreventsPreevaluation(tree->child1)) return 1;
+    return 0;
+    break; 			
+  case STRUCTURE:
+    for (curr = tree->arguments;
+	 curr != NULL;
+	 curr = curr->next) {
+      if (variableUsePreventsPreevaluation((node *) (((entry *) (curr->value))->value))) return 1;
+    }
+    return 0;
+    break; 			
+  default:
+    sollyaFprintf(stderr,"Error: variableUsePreventsPreevaluation: unknown identifier (%d) in the tree\n",tree->nodeType);
+    exit(1);
+  }
+  return 1;
+}
+ 
+node *preevaluateMatcher(node *tree) {
+  node *copy, *tempNode2, *tempNode;
+  int rangeEvaluateLeft, rangeEvaluateRight;
+  chain *tempChain, *curr, *newChain;
+  int resA, resB, resC, i;
+  mpfr_t a, infinity;
+
+  if (tree == NULL) return NULL;
+
+  copy = (node *) safeMalloc(sizeof(node));
+  copy->nodeType = tree->nodeType;
+
+  switch (tree->nodeType) {
+  case DECIMALCONSTANT:
+  case MIDPOINTCONSTANT:
+  case DYADICCONSTANT:
+  case HEXCONSTANT:
+  case HEXADECIMALCONSTANT:
+  case BINARYCONSTANT:
+    free(copy);
+    copy = evaluateThing(tree);
+    break; 			
+  case RANGE:
+    rangeEvaluateLeft = !variableUsePreventsPreevaluation(tree->child1);
+    rangeEvaluateRight = !variableUsePreventsPreevaluation(tree->child2);
+    if (rangeEvaluateLeft && rangeEvaluateRight) {
+      free(copy);
+      copy = evaluateThing(tree);
+      if (copy->nodeType != RANGE) {
+	freeThing(copy);
+	copy = (node *) safeMalloc(sizeof(node));
+	copy->nodeType = tree->nodeType;
+	copy->child1 = preevaluateMatcher(tree->child1);
+	copy->child2 = preevaluateMatcher(tree->child2);
+      }
+    } else {
+      if (rangeEvaluateLeft) {
+	copy->child2 = preevaluateMatcher(tree->child2);
+	tempNode = (node *) safeMalloc(sizeof(node));
+	tempNode->nodeType = RANGE;
+	tempNode->child1 = copyThing(tree->child1);
+	mpfr_init2(infinity,12);
+	mpfr_set_inf(infinity,1);
+	tempNode->child2 = makeConstant(infinity);
+	mpfr_clear(infinity);
+	tempNode2 = evaluateThing(tempNode);
+	if (tempNode2->nodeType == RANGE) {
+	  copy->child1 = tempNode2->child1;
+	  freeThing(tempNode2->child2);
+	  free(tempNode2);
+	} else {
+	  copy->child1 = preevaluateMatcher(tree->child1);
+	  freeThing(tempNode2);
+	}
+	freeThing(tempNode);
+      } else {
+	if (rangeEvaluateRight) {
+	  copy->child1 = preevaluateMatcher(tree->child1);
+	  tempNode = (node *) safeMalloc(sizeof(node));
+	  tempNode->nodeType = RANGE;
+	  mpfr_init2(infinity,12);
+	  mpfr_set_inf(infinity,-1);
+	  tempNode->child1 = makeConstant(infinity);
+	  tempNode->child2 = copyThing(tree->child2);
+	  mpfr_clear(infinity);
+	  tempNode2 = evaluateThing(tempNode);
+	  if (tempNode2->nodeType == RANGE) {
+	    copy->child2 = tempNode2->child2;
+	    freeThing(tempNode2->child1);
+	    free(tempNode2);
+	  } else {
+	    copy->child2 = preevaluateMatcher(tree->child2);
+	    freeThing(tempNode2);
+	  }
+	  freeThing(tempNode);
+	} else {
+	  copy->child1 = preevaluateMatcher(tree->child1);
+	  copy->child2 = preevaluateMatcher(tree->child2);
+	}
+      }
+    }
+    break; 			 	
+  case DIFF:
+    switch (tree->child1->nodeType) {
+    case LIBRARYFUNCTION:
+    case PROCEDUREFUNCTION:
+      if ((tree->child1->child1->nodeType == VARIABLE) ||
+	  ((variablename != NULL) && 
+	   ((tree->child1->child1->nodeType == TABLEACCESS) && 
+	    (!strcmp(variablename,tree->child1->child1->string))))) {
+	free(copy);
+	copy = evaluateThing(tree);
+      } else {
+	copy->child1 = preevaluateMatcher(tree->child1);
+      }
+      break;
+    default:
+      copy->child1 = preevaluateMatcher(tree->child1);
+      break;
+    }
+    break; 			 	
+  case LIST:
+    tempChain = copyChain(tree->arguments, preevaluateMatcherOnVoid);
+    curr = tempChain; newChain = NULL; resC = 0;
+    while (curr != NULL) {
+      if ((curr->next != NULL) &&
+	  (curr->next->next != NULL) &&
+	  isElliptic((node *) (curr->next->value)) &&
+	  isPureTree((node *) (curr->value)) &&
+	  isPureTree((node *) (curr->next->next->value)) &&
+	  isConstant((node *) (curr->value)) &&
+	  isConstant((node *) (curr->next->next->value)) &&
+	  evaluateThingToInteger(&resA,(node *) (curr->value), NULL) &&
+	  evaluateThingToInteger(&resB,(node *) (curr->next->next->value),NULL) &&
+	  (resA >= resB)) {
+	mpfr_init2(a,sizeof(int) * 8);
+	resC = 1;
+	for (i=resA;i>=resB;i--) {
+	  mpfr_set_si(a,i,GMP_RNDN);
+	  newChain = addElement(newChain,makeConstant(a));
+	}
+	mpfr_clear(a);
+	curr = curr->next->next;
+      } else {
+	newChain = addElement(newChain,copyThing((node *) (curr->value)));
+      }
+      curr = curr->next;
+    }
+    freeChain(tempChain, freeThingOnVoid);
+    copy->arguments = newChain;
+    if (resC && (!isPureList(copy))) {
+      tempNode = preevaluateMatcher(copy);
+      freeThing(copy);
+      copy = tempNode;
+    }
+    break; 	
+  case FINALELLIPTICLIST:
+        tempChain = copyChain(tree->arguments, preevaluateMatcherOnVoid);
+    curr = tempChain; newChain = NULL; resC = 0;
+    while (curr != NULL) {
+      if ((curr->next != NULL) &&
+	  (curr->next->next != NULL) &&
+	  isElliptic((node *) (curr->next->value)) &&
+	  isPureTree((node *) (curr->value)) &&
+	  isPureTree((node *) (curr->next->next->value)) &&
+	  isConstant((node *) (curr->value)) &&
+	  isConstant((node *) (curr->next->next->value)) &&
+	  evaluateThingToInteger(&resA,(node *) (curr->value), NULL) &&
+	  evaluateThingToInteger(&resB,(node *) (curr->next->next->value),NULL) &&
+	  (resA >= resB)) {
+	mpfr_init2(a,sizeof(int) * 8);
+	resC = 1;
+	for (i=resA;i>=resB;i--) {
+	  mpfr_set_si(a,i,GMP_RNDN);
+	  newChain = addElement(newChain,makeConstant(a));
+	}
+	mpfr_clear(a);
+	curr = curr->next->next;
+      } else {
+	newChain = addElement(newChain,copyThing((node *) (curr->value)));
+      }
+      curr = curr->next;
+    }
+    freeChain(tempChain, freeThingOnVoid);
+    copy->arguments = newChain;
+    if (resC && (!isPureFinalEllipticList(copy))) {
+      tempNode = preevaluateMatcher(copy);
+      freeThing(copy);
+      copy = tempNode;
+    }
+    break; 		
+  case VARIABLE:
+    break;
+  case CONSTANT:
+    copy->value = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+    mpfr_init2(*(copy->value),mpfr_get_prec(*(tree->value)));
+    mpfr_set(*(copy->value),*(tree->value),GMP_RNDN);
+    break;
+  case ADD:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break;
+  case SUB:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break;
+  case MUL:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break;
+  case DIV:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break;
+  case SQRT:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case EXP:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case LOG:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case LOG_2:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case LOG_10:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case SIN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case COS:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case TAN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case ASIN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case ACOS:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case ATAN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case SINH:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case COSH:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case TANH:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case ASINH:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case ACOSH:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case ATANH:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case POW:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break;
+  case NEG:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case ABS:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case DOUBLE:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case SINGLE:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case QUAD:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case HALFPRECISION:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case DOUBLEDOUBLE:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case TRIPLEDOUBLE:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case ERF: 
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case ERFC:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case LOG_1P:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case EXP_M1:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case DOUBLEEXTENDED:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case LIBRARYFUNCTION:
+    copy->libFun = tree->libFun;
+    copy->libFunDeriv = tree->libFunDeriv;
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case LIBRARYCONSTANT:
+    copy->libFun = tree->libFun;
+    break;
+  case PROCEDUREFUNCTION:
+    copy->libFunDeriv = tree->libFunDeriv;
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break;
+  case CEIL:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case FLOOR:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case NEARESTINT:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case PI_CONST:
+    break;
+  case COMMANDLIST:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break;			
+  case WHILE:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break;				
+  case IFELSE:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 				
+  case IF:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 				
+  case FOR:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 				
+  case FORIN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;  				
+  case QUIT:
+    break;  				
+  case FALSEQUIT:
+    break; 			
+  case FALSERESTART:
+    break; 			
+  case RESTART:
+    break;  			
+  case PRINT:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 	
+  case VARIABLEDECLARATION:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
+    break; 	
+  case NOP:
+    break;
+  case NOPARG:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case NEWFILEPRINT:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			
+  case APPENDFILEPRINT:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 			
+  case PLOT:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break;			
+  case PRINTHEXA:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 
+  case PRINTFLOAT:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 
+  case PRINTBINARY:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			
+  case PRINTEXPANSION:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case BASHEXECUTE:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			
+  case EXTERNALPLOT:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 
+  case WRITE:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 			
+  case NEWFILEWRITE:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break;
+  case APPENDFILEWRITE:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 
+  case ASCIIPLOT:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break;			
+  case PRINTXML:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;			
+  case PRINTXMLNEWFILE:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break;			
+  case PRINTXMLAPPENDFILE:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break;			
+  case WORSTCASE:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 			
+  case RENAME:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
+    break; 				
+  case AUTOPRINT:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 
+  case EXTERNALPROC:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyIntPtrOnVoid);
+    break;
+  case ASSIGNMENT:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break; 			
+  case FLOATASSIGNMENT:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break; 			
+  case LIBRARYBINDING:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;  			
+  case LIBRARYCONSTANTBINDING:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;  			
+  case PRECASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			
+  case POINTSASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			
+  case DIAMASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;			
+  case DISPLAYASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			
+  case VERBOSITYASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;  		
+  case CANONICALASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 		
+  case AUTOSIMPLIFYASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;  		
+  case TAYLORRECURSASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 		
+  case TIMINGASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			
+  case FULLPARENASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;  		
+  case MIDPOINTASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case DIEONERRORMODEASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case RATIONALMODEASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			 			
+  case SUPPRESSWARNINGSASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			
+  case HOPITALRECURSASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 		
+  case PRECSTILLASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 		
+  case POINTSSTILLASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 		
+  case DIAMSTILLASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 		
+  case DISPLAYSTILLASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;  		
+  case VERBOSITYSTILLASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 		
+  case CANONICALSTILLASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 		
+  case AUTOSIMPLIFYSTILLASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;  	
+  case TAYLORRECURSSTILLASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 	
+  case TIMINGSTILLASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 		
+  case FULLPARENSTILLASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;  		
+  case MIDPOINTSTILLASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case DIEONERRORMODESTILLASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;
+  case RATIONALMODESTILLASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 		 		
+  case SUPPRESSWARNINGSSTILLASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 		
+  case HOPITALRECURSSTILLASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;  	
+  case AND:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 				
+  case OR:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break;				
+  case NEGATION:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			
+  case INDEX:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 
+  case COMPAREEQUAL:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 			
+  case COMPAREIN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 			
+  case COMPARELESS:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 			
+  case COMPAREGREATER:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 			
+  case COMPARELESSEQUAL:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 		
+  case COMPAREGREATEREQUAL:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break;		
+  case COMPARENOTEQUAL:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break;		
+  case CONCAT:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 			
+  case ADDTOLIST:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 			
+  case PREPEND:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 			
+  case APPEND:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 			
+  case ON:
+    break; 				
+  case OFF:
+    break; 				
+  case DYADIC:
+    break;  				
+  case POWERS:
+    break; 				
+  case BINARY:
+    break; 			 	
+  case HEXADECIMAL:
+    break; 			 	
+  case FILESYM:
+    break; 			 	
+  case POSTSCRIPT:
+    break;  			
+  case POSTSCRIPTFILE:
+    break; 			
+  case PERTURB:
+    break; 			
+  case ROUNDDOWN:
+    break; 			
+  case ROUNDUP:
+    break; 			
+  case ROUNDTOZERO:
+    break;  			
+  case ROUNDTONEAREST:
+    break; 			
+  case HONORCOEFF:
+    break; 			
+  case TRUE:
+    break; 
+  case UNIT:
+    break; 			 	
+  case FALSE:
+    break; 			 	
+  case DEFAULT:
+    break; 			
+  case DECIMAL:
+    break; 			
+  case ABSOLUTESYM:
+    break; 			
+  case RELATIVESYM:
+    break;
+  case FIXED:
+    break;
+  case FLOATING:
+    break;
+  case ERRORSPECIAL:
+    break; 			
+  case DOUBLESYMBOL:
+    break;  			
+  case SINGLESYMBOL:
+    break;  			
+  case QUADSYMBOL:
+    break;  			
+  case HALFPRECISIONSYMBOL:
+    break;  			
+  case DOUBLEEXTENDEDSYMBOL:
+    break;  			
+  case DOUBLEDOUBLESYMBOL:
+    break; 		
+  case TRIPLEDOUBLESYMBOL:
+    break; 		
+  case STRING:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break; 			 	
+  case TABLEACCESS:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;  		
+  case ISBOUND:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;  			
+  case TABLEACCESSWITHSUBSTITUTE:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;  	
+  case STRUCTACCESS:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;  	
+  case APPLY:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;  	
+  case EMPTYLIST:
+    break; 			
+  case STRUCTURE:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyEntryOnVoid);
+    break; 			 	
+  case ELLIPTIC:
+    break; 			
+  case DEBOUNDMAX:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;  			
+  case DEBOUNDMIN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			
+  case DEBOUNDMID:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			
+  case EVALCONST:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			
+  case SIMPLIFY:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;  			
+  case SIMPLIFYSAFE:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;  			
+  case TIME:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;  			
+  case REMEZ:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 			 	
+  case BASHEVALUATE:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 			 	
+  case MATCH:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 			 	
+  case MATCHELEMENT:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 			 	
+  case MIN:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 			 	
+  case MAX:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 			 	
+  case FPMINIMAX:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 			 	
+  case HORNER:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			 	
+  case CANONICAL:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			
+  case EXPAND:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			 	
+  case TAYLOR:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 			 	
+  case TAYLORFORM:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 			 	
+  case AUTODIFF:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 			 	
+  case DEGREE:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			 	
+  case NUMERATOR:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			
+  case DENOMINATOR:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			
+  case SUBSTITUTE:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break;			
+  case COEFF:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 			 	
+  case SUBPOLY:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 			
+  case ROUNDCOEFFICIENTS:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 		
+  case RATIONALAPPROX:    
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 			
+  case ACCURATEINFNORM:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 		
+  case ROUNDTOFORMAT:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break;			
+  case EVALUATE:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 			
+  case PARSE:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			 	
+  case READXML:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			 	
+  case EXECUTE:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			 	
+  case INFNORM:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 			
+  case SUPNORM:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 			
+  case FINDZEROS:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 			
+  case FPFINDZEROS:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 			
+  case DIRTYINFNORM:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 			
+  case NUMBERROOTS:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 			
+  case INTEGRAL:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 			
+  case DIRTYINTEGRAL:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break;  			
+  case IMPLEMENTPOLY:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 			
+  case IMPLEMENTCONST:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 			
+  case CHECKINFNORM:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 			
+  case ZERODENOMINATORS:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break;  		
+  case ISEVALUABLE:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 			
+  case SEARCHGAL:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 			
+  case GUESSDEGREE:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 			
+  case ASSIGNMENTININDEXING:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 			
+  case FLOATASSIGNMENTININDEXING:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 	
+  case ASSIGNMENTINSTRUCTURE:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
+    break; 			
+  case FLOATASSIGNMENTINSTRUCTURE:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
+    break; 				
+  case PROTOASSIGNMENTINSTRUCTURE:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 			
+  case PROTOFLOATASSIGNMENTINSTRUCTURE:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 				
+  case DIRTYFINDZEROS:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break; 			
+  case HEAD:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			 	
+  case ROUNDCORRECTLY:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			 	
+  case READFILE:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 
+  case REVERT:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 	
+  case SORT:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			 			 	
+  case MANTISSA:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			 	
+  case EXPONENT:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			 	
+  case PRECISION:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			 	
+  case TAIL:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 			 	
+  case LENGTH:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break; 	
+  case EXTERNALPROCEDUREUSAGE:
+    copy->libProc = tree->libProc;
+    break;
+  case PROC:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
+    break;
+  case PROCILLIM:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
+    break;
+  case PRECDEREF:
+    break; 			
+  case POINTSDEREF:
+    break; 			
+  case DIAMDEREF:
+    break; 			
+  case DISPLAYDEREF:
+    break; 			
+  case VERBOSITYDEREF:
+    break; 			
+  case CANONICALDEREF:
+    break; 			
+  case AUTOSIMPLIFYDEREF:
+    break; 		
+  case TAYLORRECURSDEREF:
+    break; 		
+  case TIMINGDEREF:
+    break; 			
+  case FULLPARENDEREF:
+    break; 			
+  case MIDPOINTDEREF:
+    break;
+  case DIEONERRORMODEDEREF:
+    break;
+  case RATIONALMODEDEREF:
+    break;
+  case SUPPRESSWARNINGSDEREF:
+    break; 			
+  case HOPITALRECURSDEREF:
+    break;  	       
+  default:
+    sollyaFprintf(stderr,"Error: preevaluateMatcher: unknown identifier (%d) in the tree\n",tree->nodeType);
+    exit(1);
+  }
+
+  return copy;
+}
 
 void *evaluateThingInnerOnVoid(void *tree) {
   return (void *) evaluateThingInner((node *) tree);
@@ -13590,6 +15505,7 @@ node *evaluateThingInner(node *tree) {
   mpfr_t bb,cc;
   sollya_mpfi_t tempIA2;
   unsigned int tempUI;
+  node **thingArray1, **thingArray2, **thingArray3;
 
   /* Make compiler happy: */
   pTemp = 12;
@@ -14489,6 +16405,50 @@ node *evaluateThingInner(node *tree) {
       sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
       sollya_mpfi_init2(tempIC,tools_precision);
       sollya_mpfi_round_to_single(tempIC,tempIA);
+      freeThing(copy);
+      mpfr_init2(a,tools_precision);
+      mpfr_init2(b,tools_precision);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
+      copy = makeRange(makeConstant(a),makeConstant(b));
+      mpfr_clear(a);
+      mpfr_clear(b);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
+    }
+    break;
+  case QUAD:
+    copy->child1 = evaluateThingInner(tree->child1);
+    if (isRangeNonEmpty(copy->child1)) {
+      pTemp = mpfr_get_prec(*(copy->child1->child1->value));
+      pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
+      if (pTemp2 > pTemp) pTemp = pTemp2;
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_round_to_quad(tempIC,tempIA);
+      freeThing(copy);
+      mpfr_init2(a,tools_precision);
+      mpfr_init2(b,tools_precision);
+      sollya_mpfi_get_left(a,tempIC);
+      sollya_mpfi_get_right(b,tempIC);
+      copy = makeRange(makeConstant(a),makeConstant(b));
+      mpfr_clear(a);
+      mpfr_clear(b);
+      sollya_mpfi_clear(tempIA);
+      sollya_mpfi_clear(tempIC);
+    }
+    break;
+  case HALFPRECISION:
+    copy->child1 = evaluateThingInner(tree->child1);
+    if (isRangeNonEmpty(copy->child1)) {
+      pTemp = mpfr_get_prec(*(copy->child1->child1->value));
+      pTemp2 = mpfr_get_prec(*(copy->child1->child2->value));
+      if (pTemp2 > pTemp) pTemp = pTemp2;
+      sollya_mpfi_init2(tempIA,pTemp);
+      sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
+      sollya_mpfi_init2(tempIC,tools_precision);
+      sollya_mpfi_round_to_halfprecision(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
@@ -16012,6 +17972,10 @@ node *evaluateThingInner(node *tree) {
     break;  			
   case SINGLESYMBOL:
     break;  			
+  case QUADSYMBOL:
+    break;  			
+  case HALFPRECISIONSYMBOL:
+    break;  			
   case DOUBLEEXTENDEDSYMBOL:
     break;  			
   case DOUBLEDOUBLESYMBOL:
@@ -17044,7 +19008,7 @@ node *evaluateThingInner(node *tree) {
     if (resA) {
       printMessage(1,"Warning: a command executed in a timed environment required quitting the tool. This is not possible. The quit command has been discarded.\n");
     }
-    break;  			
+    break;
   case REMEZ:
     copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateThingInnerOnVoid);
     curr = copy->arguments;
@@ -17054,17 +19018,25 @@ node *evaluateThingInner(node *tree) {
     curr = curr->next;
     thirdArg = copyThing((node *) (curr->value));
     curr = curr->next;
+
+    fourthArg = NULL;
     fifthArg = NULL;
+    sixthArg = NULL;
     if (curr != NULL) {
       fourthArg = copyThing((node *) (curr->value));
       curr = curr->next;
       if (curr != NULL) {
 	fifthArg = copyThing((node *) (curr->value));
-      } 
-    } else {
-      fourthArg = makeConstantDouble(1.0);
-    }    
-    if (isPureTree(firstArg) && isRange(thirdArg) && (isPureTree(fourthArg) || isDefault(fourthArg)) && ((fifthArg == NULL) || isPureTree(fifthArg))) {
+        curr = curr->next;
+        if (curr != NULL) {
+          sixthArg = copyThing((node *) (curr->value));
+        }
+      }
+    }
+
+    if (fourthArg == NULL) fourthArg = makeConstantDouble(1.0);
+
+    if (isPureTree(firstArg) && isRange(thirdArg) && (isPureTree(fourthArg) || isDefault(fourthArg)) && ((fifthArg == NULL) || isDefault(fifthArg) || isPureTree(fifthArg)) && ((sixthArg == NULL) || isDefault(sixthArg) || isRange(sixthArg))) {
       if (isPureTree(secondArg) || isPureList(secondArg)) {
 	resB = 0;
 	if (isPureTree(secondArg)) {
@@ -17073,7 +19045,7 @@ node *evaluateThingInner(node *tree) {
 	    tempChain = makeIntPtrChainFromTo(0, resA);
 	  }
 	} else {
-	  if (evaluateThingToIntegerList(&tempChain, NULL, secondArg)) {	  
+	  if (evaluateThingToIntegerList(&tempChain, NULL, secondArg)) {
 	    resB = 1;
 	  }
 	}
@@ -17086,7 +19058,7 @@ node *evaluateThingInner(node *tree) {
 	  mpfr_init2(b,tools_precision);
 	  if (evaluateThingToRange(a,b,thirdArg)) {
 	    tempMpfrPtr = NULL;
-	    if (fifthArg != NULL) {
+	    if ((fifthArg != NULL) && (!isDefault(fifthArg))) {
 	      tempMpfrPtr = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
 	      mpfr_init2(*tempMpfrPtr,tools_precision);
 	      if (!evaluateThingToConstant(*tempMpfrPtr,fifthArg,NULL,0)) {
@@ -17097,20 +19069,38 @@ node *evaluateThingInner(node *tree) {
 		tempMpfrPtr = NULL;
 	      }
 	    }
-	    if (timingString != NULL) pushTimeCounter(); 
-	    tempNode = remez(firstArg, fourthArg, tempChain, a, b, tempMpfrPtr, tools_precision);
-	    if (timingString != NULL) popTimeCounter(timingString);
-	    freeThing(copy);
-	    copy = tempNode;
-	    if (tempMpfrPtr != NULL) {
-	      mpfr_clear(*tempMpfrPtr);
-	      free(tempMpfrPtr);
-	    }
-	  }
-	  mpfr_clear(a); 
-	  mpfr_clear(b); 
-	  freeChain(tempChain,freeIntPtr);
-	}
+            mpfr_init2(c, tools_precision);
+            mpfr_init2(d, tools_precision);
+            resC = 0;
+            if ((sixthArg==NULL) || isDefault(sixthArg)) {
+              resC = 1;
+              mpfr_set_ui(c, 0, GMP_RNDN);
+              mpfr_set_inf(d, 1);
+            }
+            else resC = evaluateThingToRange(c, d, sixthArg);
+            if (resC) {
+              if (mpfr_cmp_ui(c, 0) < 0) {
+                printMessage(1, "Warning: the sixth argument of remez must be a non-negative interval. Replaced by [0, +Inf]\n");
+                mpfr_set_ui(c, 0, GMP_RNDN);
+                mpfr_set_inf(d, 1);
+              }
+              if (timingString != NULL) pushTimeCounter();
+              tempNode = remez(firstArg, fourthArg, tempChain, a, b, tempMpfrPtr, c, d, tools_precision);
+              if (timingString != NULL) popTimeCounter(timingString);
+              freeThing(copy);
+              copy = tempNode;
+              if (tempMpfrPtr != NULL) {
+                mpfr_clear(*tempMpfrPtr);
+                free(tempMpfrPtr);
+              }
+            }
+            mpfr_clear(c);
+            mpfr_clear(d);
+          }
+          mpfr_clear(a);
+          mpfr_clear(b);
+          freeChain(tempChain,freeIntPtr);
+        }
       }
     }
     freeThing(firstArg);
@@ -17118,7 +19108,59 @@ node *evaluateThingInner(node *tree) {
     freeThing(thirdArg);
     freeThing(fourthArg);
     if (fifthArg != NULL) freeThing(fifthArg);
-    break; 			 	
+    if (sixthArg != NULL) freeThing(sixthArg);
+    break;
+  case MATCH:
+    copy->child1 = evaluateThingInner(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateThingInnerOnVoid);
+    if (isCorrectlyTyped(copy->child1)) {
+      resA = 1;
+      for (curr = copy->arguments; curr != NULL; curr=curr->next) {
+	if (!isMatchElement((node *) (curr->value))) {
+	  resA = 0;
+	  break;
+	}
+      }
+      if (resA) {
+	resB = lengthChain(copy->arguments);
+	thingArray1 = (node **) safeCalloc(resB, sizeof(node *));
+	thingArray2 = (node **) safeCalloc(resB, sizeof(node *));
+	thingArray3 = (node **) safeCalloc(resB, sizeof(node *));
+	resC = 0;
+	for (curr = copy->arguments; curr != NULL; curr=curr->next) {
+	  thingArray1[resC] = preevaluateMatcher(((node *) (curr->value))->child1);
+	  thingArray3[resC] = ((node *) (curr->value))->child2;
+	  thingArray2[resC] = (node *) (((node *) (curr->value))->arguments->value);
+	  resC++;
+	}
+	resD = 1;
+	for (resC=0;resC<resB;resC++) {
+	  if (!isMatchable(thingArray1[resC])) {
+	    resD = 0;
+	    break;
+	  }
+	}
+	if (resD) {
+	  tempNode = NULL;
+	  if ((executeMatch(&tempNode,copy->child1,thingArray1,thingArray2,thingArray3,resB)) && (tempNode != NULL)) {
+	    freeThing(copy);
+	    copy = tempNode;
+	  }
+	}
+	for (resC=0;resC<resB;resC++) {
+	  freeThing(thingArray1[resC]);
+	}
+	free(thingArray1);
+	free(thingArray2);
+	free(thingArray3);
+      }
+    }
+    break;
+  case MATCHELEMENT:
+    copy->child1 = copyThing(tree->child1);
+    copy->child2 = copyThing(tree->child2);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
+    break;
   case FPMINIMAX:
     copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateThingInnerOnVoid);
     curr = copy->arguments;
@@ -17149,7 +19191,7 @@ node *evaluateThingInner(node *tree) {
 
     tempChain = NULL;
     if(evaluateThingToInteger(&resA, secondArg, NULL)) {
-      if(resA<0) printMessage(1, "Degree must be a positive integer");
+      if(resA<0) printMessage(1, "Error in fpminimax: degree must be a positive integer");
       else {
 	for(i=resA;i>=0;i--) {
 	  intptr = (int *)safeMalloc(sizeof(int));
@@ -17160,17 +19202,16 @@ node *evaluateThingInner(node *tree) {
     }
     else{
       if( (!evaluateThingToIntegerList(&tempChain, &resA, secondArg)) ||
-	  (resA==0) ) {
-	printMessage(1, "The second argument of fpminimax must be either an integer or a finite list of integers.\n");
+	  (resA==1) ) {
+	printMessage(1, "Error in fpminimax: the second argument of fpminimax must be either an integer or a finite list of integers.\n");
+        if (tempChain) freeChain(tempChain, freeIntPtr);
+        tempChain = NULL;
       }
     }
-  
-    tempChain2 = NULL;
-    if( (thirdArg->nodeType == LIST) || (thirdArg->nodeType == FINALELLIPTICLIST) )
-      evaluateFormatsListForFPminimax(&tempChain2, thirdArg, lengthChain(tempChain));
-    else
-      printMessage(1, "The third argument of fpminimax must be a list of formats indications.\n");
 
+    /* We skip the third argument for now on, because we need to parse the 4th, 5th and 6th arguments before
+       in order to know if negative formats are allowed or not (they are allowed in FIXED mode but not in
+       FLOATING mode) */
 
     tempChain3 = NULL;
     mpfr_init2(a, tools_precision);
@@ -17179,7 +19220,7 @@ node *evaluateThingInner(node *tree) {
     if (!evaluateThingToRange(a,b,fourthArg)) {
       if (!evaluateThingToConstantList(&tempChain3, fourthArg)) {
 	resD = 0;
-	printMessage(1, "The fourth argument of fpminimax must be either an interval or a list of points\n");
+	printMessage(1, "Error in fpminimax: the fourth argument of fpminimax must be either an interval or a list of points\n");
       }
     }
     if(tempChain3 != NULL) {
@@ -17209,12 +19250,12 @@ node *evaluateThingInner(node *tree) {
 	  tempNode = copyTree(fifthArg);
 	}
 	else {
-	  printMessage(1, "fpminimax: invalid fifth argument\n");
+	  printMessage(1, "Error in fpminimax: invalid fifth argument\n");
 	  resE = 0;
 	}
       }
     }
-    
+
     if ( (sixthArg != NULL) && (!isDefault(sixthArg)) ) {
       switch(sixthArg->nodeType) {
       case RELATIVESYM: resC = RELATIVESYM; break;
@@ -17227,12 +19268,12 @@ node *evaluateThingInner(node *tree) {
 	  tempNode = copyTree(sixthArg);
 	}
 	else {
-	  printMessage(1, "fpminimax: invalid sixth argument\n");
+	  printMessage(1, "Error in fpminimax: invalid sixth argument\n");
 	  resE = 0;
 	}
       }
     }
-  
+
     if ( (seventhArg != NULL) && (!isDefault(seventhArg)) ) {
       switch(seventhArg->nodeType) {
       case RELATIVESYM: resC = RELATIVESYM; break;
@@ -17245,11 +19286,18 @@ node *evaluateThingInner(node *tree) {
 	  tempNode = copyTree(seventhArg);
 	}
 	else {
-	  printMessage(1, "fpminimax: invalid seventh argument\n");
+	  printMessage(1, "Error in fpminimax: invalid seventh argument\n");
 	  resE = 0;
 	}
       }
     }
+
+    /* Now, we parse the third argument */
+    tempChain2 = NULL;
+    if( (thirdArg->nodeType == LIST) || (thirdArg->nodeType == FINALELLIPTICLIST) )
+      evaluateFormatsListForFPminimax(&tempChain2, thirdArg, lengthChain(tempChain), resB);
+    else
+      printMessage(1, "Error in fpminimax: the third argument of fpminimax must be a list of formats indications.\n");
 
 
     tempNode2 = NULL;
@@ -17264,7 +19312,7 @@ node *evaluateThingInner(node *tree) {
 	 (resE) &&                 /* resB=FIXED,FLOATING   resC=ABSOLUTESYM,RELATIVESYM    tempNode=consPart */
 	 ((eighthArg == NULL) || (tempNode2 != NULL))  /* tempNode2 is minimax or NULL */
 	 ) {
-      
+
       if (timingString != NULL) pushTimeCounter();
       tempNode3 = FPminimax(firstArg, tempChain, tempChain2, tempChain3, a, b, resB, resC, tempNode, tempNode2);
       if (timingString != NULL) popTimeCounter(timingString);
@@ -17273,9 +19321,9 @@ node *evaluateThingInner(node *tree) {
       if (tempNode3 == NULL) { tempNode3 = makeError(); }
       copy=tempNode3;
     }
-  
 
-	 
+
+
     freeChain(tempChain, freeIntPtr);
     freeChain(tempChain2, freeIntPtr);
     freeChain(tempChain3, freeMpfrPtr);
@@ -18728,32 +20776,50 @@ node *evaluateThingInner(node *tree) {
     curr = curr->next;
     thirdArg = copyThing((node *) (curr->value));
     curr = curr->next;
+
+    fourthArg = NULL;
     if (curr != NULL) {
       fourthArg = copyThing((node *) (curr->value));
-    } else {
-      fourthArg = makeConstantDouble(1.0);
+      curr = curr->next;
     }
+    if ( (fourthArg==NULL)||(isDefault(fourthArg)) )
+      fourthArg = makeConstantDouble(1.0);
+
+    fifthArg = NULL;
+    if (curr != NULL)
+      fifthArg = copyThing((node *) (curr->value));
+    if ( (fifthArg==NULL)||(isDefault(fifthArg)) )
+      fifthArg = makeConstantDouble(128.0);
+
     if (isPureTree(firstArg) &&
 	isRange(secondArg) &&
 	isPureTree(thirdArg) &&
-	isPureTree(fourthArg)) {
+	isPureTree(fourthArg) &&
+        isPureTree(fifthArg)) {
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
       mpfr_init2(c,tools_precision);
+
       if (evaluateThingToRange(a,b,secondArg) &&
-	  evaluateThingToConstant(c,thirdArg, NULL,0)) {
-	if (timingString != NULL) pushTimeCounter(); 
-	yrange = guessDegreeWrapper(firstArg, fourthArg, a, b, c);
-	if (timingString != NULL) popTimeCounter(timingString);
-	if ((yrange.a != NULL) && (yrange.b != NULL)) {
-	  tempNode = makeRange(makeConstant(*(yrange.a)),makeConstant(*(yrange.b)));
-	  freeThing(copy);
-	  copy = tempNode;
-	  mpfr_clear(*(yrange.a));
-	  mpfr_clear(*(yrange.b));
-	  free(yrange.a);
-	  free(yrange.b);
-	}
+	  evaluateThingToConstant(c,thirdArg, NULL,0) &&
+          evaluateThingToInteger(&resA,fifthArg,NULL)) {
+        if (resA < 0) {
+          printMessage(1, "Error: guessdegree: the optional fifth argument must be a positive number.\n");
+        }
+        else {
+          if (timingString != NULL) pushTimeCounter(); 
+          yrange = guessDegreeWrapper(firstArg, fourthArg, a, b, c, resA+1);
+          if (timingString != NULL) popTimeCounter(timingString);
+          if ((yrange.a != NULL) && (yrange.b != NULL)) {
+            tempNode = makeRange(makeConstant(*(yrange.a)),makeConstant(*(yrange.b)));
+            freeThing(copy);
+            copy = tempNode;
+            mpfr_clear(*(yrange.a));
+            mpfr_clear(*(yrange.b));
+            free(yrange.a);
+            free(yrange.b);
+          }
+        }
       }
       mpfr_clear(a);
       mpfr_clear(b);
@@ -18763,6 +20829,7 @@ node *evaluateThingInner(node *tree) {
     freeThing(secondArg);
     freeThing(thirdArg);
     freeThing(fourthArg);
+    freeThing(fifthArg);
     break; 			
   case DIRTYFINDZEROS:
     copy->child1 = evaluateThingInner(tree->child1);
@@ -18860,6 +20927,33 @@ node *evaluateThingInner(node *tree) {
       } else {
 	printMessage(1,"Warning: the file \"%s\" could not be opened for reading.\n",copy->child1->string);
         considerDyingOnError();
+      }
+    }
+    break;
+  case BASHEVALUATE:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateThingInnerOnVoid);
+    curr = copy->arguments;
+    if (isString((node *) (curr->value))) {
+      tempString2 = NULL;
+      resA = 1;
+      if (curr->next != NULL) {
+	if (isString((node *) (curr->next->value))) {
+	  tempString2 = ((node *) (curr->next->value))->string;
+	} else {
+	  resA = 0;
+	}
+      }
+      if (resA) {
+	if (timingString != NULL) pushTimeCounter();      
+	tempString = NULL;
+	tempString = evaluateStringAsBashCommand(((node *) (curr->value))->string, tempString2);
+	if (timingString != NULL) popTimeCounter(timingString);
+	if (tempString != NULL) {
+	  tempNode = makeString(tempString);
+	  free(tempString);
+	  freeThing(copy);
+	  copy = tempNode;
+	} 
       }
     }
     break;

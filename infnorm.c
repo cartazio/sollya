@@ -1,8 +1,8 @@
 /*
 
-Copyright 2006-2011 by 
+Copyright 2006-2011 by
 
-Laboratoire de l'Informatique du Parallelisme, 
+Laboratoire de l'Informatique du Parallelisme,
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
 
 LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2),
@@ -28,16 +28,16 @@ it offers a certified infinity norm, an automatic polynomial
 implementer and a fast Remez algorithm.
 
 This software is governed by the CeCILL-C license under French law and
-abiding by the rules of distribution of free software.  You can  use, 
+abiding by the rules of distribution of free software.  You can  use,
 modify and/ or redistribute the software under the terms of the CeCILL-C
 license as circulated by CEA, CNRS and INRIA at the following URL
-"http://www.cecill.info". 
+"http://www.cecill.info".
 
 As a counterpart to the access to the source code and  rights to copy,
 modify and redistribute granted by the license, users are provided only
 with a limited warranty  and the software's author,  the holder of the
 economic rights,  and the successive licensors  have only  limited
-liability. 
+liability.
 
 In this respect, the user's attention is drawn to the risks associated
 with loading,  using,  modifying and/or developing or reproducing the
@@ -46,9 +46,9 @@ that may mean  that it is complicated to manipulate,  and  that  also
 therefore means  that it is reserved for developers  and  experienced
 professionals having in-depth computer knowledge. Users are therefore
 encouraged to load and test the software's suitability as regards their
-requirements in conditions enabling the security of their systems and/or 
-data to be ensured and,  more generally, to use and operate it in the 
-same conditions as regards security. 
+requirements in conditions enabling the security of their systems and/or
+data to be ensured and,  more generally, to use and operate it in the
+same conditions as regards security.
 
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
@@ -236,6 +236,53 @@ void sollya_mpfi_round_to_single(sollya_mpfi_t rop, sollya_mpfi_t op) {
   mpfr_clear(rres);
 }
 
+void sollya_mpfi_round_to_quad(sollya_mpfi_t rop, sollya_mpfi_t op) {
+  mpfr_t l,r, lres, rres;
+  mp_prec_t prec;
+
+  prec = sollya_mpfi_get_prec(op) + 10;
+  mpfr_init2(l,prec);
+  mpfr_init2(r,prec);
+  mpfr_init2(lres,prec);
+  mpfr_init2(rres,prec);
+
+  sollya_mpfi_get_left(l,op);
+  sollya_mpfi_get_right(r,op);
+
+  mpfr_round_to_quad(lres,l);
+  mpfr_round_to_quad(rres,r);
+
+  sollya_mpfi_interv_fr(rop,lres,rres);
+
+  mpfr_clear(l);
+  mpfr_clear(r);
+  mpfr_clear(lres);
+  mpfr_clear(rres);
+}
+
+void sollya_mpfi_round_to_halfprecision(sollya_mpfi_t rop, sollya_mpfi_t op) {
+  mpfr_t l,r, lres, rres;
+  mp_prec_t prec;
+
+  prec = sollya_mpfi_get_prec(op) + 10;
+  mpfr_init2(l,prec);
+  mpfr_init2(r,prec);
+  mpfr_init2(lres,prec);
+  mpfr_init2(rres,prec);
+
+  sollya_mpfi_get_left(l,op);
+  sollya_mpfi_get_right(r,op);
+
+  mpfr_round_to_halfprecision(lres,l);
+  mpfr_round_to_halfprecision(rres,r);
+
+  sollya_mpfi_interv_fr(rop,lres,rres);
+
+  mpfr_clear(l);
+  mpfr_clear(r);
+  mpfr_clear(lres);
+  mpfr_clear(rres);
+}
 
 void sollya_mpfi_round_to_doubledouble(sollya_mpfi_t rop, sollya_mpfi_t op) {
   mpfr_t l,r, lres, rres;
@@ -1768,6 +1815,20 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
   case SINGLE:
     excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
     sollya_mpfi_round_to_single(stack3, stack1);
+    if (internalTheo != NULL) {
+      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
+    }
+    break;
+  case HALFPRECISION:
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
+    sollya_mpfi_round_to_halfprecision(stack3, stack1);
+    if (internalTheo != NULL) {
+      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
+    }
+    break;
+  case QUAD:
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
+    sollya_mpfi_round_to_quad(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
@@ -4118,6 +4179,12 @@ chain *uncertifiedZeroDenominators(node *tree, mpfr_t a, mpfr_t b, mp_prec_t pre
   case SINGLE:
     return uncertifiedZeroDenominators(tree->child1,a,b,prec);
     break;
+  case QUAD:
+    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
+    break;
+  case HALFPRECISION:
+    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
+    break;
   case DOUBLEDOUBLE:
     return uncertifiedZeroDenominators(tree->child1,a,b,prec);
     break;
@@ -5333,6 +5400,10 @@ int evaluateSign(int *s, node *rawFunc) {
       case DOUBLE:
 	break;
       case SINGLE:
+	break;
+      case QUAD:
+	break;
+      case HALFPRECISION:
 	break;
       case DOUBLEDOUBLE:
 	break;

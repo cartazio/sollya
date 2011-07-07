@@ -86,8 +86,18 @@ void yyerror(char *message) {
     printMessage(1,"Warning: %s.\nThe last symbol read has been \"%s\".\nWill skip input until next semicolon after the unexpected token. May leak memory.\n",message,str);
     free(str);
     promptToBePrinted = 1;
+    lastWasSyntaxError = 1;
     considerDyingOnError();
-  }
+  } 
+}
+
+int parserCheckEof() {
+  FILE *myFd;
+
+  myFd = yyget_in(scanner);
+  if (myFd == NULL) return 0;
+  
+  return feof(myFd);
 }
 
 // #define WARN_IF_NO_HELP_TEXT 1
@@ -96,7 +106,7 @@ void yyerror(char *message) {
 
 %defines
 
-%expect 1
+%expect 2
 
 %pure_parser
 
@@ -148,6 +158,7 @@ void yyerror(char *message) {
 %token  VERTBARTOKEN;
 %token  ATTOKEN;
 %token  DOUBLECOLONTOKEN;
+%token  COLONTOKEN;
 %token  DOTCOLONTOKEN;
 %token  COLONDOTTOKEN;
 %token  EXCLAMATIONEQUALTOKEN;
@@ -185,6 +196,8 @@ void yyerror(char *message) {
 %token  EXPM1TOKEN;
 %token  DOUBLETOKEN;
 %token  SINGLETOKEN;
+%token  HALFPRECISIONTOKEN;
+%token  QUADTOKEN;
 %token  DOUBLEDOUBLETOKEN;
 %token  TRIPLEDOUBLETOKEN;
 %token  DOUBLEEXTENDEDTOKEN;
@@ -236,6 +249,8 @@ void yyerror(char *message) {
 %token  TRUETOKEN;
 %token  FALSETOKEN;
 %token  DEFAULTTOKEN;
+%token  MATCHTOKEN;
+%token  WITHTOKEN;
 %token  ABSOLUTETOKEN;
 %token  DECIMALTOKEN;
 %token  RELATIVETOKEN;
@@ -254,6 +269,7 @@ void yyerror(char *message) {
 %token  DIFFTOKEN;
 %token  SIMPLIFYTOKEN;
 %token  REMEZTOKEN;
+%token  BASHEVALUATETOKEN;
 %token  FPMINIMAXTOKEN;
 %token  HORNERTOKEN;
 %token  EXPANDTOKEN;
@@ -371,7 +387,10 @@ void yyerror(char *message) {
 %type <list>  variabledeclarationlist;
 %type <list>  identifierlist;
 %type <tree>  thing;
+%type <tree>  supermegaterm;
 %type <list>  thinglist;
+%type <list>  matchlist;
+%type <tree>  matchelement; 
 %type <list>  structelementlist;
 %type <association>  structelement;
 %type <other>  structelementseparator;
@@ -435,7 +454,11 @@ startsymbol:            command SEMICOLONTOKEN
                       | VERSIONTOKEN SEMICOLONTOKEN
                           {
 			    outputMode();
-			    sollyaPrintf("This is\n\n\t%s.\n\nCopyright 2006-2011 by\n\n    Laboratoire de l'Informatique du Parallelisme,\n    UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668, Lyon, France,\n\n    LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2), Nancy, France,\n\n    Laboratoire d'Informatique de Paris 6, equipe PEQUAN,\n    UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France,\n\nand by\n\n    INRIA Sophia-Antipolis Mediterranee, APICS Team,\n    Sophia-Antipolis, France.\n\nAll rights reserved.\n\nContributors are S. Chevillard, N. Jourdan, M. Joldes and Ch. Lauter.\n\nThis software is governed by the CeCILL-C license under French law and\nabiding by the rules of distribution of free software.  You can  use,\nmodify and/ or redistribute the software under the terms of the CeCILL-C\nlicense as circulated by CEA, CNRS and INRIA at the following URL\n\"http://www.cecill.info\".\n\nPlease send bug reports to %s.\n\nThis program is distributed WITHOUT ANY WARRANTY; without even the\nimplied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\nThis build of %s is based on GMP %s, MPFR %s and MPFI %s.\n\n",PACKAGE_STRING,PACKAGE_BUGREPORT,PACKAGE_STRING,gmp_version,mpfr_get_version(),sollya_mpfi_get_version());
+			    sollyaPrintf("This is\n\n\t%s.\n\nCopyright 2006-2011 by\n\n    Laboratoire de l'Informatique du Parallelisme,\n    UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668, Lyon, France,\n\n    LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2), Nancy, France,\n\n    Laboratoire d'Informatique de Paris 6, equipe PEQUAN,\n    UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France,\n\nand by\n\n    INRIA Sophia-Antipolis Mediterranee, APICS Team,\n    Sophia-Antipolis, France.\n\nAll rights reserved.\n\nContributors are S. Chevillard, N. Jourdan, M. Joldes and Ch. Lauter.\n\nThis software is governed by the CeCILL-C license under French law and\nabiding by the rules of distribution of free software.  You can  use,\nmodify and/ or redistribute the software under the terms of the CeCILL-C\nlicense as circulated by CEA, CNRS and INRIA at the following URL\n\"http://www.cecill.info\".\n\nPlease send bug reports to %s.\n\nThis program is distributed WITHOUT ANY WARRANTY; without even the\nimplied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\nThis build of %s is based on GMP %s, MPFR %s and MPFI %s.\n",PACKAGE_STRING,PACKAGE_BUGREPORT,PACKAGE_STRING,gmp_version,mpfr_get_version(),sollya_mpfi_get_version());
+#if defined(HAVE_FPLLL_VERSION_STRING)
+			    sollyaPrintf("%s uses FPLLL as: \"%s\"\n",PACKAGE_STRING,HAVE_FPLLL_VERSION_STRING);
+#endif
+			    sollyaPrintf("\n");
 			    parsedThing = NULL;
 			    $$ = NULL;
 			    YYACCEPT;
@@ -1034,7 +1057,17 @@ structelement:          DOTTOKEN IDENTIFIERTOKEN EQUALTOKEN thing
 			  }
 ;
 
-thing:                  megaterm
+thing:                  supermegaterm
+                         {
+			   $$ = $1;
+			 }
+                      | MATCHTOKEN supermegaterm WITHTOKEN matchlist
+		          {
+			    $$ = makeMatch($2,$4);
+			  }
+;
+
+supermegaterm:          megaterm
                           {
 			    $$ = $1;
 			  }
@@ -1321,6 +1354,14 @@ basicthing:             ONTOKEN
                           {
 			    $$ = makeSingleSymbol();
 			  }
+                      | QUADTOKEN
+                          {
+			    $$ = makeQuadSymbol();
+			  }
+                      | HALFPRECISIONTOKEN
+                          {
+			    $$ = makeHalfPrecisionSymbol();
+			  }
                       | DOUBLEEXTENDEDTOKEN
                           {
 			    $$ = makeDoubleextendedSymbol();
@@ -1425,6 +1466,53 @@ basicthing:             ONTOKEN
                           }
 ;
 
+matchlist:              matchelement
+                          {
+			    $$ = addElement(NULL,$1);
+			  }
+                      | matchelement matchlist
+		          {
+			    $$ = addElement($2,$1);
+			  }
+;
+
+matchelement:          thing COLONTOKEN beginsymbol variabledeclarationlist commandlist RETURNTOKEN thing SEMICOLONTOKEN endsymbol
+                          {
+			    $$ = makeMatchElement($1,makeCommandList(concatChains($4, $5)),$7);
+			  }
+                      | thing COLONTOKEN beginsymbol variabledeclarationlist commandlist endsymbol
+                          {
+			    $$ = makeMatchElement($1,makeCommandList(concatChains($4, $5)),makeUnit());
+			  }
+                      | thing COLONTOKEN beginsymbol variabledeclarationlist RETURNTOKEN thing SEMICOLONTOKEN endsymbol
+                          {
+			    $$ = makeMatchElement($1,makeCommandList($4),$6);
+			  }
+                      | thing COLONTOKEN beginsymbol variabledeclarationlist endsymbol
+                          {
+			    $$ = makeMatchElement($1,makeCommandList($4),makeUnit());
+			  }
+                      | thing COLONTOKEN beginsymbol commandlist RETURNTOKEN thing SEMICOLONTOKEN endsymbol
+                          {
+			    $$ = makeMatchElement($1,makeCommandList($4),$6);
+			  }
+                      | thing COLONTOKEN beginsymbol commandlist endsymbol
+                          {
+			    $$ = makeMatchElement($1,makeCommandList($4),makeUnit());
+			  }
+                      | thing COLONTOKEN beginsymbol RETURNTOKEN thing SEMICOLONTOKEN endsymbol
+                          {
+			    $$ = makeMatchElement($1, makeCommandList(addElement(NULL,makeNop())), $5);
+			  }
+                      | thing COLONTOKEN beginsymbol endsymbol
+                          {
+			    $$ = makeMatchElement($1, makeCommandList(addElement(NULL,makeNop())), makeUnit());
+			  }
+                      | thing COLONTOKEN LPARTOKEN thing RPARTOKEN
+		          {
+			    $$ = makeMatchElement($1, makeCommandList(addElement(NULL,makeNop())), $4);
+			  } 
+;
 
 constant:               CONSTANTTOKEN
                           {
@@ -1544,6 +1632,14 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | SIMPLIFYTOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeSimplify($3);
+			  }
+                      | BASHEVALUATETOKEN LPARTOKEN thing RPARTOKEN
+                          {
+			    $$ = makeBashevaluate(addElement(NULL,$3));
+			  }
+                      | BASHEVALUATETOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
+                          {
+			    $$ = makeBashevaluate(addElement(addElement(NULL,$5),$3));
 			  }
                       | REMEZTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thinglist RPARTOKEN
                           {
@@ -1844,6 +1940,14 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | SINGLETOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeSingle($3);
+			  }
+                      | QUADTOKEN LPARTOKEN thing RPARTOKEN
+                          {
+			    $$ = makeQuad($3);
+			  }
+                      | HALFPRECISIONTOKEN LPARTOKEN thing RPARTOKEN
+                          {
+			    $$ = makeHalfPrecision($3);
 			  }
                       | DOUBLEDOUBLETOKEN LPARTOKEN thing RPARTOKEN
                           {
@@ -2650,6 +2754,28 @@ help:                   CONSTANTTOKEN
 #endif
 #endif
                           }
+                      | QUADTOKEN
+                          {
+#ifdef HELP_QUAD_TEXT
+			    outputMode(); sollyaPrintf(HELP_QUAD_TEXT);
+#else
+			    outputMode(); sollyaPrintf("Quad precision rounding operator.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for QUAD"
+#endif
+#endif
+                          }
+                      | HALFPRECISIONTOKEN
+                          {
+#ifdef HELP_HALFPRECISION_TEXT
+			    outputMode(); sollyaPrintf(HELP_HALFPRECISION_TEXT);
+#else
+			    outputMode(); sollyaPrintf("Half-precision rounding operator.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for HALFPRECISION"
+#endif
+#endif
+                          }
                       | DOUBLEDOUBLETOKEN
                           {
 #ifdef HELP_DOUBLEDOUBLE_TEXT
@@ -3156,6 +3282,28 @@ help:                   CONSTANTTOKEN
 #endif
 #endif
                           }
+                      | MATCHTOKEN
+                          {
+#ifdef HELP_MATCH_TEXT
+			    outputMode(); sollyaPrintf(HELP_MATCH_TEXT);
+#else
+			    outputMode(); sollyaPrintf("match ... with ... construct.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for MATCH"
+#endif
+#endif
+                          }
+                      | WITHTOKEN
+                          {
+#ifdef HELP_WITH_TEXT
+			    outputMode(); sollyaPrintf(HELP_WITH_TEXT);
+#else
+			    outputMode(); sollyaPrintf("match ... with ... construct.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for WITH"
+#endif
+#endif
+                          }
                       | ABSOLUTETOKEN
                           {
 #ifdef HELP_ABSOLUTE_TEXT
@@ -3285,6 +3433,17 @@ help:                   CONSTANTTOKEN
 			    outputMode(); sollyaPrintf("Differentiation: diff(func).\n");
 #if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
 #warning "No help text for DIFF"
+#endif
+#endif
+                          }
+                      | BASHEVALUATETOKEN
+                          {
+#ifdef HELP_BASHEVALUATE_TEXT
+			    outputMode(); sollyaPrintf(HELP_BASHEVALUATE_TEXT);
+#else
+			    outputMode(); sollyaPrintf("Executes a string as a bash command and returns the output as a string.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for BASHEVALUATE"
 #endif
 #endif
                           }

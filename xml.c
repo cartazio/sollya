@@ -1,9 +1,14 @@
 /*
 
-Copyright 2007-2010 by 
+Copyright 2007-2011 by
 
-Laboratoire de l'Informatique du Parallelisme, 
+Laboratoire de l'Informatique du Parallelisme,
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
+
+and by
+
+Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
+UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.
 
 Contributors Ch. Lauter, S. Chevillard, N. Jourdan
 
@@ -18,16 +23,16 @@ it offers a certified infinity norm, an automatic polynomial
 implementer and a fast Remez algorithm.
 
 This software is governed by the CeCILL-C license under French law and
-abiding by the rules of distribution of free software.  You can  use, 
+abiding by the rules of distribution of free software.  You can  use,
 modify and/ or redistribute the software under the terms of the CeCILL-C
 license as circulated by CEA, CNRS and INRIA at the following URL
-"http://www.cecill.info". 
+"http://www.cecill.info".
 
 As a counterpart to the access to the source code and  rights to copy,
 modify and redistribute granted by the license, users are provided only
 with a limited warranty  and the software's author,  the holder of the
 economic rights,  and the successive licensors  have only  limited
-liability. 
+liability.
 
 In this respect, the user's attention is drawn to the risks associated
 with loading,  using,  modifying and/or developing or reproducing the
@@ -36,9 +41,9 @@ that may mean  that it is complicated to manipulate,  and  that  also
 therefore means  that it is reserved for developers  and  experienced
 professionals having in-depth computer knowledge. Users are therefore
 encouraged to load and test the software's suitability as regards their
-requirements in conditions enabling the security of their systems and/or 
-data to be ensured and,  more generally, to use and operate it in the 
-same conditions as regards security. 
+requirements in conditions enabling the security of their systems and/or
+data to be ensured and,  more generally, to use and operate it in the
+same conditions as regards security.
 
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
@@ -242,6 +247,18 @@ void fPrintXmlInner(FILE *fd, node *tree) {
   case SINGLE:
     sollyaFprintf(fd,"<apply>\n");
     sollyaFprintf(fd,"<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">single</csymbol>\n");
+    fPrintXmlInner(fd, tree->child1);
+    sollyaFprintf(fd,"</apply>\n");
+    break;
+  case QUAD:
+    sollyaFprintf(fd,"<apply>\n");
+    sollyaFprintf(fd,"<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">quad</csymbol>\n");
+    fPrintXmlInner(fd, tree->child1);
+    sollyaFprintf(fd,"</apply>\n");
+    break;
+  case HALFPRECISION:
+    sollyaFprintf(fd,"<apply>\n");
+    sollyaFprintf(fd,"<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">halfprecision</csymbol>\n");
     fPrintXmlInner(fd, tree->child1);
     sollyaFprintf(fd,"</apply>\n");
     break;
@@ -495,6 +512,8 @@ node* xml_make_pow (node* n1,node* n2) {if (n1&&n2) return makePow(n1,n2); retur
 node* xml_make_abs (node* n1,node* n2) {UNUSED_PARAM(n2); if (n1)     return makeAbs  (n1);  return 0; }
 node* xml_make_db  (node* n1,node* n2) {UNUSED_PARAM(n2); if (n1)     return makeDouble(n1); return 0; }
 node* xml_make_sg  (node* n1,node* n2) {UNUSED_PARAM(n2); if (n1)     return makeSingle(n1); return 0; }
+node* xml_make_hp  (node* n1,node* n2) {UNUSED_PARAM(n2); if (n1)     return makeHalfPrecision(n1); return 0; }
+node* xml_make_qd  (node* n1,node* n2) {UNUSED_PARAM(n2); if (n1)     return makeQuad(n1); return 0; }
 node* xml_make_db2 (node* n1,node* n2) {UNUSED_PARAM(n2); if (n1)     return makeDoubledouble(n1); return 0; }
 node* xml_make_db3 (node* n1,node* n2) {UNUSED_PARAM(n2); if (n1)     return makeTripledouble(n1); return 0; }
 node* xml_make_dbex(node* n1,node* n2) {UNUSED_PARAM(n2); if (n1)     return makeDoubleextended(n1); return 0; }
@@ -596,6 +615,8 @@ int search_math_tree (xmlTextReaderPtr reader)
 	  else if (!strcmp((char*)xml_value,"log1p"))	mthis->operator=xml_make_log1p;
 	  else if (!strcmp((char*)xml_value,"expm1"))	mthis->operator=xml_make_expm1;
 	  else if (!strcmp((char*)xml_value,"single"))	mthis->operator=xml_make_sg;
+	  else if (!strcmp((char*)xml_value,"halfprecision"))	mthis->operator=xml_make_hp;
+	  else if (!strcmp((char*)xml_value,"quad"))	mthis->operator=xml_make_qd;
 	  else if (!strcmp((char*)xml_value,"double"))	mthis->operator=xml_make_db;
 	  else if (!strcmp((char*)xml_value,"doubledouble"))	mthis->operator=xml_make_db2;
 	  else if (!strcmp((char*)xml_value,"tripledouble"))	mthis->operator=xml_make_db3;

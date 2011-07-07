@@ -1,9 +1,14 @@
-/* 
+/*
 
-Copyright 2006-2009 by 
+Copyright 2006-2011 by
 
-Laboratoire de l'Informatique du Parallelisme, 
+Laboratoire de l'Informatique du Parallelisme,
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
+
+and by
+
+Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
+UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.
 
 Contributor Ch. Lauter
 
@@ -17,16 +22,16 @@ it offers a certified infinity norm, an automatic polynomial
 implementer and a fast Remez algorithm.
 
 This software is governed by the CeCILL-C license under French law and
-abiding by the rules of distribution of free software.  You can  use, 
+abiding by the rules of distribution of free software.  You can  use,
 modify and/ or redistribute the software under the terms of the CeCILL-C
 license as circulated by CEA, CNRS and INRIA at the following URL
-"http://www.cecill.info". 
+"http://www.cecill.info".
 
 As a counterpart to the access to the source code and  rights to copy,
 modify and redistribute granted by the license, users are provided only
 with a limited warranty  and the software's author,  the holder of the
 economic rights,  and the successive licensors  have only  limited
-liability. 
+liability.
 
 In this respect, the user's attention is drawn to the risks associated
 with loading,  using,  modifying and/or developing or reproducing the
@@ -35,9 +40,9 @@ that may mean  that it is complicated to manipulate,  and  that  also
 therefore means  that it is reserved for developers  and  experienced
 professionals having in-depth computer knowledge. Users are therefore
 encouraged to load and test the software's suitability as regards their
-requirements in conditions enabling the security of their systems and/or 
-data to be ensured and,  more generally, to use and operate it in the 
-same conditions as regards security. 
+requirements in conditions enabling the security of their systems and/or
+data to be ensured and,  more generally, to use and operate it in the
+same conditions as regards security.
 
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-C license and that you accept its terms.
@@ -54,6 +59,19 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include <sys/time.h>
 #include <time.h>
 
+#if defined(D_TO_D)
+extern void POLYNOMIALNAME(double *, double);
+#elif defined(D_TO_DD)
+extern void POLYNOMIALNAME(double *, double *, double);
+#elif defined(D_TO_TD)
+extern void POLYNOMIALNAME(double *, double *, double *, double);
+#elif defined(DD_TO_DD)
+extern void POLYNOMIALNAME(double *, double *, double, double);
+#elif defined(DD_TO_TD)
+extern void POLYNOMIALNAME(double *, double *, double *, double, double);
+#elif defined (TD_TO_TD)
+extern void POLYNOMIALNAME(double *, double *, double *, double, double, double);
+#endif
 
 void mpfr_to_double(double *dh, mpfr_t op) {
   *dh = mpfr_get_d(op, GMP_RNDN);
@@ -176,27 +194,27 @@ void f(mpfr_t y, mpfr_t xMpfr) {
 
 #if defined(D_TO_D)
   mpfr_to_double(&x, xMpfr);     
-  p(&resh, x);
+  POLYNOMIALNAME(&resh, x);
   double_to_mpfr(y, resh);
 #elif defined(D_TO_DD)
   mpfr_to_double(&x, xMpfr);
-  p(&resh, &resm, x);
+  POLYNOMIALNAME(&resh, &resm, x);
   doubledouble_to_mpfr(y, resh, resm);
 #elif defined(D_TO_TD)
   mpfr_to_double(&x, xMpfr);
-  p(&resh, &resm, &resl, x);
+  POLYNOMIALNAME(&resh, &resm, &resl, x);
   tripledouble_to_mpfr(y, resh, resm, resl);
 #elif defined(DD_TO_DD)
   mpfr_to_doubledouble(&xh, &xm, xMpfr);
-  p(&resh, &resm, xh, xm);
+  POLYNOMIALNAME(&resh, &resm, xh, xm);
   doubledouble_to_mpfr(y, resh, resm);
 #elif defined(DD_TO_TD)
   mpfr_to_doubledouble(&xh, &xm, xMpfr);
-  p(&resh, &resm, &resl, xh, xm);
+  POLYNOMIALNAME(&resh, &resm, &resl, xh, xm);
   tripledouble_to_mpfr(y, resh, resm, resl);
 #elif defined(TD_TO_TD)
   mpfr_to_tripledouble(&xh, &xm, &xl, xMpfr);
-  p(&resh, &resm, &resl, xh, xm, xl);
+  POLYNOMIALNAME(&resh, &resm, &resl, xh, xm, xl);
   tripledouble_to_mpfr(y, resh, resm, resl);
 #else
 #warning You must define one of the macros for the argument and result formats
@@ -264,32 +282,32 @@ int timefunc(int *timing, void **args) {
 #if defined(D_TO_D)
     mpfr_to_double(&x, xMpfr);     
     gettimeofday(&start,NULL);
-    for (i=0;i<iterations;i++) p(&resh, x);
+    for (i=0;i<iterations;i++) POLYNOMIALNAME(&resh, x);
     gettimeofday(&end,NULL);
 #elif defined(D_TO_DD)
     mpfr_to_double(&x, xMpfr);
     gettimeofday(&start,NULL);
-    for (i=0;i<iterations;i++) p(&resh, &resm, x);
+    for (i=0;i<iterations;i++) POLYNOMIALNAME(&resh, &resm, x);
     gettimeofday(&end,NULL);
 #elif defined(D_TO_TD)
     mpfr_to_double(&x, xMpfr);
     gettimeofday(&start,NULL);
-    for (i=0;i<iterations;i++) p(&resh, &resm, &resl, x);
+    for (i=0;i<iterations;i++) POLYNOMIALNAME(&resh, &resm, &resl, x);
     gettimeofday(&end,NULL);
 #elif defined(DD_TO_DD)
     mpfr_to_doubledouble(&xh, &xm, xMpfr);
     gettimeofday(&start,NULL);
-    for (i=0;i<iterations;i++) p(&resh, &resm, xh, xm);
+    for (i=0;i<iterations;i++) POLYNOMIALNAME(&resh, &resm, xh, xm);
     gettimeofday(&end,NULL);
 #elif defined(DD_TO_TD)
     mpfr_to_doubledouble(&xh, &xm, xMpfr);
     gettimeofday(&start,NULL);
-    for (i=0;i<iterations;i++) p(&resh, &resm, &resl, xh, xm);
+    for (i=0;i<iterations;i++) POLYNOMIALNAME(&resh, &resm, &resl, xh, xm);
     gettimeofday(&end,NULL);
 #elif defined(TD_TO_TD)
     mpfr_to_tripledouble(&xh, &xm, &xl, xMpfr);
     gettimeofday(&start,NULL);
-    for (i=0;i<iterations;i++) p(&resh, &resm, &resl, xh, xm, xl);
+    for (i=0;i<iterations;i++) POLYNOMIALNAME(&resh, &resm, &resl, xh, xm, xl);
     gettimeofday(&end,NULL);
 #else
 #warning You must define one of the macros for the argument and result formats
