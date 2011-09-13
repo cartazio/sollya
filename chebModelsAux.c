@@ -1,36 +1,80 @@
-/*For compiling this file:
-    gcc -fPIC -Wall -c chebModelsAux.c
-    gcc -fPIC -shared -o chebModelsAux chebModelsAux.o
-    
-    From sollya:
-    externalproc(CM, "./chebModelsAux", (function, range, integer,integer) ->list of range);
+/*
+  Copyright 2011-2013 by 
+  
+  Centre de recherche INRIA Sophia-Antipolis Mediterranee, equipe APICS,
+  Sophia Antipolis, France.
+  
+  Laboratoire de l'Informatique du Parallelisme, 
+  UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
 
+  Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
+  UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France,
+
+  Contributors S. Chevillard, M. Joldes, Ch. Lauter 
+
+  mioara.joldes@ens-lyon.fr
+  christoph.lauter@ens-lyon.org
+  sylvain.chevillard@ens-lyon.org
+
+  This software is a computer program whose purpose is to provide an
+  environment for safe floating-point code development. It is
+  particularily targeted to the automatized implementation of
+  mathematical floating-point libraries (libm). Amongst other features,
+  it offers a certified infinity norm, an automatic polynomial
+  implementer and a fast Remez algorithm.
+
+  This software is governed by the CeCILL-C license under French law and
+  abiding by the rules of distribution of free software.  You can  use, 
+  modify and/ or redistribute the software under the terms of the CeCILL-C
+  license as circulated by CEA, CNRS and INRIA at the following URL
+  "http://www.cecill.info". 
+
+  As a counterpart to the access to the source code and  rights to copy,
+  modify and redistribute granted by the license, users are provided only
+  with a limited warranty  and the software's author,  the holder of the
+  economic rights,  and the successive licensors  have only  limited
+  liability. 
+
+  In this respect, the user's attention is drawn to the risks associated
+  with loading,  using,  modifying and/or developing or reproducing the
+  software by the user in light of its specific status of free software,
+  that may mean  that it is complicated to manipulate,  and  that  also
+  therefore means  that it is reserved for developers  and  experienced
+  professionals having in-depth computer knowledge. Users are therefore
+  encouraged to load and test the software's suitability as regards their
+  requirements in conditions enabling the security of their systems and/or 
+  data to be ensured and,  more generally, to use and operate it in the 
+  same conditions as regards security. 
+
+  The fact that you are presently reading this means that you have had
+  knowledge of the CeCILL-C license and that you accept its terms.
+
+  This program is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 */
-
-
-
-//extern void fprintInterval(FILE *fd, sollya_mpfi_t interval);
-//extern void pushTimeCounter(void);
-//extern void popTimeCounter(char *s);
 
 #include  "chebModelsAux.h"
-/****************************************************************************/
-/****************************************************************************/
-/****************************************************************************/
-
-/*This function gets an mpfi from a node c:
-if c constant after simplification-> ok
-if not 0
+/*This file contains auxiliary functions for constructing 
+                 Chebyshev Models/forms
 */
+
+/*This function sets an mpfi from evaluating a node* c:
+if c constant after simplification-> ok
+if not sets the value to 0
+*/
+
 int mpfi_set_node( sollya_mpfi_t *r, node * c) {
   sollya_mpfi_t rr;
-   sollya_mpfi_t *rrr;
+  sollya_mpfi_t *rrr;
   node *cc;
   sollya_mpfi_t dummy;
-  sollya_mpfi_init2(rr,getToolPrecision());
-  sollya_mpfi_init2(dummy,getToolPrecision());
+  
+  mp_prec_t prec;
+  prec = getToolPrecision();
+  sollya_mpfi_init2(rr,prec);
+  sollya_mpfi_init2(dummy,prec);
   rrr=safeMalloc(sizeof(sollya_mpfi_t));
-  sollya_mpfi_init2(*rrr,getToolPrecision());
+  sollya_mpfi_init2(*rrr,prec);
   if (c!=NULL){
     cc=simplifyTreeErrorfree(c);
     switch (cc->nodeType){
@@ -44,16 +88,12 @@ int mpfi_set_node( sollya_mpfi_t *r, node * c) {
     free(cc);
   }
   else mpfi_set_ui(rr,0);
-  mpfi_set(*r,rr);
-  //printf("\n in mpfi set node\n");
-  //printInterval(rr);
   mpfi_clear(rr);
   mpfi_clear(dummy);
   mpfi_clear(*rrr);
   free(rrr);
   return 0;
 }
-
 
 
 /**************************************************************************************/
@@ -63,29 +103,24 @@ int mpfi_set_node( sollya_mpfi_t *r, node * c) {
 /**************************************************************************************/
 
 
-/*returns n chebyshev points in X*/
+/*returns n chebyshev points of first kind in interval x*/
 
 void getChebyshevPoints(sollya_mpfi_t *chebPoints, int n, sollya_mpfi_t x){
 int i;
 mpfr_t u, v;
-
 sollya_mpfi_t ui, vi, temp1, temp2, mpfiPi, mpfiPiArg;
+mp_prec_t prec;
+prec = getToolPrecision();
 
-/*print("The chebyshev points are:");
-  };
-  for i from 1 to n do{  
-    chebList[i-1]=(cos((2*i-1)*Pi/(2*n)))*(u-v)/2 + (u+v)/2;
-  };
-*/
-sollya_mpfi_init2(ui,getToolPrecision());
-sollya_mpfi_init2(vi, getToolPrecision());
-sollya_mpfi_init2(temp1, getToolPrecision());
-sollya_mpfi_init2(temp2, getToolPrecision());
-sollya_mpfi_init2(mpfiPi, getToolPrecision());
-sollya_mpfi_init2(mpfiPiArg, getToolPrecision());
+sollya_mpfi_init2(ui,prec);
+sollya_mpfi_init2(vi, prec);
+sollya_mpfi_init2(temp1, prec);
+sollya_mpfi_init2(temp2, prec);
+sollya_mpfi_init2(mpfiPi, prec);
+sollya_mpfi_init2(mpfiPiArg, prec);
 
-mpfr_init2(u, getToolPrecision());
-mpfr_init2(v, getToolPrecision());
+mpfr_init2(u, prec);
+mpfr_init2(v, prec);
 
 sollya_mpfi_get_left(u,x);
 sollya_mpfi_get_right(v,x);
@@ -106,13 +141,8 @@ sollya_mpfi_const_pi(mpfiPi);
 sollya_mpfi_div_ui(mpfiPi,mpfiPi,2*n);
 
 for (i=1;i<=n;i++){
-//if (2*i-1<n) 
-sollya_mpfi_mul_ui(mpfiPiArg,mpfiPi,(2*i-1));
-//else{
-//sollya_mpfi_mul_ui(mpfiPiArg,mpfiPi,2*n-1-j);
-//j=j+2;
-//}
 
+sollya_mpfi_mul_ui(mpfiPiArg,mpfiPi,(2*i-1));
 sollya_mpfi_cos(chebPoints[i-1],mpfiPiArg);
 
 sollya_mpfi_mul( chebPoints[i-1], chebPoints[i-1], temp1);
@@ -132,12 +162,12 @@ mpfr_clear(v);
 }
 
 
-
+/*returns n-1 chebyshev points of second kind in interval x (extremas of T_n((2x-b-a)/(b-a)))*/
 
 void getChebyshevExtrema(sollya_mpfi_t *chebPoints, int n, sollya_mpfi_t x){
 int i;
 mpfr_t u, v;
-
+mp_prec_t prec;
 sollya_mpfi_t ui, vi, temp1, temp2, mpfiPi, mpfiPiArg;
 
 /*print("The chebyshev extremas are:");
@@ -146,16 +176,16 @@ sollya_mpfi_t ui, vi, temp1, temp2, mpfiPi, mpfiPiArg;
     chebExtremas[i-1]=(cos((i)*Pi/(n)))*(u-v)/2 + (u+v)/2;
   };
 */
+prec = getToolPrecision();
+sollya_mpfi_init2(ui,prec);
+sollya_mpfi_init2(vi, prec);
+sollya_mpfi_init2(temp1, prec);
+sollya_mpfi_init2(temp2, prec);
+sollya_mpfi_init2(mpfiPi, prec);
+sollya_mpfi_init2(mpfiPiArg, prec);
 
-sollya_mpfi_init2(ui,getToolPrecision());
-sollya_mpfi_init2(vi, getToolPrecision());
-sollya_mpfi_init2(temp1, getToolPrecision());
-sollya_mpfi_init2(temp2, getToolPrecision());
-sollya_mpfi_init2(mpfiPi, getToolPrecision());
-sollya_mpfi_init2(mpfiPiArg, getToolPrecision());
-
-mpfr_init2(u, getToolPrecision());
-mpfr_init2(v, getToolPrecision());
+mpfr_init2(u, prec);
+mpfr_init2(v, prec);
 
 sollya_mpfi_get_left(u,x);
 sollya_mpfi_get_right(v,x);
@@ -195,10 +225,12 @@ sollya_mpfi_clear(mpfiPiArg);
 mpfr_clear(u);
 mpfr_clear(v);
 }
-/*The so called chebMatrix, contains 
-the specific values of T_i(x_j) i=0..n-1, j=0..n-1
-x_j \in [-1,1]. 
-Note: It has to be computed only once for each n*/
+
+
+/* Returns a matrix chebMatrix of dimension nxn,
+s.t. chebMatrix[i,j]=T_i(x_j), for  i=0..n-1, j=0..n-1, and 
+x_j \in [-1,1] the chebyshev points of first kind in [-1,1].
+*/
 
 void getChebMatrix(sollya_mpfi_t**chebMatrix, int n){
 int i,j;
@@ -206,14 +238,17 @@ sollya_mpfi_t *chebPoints;
 sollya_mpfi_t intrval;
 
 sollya_mpfi_t temp;
-sollya_mpfi_init2(temp, getToolPrecision());
+mp_prec_t prec;
+prec = getToolPrecision();
+
+sollya_mpfi_init2(temp, prec);
 
 chebPoints=safeMalloc((n)*sizeof(sollya_mpfi_t));
   for (i=0;i<n;i++){
-  sollya_mpfi_init2(chebPoints[i],getToolPrecision());
+  sollya_mpfi_init2(chebPoints[i],prec);
   }
 
-sollya_mpfi_init2(intrval,getToolPrecision());
+sollya_mpfi_init2(intrval,prec);
 sollya_mpfi_interv_si(intrval,-1,1);
 
 getChebyshevPoints(chebPoints, n, intrval);
@@ -222,7 +257,7 @@ getChebyshevPoints(chebPoints, n, intrval);
 
 for (i=0;i<n;i++){
   for (j=0;j<n;j++){
-    sollya_mpfi_init2((*chebMatrix)[i*n+j],getToolPrecision());
+    sollya_mpfi_init2((*chebMatrix)[i*n+j],prec);
   }
 }
 
@@ -252,52 +287,61 @@ for (i=0;i<n;i++){
 free(chebPoints);
 }
 
-void getChebPolyCoeffs(mpz_t* chebMatrix, int n){
+/* Returns a matrix chebCoeffsMatrix of dimension nxn,
+s.t. chebCoeffsMatrix[i,j]=coeff(T_i(x), j), for  i=0..n-1, j=0..n-1
+*/
+
+void getChebPolyCoeffs(mpz_t* chebCoeffsMatrix, int n){
 int i,j;
 mpz_t temp;
-mpz_init2(temp, getToolPrecision());
-//printf("in getChebPolyCoeffs, %d\n",n);
+mp_prec_t prec;
+prec = getToolPrecision();
+mpz_init2(temp, prec);
 for (i=0;i<n;i++)
   for (j=0;j<n;j++)
-    mpz_set_ui(chebMatrix[i*n+j],0);
+    mpz_set_ui(chebCoeffsMatrix[i*n+j],0);
 
-if (n>0) mpz_set_ui(chebMatrix[0],1);
-if (n>1) mpz_set_ui(chebMatrix[n+1],1);
+if (n>0) mpz_set_ui(chebCoeffsMatrix[0],1);
+if (n>1) mpz_set_ui(chebCoeffsMatrix[n+1],1);
 
 for (i=2;i<n;i++){
-  mpz_neg(chebMatrix[i*n],chebMatrix[(i-2)*n]); //put constant coeff of T_{n-2}
+  mpz_neg(chebCoeffsMatrix[i*n],chebCoeffsMatrix[(i-2)*n]); //put constant coeff of T_{n-2}
   for (j=0;j<i;j++){
-  mpz_mul_ui(temp,chebMatrix[(i-1)*n+j],2);
-  mpz_sub(chebMatrix[i*n+j+1],temp,chebMatrix[(i-2)*n+j+1]);
+  mpz_mul_ui(temp,chebCoeffsMatrix[(i-1)*n+j],2);
+  mpz_sub(chebCoeffsMatrix[i*n+j+1],temp,chebCoeffsMatrix[(i-2)*n+j+1]);
   }
 }
-
 mpz_clear(temp);
-
 }
 
-/*returns in chebCoeffs the coeffs of the finite Chebyshev basis expansion of the polynomial given by the monomial coefficients p, of degree n-1*/
+/*Returns in chebCoeffs the coeffs of the finite Chebyshev basis expansion
+ of the polynomial p of degree n-1, over [-1,1];
+ The coefficients in monomial basis of p are in *p
+ 
+ This algorithm uses simply euclidean division.
+ */
 void getPolyCoeffsChebBasis(sollya_mpfi_t *chebCoeffs, sollya_mpfi_t *p, int n){
 sollya_mpfi_t *pAux, temp;
 mpz_t *chebMatrix;
 int i,j;
-  //printf("\nIn getPolyCoeffsChebBasis: %d \n",n);
+mp_prec_t prec;  
+prec = getToolPrecision();
   pAux=safeMalloc((n)*sizeof(sollya_mpfi_t));
 
   for (i=0;i<n;i++){
-    //printInterval(p[i]);
-    sollya_mpfi_init2(pAux[i],getToolPrecision());
+   
+    sollya_mpfi_init2(pAux[i],prec);
     sollya_mpfi_set(pAux[i], p[i]);
   }
   
   chebMatrix=(mpz_t *)safeMalloc((n*n)*sizeof(mpz_t));  
   
   for (i=0;i<n*n;i++){
-    mpz_init2(chebMatrix[i],getToolPrecision());
+    mpz_init2(chebMatrix[i],prec);
   }
   
   getChebPolyCoeffs(chebMatrix, n);
-  sollya_mpfi_init2(temp,getToolPrecision());  
+  sollya_mpfi_init2(temp,prec);  
   
   for(i=n-1; i>=0;i--){
     
@@ -318,29 +362,27 @@ int i,j;
   free(chebMatrix);
   
   sollya_mpfi_clear(temp);
-  //printf("\nOut of getPolyCoeffsChebBasis: %d \n",n);
 }
 
-/*returns in c the coeffs in the monomial basis for the polynomial p(a*x+b), where a and b are mpfi_s
- the polynomial p  of degree n-1 given by the monomial coefficients stored as mpfi_s in p*/
+/*Returns in c the coeffs in the monomial basis for the polynomial p(a*x+b), where:
+ -- a and b are mpfi_s
+ -- polynomial p  of degree n-1 given by the monomial coefficients stored as mpfi_s in *p*/
 void getTranslatedPolyCoeffs(sollya_mpfi_t *c, sollya_mpfi_t *p, int n, sollya_mpfi_t a, sollya_mpfi_t b){
 sollya_mpfi_t *pAux, temp, pow, alpha, evalP;
-
 int i;
- // printf("\nIn getTranslatedPolyCoeffs: %d \n",n);
+mp_prec_t prec;
+prec = getToolPrecision();
   pAux=safeMalloc((n)*sizeof(sollya_mpfi_t));
-  sollya_mpfi_init2(temp,getToolPrecision());  
-  sollya_mpfi_init2(pow,getToolPrecision());  
-  sollya_mpfi_init2(alpha,getToolPrecision());  
-  sollya_mpfi_init2(evalP,getToolPrecision());  
+  sollya_mpfi_init2(temp,prec);  
+  sollya_mpfi_init2(pow,prec);  
+  sollya_mpfi_init2(alpha,prec);  
+  sollya_mpfi_init2(evalP,prec);  
+
   for (i=0;i<n;i++){
-    //printInterval(p[i]);
-    sollya_mpfi_init2(pAux[i],getToolPrecision());
+    sollya_mpfi_init2(pAux[i],prec);
     sollya_mpfi_set(pAux[i], p[i]);
   }
   
-  //printInterval(a);
-  //printInterval(b);  
   /*do the transformation : P(a*x+b) = \sum p_i*a^i *(x+b/a)^i*/
   for (i=0;i<n;i++){
     sollya_mpfi_set_ui(pow,i);
@@ -349,7 +391,7 @@ int i;
   }
   sollya_mpfi_div(alpha, b,a);
   /*do the translation from P(x+alpha) --> Q(x)*/
-  /*P(x+alpha)= \sum P^(i)(alpha)/i! *x^i */
+  /*P(x+alpha)= \sum P^{(i)}(alpha)/i! *x^i */
   /*we have to compute the first n-1 derivatives in alpha: P(alpha), P'(alpha), ..., P^(n-1)(alpha)*/
   /*evaluate P in alpha, P is of degree n-1*/
   symbolic_poly_evaluation_horner(evalP, pAux,alpha,n-1);
@@ -372,12 +414,11 @@ int i;
   sollya_mpfi_clear(pow);
   sollya_mpfi_clear(alpha);
   sollya_mpfi_clear(evalP);
- // printf("\nOut of getTranslatedPolyCoeffs: %d \n",n);
 }
 
 /***************************************************************/
 /***************************************************************/
-/**********Functions related to Obtaining Chebyshev Coeffs*********/
+/**********Functions related to Obtaining Chebyshev Coeffs******/
 /***************************************************************/
 /***************************************************************/
 
@@ -385,21 +426,25 @@ int i;
 /*evaluate a function in n chebPoints*/
 void getFunctionValues(sollya_mpfi_t* fValues, sollya_mpfi_t * chebPoints,node* f,int n){
 int i;
-for (i=0;i<n;i++){
-  //evaluateMpfiFunction(fValues[i],f,chebPoints[i],getToolPrecision());
-  
-  auto_diff(&fValues[i],f,chebPoints[i],0);
+  for (i=0;i<n;i++){
+    auto_diff(&fValues[i],f,chebPoints[i],0);
   }
-
 }
 
 
-/*this function computes the cheb coeffs for the interpolation polynomial of degree n-1 at chebpoints (we have n chebpoints and a n*n chebMatrix)*/
+/*Compute the cheb coeffs for the interpolation polynomial 
+  of degree n-1 at chebpoints of first kind, we are given:
+  n chebpoints x_i and a n*n chebMatrix T_i(x_j))
+  Formula is given in "Summary of Formulas" in MJ thesis
+*/
 void getChebCoeffs(sollya_mpfi_t* coeffs, sollya_mpfi_t *chebMatrix, sollya_mpfi_t *fValues,int n){
 
 int i,j;
 sollya_mpfi_t temp;
-sollya_mpfi_init2(temp, getToolPrecision());
+mp_prec_t prec;
+
+prec = getToolPrecision();
+sollya_mpfi_init2(temp, prec);
 
 for (i=0;i<n;i++)
     sollya_mpfi_set_ui(coeffs[i], 0);
@@ -421,15 +466,19 @@ sollya_mpfi_div_ui(coeffs[i],coeffs[i], n);
 sollya_mpfi_clear(temp);
 }
 
-/*wrapper to get directly the coeffs from the function*/
+/*Wrapper that returns the coeffs 
+of the interpolation polynomial of f at chebpoints
+*/
 void getChebCoeffsFromFunction(sollya_mpfi_t* coeffs, sollya_mpfi_t * chebPoints, sollya_mpfi_t * chebMatrix,node *f,int n){
 
 sollya_mpfi_t *fValues ;
 int i;
+mp_prec_t prec;
+prec = getToolPrecision();
 
 fValues=safeMalloc((n+1)*sizeof(sollya_mpfi_t));
   for (i=0;i<=n;i++){
-  sollya_mpfi_init2(fValues[i],getToolPrecision());
+  sollya_mpfi_init2(fValues[i],prec);
   }
   getFunctionValues(fValues, chebPoints,f,n);
   getChebCoeffs(coeffs,chebMatrix,fValues,n);
@@ -441,16 +490,18 @@ free(fValues);
 
 }
 
-/*wrapper to get directly the coeffs in the chebyshev basis from a polynomial in the monomial basis(given a pointer to node, over a given interval x*/
-void getChebCoeffsFromPolynomial(sollya_mpfi_t**coeffs, int*n, node *f, sollya_mpfi_t x){
+/*Wrapper to get directly the coeffs in the Chebyshev basis
+  from a polynomial in the monomial basis given by a *node
+*/
+void getChebCoeffsFromPolynomial(sollya_mpfi_t**coeffs, int *n, node *f, sollya_mpfi_t x){
   sollya_mpfi_t z1, z2, ui, vi;
   node **coefficients;
   int d,i;
   sollya_mpfi_t *p, *c;
   mpfr_t u,v;
-  int verbosity =0;
+  mp_prec_t prec;
+  prec = getToolPrecision();
   if (isPolynomial(f) ){
-    //printf("We found a polynomial!!!\n");
     getCoefficients(&d, &coefficients, f);
     *n=d+1;
    
@@ -459,9 +510,9 @@ void getChebCoeffsFromPolynomial(sollya_mpfi_t**coeffs, int*n, node *f, sollya_m
     p=safeMalloc((d+1)*sizeof(sollya_mpfi_t));
     c=safeMalloc((d+1)*sizeof(sollya_mpfi_t));
     for (i=0;i<d+1;i++){
-      sollya_mpfi_init2((*coeffs)[i],getToolPrecision());
-      sollya_mpfi_init2(p[i],getToolPrecision());
-      sollya_mpfi_init2(c[i],getToolPrecision());
+      sollya_mpfi_init2((*coeffs)[i],prec);
+      sollya_mpfi_init2(p[i],prec);
+      sollya_mpfi_init2(c[i],prec);
       mpfi_set_node(&(p[i]),coefficients[i]);   
     }
    
@@ -469,15 +520,15 @@ void getChebCoeffsFromPolynomial(sollya_mpfi_t**coeffs, int*n, node *f, sollya_m
     /*we need to compute the polynomial over [-1,1]*/
     /*we make the change of variable: x= y*(b-a)/2 + (b+a)/2, hence for y \in [-1,1] we have x\in [a,b]*/
     /* we compute P(x)=Q(y)*/
-    sollya_mpfi_init2(ui, getToolPrecision());
-    sollya_mpfi_init2(vi, getToolPrecision());
+    sollya_mpfi_init2(ui, prec);
+    sollya_mpfi_init2(vi, prec);
     
     
-    mpfr_init2(u, getToolPrecision());
-    mpfr_init2(v, getToolPrecision());
+    mpfr_init2(u, prec);
+    mpfr_init2(v, prec);
     
-    sollya_mpfi_init2(z1, getToolPrecision());
-    sollya_mpfi_init2(z2, getToolPrecision());
+    sollya_mpfi_init2(z1, prec);
+    sollya_mpfi_init2(z2, prec);
     
     sollya_mpfi_get_left(u,x);
     sollya_mpfi_get_right(v,x);
@@ -492,20 +543,31 @@ void getChebCoeffsFromPolynomial(sollya_mpfi_t**coeffs, int*n, node *f, sollya_m
     sollya_mpfi_div_ui(z2,z2,2);
     
     getTranslatedPolyCoeffs(c, p, d+1, z1,z2);
-    if (verbosity>10) {
-    printf("\nThe %d coefficients of the translated poly are :\n ",d+1);
-      for (i=0;i<d+1;i++){
-      printInterval(c[i]);
-      }
-    }
     
     getPolyCoeffsChebBasis(*coeffs, c, d+1);
-    if (verbosity>10) {
-    printf("\nThe %d coefficients in cheby basis are :\n ",d+1);
-      for (i=0;i<d+1;i++){
-      printInterval((*coeffs)[i]);
-      }
+    
+    /*cleaning*/
+    
+    for (i=0;i<d+1;i++){
+      sollya_mpfi_clear(p[i]);
+      sollya_mpfi_clear(c[i]);
+      sollya_mpfi_clear((*coeffs)[i]);
     }
+    free(p);
+    free(c);
+    free(coeffs);
+    
+    sollya_mpfi_clear(ui);
+    sollya_mpfi_clear(vi);
+    
+    
+    mpfr_clear(u);
+    mpfr_clear(v);
+    
+    sollya_mpfi_clear(z1);
+    sollya_mpfi_clear(z2);
+    
+    
   }
   else{
      printf("The given function is not a polynomial, no modif is made \n");  
@@ -513,32 +575,34 @@ void getChebCoeffsFromPolynomial(sollya_mpfi_t**coeffs, int*n, node *f, sollya_m
 }
 
 
-/*wrapper to get directly the coeffs in the monomial basis from a polynomial in the Chebyshev basis, over a given interval x*/
+/*Wrapper to get directly the coeffs in the monomial basis 
+  from a polynomial in the Chebyshev basis, over a given interval x*/
 void getCoeffsFromChebPolynomial(sollya_mpfi_t**coeffs, sollya_mpfi_t *chebCoeffs, int n, sollya_mpfi_t x){
   sollya_mpfi_t z1, z2, ui, vi, temp;
  
   int j,i;
   sollya_mpfi_t *c;
   mpfr_t u,v;
-  int verbosity =0;
   mpz_t *chebMatrix;
-  
-    sollya_mpfi_init2(temp, getToolPrecision());
+  mp_prec_t prec;
+  prec = getToolPrecision();
+
+  sollya_mpfi_init2(temp, prec);
    
-   chebMatrix= (mpz_t *)safeMalloc((n*n)*sizeof(mpz_t));  
+  chebMatrix= (mpz_t *)safeMalloc((n*n)*sizeof(mpz_t));  
    
-   for (i=0;i<n*n;i++){
-    mpz_init2(chebMatrix[i], getToolPrecision());
+  for (i=0;i<n*n;i++){
+    mpz_init2(chebMatrix[i], prec);
    }
    getChebPolyCoeffs(chebMatrix, n);
-   //printf("After computing cheby coeffs");
+  
    
    *coeffs= (sollya_mpfi_t *)safeMalloc((n)*sizeof(sollya_mpfi_t));  
    c=(sollya_mpfi_t *)safeMalloc((n)*sizeof(sollya_mpfi_t));
    
    for (i=0;i<n;i++){
-      sollya_mpfi_init2((*coeffs)[i],getToolPrecision());
-      sollya_mpfi_init2(c[i],getToolPrecision());
+      sollya_mpfi_init2((*coeffs)[i],prec);
+      sollya_mpfi_init2(c[i],prec);
       sollya_mpfi_set_ui(c[i],0);
    }
    
@@ -552,17 +616,17 @@ void getCoeffsFromChebPolynomial(sollya_mpfi_t**coeffs, sollya_mpfi_t *chebCoeff
    /*we have in c_i the values of the coefs of P(2/(b-a)x- (b+a)/(b-a)) = \sum c_i (2/(b-a)x- (b+a)/(b-a))^i*/   
    /*we need to the translation*/
     
-    /*we compute z1=2/(b-a); z2=-(b+a)/(b-a)*/
+   /*we compute z1=2/(b-a); z2=-(b+a)/(b-a)*/
    
-    sollya_mpfi_init2(ui, getToolPrecision());
-    sollya_mpfi_init2(vi, getToolPrecision());
+    sollya_mpfi_init2(ui, prec);
+    sollya_mpfi_init2(vi, prec);
     
     
-    mpfr_init2(u, getToolPrecision());
-    mpfr_init2(v, getToolPrecision());
+    mpfr_init2(u, prec);
+    mpfr_init2(v, prec);
     
-    sollya_mpfi_init2(z1, getToolPrecision());
-    sollya_mpfi_init2(z2, getToolPrecision());
+    sollya_mpfi_init2(z1, prec);
+    sollya_mpfi_init2(z2, prec);
     
     sollya_mpfi_get_left(u,x);
     sollya_mpfi_get_right(v,x);
@@ -576,20 +640,35 @@ void getCoeffsFromChebPolynomial(sollya_mpfi_t**coeffs, sollya_mpfi_t *chebCoeff
     sollya_mpfi_add(temp, ui, vi);
     sollya_mpfi_div(z2, temp, z2);
     sollya_mpfi_neg(z2, z2);    
-        getTranslatedPolyCoeffs((*coeffs), c, n, z1,z2);
-    if (verbosity>10) {
-    printf("\nThe %d coefficients of the translated poly are :\n ",n);
-      for (i=0;i<n;i++){
-      printInterval((*coeffs)[i]);
-      }
+    getTranslatedPolyCoeffs((*coeffs), c, n, z1,z2); 
+
+    /*cleaning*/
+    sollya_mpfi_clear(z1);
+    sollya_mpfi_clear(z2);
+    sollya_mpfi_clear(ui);
+    sollya_mpfi_clear(vi);
+    sollya_mpfi_clear(temp);
+    
+    for (i=0;i<n*n;i++){
+      mpz_clear(chebMatrix[i]);
     }
-   
+    free(chebMatrix);
+    
+    for (i=0;i<n;i++){
+      sollya_mpfi_clear((*coeffs)[i]);
+      sollya_mpfi_clear(c[i]);
+    }
+    free(coeffs);
+    free(c);
+
 }
   
 
 
 
-/*wrapper to get directly the coeffs in the chebyshev basis up to degree n-1 (first n coeffs) and a bound for the remaining polynomial, from a polynomial in the monomial basis(given a pointer to node, over a given interval x*/
+/*wrapper to get directly the coeffs in the chebyshev basis up to degree n-1 (first n coeffs)
+ and a bound for the remaining polynomial,from a polynomial in the monomial basis(given by a pointer to node), 
+ over a given interval x*/
 void getNChebCoeffsFromPolynomial(sollya_mpfi_t *coeffs, sollya_mpfi_t bound, node *f, sollya_mpfi_t x, int n){
   
   sollya_mpfi_t **c;
@@ -608,31 +687,37 @@ void getNChebCoeffsFromPolynomial(sollya_mpfi_t *coeffs, sollya_mpfi_t bound, no
   }
   else{
      for(i=0;i<n;i++)
-       sollya_mpfi_set(coeffs[i],(*c)[i]);
-    //printf("before bounding");
-    
-    chebPolynomialBoundSimple(bound, d-n, (&(*c)[n]));
+       sollya_mpfi_set(coeffs[i],(*c)[i]);    
+     chebPolynomialBoundSimple(bound, d-n, (&(*c)[n]));
   }
+  
+  /*cleaning*/
+  for (i=0;i<d;i++){
+      sollya_mpfi_clear((*c)[i]);
+  }
+  free(c);
   
 }
 
 
 /********************************Functions related to derivation and integration of polynomials in cheb basis*************************/
-
+/*Get the derivative of a polynomial in Chebyshev basis, using classical formula*/
 void getChebCoeffsDerivativePolynomial(sollya_mpfi_t*coeffs, sollya_mpfi_t *chebCoeffs, int n, sollya_mpfi_t x){
-  sollya_mpfi_t z1, z2, ui, vi, temp;
- 
+  sollya_mpfi_t z1, z2, ui, vi;
   int i;
   sollya_mpfi_t *c;
   mpfr_t u,v;
+  mp_prec_t prec;
+  prec = getToolPrecision();
+
+  /*testing parameter that should disappear soon*/
   int verbosity=0;
  
-    c=(sollya_mpfi_t *)safeMalloc((n-1)*sizeof(sollya_mpfi_t));
-    sollya_mpfi_init2(temp, getToolPrecision());
+  c=(sollya_mpfi_t *)safeMalloc((n-1)*sizeof(sollya_mpfi_t));
    
   
    for (i=0;i<n-1;i++){
-      sollya_mpfi_init2(c[i],getToolPrecision());
+      sollya_mpfi_init2(c[i],prec);
       sollya_mpfi_set_ui(c[i],0);
    }
     
@@ -654,15 +739,15 @@ void getChebCoeffsDerivativePolynomial(sollya_mpfi_t*coeffs, sollya_mpfi_t *cheb
     
     /*we compute z1=2/(b-a)*/
    
-    sollya_mpfi_init2(ui, getToolPrecision());
-    sollya_mpfi_init2(vi, getToolPrecision());
+    sollya_mpfi_init2(ui, prec);
+    sollya_mpfi_init2(vi, prec);
     
     
-    mpfr_init2(u, getToolPrecision());
-    mpfr_init2(v, getToolPrecision());
+    mpfr_init2(u, prec);
+    mpfr_init2(v, prec);
     
-    sollya_mpfi_init2(z1, getToolPrecision());
-    sollya_mpfi_init2(z2, getToolPrecision());
+    sollya_mpfi_init2(z1, prec);
+    sollya_mpfi_init2(z2, prec);
     
     sollya_mpfi_get_left(u,x);
     sollya_mpfi_get_right(v,x);
@@ -702,19 +787,18 @@ void getChebCoeffsDerivativePolynomial(sollya_mpfi_t*coeffs, sollya_mpfi_t *cheb
 /*Computes the antiderivative of a polynomial in Chebyshev basis.
 NOTE: the constant coefficient is set to zero, but it should be viewed as a constant*/
 void getChebCoeffsIntegrationPolynomial(sollya_mpfi_t*coeffs, sollya_mpfi_t *chebCoeffs, int n, sollya_mpfi_t x){
-  sollya_mpfi_t z1, z2, ui, vi, temp;
+  sollya_mpfi_t z1, z2, ui, vi;
  
   int i;
   sollya_mpfi_t *c;
   mpfr_t u,v;
-  int verbosity=0;
- 
-    c=(sollya_mpfi_t *)safeMalloc((n+1)*sizeof(sollya_mpfi_t));
-    sollya_mpfi_init2(temp, getToolPrecision());
-   
+  mp_prec_t prec;
+  prec = getToolPrecision();
+
+  c=(sollya_mpfi_t *)safeMalloc((n+1)*sizeof(sollya_mpfi_t));
   
    for (i=0;i<n+1;i++){
-      sollya_mpfi_init2(c[i],getToolPrecision());
+      sollya_mpfi_init2(c[i],prec);
       sollya_mpfi_set_ui(c[i],0);
    }
    
@@ -748,15 +832,15 @@ void getChebCoeffsIntegrationPolynomial(sollya_mpfi_t*coeffs, sollya_mpfi_t *che
     
     /*we compute z1=(b-a)/2*/
    
-    sollya_mpfi_init2(ui, getToolPrecision());
-    sollya_mpfi_init2(vi, getToolPrecision());
+    sollya_mpfi_init2(ui, prec);
+    sollya_mpfi_init2(vi, prec);
     
     
-    mpfr_init2(u, getToolPrecision());
-    mpfr_init2(v, getToolPrecision());
+    mpfr_init2(u, prec);
+    mpfr_init2(v, prec);
     
-    sollya_mpfi_init2(z1, getToolPrecision());
-    sollya_mpfi_init2(z2, getToolPrecision());
+    sollya_mpfi_init2(z1, prec);
+    sollya_mpfi_init2(z2, prec);
     
     sollya_mpfi_get_left(u,x);
     sollya_mpfi_get_right(v,x);
@@ -772,12 +856,6 @@ void getChebCoeffsIntegrationPolynomial(sollya_mpfi_t*coeffs, sollya_mpfi_t *che
       sollya_mpfi_mul(c[i], c[i],z1);
      }
     
-    if (verbosity>10) {
-    printf("\nThe %d coefficients of the integrated polynomial are :\n ",n+1);
-      for (i=0;i<n+1;i++){
-      printInterval(c[i]);
-      }
-    }
     for (i=0;i<n+1;i++){
       sollya_mpfi_set(coeffs[i], c[i]);
     }
@@ -799,19 +877,16 @@ void getChebCoeffsIntegrationPolynomial(sollya_mpfi_t*coeffs, sollya_mpfi_t *che
 /*************Functions related to bounding polynomials in ChebBasis**********/
 /*****************************************************************************/
 
-/* This function computes an interval bound for a polynomial in cheb basis. */
-/*The coefficients are given in coeffs. We have n coeffs*/
-/* by just adding the absolute values of the coeffs        */
+/* This function computes an interval bound for a polynomial in cheb basis, over [-1,1],
+   by just adding the absolute values of the coeffs;
+   The n coefficients are given in coeffs.*/
 
 void chebPolynomialBoundSimple(sollya_mpfi_t bound, int n, sollya_mpfi_t *coeffs){
   sollya_mpfi_t temp, temp2, intrval;
-  mp_prec_t prec;
   int i;
-  //printf("\nin chebPolynomialBoundSimple\n");
-  //for(i=0;i<n;i++) {
-   // printInterval(coeffs[i]);
- // }
+  mp_prec_t prec;
   prec = getToolPrecision();
+  
   sollya_mpfi_init2(temp, prec);
   sollya_mpfi_init2(temp2, prec);
   sollya_mpfi_init2(intrval, prec);
@@ -826,399 +901,7 @@ void chebPolynomialBoundSimple(sollya_mpfi_t bound, int n, sollya_mpfi_t *coeffs
   sollya_mpfi_clear(temp);
   sollya_mpfi_clear(temp2);
   sollya_mpfi_clear(intrval);
-  //printf("out of chebPolynomail bound simple");
 }
-/*additional function for computing a certified "interior" range evaluation for a polynomial poly*/
-/*Compute a range [ell,u] such that forall x in dom, [ell,u]  in poly(x) and
-
-   Additionally, if things are pretty, make sure that 
-
-   poly(x) in  [ell * (1-abs(gamma)) , u * (1 + abs(gamma))].
-
-   If everything works fine, set ell to the computed value, ADAPTING
-   THE PRECISION OF THE mpfr_t VARIABLE ell IF NECESSARY and return a
-   non-zero value.
-
-   Otherwise, set do not touch ell and u and return zero. This case happens
-   when gamma is not a non-zero number.
-
-   The function assumes that poly is a polynomial but will work even
-   if poly is not a polynomial. However, it will not try to ensure
-   that ell approximates ||eps|| up to a relative error of abs(gamma).
-
-   The procedure determines its working precision itself where
-   possible. It hence disregards the prec parameter unless the
-   determination of the working precision fails.
-*/
-int computeInteriorPolyRange(mpfr_t ell, mpfr_t ull, node *poly, sollya_mpfi_t dom, mpfr_t gamma, mp_prec_t prec) {
-  node *polyPrime;
-  int res;
-  mpfr_t l,u, y,yAbs;
-  mpfr_t temp, absGamma;
-  mp_prec_t pp, pr;
-  int deg;
-  chain *possibleExtrema;
-  mpfr_t a, b, lMinusUlp, uMinusUlp;
-  unsigned long int samplePoints;
-  mpfr_t *aBound, *bBound;
-  chain *curr;
-  int resEval;
-  int s;
-  if (mpfr_zero_p(gamma) || (!mpfr_number_p(gamma))) {
-    return 0;
-  }
-
-  pr = sollya_mpfi_get_prec(dom);
-  mpfr_init2(a,pr);
-  mpfr_init2(b,pr);
-  sollya_mpfi_get_left(a,dom);
-  sollya_mpfi_get_right(b,dom);  
-
-  if (!(mpfr_number_p(a) && mpfr_number_p(b))) {
-    mpfr_clear(a);
-    mpfr_clear(b);
-    return 0;
-  }
-
-  polyPrime = differentiate(poly);
- 
-
-  mpfr_init2(temp,10 + 8 * ((sizeof(unsigned int) > sizeof(mp_prec_t)) ? sizeof(unsigned int) : sizeof(mp_prec_t)));
-  mpfr_init2(absGamma,mpfr_get_prec(gamma));
-  mpfr_abs(absGamma,gamma,GMP_RNDN);
-  mpfr_log2(temp,absGamma,GMP_RNDD);
-  mpfr_neg(temp,temp,GMP_RNDU);
-  mpfr_ceil(temp,temp);
-  if (mpfr_sgn(temp) > 0) {
-    pp = 10 + mpfr_get_ui(temp,GMP_RNDU);
-    if (pp < 12) pp = 12;
-  } else {
-    pp = prec;
-    if (pp < 12) pp = 12;
-  }
-  
-  deg = getDegree(poly);
-  if (deg >= 0) {
-    samplePoints = 4 * deg + 1;
-  } else {
-    samplePoints = getToolPoints();
-  }
-  
-  possibleExtrema = uncertifiedFindZeros(polyPrime, a, b, samplePoints, 6 + (pp / 2));
-
-
-  aBound = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-  bBound = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-  
-  /*DO NOT ADD a to the list, and to the first evaluation here, to have some max and min already*/
-  /*mpfr_init2(*aBound,pr);
-  mpfr_set(*aBound,a,GMP_RNDD); 
-  */
-  mpfr_init2(*bBound,pr);
-  mpfr_set(*bBound,b,GMP_RNDU); /* exact */
-
-  possibleExtrema = addElement(possibleExtrema,bBound);
-
-  mpfr_init2(l,pp + 5);
-  mpfr_init2(lMinusUlp,pp);
-  mpfr_init2(u,pp + 5);
-  mpfr_init2(uMinusUlp,pp);
-  mpfr_init2(y,pp + 10);
-  mpfr_init2(yAbs,pp + 10);
-  mpfr_set_si(l,0,GMP_RNDN);
-  mpfr_set_si(u,0,GMP_RNDN);
-  res = 1;
-
-  /*DO an initial evaluation in a*/
-
-  mpfr_set(uMinusUlp,u,GMP_RNDD); /* Take latest maximum minus a couple ulps as a cut off for evaluation */
-  if (!mpfr_zero_p(uMinusUlp)) mpfr_nextbelow(uMinusUlp);
-  resEval = evaluateFaithfulWithCutOffFast(y, poly, polyPrime, a, uMinusUlp, pp + 10);
-    if ((resEval != 0) && (resEval != 3) && (mpfr_number_p(y))) { /* Evaluation okay ? */
-      //printf("\n");
-      //printMpfr(y);
-      mpfr_abs(yAbs,y,GMP_RNDN); /* exact */
-      if (mpfr_sgn(yAbs) > 0) {
-      	mpfr_nextbelow(yAbs);  /* Compensate for faithful rounding */
-	      mpfr_nextbelow(yAbs);
-        s=mpfr_sgn(y);
-        mpfr_mul_si(y,yAbs,s,GMP_RNDN);
-      }
-       /* Initial maximum */
-	      mpfr_set(u,y,GMP_RNDD); /* Round down because we produce a lower bound */
-     
-      /* Initial minimum */
-	      mpfr_set(l,y,GMP_RNDU); /* Round up because we produce a lower bound */
-     
-      
-    } else { /* Here, something went wrong with the evaluation */
-      res = 0;
-      printf("Here, something went wrong with the evaluation ");
-      
-    }
-
-
-  
-
-  for (curr=possibleExtrema;((curr!=NULL) && (res!=0));curr=curr->next) {
-    mpfr_set(uMinusUlp,u,GMP_RNDD); /* Take latest maximum minus a couple ulps as a cut off for evaluation */
-    if (!mpfr_zero_p(uMinusUlp)) mpfr_nextbelow(uMinusUlp);
-    resEval = evaluateFaithfulWithCutOffFast(y, poly, polyPrime, *((mpfr_t *) (curr->value)), uMinusUlp, pp + 10);
-    if ((resEval != 0) && (resEval != 3) && (mpfr_number_p(y))) { /* Evaluation okay ? */
-      //printf("\n");
-      //printMpfr(y);
-      mpfr_abs(yAbs,y,GMP_RNDN); /* exact */
-      if (mpfr_sgn(yAbs) > 0) {
-      	mpfr_nextbelow(yAbs);  /* Compensate for faithful rounding */
-	      mpfr_nextbelow(yAbs);
-        s=mpfr_sgn(y);
-        mpfr_mul_si(y,yAbs,s,GMP_RNDN);
-      }
-      
-      if (mpfr_cmp(y,u) > 0) { /* New maximum */
-	      mpfr_set(u,y,GMP_RNDD); /* Round down because we produce a lower bound */
-      }
-      if (mpfr_cmp(y,l) < 0) { /* New minimum */
-	      mpfr_set(l,y,GMP_RNDU); /* Round up because we produce a lower bound */
-      }
-      
-    } else { /* Here, something went wrong with the evaluation */
-      res = 0;
-      printf("Here, something went wrong with the evaluation ");
-      break;
-    }
-  }
-
-  if (res) {
-    if (mpfr_get_prec(ell) < mpfr_get_prec(l)) {
-      mpfr_set_prec(ell,mpfr_get_prec(l));
-    }
-    mpfr_set(ell,l,GMP_RNDN); /* exact */
-    if (mpfr_get_prec(ull) < mpfr_get_prec(u)) {
-      mpfr_set_prec(ull,mpfr_get_prec(u));
-    }
-    mpfr_set(ull,u,GMP_RNDN); /* exact */
-  } 
-
-  freeChain(possibleExtrema, freeMpfrPtr);
-  mpfr_clear(l);
-  mpfr_clear(lMinusUlp);
-  mpfr_clear(u);
-  mpfr_clear(uMinusUlp);
-  mpfr_clear(y);
-  mpfr_clear(yAbs);
-  mpfr_clear(a);
-  mpfr_clear(b);
-  mpfr_clear(absGamma);
-  mpfr_clear(temp);
-  free_memory(polyPrime);
-   //printf("We return from interior range, with res = %d ", res);
-  return res;
-}
-
-/* This function computes a refined interval bound for a polynomial in monomial basis. */
-/* It returns a value different from zero if everything is ok, if something went wrong, 
-it returns 0;
-*/
-/* TODO IN WORK      */
-
-int polynomialBoundRefined(sollya_mpfi_t bound,node *T, sollya_mpfi_t dom, mpfr_t gamma, mp_prec_t prec){
-  
-
-  int res;
-  node *UminusT, *TminusL, *LAsNode, *UAsNode;
-  mpfr_t ell, ull, U,L, mu,mu2,mu3;
-  
-  res=1;
-
-  mpfr_init2(ell, prec);
-  mpfr_init2(ull, prec);
-  mpfr_init2(U, prec);
-  mpfr_init2(L, prec);  
-  
-  mpfr_init2(mu, prec); 
-  mpfr_init2(mu2, prec); 
-  mpfr_init2(mu3, prec);
-  mpfr_div_ui(mu, gamma, 32,GMP_RNDN);
- 
- //printf("gamma=");
-  //printMpfr(gamma);
-  //printf("\n");
-  
-  //compute an interior min and a max
-  if((computeInteriorPolyRange(ell, ull, T, dom, mu, prec))!=0){
-    mpfr_add_ui(mu2,mu,1,GMP_RNDU); 
-    mpfr_si_sub(mu3,1,mu,GMP_RNDN);
-    
-    if (mpfr_sgn(ell)<0) {
-      mpfr_abs(L,ell, GMP_RNDU);//exact
-      mpfr_mul(L, L, mu2, GMP_RNDU);
-      mpfr_mul_si(L, L,-1, GMP_RNDD); 
-    }
-    else{
-     mpfr_mul(L, ell, mu3, GMP_RNDD);
-    } 
-  
-    if (mpfr_sgn(ull)<0) {
-      mpfr_abs(U,ull, GMP_RNDU);//exact
-      mpfr_mul(U, U, mu3, GMP_RNDD);
-      mpfr_mul_si(U, U,-1, GMP_RNDU); 
-    }
-    else{
-     mpfr_mul(U, ull, mu2, GMP_RNDU);
-    } 
-  
-  
-  LAsNode = makeConstant(L); 
-  UAsNode = makeConstant(U); 
-   /*printf("Lower and upper:\n");
-   printTree(LAsNode);
-   printf("\n vs. \n");
-   printMpfr(ell);
-   printTree(UAsNode);
-   printf("\n vs. \n");
-   printMpfr(ull);
-   printf("\n");*/
-  TminusL = subPolynomialsExactly( T,LAsNode);
-  UminusT = subPolynomialsExactly(UAsNode, T); 
-   /*printTree(TminusL);
-   printf("\n");
-   printTree(UminusT);
-    printf("\n");*/
-  //show positivity
-  if ((! showPositivity(TminusL,dom, prec)) ||
-      (! showPositivity(UminusT,dom, prec))) {
-    printf("Warning: during polynomial bound computation, the positivity of a polynomial could not be established.\n");
-    res=0;
-  }
-  else{
-    sollya_mpfi_interv_fr(bound, L,U);
-  }
-  free_memory(LAsNode);
-  free_memory(UAsNode);
-  free_memory(TminusL);
-  free_memory(UminusT);
- }
- else{
-   printf("Warning: during polynomial bound computation, we could not compute an interior range.\n");
-   res=0;
- }
-
-  mpfr_clear(ell);
-  mpfr_clear(ull);
-  mpfr_clear(U);
-  mpfr_clear(L);
-  mpfr_clear(mu);
-  mpfr_clear(mu2);
-  mpfr_clear(mu3);
-  /*printf("we return from monomial poly bound refined:");
-  printInterval(bound);
-  printf("\n with %d\n",res);*/
-  return res;
-}
-
-/* This function computes a refined interval bound for a polynomial in cheb basis. */
-/*The coefficients are given in coeffs. We have n coeffs
-It returns a value different from zero if everything is ok, if something went wrong, 
-it returns 0;
-*/
-/* TODO IN WORK      */
-
-int chebPolynomialBoundRefinedBetaTesting(sollya_mpfi_t bound, int n, sollya_mpfi_t *coeffs){
-  sollya_mpfi_t intrval,zero;
-  mp_prec_t prec;
-  int i,res;
-  sollya_mpfi_t **monomialCoeffs;
-  mpfr_t *coeffsMpfr;
-  sollya_mpfi_t *coeffsErrors;
-  sollya_mpfi_t rest, boundPoly;
-  node *T;
-
-  mpfr_t gamma;
-  int pow;  
-  res=1;
-  prec = getToolPrecision();
-  mpfr_init2(gamma, prec); 
-  pow=prec/5; 
-  //printf("-prec/5= %d\n",pow );
-  /*TODO: Set gamma to something*/
-  mpfr_set_ui(gamma,2, GMP_RNDN);
-  mpfr_pow_si(gamma,gamma,-pow, GMP_RNDN); 
-  /*printf("gamma=");
-  printMpfr(gamma);
-  printf("\n");*/
-  sollya_mpfi_init2(intrval, prec);
-  sollya_mpfi_interv_si(intrval, -1,1);
-  
-  sollya_mpfi_init2(zero, prec);
-  sollya_mpfi_set_ui(zero,0);
-  /*Compute the coeffs in monomial basis*/ 
-  monomialCoeffs=(sollya_mpfi_t **)safeMalloc(sizeof(sollya_mpfi_t*));
-  getCoeffsFromChebPolynomial(monomialCoeffs, coeffs, n, intrval);
-
-  /*construct a polynomial with mpfr_coeffs and an error chain*/
-  coeffsMpfr= (mpfr_t *)safeCalloc((n),sizeof(mpfr_t));
-  coeffsErrors = (sollya_mpfi_t *)safeCalloc((n),sizeof(sollya_mpfi_t));
-
-  
-  sollya_mpfi_init2(rest,prec);
-  sollya_mpfi_init2(boundPoly,prec);
-
-  for(i=0;i<n;i++){
-    sollya_mpfi_init2(coeffsErrors[i],prec);
-    mpfr_init2(coeffsMpfr[i],prec);
-  }
-  
-  mpfr_get_poly(coeffsMpfr, coeffsErrors, rest, n-1, *monomialCoeffs, zero, intrval);
- 
-  /*create T*/ 
-  T=makePolynomial(coeffsMpfr, n-1);
-  
-  /*printf("\nT=\n");
-  printTree(T);
- printf(" \n");*/
- 
-  if((polynomialBoundRefined( boundPoly, T,intrval, gamma, prec))!=0) {
-    sollya_mpfi_add(bound, boundPoly,rest); 
-  } 
-  else{
-   res=0; 
-  } 
-  free_memory(T);
-  
-  sollya_mpfi_clear(zero);
-  sollya_mpfi_clear(intrval);
-  sollya_mpfi_clear(rest);
-  sollya_mpfi_clear(boundPoly); 
-  
-  mpfr_clear(gamma);
-  
-  for(i=0;i<n;i++){
-    sollya_mpfi_clear(coeffsErrors[i]);
-    sollya_mpfi_clear((*monomialCoeffs)[i]);
-    mpfr_clear(coeffsMpfr[i]);
-  }
-  free(coeffsErrors);
-  free(coeffsMpfr);
-  free(monomialCoeffs);
-  /*printf("We return from chebBound refined, ");
-  printInterval(bound);
-  printf(" with %d\n",res); */
-  return res;
-}
-
-int chebPolynomialBoundRefined(sollya_mpfi_t bound, int n, sollya_mpfi_t *coeffs){
-
-  if (chebPolynomialBoundRefinedBetaTesting(bound, n, coeffs)==0) {
-
-    printf("Falling back to default version for bounding....");
-    chebPolynomialBoundSimple(bound, n,coeffs);
-    return 0;
-  }
-  else return 1;
-
-}
-
 
 /* This function computes an interval bound for a polynomial in cheb basis. */
 /*One day this function may become more complex*/
@@ -1227,16 +910,16 @@ chebPolynomialBoundSimple(bound, n,coeffs);
 }
 
 
-/* This function computes an interval bound for a polynomial in cheb basis. */
-/*The coefficients are given in coeffs. We have n coeffs*/
-/* by using Clenshaw's method --      */
-
+/* This function computes an interval bound for a polynomial in cheb basis.
+   by using Clenshaw's method --  
+   The n coefficients are given in coeffs.*/
 void evaluateChebPolynomialClenshaw(sollya_mpfi_t bound, int n, sollya_mpfi_t *coeffs, mpfi_t x,mpfi_t x0 ){
-  mp_prec_t prec;
   int i;
   sollya_mpfi_t z, zz, z1,b0,b1;
   mpfr_t a, b;
+  mp_prec_t prec;
   prec = getToolPrecision();
+  
   sollya_mpfi_init2(z, prec);
   sollya_mpfi_init2(zz, prec);
   sollya_mpfi_init2(z1, prec);
@@ -1296,63 +979,4 @@ void evaluateChebPolynomialClenshaw(sollya_mpfi_t bound, int n, sollya_mpfi_t *c
   mpfr_clear(b); mpfr_clear(a);
 }
 
-/*
-int CM(chain**resP, void **args) {
-  node *f;
-  sollya_mpfi_t x, bound;
-  sollya_mpfi_t *coeffsF, *fValues, *chebMatrix, *chebCoeffs;
-  mpz_t *chebCoeffMatrix;
-  //sollya_mpfi_t *coeffsErrors, *rest;
-  int n,i,j,verbosity;
-  int d;
 
-  //chain *ch;
-  //node *resultPoly;
-  //node *remainderL, *remainderR;
-  //mpfr_t *ptr;
-  //ch=NULL;
-  sollya_mpfi_t *chebPoints;
-  
-  chain *ch;
- 
-  sollya_mpfi_t *zz;
-  //sollya_mpfi_t *ptr;
-  
-  f = (node *)args[0];
-  n = *( (int *)args[2] );
-  verbosity=*( (int *)args[3] );
-  sollya_mpfi_init2(x, getToolPrecision());
-  sollya_mpfi_set(x, *( (sollya_mpfi_t *)args[1] ));
-  
-  chebCoeffs=safeMalloc((n)*sizeof(sollya_mpfi_t));
-  
-  for (i=0;i<n;i++){
-  sollya_mpfi_init2(chebCoeffs[i],getToolPrecision());
-  }
-  sollya_mpfi_init2(bound, getToolPrecision());
-  getNChebCoeffsFromPolynomial(chebCoeffs, bound, f, x, n);
-  
-    ch=NULL;
-    
-    zz = (sollya_mpfi_t*)safeMalloc(sizeof(sollya_mpfi_t));
-    sollya_mpfi_init2(*zz, getToolPrecision());
-    sollya_mpfi_set(*zz, bound);
-    ch=addElement(ch,zz);
-    
-    for (i=n-1; i>=0;i--){
-      zz = (sollya_mpfi_t*)safeMalloc(sizeof(sollya_mpfi_t));
-      sollya_mpfi_init2(*zz, getToolPrecision());
-      sollya_mpfi_set(*zz, chebCoeffs[i]);
-      ch=addElement(ch,zz);
-    }
-    for (i=0;i<n;i++){
-      sollya_mpfi_clear(chebCoeffs[i]);
-    }
-    free(chebCoeffs);
-  
- 
-  
-  *resP=ch;
-    
-  return 1;
-}*/
