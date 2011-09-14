@@ -52,7 +52,7 @@
   This program is distributed WITHOUT ANY WARRANTY; without even the
   implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 */
-#include "sollya.h"
+//#include "sollya.h"
 /*This file contains headers of functions in chebModelsAux.c
   i.e. of auxiliary functions for constructing Chebyshev Models/forms*/
 
@@ -60,7 +60,7 @@
 if c constant after simplification-> ok
 if not sets the value to 0
 */
-int mpfi_set_node( sollya_mpfi_t *r, node *c);
+int mpfi_set_node( sollya_mpfi_t r, node *c, mp_prec_t prec);
 
 
 /**************************************************************/
@@ -77,12 +77,12 @@ void getChebyshevExtrema(sollya_mpfi_t *chebPoints, int n, sollya_mpfi_t x);
 s.t. chebMatrix[i,j]=T_i(x_j), for  i=0..n-1, j=0..n-1, and 
 x_j \in [-1,1] the chebyshev points of first kind in [-1,1].
 */
-void getChebMatrix(sollya_mpfi_t**chebMatrix, int n);
+void getChebMatrix(sollya_mpfi_t**chebMatrix, int n, mp_prec_t prec);
 
 /* Returns a matrix chebCoeffsMatrix of dimension nxn,
 s.t. chebCoeffsMatrix[i,j]=coeff(T_i(x), j), for  i=0..n-1, j=0..n-1
 */
-void getChebPolyCoeffs(mpz_t* chebCoeffsMatrix, int n);
+void getChebPolyCoeffs(mpz_t* chebCoeffsMatrix, int n, mp_prec_t prec);
 
 /*Returns in chebCoeffs the coeffs of the finite Chebyshev basis expansion
  of the polynomial p of degree n-1, over [-1,1];
@@ -116,7 +116,7 @@ void getChebCoeffsFromFunction(sollya_mpfi_t* coeffs, sollya_mpfi_t * chebPoints
 /*Wrapper to get directly the coeffs in the Chebyshev basis
   from a polynomial in the monomial basis given by a node*
 */
-void getChebCoeffsFromPolynomial(sollya_mpfi_t**coeffs, int *n, node *f, sollya_mpfi_t x);
+void getChebCoeffsFromPolynomial(sollya_mpfi_t**coeffs, int *n, node *f, sollya_mpfi_t x, mp_prec_t prec);
 
 /*Wrapper to get directly the coeffs in the monomial basis 
   from a polynomial in the Chebyshev basis given by a list of coeffs*/
@@ -129,7 +129,7 @@ void getCoeffsFromChebPolynomial(sollya_mpfi_t**coeffs, sollya_mpfi_t *chebCoeff
 /*wrapper to get directly the coeffs in the chebyshev basis up to degree n-1 (first n coeffs)
  and a bound for the remaining polynomial,from a polynomial in the monomial basis(given by a pointer to node), 
  over a given interval x*/
-void getNChebCoeffsFromPolynomial(sollya_mpfi_t *coeffs, sollya_mpfi_t bound, node *f, sollya_mpfi_t x, int n);
+void getNChebCoeffsFromPolynomial(sollya_mpfi_t *coeffs, sollya_mpfi_t bound, node *f, sollya_mpfi_t x, int n, int boundLevel);
 
 /******************************************************************************/
 /*Functions related to derivation and integration of polynomials in cheb basis*/
@@ -161,7 +161,7 @@ void chebPolynomialBoundSimple(sollya_mpfi_t bound, int n, sollya_mpfi_t *coeffs
 
 /* Computes an interval bound for a polynomial in cheb basis.
    One day this function may become more complex*/
-void chebPolynomialBoundDefault(sollya_mpfi_t bound, int n, sollya_mpfi_t *coeffs);
+void chebPolynomialBound(sollya_mpfi_t bound, int n, sollya_mpfi_t *coeffs, int boundLevel);
 
 /* Computes an interval bound for a polynomial in cheb basis.
    by using Clenshaw's method.
