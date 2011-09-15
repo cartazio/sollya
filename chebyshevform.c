@@ -1239,7 +1239,7 @@ void chebyshevform(node **Ch, chain **errors, sollya_mpfi_t delta,
 
   chebModel *t, *tt;
   mpfr_t *coeffsMpfr;
-  sollya_mpfi_t *coeffsErrors, *chebCoeffs;
+  sollya_mpfi_t *coeffsErrors, **monomialCoeffs, *chebCoeffs;
   int i;
   chain *err;
   sollya_mpfi_t *rest, zero;
@@ -1256,17 +1256,31 @@ void chebyshevform(node **Ch, chain **errors, sollya_mpfi_t delta,
   
   /*printf("prec is=%d ", prec);*/
   t=createEmptycModelCompute(n,dom,1,1, prec);
-  /*printf("we have created an emptyChebmodel \n");*/
+  /*  printf("we have created an emptyChebmodel \n");*/
   
   cheb_model(t, f, n, dom, 0, 0, prec);
-  //printcModel(t);
-
+  /*  printcModel(t);*/
+  
+  
+  monomialCoeffs= (sollya_mpfi_t **)safeMalloc(sizeof(sollya_mpfi_t *));
+  
+  /*get interval coefficients in monomial basis*/
+  getCoeffsFromChebPolynomial(monomialCoeffs, t->poly_array, n, dom);
+  
+/*   if ((*monomialCoeffs)!=NULL){*/
+/*     printf("not null");*/
+/*     for(i=0;i<n;i++){*/
+/*       if (((*monomialCoeffs)[i])!=NULL)  printInterval((*monomialCoeffs)[i]);*/
+/*     }*/
+/*   }*/
+/*  */
+  /*Transform interval coeffs in monomial basis into (mpfr, error)*/ 
   coeffsMpfr= (mpfr_t *)safeCalloc((n),sizeof(mpfr_t));
   coeffsErrors = (sollya_mpfi_t *)safeCalloc((n),sizeof(sollya_mpfi_t));
-  chebCoeffs = (sollya_mpfi_t *)safeCalloc((n),sizeof(sollya_mpfi_t));
+  
 
   rest= (sollya_mpfi_t*)safeMalloc(sizeof(sollya_mpfi_t));
-  sollya_mpfi_init2(*rest,getToolPrecision());
+  sollya_mpfi_init2(*rest,prec);
 
   for(i=0;i<n;i++){
     sollya_mpfi_init2(coeffsErrors[i],prec);
@@ -1274,22 +1288,24 @@ void chebyshevform(node **Ch, chain **errors, sollya_mpfi_t delta,
   }
   sollya_mpfi_init2(zero, prec);
   sollya_mpfi_set_ui(zero,0);
-  mpfr_get_poly(coeffsMpfr, coeffsErrors, *rest, t->n -1,t->poly_array, zero, t->x);
+  mpfr_get_poly(coeffsMpfr, coeffsErrors, *rest, t->n -1,*monomialCoeffs, zero, t->x);
 
-  //create Ch;
+  /*create Ch;*/
   *Ch=makePolynomial(coeffsMpfr, (t->n)-1);
 
-  //create errors;
+  /*  create errors;*/
   err=constructChain(coeffsErrors,t->n-1);
+  
+  
+  chebCoeffs = (sollya_mpfi_t *)safeCalloc((n),sizeof(sollya_mpfi_t));
   
   for (i=0; i<n;i++){
     sollya_mpfi_init2(chebCoeffs[i],prec);
     sollya_mpfi_set(chebCoeffs[i], t->poly_array[i]);
   }
-  //create chebycoeffsList;
+  /*  create chebycoeffsList;*/
   *chebyshevCoefficients=constructChain(chebCoeffs,t->n-1);
-
-  //printMpfiChain(err);
+  
   *errors = err;
   sollya_mpfi_set(delta,t->rem_bound);
  
@@ -1297,10 +1313,15 @@ void chebyshevform(node **Ch, chain **errors, sollya_mpfi_t delta,
   for(i=0;i<n;i++){
     mpfr_clear(coeffsMpfr[i]);
     sollya_mpfi_clear(coeffsErrors[i]);
+    sollya_mpfi_clear(chebCoeffs[i]);
+    sollya_mpfi_clear((*monomialCoeffs)[i]);
   }
   sollya_mpfi_clear(zero);
   free(coeffsMpfr);
   free(coeffsErrors);
+  free(chebCoeffs);
+  free(*monomialCoeffs);
+  free(monomialCoeffs);
   clearcModelComplete(t);
   sollya_mpfi_clear(*rest);
   free(rest);
