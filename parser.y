@@ -174,6 +174,7 @@ int parserCheckEof() {
 
 %token  SQRTTOKEN;
 %token  EXPTOKEN;
+%token  FREEVARTOKEN;
 %token  LOGTOKEN;
 %token  LOG2TOKEN;
 %token  LOG10TOKEN;
@@ -283,6 +284,7 @@ int parserCheckEof() {
 %token  NUMERATORTOKEN;
 %token  DENOMINATORTOKEN;
 %token  SUBSTITUTETOKEN;
+%token  COMPOSEPOLYNOMIALSTOKEN;
 %token  COEFFTOKEN;
 %token  SUBPOLYTOKEN;
 %token  ROUNDCOEFFICIENTSTOKEN;
@@ -312,7 +314,7 @@ int parserCheckEof() {
 %token  WRITETOKEN;
 %token  ASCIIPLOTTOKEN;
 %token  RENAMETOKEN;
-
+%token  BINDTOKEN;
 
 %token  INFNORMTOKEN;
 %token  SUPNORMTOKEN;
@@ -806,6 +808,11 @@ simplecommand:          QUITTOKEN
                           {
 			    $$ = makeRename($3, $5);
 			    free($3);
+			    free($5);
+			  }
+                      | RENAMETOKEN LPARTOKEN FREEVARTOKEN COMMATOKEN IDENTIFIERTOKEN RPARTOKEN
+                          {
+			    $$ = makeRename("_x_", $5);
 			    free($5);
 			  }
                       | EXTERNALPROCTOKEN LPARTOKEN IDENTIFIERTOKEN COMMATOKEN thing COMMATOKEN externalproctypelist MINUSTOKEN RIGHTANGLETOKEN extendedexternalproctype RPARTOKEN
@@ -1366,6 +1373,10 @@ basicthing:             ONTOKEN
                           {
 			    $$ = makeDoubleextendedSymbol();
 			  }
+                      | FREEVARTOKEN
+                          {
+			    $$ = makeVariable();
+			  }
                       | DOUBLEDOUBLETOKEN
                           {
 			    $$ = makeDoubleDoubleSymbol();
@@ -1645,6 +1656,11 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeRemez(addElement(addElement($7, $5), $3));
 			  }
+                      | BINDTOKEN LPARTOKEN thing COMMATOKEN IDENTIFIERTOKEN COMMATOKEN thing RPARTOKEN
+                          {
+			    $$ = makeBind($3, $5, $7);
+			    free($5);
+			  } 
                       | MINTOKEN LPARTOKEN thinglist RPARTOKEN
                           {
 			    $$ = makeMin($3);
@@ -1704,6 +1720,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | SUBSTITUTETOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
                           {
 			    $$ = makeSubstitute($3, $5);
+			  }
+                      | COMPOSEPOLYNOMIALSTOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
+                          {
+			    $$ = makeComposePolynomials($3, $5);
 			  }
                       | COEFFTOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
                           {
@@ -1845,6 +1865,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeExp($3);
 			  }
+                      | FREEVARTOKEN LPARTOKEN thing RPARTOKEN
+                          {
+			    $$ = makeApply(makeVariable(),addElement(NULL,$3));
+			  }                      
                       | FUNCTIONTOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeProcedureFunction($3);
@@ -2508,6 +2532,17 @@ help:                   CONSTANTTOKEN
 			    outputMode(); sollyaPrintf("Exponential.\n");
 #if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
 #warning "No help text for EXP"
+#endif
+#endif
+                          }
+                      | FREEVARTOKEN
+                          {
+#ifdef HELP_FREEVAR_TEXT
+			    outputMode(); sollyaPrintf(HELP_FREEVAR_TEXT);
+#else
+			    outputMode(); sollyaPrintf("Reserved default free variable _x_.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for FREEVAR"
 #endif
 #endif
                           }
@@ -3623,6 +3658,17 @@ help:                   CONSTANTTOKEN
 #endif
 #endif
                           }
+                      | COMPOSEPOLYNOMIALSTOKEN
+                          {
+#ifdef HELP_COMPOSEPOLYNOMIALS_TEXT
+			    outputMode(); sollyaPrintf(HELP_COMPOSEPOLYNOMIALS_TEXT);
+#else
+			    outputMode(); sollyaPrintf("Compose two polynomials p and q and round coefficients of p(q).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for COMPOSEPOLYNOMIALS"
+#endif
+#endif
+                          }
                       | COEFFTOKEN
                           {
 #ifdef HELP_COEFF_TEXT
@@ -3863,6 +3909,17 @@ help:                   CONSTANTTOKEN
 			    outputMode(); sollyaPrintf("Rename free variable string1 to string2: rename(string1, string2).\n");
 #if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
 #warning "No help text for RENAME"
+#endif
+#endif
+                          }
+                      | BINDTOKEN
+                          {
+#ifdef HELP_BIND_TEXT
+			    outputMode(); sollyaPrintf(HELP_BIND_TEXT);
+#else
+			    outputMode(); sollyaPrintf("bind(p,ident,term): bind argument ident of procedure p to term, returning a procedure with one argument less.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for BIND"
 #endif
 #endif
                           }

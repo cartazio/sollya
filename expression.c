@@ -1114,11 +1114,7 @@ void fprintTreeWithPrintMode(FILE *fd, node *tree) {
     if (variablename != NULL) {
       sollyaFprintf(fd,"%s",variablename);
     } else {
-      printMessage(1,"Warning: the current free variable has not been bound. Nevertheless it must be printed.\n");
-      printMessage(1,"Will bind the current free variable to \"x\".\n");
-      variablename = (char *) safeCalloc(2,sizeof(char));
-      variablename[0] = 'x';
-      sollyaFprintf(fd,"%s",variablename);
+      sollyaFprintf(fd,"_x_");
     }
     break;
   case CONSTANT:
@@ -1584,11 +1580,7 @@ void printTree(node *tree) {
     if (variablename != NULL) {
       sollyaPrintf("%s",variablename);
     } else {
-      printMessage(1,"Warning: the current free variable has not been bound. Nevertheless it must be printed.\n");
-      printMessage(1,"Will bind the current free variable to \"x\".\n");
-      variablename = (char *) safeCalloc(2,sizeof(char));
-      variablename[0] = 'x';
-      sollyaPrintf("%s",variablename);
+      sollyaPrintf("_x_");
     }
     break;
   case CONSTANT:
@@ -1924,13 +1916,12 @@ char *sprintTree(node *tree) {
   switch (tree->nodeType) {
   case VARIABLE:
     if (variablename == NULL) {
-      printMessage(1,"Warning: the current free variable has not been bound. Nevertheless it must be printed.\n");
-      printMessage(1,"Will bind the current free variable to \"x\".\n");
-      variablename = (char *) safeCalloc(2,sizeof(char));
-      variablename[0] = 'x';
+      buffer = (char *) safeCalloc(4,sizeof(char));
+      sprintf(buffer,"_x_");
+    } else {
+      buffer = (char *) safeCalloc(strlen(variablename)+1,sizeof(char));
+      sprintf(buffer,"%s",variablename);
     }
-    buffer = (char *) safeCalloc(strlen(variablename)+1,sizeof(char));
-    sprintf(buffer,"%s",variablename);
     break;
   case CONSTANT:
     buffer = sprintValue(tree->value);
@@ -2301,12 +2292,10 @@ void fprintTree(FILE *fd, node *tree) {
   switch (tree->nodeType) {
   case VARIABLE:
     if (variablename == NULL) {
-      printMessage(1,"Warning: the current free variable has not been bound. Nevertheless it must be printed.\n");
-      printMessage(1,"Will bind the current free variable to \"x\".\n");
-      variablename = (char *) safeCalloc(2,sizeof(char));
-      variablename[0] = 'x';
+      sollyaFprintf(fd,"_x_");
+    } else {
+      sollyaFprintf(fd,"%s",variablename);
     }
-    sollyaFprintf(fd,"%s",variablename);
     break;
   case CONSTANT:
     fprintValue(fd,*(tree->value));
@@ -3081,6 +3070,7 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
   mpq_t resMpq;
   mpfr_t num, denom, resDiv, resA, resB;
   int numberChilds;
+  int signOkay, sign;
 
   if ((tree->nodeType == CONSTANT) && (mpfr_nan_p(*(tree->value)))) return copyTree(tree);
   if (tree->nodeType != VARIABLE) {
@@ -3146,7 +3136,7 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
   if ((tree->nodeType == DIV) && 
       (!containsNotANumbers(tree)) &&
       (isPolynomial(tree->child1)) &&
-      (isPolynomial(tree->child1)) &&
+      (isPolynomial(tree->child2)) &&
       ((alpha = getMaxPowerDivider(tree->child1)) > 0) && 
       ((beta = getMaxPowerDivider(tree->child2)) > 0)) {
     if (alpha == beta) {
@@ -3613,13 +3603,30 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
       }
     } else {
       if ((simplChild1->nodeType == CONSTANT) && (mpfr_zero_p(*(simplChild1->value)))) {
-	free_memory(simplChild1);
-	free_memory(simplChild2);
-	simplified->nodeType = CONSTANT;
-	value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*value,tools_precision);
-	simplified->value = value;
-	mpfr_set_d(*value,0.0,GMP_RNDN);
+	if (!isConstant(simplChild2)) {
+	  free_memory(simplChild1);
+	  free_memory(simplChild2);
+	  simplified->nodeType = CONSTANT;
+	  value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+	  mpfr_init2(*value,tools_precision);
+	  simplified->value = value;
+	  mpfr_set_d(*value,0.0,GMP_RNDN);
+	} else {
+	  signOkay = evaluateSign(&sign, simplChild2);
+	  if (signOkay && (sign != 0)) {
+	    free_memory(simplChild1);
+	    free_memory(simplChild2);
+	    simplified->nodeType = CONSTANT;
+	    value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+	    mpfr_init2(*value,tools_precision);
+	    simplified->value = value;
+	    mpfr_set_d(*value,0.0,GMP_RNDN);
+	  } else {
+	    simplified->nodeType = DIV;
+	    simplified->child1 = simplChild1;
+	    simplified->child2 = simplChild2;
+	  }
+	}
       } else {
 	if ((simplChild2->nodeType == CONSTANT) && (mpfr_cmp_d(*(simplChild2->value),1.0) == 0) && (!mpfr_nan_p(*(simplChild2->value)))) {
 	  free_memory(simplChild2);
@@ -3705,6 +3712,7 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
 	}
       }
     }
+    // sollyaPrintf("simplified "); printTree(tree); sollyaPrintf(" into "); printTree(simplified); sollyaPrintf("\n");
     break;
   case SQRT:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
@@ -5005,6 +5013,7 @@ node *simplifyTreeErrorfree(node *tree) {
   node *temp;
 
   temp = simplifyTreeErrorfreeInner(tree,1,rationalMode);
+
   if (verbosity >= 7) {
     if (!isSyntacticallyEqual(temp,tree)) {
       if (verbosity < 9) {
@@ -9995,7 +10004,7 @@ void computePowerOfPolynomialCoefficients(int *degreeRes, node ***coeffRes,
   }
 
   if (k == 1) {
-    for (i=1;i<=*degreeRes;i++) {
+    for (i=0;i<=*degreeRes;i++) {
       if (coeffs[i] != NULL) {
         (*coeffRes)[i] = copyTree(coeffs[i]);
       } else {
@@ -11275,6 +11284,9 @@ node *substitute(node* tree, node *t) {
   node **coeffs;
   int degree;
   int i;
+  sollya_mpfi_t tEval, treeEval;
+  mp_prec_t treeEvalPrec;
+  mpfr_t tEl, tEr;
 
   if (isPolynomial(tree) && 
       isPolynomial(t)) {
@@ -11307,6 +11319,33 @@ node *substitute(node* tree, node *t) {
       copy = substitutePolynomialUnsafe(tree,t);
       return copy;
     }
+  }
+
+  if (isConstant(t) && (!isConstant(tree))) {
+    copy = NULL;
+    sollya_mpfi_init2(tEval, tools_precision * 2);
+    sollya_mpfi_init2(treeEval, tools_precision * 2);
+    
+    evaluateConstantExpressionToInterval(tEval, t);
+    evaluateInterval(treeEval, tree, NULL, tEval);
+
+    treeEvalPrec = sollya_mpfi_get_prec(treeEval);
+    mpfr_init2(tEl, treeEvalPrec);
+    mpfr_init2(tEr, treeEvalPrec);
+    sollya_mpfi_get_left(tEl, treeEval);
+    sollya_mpfi_get_right(tEr, treeEval);
+    
+    if (mpfr_number_p(tEr) && 
+	mpfr_number_p(tEl) &&
+	mpfr_equal_p(tEr, tEl)) {
+      copy = makeConstant(tEr);
+    }
+
+    mpfr_clear(tEl);
+    mpfr_clear(tEr);
+    sollya_mpfi_clear(tEval);
+    sollya_mpfi_clear(treeEval);
+    if (copy != NULL) return copy;
   }
 
   switch (tree->nodeType) {
@@ -11550,6 +11589,209 @@ node *substitute(node* tree, node *t) {
   return copy;
 }
 
+void composePolynomialsInner(sollya_mpfi_t *res, int degR, sollya_mpfi_t *p, int degP, sollya_mpfi_t *q, int degQ, mp_prec_t prec) {
+  sollya_mpfi_t *r, *s, *t;
+  int i, j, k, l;
+  sollya_mpfi_t temp;
+
+  // Initialize a temporary
+  //
+  sollya_mpfi_init2(temp, prec);
+
+  // Allocate two scratch arrays of the length of 
+  // the result polynomial.
+  //
+  r = safeCalloc(degR+1,sizeof(sollya_mpfi_t));
+  s = safeCalloc(degR+1,sizeof(sollya_mpfi_t));
+  for (i=0;i<=degR;i++) {
+    sollya_mpfi_init2(r[i],prec);
+    sollya_mpfi_init2(s[i],prec);
+    sollya_mpfi_set_si(r[i],0);
+    sollya_mpfi_set_si(s[i],0);
+  }
+
+  // Perform a stupid Horner:
+  //
+  // p(q(x)) = a_0 + q(x) * (.... a_i * q(x) * pTilde(q(x)) ...)
+  //
+  sollya_mpfi_set(r[0],p[degP]);
+  for (i=degP-1;i>=0;i--) {
+    // Multiply pTilde(q) with q, result in s
+    // while clearing up r
+    for (j=0;j<=degQ*(degP-1-i);j++) {
+      for (k=0;k<=degQ;k++) {
+	l = j + k;
+	sollya_mpfi_mul(temp,r[j],q[k]);
+	sollya_mpfi_add(s[l],s[l],temp);
+      }
+      sollya_mpfi_set_si(r[j],0);
+    }
+    // Add in a_i
+    sollya_mpfi_add(s[0],s[0],p[i]);
+    
+    // Swap r and s for next step
+    t = s;
+    s = r;
+    r = t;
+  }
+
+  // Here, the result is in r
+  //
+  // Copy it into the result array res
+  //
+  for (i=0;i<=degR;i++) {
+    sollya_mpfi_set(res[i],r[i]);
+  }
+
+  // Clear and free the scratch arrays
+  //
+  for (i=0;i<=degR;i++) {
+    sollya_mpfi_clear(r[i]);
+    sollya_mpfi_clear(s[i]);
+  }
+  free(r);
+  free(s);
+
+  // Clear the temporary
+  //
+  sollya_mpfi_clear(temp);
+
+}
+
+void composePolynomials(node **poly, chain **radii, node *p, node *q, mp_prec_t prec) {
+  int degP, degQ, i, degR;
+  node **coeffsP, **coeffsQ;
+  sollya_mpfi_t *polyP, *polyQ, *polyR;
+  mpfr_t *coeffsR;
+  sollya_mpfi_t **radiiArray;
+  node *tempPoly, *tempPoly2;
+
+  // Check if both p and q are polynomials 
+  // and implement a fallback solution
+  // for when this is not the case
+  //
+  if ((!isPolynomial(p)) || (!isPolynomial(q))) {
+    *radii = NULL;
+    *poly = substitute(p,q);
+    return;
+  }
+
+  // Here, we know that p and q are polynomials
+  //
+  // Continue by getting all coefficients of p and q
+  //
+  getCoefficients(&degP, &coeffsP, p);
+  getCoefficients(&degQ, &coeffsQ, q);
+
+  // Evaluate all coefficients of p and q to 
+  // small intervals in two arrays polyP and polyQ.
+  //
+  polyP = (sollya_mpfi_t *) safeCalloc(degP+1,sizeof(sollya_mpfi_t));
+  for (i=0;i<=degP;i++) {
+    sollya_mpfi_init2(polyP[i],prec);
+    if (coeffsP[i] != NULL) {
+      evaluateConstantExpressionToSharpInterval(polyP[i], coeffsP[i]);
+    } else {
+      sollya_mpfi_set_si(polyP[i],0);
+    }
+  }
+  polyQ = (sollya_mpfi_t *) safeCalloc(degQ+1,sizeof(sollya_mpfi_t));
+  for (i=0;i<=degQ;i++) {
+    sollya_mpfi_init2(polyQ[i],prec);
+    if (coeffsQ[i] != NULL) {
+      evaluateConstantExpressionToSharpInterval(polyQ[i], coeffsQ[i]);
+    } else {
+      sollya_mpfi_set_si(polyQ[i],0);
+    }
+  }
+
+  // Free the arrays with the unevaluated coefficients
+  //
+  for (i=0;i<=degP;i++) {
+    if (coeffsP[i] != NULL) {
+      free_memory(coeffsP[i]);
+    }
+  }
+  free(coeffsP);
+  for (i=0;i<=degQ;i++) {
+    if (coeffsQ[i] != NULL) {
+      free_memory(coeffsQ[i]);
+    }
+  }
+  free(coeffsQ);
+  
+  // Allocate and initialize an array of interval coefficients for the result 
+  // polynomial
+  //
+  degR = degP * degQ;
+  polyR = (sollya_mpfi_t *) safeCalloc(degR+1,sizeof(sollya_mpfi_t));
+  for (i=0;i<=degR;i++) {
+    sollya_mpfi_init2(polyR[i],prec);
+  }  
+
+  // Have an auxiliary function do the real work of composing p and q
+  //
+  composePolynomialsInner(polyR,degR,polyP,degP,polyQ,degQ,prec);
+
+  // Free the arrays with the evaluated coefficients
+  //
+  for (i=0;i<=degP;i++) {
+    sollya_mpfi_clear(polyP[i]);
+  }
+  free(polyP);
+  for (i=0;i<=degQ;i++) {
+    sollya_mpfi_clear(polyQ[i]);
+  }
+  free(polyQ);
+
+  // Allocate and compute an array of centerpoints
+  // 
+  // Allocate also pointers to intervals and 
+  // initialize intervals that will hold the radii.
+  //
+  // Clear the intervals for the output coefficients
+  // as well.
+  //
+  coeffsR = (mpfr_t *) safeCalloc(degR+1,sizeof(mpfr_t));
+  radiiArray = (sollya_mpfi_t **) safeCalloc(degR+1,sizeof(sollya_mpfi_t *));
+  for (i=0;i<=degR;i++) {
+    mpfr_init2(coeffsR[i],prec+1);
+    sollya_mpfi_mid(coeffsR[i],polyR[i]);
+    radiiArray[i] = (sollya_mpfi_t *) safeMalloc(sizeof(sollya_mpfi_t));
+    sollya_mpfi_init2(*(radiiArray[i]),prec);
+    sollya_mpfi_sub_fr(*(radiiArray[i]),polyR[i],coeffsR[i]);
+    sollya_mpfi_clear(polyR[i]);
+  }
+
+  // Free the array of intervals for the output coefficients
+  //
+  free(polyR);
+
+  // Convert the array of centerpoints to a tree.
+  //
+  *poly = makePolynomial(coeffsR, degR);
+
+  // Free the arrays with the centerpoints
+  //
+  for (i=0;i<=degR;i++) {
+    mpfr_clear(coeffsR[i]);
+  }
+  free(coeffsR);
+  
+  // Convert the array of radii to a list of radii
+  //
+  *radii = NULL;
+  for (i=0;i<=degR;i++) {
+    *radii = addElement(*radii,(void *) (radiiArray[i]));
+  }
+
+  // Free the array holding the pointers to the 
+  // intervals of radii.
+  //
+  free(radiiArray);
+  
+}
+
 int readHexadecimal(mpfr_t rop, char *c) {
   mpfr_t vrd, vru;
   mp_prec_t p;
@@ -11756,35 +11998,43 @@ node *makePolynomialConstantExpressions(node **coeffs, int deg) {
   return copy;
 }
 
+/* Builds a polynomial expression, written in Horner form of the polynomial
+                  sum_{i=0}^degree  coefficients[i]*x^i
+   Moreover, while writting it in Horner form, it accounts for sparsity of
+   the polynomial.
+*/
 node *makePolynomial(mpfr_t *coefficients, int degree) {
-  node *tempTree, *tempTree2, *tempTree3;
+  node **coeffs;
   int i;
+  node *poly;
   
-  tempTree = (node *) safeMalloc(sizeof(node));
-  tempTree->nodeType = CONSTANT;
-  tempTree->value = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-  mpfr_init2(*(tempTree->value),mpfr_get_prec(coefficients[degree]));
-  mpfr_set(*(tempTree->value),coefficients[degree],GMP_RNDN);
-  for (i=degree-1;i>=0;i--) {
-    tempTree2 = (node *) safeMalloc(sizeof(node));
-    tempTree2->nodeType = MUL;
-    tempTree3 = (node *) safeMalloc(sizeof(node));
-    tempTree3->nodeType = VARIABLE;
-    tempTree2->child1 = tempTree3;
-    tempTree2->child2 = tempTree;
-    tempTree = (node *) safeMalloc(sizeof(node));
-    tempTree->nodeType = ADD;
-    tempTree->child2 = tempTree2;
-    tempTree3 = (node *) safeMalloc(sizeof(node));
-    tempTree3->nodeType = CONSTANT;
-    tempTree3->value = (mpfr_t *) safeMalloc(sizeof(node));
-    mpfr_init2(*(tempTree3->value),mpfr_get_prec(coefficients[i]));
-    mpfr_set(*(tempTree3->value),coefficients[i],GMP_RNDN);
-    tempTree->child1 = tempTree3;
+  /* Allocate and build an array of constant expressions
+     representing the coefficients. 
+     Do not represent zeros.
+  */
+  coeffs = (node **) safeCalloc(degree+1,sizeof(node *));
+  for (i=0;i<=degree;i++) {
+    if (!mpfr_zero_p(coefficients[i])) {
+      coeffs[i] = makeConstant(coefficients[i]);
+    } else {
+      /* The coefficient is zero. Do not represent it. */
+      coeffs[i] = NULL;
+    }
   }
-  tempTree2 = horner(tempTree);
-  free_memory(tempTree);
-  return tempTree2;
+
+  /* Build the polynomial */
+  poly = makePolynomialConstantExpressions(coeffs, degree);
+
+  /* Free the array of constant expressions representing the
+     coefficients
+  */
+  for (i=0;i<=degree;i++) {
+    if (coeffs[i] != NULL) free_memory(coeffs[i]);
+  }
+  free(coeffs);
+
+  /* Return the polynomial */
+  return poly;
 }
 
 

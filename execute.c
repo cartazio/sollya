@@ -984,6 +984,10 @@ node *copyThing(node *tree) {
   case SUBSTITUTE:
     copy->child1 = copyThing(tree->child1);
     copy->child2 = copyThing(tree->child2);
+    break;	
+  case COMPOSEPOLYNOMIALS:
+    copy->child1 = copyThing(tree->child1);
+    copy->child2 = copyThing(tree->child2);
     break;			
   case COEFF:
     copy->child1 = copyThing(tree->child1);
@@ -1136,6 +1140,12 @@ node *copyThing(node *tree) {
     copy->child1 = copyThing(tree->child1);
     copy->child2 = copyThing(tree->child2);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
+    break;
+  case BIND:
+    copy->child1 = copyThing(tree->child1);
+    copy->child2 = copyThing(tree->child2);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
     break;
   case PROCILLIM:
     copy->child1 = copyThing(tree->child1);
@@ -1825,6 +1835,9 @@ char *getTimingStringForThing(node *tree) {
   case SUBSTITUTE:
     constString = "substituting";
     break;			
+  case COMPOSEPOLYNOMIALS:
+    constString = "composing two polynomials";
+    break;			
   case COEFF:
     constString = "getting a coefficient";
     break; 			 	
@@ -1956,6 +1969,9 @@ char *getTimingStringForThing(node *tree) {
     break;
   case PROC:
     constString = "executing a procedure";
+    break;
+  case BIND:
+    constString = "binding an argument of a procedure";
     break;
   case PROCILLIM:
     constString = "executing a procedure";
@@ -2175,6 +2191,16 @@ int isExtendedPureTree(node *tree) {
     if (tree->arguments->next != NULL) return 0;
     return 1;
     break;
+  case APPLY:
+    if (tree->child1->nodeType != VARIABLE) {
+      if (variablename == NULL) return 0;
+      if (tree->child1->nodeType != TABLEACCESS) return 0;
+      if (strcmp(variablename,tree->child1->string)) return 0;
+    }
+    if (tree->arguments == NULL) return 0;
+    if (tree->arguments->next != NULL) return 0;
+    return 1;
+    break;    
   case CONSTANT:
     return 1;
     break;
@@ -2525,6 +2551,10 @@ int isProcedure(node *tree) {
   return 0;
 }
 
+int isProcedureNotIllim(node *tree) {
+  if (tree->nodeType == PROC) return 1;
+  return 0;
+}
 
 int isHonorcoeffprec(node *tree) {
   if (tree->nodeType == HONORCOEFF) return 1;
@@ -2715,7 +2745,7 @@ int evaluateThingToConstant(mpfr_t result, node *tree, mpfr_t *defaultVal, int s
     if (!isConstant(simplified)) {
       if (!noRoundingWarnings) {
 	printMessage(1,"Warning: the given expression should be constant in this context.\nIt proves constant under floating point evaluation.\n");
-	printMessage(1,"In this evaluation, %s will be set to 1 when evaluating the expression to a constant.\n",variablename);
+	printMessage(1,"In this evaluation, %s will be set to 1 when evaluating the expression to a constant.\n",((variablename == NULL) ? "_x_" : variablename));
 	noMessage = 1;
       }
     }
@@ -3537,7 +3567,19 @@ void printThingWithFullStrings(node *thing) {
 	  }
 	  sollyaPrintf("...|]");
 	} else {
-	  rawPrintThing(thing);
+	  if (isStructure(thing)) {
+	    sollyaPrintf("{ ");
+	    curr = thing->arguments;
+	    while (curr != NULL) {
+	      sollyaPrintf(".%s = ", ((entry *) (curr->value))->name);
+	      printThingWithFullStrings((node *) (((entry *) (curr->value))->value));
+	      if (curr->next != NULL) sollyaPrintf(", ");
+	      curr = curr->next;
+	    }
+	    sollyaPrintf(" }");
+	  } else {
+	    rawPrintThing(thing);
+	  }
 	}
       }
     }  
@@ -3596,7 +3638,19 @@ void printThing(node *thing) {
 	  if (isString(thing)) {
 	    sollyaPrintf("%s",thing->string);
 	  } else {
-	    rawPrintThing(thing);
+	    if (isStructure(thing)) {
+	      sollyaPrintf("{ ");
+	      curr = thing->arguments;
+	      while (curr != NULL) {
+		sollyaPrintf(".%s = ", ((entry *) (curr->value))->name);
+		printThingWithFullStrings((node *) (((entry *) (curr->value))->value));
+		if (curr->next != NULL) sollyaPrintf(", ");
+		curr = curr->next;
+	      }
+	      sollyaPrintf(" }");
+	    } else {
+	      rawPrintThing(thing);
+	    }
 	  }
 	}
       }
@@ -3639,12 +3693,10 @@ char *sRawPrintThing(node *tree) {
   switch (tree->nodeType) {
   case VARIABLE:
     if (variablename == NULL) {
-      printMessage(1,"Warning: the global free variable has not been bound before being printed.\n");
-      printMessage(1,"As such a binding is required, the variable will now be bound to \"x\"\n");
-      variablename = (char *) safeCalloc(2,sizeof(char));
-      variablename[0] = 'x';
+      res = newString("_x_");
+    } else {
+      res = newString(variablename);
     }
-    res = newString(variablename);
     break;
   case CONSTANT:
     res = sprintValue(tree->value);
@@ -4917,6 +4969,13 @@ char *sRawPrintThing(node *tree) {
     res = concatAndFree(res, sRawPrintThing(tree->child2));
     res = concatAndFree(res, newString(")"));
     break;			
+  case COMPOSEPOLYNOMIALS:
+    res = newString("composepolynomials(");
+    res = concatAndFree(res, sRawPrintThing(tree->child1));
+    res = concatAndFree(res, newString(", "));
+    res = concatAndFree(res, sRawPrintThing(tree->child2));
+    res = concatAndFree(res, newString(")"));
+    break;			
   case COEFF:
     res = newString("coeff(");
     res = concatAndFree(res, sRawPrintThing(tree->child1));
@@ -5244,6 +5303,15 @@ char *sRawPrintThing(node *tree) {
     res = concatAndFree(res, sRawPrintThing(tree->child2));
     res = concatAndFree(res, newString(";\n}"));
     break;
+  case BIND:
+    res = newString("bind(");
+    res = concatAndFree(res, sRawPrintThing(tree->child1));
+    res = concatAndFree(res, newString(", "));
+    res = concatAndFree(res, newString(tree->string));
+    res = concatAndFree(res, newString(", "));
+    res = concatAndFree(res, sRawPrintThing(tree->child2));
+    res = concatAndFree(res, newString(")"));
+    break;
   case PROCILLIM:
     res = newString("proc(");
     curr = tree->arguments;
@@ -5551,7 +5619,19 @@ void fPrintThingWithFullStrings(FILE *fd, node *thing) {
 	  }
 	  sollyaFprintf(fd,"...|]");
 	} else {
-	  fRawPrintThing(fd,thing);
+	  if (isStructure(thing)) {
+	    sollyaFprintf(fd,"{ ");
+	    curr = thing->arguments;
+	    while (curr != NULL) {
+	      sollyaFprintf(fd,".%s = ", ((entry *) (curr->value))->name);
+	      fPrintThingWithFullStrings(fd,(node *) (((entry *) (curr->value))->value));
+	      if (curr->next != NULL) sollyaFprintf(fd,", ");
+	      curr = curr->next;
+	    }
+	    sollyaFprintf(fd," }");
+	  } else {
+	    fRawPrintThing(fd,thing);
+	  }
 	}
       }
     }  
@@ -5610,7 +5690,19 @@ void fPrintThing(FILE *fd, node *thing) {
 	  if (isString(thing)) {
 	    sollyaFprintf(fd,"%s",thing->string);
 	  } else {
-	    fRawPrintThing(fd,thing);
+	    if (isStructure(thing)) {
+	      sollyaFprintf(fd,"{ ");
+	      curr = thing->arguments;
+	      while (curr != NULL) {
+		sollyaFprintf(fd,".%s = ", ((entry *) (curr->value))->name);
+		fPrintThingWithFullStrings(fd,(node *) (((entry *) (curr->value))->value));
+		if (curr->next != NULL) sollyaFprintf(fd,", ");
+		curr = curr->next;
+	      }
+	      sollyaFprintf(fd," }");
+	    } else {
+	      fRawPrintThing(fd,thing);
+	    }
 	  }
 	}
       }
@@ -5655,12 +5747,6 @@ node *getThingFromTable(char *identifier) {
   }
 
   if ((tempLibraryFunction = getFunction(identifier)) != NULL) {
-    if (variablename==NULL) {
-      printMessage(1,"Warning: the current free variable is not bound to an identifier. Dereferencing library function \"%s\" requires this binding.\n",tempLibraryFunction->functionName);
-      printMessage(1,"Will bind the current free variable to the identifier \"x\".\n");
-      variablename = (char *) safeCalloc(2,sizeof(char));
-      variablename[0] = 'x';
-    }
     temp_node = (node *) safeMalloc(sizeof(node));
     temp_node->nodeType = LIBRARYFUNCTION;
     temp_node->libFun = tempLibraryFunction;
@@ -5788,7 +5874,7 @@ void printExternalProcedureUsage(node *tree) {
   }
 }
 
-void autoprint(node *thing, int inList) {
+void autoprint(node *thing, int inList, node *func, node *cst) {
   mpfr_t a,b;
   node *temp_node, *tempNode2, *tempNode3, *tempNode4, *tempNode5;
   chain *curr;
@@ -5796,6 +5882,8 @@ void autoprint(node *thing, int inList) {
   int okay, shown, shown2, extraMessage;
   rangetype xrange, yrange;
   int okaySign, sign;
+  int faithfulAlreadyKnown;
+  node *simplCst;
 
   shown = 0; shown2 = 0;
   if (isPureTree(thing)) {
@@ -5806,6 +5894,7 @@ void autoprint(node *thing, int inList) {
       tempNode2 = thing;
       freeThingAfterwards = 0;
     }
+
     if (isConstant(tempNode2)) {
       if (tempNode2->nodeType == CONSTANT) {
 	printValue(tempNode2->value);
@@ -5822,10 +5911,25 @@ void autoprint(node *thing, int inList) {
 	  mpfr_init2(a,tools_precision);
 	  mpfr_init2(b,tools_precision);
 	  mpfr_set_d(b,1.0,GMP_RNDN);
-	  if (evaluateFaithful(a,tempNode2,b,tools_precision)) {
+	  faithfulAlreadyKnown = 0;
+	  if ((func != NULL) && (cst != NULL)) {
+	    simplCst = simplifyTreeErrorfree(cst);
+	    if ((simplCst->nodeType == CONSTANT) &&
+		mpfr_number_p(*(simplCst->value))) {
+	      if (evaluateFaithful(a,func,*(simplCst->value),tools_precision)) {
+		faithfulAlreadyKnown = 1;
+	      }
+	    }
+	    freeThing(simplCst);
+	  }
+	  if (faithfulAlreadyKnown || evaluateFaithful(a,tempNode2,b,tools_precision)) {
 	    if (mpfr_number_p(a)) {
 	      if (!noRoundingWarnings) {
-		if (!shown) printMessage(1,"Warning: rounding has happened. The value displayed is a faithful rounding of the true result.\n");
+		if (!shown) {
+		  if ((!faithfulAlreadyKnown) || (!mpfr_zero_p(a))) {
+		    printMessage(1,"Warning: rounding has happened. The value displayed is a faithful rounding of the true result.\n");
+		  }
+		}
 		shown = 1;
 	      }
 	    } else {
@@ -5962,7 +6066,7 @@ void autoprint(node *thing, int inList) {
       sollyaPrintf("[|");
       curr = thing->arguments;
       while (curr != NULL) {
-	autoprint((node *) (curr->value),1);
+	autoprint((node *) (curr->value),1,NULL,NULL);
 	if (curr->next != NULL) sollyaPrintf(", ");
 	curr = curr->next;
       }
@@ -5972,7 +6076,7 @@ void autoprint(node *thing, int inList) {
 	sollyaPrintf("[|");
 	curr = thing->arguments;
 	while (curr != NULL) {
-	  autoprint((node *) (curr->value),1);
+	  autoprint((node *) (curr->value),1,NULL,NULL);
 	  if (curr->next != NULL) sollyaPrintf(", ");
 	  curr = curr->next;
 	}
@@ -5983,7 +6087,7 @@ void autoprint(node *thing, int inList) {
 	  curr = thing->arguments;
 	  while (curr != NULL) {
 	    sollyaPrintf(".%s = ", ((entry *) (curr->value))->name);
-	    autoprint((node *) (((entry *) (curr->value))->value),1);
+	    autoprint((node *) (((entry *) (curr->value))->value),1,NULL,NULL);
 	    if (curr->next != NULL) sollyaPrintf(", ");
 	    curr = curr->next;
 	  }
@@ -6443,13 +6547,14 @@ int executeCommandInner(node *tree) {
   int result, res, intTemp, resA, resB, resC, resD, resE, resF, resG, defaultVal, i;  
   chain *curr, *tempList, *tempList2, *tempChain; 
   mpfr_t a, b, c, d, e;
-  node *tempNode, *tempNode2, *tempNode3, *tempNode4;
+  node *tempNode, *tempNode2, *tempNode3, *tempNode4, *tempNode5, *tempNode6, *tempNode7;
   libraryFunction *tempLibraryFunction;
   libraryProcedure *tempLibraryProcedure;
   char *tempString, *tempString2, *timingString;
   FILE *fd;
   node **array;
   rangetype tempRange;
+  int autoprintAlreadyDone, floatingPointEvaluationAlreadyDone;
 
   /* Make compiler happy */
   fd = NULL;
@@ -7372,13 +7477,15 @@ int executeCommandInner(node *tree) {
     if (variablename == NULL) {
       variablename = (char *) safeCalloc(strlen((char *) (tree->arguments->value)) + 1,sizeof(char));
       strcpy(variablename,(char *) (tree->arguments->value));
+      printMessage(1,"Information: the free variable has been named \"%s\".\n", variablename);
     } else {
-      if (strcmp(variablename,tree->string) == 0) {
-	free(variablename);
+      if ((strcmp(variablename,tree->string) == 0) || (strcmp("_x_",tree->string) == 0)) {
+	tempString = variablename;
 	variablename = (char *) safeCalloc(strlen((char *) (tree->arguments->value)) + 1,sizeof(char));
 	strcpy(variablename,(char *) (tree->arguments->value));
 	printMessage(1,"Information: the free variable has been renamed from \"%s\" to \"%s\".\n",
-		     tree->string,(char *) (tree->arguments->value));
+		     tempString,(char *) (tree->arguments->value));
+	free(tempString);
       } else {
 	printMessage(1,"Warning: the current free variable is named \"%s\" and not \"%s\". Can only rename the free variable.\n",
 		     variablename,tree->string);
@@ -7391,26 +7498,87 @@ int executeCommandInner(node *tree) {
     curr = tree->arguments;
     if (curr->next == NULL) {
       tempNode = evaluateThing((node *) (curr->value));
-      if ((!isUnit(tempNode)) || ((verbosity >= 2) && oldVoidPrint)) {
-	if (!isExternalProcedureUsage(tempNode)) {
-	  outputMode();
-	  autoprint(tempNode,0); 
+      autoprintAlreadyDone = 0;
+      if (isPureTree(tempNode) && 
+	  isConstant(tempNode) && 
+	  ((((node *) (curr->value))->nodeType == TABLEACCESSWITHSUBSTITUTE) || 
+	   (((node *) (curr->value))->nodeType == APPLY)) &&
+	  (lengthChain(((node *) (curr->value))->arguments) == 1)) {
+	if (((node *) (curr->value))->nodeType == APPLY) {
+	  tempNode2 = copyThing(((node *) (curr->value))->child1);
+	  tempNode3 = copyThing((node *) ((((node *) (curr->value))->arguments)->value));
 	} else {
-	  outputMode();
-	  printExternalProcedureUsage(tempNode);
+	  tempNode2 = makeTableAccess(((node *) (curr->value))->string);
+	  tempNode3 = copyThing((node *) ((((node *) (curr->value))->arguments)->value));
 	}
-	sollyaPrintf("\n");
-      } 
+	tempNode4 = evaluateThing(tempNode2);
+	tempNode5 = evaluateThing(tempNode3);
+	if (isPureTree(tempNode4) && 
+	    isPureTree(tempNode5) &&
+	    (!isConstant(tempNode4)) && 
+	    isConstant(tempNode5)) {
+	    outputMode();
+	    autoprint(tempNode,0,tempNode4,tempNode5); 
+	    sollyaPrintf("\n");
+	    autoprintAlreadyDone = 1;
+	}
+	freeThing(tempNode2);
+	freeThing(tempNode3);
+	freeThing(tempNode4);
+	freeThing(tempNode5);
+      }
+      if (!autoprintAlreadyDone) {
+	if ((!isUnit(tempNode)) || ((verbosity >= 2) && oldVoidPrint)) {
+	  if (!isExternalProcedureUsage(tempNode)) {
+	    outputMode();
+	    autoprint(tempNode,0,NULL,NULL); 
+	  } else {
+	    outputMode();
+	    printExternalProcedureUsage(tempNode);
+	  }
+	  sollyaPrintf("\n");
+	} 
+      }
       freeThing(tempNode);
     } else {
       while (curr != NULL) {
 	tempNode = evaluateThing((node *) (curr->value));
-	outputMode();
-	if (!isExternalProcedureUsage(tempNode)) 
-	  autoprint(tempNode,0);
-	else 
-	  printExternalProcedureUsage(tempNode);
-	freeThing(tempNode);
+	autoprintAlreadyDone = 0;
+	if (isPureTree(tempNode) && 
+	    isConstant(tempNode) && 
+	    ((((node *) (curr->value))->nodeType == TABLEACCESSWITHSUBSTITUTE) || 
+	     (((node *) (curr->value))->nodeType == APPLY)) &&
+	    (lengthChain(((node *) (curr->value))->arguments) == 1)) {
+	  if (((node *) (curr->value))->nodeType == APPLY) {
+	    tempNode2 = copyThing(((node *) (curr->value))->child1);
+	    tempNode3 = copyThing((node *) ((((node *) (curr->value))->arguments)->value));
+	  } else {
+	    tempNode2 = makeTableAccess(((node *) (curr->value))->string);
+	    tempNode3 = copyThing((node *) ((((node *) (curr->value))->arguments)->value));
+	  }
+	  tempNode4 = evaluateThing(tempNode2);
+	  tempNode5 = evaluateThing(tempNode3);
+	  if (isPureTree(tempNode4) && 
+	      isPureTree(tempNode5) &&
+	      (!isConstant(tempNode4)) && 
+	      isConstant(tempNode5)) {
+	    outputMode();
+	    autoprint(tempNode,0,tempNode4,tempNode5); 
+	    autoprintAlreadyDone = 1;
+	  }
+	  freeThing(tempNode2);
+	  freeThing(tempNode3);
+	  freeThing(tempNode4);
+	  freeThing(tempNode5);
+	}
+	if (!autoprintAlreadyDone) {
+	  outputMode();
+	  if (!isExternalProcedureUsage(tempNode)) 
+	    autoprint(tempNode,0,NULL,NULL);
+	  else 
+	    printExternalProcedureUsage(tempNode);
+	  freeThing(tempNode);
+	}
 	if (oldAutoPrint) {
 	  if (curr->next != NULL) sollyaPrintf(", ");
 	}
@@ -7477,7 +7645,40 @@ int executeCommandInner(node *tree) {
     tempNode = evaluateThing(tree->child1);
     if (isPureTree(tempNode) && isConstant(tempNode)) {
       mpfr_init2(a, tools_precision);
-      if (evaluateThingToConstant(a, tempNode, NULL,1))  {
+      floatingPointEvaluationAlreadyDone = 0;
+      if (isPureTree(tempNode) && 
+	  isConstant(tempNode) && 
+	  ((tree->child1->nodeType == TABLEACCESSWITHSUBSTITUTE) || 
+	   (tree->child1->nodeType == APPLY)) &&
+	  (lengthChain(tree->child1->arguments) == 1)) {
+	if (tree->child1->nodeType == APPLY) {
+	  tempNode2 = copyThing(tree->child1->child1);
+	  tempNode3 = copyThing((node *) ((tree->child1->arguments)->value));
+	} else {
+	  tempNode2 = makeTableAccess(tree->child1->string);
+	  tempNode3 = copyThing((node *) ((tree->child1->arguments)->value));
+	}
+	tempNode4 = evaluateThing(tempNode2);
+	tempNode5 = evaluateThing(tempNode3);
+	if (isPureTree(tempNode4) && 
+	    isPureTree(tempNode5) &&
+	    (!isConstant(tempNode4)) && 
+	    isConstant(tempNode5)) {
+	  tempNode6 = simplifyTreeErrorfree(tempNode5);
+	  if ((tempNode6->nodeType == CONSTANT) &&
+	      mpfr_number_p(*(tempNode6->value))) {
+	    if (evaluateFaithful(a, tempNode4, *(tempNode6->value), tools_precision)) {
+	      floatingPointEvaluationAlreadyDone = 1;
+	    }
+	  }
+	  freeThing(tempNode6);
+	}
+	freeThing(tempNode2);
+	freeThing(tempNode3);
+	freeThing(tempNode4);
+	freeThing(tempNode5);
+      }
+      if (floatingPointEvaluationAlreadyDone || evaluateThingToConstant(a, tempNode, NULL,1))  {
 	freeThing(tempNode);
 	tempNode = makeConstant(a);
       }
@@ -7700,7 +7901,40 @@ int executeCommandInner(node *tree) {
 	      tempNode2 = evaluateThing((node *) (curr->value));
 	      if (isPureTree(tempNode2) && isConstant(tempNode2)) {
 		mpfr_init2(a, tools_precision);
-		if (evaluateThingToConstant(a, tempNode2, NULL,1))  {
+		floatingPointEvaluationAlreadyDone = 0;
+		if (isPureTree(tempNode2) && 
+		    isConstant(tempNode2) && 
+		    ((((node *) (curr->value))->nodeType == TABLEACCESSWITHSUBSTITUTE) || 
+		     (((node *) (curr->value))->nodeType == APPLY)) &&
+		    (lengthChain(((node *) (curr->value))->arguments) == 1)) {
+		  if (((node *) (curr->value))->nodeType == APPLY) {
+		    tempNode7 = copyThing(((node *) (curr->value))->child1);
+		    tempNode3 = copyThing((node *) ((((node *) (curr->value))->arguments)->value));
+		  } else {
+		    tempNode7 = makeTableAccess(((node *) (curr->value))->string);
+		    tempNode3 = copyThing((node *) ((((node *) (curr->value))->arguments)->value));
+		  }
+		  tempNode4 = evaluateThing(tempNode7);
+		  tempNode5 = evaluateThing(tempNode3);
+		  if (isPureTree(tempNode4) && 
+		      isPureTree(tempNode5) &&
+		      (!isConstant(tempNode4)) && 
+		      isConstant(tempNode5)) {
+		    tempNode6 = simplifyTreeErrorfree(tempNode5);
+		    if ((tempNode6->nodeType == CONSTANT) &&
+			mpfr_number_p(*(tempNode6->value))) {
+		      if (evaluateFaithful(a, tempNode4, *(tempNode6->value), tools_precision)) {
+			floatingPointEvaluationAlreadyDone = 1;
+		      }
+		    }
+		    freeThing(tempNode6);
+		  }
+		  freeThing(tempNode7);
+		  freeThing(tempNode3);
+		  freeThing(tempNode4);
+		  freeThing(tempNode5);
+		} 
+		if (floatingPointEvaluationAlreadyDone || evaluateThingToConstant(a, tempNode2, NULL,1))  {
 		  freeThing(tempNode2);
 		  tempNode2 = makeConstant(a);
 		}
@@ -7806,7 +8040,7 @@ int executeCommandInner(node *tree) {
 	    printMessage(1,"This command will have no effect.\n");
             considerDyingOnError();
 	  }
-	} else {
+	} else { 
 	  if (isEmptyList(tempNode)) {
 	    curr = tree->arguments;
 	    curr = curr->next;
@@ -7816,7 +8050,40 @@ int executeCommandInner(node *tree) {
 		tempNode2 = evaluateThing((node *) (curr->value));
 		if (isPureTree(tempNode2) && isConstant(tempNode2)) {
 		  mpfr_init2(a, tools_precision);
-		  if (evaluateThingToConstant(a, tempNode2, NULL, 1))  {
+		  floatingPointEvaluationAlreadyDone = 0;
+		  if (isPureTree(tempNode2) && 
+		      isConstant(tempNode2) && 
+		      ((((node *) (curr->value))->nodeType == TABLEACCESSWITHSUBSTITUTE) || 
+		       (((node *) (curr->value))->nodeType == APPLY)) &&
+		      (lengthChain(((node *) (curr->value))->arguments) == 1)) {
+		    if (((node *) (curr->value))->nodeType == APPLY) {
+		      tempNode7 = copyThing(((node *) (curr->value))->child1);
+		      tempNode3 = copyThing((node *) ((((node *) (curr->value))->arguments)->value));
+		    } else {
+		      tempNode7 = makeTableAccess(((node *) (curr->value))->string);
+		      tempNode3 = copyThing((node *) ((((node *) (curr->value))->arguments)->value));
+		    }
+		    tempNode4 = evaluateThing(tempNode7);
+		    tempNode5 = evaluateThing(tempNode3);
+		    if (isPureTree(tempNode4) && 
+			isPureTree(tempNode5) &&
+			(!isConstant(tempNode4)) && 
+			isConstant(tempNode5)) {
+		      tempNode6 = simplifyTreeErrorfree(tempNode5);
+		      if ((tempNode6->nodeType == CONSTANT) &&
+			  mpfr_number_p(*(tempNode6->value))) {
+			if (evaluateFaithful(a, tempNode4, *(tempNode6->value), tools_precision)) {
+			  floatingPointEvaluationAlreadyDone = 1;
+			}
+		      }
+		      freeThing(tempNode6);
+		    }
+		    freeThing(tempNode7);
+		    freeThing(tempNode3);
+		    freeThing(tempNode4);
+		    freeThing(tempNode5);
+		  } 
+		  if (floatingPointEvaluationAlreadyDone || evaluateThingToConstant(a, tempNode2, NULL, 1))  {
 		    freeThing(tempNode2);
 		    tempNode2 = makeConstant(a);
 		  }
@@ -7950,7 +8217,40 @@ int executeCommandInner(node *tree) {
     tempNode = evaluateThing(tree->child1);
     if (isPureTree(tempNode) && isConstant(tempNode)) {
       mpfr_init2(a, tools_precision);
-      if (evaluateThingToConstant(a, tempNode, NULL,1))  {
+      floatingPointEvaluationAlreadyDone = 0;
+      if (isPureTree(tempNode) && 
+	  isConstant(tempNode) && 
+	  ((tree->child1->nodeType == TABLEACCESSWITHSUBSTITUTE) || 
+	   (tree->child1->nodeType == APPLY)) &&
+	  (lengthChain(tree->child1->arguments) == 1)) {
+	if (tree->child1->nodeType == APPLY) {
+	  tempNode2 = copyThing(tree->child1->child1);
+	  tempNode3 = copyThing((node *) ((tree->child1->arguments)->value));
+	} else {
+	  tempNode2 = makeTableAccess(tree->child1->string);
+	  tempNode3 = copyThing((node *) ((tree->child1->arguments)->value));
+	}
+	tempNode4 = evaluateThing(tempNode2);
+	tempNode5 = evaluateThing(tempNode3);
+	if (isPureTree(tempNode4) && 
+	    isPureTree(tempNode5) &&
+	    (!isConstant(tempNode4)) && 
+	    isConstant(tempNode5)) {
+	  tempNode6 = simplifyTreeErrorfree(tempNode5);
+	  if ((tempNode6->nodeType == CONSTANT) &&
+	      mpfr_number_p(*(tempNode6->value))) {
+	    if (evaluateFaithful(a, tempNode4, *(tempNode6->value), tools_precision)) {
+	      floatingPointEvaluationAlreadyDone = 1;
+	    }
+	  }
+	  freeThing(tempNode6);
+	}
+	freeThing(tempNode2);
+	freeThing(tempNode3);
+	freeThing(tempNode4);
+	freeThing(tempNode5);
+      }
+      if (floatingPointEvaluationAlreadyDone || evaluateThingToConstant(a, tempNode, NULL,1))  {
 	freeThing(tempNode);
 	tempNode = makeConstant(a);
       }
@@ -10182,6 +10482,20 @@ node *makeRemez(chain *thinglist) {
 
 }
 
+node *makeBind(node *thing1, char *string1, node *thing2) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = BIND;
+  res->child1 = thing1;
+  res->child2 = thing2;
+  res->string = (char *) safeCalloc(strlen(string1) + 1, sizeof(char));
+  strcpy(res->string, string1);
+
+  return res;
+
+}
+
 node *makeMax(chain *thinglist) {
   node *res;
 
@@ -10341,6 +10655,18 @@ node *makeSubstitute(node *thing1, node *thing2) {
 
   res = (node *) safeMalloc(sizeof(node));
   res->nodeType = SUBSTITUTE;
+  res->child1 = thing1;
+  res->child2 = thing2;
+
+  return res;
+
+}
+
+node *makeComposePolynomials(node *thing1, node *thing2) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = COMPOSEPOLYNOMIALS;
   res->child1 = thing1;
   res->child2 = thing2;
 
@@ -11870,6 +12196,11 @@ void freeThing(node *tree) {
     freeThing(tree->child2);
     free(tree);
     break;			
+  case COMPOSEPOLYNOMIALS:
+    freeThing(tree->child1);
+    freeThing(tree->child2);
+    free(tree);
+    break;			
   case COEFF:
     freeThing(tree->child1);
     freeThing(tree->child2);
@@ -12064,6 +12395,12 @@ void freeThing(node *tree) {
     freeThing(tree->child2);
     freeChain(tree->arguments, free);
     free(tree);
+    break;
+  case BIND:
+    freeThing(tree->child1);
+    freeThing(tree->child2);
+    free(tree->string);
+    free(tree);    
     break;
   case PROCILLIM:
     freeThing(tree->child1);
@@ -12641,7 +12978,7 @@ int isEqualThing(node *tree, node *tree2) {
     if (strcmp(tree->string,tree2->string) != 0) return 0;    break;  	
   case APPLY:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0; break;
   case DECIMALCONSTANT:
     if (strcmp(tree->string,tree2->string) != 0) return 0;    break; 		
   case MIDPOINTCONSTANT:
@@ -12765,6 +13102,10 @@ int isEqualThing(node *tree, node *tree2) {
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break; 			
   case SUBSTITUTE:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThing(tree->child2,tree2->child2)) return 0;
+    break;			
+  case COMPOSEPOLYNOMIALS:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     if (!isEqualThing(tree->child2,tree2->child2)) return 0;
     break;			
@@ -12919,6 +13260,11 @@ int isEqualThing(node *tree, node *tree2) {
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     if (!isEqualThing(tree->child2,tree2->child2)) return 0;
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
+    break;
+  case BIND:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThing(tree->child2,tree2->child2)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;
     break;
   case PROCILLIM:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
@@ -14323,6 +14669,7 @@ int variableUsePreventsPreevaluation(node *tree) {
   case APPEND:
   case RANGE:
   case SUBSTITUTE:
+  case COMPOSEPOLYNOMIALS:
   case COEFF:
   case SUBPOLY:
   case ROUNDCOEFFICIENTS:
@@ -14337,6 +14684,7 @@ int variableUsePreventsPreevaluation(node *tree) {
   case ZERODENOMINATORS:
   case ISEVALUABLE:
   case DIRTYFINDZEROS:
+  case BIND:
     return (variableUsePreventsPreevaluation(tree->child1) && variableUsePreventsPreevaluation(tree->child2));
     break;
   case SQRT:
@@ -14462,6 +14810,7 @@ int variableUsePreventsPreevaluation(node *tree) {
   case FPMINIMAX:
   case TAYLOR:
   case TAYLORFORM:
+  case CHEBYSHEVFORM:
   case AUTODIFF:
   case ACCURATEINFNORM:
   case ROUNDTOFORMAT:
@@ -15262,6 +15611,9 @@ node *preevaluateMatcher(node *tree) {
     break; 			 	
   case TAYLORFORM:
     copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 	
+  case CHEBYSHEVFORM:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 			 	
   case AUTODIFF:
     copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
@@ -15276,6 +15628,10 @@ node *preevaluateMatcher(node *tree) {
     copy->child1 = preevaluateMatcher(tree->child1);
     break; 			
   case SUBSTITUTE:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break;			
+  case COMPOSEPOLYNOMIALS:
     copy->child1 = preevaluateMatcher(tree->child1);
     copy->child2 = preevaluateMatcher(tree->child2);
     break;			
@@ -15431,6 +15787,12 @@ node *preevaluateMatcher(node *tree) {
     copy->child2 = preevaluateMatcher(tree->child2);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
     break;
+  case BIND:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);  
+    break;
   case PROCILLIM:
     copy->child1 = preevaluateMatcher(tree->child1);
     copy->child2 = preevaluateMatcher(tree->child2);
@@ -15474,12 +15836,463 @@ node *preevaluateMatcher(node *tree) {
   return copy;
 }
 
+node *performBind(node *proc, char *ident, node *thing) {
+  int hasArg;
+  chain *curr, *newArgs, *actualArgs;
+  char *newStr;
+  node *newActualArg;
+  
+  /* Start by checking if proc has an argument 
+     ident.
+  */
+  hasArg = 0;
+  curr = proc->arguments;
+  while ((!hasArg) && (curr != NULL)) {
+    if (!strcmp(((char *) (curr->value)),ident)) {
+      hasArg = 1;
+    }
+    curr = curr->next;
+  }
+  
+  /* If we do not find the argument, we return NULL */
+  if (!hasArg) return NULL;
+
+  /* Here, we are sure that we can find the argument 
+
+     We continue by generating the list of arguments 
+     different from ident.
+
+   */
+  newArgs = NULL;
+  curr = proc->arguments;
+  while (curr != NULL) {
+    if (strcmp(((char *) (curr->value)),ident)) {
+      /* The argument is different from ident */
+      newStr = safeCalloc(strlen(((char *) (curr->value))) + 1, sizeof(char));
+      strcpy(newStr, ((char *) (curr->value)));
+      newArgs = addElement(newArgs, newStr);
+    }
+    curr = curr->next;
+  }
+  
+  /* The list of new arguments is inverted, we have to revert it */
+  curr = copyChain(newArgs, copyString);
+  freeChain(newArgs, free);
+  newArgs = curr;
+
+  /* Now we have to build the list of things to apply to the 
+     original procedure 
+  */
+  actualArgs = NULL;
+  curr = proc->arguments;
+  while (curr != NULL) {
+    if (!strcmp(((char *) (curr->value)),ident)) {
+      /* Here, we have to replace the argument ident by the new thing */
+      newActualArg = copyThing(thing);
+    } else {
+      /* Here, we have to keep the argument */
+      newActualArg = makeTableAccess(((char *) (curr->value)));
+    }
+    actualArgs = addElement(actualArgs, newActualArg);
+    curr = curr->next;
+  }
+
+  /* This list actualArgs needs to be reverted, too */
+  curr = copyChain(actualArgs, copyThingOnVoid);
+  freeChain(actualArgs, freeThingOnVoid);
+  actualArgs = curr;
+
+  /* Now build up and return the new procedure */
+
+  return makeProc(newArgs, makeCommandList(addElement(NULL,makeNop())), makeApply(copyThing(proc), actualArgs));
+}
+
 void *evaluateThingInnerOnVoid(void *tree) {
   return (void *) evaluateThingInner((node *) tree);
 }
 
 void *evaluateThingOnVoid(void *tree) {
   return (void *) evaluateThing((node *) tree);
+}
+
+void *makeMonomialFromIntOnVoid(void *n) {
+  int a;
+  a = *((int *)n);
+  if (a==0) return makeConstantDouble(1.0);
+  if (a==1) return makeVariable();
+  return (void *)makePow(makeVariable(), makeConstantDouble((double)a));
+}
+
+/* Check that tree is a finite non-empty list that does not contain the symbol "..."
+/* Return 1 if, moreover, one of the following conditions is satisfied:
+     * either the list contains only non-negative and distinct integers;
+     * or the list contains only pure trees (i.e. mathematical expressions).
+   In case of success, a list of pure trees is stored in monomials. If tree
+   is a list of integers [n1...nk], monomials contain the functions [x^n1...x^nk],
+   and otherwise monomials is just the content of tree.
+   In case of failure, returns 0, without doing anything with monomials
+*/
+int evaluateThingToPseudoMonomialsList(chain **monom, node *tree) {
+  int useless;
+  chain *curr;
+  chain *monomials;
+  int prev;
+  int failure = 0;
+  int n;
+
+  if (!isPureList(tree)) return 0;
+  if (evaluateThingToIntegerList(&monomials, &useless, tree)) {
+    sortChain(monomials, cmpIntPtr);
+    prev = -1;
+    for (curr = monomials; curr != NULL; curr = curr->next) {
+      if (*(int *)(curr->value) < 0) {
+        printMessage(1,"Error: monomial degrees must be non-negative.\n");
+        failure = 1;
+        break;
+      }
+      if (*(int *)(curr->value) == prev) {
+        printMessage(1,"Error: monomial degree is given twice in argument to Remez algorithm.\n");
+        failure = 1;
+        break;
+      }
+      prev = *(int *)(curr->value);
+    }
+    if (failure) { freeChain(monomials,freeMemoryOnVoid); return 0; }
+    else {
+      *monom = copyChainWithoutReversal(monomials, makeMonomialFromIntOnVoid);
+      freeChain(monomials,freeIntPtr);
+      return 1;
+    }
+  }
+  else {
+    if (!evaluateThingToPureListOfPureTrees(monom, tree)) return 0;
+  }
+
+  return 1;
+}
+
+
+node *evaluateThingInnerRemez(node *tree, char *timingString) {
+  chain *curr;
+  chain *arguments;
+  chain *monomials = NULL;
+  node *firstArg, *secondArg, *thirdArg, *fourthArg, *fifthArg, *sixthArg;
+  node *result;
+  int failure = 0;
+  int n = -1;
+  mpfr_t tmp, a, b, c, d, quality;
+
+  /* We process the arguments:
+       * the first one must be a function f
+       * the second one can be an integer n, a list of integers [|n1...nk|] or a list of functions [|g1...gk|]
+         n is equivalent to [|0...n|] and [|n1...nk|] is equivalent to [|x^n1...x^nk|]
+       * the third argument must be an interval
+       * the fourth argument is optional and must be a function w (default is 1)
+       * the fifth argument is optional and must be a postive number (default is 1e-5). This is the required quality.
+       * the sixth argument is optional and must be a positive number r or an interval [r1, r2] (default is [0, +Inf]).
+         r is equivalent to [r,r]. This argument is officially undocumented. The description of this argument is given
+         in the commit message of revision 1405.
+
+     Note: the parser has already ensured that the first three arguments exist.
+  */
+
+  arguments = copyChainWithoutReversal(tree->arguments, evaluateThingInnerOnVoid);
+  curr = arguments;
+  firstArg = copyThing((node *) (curr->value)); curr = curr->next;
+  secondArg = copyThing((node *) (curr->value)); curr = curr->next;
+  thirdArg = copyThing((node *) (curr->value)); curr = curr->next;
+  fourthArg = NULL; fifthArg = NULL; sixthArg = NULL;
+
+  if (curr != NULL) {
+    fourthArg = copyThing((node *) (curr->value)); curr = curr->next;
+  }
+  if (curr != NULL) {
+    fifthArg = copyThing((node *) (curr->value)); curr = curr->next;
+  }
+  if (curr != NULL) {
+    sixthArg = copyThing((node *) (curr->value)); curr = curr->next;
+  }
+
+  if (curr != NULL) {
+    printMessage(1,"Warning: too many arguments given to remez command. The remaining arguments will be ignored.\n");
+    considerDyingOnError();
+  }
+
+  if ( (fourthArg == NULL) || isDefault(fourthArg) ) {
+    freeThing(fourthArg); fourthArg = makeConstantDouble(1.0);
+  }
+  if ( (fifthArg == NULL) || isDefault(fifthArg) ) {
+    freeThing(fifthArg); fifthArg = makeConstantDouble(0.00001);
+  }
+  if ( (sixthArg == NULL) || isDefault(sixthArg) ) {
+    freeThing(sixthArg);
+    mpfr_init2(tmp, 53);
+    mpfr_set_inf(tmp, 1);
+    sixthArg = makeRange(makeConstantDouble(0.0), makeConstant(tmp));
+    mpfr_clear(tmp);
+  }
+
+  /* Now we check the types of the arguments */
+  if (!isPureTree(firstArg)) failure = 1;
+
+  /* Second argument */
+  if (isPureTree(secondArg)) { /* secondArg can be an integer */
+    if (!evaluateThingToInteger(&n, secondArg, NULL)) failure = 1;
+    else {
+      if (n<0) {
+        printMessage(1,"Error: the second argument of remez must be a non-negative integer or a list.\n");
+        failure = 1;
+      }
+      else { /* The second argument is a valid integer n. Converting it to a list. */
+        freeThing(secondArg);
+        secondArg = makeList(makeConstantIntChain(n));
+      }
+    }
+  }
+  if (!evaluateThingToPseudoMonomialsList(&monomials, secondArg)) failure = 1;
+
+  /* Third argument */
+  mpfr_init2(a, tools_precision); mpfr_init2(b, tools_precision); /* Only for avoiding future reallocation.
+                                                                     The precision of a and b will be set to a suitable
+                                                                     value by evaluateThingToRange anyway */
+  if (!evaluateThingToRange(a, b, thirdArg))   failure = 1;
+
+  /* Fourth argument */
+  if (!isPureTree(fourthArg)) failure = 1;
+
+  /* Fifth argument */
+  mpfr_init2(quality, tools_precision);
+  if (!evaluateThingToConstant(quality, fifthArg, NULL, 1))   failure = 1;
+
+  /* Sixth argument */
+  mpfr_init2(c, tools_precision); mpfr_init2(d, tools_precision);
+  if (isPureTree(sixthArg)) { /* sixthArg can be a number */
+    if (!evaluateThingToConstant(c, sixthArg, NULL, 1))   failure = 1;
+    else {
+      mpfr_set_prec(d, mpfr_get_prec(c));
+      mpfr_set(d, c, GMP_RNDN); /* exact */
+    }
+  }
+  else {
+    if (!evaluateThingToRange(c, d, sixthArg))    failure = 1;
+  }
+
+  /* Now, if (failure), we cannot run the algorithm, otherwise we can */
+  if (failure) {
+    result = copyThing(tree);
+  }
+  else {
+    if (timingString != NULL) pushTimeCounter();
+    result = remez(firstArg, fourthArg, monomials, a, b, quality, c, d, tools_precision);
+    if (timingString != NULL) popTimeCounter(timingString);
+  }
+
+  mpfr_clear(a); mpfr_clear(b); mpfr_clear(c); mpfr_clear(d); mpfr_clear(quality);
+  freeChain(monomials,freeMemoryOnVoid);
+  freeChain(arguments,freeThingOnVoid);
+  freeThing(firstArg);
+  freeThing(secondArg);
+  freeThing(thirdArg);
+  freeThing(fourthArg);
+  freeThing(fifthArg);
+  freeThing(sixthArg);
+  return result;
+}
+
+node *evaluateThingInnerFpminimax(node *tree, char *timingString) {
+  chain *curr;
+  chain *arguments;
+  chain *monomials = NULL;
+  chain *formats = NULL;
+  chain *pointsList = NULL;
+  node *firstArg, *secondArg, *thirdArg, *fourthArg, *fifthArg, *sixthArg, *seventhArg, *eighthArg;
+  int relabsArg, fpfixedArg;
+  node *pstarArg, *constrainedPartArg;
+  node *result;
+  int failure = 0;
+  int n = -1;
+  mpfr_t a, b;
+
+  arguments = copyChainWithoutReversal(tree->arguments, evaluateThingInnerOnVoid);
+  curr = arguments;
+
+  /* We process the arguments:
+       * the first one must be a function f
+       * the second one can be an integer, a list of integers or a list of functions as for remez
+       * the third argument must be a list containing only integers and keywords D, DD, etc.
+       * the fourth argument must be an interval or a list of constants
+       * the fifth, sixth and seventh arguments are optional and can be
+             - RELATIVE | ABSOLUTE (default is  RELATIVE)
+             - FIXED | FLOATING (default is FLOATING)
+             - a function (default is 0)
+       * the eighth argument is optional and is a function q (constrained part)
+
+     Note: the parser has already ensured that the first four arguments exist.
+  */
+
+  firstArg = copyThing((node *) (curr->value)); curr = curr->next;
+  secondArg = copyThing((node *) (curr->value)); curr = curr->next;
+  thirdArg = copyThing((node *) (curr->value)); curr = curr->next;
+  fourthArg = copyThing((node *) (curr->value)); curr = curr->next;
+  fifthArg = sixthArg = seventhArg = eighthArg = NULL;
+
+  if (curr != NULL) {
+    fifthArg = copyThing((node *) (curr->value)); curr = curr->next;
+  }
+  if (curr != NULL) {
+    sixthArg = copyThing((node *) (curr->value)); curr = curr->next;
+  }
+  if (curr != NULL) {
+    seventhArg = copyThing((node *) (curr->value)); curr = curr->next;
+  }
+  if (curr != NULL) {
+    eighthArg = copyThing((node *) (curr->value)); curr = curr->next;
+  }
+
+ if (curr != NULL) {
+    printMessage(1,"Warning: too many arguments given to fpminimax command. The remaining arguments will be ignored.\n");
+    considerDyingOnError();
+  }
+
+
+ /* We now handle the three optional parameters that can be permuted */
+ relabsArg = RELATIVESYM;
+ fpfixedArg = FLOATING;
+ constrainedPartArg = makeConstantDouble(0.0);
+
+ if ( (fifthArg != NULL) && (!isDefault(fifthArg)) ) {
+   switch(fifthArg->nodeType) {
+   case RELATIVESYM: case ABSOLUTESYM: relabsArg = fifthArg->nodeType; break;
+   case FLOATING: case FIXED: fpfixedArg = fifthArg->nodeType; break;
+   default:
+     if (isPureTree(fifthArg)) {
+       freeThing(constrainedPartArg); constrainedPartArg = copyTree(fifthArg);
+     }
+     else {
+       printMessage(1, "Error in fpminimax: invalid fifth argument\n");
+       failure = 1;
+     }
+   }
+ }
+
+ if ( (sixthArg != NULL) && (!isDefault(sixthArg)) ) {
+   switch(sixthArg->nodeType) {
+   case RELATIVESYM: case ABSOLUTESYM: relabsArg = sixthArg->nodeType; break;
+   case FLOATING: case FIXED: fpfixedArg = sixthArg->nodeType; break;
+   default:
+     if (isPureTree(sixthArg)) {
+       freeThing(constrainedPartArg); constrainedPartArg = copyTree(sixthArg);
+     }
+     else {
+       printMessage(1, "Error in fpminimax: invalid fifth argument\n");
+       failure = 1;
+     }
+   }
+ }
+
+ if ( (seventhArg != NULL) && (!isDefault(seventhArg)) ) {
+   switch(seventhArg->nodeType) {
+   case RELATIVESYM: case ABSOLUTESYM: relabsArg = seventhArg->nodeType; break;
+   case FLOATING: case FIXED: fpfixedArg = seventhArg->nodeType; break;
+   default:
+     if (isPureTree(seventhArg)) {
+       freeThing(constrainedPartArg); constrainedPartArg = copyTree(seventhArg);
+     }
+     else {
+       printMessage(1, "Error in fpminimax: invalid fifth argument\n");
+       failure = 1;
+     }
+   }
+ }
+
+ /* Finally we handle the eighth optional argument */
+  if ( (eighthArg == NULL) || isDefault(eighthArg) )   pstarArg = NULL;
+  else pstarArg = copyThing(eighthArg);
+
+
+  /* Now, we check the type of the arguments. Arguments 5, 6 and 7 have already been done */
+  if (!isPureTree(firstArg)) failure = 1;
+
+  /* Second argument. This code is a copy-paste from evaluateThingInnerRemez */
+  if (isPureTree(secondArg)) { /* secondArg can be an integer */
+    if (!evaluateThingToInteger(&n, secondArg, NULL)) failure = 1;
+    else {
+      if (n<0) {
+        printMessage(1,"Error: the second argument of fpminimax must be a non-negative integer or a list.\n");
+        failure = 1;
+      }
+      else { /* The second argument is a valid integer n. Converting it to a list. */
+        freeThing(secondArg);
+        secondArg = makeList(makeConstantIntChain(n));
+      }
+    }
+  }
+  if (!evaluateThingToPseudoMonomialsList(&monomials, secondArg)) failure = 1;
+
+
+  /* Third argument: must be a list. Note that negative formats are allowed in FIXED mode
+     but not in FLOATING mode
+  */
+  if( (thirdArg->nodeType == LIST) || (thirdArg->nodeType == FINALELLIPTICLIST) )
+    evaluateFormatsListForFPminimax(&formats, thirdArg, lengthChain(monomials), fpfixedArg);
+  else {
+    printMessage(1, "Error in fpminimax: the third argument of fpminimax must be a list of formats indications.\n");
+    failure = 1;
+  }
+
+  /* Fourth argument: either a range or a list of points */
+  mpfr_init2(a, tools_precision); mpfr_init2(b, tools_precision); /* Only for avoiding future reallocation.
+                                                                     The precision of a and b will be set to a suitable
+                                                                     value by evaluateThingToRange anyway */
+  if (!evaluateThingToRange(a, b, fourthArg)) {
+    if (!evaluateThingToConstantList(&pointsList, fourthArg)) {
+      printMessage(1, "Error in fpminimax: the fourth argument of fpminimax must be either an interval or a list of points\n");
+      failure = 1;
+    }
+  }
+  if (pointsList != NULL) {
+    curr = pointsList;
+    mpfr_set_prec(a, mpfr_get_prec(*(mpfr_t *)(curr->value)));
+    mpfr_set(a, *(mpfr_t *)(curr->value), GMP_RNDD); /* exact */
+    while(curr->next != NULL) curr = curr->next;
+    mpfr_set_prec(b, mpfr_get_prec(*(mpfr_t *)(curr->value)));
+    mpfr_set(b, *(mpfr_t *)(curr->value), GMP_RNDU); /* exact */
+  }
+
+  /* Eighth argument */
+  if ( (pstarArg != NULL) && (!isPureTree(pstarArg)) )  failure = 1;
+
+  /* Now, if (failure), we cannot run the algorithm, otherwise we can */
+  if (failure) {
+    result = copyThing(tree);
+  }
+  else {
+    if (timingString != NULL) pushTimeCounter();
+    result = FPminimax(firstArg, monomials, formats, pointsList, a, b, fpfixedArg, relabsArg, constrainedPartArg, pstarArg);
+
+    /* FPminimax can return NULL if does not succeed, either because not enough points or format inidications were
+       prrovided, or because it did not manage to find correct exponents (for floating-point formats).
+       In this case, we return error */
+    if (result == NULL)  result = makeError();
+    if (timingString != NULL) popTimeCounter(timingString);
+  }
+
+  mpfr_clear(a); mpfr_clear(b);
+  freeChain(monomials,freeMemoryOnVoid);
+  freeChain(arguments,freeThingOnVoid);
+  freeChain(formats, freeIntPtr);
+  freeChain(pointsList, freeMpfrPtr);
+  freeThing(firstArg);
+  freeThing(secondArg);
+  freeThing(thirdArg);
+  freeThing(fourthArg);
+  freeThing(fifthArg);
+  freeThing(sixthArg);
+  freeThing(seventhArg);
+  freeThing(eighthArg);
+  freeThing(pstarArg);
+  free_memory(constrainedPartArg);
+  return result;
 }
 
 node *evaluateThingInner(node *tree) {
@@ -15506,6 +16319,10 @@ node *evaluateThingInner(node *tree) {
   sollya_mpfi_t tempIA2;
   unsigned int tempUI;
   node **thingArray1, **thingArray2, **thingArray3;
+  entry *structEntry;
+  chain *assoclist;
+  int floatingPointEvaluationAlreadyDone;
+
 
   /* Make compiler happy: */
   pTemp = 12;
@@ -18024,8 +18841,10 @@ node *evaluateThingInner(node *tree) {
     if (timingString != NULL) pushTimeCounter();
     undoVariableTrick = 0;
     if (variablename == NULL) {
-      variablename = (char *) safeCalloc(2, sizeof(char));
-      variablename[0] = 'x';
+      variablename = (char *) safeCalloc(4, sizeof(char));
+      variablename[0] = '_';
+      variablename[1] = 'x';
+      variablename[2] = '_';
       undoVariableTrick = 1;
     }
     if ((tempNode = getThingFromTable(tree->string)) == NULL) {
@@ -18051,22 +18870,14 @@ node *evaluateThingInner(node *tree) {
     if (isPureTree(tempNode)) {
       if (lengthChain(tree->arguments) == 1) {
 	if (evaluateThingToPureTree(&tempNode2,(node *) (tree->arguments->value))) {
-	  if ((tempNode->nodeType == LIBRARYFUNCTION) && (variablename == NULL)) {
-	    printMessage(1,"Warning: the current free variable is not bound to an identifier. Dereferencing library function \"%s\" requires this binding.\n",tempNode->libFun->functionName);
-	    printMessage(1,"Will bind the current free variable to the identifier \"x\"\n");
-	    variablename = (char *) safeCalloc(2, sizeof(char));
-	    variablename[0] = 'x';
-	  }
-	  if ((tempNode->nodeType == PROCEDUREFUNCTION) && (variablename == NULL)) {
-	    printMessage(1,"Warning: the current free variable is not bound to an identifier. Dereferencing a procedure-based function requires this binding.\n");
-	    printMessage(1,"Will bind the current free variable to the identifier \"x\"\n");
-	    variablename = (char *) safeCalloc(2, sizeof(char));
-	    variablename[0] = 'x';
-	  }
 	  free(copy);
 	  if (tempNode->nodeType == VARIABLE) {
-	    printMessage(1,"Warning: the identifier \"%s\" is bound to the current free variable. In a functional context it will be considered as the identity function.\n",
-			 variablename);
+	    if (variablename != NULL) {
+	      printMessage(1,"Warning: the identifier \"%s\" is bound to the current free variable. In a functional context it will be considered as the identity function.\n",
+			   variablename);
+	    } else {
+	      printMessage(1,"Warning: \"_x_\" is the free variable. In a functional context it will be considered as the identity function.\n");
+	    }
 	  }
 	  copy = substitute(tempNode, tempNode2);
 	  freeThing(tempNode2);
@@ -18212,22 +19023,14 @@ node *evaluateThingInner(node *tree) {
     if (isPureTree(tempNode)) {
       if (lengthChain(tree->arguments) == 1) {
 	if (evaluateThingToPureTree(&tempNode2,(node *) (tree->arguments->value))) {
-	  if ((tempNode->nodeType == LIBRARYFUNCTION) && (variablename == NULL)) {
-	    printMessage(1,"Warning: the current free variable is not bound to an identifier. Dereferencing library function \"%s\" requires this binding.\n",tempNode->libFun->functionName);
-	    printMessage(1,"Will bind the current free variable to the identifier \"x\"\n");
-	    variablename = (char *) safeCalloc(2, sizeof(char));
-	    variablename[0] = 'x';
-	  }
-	  if ((tempNode->nodeType == PROCEDUREFUNCTION) && (variablename == NULL)) {
-	    printMessage(1,"Warning: the current free variable is not bound to an identifier. Dereferencing a procedure-based function requires this binding.\n");
-	    printMessage(1,"Will bind the current free variable to the identifier \"x\"\n");
-	    variablename = (char *) safeCalloc(2, sizeof(char));
-	    variablename[0] = 'x';
-	  }
 	  free(copy);
 	  if (tempNode->nodeType == VARIABLE) {
-	    printMessage(1,"Warning: the identifier \"%s\" is bound to the current free variable. In a functional context it will be considered as the identity function.\n",
-			 variablename);
+	    if (variablename != NULL) {
+	      printMessage(1,"Warning: the identifier \"%s\" is bound to the current free variable. In a functional context it will be considered as the identity function.\n",
+			   variablename);
+	    } else {
+	      printMessage(1,"Warning: \"_x_\" is the free variable. In a functional context it will be considered as the identity function.\n");
+	    }
 	  }
 	  copy = substitute(tempNode, tempNode2);
 	  freeThing(tempNode2);
@@ -18893,7 +19696,40 @@ node *evaluateThingInner(node *tree) {
       tempNode = simplifyTreeErrorfree(copy->child1);
       if (isConstant(tempNode)) {
 	mpfr_init2(a,tools_precision);
-	if (evaluateThingToConstant(a,tempNode,NULL,1)) {
+	floatingPointEvaluationAlreadyDone = 0;
+	if (isPureTree(copy->child1) && 
+	    isConstant(copy->child1) && 
+	    ((tree->child1->nodeType == TABLEACCESSWITHSUBSTITUTE) || 
+	     (tree->child1->nodeType == APPLY)) &&
+	    (lengthChain(tree->child1->arguments) == 1)) {
+	  if (tree->child1->nodeType == APPLY) {
+	    tempNode2 = copyThing(tree->child1->child1);
+	    tempNode3 = copyThing((node *) ((tree->child1->arguments)->value));
+	  } else {
+	    tempNode2 = makeTableAccess(tree->child1->string);
+	    tempNode3 = copyThing((node *) ((tree->child1->arguments)->value));
+	  }
+	  tempNode4 = evaluateThing(tempNode2);
+	  tempNode5 = evaluateThing(tempNode3);
+	  if (isPureTree(tempNode4) && 
+	      isPureTree(tempNode5) &&
+	      (!isConstant(tempNode4)) && 
+	      isConstant(tempNode5)) {
+	    tempNode6 = simplifyTreeErrorfree(tempNode5);
+	    if ((tempNode6->nodeType == CONSTANT) &&
+		mpfr_number_p(*(tempNode6->value))) {
+	      if (evaluateFaithful(a, tempNode4, *(tempNode6->value), tools_precision)) {
+		floatingPointEvaluationAlreadyDone = 1;
+	      }
+	    }
+	    freeThing(tempNode6);
+	  }
+	  freeThing(tempNode2);
+	  freeThing(tempNode3);
+	  freeThing(tempNode4);
+	  freeThing(tempNode5);
+	}
+	if (floatingPointEvaluationAlreadyDone || evaluateThingToConstant(a,tempNode,NULL,1)) {
 	  tempNode2 = makeConstant(a);
 	  freeThing(copy->child1);
 	  copy = tempNode2;
@@ -19010,105 +19846,23 @@ node *evaluateThingInner(node *tree) {
     }
     break;
   case REMEZ:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateThingInnerOnVoid);
-    curr = copy->arguments;
-    firstArg = copyThing((node *) (curr->value));
-    curr = curr->next;
-    secondArg = copyThing((node *) (curr->value));
-    curr = curr->next;
-    thirdArg = copyThing((node *) (curr->value));
-    curr = curr->next;
-
-    fourthArg = NULL;
-    fifthArg = NULL;
-    sixthArg = NULL;
-    if (curr != NULL) {
-      fourthArg = copyThing((node *) (curr->value));
-      curr = curr->next;
-      if (curr != NULL) {
-	fifthArg = copyThing((node *) (curr->value));
-        curr = curr->next;
-        if (curr != NULL) {
-          sixthArg = copyThing((node *) (curr->value));
-        }
+    free(copy);
+    copy = evaluateThingInnerRemez(tree, timingString);
+    break;
+  case BIND:
+    copy->child1 = evaluateThingInner(tree->child1);
+    copy->child2 = evaluateThingInner(tree->child2);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    if (isProcedureNotIllim(copy->child1)) {
+      tempNode = performBind(copy->child1,copy->string,copy->child2);
+      if (tempNode == NULL) {
+	printMessage(1,"Warning: the given procedure has no argument named \"%s\". The procedure is returned unchanged.\n",copy->string);
+	tempNode = copyThing(copy->child1);
       }
+      freeThing(copy);
+      copy = tempNode;
     }
-
-    if (fourthArg == NULL) fourthArg = makeConstantDouble(1.0);
-
-    if (isPureTree(firstArg) && isRange(thirdArg) && (isPureTree(fourthArg) || isDefault(fourthArg)) && ((fifthArg == NULL) || isDefault(fifthArg) || isPureTree(fifthArg)) && ((sixthArg == NULL) || isDefault(sixthArg) || isRange(sixthArg))) {
-      if (isPureTree(secondArg) || isPureList(secondArg)) {
-	resB = 0;
-	if (isPureTree(secondArg)) {
-	  if (evaluateThingToInteger(&resA,secondArg,NULL)) {
-	    resB = 1;
-	    tempChain = makeIntPtrChainFromTo(0, resA);
-	  }
-	} else {
-	  if (evaluateThingToIntegerList(&tempChain, NULL, secondArg)) {
-	    resB = 1;
-	  }
-	}
-	if (resB) {
-	  if (isDefault(fourthArg)) {
-	    freeThing(fourthArg);
-	    fourthArg = makeConstantDouble(1.0);
-	  }
-	  mpfr_init2(a,tools_precision);
-	  mpfr_init2(b,tools_precision);
-	  if (evaluateThingToRange(a,b,thirdArg)) {
-	    tempMpfrPtr = NULL;
-	    if ((fifthArg != NULL) && (!isDefault(fifthArg))) {
-	      tempMpfrPtr = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-	      mpfr_init2(*tempMpfrPtr,tools_precision);
-	      if (!evaluateThingToConstant(*tempMpfrPtr,fifthArg,NULL,0)) {
-		printMessage(1,"Warning: the given argument cannot be evaluated to a constant. It will be ignored.\n");
-                considerDyingOnError();
-		mpfr_clear(*tempMpfrPtr);
-		free(tempMpfrPtr);
-		tempMpfrPtr = NULL;
-	      }
-	    }
-            mpfr_init2(c, tools_precision);
-            mpfr_init2(d, tools_precision);
-            resC = 0;
-            if ((sixthArg==NULL) || isDefault(sixthArg)) {
-              resC = 1;
-              mpfr_set_ui(c, 0, GMP_RNDN);
-              mpfr_set_inf(d, 1);
-            }
-            else resC = evaluateThingToRange(c, d, sixthArg);
-            if (resC) {
-              if (mpfr_cmp_ui(c, 0) < 0) {
-                printMessage(1, "Warning: the sixth argument of remez must be a non-negative interval. Replaced by [0, +Inf]\n");
-                mpfr_set_ui(c, 0, GMP_RNDN);
-                mpfr_set_inf(d, 1);
-              }
-              if (timingString != NULL) pushTimeCounter();
-              tempNode = remez(firstArg, fourthArg, tempChain, a, b, tempMpfrPtr, c, d, tools_precision);
-              if (timingString != NULL) popTimeCounter(timingString);
-              freeThing(copy);
-              copy = tempNode;
-              if (tempMpfrPtr != NULL) {
-                mpfr_clear(*tempMpfrPtr);
-                free(tempMpfrPtr);
-              }
-            }
-            mpfr_clear(c);
-            mpfr_clear(d);
-          }
-          mpfr_clear(a);
-          mpfr_clear(b);
-          freeChain(tempChain,freeIntPtr);
-        }
-      }
-    }
-    freeThing(firstArg);
-    freeThing(secondArg);
-    freeThing(thirdArg);
-    freeThing(fourthArg);
-    if (fifthArg != NULL) freeThing(fifthArg);
-    if (sixthArg != NULL) freeThing(sixthArg);
     break;
   case MATCH:
     copy->child1 = evaluateThingInner(tree->child1);
@@ -19162,184 +19916,8 @@ node *evaluateThingInner(node *tree) {
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break;
   case FPMINIMAX:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateThingInnerOnVoid);
-    curr = copy->arguments;
-    firstArg = copyThing((node *) (curr->value)); /* f */
-    curr = curr->next;
-    secondArg = copyThing((node *) (curr->value)); /* degree or monomials */
-    curr = curr->next;
-    thirdArg = copyThing((node *) (curr->value)); /* list of formats */
-    curr = curr->next;
-    fourthArg = copyThing((node *) (curr->value)); /* interval or points list */
-    curr = curr->next;
-    fifthArg = sixthArg = seventhArg = eighthArg = NULL;
-    if (curr != NULL) { /* one of absolute, relative, floating, fixed, constPart */
-      fifthArg = copyThing((node *) (curr->value));
-      curr = curr->next;
-      if (curr != NULL) { 
-	sixthArg = copyThing((node *) (curr->value));
-	curr = curr->next;
-	if (curr != NULL) { 
-	  seventhArg = copyThing((node *) (curr->value));
-	  curr = curr->next;
-	  if (curr != NULL) { /* minimax polynomial */
-	    eighthArg = copyThing((node *) (curr->value));
-	  }
-	}
-      }
-    }
-
-    tempChain = NULL;
-    if(evaluateThingToInteger(&resA, secondArg, NULL)) {
-      if(resA<0) printMessage(1, "Error in fpminimax: degree must be a positive integer");
-      else {
-	for(i=resA;i>=0;i--) {
-	  intptr = (int *)safeMalloc(sizeof(int));
-	  *intptr = i;
-	  tempChain = addElement(tempChain, intptr);
-	}
-      }
-    }
-    else{
-      if( (!evaluateThingToIntegerList(&tempChain, &resA, secondArg)) ||
-	  (resA==1) ) {
-	printMessage(1, "Error in fpminimax: the second argument of fpminimax must be either an integer or a finite list of integers.\n");
-        if (tempChain) freeChain(tempChain, freeIntPtr);
-        tempChain = NULL;
-      }
-    }
-
-    /* We skip the third argument for now on, because we need to parse the 4th, 5th and 6th arguments before
-       in order to know if negative formats are allowed or not (they are allowed in FIXED mode but not in
-       FLOATING mode) */
-
-    tempChain3 = NULL;
-    mpfr_init2(a, tools_precision);
-    mpfr_init2(b, tools_precision);
-    resD = 1; /* tests if something goes wrong with 4th argument */
-    if (!evaluateThingToRange(a,b,fourthArg)) {
-      if (!evaluateThingToConstantList(&tempChain3, fourthArg)) {
-	resD = 0;
-	printMessage(1, "Error in fpminimax: the fourth argument of fpminimax must be either an interval or a list of points\n");
-      }
-    }
-    if(tempChain3 != NULL) {
-      curr=tempChain3;
-      mpfr_set_prec(a, mpfr_get_prec(*(mpfr_t *)(curr->value)));
-      mpfr_set(a, *(mpfr_t *)(curr->value), GMP_RNDD);
-      while(curr->next != NULL) curr = curr->next;
-      mpfr_set_prec(b, mpfr_get_prec(*(mpfr_t *)(curr->value)));
-      mpfr_set(b, *(mpfr_t *)(curr->value), GMP_RNDD);
-    }
-
-
-    resB = FLOATING;
-    resC = RELATIVESYM;
-    tempNode = makeConstantDouble(0.);
-    resE = 1; /* tests if something goes wrong with 5th, 6th and 7th argument */
-
-    if ( (fifthArg != NULL) && (!isDefault(fifthArg)) ) {
-      switch(fifthArg->nodeType) {
-      case RELATIVESYM: resC = RELATIVESYM; break;
-      case ABSOLUTESYM: resC = ABSOLUTESYM; break;
-      case FLOATING: resB = FLOATING; break;
-      case FIXED: resB = FIXED; break;
-      default:
-	if( (isPureTree(fifthArg)) && (isPolynomial(fifthArg)) ) {
-	  freeThing(tempNode);
-	  tempNode = copyTree(fifthArg);
-	}
-	else {
-	  printMessage(1, "Error in fpminimax: invalid fifth argument\n");
-	  resE = 0;
-	}
-      }
-    }
-
-    if ( (sixthArg != NULL) && (!isDefault(sixthArg)) ) {
-      switch(sixthArg->nodeType) {
-      case RELATIVESYM: resC = RELATIVESYM; break;
-      case ABSOLUTESYM: resC = ABSOLUTESYM; break;
-      case FLOATING: resB = FLOATING; break;
-      case FIXED: resB = FIXED; break;
-      default:
-	if( (isPureTree(sixthArg)) && (isPolynomial(sixthArg)) ) {
-	  freeThing(tempNode);
-	  tempNode = copyTree(sixthArg);
-	}
-	else {
-	  printMessage(1, "Error in fpminimax: invalid sixth argument\n");
-	  resE = 0;
-	}
-      }
-    }
-
-    if ( (seventhArg != NULL) && (!isDefault(seventhArg)) ) {
-      switch(seventhArg->nodeType) {
-      case RELATIVESYM: resC = RELATIVESYM; break;
-      case ABSOLUTESYM: resC = ABSOLUTESYM; break;
-      case FLOATING: resB = FLOATING; break;
-      case FIXED: resB = FIXED; break;
-      default:
-	if( (isPureTree(seventhArg)) && (isPolynomial(seventhArg)) ) {
-	  freeThing(tempNode);
-	  tempNode = copyTree(seventhArg);
-	}
-	else {
-	  printMessage(1, "Error in fpminimax: invalid seventh argument\n");
-	  resE = 0;
-	}
-      }
-    }
-
-    /* Now, we parse the third argument */
-    tempChain2 = NULL;
-    if( (thirdArg->nodeType == LIST) || (thirdArg->nodeType == FINALELLIPTICLIST) )
-      evaluateFormatsListForFPminimax(&tempChain2, thirdArg, lengthChain(tempChain), resB);
-    else
-      printMessage(1, "Error in fpminimax: the third argument of fpminimax must be a list of formats indications.\n");
-
-
-    tempNode2 = NULL;
-    if( (eighthArg != NULL) && (isPureTree(eighthArg)) && (isPolynomial(eighthArg)) )
-      tempNode2 = copyTree(eighthArg);
-
-
-    if ( (isPureTree(firstArg)) &&
-	 (tempChain != NULL) &&    /* list of monomials */
-	 (tempChain2 != NULL) &&   /* list of formats   */
-	 (resD) &&                 /* tempChain3 != NULL or [a,b] is the interval */
-	 (resE) &&                 /* resB=FIXED,FLOATING   resC=ABSOLUTESYM,RELATIVESYM    tempNode=consPart */
-	 ((eighthArg == NULL) || (tempNode2 != NULL))  /* tempNode2 is minimax or NULL */
-	 ) {
-
-      if (timingString != NULL) pushTimeCounter();
-      tempNode3 = FPminimax(firstArg, tempChain, tempChain2, tempChain3, a, b, resB, resC, tempNode, tempNode2);
-      if (timingString != NULL) popTimeCounter(timingString);
-
-      freeThing(copy);
-      if (tempNode3 == NULL) { tempNode3 = makeError(); }
-      copy=tempNode3;
-    }
-
-
-
-    freeChain(tempChain, freeIntPtr);
-    freeChain(tempChain2, freeIntPtr);
-    freeChain(tempChain3, freeMpfrPtr);
-    mpfr_clear(a);
-    mpfr_clear(b);
-    freeThing(tempNode);
-    freeThing(tempNode2);
-
-    freeThing(firstArg);
-    freeThing(secondArg);
-    freeThing(thirdArg);
-    freeThing(fourthArg);
-    if(fifthArg!=NULL) freeThing(fifthArg);
-    if(sixthArg!=NULL) freeThing(sixthArg);
-    if(seventhArg!=NULL) freeThing(seventhArg);
-    if(eighthArg!=NULL) freeThing(eighthArg);
+    free(copy);
+    copy = evaluateThingInnerFpminimax(tree, timingString);
     break;
   case HORNER:
     copy->child1 = evaluateThingInner(tree->child1);
@@ -19765,6 +20343,50 @@ node *evaluateThingInner(node *tree) {
       if (timingString != NULL) popTimeCounter(timingString);
     }
     break;			
+  case COMPOSEPOLYNOMIALS: 
+    copy->child1 = evaluateThingInner(tree->child1);
+    copy->child2 = evaluateThingInner(tree->child2);
+    if (isPureTree(copy->child1) && isPureTree(copy->child2)) {
+      if (timingString != NULL) pushTimeCounter();      
+      tempChain = NULL;
+      tempNode2 = NULL;
+      composePolynomials(&tempNode2,&tempChain,copy->child1,copy->child2,tools_precision);
+      if (timingString != NULL) popTimeCounter(timingString);
+      if (tempNode2 != NULL) {
+	if (tempChain == NULL) {
+	  tempNode3 = makeEmptyList();
+	} else {
+	  tempChain2 = NULL;
+	  for (curr=tempChain;curr!=NULL;curr=curr->next) {
+	    mpfr_init2(a,sollya_mpfi_get_prec(*((sollya_mpfi_t *) (curr->value))));
+	    mpfr_init2(b,sollya_mpfi_get_prec(*((sollya_mpfi_t *) (curr->value))));
+	    sollya_mpfi_get_left(a,*((sollya_mpfi_t *) (curr->value)));
+	    sollya_mpfi_get_right(b,*((sollya_mpfi_t *) (curr->value)));
+	    tempChain2 = addElement(tempChain2,makeRange(makeConstant(a),makeConstant(b)));
+	    mpfr_clear(a);
+	    mpfr_clear(b);
+	  }
+	  tempNode3 = makeList(tempChain2);
+	}
+	structEntry = (entry *) safeMalloc(sizeof(entry));
+	tempString = "poly";
+	structEntry->name = (char *) safeCalloc(strlen(tempString)+1,sizeof(char));
+	strcpy(structEntry->name,tempString);
+	structEntry->value = tempNode2;
+	assoclist = addElement(NULL,(void *) structEntry);
+	structEntry = (entry *) safeMalloc(sizeof(entry));
+	tempString = "radii";
+	structEntry->name = (char *) safeCalloc(strlen(tempString)+1,sizeof(char));
+	strcpy(structEntry->name,tempString);
+	structEntry->value = tempNode3;
+	assoclist = addElement(assoclist,(void *) structEntry);
+	tempNode = makeStructure(assoclist);
+	freeThing(copy);
+	copy = tempNode;
+      } 
+      if (tempChain != NULL) freeChain(tempChain,freeMpfiPtr);
+    }
+    break;			
   case COEFF:
     copy->child1 = evaluateThingInner(tree->child1);
     copy->child2 = evaluateThingInner(tree->child2);
@@ -20129,12 +20751,6 @@ node *evaluateThingInner(node *tree) {
       if ((tempNode = readXml(copy->child1->string)) != NULL) {
 	freeThing(copy);
 	copy = tempNode; 
-	if (variablename == NULL) {
-	  printMessage(1,"Warning: the free variable is not bound to an identifier. Reading an XML file requires this binding.\n");
-	  printMessage(1,"Will bind the free variable to the identifier \"x\"\n");
-	  variablename = safeCalloc(2,sizeof(char));
-	  variablename[0] = 'x';
-	}
       } else {
 	printMessage(1,"Warning: the file \"%s\" could not be read as an XML file.\n",copy->child1->string);
         considerDyingOnError();
@@ -20264,7 +20880,7 @@ node *evaluateThingInner(node *tree) {
 	      pTemp = mpfr_get_prec(a);
 	      pTemp2 = mpfr_get_prec(b);
 	      if (pTemp2 > pTemp) pTemp = pTemp2;
-	      sollya_mpfi_init2(tempIA,pTemp2);
+	      sollya_mpfi_init2(tempIA,pTemp);
 	      sollya_mpfi_interv_fr_safe(tempIA,a,b);
 	      mpfr_init2(bb,8 * sizeof(mp_prec_t) + 10);
 	      mpfr_abs(bb,c,GMP_RNDN);

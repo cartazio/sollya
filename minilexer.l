@@ -113,6 +113,7 @@ DIV             "/"
 POW             "^"
 SQRT            "sqrt"
 EXP             "exp"
+FREEVAR         "_x_"
 LOG             "log"
 LOG2            "log2"
 LOG10           "log10"
@@ -246,6 +247,7 @@ AND             "&&"
 OR              "||"
 
 SUBSTITUTE      "substitute"
+COMPOSEPOLYNOMIALS "composepolynomials"
 
 DOTS            "..."
 
@@ -369,6 +371,7 @@ MATCH           "match"
 WITH            "with"
 
 RENAME          "rename"
+BIND            "bind"
 
 LENGTH          "length"
 
@@ -541,6 +544,7 @@ NOP             "nop"
 
 {SQRT}            			    {  return SQRTTOKEN; }
 {EXP}             			    {  return EXPTOKEN; }
+{FREEVAR}             			    {  return FREEVARTOKEN; }
 {LOG}             			    {  return LOGTOKEN; }
 {LOG2}            			    {  return LOG2TOKEN; }
 {LOG10}           			    {  return LOG10TOKEN; }
@@ -655,6 +659,7 @@ NOP             "nop"
 {NUMERATOR}       			    {  return NUMERATORTOKEN; }
 {DENOMINATOR}     			    {  return DENOMINATORTOKEN; }
 {SUBSTITUTE}      			    {  return SUBSTITUTETOKEN; }
+{COMPOSEPOLYNOMIALS}      		    {  return COMPOSEPOLYNOMIALSTOKEN; }
 {COEFF}           			    {  return COEFFTOKEN; }
 {SUBPOLY}         			    {  return SUBPOLYTOKEN; }
 {ROUNDCOEFFICIENTS} 			    {  return ROUNDCOEFFICIENTSTOKEN; }
@@ -680,6 +685,7 @@ NOP             "nop"
 {WRITE}           			    {  return WRITETOKEN; }
 {ASCIIPLOT}       			    {  return ASCIIPLOTTOKEN; }
 {RENAME}         			    {  return RENAMETOKEN; }
+{BIND}         			            {  return BINDTOKEN; }
 
 
 {INFNORM}         			    {  return INFNORMTOKEN; }

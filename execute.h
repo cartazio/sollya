@@ -285,7 +285,9 @@ extern void endBuffer(void);
 #define BASHEVALUATE 266
 #define HALFPRECISIONSYMBOL 267
 #define QUADSYMBOL 268
-#define CHEBYSHEVFORM 269
+#define COMPOSEPOLYNOMIALS 269
+#define BIND 270
+#define CHEBYSHEVFORM 271
 
 int executeCommand(node *);
 
@@ -322,6 +324,7 @@ node *makeAppendFileWrite(node *thing, chain *thinglist);
 node *makeAsciiPlot(node *thing1, node *thing2);
 node *makeWorstCase(chain *thinglist);
 node *makeRename(char *string1, char *string2);
+node *makeBind(node *thing1, char *string1, node *thing2);
 node *makeAutoprint(chain *thinglist);
 node *makeAssignment(char *string, node *thing);
 node *makeFloatAssignment(char *string, node *thing);
@@ -449,6 +452,7 @@ node *makeDegree(node *thing);
 node *makeNumerator(node *thing);
 node *makeDenominator(node *thing);
 node *makeSubstitute(node *thing1, node *thing2);
+node *makeComposePolynomials(node *thing1, node *thing2);
 node *makeCoeff(node *thing1, node *thing2);
 node *makeSubpoly(node *thing1, node *thing2);
 node *makeRoundcoefficients(node *thing1, node *thing2);

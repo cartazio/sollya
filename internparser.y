@@ -159,6 +159,7 @@ extern FILE *internyyget_in(void *scanner);
 
 %token  SQRTTOKEN;
 %token  EXPTOKEN;
+%token  FREEVARTOKEN;
 %token  LOGTOKEN;
 %token  LOG2TOKEN;
 %token  LOG10TOKEN;
@@ -262,6 +263,7 @@ extern FILE *internyyget_in(void *scanner);
 %token  NUMERATORTOKEN;
 %token  DENOMINATORTOKEN;
 %token  SUBSTITUTETOKEN;
+%token  COMPOSEPOLYNOMIALSTOKEN;
 %token  COEFFTOKEN;
 %token  SUBPOLYTOKEN;
 %token  ROUNDCOEFFICIENTSTOKEN;
@@ -291,6 +293,7 @@ extern FILE *internyyget_in(void *scanner);
 %token  WRITETOKEN;
 %token  ASCIIPLOTTOKEN;
 %token  RENAMETOKEN;
+%token  BINDTOKEN;
 
 %token  INFNORMTOKEN;
 %token  SUPNORMTOKEN;
@@ -742,6 +745,11 @@ simplecommand:          FALSEQUITTOKEN
                           {
 			    $$ = makeRename($3, $5);
 			    free($3);
+			    free($5);
+			  }
+                      | RENAMETOKEN LPARTOKEN FREEVARTOKEN COMMATOKEN IDENTIFIERTOKEN RPARTOKEN
+                          {
+			    $$ = makeRename("_x_", $5);
 			    free($5);
 			  }
                       | EXTERNALPROCTOKEN LPARTOKEN IDENTIFIERTOKEN COMMATOKEN thing COMMATOKEN externalproctypelist MINUSTOKEN RIGHTANGLETOKEN extendedexternalproctype RPARTOKEN
@@ -1302,6 +1310,10 @@ basicthing:             ONTOKEN
                           {
 			    $$ = makeDoubleextendedSymbol();
 			  }
+                      | FREEVARTOKEN
+                          {
+			    $$ = makeVariable();
+			  }
                       | DOUBLEDOUBLETOKEN
                           {
 			    $$ = makeDoubleDoubleSymbol();
@@ -1576,6 +1588,11 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeRemez(addElement(addElement($7, $5), $3));
 			  }
+                      | BINDTOKEN LPARTOKEN thing COMMATOKEN IDENTIFIERTOKEN COMMATOKEN thing RPARTOKEN
+                          {
+			    $$ = makeBind($3, $5, $7);
+			    free($5);
+			  }
                       | MINTOKEN LPARTOKEN thinglist RPARTOKEN
                           {
 			    $$ = makeMin($3);
@@ -1629,6 +1646,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
 			    $$ = makeDenominator($3);
 			  }
                       | SUBSTITUTETOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
+                          {
+			    $$ = makeSubstitute($3, $5);
+			  }
+                      | COMPOSEPOLYNOMIALSTOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
                           {
 			    $$ = makeSubstitute($3, $5);
 			  }
@@ -1776,6 +1797,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeExp($3);
 			  }
+                      | FREEVARTOKEN LPARTOKEN thing RPARTOKEN
+                          {
+			    $$ = makeApply(makeVariable(),addElement(NULL,$3));
+			  }                      
                       | FUNCTIONTOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeProcedureFunction($3);

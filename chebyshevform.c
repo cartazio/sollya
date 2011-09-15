@@ -63,6 +63,8 @@
 #include <stdlib.h>
 #include "chebModelsAux.c"
 #include "chebyshevform.h"
+#include "taylorform.h"
+
 /***************************************************************/
 /***************************************************************/
 /**********Functions related to Chebyshev Models****************/

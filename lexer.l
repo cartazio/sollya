@@ -117,6 +117,7 @@ DIV             "/"
 POW             "^"
 SQRT            "sqrt"
 EXP             "exp"
+FREEVAR         "_x_"
 LOG             "log"
 LOG2            "log2"
 LOG10           "log10"
@@ -250,6 +251,7 @@ AND             "&&"
 OR              "||"
 
 SUBSTITUTE      "substitute"
+COMPOSEPOLYNOMIALS "composepolynomials"
 
 DOTS            "..."
 
@@ -374,6 +376,7 @@ MATCH           "match"
 WITH            "with"
 
 RENAME          "rename"
+BIND            "bind"
 
 LENGTH          "length"
 
@@ -622,6 +625,7 @@ NOP             "nop"
 
 {SQRT}            			    { newTokenLexed(); return SQRTTOKEN; }
 {EXP}             			    { newTokenLexed(); return EXPTOKEN; }
+{FREEVAR}             			    { newTokenLexed(); return FREEVARTOKEN; }
 {LOG}             			    { newTokenLexed(); return LOGTOKEN; }
 {LOG2}            			    { newTokenLexed(); return LOG2TOKEN; }
 {LOG10}           			    { newTokenLexed(); return LOG10TOKEN; }
@@ -743,6 +747,7 @@ NOP             "nop"
 {NUMERATOR}       			    { newTokenLexed(); return NUMERATORTOKEN; }
 {DENOMINATOR}     			    { newTokenLexed(); return DENOMINATORTOKEN; }
 {SUBSTITUTE}      			    { newTokenLexed(); return SUBSTITUTETOKEN; }
+{COMPOSEPOLYNOMIALS}      		    { newTokenLexed(); return COMPOSEPOLYNOMIALSTOKEN; }
 {COEFF}           			    { newTokenLexed(); return COEFFTOKEN; }
 {SUBPOLY}         			    { newTokenLexed(); return SUBPOLYTOKEN; }
 {ROUNDCOEFFICIENTS} 			    { newTokenLexed(); return ROUNDCOEFFICIENTSTOKEN; }
@@ -767,6 +772,7 @@ NOP             "nop"
 {WRITE}           			    { newTokenLexed(); return WRITETOKEN; }
 {ASCIIPLOT}       			    { newTokenLexed(); return ASCIIPLOTTOKEN; }
 {RENAME}         			    { newTokenLexed(); return RENAMETOKEN; }
+{BIND}         			            { newTokenLexed(); return BINDTOKEN; }
 
 {INFNORM}         			    { newTokenLexed(); return INFNORMTOKEN; }
 {SUPNORM}         			    { newTokenLexed(); return SUPNORMTOKEN; }
