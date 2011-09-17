@@ -674,14 +674,14 @@ void getCoeffsFromChebPolynomial(sollya_mpfi_t**coeffs, sollya_mpfi_t *chebCoeff
  over a given interval x*/
 void getNChebCoeffsFromPolynomial(sollya_mpfi_t *coeffs, sollya_mpfi_t bound, node *f, sollya_mpfi_t x, int n, int boundLevel){
   
-  sollya_mpfi_t **c;
+  sollya_mpfi_t **c, *r;
   int d,i;
   mp_prec_t prec;
   prec=sollya_mpfi_get_prec(coeffs[0]);  
   c= (sollya_mpfi_t **)safeMalloc(sizeof(sollya_mpfi_t*));  
   getChebCoeffsFromPolynomial(c, &d, f, x, prec);
  
-  /*  printf("the degree of the polynomial is: %d\n", d);*/
+  /*printf("the degree of the polynomial is: %d\n", d-1);*/
   if (d<=n) {
     for(i=0;i<d;i++)
       sollya_mpfi_set(coeffs[i],(*c)[i]);
@@ -691,9 +691,22 @@ void getNChebCoeffsFromPolynomial(sollya_mpfi_t *coeffs, sollya_mpfi_t bound, no
     sollya_mpfi_set_ui(bound,0);
   }
   else{
-     for(i=0;i<n;i++)
-       sollya_mpfi_set(coeffs[i],(*c)[i]);    
-     chebPolynomialBound(bound, d-n, (&(*c)[n]), boundLevel);
+       /*in r we store only the upper part of the polynomial*/
+       /*r = [0, 0 ...., 0, c_n, ..., c_{d-1}]              */
+       r = (sollya_mpfi_t *)safeMalloc((d)*sizeof(sollya_mpfi_t));
+       for(i=0; i < d; i++){
+         sollya_mpfi_init2(r[i], prec);
+         sollya_mpfi_set_ui(r[i],0);
+       }
+       for(i=0;i<n;i++)
+         sollya_mpfi_set(coeffs[i],(*c)[i]);    
+       for(i=n;i<d;i++)
+         sollya_mpfi_set(r[i],(*c)[i]);    
+       chebPolynomialBound(bound, d, r, boundLevel);
+       /*cleaning r*/
+       for(i=0; i < d; i++)
+         sollya_mpfi_clear(r[i]);
+       free(r);  
   }
   
   /*cleaning*/
