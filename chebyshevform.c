@@ -1239,7 +1239,7 @@ void chebyshevform(node **Ch, chain **errors, sollya_mpfi_t delta,
 		   chain **chebyshevCoefficients,
 		   node *f, int n, sollya_mpfi_t dom, mp_prec_t prec) {
 
-  chebModel *t, *tt;
+  chebModel *t;
   mpfr_t *coeffsMpfr, domL, domR;
   sollya_mpfi_t *coeffsErrors, **monomialCoeffs, *chebCoeffs;
   int i;
