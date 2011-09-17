@@ -1,5 +1,5 @@
 /*
- Copyright 2011-2013 by 
+ Copyright 2011 by 
   
   Centre de recherche INRIA Sophia-Antipolis Mediterranee, equipe APICS,
   Sophia Antipolis, France.
@@ -490,8 +490,8 @@ void composition_CM(chebModel *t,chebModel *g, chebModel *f, int boundLevel, mpf
   ctMultiplication_CM(tinterm, tinterm, z, prec);
   
   sollya_mpfi_set_fr(zz,b);
-  //sollya_mpfi_add_fr(zz,zz,a);
-  mpfi_add_fr(zz,zz,a);
+  sollya_mpfi_add_fr(zz,zz,a);
+  //mpfi_add_fr(zz,zz,a);
   sollya_mpfi_mul(zz,zz,z1);
   
   sollya_mpfi_sub(tinterm->poly_array[0],tinterm->poly_array[0],zz);
@@ -751,7 +751,7 @@ void base_CMAux(chebModel *t, int typeOfFunction, int nodeType, node *f, mpfr_t 
       diffValue:=(2&*diffValue&*((op(2,X)-op(1,X))^(n)))&/(4^n );*/
     
     
-    mpfi_set(tt->rem_bound, nDeriv[n]);
+    sollya_mpfi_set(tt->rem_bound, nDeriv[n]);
     mpfr_init2(a, sollya_mpfi_get_prec(x));
     mpfr_init2(b, sollya_mpfi_get_prec(x));
     sollya_mpfi_get_left(a,x);
@@ -1240,7 +1240,7 @@ void chebyshevform(node **Ch, chain **errors, sollya_mpfi_t delta,
 		   node *f, int n, sollya_mpfi_t dom, mp_prec_t prec) {
 
   chebModel *t, *tt;
-  mpfr_t *coeffsMpfr;
+  mpfr_t *coeffsMpfr, domL, domR;
   sollya_mpfi_t *coeffsErrors, **monomialCoeffs, *chebCoeffs;
   int i;
   chain *err;
@@ -1256,6 +1256,23 @@ void chebyshevform(node **Ch, chain **errors, sollya_mpfi_t delta,
     return;
   }
   
+  /*  Check that the interval dom is not a point interval*/
+  mpfr_init2(domR, sollya_mpfi_get_prec(dom));
+  sollya_mpfi_get_right(domR, dom);
+
+  mpfr_init2(domL, sollya_mpfi_get_prec(dom));
+  sollya_mpfi_get_left(domL, dom);
+  
+  
+  if (mpfr_cmp(domR,domL)==0) {
+    printMessage(1,"Warning: the domain of a Chebyshev Model can not be a point interval.\n");
+    mpfr_clear(domL);
+    mpfr_clear(domR);
+    *Ch = NULL;
+    return;
+  }
+  mpfr_clear(domL);
+  mpfr_clear(domR);
   /*printf("prec is=%d ", prec);*/
   t=createEmptycModelCompute(n,dom,1,1, prec);
   /*  printf("we have created an emptyChebmodel \n");*/
