@@ -19,6 +19,8 @@ sollya_SOURCES = \
 mpfi-compat.c \
 mpfi-compat.h \
 message-numbers.h \
+sollya-library-wrappers.c \
+sollya-library-wrappers.h \
 printf.c \
 printf.h \
 internparser.y \
@@ -88,6 +90,8 @@ libsollya_la_SOURCES = \
 sollya.h \
 mpfi-compat.h \
 mpfi-compat.c \
+sollya-library-wrappers.c \
+sollya-library-wrappers.h \
 message-numbers.h \
 printf.c \
 printf.h \
