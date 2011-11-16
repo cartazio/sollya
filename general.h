@@ -65,6 +65,7 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include "chain.h"
 #include "library.h"
 #include <setjmp.h>
+#include <stdarg.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -156,6 +157,7 @@ char *maskString(char *);
 void *safeCalloc (size_t nmemb, size_t size);
 void *safeMalloc (size_t size);
 int printMessage(int verb, int msgNum, const char *format, ...);
+int sollyaVfprintf(FILE *fd, const char *format, va_list varlist);
 int sollyaPrintf(const char *format, ...);
 int sollyaFprintf(FILE *fd, const char *format, ...);
 char *mpfr_to_binary_str(mpfr_t x);

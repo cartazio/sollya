@@ -543,6 +543,8 @@ int isPureList(node *);
 int isEmptyList(node *);
 int isStructure(node *tree);
 int evaluateThingToConstant(mpfr_t result, node *tree, mpfr_t *defaultVal, int silent);
+int evaluateThingToRange(mpfr_t a, mpfr_t b, node *tree);
+int evaluateThingToString(char **result, node *tree);
 int isMatchablePrepend(node *tree);
 int isMatchableAppend(node *tree);
 int isMatchableConcat(node *tree);

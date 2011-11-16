@@ -643,6 +643,8 @@ int sollyaPrintf(const char *format, ...) {
 
   res = sollyaVfprintf(stdout,format,varlist);
 
+  va_end(varlist);
+
   return res;
 }
 
@@ -653,6 +655,8 @@ int sollyaFprintf(FILE *fd, const char *format, ...) {
   va_start(varlist,format);
 
   res = sollyaVfprintf(fd,format,varlist);
+
+  va_end(varlist);
 
   return res;
 }

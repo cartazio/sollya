@@ -100,10 +100,10 @@ int sollya_lib_printf(const char *, ...);
 int sollya_lib_fprintf(FILE *, const char *, ...);
 
 /* A function to clear Sollya_objects */
-void sollya_lib_clear(sollya_obj_t);
+void sollya_lib_obj_clear(sollya_obj_t);
 
-/* A function to syntactically compare two Sollya objects */
-int sollya_lib_cmp_objs_syntactically(sollya_obj_t, sollya_obj_t);
+/* A function to structurally compare two Sollya objects */
+int sollya_lib_cmp_objs_structurally(sollya_obj_t, sollya_obj_t);
 
 
 /* Functions corresponding to Sollya commands */
@@ -275,7 +275,6 @@ sollya_obj_t sollya_lib_get_hopitalrecursions();
 sollya_obj_t sollya_lib_on();
 sollya_obj_t sollya_lib_off();
 sollya_obj_t sollya_lib_dyadic();
-sollya_obj_t sollya_lib_on();
 sollya_obj_t sollya_lib_powers();
 sollya_obj_t sollya_lib_binary();
 sollya_obj_t sollya_lib_hexadecimal();
@@ -324,18 +323,29 @@ sollya_obj_t sollya_lib_constant_from_uint64(uint64_t);
 int sollya_lib_get_interval_from_range(sollya_mpfi_t, sollya_obj_t);
 int sollya_lib_get_bounds_from_range(mpfr_t, mpfr_t, sollya_obj_t);
 int sollya_lib_get_string(char **, sollya_obj_t);
-int sollya_lib_get_constant(mpfr_t, sollya_obj_t);
 int sollya_lib_get_constant_as_double(double *, sollya_obj_t);
 int sollya_lib_get_constant_as_int(int *, sollya_obj_t);
 int sollya_lib_get_constant_as_int64(int64_t *, sollya_obj_t);
 int sollya_lib_get_constant_as_uint64(uint64_t *, sollya_obj_t);
+
+/* The following function, in contrast to all others, 
+   not only assigns a new value to the mpfr_t argument
+   in case of success but also adjusts its precision
+   in order to store the constant in the Sollya 
+   object exactly (without any rounding).
+
+   Rounding may nevertheless happen if the Sollya object 
+   is not a constant by itself but a constant expression
+   that needs to be evaluated. 
+*/
+int sollya_lib_get_constant(mpfr_t, sollya_obj_t);
 
 /* Functions to build up Sollya lists from arrays of objects and 
    to get arrays of Sollya objects out of Sollya lists 
 */
 sollya_obj_t sollya_lib_list(sollya_obj_t[], int);
 sollya_obj_t sollya_lib_end_elliptic_list(sollya_obj_t[], int);
-int sollya_lib_get_list_elements(sollya_obj_t **, int *, int *, sollya_obj_t);
+int sollya_lib_get_list_elements(sollya_obj_t *[], int *, int *, sollya_obj_t);
 
 /* A function to check if a Sollya object represents a mathematical
    function 
@@ -388,7 +398,7 @@ sollya_obj_t sollya_lib_build_function_expm1(sollya_obj_t);
 sollya_obj_t sollya_lib_build_function_doubleextended(sollya_obj_t);
 sollya_obj_t sollya_lib_build_function_ceil(sollya_obj_t);
 sollya_obj_t sollya_lib_build_function_floor(sollya_obj_t);
-sollya_obj_t sollya_lib_build_function_nearestInt(sollya_obj_t);
+sollya_obj_t sollya_lib_build_function_nearestint(sollya_obj_t);
 sollya_obj_t sollya_lib_build_function_sinh(sollya_obj_t);
 sollya_obj_t sollya_lib_build_function_cosh(sollya_obj_t);
 sollya_obj_t sollya_lib_build_function_tanh(sollya_obj_t);
