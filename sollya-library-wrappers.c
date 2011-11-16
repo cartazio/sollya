@@ -101,8 +101,12 @@ int sollya_lib_fprintf(FILE *fd, const char *format, ...) {
   return res;
 }
 
-void sollya_lib_obj_clear(sollya_obj_t obj1) {
+void sollya_lib_clear_obj(sollya_obj_t obj1) {
   freeThing(obj1);
+}
+
+sollya_obj_t sollya_lib_copy_obj(sollya_obj_t obj1) {
+  return copyThing(obj1);
 }
 
 int sollya_lib_cmp_objs_structurally(sollya_obj_t obj1, sollya_obj_t obj2) {

@@ -100,11 +100,13 @@ int sollya_lib_printf(const char *, ...);
 int sollya_lib_fprintf(FILE *, const char *, ...);
 
 /* A function to clear Sollya_objects */
-void sollya_lib_obj_clear(sollya_obj_t);
+void sollya_lib_clear_obj(sollya_obj_t);
 
 /* A function to structurally compare two Sollya objects */
 int sollya_lib_cmp_objs_structurally(sollya_obj_t, sollya_obj_t);
 
+/* A function to copy Sollya objects */
+sollya_obj_t sollya_lib_copy_obj(sollya_obj_t);
 
 /* Functions corresponding to Sollya commands */
 void sollya_lib_plot(sollya_obj_t, sollya_obj_t, ...);
