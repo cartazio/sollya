@@ -66,7 +66,7 @@ typedef node * sollya_obj_t;
 */
 typedef enum fp_eval_result_enum_t fp_eval_result_t;
 enum fp_eval_result_enum_t {
-  FP_EVAL_OBJ_NO_FUNCTION,
+  FP_EVAL_OBJ_NO_FUNCTION = 0,
   FP_EVAL_FAITHFUL,
   FP_EVAL_BELOW_CUTOFF,
   FP_EVAL_NOT_FAITHFUL_ZERO,
@@ -79,7 +79,7 @@ enum fp_eval_result_enum_t {
 */
 typedef enum ia_eval_result_enum_t ia_eval_result_t;
 enum ia_eval_result_enum_t {
-  INT_EVAL_OBJ_NO_FUNCTION,
+  INT_EVAL_OBJ_NO_FUNCTION = 0,
   INT_EVAL_BOUNDED,
   INT_EVAL_UNBOUNDED,
   INT_EVAL_FAILURE
@@ -216,7 +216,7 @@ sollya_obj_t sollya_lib_checkinfnorm(sollya_obj_t, sollya_obj_t, sollya_obj_t);
 sollya_obj_t sollya_lib_zerodenominators(sollya_obj_t, sollya_obj_t);
 sollya_obj_t sollya_lib_searchgal(sollya_obj_t, ...);
 sollya_obj_t sollya_lib_guessdegree(sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
-sollya_obj_t sollya_lib_dirtyfindzeros(sollya_obj_t, sollya_obj_t, sollya_obj_t);
+sollya_obj_t sollya_lib_dirtyfindzeros(sollya_obj_t, sollya_obj_t);
 sollya_obj_t sollya_lib_head(sollya_obj_t);
 sollya_obj_t sollya_lib_roundcorrectly(sollya_obj_t);
 sollya_obj_t sollya_lib_revert(sollya_obj_t);
@@ -349,10 +349,15 @@ sollya_obj_t sollya_lib_list(sollya_obj_t[], int);
 sollya_obj_t sollya_lib_end_elliptic_list(sollya_obj_t[], int);
 int sollya_lib_get_list_elements(sollya_obj_t *[], int *, int *, sollya_obj_t);
 
-/* A function to check if a Sollya object represents a mathematical
-   function 
+/* Functions to check if a Sollya object represents a mathematical
+   function, a list, an end-elliptic list, a range, a string or a
+   constant.
 */
 int sollya_lib_obj_is_function(sollya_obj_t);
+int sollya_lib_obj_is_list(sollya_obj_t);
+int sollya_lib_obj_is_end_elliptic_list(sollya_obj_t);
+int sollya_lib_obj_is_range(sollya_obj_t);
+int sollya_lib_obj_is_string(sollya_obj_t);
 
 /* Functions to evaluate Sollya objects that are mathematical
    functions at points or over intervals 
