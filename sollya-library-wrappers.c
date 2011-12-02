@@ -2027,6 +2027,10 @@ int sollya_lib_obj_is_string(sollya_obj_t obj1) {
   return isString(obj1);
 }
 
+int sollya_lib_obj_is_error(sollya_obj_t obj1) {
+  return isError(obj1);
+}
+
 fp_eval_result_t sollya_lib_evaluate_function_at_point(mpfr_t y, sollya_obj_t obj1, mpfr_t x, mpfr_t *cutoff) {
   return FP_EVAL_FAILURE; // TODO
 }

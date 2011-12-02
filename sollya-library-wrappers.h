@@ -350,14 +350,15 @@ sollya_obj_t sollya_lib_end_elliptic_list(sollya_obj_t[], int);
 int sollya_lib_get_list_elements(sollya_obj_t *[], int *, int *, sollya_obj_t);
 
 /* Functions to check if a Sollya object represents a mathematical
-   function, a list, an end-elliptic list, a range, a string or a
-   constant.
+   function, a list, an end-elliptic list, a range, a string, a
+   constant or error.
 */
 int sollya_lib_obj_is_function(sollya_obj_t);
 int sollya_lib_obj_is_list(sollya_obj_t);
 int sollya_lib_obj_is_end_elliptic_list(sollya_obj_t);
 int sollya_lib_obj_is_range(sollya_obj_t);
 int sollya_lib_obj_is_string(sollya_obj_t);
+int sollya_lib_obj_is_error(sollya_obj_t);
 
 /* Functions to evaluate Sollya objects that are mathematical
    functions at points or over intervals 
