@@ -16,6 +16,7 @@ internlexer.c
 
 bin_PROGRAMS = sollya
 sollya_SOURCES = \
+sollya.h \
 mpfi-compat.c \
 mpfi-compat.h \
 message-numbers.h \

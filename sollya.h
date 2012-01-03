@@ -1,58 +1,58 @@
 /*
 
-Copyright 2007-2011 by
+  Copyright 2007-2012 by
 
-Laboratoire de l'Informatique du Parallelisme,
-UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
+  Laboratoire de l'Informatique du Parallelisme,
+  UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
 
-LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2)
+  LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2)
 
-and by
+  and by
 
-Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
-UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.
+  Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
+  UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.
 
-Contributors Ch. Lauter, S. Chevillard, M. Joldes
+  Contributors Ch. Lauter, S. Chevillard, M. Joldes
 
-christoph.lauter@ens-lyon.org
-sylvain.chevillard@ens-lyon.org
-mioara.joldes@ens-lyon.fr
+  christoph.lauter@ens-lyon.org
+  sylvain.chevillard@ens-lyon.org
+  mioara.joldes@ens-lyon.fr
 
-This software is a computer program whose purpose is to provide an
-environment for safe floating-point code development. It is
-particularily targeted to the automatized implementation of
-mathematical floating-point libraries (libm). Amongst other features,
-it offers a certified infinity norm, an automatic polynomial
-implementer and a fast Remez algorithm.
+  This software is a computer program whose purpose is to provide an
+  environment for safe floating-point code development. It is
+  particularily targeted to the automatized implementation of
+  mathematical floating-point libraries (libm). Amongst other features,
+  it offers a certified infinity norm, an automatic polynomial
+  implementer and a fast Remez algorithm.
 
-This software is governed by the CeCILL-C license under French law and
-abiding by the rules of distribution of free software.  You can  use,
-modify and/ or redistribute the software under the terms of the CeCILL-C
-license as circulated by CEA, CNRS and INRIA at the following URL
-"http://www.cecill.info".
+  This software is governed by the CeCILL-C license under French law and
+  abiding by the rules of distribution of free software.  You can  use,
+  modify and/ or redistribute the software under the terms of the CeCILL-C
+  license as circulated by CEA, CNRS and INRIA at the following URL
+  "http://www.cecill.info".
 
-As a counterpart to the access to the source code and  rights to copy,
-modify and redistribute granted by the license, users are provided only
-with a limited warranty  and the software's author,  the holder of the
-economic rights,  and the successive licensors  have only  limited
-liability.
+  As a counterpart to the access to the source code and  rights to copy,
+  modify and redistribute granted by the license, users are provided only
+  with a limited warranty  and the software's author,  the holder of the
+  economic rights,  and the successive licensors  have only  limited
+  liability.
 
-In this respect, the user's attention is drawn to the risks associated
-with loading,  using,  modifying and/or developing or reproducing the
-software by the user in light of its specific status of free software,
-that may mean  that it is complicated to manipulate,  and  that  also
-therefore means  that it is reserved for developers  and  experienced
-professionals having in-depth computer knowledge. Users are therefore
-encouraged to load and test the software's suitability as regards their
-requirements in conditions enabling the security of their systems and/or
-data to be ensured and,  more generally, to use and operate it in the
-same conditions as regards security.
+  In this respect, the user's attention is drawn to the risks associated
+  with loading,  using,  modifying and/or developing or reproducing the
+  software by the user in light of its specific status of free software,
+  that may mean  that it is complicated to manipulate,  and  that  also
+  therefore means  that it is reserved for developers  and  experienced
+  professionals having in-depth computer knowledge. Users are therefore
+  encouraged to load and test the software's suitability as regards their
+  requirements in conditions enabling the security of their systems and/or
+  data to be ensured and,  more generally, to use and operate it in the
+  same conditions as regards security.
 
-The fact that you are presently reading this means that you have had
-knowledge of the CeCILL-C license and that you accept its terms.
+  The fact that you are presently reading this means that you have had
+  knowledge of the CeCILL-C license and that you accept its terms.
 
-This program is distributed WITHOUT ANY WARRANTY; without even the
-implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  This program is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 */
 
@@ -63,272 +63,441 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 extern "C" {
 #endif
 
-#include <stdlib.h>
+#include <stdarg.h>
+#include <gmp.h>
 #include <mpfr.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <mpfi-compat.h>
-#include <setjmp.h>
 
-typedef struct chainStruct chain;
-struct chainStruct
-{
-  void *value;
-  chain *next;
-};
+  /* Define a type for all Sollya objects 
 
+     This header file is used both internally when compiling 
+     the Sollya library and when using the library.
 
-typedef struct libraryHandleStruct libraryHandle;
-struct libraryHandleStruct
-{
-  char *libraryName;
-  void *libraryDescriptor;
-  chain *functionList;
-};
+     This is why the typedef logic below is pretty ackward. 
+     Please be very careful when messing with it.
 
-typedef struct libraryFunctionStruct libraryFunction;
-struct libraryFunctionStruct
-{
-  char *functionName;
-  int (*code)(sollya_mpfi_t, sollya_mpfi_t, int); /* used for LIBRARYFUNCTION */
-  void (*constant_code)(mpfr_t, mp_prec_t); /* used for LIBRARYCONSTANT */
-};
+     If you are a Sollya library user, the only thing you have
+     to know that in the end of the following #if block, a
+     type 
 
-typedef struct libraryProcedureStruct libraryProcedure;
-struct libraryProcedureStruct
-{
-  char *procedureName;
-  void *code;
-  chain *signature;
-};
+     sollya_obj_t
 
+     is defined. This type represents the different objects the Sollya
+     library is able to handle.
 
-#define VARIABLE 0
-#define CONSTANT 1
-#define ADD 2
-#define SUB 3
-#define MUL 4
-#define DIV 5
-#define SQRT 6
-#define EXP 7
-#define LOG 8
-#define LOG_2 9
-#define LOG_10 10
-#define SIN 11
-#define COS 12
-#define TAN 13
-#define ASIN 14
-#define ACOS 15
-#define ATAN 16
-#define SINH 17
-#define COSH 18
-#define TANH 19
-#define ASINH 20
-#define ACOSH 21
-#define ATANH 22
-#define POW 23
-#define NEG 24
-#define ABS 25
-#define DOUBLE 26
-#define DOUBLEDOUBLE 27
-#define TRIPLEDOUBLE 28
-#define POLYNOMIAL 29
-#define ERF 30
-#define ERFC 31
-#define LOG_1P 32
-#define EXP_M1 33
-#define DOUBLEEXTENDED 34
-#define LIBRARYFUNCTION 35
-#define CEIL 36
-#define FLOOR 37
-#define PI_CONST 38
-#define SINGLE 39
-#define NEARESTINT 40
-#define LIBRARYCONSTANT 41
+   */
+#if (defined(__SOLLYA_NODE_TYPE_ALREADY_DEFINED) && (__SOLLYA_NODE_TYPE_ALREADY_DEFINED))
+  typedef node * sollya_obj_t;
+#else
+  typedef struct __sollya_internal_type_chain_struct __sollya_internal_type_chain;
+  struct __sollya_internal_type_chain_struct {
+    void *value;
+    __sollya_internal_type_chain *next;
+  };
 
-#define FIXED 236
-#define FLOATING 237
-#define ABSOLUTESYM 197
-#define RELATIVESYM 198
+  typedef struct __sollya_internal_type_library_function_struct __sollya_internal_type_library_function;
+  struct __sollya_internal_type_library_function_struct {
+    char *functionName;
+    int (*code)(sollya_mpfi_t, sollya_mpfi_t, int); 
+    void (*constant_code)(mpfr_t, mp_prec_t);       
+  };
 
-typedef struct nodeStruct node;
-struct nodeStruct
-{
-  int nodeType;
-  mpfr_t *value;
-  node *child1;
-  node *child2;
-  libraryFunction *libFun;
-  int libFunDeriv;
-  char *string;
-  chain *arguments;
-  libraryProcedure *libProc;
-};
+  typedef struct __sollya_internal_type_library_procedure_struct __sollya_internal_type_library_procedure;
+  struct __sollya_internal_type_library_procedure_struct {
+    char *procedureName;
+    void *code;
+    __sollya_internal_type_chain *signature;
+  };
 
-typedef struct rangetypeStruct rangetype;
-struct rangetypeStruct
-{
-  mpfr_t *a;
-  mpfr_t *b;
-};
+  typedef struct __sollya_internal_type_object_base_struct __sollya_internal_type_object_base;
+  struct __sollya_internal_type_object_base_struct {
+    int nodeType;
+    mpfr_t *value;
+    __sollya_internal_type_object_base *child1;
+    __sollya_internal_type_object_base *child2;
+    __sollya_internal_type_library_function *libFun;
+    int libFunDeriv;
+    char *string;
+    __sollya_internal_type_chain *arguments;
+    __sollya_internal_type_library_procedure *libProc;
+  };
 
-#define DISPLAY_MODE_DECIMAL     0
-#define DISPLAY_MODE_DYADIC      1
-#define DISPLAY_MODE_POWERS      2
-#define DISPLAY_MODE_BINARY      3
-#define DISPLAY_MODE_HEXADECIMAL 4
+  typedef __sollya_internal_type_object_base * sollya_obj_t;
+#endif
 
+  /* Define an enumeration type for the status
+     of floating-point evaluation
+  */
+  typedef enum fp_eval_result_enum_t fp_eval_result_t;
+  enum fp_eval_result_enum_t {
+    FP_EVAL_OBJ_NO_FUNCTION = 0,
+    FP_EVAL_FAITHFUL,
+    FP_EVAL_BELOW_CUTOFF,
+    FP_EVAL_NOT_FAITHFUL_ZERO,
+    FP_EVAL_NOT_FAITHFUL_NOT_ZERO,
+    FP_EVAL_FAILURE
+  };
 
-extern char *getNameOfVariable();
-extern int setNameOfVariable(char *);
-extern mp_prec_t getToolPrecision();
-extern void setToolPrecision(mp_prec_t);
-extern int getToolPoints();
-extern void setToolPoints(int);
-extern int getToolTaylorRecursions();
-extern void setToolTaylorRecursions(int);
-extern int getToolHopitalRecursions();
-extern void setToolHopitalRecursions(int);
-extern int getToolDiameter(mpfr_t);
-extern void setToolDiameter(mpfr_t);
-extern int getDisplayMode();
-extern int setDisplayMode(int);
-extern int getVerbosity();
-extern int setVerbosity(int);
-extern int getCanonical();
-extern void setCanonical(int);
-extern int getAutosimplify();
-extern void setAutosimplify(int);
-extern int getFullParentheses();
-extern void setFullParentheses(int);
-extern int getMidpointMode();
-extern void setMidpointMode(int);
-extern int getDieOnErrorMode();
-extern void setDieOnErrorMode(int);
-extern int getTimecounting();
-extern void setTimecounting(int);
-extern int getRoundingWarnings();
-extern void setRoundingWarnings(int);
-extern int getRationalMode();
-extern void setRationalMode(int);
+  /* Define an enumeration type for the status
+     of interval evaluation
+  */
+  typedef enum ia_eval_result_enum_t ia_eval_result_t;
+  enum ia_eval_result_enum_t {
+    INT_EVAL_OBJ_NO_FUNCTION = 0,
+    INT_EVAL_BOUNDED,
+    INT_EVAL_UNBOUNDED,
+    INT_EVAL_FAILURE
+  };
 
-extern void initTool();
-extern void finishTool();
-extern void setRecoverEnvironment(jmp_buf *);
-extern void invalidateRecoverEnvironment();
-extern void changeToWarningMode();
-extern void restoreMode();
+  /* Initialization and finalization functions */
+  int sollya_lib_init();
+  int sollya_lib_close();
 
-extern node *makeVariable();
-extern node *makeConstant(mpfr_t x);
-extern node *makeConstantDouble(double d);
-extern node *makeAdd(node *op1, node *op2);
-extern node *makeSub(node *op1, node *op2);
-extern node *makeMul(node *op1, node *op2);
-extern node *makeDiv(node *op1, node *op2);
-extern node *makeSqrt(node *op1);
-extern node *makeExp(node *op1);
-extern node *makeLog(node *op1);
-extern node *makeLog2(node *op1);
-extern node *makeLog10(node *op1);
-extern node *makeSin(node *op1);
-extern node *makeCos(node *op1);
-extern node *makeTan(node *op1);
-extern node *makeAsin(node *op1);
-extern node *makeAcos(node *op1);
-extern node *makeAtan(node *op1);
-extern node *makePow(node *op1, node *op2);
-extern node *makeNeg(node *op1);
-extern node *makeAbs(node *op1);
-extern node *makeDouble(node *op1);
-extern node *makeDoubledouble(node *op1);
-extern node *makeTripledouble(node *op1);
-extern node *makeErf(node *op1);
-extern node *makeErfc(node *op1);
-extern node *makeLog1p(node *op1);
-extern node *makeExpm1(node *op1);
-extern node *makeDoubleextended(node *op1);
-extern node *makeCeil(node *op1);
-extern node *makeFloor(node *op1);
-extern node *makeNearestInt(node *op1);
-extern node *makePi();
-extern node *makeSinh(node *op1);
-extern node *makeCosh(node *op1);
-extern node *makeTanh(node *op1);
-extern node *makeAsinh(node *op1);
-extern node *makeAcosh(node *op1);
-extern node *makeAtanh(node *op1);
+  /* Functions to install and uninstall a call-back for the messages
+     emitted by the Sollya core.  
+  */
+  int sollya_lib_install_msg_callback(int (*) (int));
+  int sollya_lib_uninstall_msg_callback();
 
+  /* Functions to print anything, including Sollya objects */
+  int sollya_lib_printf(const char *, ...);
+  int sollya_lib_v_printf(const char *, va_list);
+  int sollya_lib_fprintf(FILE *, const char *, ...);
+  int sollya_lib_v_fprintf(FILE *, const char *, va_list);
 
-extern node *parseString(char *str);
+  /* A function to clear Sollya_objects */
+  void sollya_lib_clear_obj(sollya_obj_t);
 
-extern void free_memory(node *tree);
+  /* A function to structurally compare two Sollya objects */
+  int sollya_lib_cmp_objs_structurally(sollya_obj_t, sollya_obj_t);
 
-extern int printMessage(int verb, const char *format, ...);
-extern void printTree(node *tree);
-extern void fprintTree(FILE *fd, node *tree);
-extern char *sprintTree(node *tree);
+  /* A function to copy Sollya objects */
+  sollya_obj_t sollya_lib_copy_obj(sollya_obj_t);
 
-extern node* copyTree(node *tree);
-extern node* differentiate(node *tree);
-extern node* simplifyTree(node *tree);
-extern node* simplifyTreeErrorfree(node *tree);
-extern node* horner(node *tree);
-extern node* expand(node *tree);
-extern node *substitute(node* tree, node *t);
-extern node *makeCanonical(node *func, mp_prec_t prec);
+  /* Functions corresponding to Sollya commands */
+  void sollya_lib_plot(sollya_obj_t, sollya_obj_t, ...);
+  void sollya_lib_v_plot(sollya_obj_t, sollya_obj_t, va_list);
+  void sollya_lib_printdouble(sollya_obj_t);
+  void sollya_lib_printsingle(sollya_obj_t);
+  void sollya_lib_printexpansion(sollya_obj_t);
+  void sollya_lib_implementconst(sollya_obj_t, ...);
+  void sollya_lib_v_implementconst(sollya_obj_t, va_list);
+  void sollya_lib_bashexecute(sollya_obj_t);
+  void sollya_lib_externalplot(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
+  void sollya_lib_v_externalplot(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
+  void sollya_lib_asciiplot(sollya_obj_t, sollya_obj_t);
+  void sollya_lib_printxml(sollya_obj_t);
+  void sollya_lib_printxml_newfile(sollya_obj_t, sollya_obj_t);
+  void sollya_lib_printxml_appendfile(sollya_obj_t, sollya_obj_t);
+  void sollya_lib_worstcase(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
+  void sollya_lib_v_worstcase(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
+  void sollya_lib_autoprint(sollya_obj_t, ...);
+  void sollya_lib_v_autoprint(sollya_obj_t, va_list);
+  void sollya_lib_set_prec(sollya_obj_t);
+  void sollya_lib_set_points(sollya_obj_t);
+  void sollya_lib_set_diam(sollya_obj_t);
+  void sollya_lib_set_display(sollya_obj_t);
+  void sollya_lib_set_verbosity(sollya_obj_t);
+  void sollya_lib_set_canonical(sollya_obj_t);
+  void sollya_lib_set_autosimplify(sollya_obj_t);
+  void sollya_lib_set_taylorrecursions(sollya_obj_t);
+  void sollya_lib_set_timing(sollya_obj_t);
+  void sollya_lib_set_midpointmode(sollya_obj_t);
+  void sollya_lib_set_dieonerrormode(sollya_obj_t);
+  void sollya_lib_set_rationalmode(sollya_obj_t);
+  void sollya_lib_set_roundingwarnings(sollya_obj_t);
+  void sollya_lib_set_hopitalrecursions(sollya_obj_t);
+  void sollya_lib_set_prec_silent(sollya_obj_t);
+  void sollya_lib_set_points_silent(sollya_obj_t);
+  void sollya_lib_set_diam_silent(sollya_obj_t);
+  void sollya_lib_set_display_silent(sollya_obj_t);
+  void sollya_lib_set_verbosity_silent(sollya_obj_t);
+  void sollya_lib_set_canonical_silent(sollya_obj_t);
+  void sollya_lib_set_autosimplify_silent(sollya_obj_t);
+  void sollya_lib_set_taylorrecursions_silent(sollya_obj_t);
+  void sollya_lib_set_timing_silent(sollya_obj_t);
+  void sollya_lib_set_midpointmode_silent(sollya_obj_t);
+  void sollya_lib_set_dieonerrormode_silent(sollya_obj_t);
+  void sollya_lib_set_rationalmode_silent(sollya_obj_t);
+  void sollya_lib_set_roundingwarnings_silent(sollya_obj_t);
+  void sollya_lib_set_hopitalrecursions_silent(sollya_obj_t);
 
-extern node *makePolynomial(mpfr_t *coefficients, int degree);
-extern node *getIthCoefficient(node *poly, int i);
-extern void getCoefficients(int *degree, node ***coefficients, node *poly);
+  /* Functions corresponding to Sollya built-in procedures */
+  sollya_obj_t sollya_lib_free_variable();
+  sollya_obj_t sollya_lib_and(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_or(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_negate(sollya_obj_t);
+  sollya_obj_t sollya_lib_cmp_equal(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_cmp_in(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_cmp_less(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_cmp_greater(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_cmp_less_equal(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_cmp_greater_equal(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_cmp_not_equal(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_add(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_sub(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_concat(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_append(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_prepend(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_apply(sollya_obj_t, sollya_obj_t, ...);
+  sollya_obj_t sollya_lib_v_apply(sollya_obj_t, sollya_obj_t, va_list);
+  sollya_obj_t sollya_lib_approx(sollya_obj_t);
+  sollya_obj_t sollya_lib_mul(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_div(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_pow(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_minus(sollya_obj_t);
+  sollya_obj_t sollya_lib_sup(sollya_obj_t);
+  sollya_obj_t sollya_lib_mid(sollya_obj_t);
+  sollya_obj_t sollya_lib_inf(sollya_obj_t);
+  sollya_obj_t sollya_lib_diff(sollya_obj_t);
+  sollya_obj_t sollya_lib_simplify(sollya_obj_t);
+  sollya_obj_t sollya_lib_bashevaluate(sollya_obj_t, ...);
+  sollya_obj_t sollya_lib_v_bashevaluate(sollya_obj_t, va_list);
+  sollya_obj_t sollya_lib_remez(sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
+  sollya_obj_t sollya_lib_v_remez(sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
+  sollya_obj_t sollya_lib_min(sollya_obj_t, ...);
+  sollya_obj_t sollya_lib_v_min(sollya_obj_t, va_list);
+  sollya_obj_t sollya_lib_max(sollya_obj_t, ...);
+  sollya_obj_t sollya_lib_v_max(sollya_obj_t, va_list);
+  sollya_obj_t sollya_lib_fpminimax(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
+  sollya_obj_t sollya_lib_v_fpminimax(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
+  sollya_obj_t sollya_lib_horner(sollya_obj_t);
+  sollya_obj_t sollya_lib_canonical(sollya_obj_t);
+  sollya_obj_t sollya_lib_expand(sollya_obj_t);
+  sollya_obj_t sollya_lib_simplifysafe(sollya_obj_t);
+  sollya_obj_t sollya_lib_taylor(sollya_obj_t, sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_taylorform(sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
+  sollya_obj_t sollya_lib_v_taylorform(sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
+  sollya_obj_t sollya_lib_autodiff(sollya_obj_t, sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_degree(sollya_obj_t);
+  sollya_obj_t sollya_lib_numerator(sollya_obj_t);
+  sollya_obj_t sollya_lib_denominator(sollya_obj_t);
+  sollya_obj_t sollya_lib_substitute(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_composepolynomials(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_coeff(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_subpoly(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_roundcoefficients(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_rationalapprox(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_round(sollya_obj_t, sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_evaluate(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_parse(sollya_obj_t);
+  sollya_obj_t sollya_lib_readxml(sollya_obj_t);
+  sollya_obj_t sollya_lib_infnorm(sollya_obj_t, sollya_obj_t, ...);
+  sollya_obj_t sollya_lib_v_infnorm(sollya_obj_t, sollya_obj_t, va_list);
+  sollya_obj_t sollya_lib_supnorm(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_findzeros(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_dirtyinfnorm(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_numberroots(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_integral(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_dirtyintegral(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_implementpoly(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
+  sollya_obj_t sollya_lib_v_implementpoly(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
+  sollya_obj_t sollya_lib_checkinfnorm(sollya_obj_t, sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_zerodenominators(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_searchgal(sollya_obj_t, ...);
+  sollya_obj_t sollya_lib_v_searchgal(sollya_obj_t, va_list);
+  sollya_obj_t sollya_lib_guessdegree(sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
+  sollya_obj_t sollya_lib_v_guessdegree(sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
+  sollya_obj_t sollya_lib_dirtyfindzeros(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_head(sollya_obj_t);
+  sollya_obj_t sollya_lib_roundcorrectly(sollya_obj_t);
+  sollya_obj_t sollya_lib_revert(sollya_obj_t);
+  sollya_obj_t sollya_lib_sort(sollya_obj_t);
+  sollya_obj_t sollya_lib_mantissa(sollya_obj_t);
+  sollya_obj_t sollya_lib_exponent(sollya_obj_t);
+  sollya_obj_t sollya_lib_tail(sollya_obj_t);
+  sollya_obj_t sollya_lib_range(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_sqrt(sollya_obj_t);
+  sollya_obj_t sollya_lib_exp(sollya_obj_t);
+  sollya_obj_t sollya_lib_log(sollya_obj_t);
+  sollya_obj_t sollya_lib_log2(sollya_obj_t);
+  sollya_obj_t sollya_lib_log10(sollya_obj_t);
+  sollya_obj_t sollya_lib_sin(sollya_obj_t);
+  sollya_obj_t sollya_lib_cos(sollya_obj_t);
+  sollya_obj_t sollya_lib_tan(sollya_obj_t);
+  sollya_obj_t sollya_lib_asin(sollya_obj_t);
+  sollya_obj_t sollya_lib_acos(sollya_obj_t);
+  sollya_obj_t sollya_lib_atan(sollya_obj_t);
+  sollya_obj_t sollya_lib_sinh(sollya_obj_t);
+  sollya_obj_t sollya_lib_cosh(sollya_obj_t);
+  sollya_obj_t sollya_lib_tanh(sollya_obj_t);
+  sollya_obj_t sollya_lib_asinh(sollya_obj_t);
+  sollya_obj_t sollya_lib_acosh(sollya_obj_t);
+  sollya_obj_t sollya_lib_atanh(sollya_obj_t);
+  sollya_obj_t sollya_lib_abs(sollya_obj_t);
+  sollya_obj_t sollya_lib_erf(sollya_obj_t);
+  sollya_obj_t sollya_lib_erfc(sollya_obj_t);
+  sollya_obj_t sollya_lib_log1p(sollya_obj_t);
+  sollya_obj_t sollya_lib_expm1(sollya_obj_t);
+  sollya_obj_t sollya_lib_double(sollya_obj_t);
+  sollya_obj_t sollya_lib_single(sollya_obj_t);
+  sollya_obj_t sollya_lib_quad(sollya_obj_t);
+  sollya_obj_t sollya_lib_halfprecision(sollya_obj_t);
+  sollya_obj_t sollya_lib_double_double(sollya_obj_t);
+  sollya_obj_t sollya_lib_triple_double(sollya_obj_t);
+  sollya_obj_t sollya_lib_doubleextended(sollya_obj_t);
+  sollya_obj_t sollya_lib_ceil(sollya_obj_t);
+  sollya_obj_t sollya_lib_floor(sollya_obj_t);
+  sollya_obj_t sollya_lib_nearestint(sollya_obj_t);
+  sollya_obj_t sollya_lib_length(sollya_obj_t);
+  sollya_obj_t sollya_lib_get_prec();
+  sollya_obj_t sollya_lib_get_points();
+  sollya_obj_t sollya_lib_get_diam();
+  sollya_obj_t sollya_lib_get_display();
+  sollya_obj_t sollya_lib_get_verbosity();
+  sollya_obj_t sollya_lib_get_canonical();
+  sollya_obj_t sollya_lib_get_autosimplify();
+  sollya_obj_t sollya_lib_get_taylorrecursions();
+  sollya_obj_t sollya_lib_get_timing();
+  sollya_obj_t sollya_lib_get_midpointmode();
+  sollya_obj_t sollya_lib_get_dieonerrormode();
+  sollya_obj_t sollya_lib_get_rationalmode();
+  sollya_obj_t sollya_lib_get_roundingwarnings();
+  sollya_obj_t sollya_lib_get_hopitalrecursions();
 
-extern void evaluateRangeFunction(rangetype y, node *f, rangetype x, mp_prec_t prec);
-extern int evaluateFaithful(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec);
-extern int evaluateFaithfulWithCutOff(mpfr_t result, node *func, mpfr_t x, mpfr_t cutoff, mp_prec_t startprec);
-extern int evaluateFaithfulWithCutOffFast(mpfr_t result, node *func, node *deriv, mpfr_t x, mpfr_t cutoff, mp_prec_t startprec);
+  /* Functions creating Sollya objects */
+  sollya_obj_t sollya_lib_on();
+  sollya_obj_t sollya_lib_off();
+  sollya_obj_t sollya_lib_dyadic();
+  sollya_obj_t sollya_lib_powers();
+  sollya_obj_t sollya_lib_binary();
+  sollya_obj_t sollya_lib_hexadecimal();
+  sollya_obj_t sollya_lib_file();
+  sollya_obj_t sollya_lib_postscript();
+  sollya_obj_t sollya_lib_postscriptfile();
+  sollya_obj_t sollya_lib_perturb();
+  sollya_obj_t sollya_lib_round_down();
+  sollya_obj_t sollya_lib_round_up();
+  sollya_obj_t sollya_lib_round_towards_zero();
+  sollya_obj_t sollya_lib_round_to_nearest();
+  sollya_obj_t sollya_lib_honorcoeffprec();
+  sollya_obj_t sollya_lib_true();
+  sollya_obj_t sollya_lib_false();
+  sollya_obj_t sollya_lib_void();
+  sollya_obj_t sollya_lib_default();
+  sollya_obj_t sollya_lib_decimal();
+  sollya_obj_t sollya_lib_absolute();
+  sollya_obj_t sollya_lib_relative();
+  sollya_obj_t sollya_lib_fixed();
+  sollya_obj_t sollya_lib_floating();
+  sollya_obj_t sollya_lib_error();
+  sollya_obj_t sollya_lib_double_obj();
+  sollya_obj_t sollya_lib_single_obj();
+  sollya_obj_t sollya_lib_quad_obj();
+  sollya_obj_t sollya_lib_halfprecision_obj();
+  sollya_obj_t sollya_lib_doubleextended_obj();
+  sollya_obj_t sollya_lib_double_double_obj();
+  sollya_obj_t sollya_lib_triple_double_obj();
+  sollya_obj_t sollya_lib_pi();
 
-extern int getDegree(node *tree);
-extern int isPolynomial(node *tree);
-extern int isSyntacticallyEqual(node *tree1, node *tree2);
-extern int isConstant(node *tree);
-extern int isHorner(node *tree);
-extern int isCanonical(node *tree);
+  /* A function to parse expressions and evaluate them */
+  sollya_obj_t sollya_lib_parse_string(const char *);
 
-extern rangetype infnorm(node *func, rangetype range, chain *excludes, mp_prec_t prec, mpfr_t diam, FILE *proof);
-extern void uncertifiedInfnorm(mpfr_t result, node *tree, mpfr_t a, mpfr_t b, unsigned long int points, mp_prec_t prec);
-extern int checkInfnorm(node *func, rangetype range, mpfr_t infnormval, mpfr_t diam, mp_prec_t prec);
+  /* Functions to convert from constants to Sollya objects */
+  sollya_obj_t sollya_lib_string(char *);
+  sollya_obj_t sollya_lib_range_from_interval(sollya_mpfi_t);
+  sollya_obj_t sollya_lib_range_from_bounds(mpfr_t, mpfr_t);
+  sollya_obj_t sollya_lib_constant(mpfr_t);
+  sollya_obj_t sollya_lib_constant_from_double(double);
+  sollya_obj_t sollya_lib_constant_from_int(int);
+  sollya_obj_t sollya_lib_constant_from_int64(int64_t);
+  sollya_obj_t sollya_lib_constant_from_uint64(uint64_t);
 
-extern int newtonMPFR(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, mpfr_t b, mp_prec_t prec);
-extern int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, mpfr_t b, mpfr_t start, mp_prec_t prec);
-extern chain* findZerosFunction(node *func, rangetype range, mp_prec_t prec, mpfr_t diam);
-extern chain* fpFindZerosFunction(node *func, rangetype range, mp_prec_t prec);
+  /* Functions to get values contained in Sollya objects */
+  int sollya_lib_get_interval_from_range(sollya_mpfi_t, sollya_obj_t);
+  int sollya_lib_get_bounds_from_range(mpfr_t, mpfr_t, sollya_obj_t);
+  int sollya_lib_get_string(char **, sollya_obj_t);
+  int sollya_lib_get_constant_as_double(double *, sollya_obj_t);
+  int sollya_lib_get_constant_as_int(int *, sollya_obj_t);
+  int sollya_lib_get_constant_as_int64(int64_t *, sollya_obj_t);
+  int sollya_lib_get_constant_as_uint64(uint64_t *, sollya_obj_t);
 
-extern node *remez(node *func, node *weight, chain *monomials, mpfr_t a, mpfr_t b, mpfr_t quality, mpfr_t satisfying_error, mpfr_t target_error, mp_prec_t prec);
-extern rangetype guessDegree(node *func, node *weight, mpfr_t a, mpfr_t b, mpfr_t eps);
+  /* The following function, in contrast to all others, 
+     not only assigns a new value to the mpfr_t argument
+     in case of success but also adjusts its precision
+     in order to store the constant in the Sollya 
+     object exactly (without any rounding).
 
-extern node *FPminimax(node *f,	chain *monomials, chain *formats, chain *points, mpfr_t a, mpfr_t b, int fp, int absrel, node *consPart, node *minimax);
+     Rounding may nevertheless happen if the Sollya object 
+     is not a constant by itself but a constant expression
+     that needs to be evaluated. 
+  */
+  int sollya_lib_get_constant(mpfr_t, sollya_obj_t);
 
-extern int implementconst(node *, FILE *, char *);
-extern void freeChain(chain *c, void (*f) (void *));
-extern chain *addElement(chain *c, void *elem);
-extern void *first(chain *c);
-extern chain *tail(chain *c);
-extern chain *copyChain(chain *c, void * (*f) (void *));
-extern chain *concatChains(chain *c1, chain *c2);
-extern int lengthChain(chain *c);
-extern void sortChain(chain *c,  int (*f) (void *, void *));
-extern chain *makeIntPtrChainFromTo(int m, int n);
-extern chain *makeConstantIntChain(int n);
-extern chain *makeConstantIntChainFromTo(int m, int n);
+  /* Functions to build up Sollya lists from arrays of objects and 
+     to get arrays of Sollya objects out of Sollya lists 
+  */
+  sollya_obj_t sollya_lib_list(sollya_obj_t[], int);
+  sollya_obj_t sollya_lib_end_elliptic_list(sollya_obj_t[], int);
+  int sollya_lib_get_list_elements(sollya_obj_t *[], int *, int *, sollya_obj_t);
 
-extern void freeIntPtr(void *ptr);
-extern void *accessInList(chain *, int);
-extern chain *removeInt(chain *c, int n);
+  /* Functions to check if a Sollya object represents a mathematical
+     function, a list, an end-elliptic list, a range, a string, a
+     constant or error.
+  */
+  int sollya_lib_obj_is_function(sollya_obj_t);
+  int sollya_lib_obj_is_list(sollya_obj_t);
+  int sollya_lib_obj_is_end_elliptic_list(sollya_obj_t);
+  int sollya_lib_obj_is_range(sollya_obj_t);
+  int sollya_lib_obj_is_string(sollya_obj_t);
+  int sollya_lib_obj_is_error(sollya_obj_t);
 
-extern void *safeCalloc (size_t nmemb, size_t size);
-extern void *safeMalloc (size_t size);
+  /* Functions to evaluate Sollya objects that are mathematical
+     functions at points or over intervals 
+  */
+  fp_eval_result_t sollya_lib_evaluate_function_at_point(mpfr_t, sollya_obj_t, mpfr_t, mpfr_t *);
+  ia_eval_result_t sollya_lib_evaluate_function_over_interval(sollya_mpfi_t, sollya_obj_t, sollya_mpfi_t);
 
-extern void printInterval(sollya_mpfi_t);
-extern void printValue(mpfr_t *);
-extern node* simplifyTreeErrorfree(node *tree);
+  /* Functions for building Sollya objects representing 
+     mathematical functions.
+
+     Attention: in contrast to all other functions in
+     the Sollya library, these functions "use up" the
+     objects they take as an argument.
+
+  */
+  sollya_obj_t sollya_lib_build_function_free_variable();
+  sollya_obj_t sollya_lib_build_function_add(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_sub(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_mul(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_div(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_sqrt(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_exp(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_log(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_log2(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_log10(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_sin(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_cos(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_tan(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_asin(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_acos(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_atan(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_pow(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_neg(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_abs(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_double(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_single(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_quad(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_halfprecision(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_double_double(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_triple_double(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_erf(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_erfc(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_log1p(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_expm1(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_doubleextended(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_ceil(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_floor(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_nearestint(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_sinh(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_cosh(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_tanh(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_asinh(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_acosh(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_atanh(sollya_obj_t);
+  sollya_obj_t sollya_lib_build_function_pi();
 
 #ifdef __cplusplus
 }

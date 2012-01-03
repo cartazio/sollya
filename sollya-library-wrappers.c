@@ -1,6 +1,6 @@
 /*
 
-Copyright 2011 by
+Copyright 2011-2012 by
 
 Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
 UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France,
@@ -65,6 +65,10 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
   chain *__thinglist, *curr;                                               \
   node *elem
 
+#define MAKE_THINGLIST_DECLS_FROM_VA_LIST(__thinglist)                     \
+  chain *__thinglist, *curr;                                               \
+  node *elem
+
 #define MAKE_THINGLIST_FROM_VARIADIC(__last)                               \
   va_start(varlist,(__last));                                              \
   thinglist = (chain *) safeMalloc(sizeof(chain));                         \
@@ -79,6 +83,18 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
   }                                                                        \
   va_end(varlist)
 
+#define MAKE_THINGLIST_FROM_VA_LIST(__last, __varlist)                     \
+  thinglist = (chain *) safeMalloc(sizeof(chain));                         \
+  thinglist->value = copyThing((__last));                                  \
+  thinglist->next = NULL;                                                  \
+  curr = thinglist;                                                        \
+  while ((elem = va_arg((__varlist),node *)) != NULL) {                    \
+    curr->next = (chain *) safeMalloc(sizeof(chain));                      \
+    curr = curr->next;                                                     \
+    curr->value = copyThing(elem);                                         \
+    curr->next = NULL;                                                     \
+  }                                                                        \
+  (void) 1
 
 /* Actual wrapper functions */
 
@@ -111,6 +127,14 @@ int sollya_lib_printf(const char *format, ...) {
   return res;
 }
 
+int sollya_lib_v_printf(const char *format, va_list varlist) {
+  int res;
+
+  res = sollyaVfprintf(stdout,format,varlist);
+
+  return res;
+}
+
 int sollya_lib_fprintf(FILE *fd, const char *format, ...) {
   va_list varlist;
   int res;
@@ -120,6 +144,14 @@ int sollya_lib_fprintf(FILE *fd, const char *format, ...) {
   res = sollyaVfprintf(fd,format,varlist);
 
   va_end(varlist);
+
+  return res;
+}
+
+int sollya_lib_v_fprintf(FILE *fd, const char *format, va_list varlist) {
+  int res;
+
+  res = sollyaVfprintf(fd,format,varlist);
 
   return res;
 }
@@ -140,6 +172,15 @@ void sollya_lib_plot(sollya_obj_t obj1, sollya_obj_t obj2, ...) {
   node *thingToExecute;
   MAKE_THINGLIST_DECLS(thinglist);
   MAKE_THINGLIST_FROM_VARIADIC(obj2);
+  thingToExecute = makePlot(addElement(thinglist, copyThing(obj1)));
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
+}
+
+void sollya_lib_v_plot(sollya_obj_t obj1, sollya_obj_t obj2, va_list varlist) {
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
+  MAKE_THINGLIST_FROM_VA_LIST(obj2,varlist);
   thingToExecute = makePlot(addElement(thinglist, copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute); 
@@ -175,6 +216,15 @@ void sollya_lib_implementconst(sollya_obj_t obj1, ...) {
   freeThing(thingToExecute);  
 }
 
+void sollya_lib_v_implementconst(sollya_obj_t obj1, va_list varlist) {
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
+  MAKE_THINGLIST_FROM_VA_LIST(obj1,varlist);
+  thingToExecute = makeImplementConst(thinglist);
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute);  
+}
+
 void sollya_lib_bashexecute(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeBashExecute(copyThing(obj1));
@@ -186,6 +236,15 @@ void sollya_lib_externalplot(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t 
   node *thingToExecute;
   MAKE_THINGLIST_DECLS(thinglist);
   MAKE_THINGLIST_FROM_VARIADIC(obj5);
+  thingToExecute = makeExternalPlot(addElement(addElement(addElement(addElement(thinglist, copyThing(obj4)),copyThing(obj3)),copyThing(obj2)),copyThing(obj1)));
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
+}
+
+void sollya_lib_v_externalplot(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, sollya_obj_t obj4, sollya_obj_t obj5, va_list varlist) {
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
+  MAKE_THINGLIST_FROM_VA_LIST(obj5,varlist);
   thingToExecute = makeExternalPlot(addElement(addElement(addElement(addElement(thinglist, copyThing(obj4)),copyThing(obj3)),copyThing(obj2)),copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute); 
@@ -228,10 +287,28 @@ void sollya_lib_worstcase(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj
   freeThing(thingToExecute); 
 }
 
+void sollya_lib_v_worstcase(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, sollya_obj_t obj4, sollya_obj_t obj5, va_list varlist) {
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
+  MAKE_THINGLIST_FROM_VA_LIST(obj5,varlist);
+  thingToExecute = makeWorstCase(addElement(addElement(addElement(addElement(thinglist, copyThing(obj4)),copyThing(obj3)),copyThing(obj2)),copyThing(obj1)));
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
+}
+
 void sollya_lib_autoprint(sollya_obj_t obj1, ...) {
   node *thingToExecute;
   MAKE_THINGLIST_DECLS(thinglist);
   MAKE_THINGLIST_FROM_VARIADIC(obj1);
+  thingToExecute = makeAutoprint(thinglist);
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
+}
+
+void sollya_lib_v_autoprint(sollya_obj_t obj1, va_list varlist) {
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
+  MAKE_THINGLIST_FROM_VA_LIST(obj1,varlist);
   thingToExecute = makeAutoprint(thinglist);
   executeCommand(thingToExecute);
   freeThing(thingToExecute); 
@@ -565,6 +642,10 @@ sollya_obj_t sollya_lib_apply(sollya_obj_t obj1, sollya_obj_t obj2, ...) {
   return NULL; 
 }
 
+sollya_obj_t sollya_lib_v_apply(sollya_obj_t obj1, sollya_obj_t obj2, va_list varlist) {
+  return NULL; 
+}
+
 sollya_obj_t sollya_lib_approx(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   thingToEvaluate = makeEvalConst(copyThing(obj1));
@@ -649,7 +730,15 @@ sollya_obj_t sollya_lib_bashevaluate(sollya_obj_t obj1, ...) {
   return NULL; 
 }
 
+sollya_obj_t sollya_lib_v_bashevaluate(sollya_obj_t obj1, va_list varlist) {
+  return NULL; 
+}
+
 sollya_obj_t sollya_lib_remez(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, ...) {
+  return NULL; 
+}
+
+sollya_obj_t sollya_lib_v_remez(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, va_list varlist) {
   return NULL; 
 }
 
@@ -657,11 +746,23 @@ sollya_obj_t sollya_lib_min(sollya_obj_t obj1, ...) {
   return NULL; 
 }
 
+sollya_obj_t sollya_lib_v_min(sollya_obj_t obj1, va_list varlist) {
+  return NULL; 
+}
+
 sollya_obj_t sollya_lib_max(sollya_obj_t obj1, ...) {
   return NULL; 
 }
 
+sollya_obj_t sollya_lib_v_max(sollya_obj_t obj1, va_list varlist) {
+  return NULL; 
+}
+
 sollya_obj_t sollya_lib_fpminimax(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, sollya_obj_t obj4, ...) {
+  return NULL; 
+}
+
+sollya_obj_t sollya_lib_v_fpminimax(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, sollya_obj_t obj4, va_list varlist) {
   return NULL; 
 }
 
@@ -706,6 +807,10 @@ sollya_obj_t sollya_lib_taylor(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_
 }
 
 sollya_obj_t sollya_lib_taylorform(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, ...) {
+  return NULL; 
+}
+
+sollya_obj_t sollya_lib_v_taylorform(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, va_list varlist) {
   return NULL; 
 }
 
@@ -825,10 +930,14 @@ sollya_obj_t sollya_lib_infnorm(sollya_obj_t obj1, sollya_obj_t obj2, ...) {
   return NULL; 
 }
 
+sollya_obj_t sollya_lib_v_infnorm(sollya_obj_t obj1, sollya_obj_t obj2, va_list varlist) {
+  return NULL; 
+}
+
 sollya_obj_t sollya_lib_supnorm(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, sollya_obj_t obj4, sollya_obj_t obj5) {
   node *thingToEvaluate, *evaluatedThing;
   thingToEvaluate = makeAutodiff(addElement(addElement(addElement(addElement(addElement(NULL,copyThing(obj5)),copyThing(obj4)),
-								  copyThing(obj3)),copyThing(obj2)),copyThing(obj1)));
+                                                                  copyThing(obj3)),copyThing(obj2)),copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate); 
   return evaluatedThing;  
@@ -878,6 +987,10 @@ sollya_obj_t sollya_lib_implementpoly(sollya_obj_t obj1, sollya_obj_t obj2, soll
   return NULL; 
 }
 
+sollya_obj_t sollya_lib_v_implementpoly(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, sollya_obj_t obj4, sollya_obj_t obj5, sollya_obj_t obj6, va_list varlist) {
+  return NULL; 
+}
+
 sollya_obj_t sollya_lib_checkinfnorm(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3) {
   node *thingToEvaluate, *evaluatedThing;
   thingToEvaluate = makeCheckInfnorm(copyThing(obj1),copyThing(obj2),copyThing(obj3));
@@ -898,7 +1011,15 @@ sollya_obj_t sollya_lib_searchgal(sollya_obj_t obj1, ...) {
   return NULL; 
 }
 
+sollya_obj_t sollya_lib_v_searchgal(sollya_obj_t obj1, va_list varlist) {
+  return NULL; 
+}
+
 sollya_obj_t sollya_lib_guessdegree(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, ...) {
+  return NULL; 
+}
+
+sollya_obj_t sollya_lib_v_guessdegree(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, va_list varlist) {
   return NULL; 
 }
 
@@ -1614,8 +1735,8 @@ sollya_obj_t sollya_lib_pi() {
   return evaluatedThing;
 }
 
-sollya_obj_t sollya_lib_parse_string(char *str) {
-  return parseString(str);
+sollya_obj_t sollya_lib_parse_string(const char *str) {
+  return parseString((char *) str);
 }
 
 sollya_obj_t sollya_lib_string(char *str) {
@@ -2035,7 +2156,7 @@ fp_eval_result_t sollya_lib_evaluate_function_at_point(mpfr_t y, sollya_obj_t ob
   return FP_EVAL_FAILURE; // TODO
 }
 
-ia_eval_result_t sollya_lib_evaluate_funtion_over_interval(sollya_mpfi_t y, sollya_obj_t obj1, sollya_mpfi_t x) {
+ia_eval_result_t sollya_lib_evaluate_function_over_interval(sollya_mpfi_t y, sollya_obj_t obj1, sollya_mpfi_t x) {
   return INT_EVAL_FAILURE; // TODO
 }
 
