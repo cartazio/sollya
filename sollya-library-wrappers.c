@@ -639,11 +639,21 @@ sollya_obj_t sollya_lib_prepend(sollya_obj_t obj1, sollya_obj_t obj2) {
 }
 
 sollya_obj_t sollya_lib_apply(sollya_obj_t obj1, sollya_obj_t obj2, ...) {
-  return NULL; 
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS(thinglist);
+  MAKE_THINGLIST_FROM_VARIADIC(obj2);
+  thingToExecute = makeApply(copyThing(obj1),thinglist);
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
 }
 
 sollya_obj_t sollya_lib_v_apply(sollya_obj_t obj1, sollya_obj_t obj2, va_list varlist) {
-  return NULL; 
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
+  MAKE_THINGLIST_FROM_VA_LIST(obj2,varlist);
+  thingToExecute = makeApply(copyThing(obj1),thinglist);
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
 }
 
 sollya_obj_t sollya_lib_approx(sollya_obj_t obj1) {
@@ -727,43 +737,93 @@ sollya_obj_t sollya_lib_simplify(sollya_obj_t obj1) {
 }
 
 sollya_obj_t sollya_lib_bashevaluate(sollya_obj_t obj1, ...) {
-  return NULL; 
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS(thinglist);
+  MAKE_THINGLIST_FROM_VARIADIC(obj1);
+  thingToExecute = makeBashevaluate(thinglist);
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
 }
 
 sollya_obj_t sollya_lib_v_bashevaluate(sollya_obj_t obj1, va_list varlist) {
-  return NULL; 
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
+  MAKE_THINGLIST_FROM_VA_LIST(obj1,varlist);
+  thingToExecute = makeBashevaluate(thinglist);
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
 }
 
 sollya_obj_t sollya_lib_remez(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, ...) {
-  return NULL; 
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS(thinglist);
+  MAKE_THINGLIST_FROM_VARIADIC(obj3);
+  thingToExecute = makeRemez(addElement(addElement(thinglist, copyThing(obj2)),copyThing(obj1)));
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
 }
 
 sollya_obj_t sollya_lib_v_remez(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, va_list varlist) {
-  return NULL; 
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
+  MAKE_THINGLIST_FROM_VA_LIST(obj3,varlist);
+  thingToExecute = makeRemez(addElement(addElement(thinglist, copyThing(obj2)),copyThing(obj1)));
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
 }
 
 sollya_obj_t sollya_lib_min(sollya_obj_t obj1, ...) {
-  return NULL; 
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS(thinglist);
+  MAKE_THINGLIST_FROM_VARIADIC(obj1);
+  thingToExecute = makeMin(thinglist);
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
 }
 
 sollya_obj_t sollya_lib_v_min(sollya_obj_t obj1, va_list varlist) {
-  return NULL; 
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
+  MAKE_THINGLIST_FROM_VA_LIST(obj1,varlist);
+  thingToExecute = makeMin(thinglist);
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
 }
 
 sollya_obj_t sollya_lib_max(sollya_obj_t obj1, ...) {
-  return NULL; 
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS(thinglist);
+  MAKE_THINGLIST_FROM_VARIADIC(obj1);
+  thingToExecute = makeMax(thinglist);
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
 }
 
 sollya_obj_t sollya_lib_v_max(sollya_obj_t obj1, va_list varlist) {
-  return NULL; 
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
+  MAKE_THINGLIST_FROM_VA_LIST(obj1,varlist);
+  thingToExecute = makeMax(thinglist);
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
 }
 
 sollya_obj_t sollya_lib_fpminimax(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, sollya_obj_t obj4, ...) {
-  return NULL; 
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS(thinglist);
+  MAKE_THINGLIST_FROM_VARIADIC(obj4);
+  thingToExecute = makeFPminimax(addElement(addElement(addElement(thinglist, copyThing(obj3)), copyThing(obj2)),copyThing(obj1)));
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
 }
 
 sollya_obj_t sollya_lib_v_fpminimax(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, sollya_obj_t obj4, va_list varlist) {
-  return NULL; 
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
+  MAKE_THINGLIST_FROM_VA_LIST(obj4,varlist);
+  thingToExecute = makeFPminimax(addElement(addElement(addElement(thinglist, copyThing(obj3)), copyThing(obj2)),copyThing(obj1)));
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
 }
 
 sollya_obj_t sollya_lib_horner(sollya_obj_t obj1) {
@@ -807,11 +867,21 @@ sollya_obj_t sollya_lib_taylor(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_
 }
 
 sollya_obj_t sollya_lib_taylorform(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, ...) {
-  return NULL; 
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS(thinglist);
+  MAKE_THINGLIST_FROM_VARIADIC(obj3);
+  thingToExecute = makeTaylorform(addElement(addElement(thinglist, copyThing(obj2)),copyThing(obj1)));
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
 }
 
 sollya_obj_t sollya_lib_v_taylorform(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, va_list varlist) {
-  return NULL; 
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
+  MAKE_THINGLIST_FROM_VA_LIST(obj3,varlist);
+  thingToExecute = makeTaylorform(addElement(addElement(thinglist, copyThing(obj2)),copyThing(obj1)));
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
 }
 
 sollya_obj_t sollya_lib_autodiff(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3) {
@@ -927,11 +997,21 @@ sollya_obj_t sollya_lib_readxml(sollya_obj_t obj1) {
 }
 
 sollya_obj_t sollya_lib_infnorm(sollya_obj_t obj1, sollya_obj_t obj2, ...) {
-  return NULL; 
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS(thinglist);
+  MAKE_THINGLIST_FROM_VARIADIC(obj2);
+  thingToExecute = makeInfnorm(addElement(thinglist, copyThing(obj1)));
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
 }
 
 sollya_obj_t sollya_lib_v_infnorm(sollya_obj_t obj1, sollya_obj_t obj2, va_list varlist) {
-  return NULL; 
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
+  MAKE_THINGLIST_FROM_VA_LIST(obj2,varlist);
+  thingToExecute = makeInfnorm(addElement(thinglist, copyThing(obj1)));
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
 }
 
 sollya_obj_t sollya_lib_supnorm(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, sollya_obj_t obj4, sollya_obj_t obj5) {
@@ -984,11 +1064,21 @@ sollya_obj_t sollya_lib_dirtyintegral(sollya_obj_t obj1, sollya_obj_t obj2) {
 }
 
 sollya_obj_t sollya_lib_implementpoly(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, sollya_obj_t obj4, sollya_obj_t obj5, sollya_obj_t obj6, ...) {
-  return NULL; 
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS(thinglist);
+  MAKE_THINGLIST_FROM_VARIADIC(obj6);
+  thingToExecute = makeImplementPoly(addElement(addElement(addElement(addElement(addElement(thinglist, copyThing(obj5)), copyThing(obj4)),copyThing(obj3)),copyThing(obj2)),copyThing(obj1)));
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
 }
 
 sollya_obj_t sollya_lib_v_implementpoly(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, sollya_obj_t obj4, sollya_obj_t obj5, sollya_obj_t obj6, va_list varlist) {
-  return NULL; 
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
+  MAKE_THINGLIST_FROM_VA_LIST(obj6,varlist);
+  thingToExecute = makeImplementPoly(addElement(addElement(addElement(addElement(addElement(thinglist, copyThing(obj5)), copyThing(obj4)),copyThing(obj3)),copyThing(obj2)),copyThing(obj1)));
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
 }
 
 sollya_obj_t sollya_lib_checkinfnorm(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3) {
@@ -1008,19 +1098,39 @@ sollya_obj_t sollya_lib_zerodenominators(sollya_obj_t obj1, sollya_obj_t obj2) {
 }
 
 sollya_obj_t sollya_lib_searchgal(sollya_obj_t obj1, ...) {
-  return NULL; 
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS(thinglist);
+  MAKE_THINGLIST_FROM_VARIADIC(obj1);
+  thingToExecute = makeSearchGal(thinglist);
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
 }
 
 sollya_obj_t sollya_lib_v_searchgal(sollya_obj_t obj1, va_list varlist) {
-  return NULL; 
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
+  MAKE_THINGLIST_FROM_VA_LIST(obj1,varlist);
+  thingToExecute = makeSearchGal(thinglist);
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
 }
 
 sollya_obj_t sollya_lib_guessdegree(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, ...) {
-  return NULL; 
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS(thinglist);
+  MAKE_THINGLIST_FROM_VARIADIC(obj3);
+  thingToExecute = makeGuessDegree(addElement(addElement(thinglist, copyThing(obj2)),copyThing(obj1)));
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
 }
 
 sollya_obj_t sollya_lib_v_guessdegree(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, va_list varlist) {
-  return NULL; 
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
+  MAKE_THINGLIST_FROM_VA_LIST(obj3,varlist);
+  thingToExecute = makeGuessDegree(addElement(addElement(thinglist, copyThing(obj2)),copyThing(obj1)));
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
 }
 
 sollya_obj_t sollya_lib_dirtyfindzeros(sollya_obj_t obj1, sollya_obj_t obj2) {
@@ -2153,11 +2263,155 @@ int sollya_lib_obj_is_error(sollya_obj_t obj1) {
 }
 
 fp_eval_result_t sollya_lib_evaluate_function_at_point(mpfr_t y, sollya_obj_t obj1, mpfr_t x, mpfr_t *cutoff) {
-  return FP_EVAL_FAILURE; // TODO
+  int res;
+  mpfr_t myCutOff;
+  sollya_mpfi_t xInt, yInt;
+  mpfr_t yLeft, yRight;
+  mp_prec_t prec;
+
+  /* Check if object is a function */
+  if (!isPureTree(obj1)) return FP_EVAL_OBJ_NO_FUNCTION;
+
+  /* Determine start precision */ 
+  prec = mpfr_get_prec(y) + 10;
+
+  /* Initialize our own cutoff variable */
+  if (cutoff == NULL) {
+    mpfr_init2(myCutOff, 12);
+    mpfr_set_ui(myCutOff, 0, GMP_RNDN);
+  } else {
+    mpfr_init2(myCutOff, mpfr_get_prec(*cutoff));
+    mpfr_set(myCutOff, *cutoff, GMP_RNDN);
+  }
+
+  /* Try to perform faithful evaluation */
+  res = evaluateFaithfulWithCutOffFast(y, obj1, NULL, x, myCutOff, prec);
+
+  /* Free cutoff */
+  mpfr_clear(myCutOff);
+
+  /* Translate the evaluation result code */
+  switch (res) {
+  case 1:
+    /* Faithful rounding was possible */
+    return FP_EVAL_FAITHFUL;
+    break;
+  case 2:
+    /* Result was shown to be smaller than cutoff */
+    return FP_EVAL_BELOW_CUTOFF;
+    break;
+  case 3:
+    /* Here, at least one of the bounds of the proof 
+       interval was something else but a number. 
+       We consider the function to be unstable at this point.
+    */
+    return FP_EVAL_FAILURE;
+    break;
+  default:
+    break;
+  }
+  
+  /* If we are here, we could not acheive faithful rounding nor get
+     below the cutoff nor show that all evaluations will lead to NaN.
+
+     We have to perform an additional interval evaluation and see
+     if we get real numbers as bounds and if zero is in that interval
+     or not.
+
+  */
+  if (prec < tools_precision) prec = tools_precision;
+  sollya_mpfi_init2(xInt, mpfr_get_prec(x));
+  sollya_mpfi_set_fr(xInt, x);
+  sollya_mpfi_init2(yInt, 256 * prec + 10);
+  
+  /* Perform interval evaluation */
+  evaluateInterval(yInt, obj1, NULL, xInt);
+
+  /* Extract bounds */
+  mpfr_init2(yLeft, sollya_mpfi_get_prec(yInt));
+  mpfr_init2(yRight, sollya_mpfi_get_prec(yInt));
+  sollya_mpfi_get_left(yLeft, yInt);
+  sollya_mpfi_get_right(yRight, yInt);
+
+  /* Clear intervals */
+  sollya_mpfi_clear(xInt);
+  sollya_mpfi_clear(yInt);
+
+  /* Check if bounds are numbers */
+  if ((!mpfr_number_p(yLeft)) || (!mpfr_number_p(yRight))) {
+    /* Here, at least one of the bounds is not a real number. We
+       consider that evaluation is not possible at this point. 
+    */
+    mpfr_clear(yLeft);
+    mpfr_clear(yRight);
+    return FP_EVAL_FAILURE;
+  }
+  
+  /* Here, both bounds of the proof interval are numbers.
+
+     Check if zero is in the proof interval or not.
+
+  */
+  if (mpfr_sgn(yLeft) * mpfr_sgn(yRight) < 0) {
+    /* Zero is in the proof interval. Take zero as the evaluation
+       result even if it cannot be shown that zero is a faithful
+       rounding of the mathematical result value.
+    */
+    mpfr_set_ui(y, 0, GMP_RNDN);
+    mpfr_clear(yLeft);
+    mpfr_clear(yRight);
+    return FP_EVAL_NOT_FAITHFUL_ZERO;    
+  } 
+
+  /* Here, zero is not in the proof interval. Take the approximate
+     midpoint of the proof interval as an approximation of the
+     mathematical result value.
+  */
+  
+  mpfr_add(yLeft, yLeft, yRight, GMP_RNDN);
+  mpfr_div_2ui(y, yLeft, 1, GMP_RNDN);
+  mpfr_clear(yLeft);
+  mpfr_clear(yRight);
+  return FP_EVAL_NOT_FAITHFUL_NOT_ZERO;    
 }
 
 ia_eval_result_t sollya_lib_evaluate_function_over_interval(sollya_mpfi_t y, sollya_obj_t obj1, sollya_mpfi_t x) {
-  return INT_EVAL_FAILURE; // TODO
+  sollya_mpfi_t myY, myPointY;
+  mpfr_t xAsPoint, yAsPoint;
+  mp_prec_t prec;
+  
+  /* Check if object is a function */
+  if (!isPureTree(obj1)) return INT_EVAL_OBJ_NO_FUNCTION;
+
+  /* Initialize our own versions of the final result */
+  prec = sollya_mpfi_get_prec(y);
+  sollya_mpfi_init2(myY, prec + 5);
+  sollya_mpfi_init2(myPointY, prec + 5);
+  sollya_mpfi_set_full_range(myPointY);
+
+  /* If x is a point interval, try to use faithful evaluation with
+     precision adaptation to get a tighter result.
+  */
+  // TODO
+
+  /* Perform a first interval evaluation */
+  // TODO
+
+
+  /* Set final result as intersection of myY and myPointY */
+  sollya_mpfi_intersect(y, myY, myPointY);
+
+  /* Clear the local variables */
+  sollya_mpfi_clear(myY);
+  sollya_mpfi_clear(myPointY);
+
+  /* Return evaluation status result as a function of the result */
+  if (sollya_mpfi_bounded_p(y)) return INT_EVAL_BOUNDED;
+  if (sollya_mpfi_has_nan(y)) return INT_EVAL_FAILURE;
+  if (sollya_mpfi_has_infinity(y)) return INT_EVAL_UNBOUNDED;
+
+  /* Just in case we missed something */
+  return INT_EVAL_FAILURE;
 }
 
 sollya_obj_t sollya_lib_build_function_free_variable() {
