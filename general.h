@@ -185,6 +185,8 @@ void restoreMode();
 void changeToWarningMode();
 int  getDisplayColor();
 void setDisplayColor(int);
+int installMessageCallback(int (*msgHandler) (int));
+int uninstallMessageCallback();
 mp_prec_t getToolPrecision();
 void setToolPrecision(mp_prec_t prec);
 int getToolPoints();

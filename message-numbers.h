@@ -51,6 +51,7 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #ifndef MESSAGE_NUMBERS_H
 #define MESSAGE_NUMBERS_H
 
+/* Symbolic constants for the different messages */
 #define SOLLYA_MSG_NO_MSG                                            0       /* Void error message, no error at all */
 #define SOLLYA_MSG_CONTINUATION                                      1       /* Continues the error message that has just started */
 #define SOLLYA_MSG_UNDEFINED_ERROR                                   2       /* Some undefined error occurred. This is a place-holder */

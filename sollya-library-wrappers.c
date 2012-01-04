@@ -107,11 +107,11 @@ int sollya_lib_close() {
 }
 
 int sollya_lib_install_msg_callback(int (*callback_func) (int)) {
-  return 0; // TODO
+  return installMessageCallback(callback_func);
 }
 
 int sollya_lib_uninstall_msg_callback() {
-  return 0; // TODO
+  return uninstallMessageCallback();
 }
 
 int sollya_lib_printf(const char *format, ...) {
@@ -2377,8 +2377,8 @@ fp_eval_result_t sollya_lib_evaluate_function_at_point(mpfr_t y, sollya_obj_t ob
 
 ia_eval_result_t sollya_lib_evaluate_function_over_interval(sollya_mpfi_t y, sollya_obj_t obj1, sollya_mpfi_t x) {
   sollya_mpfi_t myY, myPointY;
-  mpfr_t xAsPoint, yAsPoint;
-  mp_prec_t prec;
+  mpfr_t xLeft, xRight, yLeft, yRight, myCutOff;
+  mp_prec_t prec, p;
   
   /* Check if object is a function */
   if (!isPureTree(obj1)) return INT_EVAL_OBJ_NO_FUNCTION;
@@ -2392,11 +2392,35 @@ ia_eval_result_t sollya_lib_evaluate_function_over_interval(sollya_mpfi_t y, sol
   /* If x is a point interval, try to use faithful evaluation with
      precision adaptation to get a tighter result.
   */
-  // TODO
+  p = sollya_mpfi_get_prec(x);
+  mpfr_init2(xLeft, p);
+  mpfr_init2(xRight, p);
+  sollya_mpfi_get_left(xLeft, x);
+  sollya_mpfi_get_right(xRight, x);
+  if (mpfr_equal_p(xLeft,xRight)) {
+    mpfr_init2(yLeft, prec + 10);
+    mpfr_init2(yRight, prec + 10);
+    mpfr_init2(myCutOff, 12);
+    mpfr_set_ui(myCutOff, 0, GMP_RNDN);    
+    if (evaluateFaithfulWithCutOffFast(yLeft, obj1, NULL, xLeft, myCutOff, prec + 15) == 1) {
+      mpfr_set(yRight, yLeft, GMP_RNDN); /* exact */
+      mpfr_nextbelow(yLeft);
+      mpfr_nextbelow(yLeft);
+      mpfr_nextabove(yRight);
+      mpfr_nextabove(yRight);
+      if (mpfr_number_p(yLeft) && mpfr_number_p(yRight)) {
+	sollya_mpfi_interv_fr(myPointY, yLeft, yRight);
+      }
+    }
+    mpfr_clear(myCutOff);
+    mpfr_clear(yLeft);
+    mpfr_clear(yRight);
+  }
+  mpfr_clear(xLeft);
+  mpfr_clear(xRight);
 
-  /* Perform a first interval evaluation */
-  // TODO
-
+  /* Perform an interval evaluation on the whole interval */
+  evaluateInterval(myY, obj1, NULL, x);
 
   /* Set final result as intersection of myY and myPointY */
   sollya_mpfi_intersect(y, myY, myPointY);

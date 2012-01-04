@@ -78,6 +78,7 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include <sys/resource.h>
 #include <time.h>
 #include "execute.h"
+#include "message-numbers.h"
 
 #if HAVE_BACKTRACE
 #include <execinfo.h>
@@ -132,6 +133,9 @@ int exitInsteadOfRecover = 1;
 int numberBacktrace = 1;
 int displayColor = -1;
 int oldMode = 0;
+
+int (*messageCallback)(int) = NULL;
+int lastMessageCallbackResult = 1;
 
 chain *symbolTable = NULL;
 chain *declaredSymbolTable = NULL;
@@ -609,12 +613,42 @@ int sollyaVfprintf(FILE *fd, const char *format, va_list varlist) {
   return sollyaInternalVfprintf(fd,format,varlist);
 }
 
+int installMessageCallback(int (*msgHandler) (int)) {
+  messageCallback = msgHandler;
+  lastMessageCallbackResult = 1;
+  return 1;
+}
+
+int uninstallMessageCallback() {
+  messageCallback = NULL;
+  lastMessageCallbackResult = 1;  
+  return 1;
+}
+
 int printMessage(int verb, int msgNum, const char *format, ...) {
   va_list varlist;
   int oldColor;
   int res;
 
   if ((verb >= 0) && (verbosity < verb)) return 0;
+
+  /* If there is a message callback installed, call it.
+     If it says no message is to be displayed, just bail out, 
+     unless the required verbosity is negative, in which case
+     go for display in all cases (will go to stderr).
+
+     Do call the message callback handler for no messages and
+     continuation messages. In the case of a continuation message,
+     take the last "display/don't display" value instead of what the 
+     handler would return.
+  */
+  if ((msgNum != SOLLYA_MSG_CONTINUATION) || (messageCallback == NULL)) lastMessageCallbackResult = 1;
+  if ((msgNum != SOLLYA_MSG_NO_MSG) && 
+      (msgNum != SOLLYA_MSG_CONTINUATION) && 
+      (messageCallback != NULL)) {
+    lastMessageCallbackResult = messageCallback(msgNum);
+  } 
+  if (!lastMessageCallbackResult) return 0;
 
   oldColor = displayColor;
   
@@ -1057,8 +1091,6 @@ void setToolDiameter(mpfr_t op) {
   mpfr_set(statediam,op,GMP_RNDN);
 }
 
-/* NEW */
-
 int getDisplayMode() {
   return dyadic;
 }
@@ -1176,6 +1208,8 @@ int general(int argc, char *argv[]) {
   int lastWasError;
   int finishedBeforeParsing;
 
+  messageCallback = NULL;
+  lastMessageCallbackResult = 1;
   doNotModifyStackSize = 0;
   inputFileOpened = 0;
   flushOutput = 0;
