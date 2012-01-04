@@ -20,6 +20,7 @@ sollya.h \
 mpfi-compat.c \
 mpfi-compat.h \
 message-numbers.h \
+message-numbers.c \
 sollya-library-wrappers.c \
 sollya-library-wrappers.h \
 printf.c \
@@ -94,6 +95,7 @@ mpfi-compat.c \
 sollya-library-wrappers.c \
 sollya-library-wrappers.h \
 message-numbers.h \
+message-numbers.c \
 printf.c \
 printf.h \
 internparser.y \

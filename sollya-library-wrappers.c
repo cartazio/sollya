@@ -114,6 +114,10 @@ int sollya_lib_uninstall_msg_callback() {
   return uninstallMessageCallback();
 }
 
+char *sollya_lib_msg_number_to_text(int msgNum) {
+  return messageNumberToText(msgNum);
+}
+
 int sollya_lib_printf(const char *format, ...) {
   va_list varlist;
   int res;
