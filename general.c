@@ -1183,8 +1183,6 @@ void setRationalMode(int newRationalMode) {
   rationalMode = (!(!newRationalMode));
 }
 
-/* END NEW */
-
 void setRecoverEnvironment(jmp_buf *env) {
   memmove(&recoverEnvironment,env,sizeof(recoverEnvironment));
   memmove(&recoverEnvironmentError,env,sizeof(recoverEnvironmentError));
@@ -1195,6 +1193,53 @@ void invalidateRecoverEnvironment() {
   exitInsteadOfRecover = 1;
 }
 
+int initializeLibraryMode() {
+  messageCallback = NULL;
+  lastMessageCallbackResult = 1;
+  inputFileOpened = 0;
+  flushOutput = 0;
+  oldAutoPrint = 0;
+  printMode = PRINT_MODE_LEGACY;
+  warnFile = NULL;
+  eliminatePromptBackup = 1;
+  mp_set_memory_functions(safeMalloc,wrapSafeRealloc,NULL);
+  initToolDefaults();
+  handlingCtrlC = 0;
+  return 1;
+}
+
+int finalizeLibraryMode() {
+  if(variablename != NULL) free(variablename);
+  if(newReadFilename != NULL) free(newReadFilename);
+
+  if (!(eliminatePromptBackup == 1)) {
+    removePlotFiles();
+  }
+
+  while ((readStack != NULL) && (readStack2 != NULL)) {
+    temp_fd = *((FILE **) (readStack2->value));
+    fclose(temp_fd);
+    free(readStack2->value);
+    readStackTemp = readStack2->next;
+    free(readStack2);
+    readStack2 = readStackTemp;
+    free(readStack->value);
+    readStackTemp = readStack->next;
+    free(readStack);
+    readStack = readStackTemp;
+  }
+  freeFunctionLibraries();
+  freeConstantLibraries();
+  freeProcLibraries();
+  freeCounter();
+  freeSymbolTable(symbolTable, freeThingOnVoid);
+  symbolTable = NULL;
+  freeDeclaredSymbolTable(declaredSymbolTable, freeThingOnVoid);
+  declaredSymbolTable = NULL;
+  mpfr_clear(statediam);
+  mpfr_free_cache();
+  return 1;
+}
 
 int general(int argc, char *argv[]) {
   struct termios termAttr;

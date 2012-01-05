@@ -99,11 +99,11 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 /* Actual wrapper functions */
 
 int sollya_lib_init() {
-  return 0; // TODO
+  return initializeLibraryMode();
 }
 
 int sollya_lib_close() {
-  return 0; // TODO
+  return finalizeLibraryMode();
 }
 
 int sollya_lib_install_msg_callback(int (*callback_func) (int)) {
