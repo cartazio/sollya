@@ -2643,6 +2643,134 @@ int sollya_lib_decompose_function(sollya_obj_t obj1, sollya_base_function_t *bas
   return res;  
 }
 
+int sollya_lib_is_on(sollya_obj_t obj1){
+  return (obj1->nodeType == ON);
+}
+
+int sollya_lib_is_off(sollya_obj_t obj1) {
+  return (obj1->nodeType == OFF);
+}
+
+int sollya_lib_is_dyadic(sollya_obj_t obj1) {
+  return (obj1->nodeType == DYADIC);
+}
+
+int sollya_lib_is_powers(sollya_obj_t obj1) {
+  return (obj1->nodeType == POWERS);
+}
+
+int sollya_lib_is_binary(sollya_obj_t obj1) {
+  return (obj1->nodeType == BINARY);
+}
+
+int sollya_lib_is_hexadecimal(sollya_obj_t obj1) {
+  return (obj1->nodeType == HEXADECIMAL);
+}
+
+int sollya_lib_is_file(sollya_obj_t obj1) {
+  return (obj1->nodeType == FILESYM);
+}
+
+int sollya_lib_is_postscript(sollya_obj_t obj1) {
+  return (obj1->nodeType == POSTSCRIPT);
+}
+
+int sollya_lib_is_postscriptfile(sollya_obj_t obj1) {
+  return (obj1->nodeType == POSTSCRIPTFILE);
+}
+
+int sollya_lib_is_perturb(sollya_obj_t obj1) {
+  return (obj1->nodeType == PERTURB);
+}
+
+int sollya_lib_is_round_down(sollya_obj_t obj1) {
+  return (obj1->nodeType == ROUNDDOWN);
+}
+
+int sollya_lib_is_round_up(sollya_obj_t obj1) {
+  return (obj1->nodeType == ROUNDUP);
+}
+
+int sollya_lib_is_round_towards_zero(sollya_obj_t obj1) {
+  return (obj1->nodeType == ROUNDTOZERO);
+}
+
+int sollya_lib_is_round_to_nearest(sollya_obj_t obj1) {
+  return (obj1->nodeType == ROUNDTONEAREST);
+}
+
+int sollya_lib_is_honorcoeffprec(sollya_obj_t obj1) {
+  return (obj1->nodeType == HONORCOEFF);
+}
+
+int sollya_lib_is_true(sollya_obj_t obj1) {
+  return (obj1->nodeType == TRUE);
+}
+
+int sollya_lib_is_false(sollya_obj_t obj1) {
+  return (obj1->nodeType == FALSE);
+}
+
+int sollya_lib_is_void(sollya_obj_t obj1) {
+  return (obj1->nodeType == UNIT);
+}
+
+int sollya_lib_is_default(sollya_obj_t obj1) {
+  return (obj1->nodeType == DEFAULT);
+}
+
+int sollya_lib_is_decimal(sollya_obj_t obj1) {
+  return (obj1->nodeType == DECIMAL);
+}
+
+int sollya_lib_is_absolute(sollya_obj_t obj1) {
+  return (obj1->nodeType == ABSOLUTESYM);
+}
+
+int sollya_lib_is_relative(sollya_obj_t obj1) {
+  return (obj1->nodeType == RELATIVESYM);
+}
+
+int sollya_lib_is_fixed(sollya_obj_t obj1) {
+  return (obj1->nodeType == FIXED);
+}
+
+int sollya_lib_is_floating(sollya_obj_t obj1) {
+  return (obj1->nodeType == FLOATING);
+}
+
+int sollya_lib_is_double_obj(sollya_obj_t obj1) {
+  return (obj1->nodeType == DOUBLESYMBOL);
+}
+
+int sollya_lib_is_single_obj(sollya_obj_t obj1) {
+  return (obj1->nodeType == SINGLESYMBOL);
+}
+
+int sollya_lib_is_quad_obj(sollya_obj_t obj1) {
+  return (obj1->nodeType == QUADSYMBOL);
+}
+
+int sollya_lib_is_halfprecision_obj(sollya_obj_t obj1) {
+  return (obj1->nodeType == HALFPRECISIONSYMBOL);
+}
+
+int sollya_lib_is_doubleextended_obj(sollya_obj_t obj1) {
+  return (obj1->nodeType == DOUBLEEXTENDEDSYMBOL);
+}
+
+int sollya_lib_is_double_double_obj(sollya_obj_t obj1) {
+  return (obj1->nodeType == DOUBLEDOUBLESYMBOL);
+}
+
+int sollya_lib_is_triple_double_obj(sollya_obj_t obj1) {
+  return (obj1->nodeType == TRIPLEDOUBLESYMBOL);
+}
+
+int sollya_lib_is_pi(sollya_obj_t obj1) {
+  return (obj1->nodeType == PI_CONST);
+}
+
 fp_eval_result_t sollya_lib_evaluate_function_at_point(mpfr_t y, sollya_obj_t obj1, mpfr_t x, mpfr_t *cutoff) {
   int res;
   mpfr_t myCutOff;

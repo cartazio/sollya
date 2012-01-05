@@ -501,7 +501,6 @@ extern "C" {
   int sollya_lib_obj_is_string(sollya_obj_t);
   int sollya_lib_obj_is_error(sollya_obj_t);
 
-  
   /* Functions to decompose Sollya objects that represent mathematical
      functions.
 
@@ -528,6 +527,40 @@ extern "C" {
   /* A one-does-it-all function */
   int sollya_lib_decompose_function(sollya_obj_t, sollya_base_function_t *, int *, ...);
   int sollya_lib_v_decompose_function(sollya_obj_t, sollya_base_function_t *, int *, va_list);
+
+  /* Functions that check if a Sollya object is some particular constant */
+  int sollya_lib_is_on(sollya_obj_t);
+  int sollya_lib_is_off(sollya_obj_t);
+  int sollya_lib_is_dyadic(sollya_obj_t);
+  int sollya_lib_is_powers(sollya_obj_t);
+  int sollya_lib_is_binary(sollya_obj_t);
+  int sollya_lib_is_hexadecimal(sollya_obj_t);
+  int sollya_lib_is_file(sollya_obj_t);
+  int sollya_lib_is_postscript(sollya_obj_t);
+  int sollya_lib_is_postscriptfile(sollya_obj_t);
+  int sollya_lib_is_perturb(sollya_obj_t);
+  int sollya_lib_is_round_down(sollya_obj_t);
+  int sollya_lib_is_round_up(sollya_obj_t);
+  int sollya_lib_is_round_towards_zero(sollya_obj_t);
+  int sollya_lib_is_round_to_nearest(sollya_obj_t);
+  int sollya_lib_is_honorcoeffprec(sollya_obj_t);
+  int sollya_lib_is_true(sollya_obj_t);
+  int sollya_lib_is_false(sollya_obj_t);
+  int sollya_lib_is_void(sollya_obj_t);
+  int sollya_lib_is_default(sollya_obj_t);
+  int sollya_lib_is_decimal(sollya_obj_t);
+  int sollya_lib_is_absolute(sollya_obj_t);
+  int sollya_lib_is_relative(sollya_obj_t);
+  int sollya_lib_is_fixed(sollya_obj_t);
+  int sollya_lib_is_floating(sollya_obj_t);
+  int sollya_lib_is_double_obj(sollya_obj_t);
+  int sollya_lib_is_single_obj(sollya_obj_t);
+  int sollya_lib_is_quad_obj(sollya_obj_t);
+  int sollya_lib_is_halfprecision_obj(sollya_obj_t);
+  int sollya_lib_is_doubleextended_obj(sollya_obj_t);
+  int sollya_lib_is_double_double_obj(sollya_obj_t);
+  int sollya_lib_is_triple_double_obj(sollya_obj_t);
+  int sollya_lib_is_pi(sollya_obj_t);
 
   /* Functions to evaluate Sollya objects that are mathematical
      functions at points or over intervals 
