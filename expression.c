@@ -733,8 +733,8 @@ char *sPrintBinary(mpfr_t x) {
   if (mpfr_sgn(x) < 0) negative = 1;
   raw = mpfr_get_str(NULL,&expo,2,0,xx,GMP_RNDN);
   if (raw == NULL) {
-    sollyaPrintf("Error: unable to get a string for the given number.\n");
-    recoverFromError();
+    sollyaFprintf(stderr,"Error: unable to get a string for the given number.\n");
+    exit(1);
   } else {
     formatted = safeCalloc(strlen(raw) + 3, sizeof(char));
     temp1 = raw; temp2 = formatted;
@@ -803,8 +803,8 @@ char *sPrintHexadecimal(mpfr_t x) {
   if (mpfr_sgn(x) < 0) negative = 1;
   raw = mpfr_get_str(NULL,&expo,16,0,xx,GMP_RNDN);
   if (raw == NULL) {
-    sollyaPrintf("Error: unable to get a string for the given number.\n");
-    recoverFromError();
+    sollyaFprintf(stderr,"Error: unable to get a string for the given number.\n");
+    exit(1);
   } else {
     formatted = safeCalloc(strlen(raw) + 3, sizeof(char));
     temp1 = raw; temp2 = formatted;

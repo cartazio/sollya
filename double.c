@@ -1180,7 +1180,6 @@ int printPolynomialAsDoubleExpansion(node *poly, mp_prec_t prec) {
       } else {
 	if (!isConstant(tempNode)) {
 	  printMessage(1,SOLLYA_MSG_POLY_COEFF_IS_NOT_CONSTANT,"Error: a coefficient of a polynomial is not constant.\n");
-	  recoverFromError();
 	}
 	if (!evaluateFaithful(tempValue, tempNode, tempValue2, prec)) {
 	  if (!noRoundingWarnings) {
