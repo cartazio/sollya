@@ -1176,6 +1176,7 @@ int initializeLibraryMode() {
   initToolDefaults();
   handlingCtrlC = 0;
   lastHandledSignal = 0;
+  noRoundingWarnings = 0;
   return 1;
 }
 
