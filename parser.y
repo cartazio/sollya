@@ -358,6 +358,7 @@ int parserCheckEof() {
 %token  VOIDTOKEN;
 %token  CONSTANTTYPETOKEN;
 %token  FUNCTIONTOKEN;
+%token  OBJECTTOKEN;
 %token  RANGETOKEN;
 %token  INTEGERTOKEN;
 %token  STRINGTYPETOKEN;
@@ -2082,6 +2083,12 @@ externalproctype:       CONSTANTTYPETOKEN
 			    *tempIntPtr = FUNCTION_TYPE;
 			    $$ = tempIntPtr;
 			  }
+                      | OBJECTTOKEN
+                          {
+			    tempIntPtr = (int *) safeMalloc(sizeof(int));
+			    *tempIntPtr = OBJECT_TYPE;
+			    $$ = tempIntPtr;
+			  }
                       | RANGETOKEN
                           {
 			    tempIntPtr = (int *) safeMalloc(sizeof(int));
@@ -2116,6 +2123,12 @@ externalproctype:       CONSTANTTYPETOKEN
                           {
 			    tempIntPtr = (int *) safeMalloc(sizeof(int));
 			    *tempIntPtr = FUNCTION_LIST_TYPE;
+			    $$ = tempIntPtr;
+			  }
+                      | LISTTOKEN OFTOKEN OBJECTTOKEN
+                          {
+			    tempIntPtr = (int *) safeMalloc(sizeof(int));
+			    *tempIntPtr = OBJECT_LIST_TYPE;
 			    $$ = tempIntPtr;
 			  }
                       | LISTTOKEN OFTOKEN RANGETOKEN
@@ -4275,9 +4288,19 @@ help:                   CONSTANTTOKEN
 #ifdef HELP_FUNCTION_TEXT
 			    outputMode(); sollyaPrintf(HELP_FUNCTION_TEXT);
 #else
-			    outputMode(); sollyaPrintf("Represents the function type for externalproc.\n");
+			    outputMode(); sollyaPrintf("Represents the function type for externalproc or a procedure-based function.\n");
 #if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
 #warning "No help text for FUNCTION"
+#endif
+#endif
+                          }
+                      | OBJECTTOKEN                          {
+#ifdef HELP_OBJECT_TEXT
+			    outputMode(); sollyaPrintf(HELP_OBJECT_TEXT);
+#else
+			    outputMode(); sollyaPrintf("Represents the object type for externalproc.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for OBJECT"
 #endif
 #endif
                           }
@@ -4533,6 +4556,7 @@ help:                   CONSTANTTOKEN
 			    sollyaPrintf("- numberroots\n");
 			    sollyaPrintf("- nop\n");
 			    sollyaPrintf("- numerator\n");
+			    sollyaPrintf("- object\n");
 			    sollyaPrintf("- of\n");
 			    sollyaPrintf("- off\n");
 			    sollyaPrintf("- on\n");

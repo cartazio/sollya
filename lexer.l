@@ -419,6 +419,7 @@ EXTERNALPROC    "externalproc"
 VOID            "void"
 CONSTANTTYPE    "constant"
 FUNCTION        "function"
+OBJECT          "object"
 RANGE           "range"
 INTEGER         "integer"
 STRINGTYPE      "string"
@@ -806,6 +807,7 @@ NOP             "nop"
 {VOID}                                      { newTokenLexed(); return VOIDTOKEN; }
 {CONSTANTTYPE}                              { newTokenLexed(); return CONSTANTTYPETOKEN; }
 {FUNCTION}                                  { newTokenLexed(); return FUNCTIONTOKEN; }
+{OBJECT}                                    { newTokenLexed(); return OBJECTTOKEN; }
 {RANGE}                                     { newTokenLexed(); return RANGETOKEN; }
 {INTEGER}                                   { newTokenLexed(); return INTEGERTOKEN; }
 {STRINGTYPE}                                { newTokenLexed(); return STRINGTYPETOKEN; }

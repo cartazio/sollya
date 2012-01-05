@@ -4261,6 +4261,9 @@ char *sRawPrintThing(node *tree) {
 	case FUNCTION_TYPE:
 	  res = concatAndFree(res, newString("function"));
 	  break;
+	case OBJECT_TYPE:
+	  res = concatAndFree(res, newString("object"));
+	  break;
 	case RANGE_TYPE:
 	  res = concatAndFree(res, newString("range"));
 	  break;
@@ -4278,6 +4281,9 @@ char *sRawPrintThing(node *tree) {
 	  break;
 	case FUNCTION_LIST_TYPE:
 	  res = concatAndFree(res, newString("list of function"));
+	  break;
+	case OBJECT_LIST_TYPE:
+	  res = concatAndFree(res, newString("list of object"));
 	  break;
 	case RANGE_LIST_TYPE:
 	  res = concatAndFree(res, newString("list of range"));
@@ -4310,6 +4316,9 @@ char *sRawPrintThing(node *tree) {
     case FUNCTION_TYPE:
       res = concatAndFree(res, newString("function")); 
       break;
+    case OBJECT_TYPE:
+      res = concatAndFree(res, newString("object")); 
+      break;
     case RANGE_TYPE:
       res = concatAndFree(res, newString("range")); 
       break;
@@ -4327,6 +4336,9 @@ char *sRawPrintThing(node *tree) {
       break;
     case FUNCTION_LIST_TYPE:
       res = concatAndFree(res, newString("list of function")); 
+      break;
+    case OBJECT_LIST_TYPE:
+      res = concatAndFree(res, newString("list of object")); 
       break;
     case RANGE_LIST_TYPE:
       res = concatAndFree(res, newString("list of range")); 
@@ -5784,6 +5796,9 @@ void printExternalProcedureUsage(node *tree) {
       case FUNCTION_TYPE:
 	sollyaPrintf("function");
 	break;
+      case OBJECT_TYPE:
+	sollyaPrintf("object");
+	break;
       case RANGE_TYPE:
 	sollyaPrintf("range");
 	break;
@@ -5801,6 +5816,9 @@ void printExternalProcedureUsage(node *tree) {
 	break;
       case FUNCTION_LIST_TYPE:
 	sollyaPrintf("list of function");
+	break;
+      case OBJECT_LIST_TYPE:
+	sollyaPrintf("list of object");
 	break;
       case RANGE_LIST_TYPE:
 	sollyaPrintf("list of range");
@@ -5831,6 +5849,9 @@ void printExternalProcedureUsage(node *tree) {
     case FUNCTION_TYPE:
       sollyaPrintf("function");
       break;
+    case OBJECT_TYPE:
+      sollyaPrintf("object");
+      break;
     case RANGE_TYPE:
       sollyaPrintf("range");
       break;
@@ -5848,6 +5869,9 @@ void printExternalProcedureUsage(node *tree) {
       break;
     case FUNCTION_LIST_TYPE:
       sollyaPrintf("list of function");
+      break;
+    case OBJECT_LIST_TYPE:
+      sollyaPrintf("list of object");
       break;
     case RANGE_LIST_TYPE:
       sollyaPrintf("list of range");
@@ -13501,6 +13525,10 @@ int evaluateArgumentForExternalProc(void **res, node *argument, int type) {
   case FUNCTION_TYPE:
     retVal = evaluateThingToPureTree((node **) res, argument);    
     break;
+  case OBJECT_TYPE:
+    *res = evaluateThing(argument);    
+    retVal = 1;
+    break;
   case RANGE_TYPE:
     mpfr_init2(a,tools_precision);
     mpfr_init2(b,tools_precision);
@@ -13590,6 +13618,9 @@ void freeArgumentForExternalProc(void* arg, int type) {
     free(arg);
     break;
   case FUNCTION_TYPE:
+    freeThing((node *) arg);
+    break;
+  case OBJECT_TYPE:
     freeThing((node *) arg);
     break;
   case RANGE_TYPE:
@@ -14100,6 +14131,12 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	*resultThing = (node *) resultSpace;
       }
       break;
+    case OBJECT_TYPE:
+      externalResult = ((int (*)(node **, void **))(proc->code))((node **) (&resultSpace),arguments);
+      if (externalResult) {
+	*resultThing = (node *) resultSpace;
+      }
+      break;
     case RANGE_TYPE:
       resultSpace = safeMalloc(sizeof(sollya_mpfi_t));
       sollya_mpfi_init2(*((sollya_mpfi_t *) resultSpace),tools_precision);
@@ -14286,11 +14323,13 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
     case FUNCTION_TYPE:
       externalResult = ((int (*)(node **))(proc->code))((node **) (&resultSpace));
       if (externalResult) {	
-	if (((chain *) resultSpace) == NULL) {
-	  *resultThing = makeEmptyList();
-	} else {
-	  *resultThing = makeList((chain *) resultSpace);
-	}
+	*resultThing = (node *) resultSpace;
+      }
+      break;
+    case OBJECT_TYPE:
+      externalResult = ((int (*)(node **))(proc->code))((node **) (&resultSpace));
+      if (externalResult) {	
+	*resultThing = (node *) resultSpace;
       }
       break;
     case RANGE_TYPE:
@@ -14360,7 +14399,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
     case FUNCTION_LIST_TYPE:
       externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
       if (externalResult) {	
-	*resultThing = makeList((chain *) resultSpace);
+	if (((chain *) resultSpace) == NULL) {
+	  *resultThing = makeEmptyList();
+	} else {
+	  *resultThing = makeList((chain *) resultSpace);
+	}
       }
       break;
     case RANGE_LIST_TYPE:

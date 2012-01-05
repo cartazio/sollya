@@ -415,6 +415,7 @@ EXTERNALPROC    "externalproc"
 VOID            "void"
 CONSTANTTYPE    "constant"
 FUNCTION        "function"
+OBJECT          "object"
 RANGE           "range"
 INTEGER         "integer"
 STRINGTYPE      "string"
@@ -724,6 +725,7 @@ NOP             "nop"
 {VOID}                                      {  return VOIDTOKEN; }
 {CONSTANTTYPE}                              {  return CONSTANTTYPETOKEN; }
 {FUNCTION}                                  {  return FUNCTIONTOKEN; }
+{OBJECT}                                    {  return OBJECTTOKEN; }
 {RANGE}                                     {  return RANGETOKEN; }
 {INTEGER}                                   {  return INTEGERTOKEN; }
 {STRINGTYPE}                                {  return STRINGTYPETOKEN; }
