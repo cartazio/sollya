@@ -2266,6 +2266,381 @@ int sollya_lib_obj_is_error(sollya_obj_t obj1) {
   return isError(obj1);
 }
 
+int sollya_lib_get_function_arity(int *ari, sollya_obj_t obj1) {
+  if (!isPureTree(obj1)) return 0;
+  if (ari != NULL) {
+    *ari = arity(obj1);
+  }
+  return 1;
+}
+
+int sollya_lib_get_head_function(sollya_base_function_t *base_func, sollya_obj_t obj1) {
+  if (!isPureTree(obj1)) return 0;
+  if (base_func != NULL) {
+    switch (obj1->nodeType) {
+    case VARIABLE:
+      *base_func = SOLLYA_BASE_FUNC_FREE_VARIABLE;
+      break;
+    case CONSTANT:
+      *base_func = SOLLYA_BASE_FUNC_CONSTANT;
+      break;
+    case ADD:
+      *base_func = SOLLYA_BASE_FUNC_ADD;
+      break;
+    case SUB:
+      *base_func = SOLLYA_BASE_FUNC_SUB;
+      break;
+    case MUL:
+      *base_func = SOLLYA_BASE_FUNC_MUL;
+      break;
+    case DIV:
+      *base_func = SOLLYA_BASE_FUNC_DIV;
+      break;
+    case SQRT:
+      *base_func = SOLLYA_BASE_FUNC_SQRT;
+      break;
+    case EXP:
+      *base_func = SOLLYA_BASE_FUNC_EXP;
+      break;
+    case LOG:
+      *base_func = SOLLYA_BASE_FUNC_LOG;
+      break;
+    case LOG_2:
+      *base_func = SOLLYA_BASE_FUNC_LOG_2;
+      break;
+    case LOG_10:
+      *base_func = SOLLYA_BASE_FUNC_LOG_10;
+      break;
+    case SIN:
+      *base_func = SOLLYA_BASE_FUNC_SIN;
+      break;
+    case COS:
+      *base_func = SOLLYA_BASE_FUNC_COS;
+      break;
+    case TAN:
+      *base_func = SOLLYA_BASE_FUNC_TAN;
+      break;
+    case ASIN:
+      *base_func = SOLLYA_BASE_FUNC_ASIN;
+      break;
+    case ACOS:
+      *base_func = SOLLYA_BASE_FUNC_ACOS;
+      break;
+    case ATAN:
+      *base_func = SOLLYA_BASE_FUNC_ATAN;
+      break;
+    case SINH:
+      *base_func = SOLLYA_BASE_FUNC_SINH;
+      break;
+    case COSH:
+      *base_func = SOLLYA_BASE_FUNC_COSH;
+      break;
+    case TANH:
+      *base_func = SOLLYA_BASE_FUNC_TANH;
+      break;
+    case ASINH:
+      *base_func = SOLLYA_BASE_FUNC_ASINH;
+      break;
+    case ACOSH:
+      *base_func = SOLLYA_BASE_FUNC_ACOSH;
+      break;
+    case ATANH:
+      *base_func = SOLLYA_BASE_FUNC_ATANH;
+      break;
+    case POW:
+      *base_func = SOLLYA_BASE_FUNC_POW;
+      break;
+    case NEG:
+      *base_func = SOLLYA_BASE_FUNC_NEG;
+      break;
+    case ABS:
+      *base_func = SOLLYA_BASE_FUNC_ABS;
+      break;
+    case DOUBLE:
+      *base_func = SOLLYA_BASE_FUNC_DOUBLE;
+      break;
+    case SINGLE:
+      *base_func = SOLLYA_BASE_FUNC_SINGLE;
+      break;
+    case QUAD:
+      *base_func = SOLLYA_BASE_FUNC_QUAD;
+      break;  
+    case HALFPRECISION:
+      *base_func = SOLLYA_BASE_FUNC_HALFPRECISION;
+      break;
+    case DOUBLEDOUBLE:
+      *base_func = SOLLYA_BASE_FUNC_DOUBLEDOUBLE;
+      break;
+    case TRIPLEDOUBLE:
+      *base_func = SOLLYA_BASE_FUNC_TRIPLEDOUBLE;
+      break;
+    case ERF: 
+      *base_func = SOLLYA_BASE_FUNC_ERF;
+      break;
+    case ERFC:
+      *base_func = SOLLYA_BASE_FUNC_ERFC;
+      break;
+    case LOG_1P:
+      *base_func = SOLLYA_BASE_FUNC_LOG_1P;
+      break;
+    case EXP_M1:
+      *base_func = SOLLYA_BASE_FUNC_EXP_M1;
+      break;
+    case DOUBLEEXTENDED:
+      *base_func = SOLLYA_BASE_FUNC_DOUBLEEXTENDED;
+      break;
+    case LIBRARYFUNCTION:
+      *base_func = SOLLYA_BASE_FUNC_LIBRARYFUNCTION;
+      break;
+    case PROCEDUREFUNCTION:
+      *base_func = SOLLYA_BASE_FUNC_PROCEDUREFUNCTION;
+      break;
+    case CEIL:
+      *base_func = SOLLYA_BASE_FUNC_CEIL;
+      break;
+    case FLOOR:
+      *base_func = SOLLYA_BASE_FUNC_FLOOR;
+      break;
+    case NEARESTINT:
+      *base_func = SOLLYA_BASE_FUNC_NEARESTINT;
+      break;
+    case PI_CONST:
+      *base_func = SOLLYA_BASE_FUNC_PI;
+      break;
+    case LIBRARYCONSTANT:
+      *base_func = SOLLYA_BASE_FUNC_LIBRARYCONSTANT;
+      break;
+    default:
+      return 0;
+    }
+  }
+  return 1;
+}
+
+int sollya_lib_v_get_subfunctions(sollya_obj_t obj1, int *ari, va_list varlist) {
+  sollya_obj_t *elem;
+  int i, funcArity, gottaBreak;
+  
+  if (!isPureTree(obj1)) return 0;
+  funcArity = arity(obj1);
+  if (ari != NULL) {
+    *ari = funcArity;
+  }
+  i = 1;
+  while ((elem = va_arg(varlist,sollya_obj_t *)) != NULL) {
+    if (i < funcArity) {
+      gottaBreak = 0;
+      switch (i) {
+      case 1:
+	*elem = copyThing(obj1->child1);
+	break;
+      case 2:
+	*elem = copyThing(obj1->child2);
+	break;
+      default:
+	gottaBreak = 1;
+	break;
+      }
+      if (gottaBreak) break;
+    } else {
+      break;
+    }
+  }
+  return 1;
+}
+
+int sollya_lib_get_subfunctions(sollya_obj_t obj1, int *ari, ...) {
+  va_list varlist;
+  int res;
+
+  va_start(varlist,ari);
+  res = sollya_lib_v_get_subfunctions(obj1, ari, varlist);
+  va_end(varlist);
+
+  return res;
+}
+
+int sollya_lib_v_decompose_function(sollya_obj_t obj1, sollya_base_function_t *base_func, int *ari, va_list varlist) {
+  sollya_obj_t *elem;
+  int i, funcArity, gottaBreak;
+  
+  if (!isPureTree(obj1)) return 0;
+  if (base_func != NULL) {
+    switch (obj1->nodeType) {
+    case VARIABLE:
+      *base_func = SOLLYA_BASE_FUNC_FREE_VARIABLE;
+      break;
+    case CONSTANT:
+      *base_func = SOLLYA_BASE_FUNC_CONSTANT;
+      break;
+    case ADD:
+      *base_func = SOLLYA_BASE_FUNC_ADD;
+      break;
+    case SUB:
+      *base_func = SOLLYA_BASE_FUNC_SUB;
+      break;
+    case MUL:
+      *base_func = SOLLYA_BASE_FUNC_MUL;
+      break;
+    case DIV:
+      *base_func = SOLLYA_BASE_FUNC_DIV;
+      break;
+    case SQRT:
+      *base_func = SOLLYA_BASE_FUNC_SQRT;
+      break;
+    case EXP:
+      *base_func = SOLLYA_BASE_FUNC_EXP;
+      break;
+    case LOG:
+      *base_func = SOLLYA_BASE_FUNC_LOG;
+      break;
+    case LOG_2:
+      *base_func = SOLLYA_BASE_FUNC_LOG_2;
+      break;
+    case LOG_10:
+      *base_func = SOLLYA_BASE_FUNC_LOG_10;
+      break;
+    case SIN:
+      *base_func = SOLLYA_BASE_FUNC_SIN;
+      break;
+    case COS:
+      *base_func = SOLLYA_BASE_FUNC_COS;
+      break;
+    case TAN:
+      *base_func = SOLLYA_BASE_FUNC_TAN;
+      break;
+    case ASIN:
+      *base_func = SOLLYA_BASE_FUNC_ASIN;
+      break;
+    case ACOS:
+      *base_func = SOLLYA_BASE_FUNC_ACOS;
+      break;
+    case ATAN:
+      *base_func = SOLLYA_BASE_FUNC_ATAN;
+      break;
+    case SINH:
+      *base_func = SOLLYA_BASE_FUNC_SINH;
+      break;
+    case COSH:
+      *base_func = SOLLYA_BASE_FUNC_COSH;
+      break;
+    case TANH:
+      *base_func = SOLLYA_BASE_FUNC_TANH;
+      break;
+    case ASINH:
+      *base_func = SOLLYA_BASE_FUNC_ASINH;
+      break;
+    case ACOSH:
+      *base_func = SOLLYA_BASE_FUNC_ACOSH;
+      break;
+    case ATANH:
+      *base_func = SOLLYA_BASE_FUNC_ATANH;
+      break;
+    case POW:
+      *base_func = SOLLYA_BASE_FUNC_POW;
+      break;
+    case NEG:
+      *base_func = SOLLYA_BASE_FUNC_NEG;
+      break;
+    case ABS:
+      *base_func = SOLLYA_BASE_FUNC_ABS;
+      break;
+    case DOUBLE:
+      *base_func = SOLLYA_BASE_FUNC_DOUBLE;
+      break;
+    case SINGLE:
+      *base_func = SOLLYA_BASE_FUNC_SINGLE;
+      break;
+    case QUAD:
+      *base_func = SOLLYA_BASE_FUNC_QUAD;
+      break;  
+    case HALFPRECISION:
+      *base_func = SOLLYA_BASE_FUNC_HALFPRECISION;
+      break;
+    case DOUBLEDOUBLE:
+      *base_func = SOLLYA_BASE_FUNC_DOUBLEDOUBLE;
+      break;
+    case TRIPLEDOUBLE:
+      *base_func = SOLLYA_BASE_FUNC_TRIPLEDOUBLE;
+      break;
+    case ERF: 
+      *base_func = SOLLYA_BASE_FUNC_ERF;
+      break;
+    case ERFC:
+      *base_func = SOLLYA_BASE_FUNC_ERFC;
+      break;
+    case LOG_1P:
+      *base_func = SOLLYA_BASE_FUNC_LOG_1P;
+      break;
+    case EXP_M1:
+      *base_func = SOLLYA_BASE_FUNC_EXP_M1;
+      break;
+    case DOUBLEEXTENDED:
+      *base_func = SOLLYA_BASE_FUNC_DOUBLEEXTENDED;
+      break;
+    case LIBRARYFUNCTION:
+      *base_func = SOLLYA_BASE_FUNC_LIBRARYFUNCTION;
+      break;
+    case PROCEDUREFUNCTION:
+      *base_func = SOLLYA_BASE_FUNC_PROCEDUREFUNCTION;
+      break;
+    case CEIL:
+      *base_func = SOLLYA_BASE_FUNC_CEIL;
+      break;
+    case FLOOR:
+      *base_func = SOLLYA_BASE_FUNC_FLOOR;
+      break;
+    case NEARESTINT:
+      *base_func = SOLLYA_BASE_FUNC_NEARESTINT;
+      break;
+    case PI_CONST:
+      *base_func = SOLLYA_BASE_FUNC_PI;
+      break;
+    case LIBRARYCONSTANT:
+      *base_func = SOLLYA_BASE_FUNC_LIBRARYCONSTANT;
+      break;
+    default:
+      return 0;
+    }
+  }
+  funcArity = arity(obj1);
+  if (ari != NULL) {
+    *ari = funcArity;
+  }  
+  i = 1;
+  while ((elem = va_arg(varlist,sollya_obj_t *)) != NULL) {
+    if (i < funcArity) {
+      gottaBreak = 0;
+      switch (i) {
+      case 1:
+	*elem = copyThing(obj1->child1);
+	break;
+      case 2:
+	*elem = copyThing(obj1->child2);
+	break;
+      default:
+	gottaBreak = 1;
+	break;
+      }
+      if (gottaBreak) break;
+    } else {
+      break;
+    }
+  }
+  return 1;
+}
+
+int sollya_lib_decompose_function(sollya_obj_t obj1, sollya_base_function_t *base_func, int *ari, ...) {
+  va_list varlist;
+  int res;
+
+  va_start(varlist,ari);
+  res = sollya_lib_v_decompose_function(obj1, base_func, ari, varlist);
+  va_end(varlist);
+
+  return res;  
+}
+
 fp_eval_result_t sollya_lib_evaluate_function_at_point(mpfr_t y, sollya_obj_t obj1, mpfr_t x, mpfr_t *cutoff) {
   int res;
   mpfr_t myCutOff;

@@ -151,6 +151,55 @@ extern "C" {
     INT_EVAL_FAILURE
   };
 
+  /* Define an enumeration type for the mathematical base functions */
+  typedef enum sollya_base_function_enum_t sollya_base_function_t;
+  enum sollya_base_function_enum_t {
+    SOLLYA_BASE_FUNC_ABS,
+    SOLLYA_BASE_FUNC_ACOS,
+    SOLLYA_BASE_FUNC_ACOSH,
+    SOLLYA_BASE_FUNC_ADD,
+    SOLLYA_BASE_FUNC_ASIN,
+    SOLLYA_BASE_FUNC_ASINH,
+    SOLLYA_BASE_FUNC_ATAN,
+    SOLLYA_BASE_FUNC_ATANH,
+    SOLLYA_BASE_FUNC_CEIL,
+    SOLLYA_BASE_FUNC_CONSTANT,
+    SOLLYA_BASE_FUNC_COS,
+    SOLLYA_BASE_FUNC_COSH,
+    SOLLYA_BASE_FUNC_DIV,
+    SOLLYA_BASE_FUNC_DOUBLE,
+    SOLLYA_BASE_FUNC_DOUBLEDOUBLE,
+    SOLLYA_BASE_FUNC_DOUBLEEXTENDED,
+    SOLLYA_BASE_FUNC_ERF,
+    SOLLYA_BASE_FUNC_ERFC,
+    SOLLYA_BASE_FUNC_EXP,
+    SOLLYA_BASE_FUNC_EXP_M1,
+    SOLLYA_BASE_FUNC_FLOOR,
+    SOLLYA_BASE_FUNC_FREE_VARIABLE,
+    SOLLYA_BASE_FUNC_HALFPRECISION,
+    SOLLYA_BASE_FUNC_LIBRARYCONSTANT,
+    SOLLYA_BASE_FUNC_LIBRARYFUNCTION,
+    SOLLYA_BASE_FUNC_LOG,
+    SOLLYA_BASE_FUNC_LOG_10,
+    SOLLYA_BASE_FUNC_LOG_1P,
+    SOLLYA_BASE_FUNC_LOG_2,
+    SOLLYA_BASE_FUNC_MUL,
+    SOLLYA_BASE_FUNC_NEARESTINT,
+    SOLLYA_BASE_FUNC_NEG,
+    SOLLYA_BASE_FUNC_PI,
+    SOLLYA_BASE_FUNC_POW,
+    SOLLYA_BASE_FUNC_PROCEDUREFUNCTION,
+    SOLLYA_BASE_FUNC_QUAD,
+    SOLLYA_BASE_FUNC_SIN,
+    SOLLYA_BASE_FUNC_SINGLE,
+    SOLLYA_BASE_FUNC_SINH,
+    SOLLYA_BASE_FUNC_SQRT,
+    SOLLYA_BASE_FUNC_SUB,
+    SOLLYA_BASE_FUNC_TAN,
+    SOLLYA_BASE_FUNC_TANH,
+    SOLLYA_BASE_FUNC_TRIPLEDOUBLE
+  };
+  
   /* Initialization and finalization functions */
   int sollya_lib_init();
   int sollya_lib_close();
@@ -451,6 +500,34 @@ extern "C" {
   int sollya_lib_obj_is_range(sollya_obj_t);
   int sollya_lib_obj_is_string(sollya_obj_t);
   int sollya_lib_obj_is_error(sollya_obj_t);
+
+  
+  /* Functions to decompose Sollya objects that represent mathematical
+     functions.
+
+     All these functions return a zero value if the Sollya object
+     they are given is a mathematical function and a non-zero value
+     otherwise. 
+  */
+  int sollya_lib_get_function_arity(int *, sollya_obj_t);
+  int sollya_lib_get_head_function(sollya_base_function_t *, sollya_obj_t);
+  
+  /* The first object is the function to get the subfunctions from.
+
+     The second object is a pointer to an integer to store the number
+     of subfunctions stored.
+
+     The variadic objects are pointers to Sollya objects in which the
+     subfunctions will be stored (if they exist).  If less pointers
+     are given than the function has subfunctions (i.e.  less than the
+     function's arity), the last pointer must be NULL.
+  */
+  int sollya_lib_get_subfunctions(sollya_obj_t, int *, ...);
+  int sollya_lib_v_get_subfunctions(sollya_obj_t, int *, va_list);
+
+  /* A one-does-it-all function */
+  int sollya_lib_decompose_function(sollya_obj_t, sollya_base_function_t *, int *, ...);
+  int sollya_lib_v_decompose_function(sollya_obj_t, sollya_base_function_t *, int *, va_list);
 
   /* Functions to evaluate Sollya objects that are mathematical
      functions at points or over intervals 
