@@ -2428,7 +2428,7 @@ int sollya_lib_v_get_subfunctions(sollya_obj_t obj1, int *ari, va_list varlist) 
   }
   i = 1;
   while ((elem = va_arg(varlist,sollya_obj_t *)) != NULL) {
-    if (i < funcArity) {
+    if (i <= funcArity) {
       gottaBreak = 0;
       switch (i) {
       case 1:
@@ -2445,6 +2445,7 @@ int sollya_lib_v_get_subfunctions(sollya_obj_t obj1, int *ari, va_list varlist) 
     } else {
       break;
     }
+    i++;
   }
   return 1;
 }
@@ -2609,7 +2610,7 @@ int sollya_lib_v_decompose_function(sollya_obj_t obj1, sollya_base_function_t *b
   }  
   i = 1;
   while ((elem = va_arg(varlist,sollya_obj_t *)) != NULL) {
-    if (i < funcArity) {
+    if (i <= funcArity) {
       gottaBreak = 0;
       switch (i) {
       case 1:
@@ -2626,6 +2627,7 @@ int sollya_lib_v_decompose_function(sollya_obj_t obj1, sollya_base_function_t *b
     } else {
       break;
     }
+    i++;
   }
   return 1;
 }
