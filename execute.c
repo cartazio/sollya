@@ -16048,6 +16048,9 @@ node *evaluateThingInnerRemez(node *tree, char *timingString) {
     if (timingString != NULL) popTimeCounter(timingString);
   }
 
+  /* If ever result is NULL, we replace it with its original tree before evaluation */
+  if (result == NULL) result = copyThing(tree);
+
   mpfr_clear(a); mpfr_clear(b); mpfr_clear(c); mpfr_clear(d); mpfr_clear(quality);
   freeChain(monomials,freeMemoryOnVoid);
   freeChain(arguments,freeThingOnVoid);

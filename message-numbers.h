@@ -490,6 +490,10 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #define SOLLYA_MSG_TAYLOR_RECURSION_TEMPORARILY_SET_TO_A_VALUE     421
 #define SOLLYA_MSG_ABS_DIAM_AND_PREC_SET_TO_CERTAIN_VALUES         422
 #define SOLLYA_MSG_IDENTIFIER_IS_LIBRARY_FUNC_CANNOT_BE_EXTERNAL   423
+#define SOLLYA_MSG_HANDLED_SIGSEGV                                 424
+#define SOLLYA_MSG_HANDLED_SIGBUS                                  425
+#define SOLLYA_MSG_HANDLED_SIGFPE                                  426
+#define SOLLYA_MSG_HANDLED_SIGPIPE                                 427
 
 
 /* A table with textual explanations of the messages
@@ -940,6 +944,10 @@ static const messageEntry messageTextsTable[] = {
   { SOLLYA_MSG_TAYLOR_RECURSION_TEMPORARILY_SET_TO_A_VALUE            , "The number of Taylor recursions has been temporarily set to a certain value" },
   { SOLLYA_MSG_ABS_DIAM_AND_PREC_SET_TO_CERTAIN_VALUES                , "The absolute diameter and the intermediate precision have been temporarily set to certain values" },
   { SOLLYA_MSG_IDENTIFIER_IS_LIBRARY_FUNC_CANNOT_BE_EXTERNAL          , "An identifier is already bound to a library function. It cannot be bound to an external procedure" },
+  { SOLLYA_MSG_HANDLED_SIGSEGV                                        , "A SIGSEGV signal has been handled" },
+  { SOLLYA_MSG_HANDLED_SIGBUS                                         , "A SIGBUS signal has been handled" },
+  { SOLLYA_MSG_HANDLED_SIGFPE                                         , "A SIGFPE signal has been handled" },
+  { SOLLYA_MSG_HANDLED_SIGPIPE                                        , "A SIGPIPE signal has been handled" },
   { -1, "Unknown message number -1" }
 };
 #endif

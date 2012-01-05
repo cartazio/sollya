@@ -84,6 +84,13 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include <execinfo.h>
 #endif
 
+/* Some internal signal numbers */
+
+#define HANDLING_SIGINT  1
+#define HANDLING_SIGSEGV 2
+#define HANDLING_SIGBUS  3
+#define HANDLING_SIGFPE  4
+#define HANDLING_SIGPIPE 5
 
 /* STATE OF THE TOOL */
 
@@ -128,6 +135,7 @@ node *parsedThingIntern = NULL;
 jmp_buf recoverEnvironment;
 jmp_buf recoverEnvironmentError;
 int handlingCtrlC = 0;
+int lastHandledSignal = 0;
 int recoverEnvironmentReady = 0;
 int exitInsteadOfRecover = 1;
 int numberBacktrace = 1;
@@ -812,59 +820,23 @@ void popTimeCounter(char *s) {
   return;
 }
 
-
-
-void printBacktrace() {
-#if HAVE_BACKTRACE
-  void *array[BACKTRACELENGTH];
-  size_t size;
-  char **strings;
-  size_t i;
-
-  if (numberBacktrace > 0) {
-
-    size = backtrace (array, BACKTRACELENGTH);
-    strings = backtrace_symbols (array, size);
-
-    sollyaFprintf(stderr,"The current stack is:\n\n");
-
-    for (i=0; i<size; i++)
-      sollyaFprintf(stderr,"%s\n", strings[i]);
-
-    free (strings);
-    numberBacktrace--;
-
-  }
-#endif 
-}
-
-
-void signalHandler(int i) {
+void signalHandler(int i, siginfo_t *info, void *data) {
   switch (i) {
   case SIGINT: 
     handlingCtrlC = 1;
+    lastHandledSignal = HANDLING_SIGINT;
     break;
   case SIGSEGV:
-    changeToWarningMode();
-    sollyaPrintf("Warning: handling signal SIGSEGV\n");
-    printBacktrace(); 
-    sollyaPrintf("\n");
-    restoreMode();
+    lastHandledSignal = HANDLING_SIGSEGV;
     break;
   case SIGBUS:
-    changeToWarningMode();
-    sollyaPrintf("Warning: handling signal SIGBREAK\n");
-    restoreMode();
+    lastHandledSignal = HANDLING_SIGBUS;
     break;
   case SIGFPE:
-    changeToWarningMode();
-    sollyaPrintf("Warning: handling signal SIGFPE\n");
-    restoreMode();
+    lastHandledSignal = HANDLING_SIGFPE;
     break;
   case SIGPIPE:
-    changeToWarningMode();
-    sollyaPrintf("Warning: handling signal SIGPIPE\n");
-    restoreMode();
+    lastHandledSignal = HANDLING_SIGPIPE;
     break;
   default:
     sollyaFprintf(stderr,"Error: must handle an unknown signal.\n");
@@ -879,17 +851,6 @@ void signalHandler(int i) {
   } 
 }
 
-void recoverFromError(void) {
-  displayColor = -1; normalMode();
-  fflush(NULL);
-  if (exitInsteadOfRecover) {
-    sollyaFprintf(stderr,"Error: the recover environment has not been initialized. Exiting.\n");
-    exit(1);
-  }
-  longjmp(recoverEnvironmentError,1);
-}
-
-
 void printPrompt(void) {
   if (eliminatePromptBackup) return;
   if (readStack != NULL) return;
@@ -903,6 +864,21 @@ void printPrompt(void) {
 
 void initSignalHandler() {
   sigset_t mask;
+  struct sigaction action;
+
+  action.sa_sigaction = signalHandler;
+  action.sa_flags = SA_SIGINFO;
+  sigemptyset(&(action.sa_mask));
+  sigaddset(&(action.sa_mask),SIGINT);
+  sigaddset(&(action.sa_mask),SIGSEGV);
+  sigaddset(&(action.sa_mask),SIGBUS);
+  sigaddset(&(action.sa_mask),SIGFPE);
+  sigaddset(&(action.sa_mask),SIGPIPE);
+  sigaction(SIGINT, &action, NULL);
+  sigaction(SIGSEGV, &action, NULL);
+  sigaction(SIGBUS, &action, NULL);
+  sigaction(SIGFPE, &action, NULL);
+  sigaction(SIGPIPE, &action, NULL);
 
   sigemptyset(&mask);
   sigaddset(&mask,SIGINT);
@@ -911,19 +887,13 @@ void initSignalHandler() {
   sigaddset(&mask,SIGFPE);
   sigaddset(&mask,SIGPIPE);
   sigprocmask(SIG_UNBLOCK, &mask, NULL);
-  signal(SIGINT,signalHandler);
-  signal(SIGSEGV,signalHandler);
-  signal(SIGBUS,signalHandler);
-  signal(SIGFPE,signalHandler);
-  signal(SIGPIPE,signalHandler);
 }
 
 void blockSignals() {
   sigset_t mask;
 
   sigemptyset(&mask);
-
-  if (readStack != NULL) sigaddset(&mask,SIGINT);
+  sigaddset(&mask,SIGINT);
   sigaddset(&mask,SIGSEGV);
   sigaddset(&mask,SIGBUS);
   sigaddset(&mask,SIGFPE);
@@ -1205,6 +1175,7 @@ int initializeLibraryMode() {
   mp_set_memory_functions(safeMalloc,wrapSafeRealloc,NULL);
   initToolDefaults();
   handlingCtrlC = 0;
+  lastHandledSignal = 0;
   return 1;
 }
 
@@ -1399,6 +1370,27 @@ int general(int argc, char *argv[]) {
   lastWasError = 0;
   lastCorrectlyExecuted = 0;
   while (1) {
+    if (lastHandledSignal != 0) {
+      switch (lastHandledSignal) {
+      case HANDLING_SIGINT:
+	break;
+      case HANDLING_SIGSEGV:
+	printMessage(1,SOLLYA_MSG_HANDLED_SIGSEGV,"Warning: a SIGSEGV signal has been handled.\n");
+	break;
+      case HANDLING_SIGBUS:
+	printMessage(1,SOLLYA_MSG_HANDLED_SIGBUS,"Warning: a SIGBUS signal has been handled.\n");
+	break;
+      case HANDLING_SIGFPE:
+	printMessage(1,SOLLYA_MSG_HANDLED_SIGFPE,"Warning: a SIGFPE signal has been handled.\n");
+	break;
+      case HANDLING_SIGPIPE:
+	printMessage(1,SOLLYA_MSG_HANDLED_SIGPIPE,"Warning: a SIGPIPE signal has been handled.\n");
+	break;
+      default:
+	break;
+      }
+      lastHandledSignal = 0;
+    }
     executeAbort = 0;
     parsedThing = NULL;
     lastWasSyntaxError = 0;
@@ -1408,6 +1400,7 @@ int general(int argc, char *argv[]) {
     if (parsedThing != NULL) {
       
       handlingCtrlC = 0;
+      lastHandledSignal = 0;
       if (!setjmp(recoverEnvironment)) {
 	memmove(&recoverEnvironmentError,&recoverEnvironment,sizeof(recoverEnvironmentError));
 	recoverEnvironmentReady = 1;
@@ -1443,6 +1436,27 @@ int general(int argc, char *argv[]) {
 	displayColor = -1; normalMode();
 	blockSignals();
 	lastWasError = 1;
+	if (lastHandledSignal != 0) {
+	  switch (lastHandledSignal) {
+	  case HANDLING_SIGINT:
+	    break;
+	  case HANDLING_SIGSEGV:
+	    printMessage(1,SOLLYA_MSG_HANDLED_SIGSEGV,"Warning: a SIGSEGV signal has been handled.\n");
+	    break;
+	  case HANDLING_SIGBUS:
+	    printMessage(1,SOLLYA_MSG_HANDLED_SIGBUS,"Warning: a SIGBUS signal has been handled.\n");
+	    break;
+	  case HANDLING_SIGFPE:
+	    printMessage(1,SOLLYA_MSG_HANDLED_SIGFPE,"Warning: a SIGFPE signal has been handled.\n");
+	    break;
+	  case HANDLING_SIGPIPE:
+	    printMessage(1,SOLLYA_MSG_HANDLED_SIGPIPE,"Warning: a SIGPIPE signal has been handled.\n");
+	    break;
+	  default:
+	    break;
+	  }
+	  lastHandledSignal = 0;
+	}
 	if (handlingCtrlC) 
 	  printMessage(1,SOLLYA_MSG_LAST_COMMAND_INTERRUPTED,"Warning: the last command has been interrupted. May leak memory.\n");
 	else { 

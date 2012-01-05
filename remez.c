@@ -1899,7 +1899,12 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 
 	gmp_randclear(random_state);
 
-	recoverFromError();
+	/* Christoph: replacing a recoverFromError with a construction
+	   of the error special symbol and a return.  I am not 100%
+	   sure that all memory has been freed at this point, as it
+	   should be.
+	*/
+	return makeError();
       }
 
       printMessage(3, SOLLYA_MSG_REMEZ_CURRENT_QUALITY_HAS_A_CERTAIN_VALUE, "Current quality: %v\n",computedQuality);
