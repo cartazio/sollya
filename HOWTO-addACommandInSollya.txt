@@ -1,0 +1,159 @@
+* Créer newcommand.c et newcommand.h
+
+* lexer.l :
+    * dans la liste des commandes rajouter
+         NEWCOMMAND 	"newcommand"
+
+    * plus bas ajouter 
+         {NEWCOMMAND}		{ newTokenLexed(); return NEWCOMMANDTOKEN; }
+
+* internlexer.l :
+    * dans la liste des commandes rajouter
+         NEWCOMMAND 	"newcommand"
+
+    * plus bas ajouter 
+         {NEWCOMMAND}		{ return NEWCOMMANDTOKEN; }
+
+* parser.y et internparser.y :
+    * ajouter le token pour newcommand :
+         %token  NEWCOMMANDTOKEN;
+
+    * dans la section "headfunction:" ajouter un cas :
+         | NEWCOMMANDTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thinglist RPARTOKEN
+             {
+               $$ = makeNewCommand(addElement(addElement($7, $5), $3));
+             }
+
+     [ ici est créé l'arbre généralisé correspondnant à newcommand.
+       Dans le cas d'un nombre d'arguments variable, on utilise thinglist.
+       Dans le cas d'un nombre fixe d'arguments, on utilise que des thing.
+       Le premier token (NEWCOMMANDTOKEN ici) est $1, etc.
+       La fonction makeNewCommand est définie dans execute.c ; cf plus bas. ]
+
+* spécifiquement dans parser.y :
+    * dans la section "help:" ajouter un cas :
+         | NEWCOMMANDTOKEN
+             {
+         #ifdef HELP_NEWCOMMAND_TEXT
+           outputMode(); printf(HELP_NEWCOMMAND_TEXT);
+         #else
+           outputMode(); printf("Newcommand: newcommand(func, range [, degree|monoms]).\n");
+           #if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+             #warning "No help text for NEWCOMMAND"
+           #endif
+         #endif
+             } 
+
+
+     [ le #else est une chaîne affichée par défaut. Elle reflète la syntaxe
+       de base de newcommand. ]                 					                        					       
+    * un peu plus bas, sous HELPTOKEN rajouter une ligne
+         printf("- newcommand\n");
+
+
+* execute.h :
+    * ajouter une entrée
+         #define NEWCOMMAND: [un nouveau nombre]
+    * ajouter une déclaration
+         node *makeNewCommand(chain *thinglist);
+
+      ou
+         node *makeNewCommand(node *thing1, [éventuellement d'autres]);
+
+
+* execute.c :
+    * inclure newcommand.h
+    * dans la fonction copyThing ajouter le case
+         case NEWCOMMAND:
+           copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
+           break;
+
+       ou le case
+         case NEWCOMMAND:
+           copy->child1 = copyThing(tree->child1);
+           [éventuellement d'autres fils]
+           break;
+       suivant le cas
+    * dans la fonction getTimingStringForThing ajouter le case
+         case NEWCOMMAND:
+           constString = "le message affiché par la fonction timing";
+           break;
+    * dans la fonction sRawPrintThing ajouter le case
+         case NEWCOMMAND:
+           res = [du code pour construire une chaine de la forme "newcommand(arg1,arg2...)"];
+           break;
+    * Créer une fonction
+         node *makeNewCommand(chain *thinglist) {
+           node *res;
+
+           res = (node *) safeMalloc(sizeof(node));
+           res->nodeType = NEWCOMMAND;
+           res->arguments = thinglist;
+
+           return res;
+
+         }
+
+      ou une fonction
+         node *makeNewCommand(node *thing1, [éventuellement d'autres]) {
+           node *res;
+
+           res = (node *) safeMalloc(sizeof(node));
+           res->nodeType = NEWCOMMAND;
+           res->child1 = thing1;
+           [éventuellement d'autres]
+
+           return res;
+
+         }
+    * dans la fonction freeThing ajouter le case
+         case NEWCOMMAND:
+           freeChain(tree->arguments, freeThingOnVoid);
+           free(tree);
+           break;
+		 	
+      ou le case
+         case NEWCOMMAND:
+           freeThing(tree->child1);
+           [éventuellement d'autres];
+           free(tree);
+           break;
+    * dans la fonction isEqualThing ajouter un case pour tester l'égalité.
+      À moins qu'il s'agisse d'un nouvel opérateur, ça devrait être:
+         case NEWCOMMAND:
+           if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
+           break;
+
+      ou bien
+         case NEWCOMMAND:
+           if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+           [éventuellement d'autres]
+           break;  			
+    * dans la fonction evaluateThingInner rajouter un case
+         case NEWCOMMAND:
+           [code pour décoder les arguments et réaliser l'appel à la
+            fonction newcommand. À la fin, la variable copy doit 
+            contenir le résultat de l'appel. Toutes les variables
+            intermédiaires utilisées doivent être initialisées et
+            libérées dans le corps de ce case.
+            La chaîne timingString contient ce qu'il faut afficher
+            pour le mode timing. Si elle ne vaut pas NULL, il faut
+            que pushTimeCounter() et popTimeCounter(timingString) 
+            encadrent l'appel à newcommand.
+            Remarque : copy est un node au sens généralisé donc
+            on peut y mettre n'importe quelle valeur.]
+
+
+* sollya.h : rajouter la signature de la commande pour un accès en mode bibliothèque.
+
+* Makefile.am : 
+    * dans sollya_SOURCES: ajouter une entrée newcommand.c et newcommand.h
+    * de même dans libsollya_la_SOURCES
+ 
+* Créer l'entrée correspondante dans l'aide de Sollya :
+    * keywords.def : rajouter une entrée de la forme NOMDANSLAIDE="nomcommande"
+    * CommandsAndFunction.tex : rajouter une entrée de la forme \input{nomcommande}
+    * Créer un nouveau fichier .shlp correspondant à la fonctionnalité.
+    * grammar.tex : mettre à jour ce fichier [ça vaut toujours ?]
+
+    * Générer le .tex et l'aide en ligne en faisant ./shlp2tex et ./shlp2txt sur le nouveau fichier.

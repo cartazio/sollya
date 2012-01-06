@@ -1,0 +1,624 @@
+\documentclass{article}
+
+\usepackage[english]{babel}
+
+\usepackage[utf8]{inputenc}
+\usepackage{fullpage}
+\usepackage[naturalnames,a4paper=true,ps2pdf=true]{hyperref}
+\usepackage{color}
+\usepackage{url}
+\usepackage{xspace}
+
+
+\newcommand{\commandName}{\texttt{foo}\xspace}
+\newcommand{\commandNameUp}{\texttt{Foo}\xspace} % The previous one with first letter in uppercase
+
+\newcommand{\commandFunction}{\texttt{fooFunction}\xspace}
+\newcommand{\commandFile}[1]{\texttt{fooFile#1}\xspace}
+\newcommand{\commandLexer}{\texttt{FOO}\xspace}
+\newcommand{\commandToken}{\texttt{FOOTOKEN}\xspace}
+\newcommand{\commandMakeFunc}{\texttt{makeFoo}}
+\newcommand{\commandNodeName}{\texttt{FOONODETYPE}\xspace}
+
+\newcommand{\commandShlp}{\texttt{doc/fooHelp.shlp}\xspace}
+\newcommand{\commandShlpWithoutDoc}{\texttt{fooHelp.shlp}\xspace} % The previous one without doc/
+\newcommand{\commandTexName}{\texttt{fooHelp}} % This is the previous one without the extension
+\newcommand{\commandHELP}{\texttt{FOOHELP}\xspace} % This is the previous one in uppercase
+\newcommand{\commandKeyword}{\texttt{FOOKEYWORD}}
+
+\title{How to add a new command in Sollya}
+\author{Sylvain Chevillard}
+
+\begin{document}
+\maketitle
+
+Let's say that we want to add a new command called \commandName in Sollya.
+
+The procedure is the following:
+\begin{itemize}
+\item (Possibly) add new files \commandFile{.h} and \commandFile{.c}
+\item Update \texttt{lexer.l} and \texttt{internlexer.l} \textbf{and \texttt{minilexer.l}} (new and undocumented in the following)
+\item Write a function \commandFunction (either in an existing file or in \commandFile{.c})
+\item Update \texttt{parser.y} and \texttt{internparser.y} \textbf{and \texttt{miniparser.y}} (new and undocumented in the following)
+\item Declare a new node type in \texttt{execute.h}
+\item Add \commandFile{.c} and \commandFile{.h} to variable \texttt{sollya\_SOURCES} in \texttt{Makefile.am}. (Possibly also to variable \texttt{libsollya\_la\_SOURCES})
+\item Write technical stuff in \texttt{execute.c}, in order to bind the token recognised by the parser to the function \commandFunction.
+\end{itemize}
+
+At this level, Sollya should compile again and \commandName typed within Sollya should result in calling \commandFunction.
+
+There remain non-critical but important things to do:
+\begin{itemize}
+\item Update \texttt{sollya.h} to let users of \texttt{libsollya} use \commandFunction.
+\item Create and fill a new documentation file \commandShlp
+\item (Update \texttt{doc/grammar.tex})
+\item Generate the documentation files.
+\end{itemize}
+
+\section{Detailed procedure}
+\paragraph{Implementation files: } your new command will be implemented by a C function \commandFunction. This C function can be implemented either in an existing source file of Sollya or in a new file \commandFile{.c}. It is up to you to decide if the new command has its natural place in an existing source file or not.
+
+In both cases you have to add a declaration for your function, either in a new file \commandFile{.h} or in the corresponding header file of Sollya.
+
+You may declare other functions if you think they might be useful in the future and/or for users of \texttt{libsollya}. 
+
+Your C function could be something like:
+\begin{center}
+  \texttt{int }\commandFunction\texttt{(mpfr\_t res, node *f, node *f2, chain *list, mpfr\_t a, mpfr\_t b) \{ ... \}}
+\end{center}
+
+
+\paragraph{Lexers: } Sollya has two lexers. \texttt{lexer.l} is used when Sollya [?] and \texttt{internlexer.l} is used when Sollya [?]. In general the command that you are adding to Sollya takes place in both lexers.
+
+In the list of commands of both files, you must add an entry
+\begin{center}
+  \commandLexer\qquad\texttt{"}\commandName\texttt{"}
+\end{center}
+At the right place in \texttt{lexer.l}:
+\begin{center}
+  \texttt{\{}\commandLexer\texttt{\}\qquad \{ newTokenLexed(); return }\commandToken\texttt{;\}}
+\end{center}
+And at the right place in \texttt{internlexer.l}:
+\begin{center}
+  \texttt{\{}\commandLexer\texttt{\}\qquad \{return }\commandToken\texttt{;\}}
+\end{center}
+
+
+\paragraph{Parsers:} Sollya has two parser \texttt{parser.y} and \texttt{internparser.y} corresponding to both lexers of Sollya. Again, in general, you probably want to update both files.
+
+You must first add the token for your command in the list of tokens (in both files):
+\begin{center}
+  \texttt{\%token   }\commandToken\texttt{;}
+\end{center}
+
+In section \texttt{headfunction} of both files, you must add a new case:\\
+    \texttt{| }\commandToken\texttt{ LPARTOKEN thing COMMATOKEN thing COMMATOKEN thinglist RPARTOKEN}\\
+    \phantom{1}\quad\texttt{\{}\\
+    \phantom{1}\qquad\texttt{\$\$ =  }\commandMakeFunc\texttt{(addElement(addElement(\$7, \$5), \$3));}\\
+    \phantom{1}\quad\texttt{\}}
+
+
+Here a few explanations are required.
+
+The function \commandMakeFunc{} is to be implemented in file \texttt{execute.c}. This will be explained later. If your command expects a fixed number of arguments ($3$ for instance), \commandMakeFunc{} should have a signature of the form:
+\begin{center}
+  \texttt{node *}\commandMakeFunc\texttt{(node *thing1, node *thing2, node *thing3)}
+\end{center}
+On the contrary, if some arguments are optional, you should use a list instead (as shown in our previous example). This list will be read by the function \texttt{evaluateThingInner} or \texttt{executeCommandInner} of \texttt{execute.c} (again this will be explained later) that will do all the decoding work before calling \commandFunction with proper arguments.
+
+Assume that our new command has the following syntax: \commandName\texttt{(func, range, list [, func2])}. The argument \texttt{func2} is optional. Thus the parser expects $2$ arguments (\texttt{func} and \texttt{range}) followed by a list containing at least one argument (\texttt{list}). This explains the line we just wrote in the parser.
+
+Note that the arguments read by the parser are denoted by \texttt{\$1}, \texttt{\$2}, etc. Thus \texttt{\$1} is \commandToken, etc. Hence \texttt{\$3}, \texttt{\$5}, and \texttt{\$7}, are the three interesting arguments here.
+
+
+\paragraph{Specific modification of \texttt{parser.y}: } the file \texttt{parser.y} contains code corresponding to the interactive help available within Sollya. You have to add your command to the list of known commands.
+
+In the section \texttt{help:} you must add the case:\\
+    \texttt{| }\commandToken\\
+    \phantom{1}\quad\texttt{\{}\\
+    \texttt{\#ifdef HELP\_}\commandHELP\texttt{\_TEXT}\\
+    \phantom{1}\quad\texttt{outputMode(); printf(HELP\_}\commandHELP\texttt{\_TEXT);}\\
+    \texttt{\#else}\\
+    \phantom{1}\quad\texttt{outputMode(); printf("}\commandNameUp: \commandName\texttt{(func, range, list [, func2]).$\backslash$n");}\\
+     \phantom{1}\quad\texttt{\#if defined(WARN\_IF\_NO\_HELP\_TEXT) \&\& WARN\_IF\_NO\_HELP\_TEXT}\\
+     \phantom{1}\quad\phantom{1}\texttt{\#warning "No help text for \commandName."}\\
+     \phantom{1}\quad\texttt{\#endif}\\
+    \texttt{\#endif}\\
+    \phantom{1}\quad\texttt{\}}
+
+If you provide a documentation file \commandShlp (see later), it will be used as an interactive documentation in Sollya. If such a file does not exist, the \texttt{\#else} branch is used instead. It must provide a short recall of the syntax of your command.
+
+Finally, you must add your command to the list of available commands: in this list (under \texttt{HELP\_TOKEN}) add a line
+\begin{center}
+  \texttt{printf("- }\commandName$\backslash$\texttt{n");}
+\end{center}
+
+
+\paragraph{Declare your command as a new node type: } in the file \texttt{execute.h} there is a list of node types (one per command). You must add yours at the end of the list (which goes up to $235$ at the time of writing this document):
+\begin{center}
+  \texttt{\#define }\commandNodeName \texttt{~~236}
+\end{center}
+
+You must also add a declaration for \commandMakeFunc{} matching the one you wrote in the parsers:
+\begin{center}
+\texttt{node *}\commandMakeFunc\texttt{(chain *thinglist);}
+\end{center}
+
+
+\paragraph{Add new entries in \texttt{Makefile.am}: } if you inserted your new command into an existing C file of Sollya, you do not have anything to do here. If you created your own C files, you have to let the Makefile know that it must compile your new files. The file \texttt{Makefile.am} defines a variable \texttt{sollya\_SOURCES} that lists the source files of Sollya. Add \commandFile{.c} and \commandFile{.h} to this list. If you want your command to be available for the users of \texttt{libsollya}, do the same for the variable \texttt{libsollya\_la\_SOURCES}).
+
+
+\subsection{Add your command at strategic places in \texttt{execute.c}}
+The file \texttt{execute.c} contains functions that make the link between the parser (user' side) and your C code (developer' side). There are a few things to do here:
+
+\begin{itemize}
+\item add \commandFile{.h} if you created one
+\item add the function \commandMakeFunc{} that is called by the parser. This function returns a \texttt{node *} with type \commandNodeName that will then be evaluated by the function \texttt{evaluateThingInner} or \texttt{executeCommandInner}.
+\item add a case for your command in \texttt{copyThing}. This function is used to copy a node.
+\item add a case for your command in \texttt{getTimingStringForThing}. This gives a string used when \texttt{timing} mode is activated for printing the time consumed by you command.
+\item add a case for your command in \texttt{sRawPrintThing}. This gives a string for pretty-printing your command.
+\item add a case for your command in \texttt{freeThing}. This function is called to clean up the memory when a node is not used any more. When you make a call to your command within Sollya, a node is constructed by the parser (via \commandMakeFunc). This node is then evaluated. Before returning the result, Sollya cleans up this node (become useless) using \texttt{freeThing}.
+\item add a case for your command in \texttt{isEqualThing}. This function is used to compare two things.
+\item add a case for your command in \texttt{evaluateThingInner} or \texttt{executeCommandInner}. This is where the arguments of your command are decoded and default values applied in case of optional arguments. Then the C function \commandFunction is called to perform the actual computation and the result is returned. 
+\end{itemize}
+
+\paragraph{The function  \commandMakeFunc: } this function just creates a new node with type \commandNodeName. In our case, it is just the following:\\
+\texttt{node *}\commandMakeFunc\texttt{(chain *thinglist) \{}\\
+\phantom{1}\texttt{~~node *res;}\\
+\phantom{1}\texttt{~~res = (node *) safeMalloc(sizeof(node));}\\
+\phantom{1}\texttt{~~res->nodeType = }\commandNodeName\texttt{;}\\
+\phantom{1}\texttt{~~res->arguments = thinglist;}\\
+\phantom{1}\texttt{~~return res;}\\
+\texttt{\}}
+
+If your function has a fixed number of arguments, there are two possibilities: if the number of arguments is less than two, you may assign the argument(s) to \texttt{child1} (and \texttt{child2}):\\
+\texttt{node *}\commandMakeFunc\texttt{(node *thing1, node *thing2) \{}\\
+\phantom{1}\texttt{~~node *res;}\\
+\phantom{1}\texttt{~~res = (node *) safeMalloc(sizeof(node));}\\
+\phantom{1}\texttt{~~res->nodeType = }\commandNodeName\texttt{;}\\
+\phantom{1}\texttt{~~res->child1 = thing1;}\\
+\phantom{1}\texttt{~~res->child2 = thing2;}\\
+\phantom{1}\texttt{~~return res;}\\
+\texttt{\}}
+
+if it has more than two arguments, they are transmitted as a list:\\
+\texttt{node *}\commandMakeFunc\texttt{(node *thing1, node *thing2, node *thing3) \{}\\
+\phantom{1}\texttt{~~node *res;}\\
+\phantom{1}\texttt{~~res = (node *) safeMalloc(sizeof(node));}\\
+\phantom{1}\texttt{~~res->nodeType = }\commandNodeName\texttt{;}\\
+\phantom{1}\texttt{~~res->arguments = addElement(addElement(addElement(NULL, thing3), thing2), thing1);}\\
+\phantom{1}\texttt{~~return res;}\\
+\texttt{\}}
+
+\paragraph{Add a case in the function \texttt{copyThing}: } in this function, you must add a case for your command. If the arguments are stored in a list (as in our example), just insert the following code:\\
+\phantom{1}\texttt{~~case }\commandNodeName\texttt{:}\\
+\phantom{1}\texttt{~~~~copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);}\\
+\phantom{1}\texttt{~~~~break;}\\
+If the arguments are stored in \texttt{child1} (and \texttt{child2}), insert the following code:\\
+\phantom{1}\texttt{~~case }\commandNodeName\texttt{:}\\
+\phantom{1}\texttt{~~~~copy->child1 = copyThing(tree->child1);}\\
+\phantom{1}\texttt{[~~~copy->child1 = copyThing(tree->child1);]\qquad /* only if child2 contains something */}\\
+\phantom{1}\texttt{~~~~free(tree);}\\
+\phantom{1}\texttt{~~~~break;}\\
+
+\paragraph{Add a case in the function \texttt{getTimingStringForThing}: } in this function, you must add a case for your command with a message that will be printed when timing is activated. It could be just the name of you command, or a bit more.\\
+\phantom{1}\texttt{~~case }\commandNodeName\texttt{:}\\
+\phantom{1}\texttt{~~~~constString = "computing a schmurtz";}\\
+\phantom{1}\texttt{~~~~break;}\\
+
+\paragraph{Add a case in the function \texttt{sRawPrintThing}: } in this function, you must add a case for your command. It will construct a string used for pretty printing. For instance, in our case (adapt it if the arguments are stored in \texttt{child1} and \texttt{child2}):\\
+\phantom{1}\texttt{~~case }\commandNodeName\texttt{:}\\
+\phantom{1}\texttt{~~~~res = newString("}\commandName\texttt{(");}\\
+\phantom{1}\texttt{~~~~~~curr = tree->arguments;}\\
+\phantom{1}\texttt{~~~~~~while (curr != NULL) \{}\\
+\phantom{1}\texttt{~~~~~~~~res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));}\\
+\phantom{1}\texttt{~~~~~~~~if (curr->next != NULL) res = concatAndFree(res, newString(", ")); }\\
+\phantom{1}\texttt{~~~~~~~~curr = curr->next;}\\
+\phantom{1}\texttt{~~~~~~\}}\\
+\phantom{1}\texttt{~~~~~~res = concatAndFree(res, newString(")"));}\\
+\phantom{1}\texttt{~~~~~~break;}\\
+
+
+\paragraph{Add a case in the function \texttt{freeThing}: } in this function, you must add a case for your command. If the arguments are stored in a list (as in our example), just insert the following code:\\
+\phantom{1}\texttt{~~case }\commandNodeName\texttt{:}\\
+\phantom{1}\texttt{~~~~freeChain(tree->arguments, freeThing);}\\
+\phantom{1}\texttt{~~~~free(tree);}\\
+\phantom{1}\texttt{~~~~break;}\\
+If the arguments are stored in \texttt{child1} (and \texttt{child2}), insert the following code:\\
+\phantom{1}\texttt{~~case }\commandNodeName\texttt{:}\\
+\phantom{1}\texttt{~~~~freeThing(tree->child1);}\\
+\phantom{1}\texttt{[~~~freeThing(tree->child2);]\qquad /* only if child2 contains something */}\\
+\phantom{1}\texttt{~~~~free(tree);}\\
+\phantom{1}\texttt{~~~~break;}\\         
+
+
+\paragraph{Add a case in the function \texttt{isEqualThing}: } in this function, you must add a case for your command. You probably just want to say that two calls to your command are equals if and only if all arguments are equal. If the arguments are stored in a list (as in our example), just insert the following code:\\
+\phantom{1}\texttt{~~case }\commandNodeName\texttt{:}\\
+\phantom{1}\texttt{~~~~if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;}\\
+\phantom{1}\texttt{~~~~break;}\\
+If the arguments are stored in \texttt{child1} (and \texttt{child2}), insert the following code:\\
+\phantom{1}\texttt{~~case }\commandNodeName\texttt{:}\\
+\phantom{1}\texttt{~~~~if (!isEqualThing(tree->child1,tree2->child1)) return 0;}\\
+\phantom{1}\texttt{[~~~if (!isEqualThing(tree->child2,tree2->child2)) return 0;]\qquad /* only if child2 contains something */}\\
+\phantom{1}\texttt{~~~~break;}\\         
+
+
+\paragraph{Add a case in the function \texttt{evaluateThingInner} or \texttt{executeCommandInner}: } this is where all the work is done and where you have to do it by yourself.
+
+If you are writing a command that does not return anything (it has just side effects, such as \texttt{plot} for instance) you must add a case in \texttt{executeCommandInner}.
+
+If you are writing a command that returns an object, you must add a case in \texttt{evaluateThingInner}. The result of the command must be stored as a \texttt{node *} in the variable \texttt{copy}. If something goes wrong, just let \texttt{copy} unchanged or change its nodetype to \texttt{tree->nodeType}.
+
+For both \texttt{executeCommandInner} and \texttt{evaluateThingInner}, any temporary variable must be initialised and freed manually. You will find the arguments of your command either in \texttt{tree->arguments} or \texttt{tree->child1} (and \texttt{tree->child2}) depending on what you did in \commandMakeFunc.
+
+Temporary variables that you may need are declared for you. Currently the following are available in \texttt{evaluateThingInner}:
+\begin{itemize}
+\item \texttt{node *copy, *tempNode, *tempNode2, *tempNode3}
+\item \texttt{int resA, resB, resC, resD, resE, i}
+\item \texttt{int *intptr}
+\item \texttt{char *tempString, *tempString2, *tempString3}
+\item \texttt{mpfr\_t a, b, c}
+\item \texttt{chain *tempChain, *tempChain2, *tempChain3, *newChain, *curr}
+\item \texttt{rangetype xrange, yrange, yrange2}
+\item \texttt{node *firstArg, *secondArg, *thirdArg, *fourthArg, *fifthArg, *sixthArg, *seventhArg, *eighthArg} (these are meant to store the arguments of your command. You have to fill them by yourself)
+\item \texttt{rangetype *rangeTempPtr}
+\item \texttt{FILE *fd, *fd2}
+\item \texttt{mpfr\_t *tempMpfrPtr}
+\item \texttt{mp\_exp\_t expo}
+\item \texttt{mp\_prec\_t pTemp}
+\end{itemize}
+
+The following are available in \texttt{executeCommandInner}:
+
+\begin{itemize}
+\item \texttt{int res, resA, resB, resC, resD, resE, intTemp, defaultVal, i}
+\item \texttt{chain *tempList, *tempList2, *curr}
+\item \texttt{mpfr\_t a, b, c, d, e}
+\item \texttt{node *tempNode, *tempNode2, *tempNode3, *tempNode4}
+\item \texttt{char *tempString, *tempString2;}
+\item \texttt{FILE *fd}
+\item \texttt{node **array}
+\item \texttt{rangetype tempRange}
+\end{itemize}
+
+If you need any extra temporary variable, please declare a new one at the beginning of \texttt{evaluateThingInner} or \texttt{executeCommandInner}.
+
+In the core of your case (either in  \texttt{evaluateThingInner} or \texttt{executeCommandInner}), you must test if the variable \texttt{timingString} is \texttt{NULL} or not. If not, you should time the call to \commandFunction (see the example above).
+
+In our very simple case, the code for \texttt{evaluateThingInner} could be something like that (for \texttt{executeCommandInner}, a few things should be changed):\\
+\phantom{1}~~\texttt{case }\commandNodeName\texttt{:}
+\begin{verbatim}
+    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateThingInnerOnVoid);
+    curr = copy->arguments;
+    firstArg = copyThing((node *) (curr->value));
+    curr = curr->next;
+    secondArg = copyThing((node *) (curr->value));
+    curr = curr->next;
+    thirdArg = copyThing((node *) (curr->value));
+    curr = curr->next;
+    fourthArg = NULL;
+    if (curr != NULL) {
+      fourthArg = copyThing((node *) (curr->value));
+      curr = curr->next;
+    }
+    if (isDefault(fourthArg)) {
+      freeThing(fourthArg);
+      fourthArg = makeConstantDouble(1.0);
+    }
+    if (fourthArg == NULL)  fourthArg = makeConstantDouble(1.0);
+
+    if( isPureTree(firstArg) && 
+        isRange(secondArg) &&
+        isPureList(thirdArg) &&
+        isPureTree(fourthArg) ) {
+
+      mpfr_init2(a, tools_precision);
+      mpfr_init2(b, tools_precision);
+      if (evaluateThingToRange(a,b,thirdArg)) {
+        mpfr_init2(c, tools_precision);
+        if (timingString != NULL) pushTimeCounter(); 
+        resA = fooFunction(c, firstArg, fouthArg, thirdArg, a, b);
+        if (timingString != NULL) popTimeCounter(timingString);
+
+        copy = makeConstant(c);
+
+        mpfr_clear(a);
+        mpfr_clear(b);
+        mpfr_clear(c);
+        freeThing(firstArg);
+        freeThing(secondArg);
+        freeThing(thirdArg);
+        freeThing(fourthArg);
+      }
+    }
+    break;
+\end{verbatim}
+
+Additional useful information may be found in Section~\ref{execute}.
+
+\subsection{Non-critical things that remain to do}
+
+\paragraph{Update \texttt{sollya.h}: } if you want your command to be available for the users of \texttt{libsollya}, you have to declare it in \texttt{sollya.h}. In our example, add this line somewhere in \texttt{sollya.h}:\\
+\begin{center}
+  \texttt{extern int }\commandFunction\texttt{(mpfr\_t res, node *f, node *f2, chain *list, mpfr\_t a, mpfr\_t b);}
+\end{center}
+
+\paragraph{Add a help file for your command: } for now the only available help about your command for Sollya users is the short line you wrote in \texttt{parser.y}. Sollya normally provides both a user manual and an interactive help (via the \texttt{help} command within Sollya). Both are generated from an input file of the form \commandShlp. Although you do not have to, it is \textbf{strongly} recommended that you write such a file documenting your new command.
+
+The first thing to do is to write the input file \commandShlp. See Section~\ref{writeShlp} for details on the syntax of such a file. The name of your file is used to create the corresponding entry in \texttt{help.h}. In our case, this is \commandHELP (remember that we used a \texttt{\#ifdef }\commandHELP in \texttt{parser.y}).
+
+Your must update \texttt{doc/keywords.def} with an entry of the form \commandKeyword\texttt{="}\commandName\texttt{"}. In the \texttt{.shlp} files, you will then refer to your command with \texttt{\$}\commandKeyword.
+
+Finally you must generate the \texttt{.tex} file corresponding to your help message and update the file \texttt{help.h}. This is automatically done by running:\\
+\phantom{1}~~~~\texttt{cd doc}\\
+\phantom{1}~~~~\texttt{./shlp2tex }\commandShlpWithoutDoc\\
+\phantom{1}~~~~\texttt{./shlp2txt }\commandShlpWithoutDoc
+
+Remark: if your command has a link with other existing commands in Sollya, you should consider to add a reference to your new command as a \texttt{\#SEEALSO} in the corresponding \texttt{.shlp} files. If you do so, you must generate the \texttt{.tex} files and the entry in \texttt{help.h} for all modified \texttt{.shlp} files. For instance:\\
+\phantom{1}~~~~\texttt{cd doc}\\
+\phantom{1}~~~~\texttt{./shlp2tex }\commandShlpWithoutDoc \texttt{command1.shlp command2.shlp}\\
+\phantom{1}~~~~\texttt{./shlp2txt }\commandShlpWithoutDoc \texttt{command1.shlp command2.shlp}
+
+
+\section{Add a new keyword}
+If you want to add a new keyword in Sollya (instead of a new command), the procedure is slightly different. For instance \texttt{absolute} and \texttt{dyadic} are keywords.
+
+\begin{itemize}
+\item Update \texttt{lexer.l} and \texttt{internlexer.l} the same way as before.
+\item Update \texttt{parser.y} and \texttt{internparser.y}. The new case is to be added in section \texttt{basicthing:} instead of \texttt{headfunction:}. Now \commandMakeFunc{} takes no argument.
+\item Declare a new node type in \texttt{execute.h} the same way as before.
+\item Write technical stuff in \texttt{execute.c}:
+  \begin{itemize}
+  \item The function \commandMakeFunc{} is the same as before except that it does not have any arguments. Only the node type should be set. \texttt{arguments}, \texttt{child1} and \texttt{child2} are let empty.
+  \item In \texttt{copyThing} the case reduces to \texttt{break;}
+  \item In \texttt{getTimingStringForThing} the case reduces to \texttt{constString = NULL; break;}
+  \item In \texttt{sRawPrintThing} the case reduces to \texttt{res = "}\commandName\texttt{"; break;}
+  \item In \texttt{freeThing} the case reduces to \texttt{free(tree); break;}
+  \item In \texttt{isEqualThing} the case reduces to \texttt{break;}
+  \item In \texttt{evaluateThingInner} the case reduces to \texttt{break;}
+  \end{itemize}
+\end{itemize}
+
+In \texttt{execute.c}: you must add a case for your keyword in the function \texttt{isCorrectlyTypedBaseSymbol}.
+
+Update \texttt{sollya.h} as before.
+
+As before, you are strongly invited to create a \texttt{.shlp} file and update \texttt{doc/keywords.def}. Moreover, your keyword may introduced a new type, in which case you should probably add it to \texttt{doc/types.def}. You should probably also add it in the list of special values described in the beginning of Sollya's manual (file \texttt{sollya.tex}).
+
+
+\section{What may be useful in \texttt{execute.c}}
+\label{execute}
+You need to know that every object in Sollya is represented by a element of type \texttt{node}. Its field \texttt{nodeType} gives the information of what it is representing. Until now, we saw that your new command is represented by a new \texttt{nodeType} (e.g. \commandNodeName) and its arguments are stored in fields \texttt{arguments} or \texttt{child1} (and \texttt{child2}).
+
+The function \texttt{evaluateThingInner} returns a \texttt{node *} representing the result of your command. Functions may help you in decoding the arguments of your command and constructing the \texttt{node *} that will store the result. We will describe them now.
+
+\begin{itemize}
+\item \texttt{int isPureTree(node *tree)}: returns $1$ if \texttt{tree} represents a mathematical expression (for example $\sin(x)+1/x$ is a pure tree; \texttt{infnorm(sin(x),[-1;1])} and \texttt{[0;1]} are not).
+\item \texttt{int isDefault(node *tree)}: returns $1$ if \texttt{tree} represents the keyword \texttt{default}.
+\item \texttt{int isString(node *tree)}: returns $1$ if \texttt{tree} represents a string.
+
+\item functions dealing with lists:
+  \begin{itemize}
+  \item \texttt{int isList(node *tree)}: returns $1$ if \texttt{tree} represents a \textbf{finite, non-empty} list (such as \texttt{[|1,2,3|]} or \texttt{[|1,...,3|]}, but not \texttt{[|1,2...|]}).
+  \item \texttt{int isEmptyList(node *tree)}: returns $1$ if \texttt{tree} represents the empty list \texttt{[||]}.
+  \item \texttt{int isElliptic(node *tree)}: returns $1$ if \texttt{tree} represents the special element \texttt{...}
+  \item \texttt{int isPureList(node *tree)}: returns $1$ if \texttt{tree} represents a \textbf{finite non-empty} list which elements are all different from \texttt{...} (for example, \texttt{[|1,2,3|]} is a pure list, but \texttt{[|1,...,3|]} is not).
+  \item \texttt{int isFinalEllipticList(node *tree)}: returns $1$ if \texttt{tree} represents an infinite list (such as \texttt{[|1,2...|]} or \texttt{[|1,...,3,5...|]} ).
+  \item \texttt{int isPureFinalEllipticList(node *tree)}: returns $1$ if \texttt{tree} represents an infinite list that does not contain the special element \texttt{...} (for example \texttt{[|1,2...|]} is a pure final elliptic list, but \texttt{[|1,...,3,5...|]} is not).
+  \end{itemize}
+\item \texttt{int isRange(node *tree)}: returns $1$ if \texttt{tree} represents an interval.
+\item functions that recognise special keywords:
+  \begin{itemize}
+  \item \texttt{int isError(node *tree)}: returns $1$ if \texttt{tree}
+    represents the special element \texttt{error}.
+  \item \texttt{int isBoolean(node *tree)}: returns $1$ if
+    \texttt{tree} represents \texttt{true} of \texttt{false}.
+  \item \texttt{int isOnOff(node *tree)}: returns $1$ if \texttt{tree}
+    represents \texttt{on} of \texttt{off}.
+  \item \texttt{int isDisplayMode(node *tree)}: returns $1$ if
+    \texttt{tree} represents one of \texttt{dyadic}, \texttt{decimal},
+    \texttt{powers}, \texttt{binary} or \texttt{hexadecimal}.
+  \item \texttt{int isRoundingSymbol(node *tree)}: returns $1$ if
+    \texttt{tree} represents one of \texttt{RN}, \texttt{RD},
+    \texttt{RU} or \texttt{RZ}.
+  \item \texttt{int isExpansionFormat(node *tree)}: returns $1$ if
+    \texttt{tree} represents one of \texttt{D}, \texttt{double},
+    \texttt{DD}, \texttt{doubledouble}, \texttt{TD},
+    \texttt{tripledouble}, \texttt{DE} or \texttt{doubleextended}.
+  \item \texttt{int isRestrictedExpansionFormat(node *tree)}: returns
+    $1$ if \texttt{tree} represents one of \texttt{D},
+    \texttt{double}, \texttt{DD}, \texttt{doubledouble}, \texttt{TD}
+    or \texttt{tripledouble}.
+  \item \texttt{int isFilePostscriptFile(node *tree)}: returns $1$ if
+    \texttt{tree} represents one of \texttt{file}, \texttt{postscript}
+    or \texttt{postscriptfile}.
+  \item \texttt{int isExternalPlotMode(node *tree)}: returns $1$ if
+    \texttt{tree} represents \texttt{absolute} or \texttt{relative}.
+  \item \texttt{int isCorrectlyTypedBaseSymbol(node *tree)}: returns $1$ if \texttt{tree} represents a keyword or a string.
+  \end{itemize}
+\item \texttt{int isCorrectlyTyped(node *tree)}: returns $1$ if \texttt{tree} represents a keyword, a mathematical expression tree, a string, an interval or a list (finite or infinite) which elements are themselves correctly typed (in particular: they do not contain the special element \texttt{...}).
+\item \texttt{int isPolynomial(node *tree)}: returns $1$ if \texttt{tree} represents a polynomial expression. \textbf{Warning: }you have to check manually beforehand that \texttt{tree} is a pure tree.
+\item \texttt{int isConstant(node *tree)}: returns $1$ if \texttt{tree} represents an expression that evaluates to a constant. \textbf{Warning: }you have to check manually beforehand that \texttt{tree} is a pure tree.
+  \item \texttt{node *evaluateThing(node *tree)}: evaluates \texttt{tree}. The returned \texttt{node *} is correctly typed (in the sense defined above).
+  \item mixed evaluation and type verification:
+  \begin{itemize}
+  \item \texttt{int evaluateThingToPureTree(node **result, node *tree)}: evaluates \texttt{tree}. If the result is a pure tree, it is stored in \texttt{*result} and $1$ is returned. In any other case, \texttt{*result} is unchanged and $0$ is returned.
+  \item \texttt{int evaluateThingToConstant(mpfr\_t result, node *tree, mpfr\_t *defaultVal)}: evaluates \texttt{tree}. If it evaluates to a constant it is stored in \texttt{result}. If it evaluates to \texttt{default} and if \texttt{defautlVal} is not \texttt{NULL}, \texttt{*defaultVal} is assigned to \texttt{result} and $1$ is returned. Else \texttt{result} is left unchanged and $0$ is returned.  In case of success the returned value is:
+    \begin{itemize}
+    \item $3$ if the value cannot be proved to be a faithful rounding of the exact value.
+    \item $2$ if it can be proved to be the exact value.
+    \item $1$ otherwise.
+    \end{itemize}
+  \item \texttt{int evaluateThingToInteger(int *result, node *tree, int *defaultVal)}: evaluates \texttt{tree}. If the result is an integer constant, it is stored in \texttt{*result} and $1$ is returned. If it is \texttt{default}, \texttt{*defaultVal} is stored in \texttt{*result} and $1$ is returned. In any other case, \texttt{*result} is unchanged and $0$ is returned.
+  \item \texttt{int evaluateThingToString(char **result, node *tree)}: guess yourself.
+  \item \texttt{int evaluateThingToRange(mpfr\_t a, mpfr\_t b, node *tree)}: guess yourself. In case of success, \texttt{a} is the lower bound and \texttt{b} an upper bound.
+  \item evaluate and type keywords (in case of success $1$ is returned and \texttt{*result} store the result):
+    \begin{itemize}
+    \item \texttt{int evaluateThingToBoolean(int *result, node *tree, int *defaultVal)}:
+      \begin{itemize}
+      \item \texttt{false} is $0$
+      \item \texttt{true} is $1$
+      \end{itemize}
+    \item \texttt{int evaluateThingToOnOff(int *result, node *tree, int *defaultVal)}:
+      \begin{itemize}
+      \item \texttt{on} is $1$
+      \item \texttt{off} is $0$.
+      \end{itemize}
+    \item \texttt{int evaluateThingToExternalPlotMode(int *result, node *tree, int *defaultVal)}:
+      \begin{itemize}
+      \item \texttt{absolute} is the predefined constant \texttt{ABSOLUTE}
+      \item \texttt{relative} is \texttt{RELATIVE} 
+      \end{itemize}
+    \item \texttt{int evaluateThingToDisplayMode(int *result, node *tree, int *defaultVal)}:
+      \begin{itemize}
+      \item \texttt{decimal} is $0$
+      \item \texttt{dyadic} is $1$
+      \item \texttt{powers} is $2$
+      \item \texttt{binary} is $3$
+      \item \texttt{hexadecimal} is $4$
+      \end{itemize}
+    \item \texttt{int evaluateThingToRoundingSymbol(int *result, node *tree, int *defaultVal)}:
+      \begin{itemize}
+      \item \texttt{RN} is the predefined constant \texttt{GMP\_RNDN}
+      \item \texttt{RZ} is \texttt{GMP\_RNDZ}
+      \item \texttt{RU} is \texttt{GMP\_RNDU}
+      \item \texttt{RD} is \texttt{GMP\_RNDD}
+      \end{itemize}
+    \item \texttt{int evaluateThingToExpansionFormat(int *result, node *tree)}:
+      \begin{itemize}
+      \item \texttt{double} and \texttt{D} are $1$
+      \item \texttt{doubledouble} and \texttt{DD} are $2$ 
+      \item \texttt{tripledouble} and \texttt{TD} are $3$ 
+      \item \texttt{doubleextended} and \texttt{DE} are $4$ 
+      \end{itemize}
+    \item \texttt{int evaluateThingToRestrictedExpansionFormat(int *result, node *tree)}:
+      \begin{itemize}
+      \item \texttt{double} and \texttt{D} are $1$
+      \item \texttt{doubledouble} and \texttt{DD} are $2$ 
+      \item \texttt{tripledouble} and \texttt{TD} are $3$ 
+      \end{itemize}
+    \end{itemize}
+  \item evaluate and type lists:
+    \begin{itemize}
+    \item \texttt{int evaluateThingToPureListOfThings(chain **ch, node *tree)}: succeed iff \texttt{tree} evaluates to a pure list (non-empty, finite, does not contain \texttt{...}). The result is stored in \texttt{*ch} as a list of \texttt{node *}.
+    \item \texttt{int evaluateThingToPureListOfPureTrees(chain **ch, node *tree)}: idem and ensures that all elements are pure trees (mathematical expressions).
+    \item \texttt{int evaluateThingToBooleanList(chain **ch, node *tree)}: idem with boolean values. If it succeeds \texttt{*ch} contains \texttt{int *} that are either $0$ or $1$.
+    \item \texttt{int evaluateThingToConstantList(chain **ch, node *tree)}: idem with constants. If it succeeds \texttt{*ch} is a list of \texttt{mpfr\_t *}.
+    \item \texttt{int evaluateThingToRangeList(chain **ch, node *tree)}: idem with intervals. If it succeeds, \texttt{*ch} is a list of \texttt{mpfi\_t *}.
+    \item \texttt{int evaluateThingToStringList(chain **ch, node *tree)}: idem with strings. If it succeeds,  \texttt{*ch} is a list of \texttt{char **}.
+    \item \texttt{int evaluateThingToIntegerList(chain **ch, int *finalelliptic, node *tree)}: succeed iff \texttt{tree} evaluates to a \textbf{non-empty} (finite or infinite) list of integers. \texttt{*finalelliptic} is set to $1$ if the list is infinite and $0$ if it is finite. Note that even if the list is infinite, the \texttt{chain} is not. It should be understood as: an ellipse follows the last element of \texttt{ch}.
+    \item \texttt{int evaluateThingToExpansionFormatList(chain **ch, node *tree)}: idem with expansion formats. If the list is infinite, the last element stored in \texttt{ch} is $-1$.
+    \item \texttt{int evaluateThingToEmptyList(node *tree)}: checks that \texttt{tree} evaluates to the empty list.
+    \end{itemize}
+  \item \texttt{void evaluateThingListToThingArray(int *number, node ***array, chain *things)}: allocate memory and fill \texttt{*array} with the elements of \texttt{things}, once evaluated. The number of elements is stored in \texttt{*number}.
+  \item \texttt{int evaluateThingArrayToListOfPureTrees(chain **ch, int number, node **array)}: it is the reverse operation: the elements of \texttt{array} are evaluated and stored in \texttt{*ch}. If one of the elements does not evaluate to a pure tree (i.e. a mathematical expression tree), $0$ is returned and \texttt{*ch} is unchanged. Otherwise $1$ is returned.
+  \item \texttt{void *evaluateThingInnerOnVoid(void *tree)}: this function is meant to be used as argument for chain manipulation functions. A typical usage is
+    \begin{center}
+      \texttt{chain *ch2 = copyChainWithoutReversal(ch1, evaluateThingInnerOnVoid);}
+    \end{center}
+that evaluates the elements of ch1 and creates a new list \texttt{ch2} with them.
+  \end{itemize}
+\end{itemize}
+
+
+
+
+\newpage
+\section{Document a new command in \texttt{.shlp} format}
+\label{writeShlp}
+A \texttt{.shlp} file has generally the following form:
+\begin{verbatim}
+#NAME $IDENTIFIER
+#QUICK_DESCRIPTION just a line that sum up the command
+
+#CALLING $COMMAND(<f>, <I>, <L>)
+#TYPE ($FUNCTION_TYPE, $RANGE_TYPE, $LIST_TYPE) -> $CONSTANT_TYPE
+
+#CALLING $COMMAND(<f>, <I>, <L>, <w>)
+#TYPE ($FUNCTION_TYPE, $RANGE_TYPE, $LIST_TYPE, $FUNCTION_TYPE) -> $CONSTANT_TYPE
+
+#PARAMETERS <f> is the function to be schmurzed.
+#PARAMETERS <I> is the domain considered.
+#PARAMETERS <L> is a list of points of <I>.
+#PARAMETERS <w> is an optional weight function.
+
+#DESCRIPTION 
+$COMMAND lets one schmurz a fuction on a given interval.
+It uses the famous algorithm of Mr Foobar.
+The schmurz of a function §§f§$f$§§ is defined as the smallest §§x§$x$§§ such
+that §§f(x) >= 1§$f(x) \ge 1$§§. 
+
+#DESCRIPTION
+Note that the interval must contain more than one point. The case when <I> is
+reduced to a single point will lead to an error.
+
+#DESCRIPTION
+The list of points is given as an indication. It is used by $COMMAND to perform
+the schmurzification. If there is not enough points, $COMMAND will automatically
+choose a set of extra points. It may even be an empty list.
+Note that the variable $POINTS will be used to determine how many points are
+to be considered.
+
+#DESCRIPTION
+The optional argument <w> provides a weight function. Its default value is 1.
+
+#EXAMPLE
+foo(sin(x), [0;1], [|0, 0.25, 0.45, 0.9|];
+
+#EXAMPLE
+foo(sin(x), [0;1], [||]);
+
+#EXAMPLE
+foo(sin(x), [0;0], [|0|]);
+
+#EXAMPLE
+a = foo(sin(x), [0;1], [|0, 0.25, 0.5, 0.75, 1|], sqrt(x));
+b = foo(sin(x), [0;1], [|0, 0.25, 0.5, 0.75, 1|]);
+a < b;
+
+#SEEALSO $REMEZ
+#SEEALSO $DIRTYFINDZEROS
+#SEEALSO $POINTS
+\end{verbatim}\newpage
+
+\begin{itemize}
+\item The first line must be \texttt{\#NAME \$IDENTIFIER}.\\
+\texttt{\$IDENTIFIER} is a shell variable defined in the file \texttt{doc/keywords.def}. It will be replaced by its value. It is the name of the command or keyword you are documenting.
+\item The second line is the directive \texttt{\#QUICK\_DESCRIPTION}. It cannot be more than one line.
+\item As many \texttt{\#CALLING} and \texttt{\#TYPE} directives as you need may follow.
+  \begin{itemize}
+  \item There must be one \texttt{\#TYPE} per \texttt{\#CALLING}.
+  \item There must be at least one directive \texttt{\#CALLING} and one directive \texttt{\#TYPE}.
+  \item Each directive cannot be more than one line.
+  \item Every possible call to your command must be documented.
+  \item \texttt{\$COMMAND} is a special variable that will be replaced by the value \texttt{\$IDENTIFIER}. You must use \texttt{\$COMMAND} and not \texttt{\$IDENTIFIER} to refer to the command that you are documenting.
+  \item You may name your arguments as you want. The convention is usually that f is a function, I an interval, L a list, etc. It is generally a good thing to follow the convention since the help will be easier to read for the user. But you may use other names if they are more significant in your context.
+  \item The list of available types is given in \texttt{doc/types.def}
+  \item A directive \texttt{\#TYPE} must be of the form \texttt{(TYPE1, TYPE2, ...) -> RETURNTYPE}.
+  \item Arguments are identified by the fact that they are between \texttt{<} and \texttt{>}. This will be rendered in a way or another in the final document. For instance, in the \texttt{.tex} file it will be rendered in italic.
+  \end{itemize}
+\item The directives \texttt{\#PARAMETERS} follow. There must be one such directive by possible argument. Each directive cannot be more than one line and should explain briefly what is the argument. If there is no parameter (for the description of a keyword for instance), just skip this directive.
+\item The directives \texttt{\#DESCRIPTION} follow.
+  \begin{itemize}
+  \item Each directive introduces a new paragraph (eventually rendered by a bullet). There should be one main idea by directive.
+  \item You may use several lines per directive. Line breaks will be ignored for \LaTeX{} output. In text mode, each line will be rendered \emph{as is}. Keep in mind that your text will probably be seen on a $76$ columns display. Break the lines manually in order for your text to be nicely rendered on such displays.
+  \item Use as many directives as you want to fully document your command.
+  \item The description begins with the next line after \texttt{\#DESCRIPTION}. There shall not be anything else than \texttt{\#DESCRIPTION} written in the line introducing this directive.
+  \end{itemize}
+\item The directives \texttt{\#EXAMPLE} follow.
+  \begin{itemize}
+  \item Each directive introduces a new example. There should be one main idea by directive.
+  \item Use as many examples as you want to show each interesting behaviour of your command.
+  \item The example begins with the next line after \texttt{\#EXAMPLE}. There shall not be anything else than \texttt{\#EXAMPLE} written in the line introducing this directive.
+  \item Each example will be numbered.
+  \item The examples will automatically be processed and the corresponding output of Sollya be printed. An example may be composed by several lines. Each line will be rendered with a new prompt.
+  \item Examples are processed with \texttt{verbosity=0} by default. If you want to illustrate a particular warning that is printed by Sollya, you must manually insert \texttt{verbosity=1!;} in your example.
+  \end{itemize}
+\item The directives \texttt{\#SEEALSO} follow. Use as many \texttt{\#SEEALSO} as you want (possibly none). The rule is one \texttt{\#SEEALSO} per line and one command linked by \texttt{\#SEEALSO}.
+\end{itemize}
+
+Currently, the \texttt{.shlp} files are used to generate a \LaTeX{} file and an interactive help (pure text). Since \LaTeX{} provides a beautiful way of formatting mathematics, there is a way of writing expressions that will not be rendered the same way in text mode and in \LaTeX. This is achieved by the following syntax:
+\begin{center}
+  \texttt{§§pure text§text for }$\backslash$\texttt{LaTeX§§}
+\end{center}
+\end{document}
