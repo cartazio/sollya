@@ -1,7 +1,7 @@
-- Tester la lib à fond et automatiquement
 - Ecrire la doc de la lib
-- faire des accesseurs isAbsolute, isOn, etc.
+- Tester la lib à fond et automatiquement
 - Contacter Mioara : chebModels
+- Réfléchir à lister les choses à surtout ne pas oublier quand on mergera le tronc et la branche bibliothèque avec la branche de Mioara.
 - Faire un calendrier
 - Traiter les bugs traitables
 
@@ -9,8 +9,9 @@
 - Idem sur les mécanismes d'installation des malloc Maple/Sollya/... 
 
 - ajouter du support pour les structures à la bibliothèque
-- étendre externalproc pourqu'on puisse communiquer des objets Sollya à une procédure externe ou en recevoir. Je suis dessus.
 - vérifier qu'on a un texte d'aide pour chaque mot clef, en compilant avec CFLAGS=-DWARN_IF_NO_HELP_TEXT=1
 - mettre à jour la documentation de externalproc en se servant de la documentation que j'ai mise dans le fichier externalproc.c (le fichier exemple)
+- tester les externalproc avec le nouveau sollya.h
 - vérifier que la liste des commandes affichée par help help; est complète. 
-- mettre à jour la documentation de externalproc en se servant de la documentation que j'ai mise dans le fichier externalproc.c (le fichier exemple) 
+
+
