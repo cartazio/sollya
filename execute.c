@@ -13572,6 +13572,13 @@ int evaluateArgumentForExternalProc(void **res, node *argument, int type) {
     } else 
       retVal = evaluateThingToPureListOfPureTrees((chain **) res, argument);
     break;
+  case OBJECT_LIST_TYPE:
+    if (evaluateThingToEmptyList(argument)) {
+      *((chain **) res) = NULL;
+      retVal = 1;
+    } else 
+      retVal = evaluateThingToPureListOfThings((chain **) res, argument);
+    break;
   case RANGE_LIST_TYPE:
     if (evaluateThingToEmptyList(argument)) {
       *((chain **) res) = NULL;
@@ -13640,6 +13647,9 @@ void freeArgumentForExternalProc(void* arg, int type) {
     freeChain((chain *) arg, freeMpfrPtr);
     break;
   case FUNCTION_LIST_TYPE:
+    freeChain((chain *) arg, freeThingOnVoid);
+    break;
+  case OBJECT_LIST_TYPE:
     freeChain((chain *) arg, freeThingOnVoid);
     break;
   case RANGE_LIST_TYPE:
@@ -14211,6 +14221,16 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	}
       }
       break;
+    case OBJECT_LIST_TYPE:
+      externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) (&resultSpace),arguments);
+      if (externalResult) {	
+	if (((chain *) resultSpace) == NULL) {
+	  *resultThing = makeEmptyList();
+	} else {
+	  *resultThing = makeList((chain *) resultSpace);
+	}
+      }
+      break;
     case RANGE_LIST_TYPE:
       externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) (&resultSpace),arguments);
       if (externalResult) {
@@ -14397,6 +14417,16 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       }
       break;
     case FUNCTION_LIST_TYPE:
+      externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
+      if (externalResult) {	
+	if (((chain *) resultSpace) == NULL) {
+	  *resultThing = makeEmptyList();
+	} else {
+	  *resultThing = makeList((chain *) resultSpace);
+	}
+      }
+      break;
+    case OBJECT_LIST_TYPE:
       externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
       if (externalResult) {	
 	if (((chain *) resultSpace) == NULL) {

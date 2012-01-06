@@ -2947,6 +2947,152 @@ ia_eval_result_t sollya_lib_evaluate_function_over_interval(sollya_mpfi_t y, sol
   return INT_EVAL_FAILURE;
 }
 
+sollya_obj_t sollya_lib_get_object_list_head(sollya_obj_list_t list) {
+  if (list == NULL) return NULL;
+  return (sollya_obj_t) (list->value);
+}
+
+sollya_obj_list_t sollya_lib_get_object_list_tail(sollya_obj_list_t list) {
+  if (list == NULL) return NULL;
+  return (sollya_obj_list_t) (list->value);
+}
+
+sollya_obj_list_t sollya_lib_construct_object_list(sollya_obj_t obj1, sollya_obj_list_t list) {
+  return (sollya_obj_list_t) addElement(list, obj1);
+}
+
+sollya_obj_list_t sollya_lib_copy_object_list(sollya_obj_list_t list) {
+  if (list == NULL) return NULL;
+  return (sollya_obj_list_t) (copyChainWithoutReversal(list, copyThingOnVoid));
+}
+
+void sollya_lib_clear_object_list(sollya_obj_list_t list) {
+  freeChain(list, freeThingOnVoid);
+}
+
+mpfr_t *sollya_lib_get_constant_list_head(sollya_constant_list_t list) {
+  if (list == NULL) return NULL;
+  return (mpfr_t *) (list->value);
+}
+
+sollya_constant_list_t sollya_lib_get_constant_list_tail(sollya_constant_list_t list) {
+  if (list == NULL) return NULL;
+  return (sollya_constant_list_t) (list->value); 
+}
+
+sollya_constant_list_t sollya_lib_construct_constant_list(mpfr_t *constant, sollya_constant_list_t list) {
+  return (sollya_constant_list_t) addElement(list, constant);
+}
+
+sollya_constant_list_t sollya_lib_copy_constant_list(sollya_constant_list_t list) {
+  if (list == NULL) return NULL;
+  return (sollya_constant_list_t) (copyChainWithoutReversal(list, copyMpfrPtr));
+}
+
+void sollya_lib_clear_constant_list(sollya_constant_list_t list) {
+  freeChain(list, freeMpfrPtr);
+}
+
+sollya_mpfi_t *sollya_lib_get_interval_list_head(sollya_interval_list_t list) {
+  if (list == NULL) return NULL;
+  return (sollya_mpfi_t *) (list->value);
+}
+
+sollya_interval_list_t sollya_lib_get_interval_list_tail(sollya_interval_list_t list) {
+  if (list == NULL) return NULL;
+  return (sollya_interval_list_t) (list->value); 
+}
+
+sollya_interval_list_t sollya_lib_construct_interval_list(sollya_mpfi_t *interval, sollya_interval_list_t list) {
+    return (sollya_interval_list_t) addElement(list, interval);
+}
+
+sollya_interval_list_t sollya_lib_copy_interval_list(sollya_interval_list_t list) {
+  if (list == NULL) return NULL;
+  return (sollya_interval_list_t) (copyChainWithoutReversal(list, copyMpfiPtr));
+}
+
+void sollya_lib_clear_interval_list(sollya_interval_list_t list) {
+  freeChain(list, freeMpfiPtr);
+}
+
+int sollya_lib_get_int_list_head(sollya_int_list_t list) {
+  if (list == NULL) return 0;
+  return *((int *) (list->value));
+}
+
+sollya_int_list_t sollya_lib_get_int_list_tail(sollya_int_list_t list) {
+  if (list == NULL) return NULL;
+  return (sollya_int_list_t) (list->value); 
+}
+
+sollya_int_list_t sollya_lib_construct_int_list(int integer, sollya_int_list_t list) {
+  int *intPtr;
+
+  intPtr = (int *) safeMalloc(sizeof(int));
+  *intPtr = integer;
+  return (sollya_int_list_t) addElement(list, intPtr);
+}
+
+sollya_int_list_t sollya_lib_copy_int_list(sollya_int_list_t list) {
+  if (list == NULL) return NULL;
+  return (sollya_int_list_t) (copyChainWithoutReversal(list, copyIntPtrOnVoid));
+}
+
+void sollya_lib_clear_int_list(sollya_int_list_t list) {
+  freeChain(list, freeIntPtr);
+}
+
+int sollya_lib_get_boolean_list_head(sollya_boolean_list_t list) {
+  if (list == NULL) return 0;
+  return *((int *) (list->value));
+}
+
+sollya_boolean_list_t sollya_lib_get_boolean_list_tail(sollya_boolean_list_t list) {
+  if (list == NULL) return NULL;
+  return (sollya_boolean_list_t) (list->value); 
+}
+
+sollya_boolean_list_t sollya_lib_construct_boolean_list(int boolVal, sollya_boolean_list_t list) {
+  int *intPtr;
+
+  intPtr = (int *) safeMalloc(sizeof(int));
+  *intPtr = boolVal;
+  return (sollya_boolean_list_t) addElement(list, intPtr);
+}
+
+sollya_boolean_list_t sollya_lib_copy_boolean_list(sollya_boolean_list_t list) {
+  if (list == NULL) return NULL;
+  return (sollya_boolean_list_t) (copyChainWithoutReversal(list, copyIntPtrOnVoid));
+}
+
+void sollya_lib_clear_boolean_list(sollya_boolean_list_t list) {
+  freeChain(list, freeIntPtr);
+}
+
+char *sollya_lib_get_string_list_head(sollya_string_list_t list) {
+  if (list == NULL) return NULL;
+  return (char *) (list->value);
+}
+
+sollya_string_list_t sollya_lib_get_string_list_tail(sollya_string_list_t list) {
+  if (list == NULL) return NULL;
+  return (sollya_string_list_t) (list->value); 
+}
+
+sollya_string_list_t sollya_lib_construct_string_list(char *str, sollya_string_list_t list) {
+  return (sollya_string_list_t) addElement(list, str);
+}
+
+sollya_string_list_t sollya_lib_copy_string_list(sollya_string_list_t list) {
+  if (list == NULL) return NULL;
+  return (sollya_string_list_t) (copyChainWithoutReversal(list, copyString));
+}
+
+void sollya_lib_clear_string_list(sollya_string_list_t list) {
+  freeChain(list, freeStringPtr);
+}
+
 sollya_obj_t sollya_lib_build_function_free_variable() {
   return makeVariable();
 }

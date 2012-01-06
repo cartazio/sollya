@@ -70,7 +70,8 @@ extern "C" {
 #include <stdio.h>
 #include <mpfi-compat.h>
 
-  /* Define a type for all Sollya objects 
+  /* Define a type for all Sollya objects and for lists
+     of Sollya objects, constants, intervals, integers, strings and booleans.
 
      This header file is used both internally when compiling 
      the Sollya library and when using the library.
@@ -84,18 +85,40 @@ extern "C" {
 
      sollya_obj_t
 
-     is defined. This type represents the different objects the Sollya
-     library is able to handle.
+     and type
+
+     sollya_obj_list_t         (list of Sollya objects)
+     sollya_constant_list_t    (list of MPFRs)
+     sollya_interval_list_t    (list of MPFIs)
+     sollya_int_list_t         (list of ints)
+     sollya_string_list_t      (list of char *s)
+     sollya_boolean_list_t     (list of ints as booleans)
+
+     are defined. These type represent the different objects the Sollya
+     library is able to handle and objects that can be chained together.
 
    */
 #if (defined(__SOLLYA_NODE_TYPE_ALREADY_DEFINED) && (__SOLLYA_NODE_TYPE_ALREADY_DEFINED))
   typedef node * sollya_obj_t;
+  typedef chain * sollya_obj_list_t;
+  typedef chain * sollya_constant_list_t;
+  typedef chain * sollya_interval_list_t;
+  typedef chain * sollya_int_list_t;
+  typedef chain * sollya_string_list_t;
+  typedef chain * sollya_boolean_list_t;
 #else
   typedef struct __sollya_internal_type_chain_struct __sollya_internal_type_chain;
   struct __sollya_internal_type_chain_struct {
     void *value;
     __sollya_internal_type_chain *next;
   };
+
+  typedef __sollya_internal_type_chain * sollya_obj_list_t;
+  typedef __sollya_internal_type_chain * sollya_constant_list_t;
+  typedef __sollya_internal_type_chain * sollya_interval_list_t;
+  typedef __sollya_internal_type_chain * sollya_int_list_t;
+  typedef __sollya_internal_type_chain * sollya_string_list_t;
+  typedef __sollya_internal_type_chain * sollya_boolean_list_t;
 
   typedef struct __sollya_internal_type_library_function_struct __sollya_internal_type_library_function;
   struct __sollya_internal_type_library_function_struct {
@@ -567,6 +590,62 @@ extern "C" {
   */
   fp_eval_result_t sollya_lib_evaluate_function_at_point(mpfr_t, sollya_obj_t, mpfr_t, mpfr_t *);
   ia_eval_result_t sollya_lib_evaluate_function_over_interval(sollya_mpfi_t, sollya_obj_t, sollya_mpfi_t);
+
+  /* Functions to manipulate lists
+
+     These functions are not necessarily needed when using the Sollya library in 
+     free-standing applications. They are needed when the Sollya library is used 
+     in external procedures that are to be dynamically loaded into interactive
+     Sollya sessions.
+
+     Attention: these functions
+     - take and return NULL as a placeholder for empty lists
+     - only return references for Sollya objects, constants, intervals and strings (for the head functions)
+     - only return references for the tail lists (for the tail functions)
+     - "eat up" the references given when constructing lists from elements (construct functions)
+     - return NULL (resp. 0 for integers and booleans) if the head of an empty list is queried
+     - return an empty list for empty tails, in particular tails of empty lists.
+
+     The copy functions structurally (deeply) copy both the lists and all elements.
+
+     The clear functions clear both the lists and the elements.
+  */
+  sollya_obj_t sollya_lib_get_object_list_head(sollya_obj_list_t);
+  sollya_obj_list_t sollya_lib_get_object_list_tail(sollya_obj_list_t);
+  sollya_obj_list_t sollya_lib_construct_object_list(sollya_obj_t, sollya_obj_list_t);
+  sollya_obj_list_t sollya_lib_copy_object_list(sollya_obj_list_t);
+  void sollya_lib_clear_object_list(sollya_obj_list_t);
+
+  mpfr_t *sollya_lib_get_constant_list_head(sollya_constant_list_t);
+  sollya_constant_list_t sollya_lib_get_constant_list_tail(sollya_constant_list_t);
+  sollya_constant_list_t sollya_lib_construct_constant_list(mpfr_t *, sollya_constant_list_t);
+  sollya_constant_list_t sollya_lib_copy_constant_list(sollya_constant_list_t);
+  void sollya_lib_clear_constant_list(sollya_constant_list_t);
+
+  sollya_mpfi_t *sollya_lib_get_interval_list_head(sollya_interval_list_t);
+  sollya_interval_list_t sollya_lib_get_interval_list_tail(sollya_interval_list_t);
+  sollya_interval_list_t sollya_lib_construct_interval_list(sollya_mpfi_t *, sollya_interval_list_t);
+  sollya_interval_list_t sollya_lib_copy_interval_list(sollya_interval_list_t);
+  void sollya_lib_clear_interval_list(sollya_interval_list_t);
+
+  int sollya_lib_get_int_list_head(sollya_int_list_t);
+  sollya_int_list_t sollya_lib_get_int_list_tail(sollya_int_list_t);
+  sollya_int_list_t sollya_lib_construct_int_list(int, sollya_int_list_t);
+  sollya_int_list_t sollya_lib_copy_int_list(sollya_int_list_t);
+  void sollya_lib_clear_int_list(sollya_int_list_t);
+
+  int sollya_lib_get_boolean_list_head(sollya_boolean_list_t);
+  sollya_boolean_list_t sollya_lib_get_boolean_list_tail(sollya_boolean_list_t);
+  sollya_boolean_list_t sollya_lib_construct_boolean_list(int, sollya_boolean_list_t);
+  sollya_boolean_list_t sollya_lib_copy_boolean_list(sollya_boolean_list_t);
+  void sollya_lib_clear_boolean_list(sollya_boolean_list_t);
+
+  char *sollya_lib_get_string_list_head(sollya_string_list_t);
+  sollya_string_list_t sollya_lib_get_string_list_tail(sollya_string_list_t);
+  sollya_string_list_t sollya_lib_construct_string_list(char *, sollya_string_list_t);
+  sollya_string_list_t sollya_lib_copy_string_list(sollya_string_list_t);
+  void sollya_lib_clear_string_list(sollya_string_list_t);
+
 
   /* Functions for building Sollya objects representing 
      mathematical functions.
