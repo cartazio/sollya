@@ -1,4 +1,4 @@
-- Ecrire la doc de la lib
+- Ecrire la doc de la lib (et concevoir un mécanisme pour maintenir cette doc facilement)
 - Tester la lib à fond et automatiquement
 - Contacter Mioara : chebModels
 - Réfléchir à lister les choses à surtout ne pas oublier quand on mergera le tronc et la branche bibliothèque avec la branche de Mioara.
@@ -8,7 +8,6 @@
 - Continuer la réflexion sur safeMalloc qui push le pointeur pour gérer les interruptions.
 - Idem sur les mécanismes d'installation des malloc Maple/Sollya/... 
 
-- ajouter du support pour les structures à la bibliothèque
 - vérifier qu'on a un texte d'aide pour chaque mot clef, en compilant avec CFLAGS=-DWARN_IF_NO_HELP_TEXT=1
 - mettre à jour la documentation de externalproc en se servant de la documentation que j'ai mise dans le fichier externalproc.c (le fichier exemple)
 - tester les externalproc avec le nouveau sollya.h
