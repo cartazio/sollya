@@ -52,9 +52,11 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include <mpfr.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include "expression.h"
 #include "execute.h"
 #include "chain.h"
+#include "assignment.h"
 #include "mpfi-compat.h"
 #include "sollya-library-wrappers.h"
 
@@ -2215,7 +2217,7 @@ sollya_obj_t sollya_lib_end_elliptic_list(sollya_obj_t objects[], int num) {
   return makeFinalEllipticList(tempChain);
 }
 
-int sollya_lib_get_list_elements(sollya_obj_t *objects[], int *num, int *end_elliptic, sollya_obj_t obj1) {
+int sollya_lib_get_list_elements(sollya_obj_t **objects, int *num, int *end_elliptic, sollya_obj_t obj1) {
   sollya_obj_t evaluatedObj;
   int tempVal, i;
   chain *curr;
@@ -2775,20 +2777,79 @@ int sollya_lib_obj_is_structure(sollya_obj_t obj1) {
   return isStructure(obj1);
 }
 
-int sollya_lib_get_structure_elements(char *identifiers[], sollya_obj_t *objects[], int *num, sollya_obj_t obj1) {
-  return 0; // TODO
+int sollya_lib_get_structure_elements(char ***identifiers, sollya_obj_t **objects, int *num, sollya_obj_t obj1) {
+  chain *curr;
+  int i;
+  
+  if (!isStructure(obj1)) return 0;
+
+  *num = lengthChain(obj1->arguments);
+  *identifiers = (char **) safeCalloc(*num, sizeof(char *));
+  *objects = (sollya_obj_t *) safeCalloc(*num, sizeof(sollya_obj_t));
+  for (curr=obj1->arguments, i=0; curr != NULL; curr=curr->next, i++) {
+    (*objects)[i] = copyThing((node *) (((entry *) (curr->value))->value));
+    (*identifiers)[i] = (char *) safeCalloc(strlen((char *) (((entry *) (curr->value))->name)) + 1, sizeof(char));
+    strcpy((*identifiers)[i],(char *) (((entry *) (curr->value))->name));
+  }
+  return 1;
 }
 
 int sollya_lib_get_element_in_structure(sollya_obj_t *object, char *identifier, sollya_obj_t obj1) {
-  return 0; // TODO
-}
+  chain *curr;
+  if (!isStructure(obj1)) return 0;
 
-sollya_obj_t sollya_lib_empty_structure() {
-  return NULL; // TODO
+  for (curr=obj1->arguments; curr != NULL; curr=curr->next) {
+    if (!strcmp(identifier, (char *) (((entry *) (curr->value))->name))) {
+      *object = copyThing((node *) (((entry *) (curr->value))->value));
+      return 1;
+    }
+  }
+
+  return 0;
 }
 
 int sollya_lib_assign_in_structure(sollya_obj_t *object, sollya_obj_t obj1, char *identifier, sollya_obj_t obj2) {
-  return 0; // TODO
+  entry *tempEntry;
+  int added;
+  chain *curr;
+  node *tempObj;
+  
+  if (obj1 == NULL) {
+    tempEntry = (entry *) safeMalloc(sizeof(entry));
+    tempEntry->name = (char *) safeCalloc(strlen(identifier) + 1, sizeof(char));
+    strcpy(tempEntry->name, identifier);
+    tempEntry->value = copyThing(obj2);
+    *object = makeStructure(addElement(NULL, tempEntry));
+    return 1;
+  }
+  if (!isStructure(obj1)) return 0;
+
+  tempObj = (node *) safeMalloc(sizeof(node));
+  tempObj->nodeType = STRUCTURE;
+  tempObj->arguments = NULL;
+  added = 0;
+  for (curr = obj1->arguments; curr != NULL; curr=curr->next) {
+    tempEntry = (entry *) safeMalloc(sizeof(entry));
+    tempEntry->name = (char *) safeCalloc(strlen((char *) (((entry *) (curr->value))->name)) + 1, sizeof(char));
+    strcpy(tempEntry->name, (char *) (((entry *) (curr->value))->name));    
+    if (!strcmp(identifier, (char *) (((entry *) (curr->value))->name))) {
+      tempEntry->value = copyThing(obj2);
+      added = 1;
+    } else {
+      tempEntry->value = copyThing((node *) (((entry *) (curr->value))->value));
+    }
+    tempObj->arguments = addElement(tempObj->arguments, tempEntry);
+  }
+  if (!added) {
+    tempEntry = (entry *) safeMalloc(sizeof(entry));
+    tempEntry->name = (char *) safeCalloc(strlen(identifier) + 1, sizeof(char));
+    strcpy(tempEntry->name, identifier);
+    tempEntry->value = copyThing(obj2);
+    tempObj->arguments = addElement(tempObj->arguments, tempEntry);
+  }
+  *object = tempObj;
+
+  return 1;
 }
 
 fp_eval_result_t sollya_lib_evaluate_function_at_point(mpfr_t y, sollya_obj_t obj1, mpfr_t x, mpfr_t *cutoff) {

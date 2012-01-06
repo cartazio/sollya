@@ -511,7 +511,7 @@ extern "C" {
   */
   sollya_obj_t sollya_lib_list(sollya_obj_t[], int);
   sollya_obj_t sollya_lib_end_elliptic_list(sollya_obj_t[], int);
-  int sollya_lib_get_list_elements(sollya_obj_t *[], int *, int *, sollya_obj_t);
+  int sollya_lib_get_list_elements(sollya_obj_t **, int *, int *, sollya_obj_t);
 
   /* Functions to check if a Sollya object represents a mathematical
      function, a list, an end-elliptic list, a range, a string, a
@@ -557,20 +557,25 @@ extern "C" {
 
      The int return value indicates success (zero -> failure, non-zero -> success).
 
-     Attention: upon success, memory is allocated by the functions for
-     the returned objects.  This includes
-     sollya_lib_assign_in_structure which "returns" a new Sollya
-     object representing a structure that contains all elements
-     contained in the structure given in parameter plus, if
+     Attention: 
+
+     Upon success, memory is allocated by the functions for the
+     returned objects.
+
+     This includes sollya_lib_assign_in_structure which "returns" a
+     new Sollya object representing a structure that contains all
+     elements contained in the structure given in parameter plus, if
      applicable, a new element "identifier -> object". In the case
      when the identifier was already present in the given structure, a
      new (copied) structure is "returned" in which the existing
      correspondence "identifier -> ..." is replaced by the new one.
 
+     In order to create a structure "from scratch", give NULL as an
+     existing Sollya structure object to sollya_lib_assign_in_structure.
+
    */
-  int sollya_lib_get_structure_elements(char *[], sollya_obj_t *[], int *, sollya_obj_t);
+  int sollya_lib_get_structure_elements(char ***, sollya_obj_t **, int *, sollya_obj_t);
   int sollya_lib_get_element_in_structure(sollya_obj_t *, char *, sollya_obj_t);
-  sollya_obj_t sollya_lib_empty_structure();
   int sollya_lib_assign_in_structure(sollya_obj_t *, sollya_obj_t, char *, sollya_obj_t);
 
   /* Functions that check if a Sollya object is some particular constant */
