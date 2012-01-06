@@ -523,6 +523,7 @@ extern "C" {
   int sollya_lib_obj_is_range(sollya_obj_t);
   int sollya_lib_obj_is_string(sollya_obj_t);
   int sollya_lib_obj_is_error(sollya_obj_t);
+  int sollya_lib_obj_is_structure(sollya_obj_t);
 
   /* Functions to decompose Sollya objects that represent mathematical
      functions.
@@ -550,6 +551,27 @@ extern "C" {
   /* A one-does-it-all function */
   int sollya_lib_decompose_function(sollya_obj_t, sollya_base_function_t *, int *, ...);
   int sollya_lib_v_decompose_function(sollya_obj_t, sollya_base_function_t *, int *, va_list);
+
+
+  /* Functions that work on Sollya objects that are structures 
+
+     The int return value indicates success (zero -> failure, non-zero -> success).
+
+     Attention: upon success, memory is allocated by the functions for
+     the returned objects.  This includes
+     sollya_lib_assign_in_structure which "returns" a new Sollya
+     object representing a structure that contains all elements
+     contained in the structure given in parameter plus, if
+     applicable, a new element "identifier -> object". In the case
+     when the identifier was already present in the given structure, a
+     new (copied) structure is "returned" in which the existing
+     correspondence "identifier -> ..." is replaced by the new one.
+
+   */
+  int sollya_lib_get_structure_elements(char *[], sollya_obj_t *[], int *, sollya_obj_t);
+  int sollya_lib_get_element_in_structure(sollya_obj_t *, char *, sollya_obj_t);
+  sollya_obj_t sollya_lib_empty_structure();
+  int sollya_lib_assign_in_structure(sollya_obj_t *, sollya_obj_t, char *, sollya_obj_t);
 
   /* Functions that check if a Sollya object is some particular constant */
   int sollya_lib_is_on(sollya_obj_t);

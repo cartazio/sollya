@@ -2771,6 +2771,26 @@ int sollya_lib_is_pi(sollya_obj_t obj1) {
   return (obj1->nodeType == PI_CONST);
 }
 
+int sollya_lib_obj_is_structure(sollya_obj_t obj1) {
+  return isStructure(obj1);
+}
+
+int sollya_lib_get_structure_elements(char *identifiers[], sollya_obj_t *objects[], int *num, sollya_obj_t obj1) {
+  return 0; // TODO
+}
+
+int sollya_lib_get_element_in_structure(sollya_obj_t *object, char *identifier, sollya_obj_t obj1) {
+  return 0; // TODO
+}
+
+sollya_obj_t sollya_lib_empty_structure() {
+  return NULL; // TODO
+}
+
+int sollya_lib_assign_in_structure(sollya_obj_t *object, sollya_obj_t obj1, char *identifier, sollya_obj_t obj2) {
+  return 0; // TODO
+}
+
 fp_eval_result_t sollya_lib_evaluate_function_at_point(mpfr_t y, sollya_obj_t obj1, mpfr_t x, mpfr_t *cutoff) {
   int res;
   mpfr_t myCutOff;
