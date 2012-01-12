@@ -12,7 +12,6 @@
 - mettre à jour la documentation de externalproc en se servant de la documentation que j'ai mise dans le fichier externalproc.c (le fichier exemple)
 - tester les externalproc avec le nouveau sollya.h
 - vérifier que la liste des commandes affichée par help help; est complète. 
-- enlever les restes de recoverFromError (la fonction n'existe plus mais le code sur lequel elle se basait y est encore)
 - retester les cas de plot et remez où des recoverFromError ont été transformé en autre chose
 
 - ITERER SUR L'IMPLEMENTATION DE LA BIBLIOTHEQUE UNE FOIS LES TESTS FAITS
