@@ -21,6 +21,8 @@ mpfi-compat.c \
 mpfi-compat.h \
 message-numbers.h \
 message-numbers.c \
+bitfields.h \
+bitfields.c \
 sollya-library-wrappers.c \
 sollya-library-wrappers.h \
 printf.c \
@@ -96,6 +98,8 @@ sollya-library-wrappers.c \
 sollya-library-wrappers.h \
 message-numbers.h \
 message-numbers.c \
+bitfields.h \
+bitfields.c \
 printf.c \
 printf.h \
 internparser.y \
