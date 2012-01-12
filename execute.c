@@ -236,24 +236,12 @@ node *parseString(char *str) {
 
 rangetype guessDegreeWrapper(node *func, node *weight, mpfr_t a, mpfr_t b, mpfr_t eps, int bound) {
   rangetype result;
-  jmp_buf oldEnvironment;
   int oldVerbosity;
   int oldPoints;
   
   oldVerbosity = verbosity;
   oldPoints = defaultpoints;
-  memmove(&oldEnvironment,&recoverEnvironmentError,sizeof(oldEnvironment));
-  if (!setjmp(recoverEnvironmentError)) {
-    result = guessDegree(func, weight, a, b, eps, bound);
-  } else {
-    verbosity = oldVerbosity;
-    defaultpoints = oldPoints;
-    printMessage(1,SOLLYA_MSG_ERROR_ON_RUNNING_GUESSDEGREE,"Warning: some error occurred while executing guessdegree.\n");
-    printMessage(1,SOLLYA_MSG_CONTINUATION,"Warning: the last command could not be executed. May leak memory.\n");
-    considerDyingOnError();
-    result.a = NULL; result.b = NULL;
-  }
-  memmove(&recoverEnvironmentError,&oldEnvironment,sizeof(recoverEnvironmentError));
+  result = guessDegree(func, weight, a, b, eps, bound);
   verbosity = oldVerbosity;
   defaultpoints = oldPoints;
 
@@ -6319,18 +6307,9 @@ int evaluateThingToEmptyList(node *tree) {
 int executeCommandInner(node *tree);
 
 int executeCommand(node *tree) {
-  jmp_buf oldEnvironment;
   int res;
   
-  memmove(&oldEnvironment,&recoverEnvironmentError,sizeof(oldEnvironment));
-  if (!setjmp(recoverEnvironmentError)) {
-    res = executeCommandInner(tree);
-  } else {
-    printMessage(1,SOLLYA_MSG_COMMAND_NOT_EXECUTABLE,"Warning: the last command could not be executed. May leak memory.\n");
-    considerDyingOnError();
-    res = 0;
-  }
-  memmove(&recoverEnvironmentError,&oldEnvironment,sizeof(recoverEnvironmentError));
+  res = executeCommandInner(tree);
 
   return res;
 }
@@ -13783,22 +13762,11 @@ int executeMatchBodyInner(node **resultThing, node *body, node *thingToReturn, c
 }
 
 int executeMatchBody(node **resultThing, node *body, node *thingToReturn, chain *associations) {
-  jmp_buf *oldEnvironment;
   int res;
 
   pushTimeCounter();  
   
-  oldEnvironment = (jmp_buf *) safeMalloc(sizeof(jmp_buf));
-  memmove(oldEnvironment,&recoverEnvironmentError,sizeof(oldEnvironment));
-  if (!setjmp(recoverEnvironmentError)) {
-    res = executeMatchBodyInner(resultThing, body, thingToReturn, associations);
-  } else {
-    printMessage(1,SOLLYA_MSG_COMMAND_NOT_EXECUTABLE,"Warning: the last command could not be executed. May leak memory.\n");
-    considerDyingOnError();
-    res = 0;
-  }
-  memmove(&recoverEnvironmentError,oldEnvironment,sizeof(recoverEnvironmentError));
-  free(oldEnvironment);
+  res = executeMatchBodyInner(resultThing, body, thingToReturn, associations);
 
   popTimeCounter("executing the body of a match-with construct");
 
@@ -13975,22 +13943,11 @@ int executeProcedureInner(node **resultThing, node *proc, chain *args, int ellip
 }
 
 int executeProcedure(node **resultThing, node *proc, chain *args, int elliptic) {
-  jmp_buf *oldEnvironment;
   int res;
 
   pushTimeCounter();  
   
-  oldEnvironment = (jmp_buf *) safeMalloc(sizeof(jmp_buf));
-  memmove(oldEnvironment,&recoverEnvironmentError,sizeof(oldEnvironment));
-  if (!setjmp(recoverEnvironmentError)) {
-    res = executeProcedureInner(resultThing, proc, args, elliptic);
-  } else {
-    printMessage(1,SOLLYA_MSG_COMMAND_NOT_EXECUTABLE,"Warning: the last command could not be executed. May leak memory.\n");
-      considerDyingOnError();
-    res = 0;
-  }
-  memmove(&recoverEnvironmentError,oldEnvironment,sizeof(recoverEnvironmentError));
-  free(oldEnvironment);
+  res = executeProcedureInner(resultThing, proc, args, elliptic);
 
   popTimeCounter("executing a procedure");
 
@@ -14546,20 +14503,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 }
 
 int executeExternalProcedure(node **resultThing, libraryProcedure *proc, chain *args) {
-  jmp_buf oldEnvironment;
   int res;
 
   pushTimeCounter();  
   
-  memmove(&oldEnvironment,&recoverEnvironmentError,sizeof(oldEnvironment));
-  if (!setjmp(recoverEnvironmentError)) {
-    res = executeExternalProcedureInner(resultThing, proc, args);
-  } else {
-    printMessage(1,SOLLYA_MSG_COMMAND_NOT_EXECUTABLE,"Warning: the last command could not be executed. May leak memory.\n");
-      considerDyingOnError();
-    res = 0;
-  }
-  memmove(&recoverEnvironmentError,&oldEnvironment,sizeof(recoverEnvironmentError));
+  res = executeExternalProcedureInner(resultThing, proc, args);
 
   popTimeCounter("executing an external procedure");
 

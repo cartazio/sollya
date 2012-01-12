@@ -139,7 +139,6 @@ extern int tempInteger;
 extern chain *symbolTable;
 extern chain *declaredSymbolTable;
 extern mpfr_t statediam;
-extern jmp_buf recoverEnvironmentError;
 extern node *parsedThingIntern;
 extern int *tempIntPtr;
 extern FILE *inputFile;

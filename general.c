@@ -133,7 +133,6 @@ node *parsedThing = NULL;
 node *parsedThingIntern = NULL;
 
 jmp_buf recoverEnvironment;
-jmp_buf recoverEnvironmentError;
 int handlingCtrlC = 0;
 int lastHandledSignal = 0;
 int recoverEnvironmentReady = 0;
@@ -1155,7 +1154,6 @@ void setRationalMode(int newRationalMode) {
 
 void setRecoverEnvironment(jmp_buf *env) {
   memmove(&recoverEnvironment,env,sizeof(recoverEnvironment));
-  memmove(&recoverEnvironmentError,env,sizeof(recoverEnvironmentError));
   exitInsteadOfRecover = 0;
 }
 
@@ -1403,7 +1401,6 @@ int general(int argc, char *argv[]) {
       handlingCtrlC = 0;
       lastHandledSignal = 0;
       if (!setjmp(recoverEnvironment)) {
-	memmove(&recoverEnvironmentError,&recoverEnvironment,sizeof(recoverEnvironmentError));
 	recoverEnvironmentReady = 1;
 	if (declaredSymbolTable != NULL) {
 	  printMessage(1,SOLLYA_MSG_FRAME_STACK_HAS_BEEN_CORRUPTED,"Warning: a preceeding command interruption corrupted the variable frame stack.\n");
