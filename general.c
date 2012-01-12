@@ -105,6 +105,7 @@ int defaultpoints = DEFAULTPOINTS;
 int taylorrecursions = DEFAULTTAYLORRECURSIONS;
 int dyadic = 0;
 int verbosity = 1;
+int activateMessageNumbers = 0;
 int canonical = 0;
 int fileNumber = 0;
 int autosimplify = 1;
@@ -636,6 +637,8 @@ int printMessage(int verb, int msgNum, const char *format, ...) {
   va_list varlist;
   int oldColor;
   int res;
+  const char *myFormat;
+  const char *tempStr;
 
   if ((verb >= 0) && (verbosity < verb)) return 0;
 
@@ -663,10 +666,52 @@ int printMessage(int verb, int msgNum, const char *format, ...) {
 
   va_start(varlist,format);
 
-  if (verb >= 0) {
-    res = sollyaVfprintf(stdout,format,varlist);
+  if (activateMessageNumbers && (msgNum != SOLLYA_MSG_CONTINUATION) && (msgNum != SOLLYA_MSG_NO_MSG)) {
+    myFormat = format;
+    res = 0;
+    if (((tempStr = strstr(format,"Warning")) != NULL) && (tempStr == format)) {
+      if (verb >= 0) {
+	res += sollyaFprintf(stdout,"Warning (%d)",msgNum);
+      } else {
+	res += sollyaFprintf(stderr,"Warning (%d)",msgNum);
+      }
+      myFormat = tempStr + strlen("Warning");
+    } else {
+      if (((tempStr = strstr(format,"Error")) != NULL) && (tempStr == format)) {
+	if (verb >= 0) {
+	  res += sollyaFprintf(stdout,"Error (%d)",msgNum);
+	} else {
+	  res += sollyaFprintf(stderr,"Error (%d)",msgNum);
+	}
+	myFormat = tempStr + strlen("Error");
+      } else {
+	if (((tempStr = strstr(format,"Information")) != NULL) && (tempStr == format)) {
+	  if (verb >= 0) {
+	    res += sollyaFprintf(stdout,"Information (%d)",msgNum);
+	  } else {
+	    res += sollyaFprintf(stderr,"Information (%d)",msgNum);
+	  }
+	  myFormat = tempStr + strlen("Information");
+	} else {
+	  if (verb >= 0) {
+	    res += sollyaFprintf(stdout,"Message (%d): ",msgNum);
+	  } else {
+	    res += sollyaFprintf(stderr,"Message (%d): ",msgNum);
+	  }
+	}
+      }
+    }
+    if (verb >= 0) {
+      res += sollyaVfprintf(stdout,myFormat,varlist);
+    } else {
+      res += sollyaVfprintf(stderr,myFormat,varlist);
+    }
   } else {
-    res = sollyaVfprintf(stderr,format,varlist);
+    if (verb >= 0) {
+      res = sollyaVfprintf(stdout,format,varlist);
+    } else {
+      res = sollyaVfprintf(stderr,format,varlist);
+    }
   }
 
   va_end(varlist);
@@ -943,6 +988,7 @@ void initToolDefaults() {
   taylorrecursions = DEFAULTTAYLORRECURSIONS;
   dyadic = 0;
   verbosity = 1;
+  activateMessageNumbers = 0;
   canonical = 0;
   fileNumber = 0;
   autosimplify = 1;

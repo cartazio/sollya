@@ -101,6 +101,7 @@ extern int defaultpoints;
 extern int taylorrecursions;
 extern int dyadic;
 extern int verbosity;
+extern int activateMessageNumbers;
 extern int canonical;
 extern int fileNumber;
 extern int autosimplify;
