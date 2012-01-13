@@ -641,6 +641,9 @@ node *copyThing(node *tree) {
   case AUTOSIMPLIFYASSIGN:
     copy->child1 = copyThing(tree->child1);
     break;  		
+  case SHOWMESSAGENUMBERSASSIGN:
+    copy->child1 = copyThing(tree->child1);
+    break;  		
   case TAYLORRECURSASSIGN:
     copy->child1 = copyThing(tree->child1);
     break; 		
@@ -684,6 +687,9 @@ node *copyThing(node *tree) {
     copy->child1 = copyThing(tree->child1);
     break; 		
   case AUTOSIMPLIFYSTILLASSIGN:
+    copy->child1 = copyThing(tree->child1);
+    break;  	
+  case SHOWMESSAGENUMBERSSTILLASSIGN:
     copy->child1 = copyThing(tree->child1);
     break;  	
   case TAYLORRECURSSTILLASSIGN:
@@ -1159,6 +1165,8 @@ node *copyThing(node *tree) {
   case CANONICALDEREF:
     break; 			
   case AUTOSIMPLIFYDEREF:
+    break; 	
+  case SHOWMESSAGENUMBERSDEREF:
     break; 		
   case TAYLORRECURSDEREF:
     break; 		
@@ -1488,6 +1496,9 @@ char *getTimingStringForThing(node *tree) {
   case AUTOSIMPLIFYASSIGN:
     constString = "assigning the automatic simplification mode";
     break;  		
+  case SHOWMESSAGENUMBERSASSIGN:
+    constString = "assigning the show-message-numbers mode";
+    break;  		
   case TAYLORRECURSASSIGN:
     constString = "assigning the number of recursions for Taylor";
     break; 		
@@ -1531,6 +1542,9 @@ char *getTimingStringForThing(node *tree) {
     constString = NULL;
     break; 		
   case AUTOSIMPLIFYSTILLASSIGN:
+    constString = NULL;
+    break;  	
+  case SHOWMESSAGENUMBERSSTILLASSIGN:
     constString = NULL;
     break;  	
   case TAYLORRECURSSTILLASSIGN:
@@ -1987,6 +2001,9 @@ char *getTimingStringForThing(node *tree) {
     break; 			
   case AUTOSIMPLIFYDEREF:
     constString = "dereferencing the automatic simplification mode state of the tool";
+    break; 	
+  case SHOWMESSAGENUMBERSDEREF:
+    constString = "dereferencing the show-message-numbers mode state of the tool";
     break; 		
   case TAYLORRECURSDEREF:
     constString = "dereferencing the number of recursions for Taylor";
@@ -4385,6 +4402,10 @@ char *sRawPrintThing(node *tree) {
     res = newString("autosimplify = ");
     res = concatAndFree(res, sRawPrintThing(tree->child1));
     break;  		
+  case SHOWMESSAGENUMBERSASSIGN:
+    res = newString("showmessagenumbers = ");
+    res = concatAndFree(res, sRawPrintThing(tree->child1));
+    break;  		
   case TAYLORRECURSASSIGN:
     res = newString("taylorrecursions = ");
     res = concatAndFree(res, sRawPrintThing(tree->child1));
@@ -4449,6 +4470,11 @@ char *sRawPrintThing(node *tree) {
     break; 		
   case AUTOSIMPLIFYSTILLASSIGN:
     res = newString("autosimplify = ");
+    res = concatAndFree(res, sRawPrintThing(tree->child1));
+    res = concatAndFree(res, newString("!"));
+    break;  	
+  case SHOWMESSAGENUMBERSSTILLASSIGN:
+    res = newString("showmessagenumbers = ");
     res = concatAndFree(res, sRawPrintThing(tree->child1));
     res = concatAndFree(res, newString("!"));
     break;  	
@@ -5340,6 +5366,9 @@ char *sRawPrintThing(node *tree) {
     break; 			
   case AUTOSIMPLIFYDEREF:
     res = newString("autosimplify");
+    break; 		
+  case SHOWMESSAGENUMBERSDEREF:
+    res = newString("showmessagenumbers");
     break; 		
   case TAYLORRECURSDEREF:
     res = newString("taylorrecursions");
@@ -8514,6 +8543,21 @@ int executeCommandInner(node *tree) {
       considerDyingOnError();
     }
     break;  		
+  case SHOWMESSAGENUMBERSASSIGN:
+    defaultVal = 1;
+    if (evaluateThingToOnOff(&resA, tree->child1, &defaultVal)) {
+      activateMessageNumbers = resA;
+      outputMode();
+      if (activateMessageNumbers) 
+	sollyaPrintf("Displaying of message numbers has been activated.\n");
+      else 
+	sollyaPrintf("Displaying of message numbers has been deactivated.\n");
+    } else {
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_ON_OR_OFF,"Warning: the expression given does not evaluate to on or off.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
+      considerDyingOnError();
+    }
+    break;  		
   case TAYLORRECURSASSIGN:
     defaultVal = DEFAULTTAYLORRECURSIONS;
     if (evaluateThingToInteger(&resA, tree->child1, &defaultVal)) {
@@ -8711,6 +8755,16 @@ int executeCommandInner(node *tree) {
     defaultVal = 1;
     if (evaluateThingToOnOff(&resA, tree->child1, &defaultVal)) {
       autosimplify = resA;
+    } else {
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_ON_OR_OFF,"Warning: the expression given does not evaluate to on or off.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
+      considerDyingOnError();
+    }
+    break;  	
+  case SHOWMESSAGENUMBERSSTILLASSIGN:
+    defaultVal = 1;
+    if (evaluateThingToOnOff(&resA, tree->child1, &defaultVal)) {
+      activateMessageNumbers = resA;
     } else {
       printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_ON_OR_OFF,"Warning: the expression given does not evaluate to on or off.\n");
       printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
@@ -9360,6 +9414,17 @@ node *makeAutoSimplifyAssign(node *thing) {
 
 }
 
+node *makeShowMessageNumbersAssign(node *thing) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = SHOWMESSAGENUMBERSASSIGN;
+  res->child1 = thing;
+
+  return res;
+
+}
+
 node *makeTaylorRecursAssign(node *thing) {
   node *res;
 
@@ -9533,6 +9598,17 @@ node *makeAutoSimplifyStillAssign(node *thing) {
 
   res = (node *) safeMalloc(sizeof(node));
   res->nodeType = AUTOSIMPLIFYSTILLASSIGN;
+  res->child1 = thing;
+
+  return res;
+
+}
+
+node *makeShowMessageNumbersStillAssign(node *thing) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = SHOWMESSAGENUMBERSSTILLASSIGN;
   res->child1 = thing;
 
   return res;
@@ -11206,6 +11282,15 @@ node *makeAutoSimplifyDeref() {
 
 }
 
+node *makeShowMessageNumbersDeref() {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = SHOWMESSAGENUMBERSDEREF;
+
+  return res;
+
+}
 
 node *makeTaylorRecursDeref() {
   node *res;
@@ -11737,6 +11822,10 @@ void freeThing(node *tree) {
     freeThing(tree->child1);
     free(tree);
     break;  		
+  case SHOWMESSAGENUMBERSASSIGN:
+    freeThing(tree->child1);
+    free(tree);
+    break;  		
   case TAYLORRECURSASSIGN:
     freeThing(tree->child1);
     free(tree);
@@ -11794,6 +11883,10 @@ void freeThing(node *tree) {
     free(tree);
     break; 		
   case AUTOSIMPLIFYSTILLASSIGN:
+    freeThing(tree->child1);
+    free(tree);
+    break;  	
+  case SHOWMESSAGENUMBERSSTILLASSIGN:
     freeThing(tree->child1);
     free(tree);
     break;  	
@@ -12410,6 +12503,9 @@ void freeThing(node *tree) {
   case AUTOSIMPLIFYDEREF:
     free(tree);
     break; 		
+  case SHOWMESSAGENUMBERSDEREF:
+    free(tree);
+    break; 		
   case TAYLORRECURSDEREF:
     free(tree);
     break; 		
@@ -12753,6 +12849,9 @@ int isEqualThing(node *tree, node *tree2) {
   case AUTOSIMPLIFYASSIGN:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break;  		
+  case SHOWMESSAGENUMBERSASSIGN:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    break;  		
   case TAYLORRECURSASSIGN:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break; 		
@@ -12796,6 +12895,9 @@ int isEqualThing(node *tree, node *tree2) {
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break; 		
   case AUTOSIMPLIFYSTILLASSIGN:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    break;  	
+  case SHOWMESSAGENUMBERSSTILLASSIGN:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break;  	
   case TAYLORRECURSSTILLASSIGN:
@@ -13262,6 +13364,8 @@ int isEqualThing(node *tree, node *tree2) {
   case CANONICALDEREF:
     break; 			
   case AUTOSIMPLIFYDEREF:
+    break; 		
+  case SHOWMESSAGENUMBERSDEREF:
     break; 		
   case TAYLORRECURSDEREF:
     break; 		
@@ -14617,6 +14721,7 @@ int variableUsePreventsPreevaluation(node *tree) {
   case VERBOSITYDEREF:
   case CANONICALDEREF:
   case AUTOSIMPLIFYDEREF:
+  case SHOWMESSAGENUMBERSDEREF:
   case TAYLORRECURSDEREF:
   case TIMINGDEREF:
   case FULLPARENDEREF:
@@ -14721,6 +14826,7 @@ int variableUsePreventsPreevaluation(node *tree) {
   case VERBOSITYASSIGN:
   case CANONICALASSIGN:
   case AUTOSIMPLIFYASSIGN:
+  case SHOWMESSAGENUMBERSASSIGN:
   case TAYLORRECURSASSIGN:
   case TIMINGASSIGN:
   case FULLPARENASSIGN:
@@ -14736,6 +14842,7 @@ int variableUsePreventsPreevaluation(node *tree) {
   case VERBOSITYSTILLASSIGN:
   case CANONICALSTILLASSIGN:
   case AUTOSIMPLIFYSTILLASSIGN:
+  case SHOWMESSAGENUMBERSSTILLASSIGN:
   case TAYLORRECURSSTILLASSIGN:
   case TIMINGSTILLASSIGN:
   case FULLPARENSTILLASSIGN:
@@ -15312,6 +15419,9 @@ node *preevaluateMatcher(node *tree) {
   case AUTOSIMPLIFYASSIGN:
     copy->child1 = preevaluateMatcher(tree->child1);
     break;  		
+  case SHOWMESSAGENUMBERSASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;  		
   case TAYLORRECURSASSIGN:
     copy->child1 = preevaluateMatcher(tree->child1);
     break; 		
@@ -15355,6 +15465,9 @@ node *preevaluateMatcher(node *tree) {
     copy->child1 = preevaluateMatcher(tree->child1);
     break; 		
   case AUTOSIMPLIFYSTILLASSIGN:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    break;  	
+  case SHOWMESSAGENUMBERSSTILLASSIGN:
     copy->child1 = preevaluateMatcher(tree->child1);
     break;  	
   case TAYLORRECURSSTILLASSIGN:
@@ -15793,6 +15906,8 @@ node *preevaluateMatcher(node *tree) {
   case CANONICALDEREF:
     break; 			
   case AUTOSIMPLIFYDEREF:
+    break; 	
+  case SHOWMESSAGENUMBERSDEREF:
     break; 		
   case TAYLORRECURSDEREF:
     break; 		
@@ -21752,6 +21867,16 @@ node *evaluateThingInner(node *tree) {
     if (timingString != NULL) pushTimeCounter();      
     freeThing(copy);
     if (autosimplify) {
+      copy = makeOn();
+    } else {
+      copy = makeOff();
+    }
+    if (timingString != NULL) popTimeCounter(timingString);
+    break; 		
+  case SHOWMESSAGENUMBERSDEREF:
+    if (timingString != NULL) pushTimeCounter();      
+    freeThing(copy);
+    if (activateMessageNumbers) {
       copy = makeOn();
     } else {
       copy = makeOff();

@@ -369,6 +369,13 @@ void sollya_lib_set_autosimplify(sollya_obj_t obj1) {
   freeThing(thingToExecute); 
 }
 
+void sollya_lib_set_showmessagenumbers(sollya_obj_t obj1) {
+  node *thingToExecute;
+  thingToExecute = makeShowMessageNumbersAssign(copyThing(obj1));
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
+}
+
 void sollya_lib_set_taylorrecursions(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeTaylorRecursAssign(copyThing(obj1));
@@ -463,6 +470,13 @@ void sollya_lib_set_canonical_silent(sollya_obj_t obj1) {
 void sollya_lib_set_autosimplify_silent(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeAutoSimplifyStillAssign(copyThing(obj1));
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
+}
+
+void sollya_lib_set_showmessagenumbers_silent(sollya_obj_t obj1) {
+  node *thingToExecute;
+  thingToExecute = makeShowMessageNumbersStillAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute); 
 }
@@ -1526,6 +1540,14 @@ sollya_obj_t sollya_lib_get_canonical() {
 sollya_obj_t sollya_lib_get_autosimplify() {
   node *thingToEvaluate, *evaluatedThing;
   thingToEvaluate = makeAutoSimplifyDeref();
+  evaluatedThing = evaluateThing(thingToEvaluate);
+  freeThing(thingToEvaluate); 
+  return evaluatedThing;
+}
+
+sollya_obj_t sollya_lib_get_showmessagenumbers() {
+  node *thingToEvaluate, *evaluatedThing;
+  thingToEvaluate = makeShowMessageNumbersDeref();
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate); 
   return evaluatedThing;

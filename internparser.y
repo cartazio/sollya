@@ -205,6 +205,7 @@ extern FILE *internyyget_in(void *scanner);
 %token  DIAMTOKEN;
 %token  DISPLAYTOKEN;
 %token  VERBOSITYTOKEN;
+%token  SHOWMESSAGENUMBERSTOKEN;
 %token  CANONICALTOKEN;
 %token  AUTOSIMPLIFYTOKEN;
 %token  TAYLORRECURSIONSTOKEN;
@@ -857,6 +858,10 @@ stateassignment:        PRECTOKEN EQUALTOKEN thing
                           {
 			    $$ = makeVerbosityAssign($3);
 			  }
+                      | SHOWMESSAGENUMBERSTOKEN EQUALTOKEN thing
+                          {
+			    $$ = makeShowMessageNumbersAssign($3);
+			  }
                       | CANONICALTOKEN EQUALTOKEN thing
                           {
 			    $$ = makeCanonicalAssign($3);
@@ -918,6 +923,10 @@ stillstateassignment:   PRECTOKEN EQUALTOKEN thing
                       | VERBOSITYTOKEN EQUALTOKEN thing
                           {
 			    $$ = makeVerbosityStillAssign($3);
+			  }
+                      | SHOWMESSAGENUMBERSTOKEN EQUALTOKEN thing
+                          {
+			    $$ = makeShowMessageNumbersStillAssign($3);
 			  }
                       | CANONICALTOKEN EQUALTOKEN thing
                           {
@@ -1965,6 +1974,10 @@ statedereference:       PRECTOKEN egalquestionmark
                       | VERBOSITYTOKEN egalquestionmark
                           {
 			    $$ = makeVerbosityDeref();
+			  }
+                      | SHOWMESSAGENUMBERSTOKEN egalquestionmark
+                          {
+			    $$ = makeShowMessageNumbersDeref();
 			  }
                       | CANONICALTOKEN egalquestionmark
                           {

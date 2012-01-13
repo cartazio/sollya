@@ -233,6 +233,7 @@ STRING          ({STRINGDELIMITER})((("\\\\")|(("\\")[\"\'\?ntabfrv])|(("\\")({O
 
 
 VERBOSITY       "verbosity"
+SHOWMESSAGENUMBERS "showmessagenumbers"
 
 WORSTCASE       "worstcase"
 
@@ -659,6 +660,7 @@ NOP             "nop"
 {DIAM}            			    { newTokenLexed(); return DIAMTOKEN; }
 {DISPLAY}          			    { newTokenLexed(); return DISPLAYTOKEN; }
 {VERBOSITY}       			    { newTokenLexed(); return VERBOSITYTOKEN; }
+{SHOWMESSAGENUMBERS}			    { newTokenLexed(); return SHOWMESSAGENUMBERSTOKEN; }
 {CANONICAL}       			    { newTokenLexed(); return CANONICALTOKEN; }
 {AUTOSIMPLIFY}    			    { newTokenLexed(); return AUTOSIMPLIFYTOKEN; }
 {TAYLORRECURSIONS}			    { newTokenLexed(); return TAYLORRECURSIONSTOKEN; }

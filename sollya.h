@@ -282,6 +282,7 @@ extern "C" {
   void sollya_lib_set_verbosity(sollya_obj_t);
   void sollya_lib_set_canonical(sollya_obj_t);
   void sollya_lib_set_autosimplify(sollya_obj_t);
+  void sollya_lib_set_showmessagenumbers(sollya_obj_t);
   void sollya_lib_set_taylorrecursions(sollya_obj_t);
   void sollya_lib_set_timing(sollya_obj_t);
   void sollya_lib_set_midpointmode(sollya_obj_t);
@@ -296,6 +297,7 @@ extern "C" {
   void sollya_lib_set_verbosity_silent(sollya_obj_t);
   void sollya_lib_set_canonical_silent(sollya_obj_t);
   void sollya_lib_set_autosimplify_silent(sollya_obj_t);
+  void sollya_lib_set_showmessagenumbers_silent(sollya_obj_t);
   void sollya_lib_set_taylorrecursions_silent(sollya_obj_t);
   void sollya_lib_set_timing_silent(sollya_obj_t);
   void sollya_lib_set_midpointmode_silent(sollya_obj_t);
@@ -429,6 +431,7 @@ extern "C" {
   sollya_obj_t sollya_lib_get_verbosity();
   sollya_obj_t sollya_lib_get_canonical();
   sollya_obj_t sollya_lib_get_autosimplify();
+  sollya_obj_t sollya_lib_get_showmessagenumbers();
   sollya_obj_t sollya_lib_get_taylorrecursions();
   sollya_obj_t sollya_lib_get_timing();
   sollya_obj_t sollya_lib_get_midpointmode();

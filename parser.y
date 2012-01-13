@@ -220,6 +220,7 @@ int parserCheckEof() {
 %token  DIAMTOKEN;
 %token  DISPLAYTOKEN;
 %token  VERBOSITYTOKEN;
+%token  SHOWMESSAGENUMBERSTOKEN;
 %token  CANONICALTOKEN;
 %token  AUTOSIMPLIFYTOKEN;
 %token  TAYLORRECURSIONSTOKEN;
@@ -920,6 +921,10 @@ stateassignment:        PRECTOKEN EQUALTOKEN thing
                           {
 			    $$ = makeVerbosityAssign($3);
 			  }
+                      | SHOWMESSAGENUMBERSTOKEN EQUALTOKEN thing
+                          {
+			    $$ = makeShowMessageNumbersAssign($3);
+			  }
                       | CANONICALTOKEN EQUALTOKEN thing
                           {
 			    $$ = makeCanonicalAssign($3);
@@ -981,6 +986,10 @@ stillstateassignment:   PRECTOKEN EQUALTOKEN thing
                       | VERBOSITYTOKEN EQUALTOKEN thing
                           {
 			    $$ = makeVerbosityStillAssign($3);
+			  }
+                      | SHOWMESSAGENUMBERSTOKEN EQUALTOKEN thing
+                          {
+			    $$ = makeShowMessageNumbersStillAssign($3);
 			  }
                       | CANONICALTOKEN EQUALTOKEN thing
                           {
@@ -2029,6 +2038,10 @@ statedereference:       PRECTOKEN egalquestionmark
                           {
 			    $$ = makeVerbosityDeref();
 			  }
+                      | SHOWMESSAGENUMBERSTOKEN egalquestionmark
+                          {
+			    $$ = makeShowMessageNumbersDeref();
+			  }
                       | CANONICALTOKEN egalquestionmark
                           {
 			    $$ = makeCanonicalDeref();
@@ -3003,6 +3016,17 @@ help:                   CONSTANTTOKEN
 			    outputMode(); sollyaPrintf("Global environment variable verbosity.\n");
 #if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
 #warning "No help text for VERBOSITY"
+#endif
+#endif
+                          }
+                      | SHOWMESSAGENUMBERSTOKEN
+                          {
+#ifdef HELP_SHOWMESSAGENUMBERS_TEXT
+			    outputMode(); sollyaPrintf(HELP_SHOWMESSAGENUMBERS_TEXT);
+#else
+			    outputMode(); sollyaPrintf("Global environment variable activating the displaying of message numbers.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for SHOWMESSAGENUMBERS"
 #endif
 #endif
                           }
@@ -4598,6 +4622,7 @@ help:                   CONSTANTTOKEN
 			    sollyaPrintf("- roundingwarnings\n");
 			    sollyaPrintf("- safesimplify\n");
 			    sollyaPrintf("- searchgal\n");
+			    sollyaPrintf("- showmessagenumbers\n");
 			    sollyaPrintf("- simplify\n");
 			    sollyaPrintf("- simplifysafe\n");
 			    sollyaPrintf("- sin\n");

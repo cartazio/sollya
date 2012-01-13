@@ -288,6 +288,10 @@ extern void endBuffer(void);
 #define QUADSYMBOL 268
 #define COMPOSEPOLYNOMIALS 269
 #define BIND 270
+#define SHOWMESSAGENUMBERSASSIGN 271
+#define SHOWMESSAGENUMBERSSTILLASSIGN 272
+#define SHOWMESSAGENUMBERSDEREF 273
+
 
 int executeCommand(node *);
 
@@ -336,6 +340,7 @@ node *makePointsAssign(node *thing);
 node *makeDiamAssign(node *thing);
 node *makeDisplayAssign(node *thing);
 node *makeVerbosityAssign(node *thing);
+node *makeShowMessageNumbersAssign(node *thing);
 node *makeCanonicalAssign(node *thing);
 node *makeAutoSimplifyAssign(node *thing);
 node *makeTaylorRecursAssign(node *thing);
@@ -354,6 +359,7 @@ node *makePointsStillAssign(node *thing);
 node *makeDiamStillAssign(node *thing);
 node *makeDisplayStillAssign(node *thing);
 node *makeVerbosityStillAssign(node *thing);
+node *makeShowMessageNumbersStillAssign(node *thing);
 node *makeCanonicalStillAssign(node *thing);
 node *makeAutoSimplifyStillAssign(node *thing);
 node *makeTaylorRecursStillAssign(node *thing);
@@ -492,6 +498,7 @@ node *makePointsDeref();
 node *makeDiamDeref();
 node *makeDisplayDeref();
 node *makeVerbosityDeref();
+node *makeShowMessageNumbersDeref();
 node *makeCanonicalDeref();
 node *makeAutoSimplifyDeref();
 node *makeTaylorRecursDeref();
