@@ -16,4 +16,6 @@
 
 - ITERER SUR L'IMPLEMENTATION DE LA BIBLIOTHEQUE UNE FOIS LES TESTS FAITS
 
-- documenter la désactivation des numéros de message lorsque ce mécanisme sera implémenté.
+- documenter et tester la désactivation des numéros de message, la réactivation et le calcul de la liste des messages
+- documenter et tester le mode showmessagenumbers
+
