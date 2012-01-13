@@ -3,10 +3,7 @@ for i in $TESTFILES
 do
  if ! $SOLLYA < $i | diff - $i.reference > /dev/null
  then
-     echo $i failed
      TEST=1
- else 
-     echo $i passed
  fi
 done
 

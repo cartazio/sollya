@@ -1,7 +1,5 @@
-SUBDIRS = doc tests
+SUBDIRS = doc tests tests-lib
 EXTRA_DIST = autogen.sh sollya.h libsollyaexample.c compile.sh expansion.c expansion.h externalfun.c externalproc.c 
-
-check_PROGRAMS = sollya
 
 AM_YFLAGS = -d
 AM_LFLAGS = -o$(LEX_OUTPUT_ROOT).c
@@ -163,3 +161,30 @@ LIBTOOL_DEPS = @LIBTOOL_DEPS@
 libtool: $(LIBTOOL_DEPS)
 	$(SHELL) ./config.status --recheck
 
+check-lib: $(BUILT_SOURCES)
+	@fail= failcom='exit 1'; \
+	for f in x $$MAKEFLAGS; do \
+	  case $$f in \
+	    *=* | --[!k]*);; \
+	    *k*) failcom='fail=yes';; \
+	  esac; \
+	done; \
+	echo "Making check in tests-lib"; \
+	($(am__cd) tests-lib && $(MAKE) $(AM_MAKEFLAGS) check) \
+	|| eval $$failcom; \
+	$(MAKE) $(AM_MAKEFLAGS) check-am || exit 1; \
+	test -z "$$fail"
+
+check-tool: $(BUILT_SOURCES)
+	@fail= failcom='exit 1'; \
+	for f in x $$MAKEFLAGS; do \
+	  case $$f in \
+	    *=* | --[!k]*);; \
+	    *k*) failcom='fail=yes';; \
+	  esac; \
+	done; \
+	echo "Making check in tests"; \
+	($(am__cd) tests && $(MAKE) $(AM_MAKEFLAGS) check) \
+	|| eval $$failcom; \
+	$(MAKE) $(AM_MAKEFLAGS) check-am || exit 1; \
+	test -z "$$fail"
