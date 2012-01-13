@@ -1,6 +1,6 @@
 /*
 
-Copyright 2007-2011 by
+Copyright 2007-2012 by
 
 Laboratoire de l'Informatique du Parallelisme,
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
@@ -79,6 +79,7 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include <time.h>
 #include "execute.h"
 #include "message-numbers.h"
+#include "bitfields.h"
 
 #if HAVE_BACKTRACE
 #include <execinfo.h>
@@ -99,6 +100,7 @@ int oldVoidPrint = 0;
 int printMode = PRINT_MODE_LEGACY;
 FILE *warnFile = NULL;
 char *variablename = NULL;
+bitfield suppressedMessages = NULL;
 mp_prec_t defaultprecision = DEFAULTPRECISION;
 mp_prec_t tools_precision = DEFAULTPRECISION;
 int defaultpoints = DEFAULTPOINTS;
@@ -144,6 +146,7 @@ int oldMode = 0;
 
 int (*messageCallback)(int) = NULL;
 int lastMessageCallbackResult = 1;
+int lastMessageSuppressedResult = -1;
 
 chain *symbolTable = NULL;
 chain *declaredSymbolTable = NULL;
@@ -636,11 +639,29 @@ int uninstallMessageCallback() {
 int printMessage(int verb, int msgNum, const char *format, ...) {
   va_list varlist;
   int oldColor;
-  int res;
+  int res, suppressed;
   const char *myFormat;
   const char *tempStr;
 
   if ((verb >= 0) && (verbosity < verb)) return 0;
+
+  /* Check if message suppression is activated for that message */
+  suppressed = 0;
+  if ((suppressedMessages != NULL) && 
+      (verb >= 0) && 
+      (msgNum != SOLLYA_MSG_NO_MSG)) {
+    if (msgNum != SOLLYA_MSG_CONTINUATION) {
+      suppressed = getBitInBitfield(suppressedMessages, msgNum);
+    } else {
+      if (lastMessageSuppressedResult == -1) {
+	suppressed = 0;
+      } else {
+	suppressed = lastMessageSuppressedResult;
+      }
+    }
+  }
+  lastMessageSuppressedResult = suppressed;
+  if ((verb >= 0) && suppressed && (msgNum != SOLLYA_MSG_NO_MSG)) return 0;
 
   /* If there is a message callback installed, call it.
      If it says no message is to be displayed, just bail out, 
@@ -948,6 +969,7 @@ void blockSignals() {
 void freeTool() {
   if(variablename != NULL) free(variablename);
   if(newReadFilename != NULL) free(newReadFilename);
+  if(suppressedMessages != NULL) freeBitfield(suppressedMessages);
 
   if (!(eliminatePromptBackup == 1)) {
     removePlotFiles();
@@ -982,6 +1004,8 @@ void freeTool() {
 void initToolDefaults() {
   if(variablename != NULL) free(variablename); 
   variablename = NULL;
+  if(suppressedMessages != NULL) freeBitfield(suppressedMessages);
+  suppressedMessages = NULL;
   defaultprecision = DEFAULTPRECISION;
   tools_precision = DEFAULTPRECISION;
   defaultpoints = DEFAULTPOINTS;
@@ -1210,6 +1234,7 @@ void invalidateRecoverEnvironment() {
 int initializeLibraryMode() {
   messageCallback = NULL;
   lastMessageCallbackResult = 1;
+  lastMessageSuppressedResult = -1;
   inputFileOpened = 0;
   flushOutput = 0;
   oldAutoPrint = 0;
@@ -1227,6 +1252,7 @@ int initializeLibraryMode() {
 int finalizeLibraryMode() {
   if(variablename != NULL) free(variablename);
   if(newReadFilename != NULL) free(newReadFilename);
+  if(suppressedMessages != NULL) freeBitfield(suppressedMessages);
 
   if (!(eliminatePromptBackup == 1)) {
     removePlotFiles();
@@ -1271,6 +1297,7 @@ int general(int argc, char *argv[]) {
 
   messageCallback = NULL;
   lastMessageCallbackResult = 1;
+  lastMessageSuppressedResult = -1;
   doNotModifyStackSize = 0;
   inputFileOpened = 0;
   flushOutput = 0;

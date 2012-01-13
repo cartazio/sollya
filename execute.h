@@ -291,7 +291,9 @@ extern void endBuffer(void);
 #define SHOWMESSAGENUMBERSASSIGN 271
 #define SHOWMESSAGENUMBERSSTILLASSIGN 272
 #define SHOWMESSAGENUMBERSDEREF 273
-
+#define SUPPRESSMESSAGE 274
+#define UNSUPPRESSMESSAGE 275
+#define GETSUPPRESSEDMESSAGES 276
 
 int executeCommand(node *);
 
@@ -312,6 +314,8 @@ node *makeFalseQuit();
 node *makeFalseRestart();
 node *makeRestart();
 node *makePrint(chain *thinglist);
+node *makeSuppressMessage(chain *thinglist);
+node *makeUnsuppressMessage(chain *thinglist);
 node *makeNewFilePrint(node *thing, chain *thinglist);
 node *makeAppendFilePrint(node *thing, chain *thinglist);
 node *makePlot(chain *thinglist);
@@ -441,6 +445,7 @@ node *makeDeboundMid(node *thing);
 node *makeEvalConst(node *thing);
 node *makeDiff(node *thing);
 node *makeBashevaluate(chain *thinglist);
+node *makeGetSuppressedMessages();
 node *makeSimplify(node *thing);
 node *makeSimplifySafe(node *thing);
 node *makeRemez(chain *thinglist);

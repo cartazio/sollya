@@ -72,6 +72,7 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #endif
 
 #include "message-numbers.h"
+#include "bitfields.h"
 
 #define DEFAULTPOINTS 501
 #define DEFAULTPRECISION 165
@@ -95,6 +96,7 @@ extern int oldVoidPrint;
 extern int printMode;
 extern FILE *warnFile;
 extern char *variablename;
+extern bitfield suppressedMessages;
 extern mp_prec_t defaultprecision;
 extern mp_prec_t tools_precision;
 extern int defaultpoints;

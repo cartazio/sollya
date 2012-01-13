@@ -311,11 +311,47 @@ void sollya_lib_autoprint(sollya_obj_t obj1, ...) {
   freeThing(thingToExecute); 
 }
 
+void sollya_lib_suppressmessage(sollya_obj_t obj1, ...) {
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS(thinglist);
+  MAKE_THINGLIST_FROM_VARIADIC(obj1);
+  thingToExecute = makeSuppressMessage(thinglist);
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
+}
+
+void sollya_lib_unsuppressmessage(sollya_obj_t obj1, ...) {
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS(thinglist);
+  MAKE_THINGLIST_FROM_VARIADIC(obj1);
+  thingToExecute = makeUnsuppressMessage(thinglist);
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
+}
+
 void sollya_lib_v_autoprint(sollya_obj_t obj1, va_list varlist) {
   node *thingToExecute;
   MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
   MAKE_THINGLIST_FROM_VA_LIST(obj1,varlist);
   thingToExecute = makeAutoprint(thinglist);
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
+}
+
+void sollya_lib_v_suppressmessage(sollya_obj_t obj1, va_list varlist) {
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
+  MAKE_THINGLIST_FROM_VA_LIST(obj1,varlist);
+  thingToExecute = makeSuppressMessage(thinglist);
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
+}
+
+void sollya_lib_v_unsuppressmessage(sollya_obj_t obj1, va_list varlist) {
+  node *thingToExecute;
+  MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
+  MAKE_THINGLIST_FROM_VA_LIST(obj1,varlist);
+  thingToExecute = makeUnsuppressMessage(thinglist);
   executeCommand(thingToExecute);
   freeThing(thingToExecute); 
 }
@@ -770,6 +806,13 @@ sollya_obj_t sollya_lib_v_bashevaluate(sollya_obj_t obj1, va_list varlist) {
   MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
   MAKE_THINGLIST_FROM_VA_LIST(obj1,varlist);
   thingToExecute = makeBashevaluate(thinglist);
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute); 
+}
+
+sollya_obj_t sollya_lib_getsuppressedmessages() {
+  node *thingToExecute;
+  thingToExecute = makeGetSuppressedMessages();
   executeCommand(thingToExecute);
   freeThing(thingToExecute); 
 }

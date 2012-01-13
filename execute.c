@@ -519,6 +519,12 @@ node *copyThing(node *tree) {
     break;  			
   case PRINT:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
+    break; 
+  case SUPPRESSMESSAGE:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
+    break; 	
+  case UNSUPPRESSMESSAGE:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 	
   case VARIABLEDECLARATION:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
@@ -923,6 +929,8 @@ node *copyThing(node *tree) {
     break; 
   case BASHEVALUATE:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
+    break; 
+  case GETSUPPRESSEDMESSAGES:
     break; 			 	
   case SIMPLIFY:
     copy->child1 = copyThing(tree->child1);
@@ -1399,6 +1407,12 @@ char *getTimingStringForThing(node *tree) {
     break;  			
   case PRINT:
     constString = "print statement";
+    break; 
+  case SUPPRESSMESSAGE:
+    constString = "suppressing a message";
+    break; 	
+  case UNSUPPRESSMESSAGE:
+    constString = "unsuppressing a message";
     break; 	
   case VARIABLEDECLARATION:
     constString = NULL;
@@ -1783,6 +1797,9 @@ char *getTimingStringForThing(node *tree) {
     break; 
   case BASHEVALUATE:
     constString = "evaluating a string as a bash command";
+    break; 
+  case GETSUPPRESSEDMESSAGES:
+    constString = "getting the list of suppressed messages";
     break; 			 	
   case SIMPLIFY:
     constString = "simplifying";
@@ -4084,6 +4101,26 @@ char *sRawPrintThing(node *tree) {
     }
     res = concatAndFree(res, newString(")"));
     break; 				
+  case SUPPRESSMESSAGE:
+    res = newString("suppressmessage(");
+    curr = tree->arguments;
+    while (curr != NULL) {
+      res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
+      if (curr->next != NULL) res = concatAndFree(res, newString(", ")); 
+      curr = curr->next;
+    }
+    res = concatAndFree(res, newString(")"));
+    break; 				
+  case UNSUPPRESSMESSAGE:
+    res = newString("unsuppressmessage(");
+    curr = tree->arguments;
+    while (curr != NULL) {
+      res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
+      if (curr->next != NULL) res = concatAndFree(res, newString(", ")); 
+      curr = curr->next;
+    }
+    res = concatAndFree(res, newString(")"));
+    break; 				
   case NEWFILEPRINT:
     res = newString("print(");
     curr = tree->arguments;
@@ -4843,6 +4880,9 @@ char *sRawPrintThing(node *tree) {
       curr = curr->next;
     }
     res = concatAndFree(res, newString(")"));
+    break; 
+  case GETSUPPRESSEDMESSAGES:
+    res = newString("getsuppressedmessages()");
     break; 			 	
   case SIMPLIFY:
     res = concatAndFree(newString("simplify("),
@@ -6568,9 +6608,24 @@ node *recomputeLeftHandSideForAssignmentInStructure(node *oldValue, node *newVal
   return res;
 }
 
+int setMessageSuppressionState(int msgNum, int state) {
+  if ((msgNum < 0) || (msgNum == SOLLYA_MSG_NO_MSG) || (msgNum == SOLLYA_MSG_CONTINUATION) || (!messageNumberExists(msgNum))) {
+    printMessage(1,SOLLYA_MSG_CANNOT_SUPPRESS_OR_UNSUPPRESS_A_MESSAGE,
+		 ((state)?"Warning: the message with the number %d cannot be suppressed.\n":
+		  "Warning: the message with the number %d cannot be unsuppressed.\n"), msgNum);
+    return 0;
+  }
+  if (suppressedMessages == NULL) {
+    suppressedMessages = initializeBitfield();
+  }
+  fixBitInBitfield(suppressedMessages, (unsigned int) msgNum, state);
+
+  return 1;
+}
+
 int executeCommandInner(node *tree) {
   int result, res, intTemp, resA, resB, resC, resD, resE, resF, resG, defaultVal, i;  
-  chain *curr, *tempList, *tempList2, *tempChain; 
+  chain *curr, *tempList, *tempList2, *tempChain, *tempChain2; 
   mpfr_t a, b, c, d, e;
   node *tempNode, *tempNode2, *tempNode3, *tempNode4, *tempNode5, *tempNode6, *tempNode7;
   libraryFunction *tempLibraryFunction;
@@ -6580,6 +6635,7 @@ int executeCommandInner(node *tree) {
   node **array;
   rangetype tempRange;
   int autoprintAlreadyDone, floatingPointEvaluationAlreadyDone;
+  int *tempIntPtr;
 
   /* Make compiler happy */
   fd = NULL;
@@ -6841,6 +6897,74 @@ int executeCommandInner(node *tree) {
       curr = curr->next;
     }
     sollyaPrintf("\n");
+    break; 
+  case SUPPRESSMESSAGE:
+    evaluateThingListToThingArray(&resA, &array, tree->arguments);
+    tempChain = NULL;
+    for (i=0;i<resA;i++) {
+      if (evaluateThingToInteger(&resB, array[i], NULL)) {
+	tempIntPtr = (int *) safeMalloc(sizeof(int));
+	*tempIntPtr = resB;
+	tempChain = addElement(tempChain, tempIntPtr);
+      } else {
+	tempChain2 = NULL;
+	if (evaluateThingToIntegerList(&tempChain2, NULL, array[i])) {
+	  tempChain = concatChains(tempChain, tempChain2);
+	} else {
+	  if (!isEmptyList(array[i])) {
+	    freeChain(tempChain,freeIntPtr);
+	    tempChain = NULL;
+	    printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_INT_OR_LIST_OF_INT,"Warning: the expression given does not evaluate to an integer nor to a list of integers.\n");
+	    printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
+	    considerDyingOnError();
+	    break;
+	  }
+	}
+      }
+    }
+    for (curr=tempChain;curr!=NULL;curr=curr->next) {
+      if (!setMessageSuppressionState(*((int *) (curr->value)), 1)) {
+	printMessage(1,SOLLYA_MSG_SUPPRESSION_NUMBER_OMITTED,"Warning: The command will have had no effect for message number %d.\n",*((int *) (curr->value)));
+      }
+    }
+    freeChain(tempChain,freeIntPtr);
+    for (i=0;i<resA;i++)
+      freeThing(array[i]);
+    free(array);
+    break; 				
+  case UNSUPPRESSMESSAGE:
+    evaluateThingListToThingArray(&resA, &array, tree->arguments);
+    tempChain = NULL;
+    for (i=0;i<resA;i++) {
+      if (evaluateThingToInteger(&resB, array[i], NULL)) {
+	tempIntPtr = (int *) safeMalloc(sizeof(int));
+	*tempIntPtr = resB;
+	tempChain = addElement(tempChain, tempIntPtr);
+      } else {
+	tempChain2 = NULL;
+	if (evaluateThingToIntegerList(&tempChain2, NULL, array[i])) {
+	  tempChain = concatChains(tempChain, tempChain2);
+	} else {
+	  if (!isEmptyList(array[i])) {
+	    freeChain(tempChain,freeIntPtr);
+	    tempChain = NULL;
+	    printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_INT_OR_LIST_OF_INT,"Warning: the expression given does not evaluate to an integer nor to a list of integers.\n");
+	    printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
+	    considerDyingOnError();
+	    break;
+	  }
+	}
+      }
+    }
+    for (curr=tempChain;curr!=NULL;curr=curr->next) {
+      if (!setMessageSuppressionState(*((int *) (curr->value)), 0)) {
+	printMessage(1,SOLLYA_MSG_SUPPRESSION_NUMBER_OMITTED,"Warning: The command will have had no effect for message number %d.\n",*((int *) (curr->value)));
+      }
+    }
+    freeChain(tempChain,freeIntPtr);
+    for (i=0;i<resA;i++)
+      freeThing(array[i]);
+    free(array);
     break; 				
   case NEWFILEPRINT:
     if (evaluateThingToString(&tempString, tree->child1)) {
@@ -9021,6 +9145,28 @@ node *makePrint(chain *thinglist) {
 
 }
 
+node *makeSuppressMessage(chain *thinglist) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = SUPPRESSMESSAGE;
+  res->arguments = thinglist;
+
+  return res;
+
+}
+
+node *makeUnsuppressMessage(chain *thinglist) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = UNSUPPRESSMESSAGE;
+  res->arguments = thinglist;
+
+  return res;
+
+}
+
 node *makeVariableDeclaration(chain *stringlist) {
   node *res;
 
@@ -11081,6 +11227,16 @@ node *makeBashevaluate(chain *thinglist) {
 
 }
 
+node *makeGetSuppressedMessages() {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = GETSUPPRESSEDMESSAGES;
+
+  return res;
+
+}
+
 node *makeRevert(node *thing) {
   node *res;
 
@@ -11679,6 +11835,14 @@ void freeThing(node *tree) {
   case PRINT:
     freeChain(tree->arguments, freeThingOnVoid);
     free(tree);
+    break; 
+  case SUPPRESSMESSAGE:
+    freeChain(tree->arguments, freeThingOnVoid);
+    free(tree);
+    break; 	
+  case UNSUPPRESSMESSAGE:
+    freeChain(tree->arguments, freeThingOnVoid);
+    free(tree);
     break; 	
   case VARIABLEDECLARATION:
     freeChain(tree->arguments, free);
@@ -12188,6 +12352,9 @@ void freeThing(node *tree) {
     break; 			 	
   case BASHEVALUATE:
     freeChain(tree->arguments, freeThingOnVoid);
+    free(tree);
+    break; 
+  case GETSUPPRESSEDMESSAGES:
     free(tree);
     break; 			 	
   case SIMPLIFY:
@@ -12746,6 +12913,12 @@ int isEqualThing(node *tree, node *tree2) {
     break; 						
   case PRINT:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
+    break; 
+  case SUPPRESSMESSAGE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
+    break; 				
+  case UNSUPPRESSMESSAGE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
     break; 				
   case NEWFILEPRINT:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
@@ -13123,6 +13296,8 @@ int isEqualThing(node *tree, node *tree2) {
     break; 			 	
   case BASHEVALUATE:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
+    break; 
+  case GETSUPPRESSEDMESSAGES:
     break; 			 	
   case SIMPLIFY:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
@@ -14730,6 +14905,7 @@ int variableUsePreventsPreevaluation(node *tree) {
   case RATIONALMODEDEREF:
   case SUPPRESSWARNINGSDEREF:
   case HOPITALRECURSDEREF:
+  case GETSUPPRESSEDMESSAGES:
     return 0;
     break;
   case ADD:
@@ -14889,6 +15065,8 @@ int variableUsePreventsPreevaluation(node *tree) {
   case COMMANDLIST:
   case IFELSE:
   case PRINT:
+  case SUPPRESSMESSAGE:
+  case UNSUPPRESSMESSAGE:
   case PLOT:
   case EXTERNALPLOT:
   case WRITE:
@@ -15297,6 +15475,12 @@ node *preevaluateMatcher(node *tree) {
     break;  			
   case PRINT:
     copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 
+  case SUPPRESSMESSAGE:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 	
+  case UNSUPPRESSMESSAGE:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break; 	
   case VARIABLEDECLARATION:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
@@ -15676,6 +15860,8 @@ node *preevaluateMatcher(node *tree) {
     break; 			 	
   case BASHEVALUATE:
     copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break; 
+  case GETSUPPRESSEDMESSAGES:
     break; 			 	
   case MATCH:
     copy->child1 = preevaluateMatcher(tree->child1);
@@ -21574,6 +21760,30 @@ node *evaluateThingInner(node *tree) {
 	} 
       }
     }
+    break;
+  case GETSUPPRESSEDMESSAGES:
+    if (timingString != NULL) pushTimeCounter();      
+    if ((suppressedMessages == NULL) || ((resA = getMaxIndexOfSetBit(suppressedMessages)) < 0)) {
+      tempNode = makeEmptyList();
+    } else {
+      tempChain = NULL;
+      mpfr_init2(a, 5 + 8 * sizeof(int));
+      for (i=resA;i>=0;i--) {
+	if (getBitInBitfield(suppressedMessages, (unsigned int) i)) {
+	  mpfr_set_si(a, i, GMP_RNDN); /* exact */
+	  tempChain = addElement(tempChain, makeConstant(a));
+	}
+      }
+      mpfr_clear(a);
+      if (tempChain == NULL) {
+	tempNode = makeEmptyList();
+      } else {
+	tempNode = makeList(tempChain);
+      }
+    }
+    if (timingString != NULL) popTimeCounter(timingString);
+    freeThing(copy);
+    copy = tempNode;
     break;
   case REVERT:
     copy->child1 = evaluateThingInner(tree->child1);

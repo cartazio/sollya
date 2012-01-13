@@ -151,6 +151,8 @@ ASSIGNEQUAL     ":="
 SEMICOLON       ";"
 QUIT            "quit"
 PRINT           "print"
+SUPPRESSMESSAGE "suppressmessage"
+UNSUPPRESSMESSAGE "unsuppressmessage"
 DIFF            "diff"
 SIMPLIFY        "simplify"
 CANONICAL       "canonical"
@@ -285,6 +287,7 @@ PRINTEXPANSION  "printexpansion"
 
 BASHEXECUTE     "bashexecute"
 BASHEVALUATE    "bashevaluate"
+GETSUPPRESSEDMESSAGES "getsuppressedmessages"
 EXTERNALPLOT    "externalplot"
 PERTURB         "perturb"
 
@@ -673,6 +676,8 @@ NOP             "nop"
 {EVALUATE}        			    {  return EVALUATETOKEN; }
 {PARSE}           			    {  return PARSETOKEN; }
 {PRINT}           			    {  return PRINTTOKEN; }
+{SUPPRESSMESSAGE}           		    {  return SUPPRESSMESSAGETOKEN; }
+{UNSUPPRESSMESSAGE}           		    {  return UNSUPPRESSMESSAGETOKEN; }
 {PRINTXML}           			    {  return PRINTXMLTOKEN; }
 {EXECUTE}           			    {  return EXECUTETOKEN; }
 {PLOT}            			    {  return PLOTTOKEN; }
@@ -682,6 +687,7 @@ NOP             "nop"
 {PRINTEXPANSION}  			    {  return PRINTEXPANSIONTOKEN; }
 {BASHEXECUTE}     			    {  return BASHEXECUTETOKEN; }
 {BASHEVALUATE}     			    {  return BASHEVALUATETOKEN; }
+{GETSUPPRESSEDMESSAGES}     		    {  return GETSUPPRESSEDMESSAGESTOKEN; }
 {EXTERNALPLOT}    			    {  return EXTERNALPLOTTOKEN; }
 {WRITE}           			    {  return WRITETOKEN; }
 {ASCIIPLOT}       			    {  return ASCIIPLOTTOKEN; }

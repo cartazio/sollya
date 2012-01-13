@@ -272,6 +272,7 @@ int parserCheckEof() {
 %token  SIMPLIFYTOKEN;
 %token  REMEZTOKEN;
 %token  BASHEVALUATETOKEN;
+%token  GETSUPPRESSEDMESSAGESTOKEN;
 %token  FPMINIMAXTOKEN;
 %token  HORNERTOKEN;
 %token  EXPANDTOKEN;
@@ -308,6 +309,8 @@ int parserCheckEof() {
 %token  PRINTHEXATOKEN;
 %token  PRINTFLOATTOKEN;
 %token  PRINTBINARYTOKEN;
+%token  SUPPRESSMESSAGETOKEN;
+%token  UNSUPPRESSMESSAGETOKEN;
 %token  PRINTEXPANSIONTOKEN;
 %token  BASHEXECUTETOKEN;
 %token  EXTERNALPLOTTOKEN;
@@ -752,6 +755,14 @@ simplecommand:          QUITTOKEN
                       | PRINTBINARYTOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makePrintBinary($3);
+			  }
+                      | SUPPRESSMESSAGETOKEN LPARTOKEN thinglist RPARTOKEN
+                          {
+			    $$ = makeSuppressMessage($3);
+			  }
+                      | UNSUPPRESSMESSAGETOKEN LPARTOKEN thinglist RPARTOKEN
+                          {
+			    $$ = makeUnsuppressMessage($3);
 			  }
                       | PRINTEXPANSIONTOKEN LPARTOKEN thing RPARTOKEN
                           {
@@ -1656,6 +1667,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | BASHEVALUATETOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeBashevaluate(addElement(NULL,$3));
+			  }
+                      | GETSUPPRESSEDMESSAGESTOKEN LPARTOKEN RPARTOKEN
+                          {
+			    $$ = makeGetSuppressedMessages();
 			  }
                       | BASHEVALUATETOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
                           {
@@ -3514,6 +3529,17 @@ help:                   CONSTANTTOKEN
 #endif
 #endif
                           }
+                      | GETSUPPRESSEDMESSAGESTOKEN
+                          {
+#ifdef HELP_GETSUPPRESSEDMESSAGES_TEXT
+			    outputMode(); sollyaPrintf(HELP_GETSUPPRESSEDMESSAGES_TEXT);
+#else
+			    outputMode(); sollyaPrintf("Get a list of message numbers that have been suppressed.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for GETSUPPRESSEDMESSAGES"
+#endif
+#endif
+                          }
                       | SIMPLIFYTOKEN
                           {
 #ifdef HELP_SIMPLIFY_TEXT
@@ -3864,6 +3890,28 @@ help:                   CONSTANTTOKEN
 			    outputMode(); sollyaPrintf("Print a constant in binary: printbinary(constant).\n");
 #if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
 #warning "No help text for PRINTBINARY"
+#endif
+#endif
+                          }
+                      | SUPPRESSMESSAGETOKEN
+                          {
+#ifdef HELP_SUPPRESSMESSAGE_TEXT
+			    outputMode(); sollyaPrintf(HELP_SUPPRESSMESSAGE_TEXT);
+#else
+			    outputMode(); sollyaPrintf("Suppress a message with a certain message number.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for SUPPRESSMESSAGE"
+#endif
+#endif
+                          }
+                      | UNSUPPRESSMESSAGETOKEN
+                          {
+#ifdef HELP_UNSUPPRESSMESSAGE_TEXT
+			    outputMode(); sollyaPrintf(HELP_UNSUPPRESSMESSAGE_TEXT);
+#else
+			    outputMode(); sollyaPrintf("Unsuppress a message with a certain message number.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for UNSUPPRESSMESSAGE"
 #endif
 #endif
                           }
@@ -4635,6 +4683,7 @@ help:                   CONSTANTTOKEN
 			    sollyaPrintf("- substitute\n");
 			    sollyaPrintf("- sup\n");
 			    sollyaPrintf("- supnorm\n");
+			    sollyaPrintf("- suppressmessage\n");
 			    sollyaPrintf("- tail\n");
 			    sollyaPrintf("- tan\n");
 			    sollyaPrintf("- tanh\n");
@@ -4647,6 +4696,7 @@ help:                   CONSTANTTOKEN
 			    sollyaPrintf("- to\n");
 			    sollyaPrintf("- tripledouble\n");
 			    sollyaPrintf("- true\n");
+			    sollyaPrintf("- unsuppressmessage\n");
 			    sollyaPrintf("- var\n");
 			    sollyaPrintf("- verbosity\n");
 			    sollyaPrintf("- version\n");

@@ -66,5 +66,6 @@ void clearBitInBitfield(bitfield, unsigned int);
 void fixBitInBitfield(bitfield, unsigned int, int);
 int getBitInBitfield(bitfield, unsigned int);
 void clearBitfield(bitfield);
+int getMaxIndexOfSetBit(bitfield);
 
 #endif /* ifdef BITFIELDS_H*/

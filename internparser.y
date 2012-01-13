@@ -250,6 +250,7 @@ extern FILE *internyyget_in(void *scanner);
 
 %token  DIFFTOKEN;
 %token  BASHEVALUATETOKEN;
+%token  GETSUPPRESSEDMESSAGESTOKEN;
 %token  SIMPLIFYTOKEN;
 %token  REMEZTOKEN;
 %token  FPMINIMAXTOKEN;
@@ -287,6 +288,8 @@ extern FILE *internyyget_in(void *scanner);
 %token  PRINTHEXATOKEN;
 %token  PRINTFLOATTOKEN;
 %token  PRINTBINARYTOKEN;
+%token  SUPPRESSMESSAGETOKEN;
+%token  UNSUPPRESSMESSAGETOKEN;
 %token  PRINTEXPANSIONTOKEN;
 %token  BASHEXECUTETOKEN;
 %token  EXTERNALPLOTTOKEN;
@@ -693,6 +696,14 @@ simplecommand:          FALSEQUITTOKEN
                       | PRINTBINARYTOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makePrintBinary($3);
+			  }
+                      | SUPPRESSMESSAGETOKEN LPARTOKEN thinglist RPARTOKEN
+                          {
+			    $$ = makeSuppressMessage($3);
+			  }
+                      | UNSUPPRESSMESSAGETOKEN LPARTOKEN thinglist RPARTOKEN
+                          {
+			    $$ = makeUnsuppressMessage($3);
 			  }
                       | PRINTEXPANSIONTOKEN LPARTOKEN thing RPARTOKEN
                           {
@@ -1584,6 +1595,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | BASHEVALUATETOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeBashevaluate(addElement(NULL,$3));
+			  }
+                      | GETSUPPRESSEDMESSAGESTOKEN LPARTOKEN RPARTOKEN
+                          {
+			    $$ = makeGetSuppressedMessages();
 			  }
                       | BASHEVALUATETOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
                           {

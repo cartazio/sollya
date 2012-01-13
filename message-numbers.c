@@ -89,3 +89,17 @@ char *messageNumberToText(int msgNum) {
   free(temp);
   return res;
 }
+
+int messageNumberExists(int msgNum) {
+  int i;
+
+  if (msgNum >= 1) {
+    for (i=0; messageTextsTable[i].msgNum >= 0; i++) {
+      if (messageTextsTable[i].msgNum == msgNum) {
+	return 1;
+      }
+    }
+  }
+
+  return 0;
+}

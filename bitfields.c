@@ -75,6 +75,9 @@ void setBitInBitfield(bitfield bf, unsigned int bit) {
   if ((bit >> 6) >= bf->limbs) {
     newFields = (uint64_t *) safeCalloc((bit >> 6) + 1,sizeof(uint64_t));
     for (i=0;i<(bit >> 6) + 1;i++) {
+      newFields[i] = 0ULL;
+    }
+    for (i=0;i<bf->limbs;i++) {
       newFields[i] = bf->fields[i];
     }
     bf->limbs = (bit >> 6) + 1;
@@ -109,3 +112,16 @@ void clearBitfield(bitfield bf) {
   for (i=0;i<bf->limbs;i++) bf->fields[i] = 0ULL;
 }
 
+int getMaxIndexOfSetBit(bitfield bf) {
+  int i, j;
+  for (i=bf->limbs-1;i>=0;i--) {
+    if (!(!(bf->fields[i]))) {
+      for (j=63;j>=0;j--) {
+	if (!(!(bf->fields[i] & (1ULL << j)))) {
+	  return j + (i << 6);
+	}
+      }
+    }
+  }
+  return -1;
+}

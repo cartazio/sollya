@@ -275,6 +275,10 @@ extern "C" {
   void sollya_lib_v_worstcase(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
   void sollya_lib_autoprint(sollya_obj_t, ...);
   void sollya_lib_v_autoprint(sollya_obj_t, va_list);
+  void sollya_lib_suppressmessage(sollya_obj_t, ...);
+  void sollya_lib_v_suppressmessage(sollya_obj_t, va_list);
+  void sollya_lib_unsuppressmessage(sollya_obj_t, ...);
+  void sollya_lib_v_unsuppressmessage(sollya_obj_t, va_list);
   void sollya_lib_set_prec(sollya_obj_t);
   void sollya_lib_set_points(sollya_obj_t);
   void sollya_lib_set_diam(sollya_obj_t);
@@ -337,6 +341,7 @@ extern "C" {
   sollya_obj_t sollya_lib_simplify(sollya_obj_t);
   sollya_obj_t sollya_lib_bashevaluate(sollya_obj_t, ...);
   sollya_obj_t sollya_lib_v_bashevaluate(sollya_obj_t, va_list);
+  sollya_obj_t sollya_lib_getsuppressedmessages();
   sollya_obj_t sollya_lib_remez(sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
   sollya_obj_t sollya_lib_v_remez(sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
   sollya_obj_t sollya_lib_min(sollya_obj_t, ...);
