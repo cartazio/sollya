@@ -1,16 +1,15 @@
-EXTRA_DIST=check00.c
+TESTFILES= check00.c check01.c
 
-#TESTS_ENVIRONMENT=$(SHELL) 
+EXTRA_DIST= $(TESTFILES)
 
-TESTS= check00
+check_PROGRAMS = $(TESTFILES:.c=)
+TESTS= $(check_PROGRAMS)
+
+LDADD = $(top_builddir)/.libs/libsollya.la
 
 .PHONY: $(top_builddir)/sollya
 
 $(top_builddir)/sollya:
-	cd $(top_builddir); make all
+	@echo "Recompiling sollya";cd $(top_builddir); $(MAKE) all
 
-check00.o: check00.c
-	$(CC) check00.c $(CFLAGS) -c
-
-check00: check00.o
-	$(CC) check00.o $(LDLAGS) -o check00
+$(TESTS): $(top_builddir)/sollya

@@ -376,5 +376,5 @@ AC_CHECK_FUNCS([gettimeofday memmove memset strchr strerror strrchr strtol backt
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(AM_CFLAGS)
 AC_SUBST(AM_LDFLAGS)
-AC_CONFIG_FILES([Makefile doc/Makefile tests/Makefile tests-lib/Makefile])
+AC_CONFIG_FILES([Makefile doc/Makefile tests-tool/Makefile tests-lib/Makefile])
 AC_OUTPUT

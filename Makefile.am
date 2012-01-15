@@ -1,4 +1,4 @@
-SUBDIRS = doc tests tests-lib
+SUBDIRS = doc tests-tool tests-lib
 EXTRA_DIST = autogen.sh sollya.h libsollyaexample.c compile.sh expansion.c expansion.h externalfun.c externalproc.c 
 
 AM_YFLAGS = -d
@@ -183,8 +183,8 @@ check-tool: $(BUILT_SOURCES)
 	    *k*) failcom='fail=yes';; \
 	  esac; \
 	done; \
-	echo "Making check in tests"; \
-	($(am__cd) tests && $(MAKE) $(AM_MAKEFLAGS) check) \
+	echo "Making check in tests-tool"; \
+	($(am__cd) tests-tool && $(MAKE) $(AM_MAKEFLAGS) check) \
 	|| eval $$failcom; \
 	$(MAKE) $(AM_MAKEFLAGS) check-am || exit 1; \
 	test -z "$$fail"
