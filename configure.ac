@@ -223,7 +223,7 @@ LDFLAGS="$AM_LDFLAGS $LDFLAGS"
 
 dlopen_ok="yes"
 AC_CHECK_LIB([c], [dlopen], [], [dlopen_ok="no"])
-if [[ $dlopen_ok == "no" ]] ; then
+if test "x${dlopen_ok}y" == "xnoy" ; then
   AC_CHECK_LIB([dl], [dlopen], [], AC_MSG_ERROR([libdl unusable]))
 fi
 AC_CHECK_LIB([gmp], [__gmpz_init], [], AC_MSG_ERROR([libgmp unusable]))
@@ -257,7 +257,7 @@ AC_MSG_RESULT(no) ])
 CFLAGS="$FPLLLOLDCFLAGS"
 CPPFLAGS="$FPLLLOLDCPPFLAGS"
 LDFLAGS="$FPLLLOLDLDFLAGS"
-if [[ $FPLLLISREALLIB == "no" ]] ; then
+if test "x${FPLLLISREALLIB}y" == "xnoy" ; then
 AC_MSG_CHECKING([for fplll support, fplll being just a header file])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdlib.h>]]
 [[#include <fplll.h>]] 
@@ -274,7 +274,7 @@ AM_LDFLAGS="-lfplll $AM_LDFLAGS"
 FPLLLVERSIONSTRING="FPLLL: a real library, linked with -lfplll$FPLLLVERSIONSTRING"
 FPLLLJUSTHEADER=no
 fi
-if [[ $FPLLLUSABLE == "no" ]] ; then
+if test "x${FPLLLUSABLE}y" == "xnoy" ; then
 FPLLLSPECIALINCLUDE="yes"
 AC_MSG_CHECKING([for Debian-like fplll support, fplll being just a header file])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdlib.h>]]
@@ -289,7 +289,7 @@ AC_MSG_ERROR([fplll unusable (or g++ too new -- see README)])
 FPLLLVERSIONSTRING="FPLLL: unusable or g++ too new, $FPLLLVERSIONSTRING"
 ])
 fi
-if [[ $FPLLLSPECIALINCLUDE == "yes" ]] ; then 
+if test "x${FPLLLSPECIALINCLUDE}y" == "xyesy" ; then 
 AC_DEFINE([HAVE_SPECIAL_FPLLL_INCLUDE],[1],[Define for determining a special version of FPLLL])
 else
 AC_DEFINE([HAVE_SPECIAL_FPLLL_INCLUDE],[0],[Define for determining a special version of FPLLL])
@@ -297,10 +297,10 @@ fi
 AC_DEFINE_UNQUOTED([HAVE_FPLLL_VERSION_STRING],["$FPLLLVERSIONSTRING"],[Define a kind of a version string for FPLLL])
 
 
-if [[ "x${FPLLLJUSTHEADER}y" == "xyesy" ]] ; then 
+if test "x${FPLLLJUSTHEADER}y" == "xyesy" ; then 
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
-if [[ "x${enable_shared}y" == "xnoy" ]] ; then 
+if test "x${enable_shared}y" == "xnoy" ; then 
 AC_MSG_ERROR([fplll too old to be used in static libraries. Try to enable construction of shared libraries or update fplll])
 fi
 fi
