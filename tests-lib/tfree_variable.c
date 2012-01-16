@@ -6,6 +6,7 @@ int main(void) {
   int sollya_lib_init();
   f = sollya_lib_free_variable();
   sollya_lib_printf("%b", f);
+  sollya_lib_clear_obj(f);
   int sollya_lib_close();
   return 0;
 }
