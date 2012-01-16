@@ -4,12 +4,14 @@ EXTRA_DIST = check.proto $(TESTFILES) $(TESTFILES:.sollya=.sollya.reference)
 
 TESTS = $(TESTFILES:.sollya=.sh)
 
-.PHONY: $(top_builddir)/sollya
+check_PROGRAMS = force_compilation
 
-$(top_builddir)/sollya:
+.PHONY: force_compilation
+
+force_compilation:
 	@echo "Recompiling sollya";cd $(top_builddir); $(MAKE) all
 
-$(TESTS): check.proto $(top_builddir)/sollya
+$(TESTS): check.proto
 	@echo "Building "$@
 	@echo "#!/bin/sh" > $@
 	@echo "SOLLYA="$(top_builddir)"/sollya" >> $@
