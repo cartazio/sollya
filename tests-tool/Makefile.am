@@ -17,3 +17,4 @@ $(TESTS): check.proto $(top_builddir)/sollya
 	@echo "TESTFILES=\""$(@:.sh=.sollya)"\"" >> $@
 	@cat check.proto >> $@
 	@chmod +x $@
+

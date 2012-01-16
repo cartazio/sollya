@@ -6,3 +6,4 @@ check_PROGRAMS = $(TESTFILES:.c=)
 TESTS= $(check_PROGRAMS)
 
 LDADD = $(top_builddir)/.libs/libsollya.la
+
