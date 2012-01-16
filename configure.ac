@@ -65,6 +65,7 @@ fi
 
 # withs...
 FPLLLVERSIONSTRING=""
+FPLLLJUSTHEADER=yes
 
 WITH_LIB_GIVEN="no"
 AC_ARG_WITH(gmp-include,
@@ -271,6 +272,7 @@ else
 # Add -lfplll to LFLAGS
 AM_LDFLAGS="-lfplll $AM_LDFLAGS"	
 FPLLLVERSIONSTRING="FPLLL: a real library, linked with -lfplll$FPLLLVERSIONSTRING"
+FPLLLJUSTHEADER=no
 fi
 if [[ $FPLLLUSABLE == "no" ]] ; then
 FPLLLSPECIALINCLUDE="yes"
@@ -293,6 +295,17 @@ else
 AC_DEFINE([HAVE_SPECIAL_FPLLL_INCLUDE],[0],[Define for determining a special version of FPLLL])
 fi
 AC_DEFINE_UNQUOTED([HAVE_FPLLL_VERSION_STRING],["$FPLLLVERSIONSTRING"],[Define a kind of a version string for FPLLL])
+
+
+if [[ "x${FPLLLJUSTHEADER}y" == "xyesy" ]] ; then 
+AC_DISABLE_STATIC
+AC_PROG_LIBTOOL
+if [[ "x${enable_shared}y" == "xnoy" ]] ; then 
+AC_MSG_ERROR([fplll too old to be used in static libraries. Try to enable construction of shared libraries or update fplll])
+fi
+fi
+
+
 AC_LANG_POP([C++])	
 
 
