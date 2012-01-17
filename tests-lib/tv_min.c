@@ -37,8 +37,8 @@ int main(void) {
 
 
   /* Tests a tricky case where the minimum is impossible to detect */
-  a[0] = sollya_lib_parse_string("17 + log2(13)/log2(9)");
-  a[1] = sollya_lib_parse_string("17 + log(13)/log(9)");
+  a[0] = sollya_lib_parse_string("17 + log2(13)/log2(9);");
+  a[1] = sollya_lib_parse_string("17 + log(13)/log(9);");
 
   b = stupid_wrapper(a[0], a[1], NULL);
   sollya_lib_printf("min of 17 + log2(13)/log2(9) and 17 + log(13)/log(9) returns %b\n", b);
@@ -56,7 +56,7 @@ int main(void) {
 
   /* Tests what happens when a NaN is in the list */
   a[0] = sollya_lib_constant_from_int(2);
-  a[1] = sollya_lib_parse_string("NaN");
+  a[1] = sollya_lib_parse_string("NaN;");
   a[2] = sollya_lib_constant_from_int(1);
 
   b = stupid_wrapper(a[0], a[1], a[2], NULL);
@@ -74,7 +74,7 @@ int main(void) {
   sollya_lib_clear_obj(a[2]);
 
   a[0] = sollya_lib_constant_from_int(1);
-  a[1] = sollya_lib_parse_string("NaN");
+  a[1] = sollya_lib_parse_string("NaN;");
   a[2] = sollya_lib_constant_from_int(2);
 
   b = stupid_wrapper(a[0], a[1], a[2], NULL);
