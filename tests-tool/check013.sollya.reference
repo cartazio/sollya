@@ -401,12 +401,16 @@ The tool has been restarted.
 =============== Test number 259 ================
 -1.3862943611198906188344642429163531361510002687205
 17
+1
+1
 -1.3862943611198906188344642429163531361510002687205
 sin(62)
 Warning: minimum computation relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.
 17 + log(13) / log(9)
 1.48413159102576603421115580040552279623487667593878e2
 17
+2
+2
 1.48413159102576603421115580040552279623487667593878e2
 exp(17)
 Warning: maximum computation relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.

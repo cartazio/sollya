@@ -64,8 +64,8 @@ int main(void) {
   sollya_lib_clear_obj(a[1]);
   sollya_lib_clear_obj(a[2]);
 
-  a[0] = sollya_lib_constant_from_int(1);
-  a[1] = sollya_lib_parse_string("NaN");
+  a[0] = sollya_lib_parse_string("NaN");
+  a[1] = sollya_lib_constant_from_int(1);
   a[2] = sollya_lib_constant_from_int(2);
 
   b = sollya_lib_max(a[0], a[1], a[2], NULL);
@@ -81,6 +81,20 @@ int main(void) {
   sollya_lib_clear_obj(a[0]);
   sollya_lib_clear_obj(a[1]);
   sollya_lib_clear_obj(a[2]);
+
+  /* Tests maximum of only one element */
+  a[0] = sollya_lib_constant_from_int(17);
+  b = sollya_lib_max(a[0], NULL);
+  sollya_lib_printf("max of 17 returns %b\n", b);
+  sollya_lib_clear_obj(b);
+
+  c = sollya_lib_list(a, 1);
+  b = sollya_lib_max(c, NULL);
+  sollya_lib_printf("max(%b) returns %b\n", c, b);
+  sollya_lib_clear_obj(b);
+  sollya_lib_clear_obj(c);
+
+  sollya_lib_clear_obj(a[0]);
 
   /* Tests maximum of an empty list */
   c = sollya_lib_list(NULL, 0);

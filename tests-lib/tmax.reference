@@ -7,7 +7,9 @@ max([|17 + log2(13) / log2(9), 17 + log(13) / log(9)|]) returns 17 + log2(13) / 
 max(2,NaN,1) returns 2
 max([|2, @NaN@, 1|]) returns 2
 max(1,NaN,2) returns 2
-max([|1, @NaN@, 2|]) returns 2
+max([|@NaN@, 1, 2|]) returns 2
+max of 17 returns 17
+max([|17|]) returns 17
 Warning: at least one of the given expressions or a subexpression is not correctly typed
 or its evaluation has failed because of some error on a side-effect.
 max of an empty list returns error

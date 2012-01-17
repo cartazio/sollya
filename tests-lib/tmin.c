@@ -82,6 +82,20 @@ int main(void) {
   sollya_lib_clear_obj(a[1]);
   sollya_lib_clear_obj(a[2]);
 
+  /* Tests minimum of only one element */
+  a[0] = sollya_lib_constant_from_int(17);
+  b = sollya_lib_min(a[0], NULL);
+  sollya_lib_printf("min of 17 returns %b\n", b);
+  sollya_lib_clear_obj(b);
+
+  c = sollya_lib_list(a, 1);
+  b = sollya_lib_min(c, NULL);
+  sollya_lib_printf("min(%b) returns %b\n", c, b);
+  sollya_lib_clear_obj(b);
+  sollya_lib_clear_obj(c);
+
+  sollya_lib_clear_obj(a[0]);
+
   /* Tests minimum of an empty list */
   c = sollya_lib_list(NULL, 0);
   b = sollya_lib_min(c, NULL);
