@@ -333,7 +333,7 @@ extern "C" {
   sollya_obj_t sollya_lib_mul(sollya_obj_t, sollya_obj_t);
   sollya_obj_t sollya_lib_div(sollya_obj_t, sollya_obj_t);
   sollya_obj_t sollya_lib_pow(sollya_obj_t, sollya_obj_t);
-  sollya_obj_t sollya_lib_minus(sollya_obj_t);
+  sollya_obj_t sollya_lib_neg(sollya_obj_t);
   sollya_obj_t sollya_lib_sup(sollya_obj_t);
   sollya_obj_t sollya_lib_mid(sollya_obj_t);
   sollya_obj_t sollya_lib_inf(sollya_obj_t);

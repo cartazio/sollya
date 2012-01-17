@@ -746,7 +746,7 @@ sollya_obj_t sollya_lib_pow(sollya_obj_t obj1, sollya_obj_t obj2) {
   return evaluatedThing;
 }
 
-sollya_obj_t sollya_lib_minus(sollya_obj_t obj1) {
+sollya_obj_t sollya_lib_neg(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   thingToEvaluate = makeNeg(copyThing(obj1));
   evaluatedThing = evaluateThing(thingToEvaluate);

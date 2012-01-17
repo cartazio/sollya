@@ -5,7 +5,7 @@ int main(void) {
 
   sollya_lib_init();
   f1 = sollya_lib_free_variable();
-  f2 = sollya_lib_minus(f1);
+  f2 = sollya_lib_neg(f1);
   sollya_lib_printf("%b", f2);
   sollya_lib_clear_obj(f1);
   sollya_lib_clear_obj(f2);
