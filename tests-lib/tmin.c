@@ -12,7 +12,7 @@ int main(void) {
   a[2] = sollya_lib_constant_from_int(1);
   a[3] = sollya_lib_constant_from_int(3);
 
-  b = sollya_lib_min(a[0], a[1], a[2], a[3]);
+  b = sollya_lib_min(a[0], a[1], a[2], a[3], NULL);
   sollya_lib_printf("%b", b);
 
   for(i=0;i<4;i++) sollya_lib_clear_obj(a[i]);
