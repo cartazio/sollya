@@ -279,6 +279,21 @@ extern "C" {
   void sollya_lib_v_suppressmessage(sollya_obj_t, va_list);
   void sollya_lib_unsuppressmessage(sollya_obj_t, ...);
   void sollya_lib_v_unsuppressmessage(sollya_obj_t, va_list);
+  void sollya_lib_set_prec_and_print(sollya_obj_t);
+  void sollya_lib_set_points_and_print(sollya_obj_t);
+  void sollya_lib_set_diam_and_print(sollya_obj_t);
+  void sollya_lib_set_display_and_print(sollya_obj_t);
+  void sollya_lib_set_verbosity_and_print(sollya_obj_t);
+  void sollya_lib_set_canonical_and_print(sollya_obj_t);
+  void sollya_lib_set_autosimplify_and_print(sollya_obj_t);
+  void sollya_lib_set_showmessagenumbers_and_print(sollya_obj_t);
+  void sollya_lib_set_taylorrecursions_and_print(sollya_obj_t);
+  void sollya_lib_set_timing_and_print(sollya_obj_t);
+  void sollya_lib_set_midpointmode_and_print(sollya_obj_t);
+  void sollya_lib_set_dieonerrormode_and_print(sollya_obj_t);
+  void sollya_lib_set_rationalmode_and_print(sollya_obj_t);
+  void sollya_lib_set_roundingwarnings_and_print(sollya_obj_t);
+  void sollya_lib_set_hopitalrecursions_and_print(sollya_obj_t);
   void sollya_lib_set_prec(sollya_obj_t);
   void sollya_lib_set_points(sollya_obj_t);
   void sollya_lib_set_diam(sollya_obj_t);
@@ -293,22 +308,7 @@ extern "C" {
   void sollya_lib_set_dieonerrormode(sollya_obj_t);
   void sollya_lib_set_rationalmode(sollya_obj_t);
   void sollya_lib_set_roundingwarnings(sollya_obj_t);
-  void sollya_lib_set_hopitalrecursions(sollya_obj_t);
-  void sollya_lib_set_prec_silent(sollya_obj_t);
-  void sollya_lib_set_points_silent(sollya_obj_t);
-  void sollya_lib_set_diam_silent(sollya_obj_t);
-  void sollya_lib_set_display_silent(sollya_obj_t);
-  void sollya_lib_set_verbosity_silent(sollya_obj_t);
-  void sollya_lib_set_canonical_silent(sollya_obj_t);
-  void sollya_lib_set_autosimplify_silent(sollya_obj_t);
-  void sollya_lib_set_showmessagenumbers_silent(sollya_obj_t);
-  void sollya_lib_set_taylorrecursions_silent(sollya_obj_t);
-  void sollya_lib_set_timing_silent(sollya_obj_t);
-  void sollya_lib_set_midpointmode_silent(sollya_obj_t);
-  void sollya_lib_set_dieonerrormode_silent(sollya_obj_t);
-  void sollya_lib_set_rationalmode_silent(sollya_obj_t);
-  void sollya_lib_set_roundingwarnings_silent(sollya_obj_t);
-  void sollya_lib_set_hopitalrecursions_silent(sollya_obj_t);
+  void sollya_lib_set_hopitalrecursions(sollya_obj_t); 
 
   /* Functions corresponding to Sollya built-in procedures */
   sollya_obj_t sollya_lib_free_variable();

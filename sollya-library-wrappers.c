@@ -356,210 +356,210 @@ void sollya_lib_v_unsuppressmessage(sollya_obj_t obj1, va_list varlist) {
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_prec(sollya_obj_t obj1) {
+void sollya_lib_set_prec_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makePrecAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_points(sollya_obj_t obj1) {
+void sollya_lib_set_points_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makePointsAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_diam(sollya_obj_t obj1) {
+void sollya_lib_set_diam_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeDiamAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_display(sollya_obj_t obj1) {
+void sollya_lib_set_display_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeDisplayAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_verbosity(sollya_obj_t obj1) {
+void sollya_lib_set_verbosity_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeVerbosityAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_canonical(sollya_obj_t obj1) {
+void sollya_lib_set_canonical_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeCanonicalAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_autosimplify(sollya_obj_t obj1) {
+void sollya_lib_set_autosimplify_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeAutoSimplifyAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_showmessagenumbers(sollya_obj_t obj1) {
+void sollya_lib_set_showmessagenumbers_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeShowMessageNumbersAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_taylorrecursions(sollya_obj_t obj1) {
+void sollya_lib_set_taylorrecursions_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeTaylorRecursAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_timing(sollya_obj_t obj1) {
+void sollya_lib_set_timing_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeTimingAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_midpointmode(sollya_obj_t obj1) {
+void sollya_lib_set_midpointmode_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeMidpointAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_dieonerrormode(sollya_obj_t obj1) {
+void sollya_lib_set_dieonerrormode_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeDieOnErrorAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_rationalmode(sollya_obj_t obj1) {
+void sollya_lib_set_rationalmode_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeRationalModeAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_roundingwarnings(sollya_obj_t obj1) {
+void sollya_lib_set_roundingwarnings_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeSuppressWarningsAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_hopitalrecursions(sollya_obj_t obj1) {
+void sollya_lib_set_hopitalrecursions_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeHopitalRecursAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_prec_silent(sollya_obj_t obj1) {
+void sollya_lib_set_prec(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makePrecStillAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_points_silent(sollya_obj_t obj1) {
+void sollya_lib_set_points(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makePointsStillAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_diam_silent(sollya_obj_t obj1) {
+void sollya_lib_set_diam(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeDiamStillAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_display_silent(sollya_obj_t obj1) {
+void sollya_lib_set_display(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeDisplayStillAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_verbosity_silent(sollya_obj_t obj1) {
+void sollya_lib_set_verbosity(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeVerbosityStillAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_canonical_silent(sollya_obj_t obj1) {
+void sollya_lib_set_canonical(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeCanonicalStillAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_autosimplify_silent(sollya_obj_t obj1) {
+void sollya_lib_set_autosimplify(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeAutoSimplifyStillAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_showmessagenumbers_silent(sollya_obj_t obj1) {
+void sollya_lib_set_showmessagenumbers(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeShowMessageNumbersStillAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_taylorrecursions_silent(sollya_obj_t obj1) {
+void sollya_lib_set_taylorrecursions(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeTaylorRecursStillAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_timing_silent(sollya_obj_t obj1) {
+void sollya_lib_set_timing(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeTimingStillAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_midpointmode_silent(sollya_obj_t obj1) {
+void sollya_lib_set_midpointmode(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeMidpointStillAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_dieonerrormode_silent(sollya_obj_t obj1) {
+void sollya_lib_set_dieonerrormode(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeDieOnErrorStillAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_rationalmode_silent(sollya_obj_t obj1) {
+void sollya_lib_set_rationalmode(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeRationalModeStillAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
-void sollya_lib_set_roundingwarnings_silent(sollya_obj_t obj1) {
+void sollya_lib_set_roundingwarnings(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeSuppressWarningsStillAssign(copyThing(obj1));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
-}
+} 
 
-void sollya_lib_set_hopitalrecursions_silent(sollya_obj_t obj1) {
+void sollya_lib_set_hopitalrecursions(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makeHopitalRecursStillAssign(copyThing(obj1));
   executeCommand(thingToExecute);
