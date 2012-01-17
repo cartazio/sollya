@@ -232,6 +232,7 @@ extern "C" {
   */
   int sollya_lib_install_msg_callback(int (*) (int));
   int sollya_lib_uninstall_msg_callback();
+  int (*sollya_lib_get_msg_callback())(int);
 
   /* A function to translate a message number (as received by the 
      message call-back function) to text.

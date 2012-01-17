@@ -630,6 +630,10 @@ int installMessageCallback(int (*msgHandler) (int)) {
   return 1;
 }
 
+int (*getMessageCallback())(int) {
+  return messageCallback;
+}
+
 int uninstallMessageCallback() {
   messageCallback = NULL;
   lastMessageCallbackResult = 1;  
