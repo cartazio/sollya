@@ -16584,7 +16584,7 @@ node *evaluateThingInnerFpminimax(node *tree, char *timingString) {
 node *evaluateThingInner(node *tree) {
   node *copy, *tempNode, *tempNode2, *tempNode3, *tempNode4, *tempNode5, *tempNode6;
   int *intptr;
-  int resA, resB, i, resC, resD, resE, resF;
+  int resA, resB, i, resC, resD, resE, resF, resG;
   char *tempString, *tempString2, *timingString, *tempString3, *tempString4, *tempString5;
   char *str1, *str2, *str3;
   mpfr_t a, b, c, d, e;
@@ -18256,6 +18256,7 @@ node *evaluateThingInner(node *tree) {
                 if ((resA == 3) || (resB == 3)) 
                   printMessage(1,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: minimum computation relies on floating-point result that is not faithfully evaluated.\n");
                 resC = ((mpfr_cmp(a,b) < 0) && (!mpfr_unordered_p(a,b)));
+		resG = mpfr_number_p(b);
                 if ((resA == 1) || (resB == 1)) {
                   if (resC) {
                     /* a < b */
@@ -18269,12 +18270,13 @@ node *evaluateThingInner(node *tree) {
                   if ((mpfr_cmp(a,b) < 0) != resC) {
                     if (compareConstant(&resD, tempNode, tempNode2)) {
                       resC = (resD < 0);
+		      resG = 1;
                     } else 
                       printMessage(1,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: minimum computation relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
                   } else 
                     printMessage(2,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT,"Information: minimum computation relies on floating-point result.\n");
                 }
-                if (!resC) {
+                if ((!resC) && (resG)) {
                   tempNode = tempNode2;
                 } 
               } else {
@@ -18327,6 +18329,7 @@ node *evaluateThingInner(node *tree) {
                 if ((resA == 3) || (resB == 3)) 
                   printMessage(1,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: minimum computation relies on floating-point result that is not faithfully evaluated.\n");
                 resC = ((mpfr_cmp(a,b) < 0) && (!mpfr_unordered_p(a,b)));
+		resG = mpfr_number_p(b);
                 if ((resA == 1) || (resB == 1)) {
                   if (resC) {
                     /* a < b */
@@ -18340,12 +18343,13 @@ node *evaluateThingInner(node *tree) {
                   if ((mpfr_cmp(a,b) < 0) != resC) {
                     if (compareConstant(&resD, tempNode, tempNode2)) {
                       resC = (resD < 0);
+		      resG = 1;
                     } else 
                       printMessage(1,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: minimum computation relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
                   } else 
                     printMessage(2,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT,"Information: minimum computation relies on floating-point result.\n");
                 }
-                if (!resC) {
+                if ((!resC) && (resG)) {
                   tempNode = tempNode2;
                 } 
               } else {
@@ -18404,7 +18408,8 @@ node *evaluateThingInner(node *tree) {
                   (resB = evaluateThingToConstant(b,tempNode2,NULL,1))) {
                 if ((resA == 3) || (resB == 3)) 
                   printMessage(1,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: maximum computation relies on floating-point result that is not faithfully evaluated.\n");
-                resC = ((mpfr_cmp(a,b) < 0) && (!mpfr_unordered_p(a,b)));
+                resC = ((mpfr_cmp(a,b) < 0) || (mpfr_unordered_p(a,b)));
+		resG = mpfr_number_p(b);
                 if ((resA == 1) || (resB == 1)) {
                   if (resC) {
                     /* a < b */
@@ -18418,12 +18423,13 @@ node *evaluateThingInner(node *tree) {
                   if ((mpfr_cmp(a,b) < 0) != resC) {
                     if (compareConstant(&resD, tempNode, tempNode2)) {
                       resC = (resD < 0);
+		      resG = 1;
                     } else 
                       printMessage(1,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: maximum computation relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
                   } else 
                     printMessage(2,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT,"Information: maximum computation relies on floating-point result.\n");
                 }
-                if (resC) {
+                if (resC && resG) {
                   tempNode = tempNode2;
                 } 
               } else {
@@ -18475,7 +18481,8 @@ node *evaluateThingInner(node *tree) {
                   (resB = evaluateThingToConstant(b,tempNode2,NULL,1))) {
                 if ((resA == 3) || (resB == 3)) 
                   printMessage(1,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: maximum computation relies on floating-point result that is not faithfully evaluated.\n");
-                resC = ((mpfr_cmp(a,b) < 0) && (!mpfr_unordered_p(a,b)));
+                resC = ((mpfr_cmp(a,b) < 0) || (mpfr_unordered_p(a,b)));
+		resG = mpfr_number_p(b);
                 if ((resA == 1) || (resB == 1)) {
                   if (resC) {
                     /* a < b */
@@ -18489,12 +18496,13 @@ node *evaluateThingInner(node *tree) {
                   if ((mpfr_cmp(a,b) < 0) != resC) {
                     if (compareConstant(&resD, tempNode, tempNode2)) {
                       resC = (resD < 0);
+		      resG = 1;
                     } else 
                       printMessage(1,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: maximum computation relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
                   } else 
                     printMessage(2,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT,"Information: maximum computation relies on floating-point result.\n");
                 }
-                if (resC) {
+                if (resC && resG) {
                   tempNode = tempNode2;
                 } 
               } else {
