@@ -737,6 +737,48 @@ extern "C" {
   sollya_obj_t sollya_lib_build_function_atanh(sollya_obj_t);
   sollya_obj_t sollya_lib_build_function_pi();
 
+  /* Macros provided as shortcuts to functions sollya_lib_build_function_* */
+#define SOLLYA_X_ sollya_lib_build_function_free_variable()
+#define SOLLYA_ADD(x,y) sollya_lib_build_function_add((x), (y))
+#define SOLLYA_SUB(x,y) sollya_lib_build_function_sub((x), (y))
+#define SOLLYA_MUL(x,y) sollya_lib_build_function_mul((x), (y))
+#define SOLLYA_DIV(x,y) sollya_lib_build_function_div((x), (y))
+#define SOLLYA_SQRT(x) sollya_lib_build_function_sqrt(x)
+#define SOLLYA_EXP(x) sollya_lib_build_function_exp(x)
+#define SOLLYA_LOG(x) sollya_lib_build_function_log(x)
+#define SOLLYA_LOG2(x) sollya_lib_build_function_log2(x)
+#define SOLLYA_LOG10(x) sollya_lib_build_function_log10(x)
+#define SOLLYA_SIN(x) sollya_lib_build_function_sin(x)
+#define SOLLYA_COS(x) sollya_lib_build_function_cos(x)
+#define SOLLYA_TAN(x) sollya_lib_build_function_tan(x)
+#define SOLLYA_ASIN(x) sollya_lib_build_function_asin(x)
+#define SOLLYA_ACOS(x) sollya_lib_build_function_acos(x)
+#define SOLLYA_ATAN(x) sollya_lib_build_function_atan(x)
+#define SOLLYA_POW(x,y) sollya_lib_build_function_pow((x), (y))
+#define SOLLYA_NEG(x) sollya_lib_build_function_neg(x)
+#define SOLLYA_ABS(x) sollya_lib_build_function_abs(x)
+#define SOLLYA_D(x) sollya_lib_build_function_double(x)
+#define SOLLYA_SG(x) sollya_lib_build_function_single(x)
+#define SOLLYA_QD(x) sollya_lib_build_function_quad(x)
+#define SOLLYA_HP(x) sollya_lib_build_function_halfprecision(x)
+#define SOLLYA_DD(x) sollya_lib_build_function_double_double(x)
+#define SOLLYA_TD(x) sollya_lib_build_function_triple_double(x)
+#define SOLLYA_ERF(x) sollya_lib_build_function_erf(x)
+#define SOLLYA_ERFC(x) sollya_lib_build_function_erfc(x)
+#define SOLLYA_LOG1P(x) sollya_lib_build_function_log1p(x)
+#define SOLLYA_EXPM1(x) sollya_lib_build_function_expm1(x)
+#define SOLLYA_DE(x) sollya_lib_build_function_doubleextended(x)
+#define SOLLYA_CEIL(x) sollya_lib_build_function_ceil(x)
+#define SOLLYA_FLOOR(x) sollya_lib_build_function_floor(x)
+#define SOLLYA_NEARESTINT(x) sollya_lib_build_function_nearestint(x)
+#define SOLLYA_SINH(x) sollya_lib_build_function_sinh(x)
+#define SOLLYA_COSH(x) sollya_lib_build_function_cosh(x)
+#define SOLLYA_TANH(x) sollya_lib_build_function_tanh(x)
+#define SOLLYA_ASINH(x) sollya_lib_build_function_asinh(x)
+#define SOLLYA_ACOSH(x) sollya_lib_build_function_acosh(x)
+#define SOLLYA_ATANH(x) sollya_lib_build_function_atanh(x)
+#define SOLLYA_PI() sollya_lib_build_function_pi()
+
 #ifdef __cplusplus
 }
 #endif
