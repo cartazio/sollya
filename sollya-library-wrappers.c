@@ -2297,7 +2297,7 @@ sollya_obj_t sollya_lib_end_elliptic_list(sollya_obj_t objects[], int num) {
   int i;
   chain *tempChain;
 
-  if (num < 1) return makeEmptyList();
+  if (num < 1) return makeError();
   tempChain = NULL;
   for (i=num-1;i>=0;i--) {
     tempChain = addElement(tempChain, copyThing(objects[i]));
