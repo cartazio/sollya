@@ -664,9 +664,7 @@ int printMessage(int verb, int msgNum, const char *format, ...) {
   if ((verb >= 0) && suppressed && (msgNum != SOLLYA_MSG_NO_MSG)) return 0;
 
   /* If there is a message callback installed, call it.
-     If it says no message is to be displayed, just bail out, 
-     unless the required verbosity is negative, in which case
-     go for display in all cases (will go to stderr).
+     If it says no message is to be displayed, just bail out.
 
      Do call the message callback handler for no messages and
      continuation messages. In the case of a continuation message,
