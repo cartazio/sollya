@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include <sollya.h>
 
 int main(void) {

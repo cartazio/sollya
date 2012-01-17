@@ -1,4 +1,15 @@
 #include <sollya.h>
+#include <sollya.h>
+#include <stdarg.h>
+
+sollya_obj_t stupid_wrapper(sollya_obj_t arg1, ...) {
+  va_list va;
+  sollya_obj_t a;
+  va_start(va, arg1);
+  a = sollya_lib_v_max(arg1, va);
+  va_end(va);
+  return a;
+}
 
 int main(void) {
   sollya_obj_t a[4];
