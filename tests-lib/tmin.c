@@ -6,7 +6,7 @@ int main(void) {
   sollya_obj_t b;
   int i;
 
-  int sollya_lib_init();
+  sollya_lib_init();
   a[0] = sollya_lib_constant_from_int(4);
   a[1] = sollya_lib_constant_from_int(5);
   a[2] = sollya_lib_constant_from_int(1);
@@ -18,6 +18,6 @@ int main(void) {
   for(i=0;i<4;i++) sollya_lib_clear_obj(a[i]);
   sollya_lib_clear_obj(b);
 
-  int sollya_lib_close();
+  sollya_lib_close();
   return 0;
 }

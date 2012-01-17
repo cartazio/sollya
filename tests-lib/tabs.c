@@ -3,12 +3,12 @@
 int main(void) {
   sollya_obj_t f1, f2;
 
-  int sollya_lib_init();
+  sollya_lib_init();
   f1 = sollya_lib_free_variable();
   f2 = sollya_lib_abs(f1);
   sollya_lib_printf("%b", f2);
   sollya_lib_clear_obj(f1);
   sollya_lib_clear_obj(f2);
-  int sollya_lib_close();
+  sollya_lib_close();
   return 0;
 }
