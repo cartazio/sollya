@@ -683,13 +683,19 @@ extern "C" {
 
 
   /* Functions for building Sollya objects representing 
-     mathematical functions.
+     mathematical functions or Sollya objects representing lists.
 
      Attention: in contrast to all other functions in
      the Sollya library, these functions "use up" the
      objects they take as an argument.
 
   */
+
+  sollya_obj_t sollya_lib_build_list(sollya_obj_t, ...);
+  sollya_obj_t sollya_lib_build_end_elliptic_list(sollya_obj_t, ...);
+  sollya_obj_t sollya_lib_v_build_list(va_list);
+  sollya_obj_t sollya_lib_v_build_end_elliptic_list(va_list);
+
   sollya_obj_t sollya_lib_build_function_free_variable();
   sollya_obj_t sollya_lib_build_function_add(sollya_obj_t, sollya_obj_t);
   sollya_obj_t sollya_lib_build_function_sub(sollya_obj_t, sollya_obj_t);

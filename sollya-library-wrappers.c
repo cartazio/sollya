@@ -3262,6 +3262,102 @@ void sollya_lib_clear_string_list(sollya_string_list_t list) {
   freeChain(list, freeStringPtr);
 }
 
+sollya_obj_t sollya_lib_build_list(sollya_obj_t obj1, ...) {
+  node *elem;
+  chain *thinglist, *curr;
+  va_list varlist;
+  
+  if (obj1 == NULL) {
+    return makeEmptyList();
+  } 
+
+  va_start(varlist,obj1);
+  thinglist = (chain *) safeMalloc(sizeof(chain));
+  thinglist->value = obj1;
+  thinglist->next = NULL;
+  curr = thinglist;
+  while ((elem = va_arg(varlist,node *)) != NULL) {
+      curr->next = (chain *) safeMalloc(sizeof(chain));
+      curr = curr->next;
+      curr->value = elem;
+      curr->next = NULL;
+  }
+  va_end(varlist);
+  
+  return makeList(thinglist);
+}
+
+sollya_obj_t sollya_lib_build_end_elliptic_list(sollya_obj_t obj1, ...) {
+  node *elem;
+  chain *thinglist, *curr;
+  va_list varlist;
+  
+  if (obj1 == NULL) {
+    return makeError();
+  } 
+
+  va_start(varlist,obj1);
+  thinglist = (chain *) safeMalloc(sizeof(chain));
+  thinglist->value = obj1;
+  thinglist->next = NULL;
+  curr = thinglist;
+  while ((elem = va_arg(varlist,node *)) != NULL) {
+      curr->next = (chain *) safeMalloc(sizeof(chain));
+      curr = curr->next;
+      curr->value = elem;
+      curr->next = NULL;
+  }
+  va_end(varlist);
+  
+  return makeFinalEllipticList(thinglist);
+} 
+
+sollya_obj_t sollya_lib_v_build_list(va_list varlist) {
+  node *elem;
+  chain *thinglist, *curr;
+  
+  elem = va_arg(varlist,node *);
+  if (elem == NULL) {
+    return makeEmptyList();
+  } 
+
+  thinglist = (chain *) safeMalloc(sizeof(chain));
+  thinglist->value = elem;
+  thinglist->next = NULL;
+  curr = thinglist;
+  while ((elem = va_arg(varlist,node *)) != NULL) {
+      curr->next = (chain *) safeMalloc(sizeof(chain));
+      curr = curr->next;
+      curr->value = elem;
+      curr->next = NULL;
+  }
+  
+  return makeList(thinglist);
+}
+
+sollya_obj_t sollya_lib_v_build_end_elliptic_list(va_list varlist) {
+  node *elem;
+  chain *thinglist, *curr;
+  
+  elem = va_arg(varlist,node *);
+  if (elem == NULL) {
+    return makeError();
+  } 
+
+  thinglist = (chain *) safeMalloc(sizeof(chain));
+  thinglist->value = elem;
+  thinglist->next = NULL;
+  curr = thinglist;
+  while ((elem = va_arg(varlist,node *)) != NULL) {
+      curr->next = (chain *) safeMalloc(sizeof(chain));
+      curr = curr->next;
+      curr->value = elem;
+      curr->next = NULL;
+  }
+  
+  return makeFinalEllipticList(thinglist);
+}
+
 sollya_obj_t sollya_lib_build_function_free_variable() {
   return makeVariable();
 }
