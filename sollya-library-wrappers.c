@@ -53,6 +53,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "expression.h"
 #include "execute.h"
 #include "chain.h"
@@ -176,6 +177,19 @@ sollya_obj_t sollya_lib_copy_obj(sollya_obj_t obj1) {
 
 int sollya_lib_cmp_objs_structurally(sollya_obj_t obj1, sollya_obj_t obj2) {
   return isEqualThing(obj1, obj2);
+}
+
+void sollya_lib_name_free_variable(const char *str) {
+  if (variablename != NULL) {
+    free(variablename);
+    variablename = NULL;
+  }
+  variablename = (char *) safeCalloc(strlen(str) + 1, sizeof(char));
+  strcpy(variablename, str);
+}
+
+const char *sollya_lib_get_free_variable_name() {
+  return ((const char *) variablename);
 }
 
 void sollya_lib_plot(sollya_obj_t obj1, sollya_obj_t obj2, ...) {
