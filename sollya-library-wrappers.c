@@ -189,7 +189,15 @@ void sollya_lib_name_free_variable(const char *str) {
 }
 
 const char *sollya_lib_get_free_variable_name() {
-  return ((const char *) variablename);
+  char unnamed[] = "_x_";
+  char *staticName, *res;
+
+  staticName = unnamed;
+  if (variablename != NULL) staticName = variablename;
+  res = (char *) safeCalloc(strlen(staticName) + 1, sizeof(char));
+  strcpy(res,staticName);
+
+  return ((const char *) res);
 }
 
 void sollya_lib_plot(sollya_obj_t obj1, sollya_obj_t obj2, ...) {

@@ -262,9 +262,10 @@ extern "C" {
      - If the variable has already been named when the naming function
        is called, the variable gets renamed.
 
-     - If the variable has no name, NULL is returned as a place-holder.
+     - If the variable has not been named yet, "_x_" is returned as its name.
+       This corresponds to the name displayed by other functions.
 
-     - The pointer returned for the name *must not* be freed by the user.
+     - The pointer returned for the name *must* be freed by the user.
 
      - The pointer given to the naming function is not "used up" by
        the function.
