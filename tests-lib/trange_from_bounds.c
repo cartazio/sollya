@@ -4,6 +4,8 @@
 int callback(int message) {
   if (message==SOLLYA_MSG_RANGE_BOUNDS_IN_INVERSE_ORDER)
     sollya_lib_printf("Caught the message about bounds in inverse order.\n");
+  else
+    sollya_lib_printf("Unexpected message caught.\n");
   return 0;
 }
 
