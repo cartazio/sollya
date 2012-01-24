@@ -497,7 +497,7 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #define SOLLYA_MSG_CANNOT_SUPPRESS_OR_UNSUPPRESS_A_MESSAGE         428
 #define SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_INT_OR_LIST_OF_INT    429 
 #define SOLLYA_MSG_SUPPRESSION_NUMBER_OMITTED                      430
-
+#define SOLLYA_MSG_ROUNDING_ON_CONSTANT_RETRIEVAL                  431
 
 /* A table with textual explanations of the messages
 
@@ -954,8 +954,9 @@ static const messageEntry messageTextsTable[] = {
   { SOLLYA_MSG_CANNOT_SUPPRESS_OR_UNSUPPRESS_A_MESSAGE                , "A message with a certain message number cannot be suppressed nor unsuppressed." },
   { SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_INT_OR_LIST_OF_INT           , "A certain expression does not evaluate to a machine integer nor to a list of machine integers." },
   { SOLLYA_MSG_SUPPRESSION_NUMBER_OMITTED                             , "A certain message suppression or unsuppression command will have had no effect for a certain message number." },
+  { SOLLYA_MSG_ROUNDING_ON_CONSTANT_RETRIEVAL                         , "A rounding occurred on retrieval of a constant." },
 
-  /* Add your new warning message texts here. */
+  /* Add your new warning message texts above here. */
 
   { -1, "Unknown message number -1" }   /* Do not ever change the text in this default entry, which must be the last entry in the list */
 };

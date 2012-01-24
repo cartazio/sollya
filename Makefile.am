@@ -85,7 +85,7 @@ xml.h
 sollya_CFLAGS = $(AM_CFLAGS)
 sollya_CXXFLAGS = $(AM_CXXFLAGS)
 
-include_HEADERS = sollya.h mpfi-compat.h
+include_HEADERS = sollya.h
 
 lib_LTLIBRARIES     = libsollya.la
 libsollya_la_SOURCES = \

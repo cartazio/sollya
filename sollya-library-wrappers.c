@@ -2143,6 +2143,7 @@ int sollya_lib_get_string(char **str, sollya_obj_t obj1) {
 
 int sollya_lib_get_constant(mpfr_t value, sollya_obj_t obj1) {
   sollya_obj_t evaluatedObj, simplifiedObj;
+  mpfr_t myValue;
 
   evaluatedObj = evaluateThing(obj1);
   if (!isPureTree(evaluatedObj)) {
@@ -2157,7 +2158,43 @@ int sollya_lib_get_constant(mpfr_t value, sollya_obj_t obj1) {
     return 0;
   }
 
-  if (evaluateThingToConstant(value, simplifiedObj, NULL, 1)) {
+  mpfr_init2(myValue, mpfr_get_prec(value));
+  if (evaluateThingToConstant(myValue, simplifiedObj, NULL, 1)) {
+    if (mpfr_set(value, myValue, GMP_RNDN) != 0) {
+      if (!noRoundingWarnings) {
+	printMessage(1,SOLLYA_MSG_ROUNDING_ON_CONSTANT_RETRIEVAL,"Warning: rounding occurred on retrieval of a constant.\n");
+      }
+    }
+    mpfr_clear(myValue);
+    freeThing(evaluatedObj);
+    freeThing(simplifiedObj);
+    return 1;
+  }
+
+  mpfr_clear(myValue);
+  freeThing(evaluatedObj);
+  freeThing(simplifiedObj);
+  return 0;
+}
+
+int sollya_lib_get_prec_of_constant(mp_prec_t *pr, sollya_obj_t obj1) {
+  sollya_obj_t evaluatedObj, simplifiedObj;
+
+  evaluatedObj = evaluateThing(obj1);
+  if (!isPureTree(evaluatedObj)) {
+    freeThing(evaluatedObj);
+    return 0;
+  }
+
+  simplifiedObj = simplifyTreeErrorfree(evaluatedObj);
+  if (!isConstant(simplifiedObj)) {
+    freeThing(evaluatedObj);
+    freeThing(simplifiedObj);
+    return 0;
+  }
+
+  if (simplifiedObj->nodeType == CONSTANT) {
+    *pr = mpfr_get_prec(*(simplifiedObj->value));
     freeThing(evaluatedObj);
     freeThing(simplifiedObj);
     return 1;

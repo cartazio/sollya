@@ -66,9 +66,9 @@ extern "C" {
 #include <stdarg.h>
 #include <gmp.h>
 #include <mpfr.h>
+#include <mpfi.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <mpfi-compat.h>
 
   /* Define a type for all Sollya objects and for lists
      of Sollya objects, constants, intervals, integers, strings and booleans.
@@ -123,7 +123,7 @@ extern "C" {
   typedef struct __sollya_internal_type_library_function_struct __sollya_internal_type_library_function;
   struct __sollya_internal_type_library_function_struct {
     char *functionName;
-    int (*code)(sollya_mpfi_t, sollya_mpfi_t, int); 
+    int (*code)(mpfi_t, mpfi_t, int); 
     void (*constant_code)(mpfr_t, mp_prec_t);       
   };
 
@@ -503,7 +503,7 @@ extern "C" {
 
   /* Functions to convert from constants to Sollya objects */
   sollya_obj_t sollya_lib_string(char *);
-  sollya_obj_t sollya_lib_range_from_interval(sollya_mpfi_t);
+  sollya_obj_t sollya_lib_range_from_interval(mpfi_t);
   sollya_obj_t sollya_lib_range_from_bounds(mpfr_t, mpfr_t);
   sollya_obj_t sollya_lib_constant(mpfr_t);
   sollya_obj_t sollya_lib_constant_from_double(double);
@@ -512,25 +512,15 @@ extern "C" {
   sollya_obj_t sollya_lib_constant_from_uint64(uint64_t);
 
   /* Functions to get values contained in Sollya objects */
-  int sollya_lib_get_interval_from_range(sollya_mpfi_t, sollya_obj_t);
+  int sollya_lib_get_interval_from_range(mpfi_t, sollya_obj_t);
   int sollya_lib_get_bounds_from_range(mpfr_t, mpfr_t, sollya_obj_t);
   int sollya_lib_get_string(char **, sollya_obj_t);
   int sollya_lib_get_constant_as_double(double *, sollya_obj_t);
   int sollya_lib_get_constant_as_int(int *, sollya_obj_t);
   int sollya_lib_get_constant_as_int64(int64_t *, sollya_obj_t);
   int sollya_lib_get_constant_as_uint64(uint64_t *, sollya_obj_t);
-
-  /* The following function, in contrast to all others, 
-     not only assigns a new value to the mpfr_t argument
-     in case of success but also adjusts its precision
-     in order to store the constant in the Sollya 
-     object exactly (without any rounding).
-
-     Rounding may nevertheless happen if the Sollya object 
-     is not a constant by itself but a constant expression
-     that needs to be evaluated. 
-  */
   int sollya_lib_get_constant(mpfr_t, sollya_obj_t);
+  int sollya_lib_get_prec_of_constant(mp_prec_t *, sollya_obj_t);
 
   /* Functions to build up Sollya lists from arrays of objects and 
      to get arrays of Sollya objects out of Sollya lists 
@@ -642,7 +632,7 @@ extern "C" {
      functions at points or over intervals 
   */
   fp_eval_result_t sollya_lib_evaluate_function_at_point(mpfr_t, sollya_obj_t, mpfr_t, mpfr_t *);
-  ia_eval_result_t sollya_lib_evaluate_function_over_interval(sollya_mpfi_t, sollya_obj_t, sollya_mpfi_t);
+  ia_eval_result_t sollya_lib_evaluate_function_over_interval(mpfi_t, sollya_obj_t, mpfi_t);
 
   /* Functions to manipulate lists
 
@@ -675,9 +665,9 @@ extern "C" {
   sollya_constant_list_t sollya_lib_copy_constant_list(sollya_constant_list_t);
   void sollya_lib_clear_constant_list(sollya_constant_list_t);
 
-  sollya_mpfi_t *sollya_lib_get_interval_list_head(sollya_interval_list_t);
+  mpfi_t *sollya_lib_get_interval_list_head(sollya_interval_list_t);
   sollya_interval_list_t sollya_lib_get_interval_list_tail(sollya_interval_list_t);
-  sollya_interval_list_t sollya_lib_construct_interval_list(sollya_mpfi_t *, sollya_interval_list_t);
+  sollya_interval_list_t sollya_lib_construct_interval_list(mpfi_t *, sollya_interval_list_t);
   sollya_interval_list_t sollya_lib_copy_interval_list(sollya_interval_list_t);
   void sollya_lib_clear_interval_list(sollya_interval_list_t);
 

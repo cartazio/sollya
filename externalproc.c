@@ -48,7 +48,6 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 */
 
 #include <mpfr.h>
-#include "mpfi-compat.h"
 #include "sollya.h"
 
 /* Example of an external procedure linked to an identifier in sollya
@@ -76,7 +75,7 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
                    the result is returned by affecting the MPFR variable
    * function:     the first argument of the C function is of C type sollya_obj_t *,
                    the result is returned by the sollya_obj_t  pointed with a new sollya_obj_t 
-   * range:        the first argument of the C function is of C type sollya_mpfi_t *,
+   * range:        the first argument of the C function is of C type mpfi_t *,
                    the result is returned by affecting the MPFI variable
    * integer:      the first argument of the C function is of C type int *,
                    the result is returned by affecting the int variable
@@ -108,7 +107,7 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
    * constant:     the C type the void * is to be cast to is mpfr_t *
    * function:     the C type the void * is to be cast to is sollya_obj_t 
    * object:       the C type the void * is to be cast to is sollya_obj_t 
-   * range:        the C type the void * is to be cast to is sollya_mpfi_t *
+   * range:        the C type the void * is to be cast to is mpfi_t *
    * integer:      the C type the void * is to be cast to is int *
    * string:       the C type the void * is to be cast to is char *
    * boolean:      the C type the void * is to be cast to is int *
