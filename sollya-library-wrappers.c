@@ -54,6 +54,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <mpfi.h>
 #include "expression.h"
 #include "execute.h"
 #include "chain.h"
@@ -1994,7 +1995,22 @@ sollya_obj_t sollya_lib_range_from_interval(mpfi_t interval) {
 }
 
 sollya_obj_t sollya_lib_range_from_bounds(mpfr_t left, mpfr_t right) {
-  return makeRange(makeConstant(left),makeConstant(right));
+  mpfi_t tmp;
+  mp_prec_t p, pp;
+  sollya_obj_t res;
+
+  p = mpfr_get_prec(left);
+  pp = mpfr_get_prec(right);
+  if (pp > p) p = pp;
+
+  mpfi_init2(tmp, pp);
+  mpfi_interv_fr(tmp, left, right);
+  
+  res = sollya_lib_range_from_interval(tmp);
+  
+  mpfi_clear(tmp);
+
+  return res;
 }
 
 sollya_obj_t sollya_lib_constant(mpfr_t value) {
