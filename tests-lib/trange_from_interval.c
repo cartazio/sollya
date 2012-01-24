@@ -1,4 +1,11 @@
 #include <sollya.h>
+#include <message-numbers.h>
+
+int callback(int message) {
+  if (message==SOLLYA_MSG_RANGE_BOUNDS_IN_INVERSE_ORDER)
+    sollya_lib_printf("Caught the message about bounds in inverse order.\n");
+  return 0;
+}
 
 int main(void) {
   sollya_obj_t a, prec, tmp, left, right;
@@ -6,17 +13,18 @@ int main(void) {
   double nan;
 
   sollya_lib_init();
+  sollya_lib_install_msg_callback(callback);
 
-  /* tmp = sollya_lib_binary();
+  tmp = sollya_lib_binary();
   sollya_lib_set_display(tmp);
-  sollya_lib_clear_obj(tmp);*/
+  sollya_lib_clear_obj(tmp);
 
   mpfi_init2(b, 40);
   mpfi_interv_d(b, 0.1, 0.2);
   a = sollya_lib_range_from_interval(b);
   left = sollya_lib_parse_string("round(D(1/10), 40, RD);");
   right = sollya_lib_parse_string("round(D(2/10), 40, RU);");
-  sollya_lib_printf("%b\n[%b;%b]  (should be the same as above)\n", a, left, right);
+  sollya_lib_printf("%b\n[%b;%b] (should be the same as above)\n", a, left, right);
   sollya_lib_clear_obj(left);
   sollya_lib_clear_obj(right);
   sollya_lib_clear_obj(a);
@@ -61,6 +69,8 @@ int main(void) {
   sollya_lib_clear_obj(a);
 
   mpfi_clear(b);
+
+  sollya_lib_uninstall_msg_callback();
   sollya_lib_close();
   return 0;
 }
