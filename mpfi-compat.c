@@ -60,6 +60,7 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 #include "mpfi-compat.h"
 #include "general.h"
+#include "message-numbers.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -279,6 +280,27 @@ int mpfi_to_sollya_mpfi(sollya_mpfi_t rop, mpfi_t op) {
   res = mpfi_set(rop,op);
   sollya_mpfi_nan_normalize(rop);
   sollya_mpfi_empty_normalize(rop);
+  return res;
+}
+
+int sollya_init_and_convert_interval(sollya_mpfi_t rop, mpfi_t op) {
+  int res;
+
+  /* HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
+  */
+
+  sollya_mpfi_init2(rop, mpfi_get_prec(op));
+  if ((!sollya_mpfi_has_nan(op)) && 
+      (mpfr_cmp(&(op->left), &(op->right)) > 0)) {
+    printMessage(1,SOLLYA_MSG_RANGE_BOUNDS_IN_INVERSE_ORDER,"Warning: the bounds of a given interval are given in inverse order. Will revert them.\n");
+    res = sollya_mpfi_interv_fr(rop, &(op->right), &(op->left));
+    sollya_mpfi_nan_normalize(rop);
+    sollya_mpfi_empty_normalize(rop);
+  } else {
+    res = mpfi_to_sollya_mpfi(rop, op);
+  }
+
   return res;
 }
 

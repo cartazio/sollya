@@ -1973,19 +1973,22 @@ sollya_obj_t sollya_lib_string(char *str) {
   return makeString(str);
 }
 
-sollya_obj_t sollya_lib_range_from_interval(sollya_mpfi_t interval) {
+sollya_obj_t sollya_lib_range_from_interval(mpfi_t interval) {
   sollya_obj_t temp;
   mp_prec_t prec;
   mpfr_t left, right;
+  sollya_mpfi_t myInterval;
 
-  prec = sollya_mpfi_get_prec(interval);
+  sollya_init_and_convert_interval(myInterval, interval);
+  prec = sollya_mpfi_get_prec(myInterval);
   mpfr_init2(left,prec);
   mpfr_init2(right,prec);
-  sollya_mpfi_get_left(left,interval);
-  sollya_mpfi_get_right(right,interval);
+  sollya_mpfi_get_left(left,myInterval);
+  sollya_mpfi_get_right(right,myInterval);
   temp = makeRange(makeConstant(left),makeConstant(right));
   mpfr_clear(left);
   mpfr_clear(right);
+  sollya_mpfi_clear(myInterval);
 
   return temp;
 }
@@ -2094,7 +2097,7 @@ sollya_obj_t sollya_lib_constant_from_uint64(uint64_t value) {
   return temp;
 }
 
-int sollya_lib_get_interval_from_range(sollya_mpfi_t interval, sollya_obj_t obj1) {
+int sollya_lib_get_interval_from_range(mpfi_t interval, sollya_obj_t obj1) {
   mpfr_t a, b;
 
   mpfr_init2(a,tools_precision); /* evaluateThingToRange will change the precision afterwards */
@@ -3116,13 +3119,16 @@ fp_eval_result_t sollya_lib_evaluate_function_at_point(mpfr_t y, sollya_obj_t ob
   return FP_EVAL_NOT_FAITHFUL_NOT_ZERO;
 }
 
-ia_eval_result_t sollya_lib_evaluate_function_over_interval(sollya_mpfi_t y, sollya_obj_t obj1, sollya_mpfi_t x) {
-  sollya_mpfi_t myY, myPointY;
+ia_eval_result_t sollya_lib_evaluate_function_over_interval(mpfi_t y, sollya_obj_t obj1, mpfi_t op_x) {
+  sollya_mpfi_t myY, myPointY, x;
   mpfr_t xLeft, xRight, yLeft, yRight, myCutOff;
   mp_prec_t prec, p;
 
   /* Check if object is a function */
   if (!isPureTree(obj1)) return INT_EVAL_OBJ_NO_FUNCTION;
+
+  /* Convert entering mpfi_t interval to sollya_mpfi_t */
+  sollya_init_and_convert_interval(x, op_x);
 
   /* Initialize our own versions of the final result */
   prec = sollya_mpfi_get_prec(y);
@@ -3169,6 +3175,9 @@ ia_eval_result_t sollya_lib_evaluate_function_over_interval(sollya_mpfi_t y, sol
   /* Clear the local variables */
   sollya_mpfi_clear(myY);
   sollya_mpfi_clear(myPointY);
+
+  /* Clear our sollya_mpfi_t copy of the entering interval */
+  sollya_mpfi_clear(x);
 
   /* Return evaluation status result as a function of the result */
   if (sollya_mpfi_bounded_p(y)) return INT_EVAL_BOUNDED;
@@ -3225,9 +3234,9 @@ void sollya_lib_clear_constant_list(sollya_constant_list_t list) {
   freeChain(list, freeMpfrPtr);
 }
 
-sollya_mpfi_t *sollya_lib_get_interval_list_head(sollya_interval_list_t list) {
+mpfi_t *sollya_lib_get_interval_list_head(sollya_interval_list_t list) {
   if (list == NULL) return NULL;
-  return (sollya_mpfi_t *) (list->value);
+  return (mpfi_t *) (list->value);
 }
 
 sollya_interval_list_t sollya_lib_get_interval_list_tail(sollya_interval_list_t list) {
@@ -3235,7 +3244,7 @@ sollya_interval_list_t sollya_lib_get_interval_list_tail(sollya_interval_list_t 
   return (sollya_interval_list_t) (list->value);
 }
 
-sollya_interval_list_t sollya_lib_construct_interval_list(sollya_mpfi_t *interval, sollya_interval_list_t list) {
+sollya_interval_list_t sollya_lib_construct_interval_list(mpfi_t *interval, sollya_interval_list_t list) {
   return (sollya_interval_list_t) addElement(list, interval);
 }
 

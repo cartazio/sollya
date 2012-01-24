@@ -1338,20 +1338,24 @@ void nearestint_diff(sollya_mpfi_t *res, sollya_mpfi_t x, int n, int *silent){
 }
 
 void libraryFunction_diff(sollya_mpfi_t *res, node *f, sollya_mpfi_t x, int n, int *silent) {
-  sollya_mpfi_t fact;
+  sollya_mpfi_t fact, temp, temp2;
   mp_prec_t prec;
   int i;
 
   prec = getToolPrecision();
   sollya_mpfi_init2(fact, prec);
   sollya_mpfi_set_ui(fact, 1);
+  sollya_mpfi_init2(temp, prec);
 
   for(i=0;i<=n;i++) {
-    f->libFun->code(res[i], x, f->libFunDeriv + i);
-    sollya_mpfi_div(res[i], res[i], fact);
+    f->libFun->code(temp, x, f->libFunDeriv + i);
+    sollya_init_and_convert_interval(temp2, temp);
+    sollya_mpfi_div(res[i], temp2, fact);
+    sollya_mpfi_clear(temp2);
     sollya_mpfi_mul_ui(fact, fact, i+1);
   }
   sollya_mpfi_clear(fact);
+  sollya_mpfi_clear(temp);
 }
 
 void procedureFunction_diff(sollya_mpfi_t *res, node *f, sollya_mpfi_t x, int n, int *silent) {

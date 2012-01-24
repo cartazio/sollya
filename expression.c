@@ -120,18 +120,20 @@ void simplifyMpfrPrec(mpfr_t rop, mpfr_t op) {
 
 
 void mpfr_from_mpfi(mpfr_t rop, mpfr_t op, int n, int (*mpfifun)(sollya_mpfi_t, sollya_mpfi_t, int)) {
-  sollya_mpfi_t opI, ropI;
+  sollya_mpfi_t opI, ropI, ropItemp;
 
   sollya_mpfi_init2(opI,mpfr_get_prec(op));
-  sollya_mpfi_init2(ropI,mpfr_get_prec(rop)+2);
+  sollya_mpfi_init2(ropItemp,mpfr_get_prec(rop)+2);
   sollya_mpfi_set_fr(opI,op);
 
-  mpfifun(ropI,opI,n);
+  mpfifun(ropItemp,opI,n);
+  sollya_init_and_convert_interval(ropI, ropItemp);
   
   sollya_mpfi_mid(rop,ropI);
 
   sollya_mpfi_clear(opI);
   sollya_mpfi_clear(ropI);
+  sollya_mpfi_clear(ropItemp);
 }
 
 void free_memory(node *tree) {

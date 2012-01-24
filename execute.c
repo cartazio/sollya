@@ -14386,7 +14386,7 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
     case RANGE_TYPE:
       resultSpace = safeMalloc(sizeof(sollya_mpfi_t));
       sollya_mpfi_init2(*((sollya_mpfi_t *) resultSpace),tools_precision);
-      externalResult = ((int (*)(sollya_mpfi_t *, void **))(proc->code))((sollya_mpfi_t *) resultSpace,arguments);
+      externalResult = ((int (*)(mpfi_t *, void **))(proc->code))((mpfi_t *) resultSpace,arguments);
       if (externalResult) {
 	mpfr_init2(a,tools_precision);
 	mpfr_init2(b,tools_precision);
@@ -16597,7 +16597,7 @@ node *evaluateThingInner(node *tree) {
   mp_exp_t expo;
   mp_prec_t pTemp, pTemp2;
   int undoVariableTrick;
-  sollya_mpfi_t tempIA, tempIB, tempIC;
+  sollya_mpfi_t tempIA, tempIB, tempIC, tempID;
   int alreadyDisplayed;
   sollya_mpfi_t *tmpInterv1, *tmpInterv2;
   sollya_mpfi_t *tmpInterv11;
@@ -17728,8 +17728,10 @@ node *evaluateThingInner(node *tree) {
       if (pTemp2 > pTemp) pTemp = pTemp2;
       sollya_mpfi_init2(tempIA,pTemp);
       sollya_mpfi_interv_fr(tempIA,*(copy->child1->child1->value),*(copy->child1->child2->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      copy->libFun->code(tempIC, tempIA, copy->libFunDeriv);
+      mpfi_init2(tempID,tools_precision);
+      copy->libFun->code(tempID, tempIA, copy->libFunDeriv);
+      sollya_init_and_convert_interval(tempIC, tempID);
+      mpfi_clear(tempID);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);

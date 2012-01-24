@@ -834,7 +834,7 @@ void makeMpfiAroundMpfr(sollya_mpfi_t res, mpfr_t x, unsigned int thousandUlps) 
 
 
 chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t prec, int simplifiesA, int simplifiesB, mpfr_t *hopitalPoint, exprBoundTheo *theo, int noExcludes) {
-  sollya_mpfi_t stack1, stack2;
+  sollya_mpfi_t stack1, stack2, tempI, tempI2;
   sollya_mpfi_t stack3, zI, numeratorInZI, denominatorInZI, newExcludeTemp, xMXZ, temp1, temp2, tempA, tempB;
   sollya_mpfi_t *newExclude;
   sollya_mpfi_t leftConstantTerm, rightConstantTerm;
@@ -1772,7 +1772,12 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
     break;
   case LIBRARYFUNCTION:
     excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    tree->libFun->code(stack3, stack1, tree->libFunDeriv);
+    mpfi_init2(tempI, sollya_mpfi_get_prec(stack3));
+    tree->libFun->code(tempI, stack1, tree->libFunDeriv);
+    sollya_init_and_convert_interval(tempI2, tempI);
+    sollya_mpfi_set(stack3, tempI2);
+    sollya_mpfi_clear(tempI2);
+    mpfi_clear(tempI);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
