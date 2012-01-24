@@ -1,0 +1,10 @@
+[9.999999999990905052982270717620849609375e-2;0.200000000000045474735088646411895751953125]
+[9.999999999990905052982270717620849609375e-2;0.200000000000045474735088646411895751953125]  (should be the same as above)
+[9.99999999999e-2;0.2] (should be the same as above)
+[9.99999999999e-2;0.2] (should be the same as above)
+--------> ATTENTION ! BUG ? <--------
+
+[@NaN@;@NaN@] (should be [NaN, NaN])
+[@NaN@;@NaN@] (should be [NaN, NaN])
+[@NaN@;@NaN@] (should be [NaN, NaN])
+[-1;1] (should be [-1, 1])
