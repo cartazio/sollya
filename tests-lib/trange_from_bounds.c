@@ -2,10 +2,13 @@
 #include <message-numbers.h>
 
 int callback(int message) {
+  char *str;
   if (message==SOLLYA_MSG_RANGE_BOUNDS_IN_INVERSE_ORDER)
     sollya_lib_printf("Caught the message about bounds in inverse order.\n");
-  else
-    sollya_lib_printf("Unexpected message caught.\n");
+  else {
+    sollya_lib_printf("Unexpected message \"%s\" caught.\n", str = sollya_lib_msg_number_to_text(message));
+    free(str);
+  }
   return 0;
 }
 
