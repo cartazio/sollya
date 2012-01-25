@@ -1998,10 +1998,6 @@ sollya_obj_t sollya_lib_range_from_bounds(mpfr_t left, mpfr_t right) {
   sollya_obj_t temp, res;
   temp = makeRange(makeConstant(left),makeConstant(right));
   res = evaluateThing(temp);
-
-  sollyaPrintf("left = %v, right = %v, temp = %b, res = %b\n",left,right,temp,res);
-
-
   freeThing(temp);
   return res;
 }
