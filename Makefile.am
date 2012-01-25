@@ -17,8 +17,9 @@ sollya_SOURCES = \
 sollya.h \
 mpfi-compat.c \
 mpfi-compat.h \
-message-numbers.h \
-message-numbers.c \
+sollya-messaging.h \
+sollya-messages.h \
+sollya-messaging.c \
 bitfields.h \
 bitfields.c \
 sollya-library-wrappers.c \
@@ -85,7 +86,7 @@ xml.h
 sollya_CFLAGS = $(AM_CFLAGS)
 sollya_CXXFLAGS = $(AM_CXXFLAGS)
 
-include_HEADERS = sollya.h
+include_HEADERS = sollya.h sollya-messages.h
 
 lib_LTLIBRARIES     = libsollya.la
 libsollya_la_SOURCES = \
@@ -94,8 +95,9 @@ mpfi-compat.h \
 mpfi-compat.c \
 sollya-library-wrappers.c \
 sollya-library-wrappers.h \
-message-numbers.h \
-message-numbers.c \
+sollya-messaging.h \
+sollya-messages.h \
+sollya-messaging.c \
 bitfields.h \
 bitfields.c \
 printf.c \

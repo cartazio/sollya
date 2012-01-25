@@ -55,12 +55,12 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include <string.h>
 
 /* The following #defined is needed to activate some features in the 
-   message-numbers header file that are only needed when used with this
-   message-numbers implementation file.
+   sollya-messaging header file that are only needed when used with this
+   sollya-messaging implementation file.
 */
-#define MESSAGE_NUMBERS_USE_TABLES 1
-#include "message-numbers.h"
-#undef MESSAGE_NUMBERS_USE_TABLES
+#define SOLLYA_MESSAGING_USE_TABLES 1
+#include "sollya-messaging.h"
+#undef SOLLYA_MESSAGING_USE_TABLES
 
 #include "general.h"
 

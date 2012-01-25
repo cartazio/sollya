@@ -63,6 +63,19 @@
 extern "C" {
 #endif
 
+/* The following #include should be first ! 
+
+   IT MUST BE PROTECTED BY THE #if THAT IS USED! 
+
+   This is because this header file is used both internally when
+   compiling the Sollya library and when using the library.
+
+*/
+#if (!(defined(__SOLLYA_NODE_TYPE_ALREADY_DEFINED) && (__SOLLYA_NODE_TYPE_ALREADY_DEFINED)))
+#include <sollya-messages.h>
+#endif
+
+/* Now some other #includes we need to get the different types defined. */
 #include <stdarg.h>
 #include <gmp.h>
 #include <mpfr.h>

@@ -60,7 +60,7 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 #include "mpfi-compat.h"
 #include "general.h"
-#include "message-numbers.h"
+#include "sollya-messaging.h"
 #include <stdlib.h>
 #include <stdio.h>
 

@@ -71,7 +71,7 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include "config.h"
 #endif
 
-#include "message-numbers.h"
+#include "sollya-messaging.h"
 #include "bitfields.h"
 
 #define DEFAULTPOINTS 501

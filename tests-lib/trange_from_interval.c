@@ -1,5 +1,4 @@
 #include <sollya.h>
-#include <message-numbers.h>
 
 int callback(int message) {
   if (message==SOLLYA_MSG_RANGE_BOUNDS_IN_INVERSE_ORDER)

@@ -78,7 +78,7 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include <sys/resource.h>
 #include <time.h>
 #include "execute.h"
-#include "message-numbers.h"
+#include "sollya-messaging.h"
 #include "bitfields.h"
 
 #if HAVE_BACKTRACE

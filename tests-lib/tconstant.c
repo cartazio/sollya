@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <sollya.h>
-#include <message-numbers.h>
 
 int callback(int message) {
   if (message==SOLLYA_MSG_FAITHFUL_ROUNDING_FOR_EXPR_THAT_SHOULD_BE_CONST)

@@ -1,5 +1,4 @@
 #include <sollya.h>
-#include <message-numbers.h>
 
 int callback(int message) {
   char *str;
