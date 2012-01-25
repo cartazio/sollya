@@ -73,7 +73,8 @@ int main(void) {
   sollya_lib_clear_obj(a2);
   sollya_lib_clear_obj(a);
 
-  d = -1.0e500; /* overflow */
+  d = -1.0e300;
+  d *= 1e300; /* overflow */
   a = sollya_lib_constant_from_double(d);
   sollya_lib_printf("%b (should be -Inf)\n", a);
   sollya_lib_clear_obj(a);
