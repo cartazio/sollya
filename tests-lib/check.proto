@@ -3,7 +3,12 @@ for i in $TESTFILES
 do
   if ! test -e $i.reference
   then
-    echo "Unexpected error: file $i.reference is missing." >&2
+    if ! test -e $i 
+    then 
+      echo "Unexpected error: executable $i not found. Are you in the right directory?" >&2
+    else 
+      echo "Unexpected error: file $i.reference seems to be missing." >&2
+    fi
     TEST=1
   else
     if test -s $i.reference

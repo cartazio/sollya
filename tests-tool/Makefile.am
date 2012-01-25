@@ -6,6 +6,8 @@ TESTS = $(TESTFILES:.sollya=.sh)
 
 check_PROGRAMS = force_compilation
 
+MOSTLYCLEANFILES = $(TESTS)
+
 .PHONY: force_compilation
 
 force_compilation:

@@ -7,6 +7,8 @@ TESTS= $(TESTFILES:.c=.sh)
 
 LDADD = $(top_builddir)/.libs/libsollya.la
 
+MOSTLYCLEANFILES = $(TESTS)
+
 .PHONY: force_compilation
 
 force_compilation:
