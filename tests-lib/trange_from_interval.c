@@ -3,6 +3,8 @@
 int callback(int message) {
   if (message==SOLLYA_MSG_RANGE_BOUNDS_IN_INVERSE_ORDER)
     sollya_lib_printf("Caught the message about bounds in inverse order.\n");
+  else if (message==SOLLYA_MSG_ONLY_ONE_ENDPOINT_OF_RANGE_IS_NAN)
+    sollya_lib_printf("Caught the message indicating that only one bound is NaN.\n");
   else
     sollya_lib_printf("Unexpected message caught.\n");
   return 0;

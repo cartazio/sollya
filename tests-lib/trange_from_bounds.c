@@ -1,13 +1,12 @@
 #include <sollya.h>
 
 int callback(int message) {
-  char *str;
   if (message==SOLLYA_MSG_RANGE_BOUNDS_IN_INVERSE_ORDER)
     sollya_lib_printf("Caught the message about bounds in inverse order.\n");
-  else {
-    sollya_lib_printf("Unexpected message \"%s\" caught.\n", str = sollya_lib_msg_number_to_text(message));
-    free(str);
-  }
+  else if (message==SOLLYA_MSG_ONLY_ONE_ENDPOINT_OF_RANGE_IS_NAN)
+    sollya_lib_printf("Caught the message indicating that only one bound is NaN.\n");
+  else
+    sollya_lib_printf("Unexpected message caught.\n");
   return 0;
 }
 
