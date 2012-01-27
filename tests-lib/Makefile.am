@@ -55,6 +55,7 @@ tconstant_from_double.c \
 tconstant_from_int64.c \
 tconstant_from_int.c \
 tconstant_from_uint64.c \
+tconstant_list_ops.c \
 tcos.c \
 tcosh.c \
 tdecimal.c \
