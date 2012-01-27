@@ -1,8 +1,8 @@
 #include <sollya.h>
 
 int main(void) {
-  sollya_obj_t a[50];
-  int t[50];
+  sollya_obj_t a[51];
+  int t[51];
   int i;
 
   sollya_lib_init();
@@ -58,8 +58,9 @@ int main(void) {
   a[47] = sollya_lib_build_function_triple_double(sollya_lib_free_variable());
   a[48] = sollya_lib_build_function_cos(sollya_lib_constant_from_int(5));
   a[49] = sollya_lib_end_elliptic_list(NULL, 0);
+  a[50] = sollya_lib_parse_string("{.a = 5; .b = exp(_x_)};");
 
-  for(i=0;i<50;i++)  t[i] = sollya_lib_is_double_double_obj(a[i]);
+  for(i=0;i<51;i++)  t[i] = sollya_lib_is_double_double_obj(a[i]);
 
   if (t[0]) sollya_lib_printf("sollya_lib_is_double_double_obj detects absolute\n");
   if (t[1]) sollya_lib_printf("sollya_lib_is_double_double_obj detects binary\n");
@@ -111,8 +112,9 @@ int main(void) {
   if (t[47]) sollya_lib_printf("sollya_lib_is_double_double_obj detects TD(_x_).\n");
   if (t[48]) sollya_lib_printf("sollya_lib_is_double_double_obj detects a constant expression.\n");
   if (t[49]) sollya_lib_printf("sollya_lib_is_double_double_obj detects an empty end-elliptic list.\n");
+  if (t[50]) sollya_lib_printf("sollya_lib_obj_is_structure detects structure { .a = 5; .b = exp(_x_)}.\n");
 
-  for(i=0;i<50;i++) sollya_lib_clear_obj(a[i]);
+  for(i=0;i<51;i++) sollya_lib_clear_obj(a[i]);
   sollya_lib_close();
   return 0;
 }
