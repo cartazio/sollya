@@ -14,7 +14,7 @@ mpfr_t *tconstant_list_ops_make_mpfr_ptr(double x) {
 }
 
 int main(void) {
-  sollya_obj_list_t list1, iter, list2;
+  sollya_constant_list_t list1, iter, list2;
   mpfr_t *a, *b, *c, *d, *e;
   int i;
 

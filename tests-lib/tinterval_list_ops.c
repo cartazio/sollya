@@ -14,7 +14,7 @@ mpfi_t *tinterval_list_ops_make_mpfi_ptr(double l, double r) {
 }
 
 int main(void) {
-  sollya_obj_list_t list1, iter, list2;
+  sollya_interval_list_t list1, iter, list2;
   mpfi_t *a, *b, *c, *d, *e;
   int i;
 

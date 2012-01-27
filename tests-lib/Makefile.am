@@ -9,6 +9,7 @@ tassign_in_structure.c \
 tatan.c \
 tatanh.c \
 tbinary.c \
+tboolean_list_ops.c \
 tbuild_function_abs.c \
 tbuild_function_acos.c \
 tbuild_function_acosh.c \
@@ -101,6 +102,7 @@ thalfprecision.c \
 thalfprecision_obj.c \
 thexadecimal.c \
 thonorcoeffprec.c \
+tint_list_ops.c \
 tinterval_list_ops.c \
 tis_absolute.c \
 tis_binary.c \
@@ -206,6 +208,7 @@ tsingle_obj.c \
 tsinh.c \
 tsqrt.c \
 tstring.c \
+tstring_list_ops.c \
 tsub.c \
 ttan.c \
 ttanh.c \
