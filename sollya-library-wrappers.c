@@ -2097,7 +2097,7 @@ sollya_obj_t sollya_lib_constant_from_uint64(uint64_t value) {
   mpfr_add(valueMpfr, valueMpfr, tempMpfr, GMP_RNDN); /* exact */
   temp = makeConstant(valueMpfr);
   mpfr_clear(valueMpfr);
-  mpfr_clear(valueMpfr);
+  mpfr_clear(tempMpfr);
 
   return temp;
 }
