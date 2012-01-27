@@ -3200,7 +3200,7 @@ sollya_obj_t sollya_lib_get_object_list_head(sollya_obj_list_t list) {
 
 sollya_obj_list_t sollya_lib_get_object_list_tail(sollya_obj_list_t list) {
   if (list == NULL) return NULL;
-  return (sollya_obj_list_t) (list->value);
+  return (sollya_obj_list_t) (list->next);
 }
 
 sollya_obj_list_t sollya_lib_construct_object_list(sollya_obj_t obj1, sollya_obj_list_t list) {
@@ -3227,7 +3227,7 @@ mpfr_t *sollya_lib_get_constant_list_head(sollya_constant_list_t list) {
 
 sollya_constant_list_t sollya_lib_get_constant_list_tail(sollya_constant_list_t list) {
   if (list == NULL) return NULL;
-  return (sollya_constant_list_t) (list->value);
+  return (sollya_constant_list_t) (list->next);
 }
 
 sollya_constant_list_t sollya_lib_construct_constant_list(mpfr_t *constant, sollya_constant_list_t list) {
@@ -3254,7 +3254,7 @@ mpfi_t *sollya_lib_get_interval_list_head(sollya_interval_list_t list) {
 
 sollya_interval_list_t sollya_lib_get_interval_list_tail(sollya_interval_list_t list) {
   if (list == NULL) return NULL;
-  return (sollya_interval_list_t) (list->value);
+  return (sollya_interval_list_t) (list->next);
 }
 
 sollya_interval_list_t sollya_lib_construct_interval_list(mpfi_t *interval, sollya_interval_list_t list) {
@@ -3281,7 +3281,7 @@ int sollya_lib_get_int_list_head(sollya_int_list_t list) {
 
 sollya_int_list_t sollya_lib_get_int_list_tail(sollya_int_list_t list) {
   if (list == NULL) return NULL;
-  return (sollya_int_list_t) (list->value);
+  return (sollya_int_list_t) (list->next);
 }
 
 sollya_int_list_t sollya_lib_construct_int_list(int integer, sollya_int_list_t list) {
@@ -3312,7 +3312,7 @@ int sollya_lib_get_boolean_list_head(sollya_boolean_list_t list) {
 
 sollya_boolean_list_t sollya_lib_get_boolean_list_tail(sollya_boolean_list_t list) {
   if (list == NULL) return NULL;
-  return (sollya_boolean_list_t) (list->value);
+  return (sollya_boolean_list_t) (list->next);
 }
 
 sollya_boolean_list_t sollya_lib_construct_boolean_list(int boolVal, sollya_boolean_list_t list) {
@@ -3343,7 +3343,7 @@ char *sollya_lib_get_string_list_head(sollya_string_list_t list) {
 
 sollya_string_list_t sollya_lib_get_string_list_tail(sollya_string_list_t list) {
   if (list == NULL) return NULL;
-  return (sollya_string_list_t) (list->value);
+  return (sollya_string_list_t) (list->next);
 }
 
 sollya_string_list_t sollya_lib_construct_string_list(char *str, sollya_string_list_t list) {

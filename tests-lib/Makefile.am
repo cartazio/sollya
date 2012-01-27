@@ -150,6 +150,7 @@ tobj_is_list.c \
 tobj_is_range.c \
 tobj_is_string.c \
 tobj_is_structure.c \
+tobject_list_ops.c \
 toff.c \
 ton.c \
 tperturb.c \
