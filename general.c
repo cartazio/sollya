@@ -122,6 +122,7 @@ int hopitalrecursions = DEFAULTHOPITALRECURSIONS;
 mpfr_t statediam;
 
 int eliminatePromptBackup;
+int libraryMode = 0;
 chain *readStack = NULL;
 chain *readStackTemp = NULL;
 chain *readStack2 = NULL;
@@ -933,6 +934,8 @@ void initSignalHandler() {
   sigset_t mask;
   struct sigaction action;
 
+  if (libraryMode) return;
+
   action.sa_sigaction = signalHandler;
   action.sa_flags = SA_SIGINFO;
   sigemptyset(&(action.sa_mask));
@@ -958,6 +961,8 @@ void initSignalHandler() {
 
 void blockSignals() {
   sigset_t mask;
+
+  if (libraryMode) return;
 
   sigemptyset(&mask);
   sigaddset(&mask,SIGINT);
@@ -1234,6 +1239,7 @@ void invalidateRecoverEnvironment() {
 }
 
 int initializeLibraryMode() {
+  libraryMode = 1;
   messageCallback = NULL;
   lastMessageCallbackResult = 1;
   lastMessageSuppressedResult = -1;
@@ -1282,6 +1288,7 @@ int finalizeLibraryMode() {
   declaredSymbolTable = NULL;
   mpfr_clear(statediam);
   mpfr_free_cache();
+  libraryMode = 0;
   return 1;
 }
 
@@ -1298,6 +1305,7 @@ int general(int argc, char *argv[]) {
   int finishedBeforeParsing;
 
   messageCallback = NULL;
+  libraryMode = 0;
   lastMessageCallbackResult = 1;
   lastMessageSuppressedResult = -1;
   doNotModifyStackSize = 0;
@@ -1492,6 +1500,7 @@ int general(int argc, char *argv[]) {
             fflush(stdout); 
             fflush(stderr);
         }
+	libraryMode = 0;
 	pushTimeCounter();
 	executeAbort = executeCommand(parsedThing);
 	lastCorrectlyExecuted = 1;
