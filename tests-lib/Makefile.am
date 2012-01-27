@@ -101,6 +101,7 @@ thalfprecision.c \
 thalfprecision_obj.c \
 thexadecimal.c \
 thonorcoeffprec.c \
+tinterval_list_ops.c \
 tis_absolute.c \
 tis_binary.c \
 tis_decimal.c \
