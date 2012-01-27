@@ -671,37 +671,42 @@ extern "C" {
   sollya_obj_list_t sollya_lib_construct_object_list(sollya_obj_t, sollya_obj_list_t);
   sollya_obj_list_t sollya_lib_copy_object_list(sollya_obj_list_t);
   void sollya_lib_clear_object_list(sollya_obj_list_t);
+  int sollya_lib_is_empty_object_list(sollya_obj_list_t);
 
   mpfr_t *sollya_lib_get_constant_list_head(sollya_constant_list_t);
   sollya_constant_list_t sollya_lib_get_constant_list_tail(sollya_constant_list_t);
   sollya_constant_list_t sollya_lib_construct_constant_list(mpfr_t *, sollya_constant_list_t);
   sollya_constant_list_t sollya_lib_copy_constant_list(sollya_constant_list_t);
   void sollya_lib_clear_constant_list(sollya_constant_list_t);
+  int sollya_lib_is_empty_constant_list(sollya_obj_list_t);
 
   mpfi_t *sollya_lib_get_interval_list_head(sollya_interval_list_t);
   sollya_interval_list_t sollya_lib_get_interval_list_tail(sollya_interval_list_t);
   sollya_interval_list_t sollya_lib_construct_interval_list(mpfi_t *, sollya_interval_list_t);
   sollya_interval_list_t sollya_lib_copy_interval_list(sollya_interval_list_t);
   void sollya_lib_clear_interval_list(sollya_interval_list_t);
+  int sollya_lib_is_empty_interval_list(sollya_obj_list_t);
 
   int sollya_lib_get_int_list_head(sollya_int_list_t);
   sollya_int_list_t sollya_lib_get_int_list_tail(sollya_int_list_t);
   sollya_int_list_t sollya_lib_construct_int_list(int, sollya_int_list_t);
   sollya_int_list_t sollya_lib_copy_int_list(sollya_int_list_t);
   void sollya_lib_clear_int_list(sollya_int_list_t);
+  int sollya_lib_is_empty_int_list(sollya_obj_list_t);
 
   int sollya_lib_get_boolean_list_head(sollya_boolean_list_t);
   sollya_boolean_list_t sollya_lib_get_boolean_list_tail(sollya_boolean_list_t);
   sollya_boolean_list_t sollya_lib_construct_boolean_list(int, sollya_boolean_list_t);
   sollya_boolean_list_t sollya_lib_copy_boolean_list(sollya_boolean_list_t);
   void sollya_lib_clear_boolean_list(sollya_boolean_list_t);
+  int sollya_lib_is_empty_boolean_list(sollya_obj_list_t);
 
   char *sollya_lib_get_string_list_head(sollya_string_list_t);
   sollya_string_list_t sollya_lib_get_string_list_tail(sollya_string_list_t);
   sollya_string_list_t sollya_lib_construct_string_list(char *, sollya_string_list_t);
   sollya_string_list_t sollya_lib_copy_string_list(sollya_string_list_t);
   void sollya_lib_clear_string_list(sollya_string_list_t);
-
+  int sollya_lib_is_empty_string_list(sollya_obj_list_t);
 
   /* Functions for building Sollya objects representing 
      mathematical functions or Sollya objects representing lists.

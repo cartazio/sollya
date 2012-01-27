@@ -3216,6 +3216,10 @@ void sollya_lib_clear_object_list(sollya_obj_list_t list) {
   freeChain(list, freeThingOnVoid);
 }
 
+int sollya_lib_is_empty_object_list(sollya_obj_list_t list) {
+  return (list == NULL);
+}
+
 mpfr_t *sollya_lib_get_constant_list_head(sollya_constant_list_t list) {
   if (list == NULL) return NULL;
   return (mpfr_t *) (list->value);
@@ -3239,6 +3243,10 @@ void sollya_lib_clear_constant_list(sollya_constant_list_t list) {
   freeChain(list, freeMpfrPtr);
 }
 
+int sollya_lib_is_empty_constant_list(sollya_constant_list_t list) {
+  return (list == NULL);
+}
+
 mpfi_t *sollya_lib_get_interval_list_head(sollya_interval_list_t list) {
   if (list == NULL) return NULL;
   return (mpfi_t *) (list->value);
@@ -3260,6 +3268,10 @@ sollya_interval_list_t sollya_lib_copy_interval_list(sollya_interval_list_t list
 
 void sollya_lib_clear_interval_list(sollya_interval_list_t list) {
   freeChain(list, freeMpfiPtr);
+}
+
+int sollya_lib_is_empty_interval_list(sollya_interval_list_t list) {
+  return (list == NULL);
 }
 
 int sollya_lib_get_int_list_head(sollya_int_list_t list) {
@@ -3289,6 +3301,10 @@ void sollya_lib_clear_int_list(sollya_int_list_t list) {
   freeChain(list, freeIntPtr);
 }
 
+int sollya_lib_is_empty_int_list(sollya_int_list_t list) {
+  return (list == NULL);
+}
+
 int sollya_lib_get_boolean_list_head(sollya_boolean_list_t list) {
   if (list == NULL) return 0;
   return *((int *) (list->value));
@@ -3316,6 +3332,10 @@ void sollya_lib_clear_boolean_list(sollya_boolean_list_t list) {
   freeChain(list, freeIntPtr);
 }
 
+int sollya_lib_is_empty_boolean_list(sollya_boolean_list_t list) {
+  return (list == NULL);
+}
+
 char *sollya_lib_get_string_list_head(sollya_string_list_t list) {
   if (list == NULL) return NULL;
   return (char *) (list->value);
@@ -3337,6 +3357,10 @@ sollya_string_list_t sollya_lib_copy_string_list(sollya_string_list_t list) {
 
 void sollya_lib_clear_string_list(sollya_string_list_t list) {
   freeChain(list, freeStringPtr);
+}
+
+int sollya_lib_is_empty_string_list(sollya_string_list_t list) {
+  return (list == NULL);
 }
 
 sollya_obj_t sollya_lib_build_list(sollya_obj_t obj1, ...) {
