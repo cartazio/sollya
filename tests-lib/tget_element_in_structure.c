@@ -5,7 +5,7 @@
 int main(void) {
   sollya_obj_t a, b;
   sollya_obj_t ea, eb, ec;
-  sollya_obj_t ra, rb, rc;
+  int ra, rb, rc;
   
 
   sollya_lib_init();

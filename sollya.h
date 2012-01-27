@@ -285,7 +285,7 @@ extern "C" {
 
   */
   void sollya_lib_name_free_variable(const char *);
-  const char *sollya_lib_get_free_variable_name();
+  char *sollya_lib_get_free_variable_name();
 
   /* Functions corresponding to Sollya commands */
   void sollya_lib_plot(sollya_obj_t, sollya_obj_t, ...);
