@@ -163,6 +163,7 @@ tpostscript.c \
 tpostscriptfile.c \
 tpow.c \
 tpowers.c \
+tprintdouble.c \
 tquad.c \
 tquad_obj.c \
 trange_from_bounds.c \
