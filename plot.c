@@ -367,7 +367,7 @@ void asciiPlotTree(node *tree, mpfr_t a, mpfr_t b, mp_prec_t prec) {
 
 
 #if defined(TIOCGWINSZ) && defined(STDIN_FILENO)
-  if ((eliminatePromptBackup == 1) || libraryMode) {
+  if ((eliminatePromptBackup == 1) && (!libraryMode)) {
     sizeX = 77;
     sizeY = 25;
   } else {
