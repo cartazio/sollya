@@ -116,6 +116,7 @@ extern int rationalMode;
 extern int noRoundingWarnings;
 extern int hopitalrecursions;
 extern int eliminatePromptBackup;
+extern int libraryMode;
 extern chain *readStack;
 extern chain *readStackTemp;
 extern chain *readStack2;
