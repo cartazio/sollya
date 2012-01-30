@@ -803,7 +803,10 @@ extern "C" {
 #define SOLLYA_ASINH(x) sollya_lib_build_function_asinh(x)
 #define SOLLYA_ACOSH(x) sollya_lib_build_function_acosh(x)
 #define SOLLYA_ATANH(x) sollya_lib_build_function_atanh(x)
-#define SOLLYA_PI() sollya_lib_build_function_pi()
+#define SOLLYA_PI (sollya_lib_build_function_pi())
+#define SOLLYA_CONST(x) sollya_lib_constant_from_double(x)
+#define SOLLYA_CONST_UI64(x) sollya_lib_constant_from_uint64(x)
+#define SOLLYA_CONST_SI64(x) sollya_lib_constant_from_int64(x)
 
 #ifdef __cplusplus
 }
