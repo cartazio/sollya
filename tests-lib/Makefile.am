@@ -8,6 +8,7 @@ tasinh.c \
 tassign_in_structure.c \
 tatan.c \
 tatanh.c \
+tbashexecute.c \
 tbinary.c \
 tboolean_list_ops.c \
 tbuild_function_abs.c \
