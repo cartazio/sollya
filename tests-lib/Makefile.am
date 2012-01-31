@@ -210,6 +210,7 @@ tset_timing_and_print.c \
 tset_timing.c \
 tset_verbosity_and_print.c \
 tset_verbosity.c \
+tsimplifysafe.c \
 tsin.c \
 tsingle.c \
 tsingle_obj.c \
