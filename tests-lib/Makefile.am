@@ -5,6 +5,7 @@ tacosh.c \
 tadd.c \
 tasin.c \
 tasinh.c \
+tasciiplot.c \
 tassign_in_structure.c \
 tatan.c \
 tatanh.c \

@@ -371,11 +371,15 @@ void asciiPlotTree(node *tree, mpfr_t a, mpfr_t b, mp_prec_t prec) {
     sizeX = 77;
     sizeY = 25;
   } else {
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, (char *) &size);
-    sizeX = size.ws_col;
-    sizeY = size.ws_row;
-    if (sizeX > 5000) sizeX = 5000;
-    if (sizeY > 5000) sizeY = 5000;
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, (char *) &size) >= 0) {
+      sizeX = size.ws_col;
+      sizeY = size.ws_row;
+      if (sizeX > 5000) sizeX = 5000;
+      if (sizeY > 5000) sizeY = 5000;
+    } else {
+      sizeX = 77;
+      sizeY = 25;
+    }
   }
 #else
   sizeX = 77;
