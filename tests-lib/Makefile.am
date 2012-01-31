@@ -52,6 +52,7 @@ tbuild_function_sub.c \
 tbuild_function_tan.c \
 tbuild_function_tanh.c \
 tbuild_function_triple_double.c \
+tcanonical.c \
 tceil.c \
 tconstant.c \
 tconstant_from_double.c \
