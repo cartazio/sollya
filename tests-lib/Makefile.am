@@ -104,6 +104,7 @@ thalfprecision.c \
 thalfprecision_obj.c \
 thexadecimal.c \
 thonorcoeffprec.c \
+thorner.c \
 tint_list_ops.c \
 tinterval_list_ops.c \
 tis_absolute.c \
