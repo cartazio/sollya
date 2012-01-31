@@ -76,6 +76,7 @@ terf.c \
 terfc.c \
 terror.c \
 texp.c \
+texpand.c \
 texpm1.c \
 tfalse.c \
 tfile.c \

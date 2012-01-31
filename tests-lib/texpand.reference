@@ -1,0 +1,6 @@
+((2 * x + 3)^2 + x^4)^2 with all polynomial subtrees maximally expanded is x * x * x * x * x * x * x * x + 18 * x * x * x * x + 24 * x * x * x * x * x + 8 * x * x * x * x * x * x + x * x * x * x * 16 + x * x * 72 + 24 * x * x * x * 4 + 144 * x * x + x * 216 + 81.
+exp(x) with all polynomial subtrees maximally expanded is exp(x).
+((2 * x + 3)^2 + x^4)^2 + sin(((2 * x + 3)^2 + x^4)^2) with all polynomial subtrees maximally expanded is x * x * x * x * x * x * x * x + 18 * x * x * x * x + 24 * x * x * x * x * x + 8 * x * x * x * x * x * x + x * x * x * x * 16 + x * x * 72 + 24 * x * x * x * 4 + 144 * x * x + x * 216 + 81 + sin(x * x * x * x * x * x * x * x + 18 * x * x * x * x + 24 * x * x * x * x * x + 8 * x * x * x * x * x * x + x * x * x * x * 16 + x * x * 72 + 24 * x * x * x * 4 + 144 * x * x + x * 216 + 81).
+(x^2 * (1 + x^2) + (9 + x * (6 + x)) / (4 + x))^7 with all polynomial subtrees maximally expanded is (x * x + x * x * x * x + (9 + 6 * x + x * x) / (4 + x))^7.
+((x + 1) / (x + 2) * (x + 3) / (x + 4)) / ((x + 5) / (x + 6) * (x + 7) / (x + 8)) with all polynomial subtrees maximally expanded is ((x + 1) / (x + 2) * (x + 3) / (x + 4)) / ((x + 5) / (x + 6) * (x + 7) / (x + 8)).
+((x + 1) / (x + 2) * (x + 3) / (x + 4)) / x with all polynomial subtrees maximally expanded is ((x + 1) / (x + 2) * (x + 3) / (x + 4)) / x.
