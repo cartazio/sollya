@@ -1,0 +1,6 @@
+One of the expected warning messages has been caught.
+One of the expected warning messages has been caught.
+The denominator of 17 / 1001 is 1001.
+The denominator of (x + x^2) / (x + 2 * x^2 + 1) is x + 2 * x^2 + 1.
+The denominator of (x + 1) / (x + 2) * (x + 3) / (x + 4) is 1.
+The denominator of exp(x) is 1.

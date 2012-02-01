@@ -65,6 +65,7 @@ tcosh.c \
 tdecimal.c \
 tdefault.c \
 tdegree.c \
+tdenominator.c \
 tdiv.c \
 tdouble.c \
 tdouble_double.c \
