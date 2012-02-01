@@ -98,7 +98,7 @@ extern "C" {
 
      sollya_obj_t
 
-     and type
+     and types
 
      sollya_obj_list_t         (list of Sollya objects)
      sollya_constant_list_t    (list of MPFRs)
@@ -107,7 +107,7 @@ extern "C" {
      sollya_string_list_t      (list of char *s)
      sollya_boolean_list_t     (list of ints as booleans)
 
-     are defined. These type represent the different objects the Sollya
+     are defined. These types represent the different objects the Sollya
      library is able to handle and objects that can be chained together.
 
    */
