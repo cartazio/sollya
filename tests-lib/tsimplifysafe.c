@@ -8,8 +8,8 @@ int main(void) {
 
   a[0] = SOLLYA_SUB(SOLLYA_ADD(SOLLYA_X_,SOLLYA_CONST(2.0)),SOLLYA_ADD(SOLLYA_X_,SOLLYA_CONST(2.0)));
   a[1] = SOLLYA_ASIN(SOLLYA_EXP(SOLLYA_SUB(SOLLYA_ADD(SOLLYA_X_,SOLLYA_CONST(2.0)),SOLLYA_ADD(SOLLYA_X_,SOLLYA_CONST(2.0)))));
-  a[2] = SOLLYA_SUB(sollya_lib_parse_string("exp(x) - 1"),
-		    sollya_lib_parse_string("expm1(x)"));
+  a[2] = SOLLYA_SUB(sollya_lib_parse_string("exp(x) - 1;"),
+		    sollya_lib_parse_string("expm1(x);"));
   a[3] = SOLLYA_ADD(SOLLYA_CONST(1.0),SOLLYA_CONST(1e-300));
 
   for (i=0;i<4;i++) {

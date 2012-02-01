@@ -3,7 +3,7 @@
 int callback(int message) {
   switch (message) {
   case SOLLYA_MSG_EXPR_IS_NO_FRACTION:
-    sollya_lib_printf("One of the expected warning messages has been caught.\n");
+    sollya_lib_printf("The following object is not a fraction.\n");
     break;
   default:
     sollya_lib_printf("Unexpected message caught.\n");
@@ -22,13 +22,10 @@ int main(void) {
   a[1] = SOLLYA_DIV(SOLLYA_ADD(SOLLYA_X_,SOLLYA_POW(SOLLYA_X_,SOLLYA_CONST(2.0))),
 		    SOLLYA_ADD(SOLLYA_ADD(SOLLYA_X_,SOLLYA_MUL(SOLLYA_CONST(2.0),SOLLYA_POW(SOLLYA_X_,SOLLYA_CONST(2.0)))),SOLLYA_CONST(1.0)));
   a[2] = sollya_lib_parse_string("((x + 1)/(x + 2)) * ((x + 3)/(x + 4));");
-  a[3] = SOLLYA_EXP(SOLLYA_X_);
+  a[3] = SOLLYA_EXP(SOLLYA_DIV(SOLLYA_X_, SOLLYA_CONST(4)));
 
   for (i=0;i<4;i++) {
     b[i] = sollya_lib_denominator(a[i]);
-  }
-
-  for (i=0;i<4;i++) {
     sollya_lib_printf("The denominator of %b is %b.\n",a[i],b[i]);
   }
 

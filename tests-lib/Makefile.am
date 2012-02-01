@@ -54,6 +54,7 @@ tbuild_function_tanh.c \
 tbuild_function_triple_double.c \
 tcanonical.c \
 tceil.c \
+tcmp_objs_structurally.c \
 tconstant.c \
 tconstant_from_double.c \
 tconstant_from_int64.c \
