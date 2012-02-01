@@ -153,6 +153,7 @@ tmul.c \
 tname_free_variable.c \
 tnearestint.c \
 tneg.c \
+tnumerator.c \
 tobj_is_end_elliptic_list.c \
 tobj_is_error.c \
 tobj_is_function.c \
