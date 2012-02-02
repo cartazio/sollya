@@ -41,6 +41,8 @@ int main(void) {
   a = sollya_lib_parse_string("[1;2];");
   mpfr_init2(tmp1, 20); /* not the current precision */
   mpfr_init2(tmp2, 30); /* not the current precision */
+  mpfr_set_ui(tmp1, 1, GMP_RNDN);
+  mpfr_set_ui(tmp2, 2, GMP_RNDN);
   b = sollya_lib_range_from_bounds(tmp1, tmp2);
   mpfr_clear(tmp1); mpfr_clear(tmp2);
   c = sollya_lib_copy_obj(a);

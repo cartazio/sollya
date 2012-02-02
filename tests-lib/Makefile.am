@@ -3,6 +3,7 @@ tabsolute.c \
 tacos.c \
 tacosh.c \
 tadd.c \
+tand.c \
 tasin.c \
 tasinh.c \
 tasciiplot.c \
@@ -54,6 +55,8 @@ tbuild_function_tanh.c \
 tbuild_function_triple_double.c \
 tcanonical.c \
 tceil.c \
+tcmp_equal.c \
+tcmp_in.c \
 tcmp_objs_structurally.c \
 tconstant.c \
 tconstant_from_double.c \
@@ -155,6 +158,7 @@ tmul.c \
 tname_free_variable.c \
 tnearestint.c \
 tneg.c \
+tnegate.c \
 tnumerator.c \
 tobj_is_end_elliptic_list.c \
 tobj_is_error.c \
@@ -166,6 +170,7 @@ tobj_is_structure.c \
 tobject_list_ops.c \
 toff.c \
 ton.c \
+tor.c \
 tperturb.c \
 tpi.c \
 tpostscript.c \
