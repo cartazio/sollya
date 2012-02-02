@@ -224,10 +224,10 @@ int main(void) {
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
 
-  a = SOLLYA_CONST(0.1); b = sollya_lib_parse_string("0.1;");
+  a = SOLLYA_CONST(0.1); b = sollya_lib_parse_string("0.1");
   sollya_lib_printf("%b is not %b (and it is expected)\n",a,b);
   sollya_lib_clear_obj(b);
-  b = sollya_lib_parse_string("D(1/10);");
+  b = sollya_lib_parse_string("D(1/10)");
   sollya_lib_printf("... but %b is %b\n",a,b);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);

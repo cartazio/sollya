@@ -10,7 +10,7 @@ int main(void) {
 
   sollya_lib_init();
 
-  a = sollya_lib_parse_string("{ .a = 5; .b = exp(_x_); .c = { .d = 17; .e = sin(_x_) }};");
+  a = sollya_lib_parse_string("{ .a = 5; .b = exp(_x_); .c = { .d = 17; .e = sin(_x_) }}");
   b = SOLLYA_EXP(SOLLYA_X_);
 
   ea = NULL;

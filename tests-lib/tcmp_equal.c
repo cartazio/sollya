@@ -70,7 +70,7 @@ int main(void) {
 
   a = SOLLYA_SIN(SOLLYA_DIV(SOLLYA_PI, SOLLYA_CONST(3)));
   b = SOLLYA_DIV(SOLLYA_SQRT(SOLLYA_CONST(3)), SOLLYA_CONST(2));
-  b = SOLLYA_MUL(b, SOLLYA_ADD(SOLLYA_CONST(1), sollya_lib_parse_string("1b-200;")));
+  b = SOLLYA_MUL(b, SOLLYA_ADD(SOLLYA_CONST(1), sollya_lib_parse_string("1b-200")));
   res = sollya_lib_cmp_equal(a, b);
   sollya_lib_printf("%b == %b returns %b\n", a, b, res);
   sollya_lib_clear_obj(a);
@@ -129,7 +129,7 @@ int main(void) {
   sollya_lib_clear_obj(res);
 
   /* Equality between equal intervals but with bounds at different precisions */
-  a = sollya_lib_parse_string("[1;2];");
+  a = sollya_lib_parse_string("[1;2]");
   mpfr_init2(tmp1, 20); /* not the current precision */
   mpfr_init2(tmp2, 30); /* not the current precision */
   mpfr_set_ui(tmp1, 1, GMP_RNDN);
@@ -143,11 +143,11 @@ int main(void) {
   sollya_lib_clear_obj(res);
 
   /* More involved expression */
-  a = sollya_lib_parse_string("1 + exp(sin(x + log(x^2)));");
+  a = sollya_lib_parse_string("1 + exp(sin(x + log(x^2)))");
   c = SOLLYA_CONST(40);
   sollya_lib_set_prec(c);
   sollya_lib_clear_obj(c);
-  b = sollya_lib_parse_string("sin(x + log(x^2));");
+  b = sollya_lib_parse_string("sin(x + log(x^2))");
   b = SOLLYA_ADD(SOLLYA_CONST(1), SOLLYA_EXP(b));
   res = sollya_lib_cmp_equal(a, b);
   sollya_lib_printf("%b == %b returns %b (even when constructed at different precisions)\n", a, b, res);

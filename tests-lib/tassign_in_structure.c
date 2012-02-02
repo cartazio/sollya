@@ -12,7 +12,7 @@ int main(void) {
   for (i=0;i<8;i++) a[i] = NULL;
   for (i=0;i<5;i++) r[i] = 0;
 
-  a[0] = sollya_lib_parse_string("{ .a = 5; .b = exp(_x_); .c = { .d = 17; .e = sin(_x_) }};");
+  a[0] = sollya_lib_parse_string("{ .a = 5; .b = exp(_x_); .c = { .d = 17; .e = sin(_x_) }}");
   a[1] = SOLLYA_EXP(SOLLYA_ASIN(SOLLYA_X_));
   a[2] = SOLLYA_LOG(SOLLYA_ATAN(SOLLYA_X_));
   r[0] = sollya_lib_assign_in_structure(&(a[3]), NULL, "u", a[1]);

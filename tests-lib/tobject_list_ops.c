@@ -9,10 +9,10 @@ int main(void) {
   sollya_lib_init();
 
   a = SOLLYA_EXP(SOLLYA_ASIN(SOLLYA_X_));
-  b = sollya_lib_parse_string("\"Hello\";");
+  b = sollya_lib_parse_string("\"Hello\"");
   c = sollya_lib_on();
-  d = sollya_lib_parse_string("[| 1, ..., 17... |];");
-  e = sollya_lib_parse_string("1 + x;");
+  d = sollya_lib_parse_string("[| 1, ..., 17... |]");
+  e = sollya_lib_parse_string("1 + x");
 
   list1 = sollya_lib_construct_object_list(a, sollya_lib_construct_object_list(b, sollya_lib_construct_object_list(c, sollya_lib_construct_object_list(d, NULL))));
 

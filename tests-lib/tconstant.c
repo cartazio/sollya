@@ -24,7 +24,7 @@ int main(void) {
   mpfr_const_pi(b, GMP_RNDN);
 
   a = sollya_lib_constant(b);
-  a2 = sollya_lib_parse_string("round(pi, 40, RN);");
+  a2 = sollya_lib_parse_string("round(pi, 40, RN)");
   sollya_lib_printf("%b\n%b (should be the same as above)\n", a, a2);
   mpfr_out_str(stdout, 2, 0, b, GMP_RNDN);
   sollya_lib_printf(" (should represent the same number as above)\n");

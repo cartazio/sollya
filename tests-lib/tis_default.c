@@ -58,7 +58,7 @@ int main(void) {
   a[47] = sollya_lib_build_function_triple_double(sollya_lib_free_variable());
   a[48] = sollya_lib_build_function_cos(sollya_lib_constant_from_int(5));
   a[49] = sollya_lib_end_elliptic_list(NULL, 0);
-  a[50] = sollya_lib_parse_string("{.a = 5; .b = exp(_x_)};");
+  a[50] = sollya_lib_parse_string("{.a = 5; .b = exp(_x_)}");
 
   for(i=0;i<51;i++)  t[i] = sollya_lib_is_default(a[i]);
 

@@ -27,8 +27,8 @@ int main(void) {
   mpfr_set_d(b1, 0.1, GMP_RNDD);
   mpfr_set_d(b2, 0.2, GMP_RNDU);
   a = sollya_lib_range_from_bounds(b1, b2);
-  left = sollya_lib_parse_string("round(D(1/10), 40, RD);");
-  right = sollya_lib_parse_string("round(D(2/10), 40, RU);");
+  left = sollya_lib_parse_string("round(D(1/10), 40, RD)");
+  right = sollya_lib_parse_string("round(D(2/10), 40, RU)");
   sollya_lib_printf("%b\n[%b;%b] (should be the same as above)\n", a, left, right);
   sollya_lib_clear_obj(left);
   sollya_lib_clear_obj(right);

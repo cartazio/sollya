@@ -39,24 +39,24 @@ int main(void) {
   sollya_lib_set_prec(temp = sollya_lib_constant_from_double(1000.0));
   sollya_lib_clear_obj(temp);
 
-  a[6] = sollya_lib_parse_string("1b128 - 1b103 - 1b-500;");
-  a[7] = sollya_lib_parse_string("1b128 - 1b103 - 1b-74;");
-  a[8] = sollya_lib_parse_string("1b128 - 1b103 - 1b-75;");
-  a[9] = sollya_lib_parse_string("1b128 - 1b103;");
-  a[10] = sollya_lib_parse_string("1b128 - 1b103 + 1b-500;");
-  a[11] = sollya_lib_parse_string("1b128 - 1b103 + 1b-74;");
-  a[12] = sollya_lib_parse_string("1b128 - 1b103 + 1b-75;");
-  a[13] = sollya_lib_parse_string("1.0000000010111111111111111000001_2 * 2^(-140);");
-  a[14] = sollya_lib_parse_string("-1.0000000010111111111111111000001_2 * 2^(-140);");
-  a[15] = sollya_lib_parse_string("1b-1000;");
-  a[16] = sollya_lib_parse_string("-1b-1000;");
-  a[17] = sollya_lib_parse_string("0;");
-  a[18] = sollya_lib_parse_string("-0;");
-  a[19] = sollya_lib_parse_string("1b-150;");
-  a[20] = sollya_lib_parse_string("1b-150 + 1b-1000;");
-  a[21] = sollya_lib_parse_string("1b-150 - 1b-1000;");
-  a[22] = sollya_lib_parse_string("-1b-150 + 1b-1000;");
-  a[23] = sollya_lib_parse_string("-1b-150 - 1b-1000;");
+  a[6] = sollya_lib_parse_string("1b128 - 1b103 - 1b-500");
+  a[7] = sollya_lib_parse_string("1b128 - 1b103 - 1b-74");
+  a[8] = sollya_lib_parse_string("1b128 - 1b103 - 1b-75");
+  a[9] = sollya_lib_parse_string("1b128 - 1b103");
+  a[10] = sollya_lib_parse_string("1b128 - 1b103 + 1b-500");
+  a[11] = sollya_lib_parse_string("1b128 - 1b103 + 1b-74");
+  a[12] = sollya_lib_parse_string("1b128 - 1b103 + 1b-75");
+  a[13] = sollya_lib_parse_string("1.0000000010111111111111111000001_2 * 2^(-140)");
+  a[14] = sollya_lib_parse_string("-1.0000000010111111111111111000001_2 * 2^(-140)");
+  a[15] = sollya_lib_parse_string("1b-1000");
+  a[16] = sollya_lib_parse_string("-1b-1000");
+  a[17] = sollya_lib_parse_string("0");
+  a[18] = sollya_lib_parse_string("-0");
+  a[19] = sollya_lib_parse_string("1b-150");
+  a[20] = sollya_lib_parse_string("1b-150 + 1b-1000");
+  a[21] = sollya_lib_parse_string("1b-150 - 1b-1000");
+  a[22] = sollya_lib_parse_string("-1b-150 + 1b-1000");
+  a[23] = sollya_lib_parse_string("-1b-150 - 1b-1000");
 
 
   for (i=0;i<24;i++) {

@@ -22,7 +22,7 @@ int main(void) {
   prec = sollya_lib_constant_from_int(53);
   sollya_lib_set_prec(prec);
   sollya_lib_clear_obj(prec);
-  a2 = sollya_lib_parse_string("3.141592653589793;");
+  a2 = sollya_lib_parse_string("3.141592653589793");
 
   prec = sollya_lib_constant_from_int(100);
   sollya_lib_set_prec(prec);
@@ -63,12 +63,12 @@ int main(void) {
   prec = sollya_lib_constant_from_int(53);
   sollya_lib_set_prec(prec);
   sollya_lib_clear_obj(prec);
-  a2 = sollya_lib_parse_string("D(5.4611528809225927e-310);");
+  a2 = sollya_lib_parse_string("D(5.4611528809225927e-310)");
   d = 5.4611528809225927e-310; /* subnormal */
   a = sollya_lib_constant_from_double(d);
   sollya_lib_printf("%b\n%b (should be the same as above)\n", a, a2);
   sollya_lib_clear_obj(a2);
-  a2 = sollya_lib_parse_string("5.4611528809225927e-310;");
+  a2 = sollya_lib_parse_string("5.4611528809225927e-310");
   sollya_lib_printf("%b (should *NOT* be the same, but the previous entry should be a prefix of this one)\n", a2);
   sollya_lib_clear_obj(a2);
   sollya_lib_clear_obj(a);

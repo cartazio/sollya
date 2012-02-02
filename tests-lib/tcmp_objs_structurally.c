@@ -38,7 +38,7 @@ int main(void) {
 
 
   /* Structural equality between objs that are not expressions */
-  a = sollya_lib_parse_string("[1;2];");
+  a = sollya_lib_parse_string("[1;2]");
   mpfr_init2(tmp1, 20); /* not the current precision */
   mpfr_init2(tmp2, 30); /* not the current precision */
   mpfr_set_ui(tmp1, 1, GMP_RNDN);
@@ -107,11 +107,11 @@ int main(void) {
 
 
   /* More involved expression */
-  a = sollya_lib_parse_string("1 + exp(sin(x + log(x^2)));");
+  a = sollya_lib_parse_string("1 + exp(sin(x + log(x^2)))");
   c = SOLLYA_CONST(40);
   sollya_lib_set_prec(c);
   sollya_lib_clear_obj(c);
-  b = sollya_lib_parse_string("sin(x + log(x^2));");
+  b = sollya_lib_parse_string("sin(x + log(x^2))");
   b = SOLLYA_ADD(SOLLYA_CONST(1), SOLLYA_EXP(b));
 
   if (sollya_lib_cmp_objs_structurally(a,b))
