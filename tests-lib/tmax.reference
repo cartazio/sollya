@@ -1,8 +1,8 @@
 max(4,5,1,3) returns 5
 max([|4, 5, 1, 3|]) returns 5
-Warning: maximum computation relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.
+Warning: the tool is unable to decide a maximum computation by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.
 max of 17 + log2(13)/log2(9) and 17 + log(13)/log(9) returns 17 + log2(13) / log2(9)
-Warning: maximum computation relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.
+Warning: the tool is unable to decide a maximum computation by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.
 max([|17 + log2(13) / log2(9), 17 + log(13) / log(9)|]) returns 17 + log2(13) / log2(9)
 max(2,NaN,1) returns 2
 max([|2, @NaN@, 1|]) returns 2

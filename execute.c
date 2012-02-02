@@ -16584,7 +16584,7 @@ node *evaluateThingInnerFpminimax(node *tree, char *timingString) {
 node *evaluateThingInner(node *tree) {
   node *copy, *tempNode, *tempNode2, *tempNode3, *tempNode4, *tempNode5, *tempNode6;
   int *intptr;
-  int resA, resB, i, resC, resD, resE, resF, resG;
+  int resA, resB, i, resC, resD, resE, resF, resG, resH;
   char *tempString, *tempString2, *timingString, *tempString3, *tempString4, *tempString5;
   char *str1, *str2, *str3;
   mpfr_t a, b, c, d, e;
@@ -18029,8 +18029,10 @@ node *evaluateThingInner(node *tree) {
                 if (resE) {
                   if (compareConstant(&resD, copy->child1, copy->child2)) {
                     resC = (resD == 0);
-                  } else 
-                    printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: equality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+                  } else {
+                    printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_UNDECIDED,"Warning: the tool is unable to decide an equality test by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.\n");
+		    resC = 1;
+		  }
                 } else 
                   printMessage(2,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT,"Information: equality test relies on floating-point result.\n");
               } else 
@@ -18073,6 +18075,7 @@ node *evaluateThingInner(node *tree) {
 		(mpfr_cmp(a,c) <= 0) && 
 		(!mpfr_unordered_p(a,b)) && 
 		(!mpfr_unordered_p(a,c)));
+	resH = (mpfr_number_p(a) && mpfr_number_p(b) && mpfr_number_p(c));
 	resB = 0;
 	if (resA == 1) {
 	  mpfr_init2(d,mpfr_get_prec(a));
@@ -18114,8 +18117,14 @@ node *evaluateThingInner(node *tree) {
 	    if (compareConstant(&resA, tempNode, copy->child1) && 
 		compareConstant(&resB, copy->child1, tempNode2)) {
 	      resC = (resA <= 0) && (resB <= 0);
-	    } else
-	      printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: containment test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+	    } else {
+	      if (resH) {
+		printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_UNDECIDED,"Warning: the tool is unable to decide a containment test by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.\n");
+		resC = 1;
+	      } else {
+		printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_NOT_REAL,"Warning: containment test relies on floating-point result that is faithfully evaluated and at least one of the sides is not a real number.\n");
+	      }
+	    }
 	    freeThing(tempNode);
 	    freeThing(tempNode2);
 	  } else 
@@ -18187,6 +18196,7 @@ node *evaluateThingInner(node *tree) {
           if ((resA == 3) || (resB == 3)) 
             printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
           resC = ((mpfr_cmp(a,b) < 0) && (!mpfr_unordered_p(a,b)));
+	  resH = (mpfr_number_p(a) && mpfr_number_p(b));
           if ((resA == 1) || (resB == 1)) {
             if (resC) {
               /* a < b */
@@ -18200,8 +18210,14 @@ node *evaluateThingInner(node *tree) {
             if ((mpfr_cmp(a,b) < 0) != resC) {
               if (compareConstant(&resD, copy->child1, copy->child2)) {
                 resC = (resD < 0);
-              } else 
-                printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: inequality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+              } else {
+		if (resH) {
+		  printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_UNDECIDED,"Warning: the tool is unable to decide an inequality test by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.\n");
+		  resC = 0;
+		} else {
+		  printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_NOT_REAL,"Warning: inequality test relies on floating-point result that is faithfully evaluated and at least one of the sides is not a real number.\n");
+		}
+	      } 
             } else 
               printMessage(2,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT,"Information: inequality test relies on floating-point result.\n");
           }
@@ -18259,6 +18275,7 @@ node *evaluateThingInner(node *tree) {
                   printMessage(1,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: minimum computation relies on floating-point result that is not faithfully evaluated.\n");
                 resC = ((mpfr_cmp(a,b) < 0) && (!mpfr_unordered_p(a,b)));
 		resG = mpfr_number_p(b);
+		resH = (mpfr_number_p(a) && mpfr_number_p(b));
                 if ((resA == 1) || (resB == 1)) {
                   if (resC) {
                     /* a < b */
@@ -18273,8 +18290,14 @@ node *evaluateThingInner(node *tree) {
                     if (compareConstant(&resD, tempNode, tempNode2)) {
                       resC = (resD < 0);
 		      resG = 1;
-                    } else 
-                      printMessage(1,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: minimum computation relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+                    } else {
+		      if (resH) {
+			printMessage(1,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT_FAITHFUL_BUT_UNDECIDED,"Warning: the tool is unable to decide a minimum computation by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.\n");
+			resC = 0;
+		      } else {
+			printMessage(1,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT_FAITHFUL_BUT_NOT_REAL,"Warning: minimum computation relies on floating-point result that is faithfully evaluated and at least one of the terms is not a real number.\n");
+		      }
+		    }
                   } else 
                     printMessage(2,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT,"Information: minimum computation relies on floating-point result.\n");
                 }
@@ -18332,6 +18355,7 @@ node *evaluateThingInner(node *tree) {
                   printMessage(1,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: minimum computation relies on floating-point result that is not faithfully evaluated.\n");
                 resC = ((mpfr_cmp(a,b) < 0) && (!mpfr_unordered_p(a,b)));
 		resG = mpfr_number_p(b);
+		resH = (mpfr_number_p(a) && mpfr_number_p(b));
                 if ((resA == 1) || (resB == 1)) {
                   if (resC) {
                     /* a < b */
@@ -18346,8 +18370,14 @@ node *evaluateThingInner(node *tree) {
                     if (compareConstant(&resD, tempNode, tempNode2)) {
                       resC = (resD < 0);
 		      resG = 1;
-                    } else 
-                      printMessage(1,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: minimum computation relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+                    } else {
+		      if (resH) {
+			printMessage(1,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT_FAITHFUL_BUT_UNDECIDED,"Warning: the tool is unable to decide a minimum computation by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.\n");
+			resC = 0;
+		      } else {
+			printMessage(1,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT_FAITHFUL_BUT_NOT_REAL,"Warning: minimum computation relies on floating-point result that is faithfully evaluated and at least one of the terms is not a real number.\n");
+		      }
+		    }
                   } else 
                     printMessage(2,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT,"Information: minimum computation relies on floating-point result.\n");
                 }
@@ -18412,6 +18442,7 @@ node *evaluateThingInner(node *tree) {
                   printMessage(1,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: maximum computation relies on floating-point result that is not faithfully evaluated.\n");
                 resC = ((mpfr_cmp(a,b) < 0) || (mpfr_unordered_p(a,b)));
 		resG = mpfr_number_p(b);
+		resH = (mpfr_number_p(a) && mpfr_number_p(b));
                 if ((resA == 1) || (resB == 1)) {
                   if (resC) {
                     /* a < b */
@@ -18426,8 +18457,14 @@ node *evaluateThingInner(node *tree) {
                     if (compareConstant(&resD, tempNode, tempNode2)) {
                       resC = (resD < 0);
 		      resG = 1;
-                    } else 
-                      printMessage(1,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: maximum computation relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+                    } else {
+		      if (resH) {
+			printMessage(1,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT_FAITHFUL_BUT_UNDECIDED,"Warning: the tool is unable to decide a maximum computation by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.\n");
+			resC = 0;
+		      } else {
+			printMessage(1,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT_FAITHFUL_BUT_NOT_REAL,"Warning: maximum computation relies on floating-point result that is faithfully evaluated and at least one of the terms is not a real number.\n");
+		      }
+		    }
                   } else 
                     printMessage(2,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT,"Information: maximum computation relies on floating-point result.\n");
                 }
@@ -18485,6 +18522,7 @@ node *evaluateThingInner(node *tree) {
                   printMessage(1,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: maximum computation relies on floating-point result that is not faithfully evaluated.\n");
                 resC = ((mpfr_cmp(a,b) < 0) || (mpfr_unordered_p(a,b)));
 		resG = mpfr_number_p(b);
+		resH = (mpfr_number_p(a) && mpfr_number_p(b));
                 if ((resA == 1) || (resB == 1)) {
                   if (resC) {
                     /* a < b */
@@ -18499,8 +18537,14 @@ node *evaluateThingInner(node *tree) {
                     if (compareConstant(&resD, tempNode, tempNode2)) {
                       resC = (resD < 0);
 		      resG = 1;
-                    } else 
-                      printMessage(1,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: maximum computation relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+                    } else {
+		      if (resH) {
+			printMessage(1,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT_FAITHFUL_BUT_UNDECIDED,"Warning: the tool is unable to decide a maximum computation by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.\n");
+			resC = 0;
+		      } else {
+			printMessage(1,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT_FAITHFUL_BUT_NOT_REAL,"Warning: maximum computation relies on floating-point result that is faithfully evaluated and at least one of the terms is not a real number.\n");
+		      }
+		    }
                   } else 
                     printMessage(2,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT,"Information: maximum computation relies on floating-point result.\n");
                 }
@@ -18549,6 +18593,7 @@ node *evaluateThingInner(node *tree) {
           if ((resA == 3) || (resB == 3)) 
             printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
           resC = ((mpfr_cmp(a,b) > 0) && (!mpfr_unordered_p(a,b)));
+	  resH = (mpfr_number_p(a) && mpfr_number_p(b));
           if ((resA == 1) || (resB == 1)) {
             if (resC) {
               /* a > b */
@@ -18562,8 +18607,14 @@ node *evaluateThingInner(node *tree) {
             if ((mpfr_cmp(a,b) > 0) != resC) {
               if (compareConstant(&resD, copy->child1, copy->child2)) {
                 resC = (resD > 0);
-              } else 
-                printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: inequality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+              } else {
+		if (resH) {
+		  printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_UNDECIDED,"Warning: the tool is unable to decide an inequality test by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.\n");
+		  resC = 0;
+		} else {
+		  printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_NOT_REAL,"Warning: inequality test relies on floating-point result that is faithfully evaluated and at least one of the sides is not a real number.\n");
+		}
+	      }
             } else 
               printMessage(2,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT,"Information: inequality test relies on floating-point result.\n");
           }
@@ -18605,6 +18656,7 @@ node *evaluateThingInner(node *tree) {
           if ((resA == 3) || (resB == 3)) 
             printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
           resC = ((mpfr_cmp(a,b) <= 0) && (!mpfr_unordered_p(a,b)));
+	  resH = (mpfr_number_p(a) && mpfr_number_p(b));
           if ((resA == 1) || (resB == 1)) {
             if (resC) {
               /* a <= b */
@@ -18618,8 +18670,14 @@ node *evaluateThingInner(node *tree) {
             if ((mpfr_cmp(a,b) <= 0) != resC) {
               if (compareConstant(&resD, copy->child1, copy->child2)) {
                 resC = (resD <= 0);
-              } else 
-                printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: inequality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+              } else {
+		if (resH) {
+		  printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_UNDECIDED,"Warning: the tool is unable to decide an inequality test by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.\n");
+		  resC = 1;
+		} else {
+		  printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_NOT_REAL,"Warning: inequality test relies on floating-point result that is faithfully evaluated and at least one of the sides is not a real number.\n");
+		}
+	      }
             } else 
               printMessage(2,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT,"Information: inequality test relies on floating-point result.\n");
           }
@@ -18661,6 +18719,7 @@ node *evaluateThingInner(node *tree) {
           if ((resA == 3) || (resB == 3)) 
             printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
           resC = ((mpfr_cmp(a,b) >= 0) && (!mpfr_unordered_p(a,b)));
+	  resH = (mpfr_number_p(a) && mpfr_number_p(b));
           if ((resA == 1) || (resB == 1)) {
             if (resC) {
               /* a >= b */
@@ -18674,8 +18733,14 @@ node *evaluateThingInner(node *tree) {
             if ((mpfr_cmp(a,b) >= 0) != resC) {
               if (compareConstant(&resD, copy->child1, copy->child2)) {
                 resC = (resD >= 0);
-              } else  
-                printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: inequality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+              } else {
+		if (resH) {
+		  printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_UNDECIDED,"Warning: the tool is unable to decide an inequality test by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.\n");
+		  resC = 1;
+		} else {
+		  printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_NOT_REAL,"Warning: inequality test relies on floating-point result that is faithfully evaluated and at least one of the sides is not a real number.\n");
+		}
+	      }
             } else 
               printMessage(2,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT,"Information: inequality test relies on floating-point result.\n");
           }
@@ -18699,7 +18764,7 @@ node *evaluateThingInner(node *tree) {
     if (timingString != NULL) pushTimeCounter();
     if ((isError(copy->child1) && (!isError(tree->child1)) && (!isError(tree->child2))) ||
 	(isError(copy->child2) && (!isError(tree->child2)) && (!isError(tree->child1)))) {
-      printMessage(1,SOLLYA_MSG_TEST_COMPARES_ERROR_TO_SOMETHING,"Warning: the evaluation of one of the sides of an inequality test yields error due to a syntax error or an error on a side-effect.\nThe other side either also yields error due to an syntax or side-effect error or does not evaluate to error.\nThe boolean returned may be meaningless.\n");
+      printMessage(1,SOLLYA_MSG_TEST_COMPARES_ERROR_TO_SOMETHING,"Warning: the evaluation of one of the sides of an equality test yields error due to a syntax error or an error on a side-effect.\nThe other side either also yields error due to an syntax or side-effect error or does not evaluate to error.\nThe boolean returned may be meaningless.\n");
     } 
     if (isEqualThing(copy->child1,copy->child2)) {
       if (!isError(copy->child1)) {
@@ -18725,6 +18790,7 @@ node *evaluateThingInner(node *tree) {
             if ((resA == 3) || (resB == 3)) 
               printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: equality test relies on floating-point result that is not faithfully evaluated.\n");
             resC = !(mpfr_equal_p(a,b) || mpfr_unordered_p(a,b));
+	    resH = (mpfr_number_p(a) && mpfr_number_p(b));
             if ((resA == 1) || (resB == 1)) {
               if (mpfr_number_p(a) && mpfr_number_p(b)) {
                 resE = 0;
@@ -18748,8 +18814,14 @@ node *evaluateThingInner(node *tree) {
                 if (resE) {
                   if (compareConstant(&resD, copy->child1, copy->child2)) {
                     resC = (resD != 0);
-                  } else 
-                    printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: equality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+                  } else {
+		    if (resH) {
+		      printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_UNDECIDED,"Warning: the tool is unable to decide an equality test by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.\n");
+		      resC = 0;
+		    } else {
+		      printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_NOT_REAL,"Warning: equality test relies on floating-point result that is faithfully evaluated and at least one of the sides is not a real number.\n");
+		    }
+		  }
                 } else 
                   printMessage(2,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT,"Information: equality test relies on floating-point result.\n");
               } else 

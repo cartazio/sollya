@@ -1,7 +1,7 @@
 #include <sollya.h>
 
 int callback(int message) {
-  if (message == SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING)
+  if (message == SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_UNDECIDED)
     sollya_lib_printf("The following test relies on floating point evaluation and is not certified\n");
   else
     sollya_lib_printf("Unexpected warning message %d\n", message);
