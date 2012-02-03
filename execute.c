@@ -2874,7 +2874,7 @@ int evaluateThingToConstant(mpfr_t result, node *tree, mpfr_t *defaultVal, int s
 
 
 int evaluateThingToInteger(int *result, node *tree, int *defaultVal) {
-  mpfr_t *defaultValMpfr, resultMpfr, resInt;
+  mpfr_t *defaultValMpfr, resultMpfr, resultMpfr2, resInt;
   int res, tempResult;
 
   if (defaultVal != NULL) {
@@ -2886,15 +2886,16 @@ int evaluateThingToInteger(int *result, node *tree, int *defaultVal) {
   }
 
   mpfr_init2(resultMpfr,sizeof(int)*16);
+  mpfr_init2(resultMpfr2,sizeof(int)*16);
 
   res = evaluateThingToConstant(resultMpfr, tree, defaultValMpfr, 0);
 
   if (res) {
     tempResult = mpfr_get_si(resultMpfr, GMP_RNDN);
 
-    mpfr_sub_si(resultMpfr, resultMpfr, tempResult, GMP_RNDN);
+    mpfr_sub_si(resultMpfr2, resultMpfr, tempResult, GMP_RNDN);
 
-    if (!mpfr_zero_p(resultMpfr)) {
+    if (!mpfr_zero_p(resultMpfr2)) {
       mpfr_init2(resInt,8 * sizeof(int) + 10);
       mpfr_set_si(resInt,tempResult,GMP_RNDN);
 
@@ -2927,6 +2928,7 @@ int evaluateThingToInteger(int *result, node *tree, int *defaultVal) {
   }
 
   mpfr_clear(resultMpfr);
+  mpfr_clear(resultMpfr2);
   
   return res;
 }

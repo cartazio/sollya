@@ -58,6 +58,7 @@ tceil.c \
 tcmp_equal.c \
 tcmp_in.c \
 tcmp_objs_structurally.c \
+tcoeff.c \
 tconstant.c \
 tconstant_from_double.c \
 tconstant_from_int64.c \
