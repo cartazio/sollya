@@ -229,6 +229,7 @@ tsqrt.c \
 tstring.c \
 tstring_list_ops.c \
 tsub.c \
+tsubpoly.c \
 tsubstitute.c \
 ttan.c \
 ttanh.c \
