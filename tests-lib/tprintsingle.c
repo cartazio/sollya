@@ -18,7 +18,7 @@ int main(void) {
   sollya_obj_t temp;
   int i;
   float huge = 1e38f;
-  float infval, nanval;
+  volatile float infval, nanval;
   uint32_t specialval = 0x3fb504f3u;
 
   sollya_lib_init();
