@@ -56,7 +56,12 @@ tbuild_function_triple_double.c \
 tcanonical.c \
 tceil.c \
 tcmp_equal.c \
+tcmp_greater.c \
+tcmp_greater_equal.c \
 tcmp_in.c \
+tcmp_less.c \
+tcmp_less_equal.c \
+tcmp_not_equal.c \
 tcmp_objs_structurally.c \
 tcoeff.c \
 tconstant.c \

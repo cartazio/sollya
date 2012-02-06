@@ -34,24 +34,24 @@ int main(void) {
   /* Equality between numbers */
   a = SOLLYA_CONST(17);
   b = SOLLYA_CONST(42);
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
 
   a = SOLLYA_CONST(42);
   b = SOLLYA_CONST(17);
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
 
   a = SOLLYA_CONST(17);
   b = SOLLYA_CONST(17);
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
@@ -59,8 +59,8 @@ int main(void) {
   /* Equality between arithmetical expressions */
   a = SOLLYA_SIN(SOLLYA_DIV(SOLLYA_PI, SOLLYA_CONST(3)));
   b = SOLLYA_DIV(SOLLYA_SQRT(SOLLYA_CONST(3)), SOLLYA_CONST(2));
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
@@ -68,8 +68,8 @@ int main(void) {
   a = SOLLYA_SIN(SOLLYA_DIV(SOLLYA_PI, SOLLYA_CONST(3)));
   b = SOLLYA_DIV(SOLLYA_SQRT(SOLLYA_CONST(3)), SOLLYA_CONST(2));
   b = SOLLYA_MUL(b, SOLLYA_ADD(SOLLYA_CONST(1), sollya_lib_parse_string("1b-200")));
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
@@ -78,8 +78,8 @@ int main(void) {
   a = SOLLYA_SUB(SOLLYA_SIN(SOLLYA_DIV(SOLLYA_PI, SOLLYA_CONST(3))),
                  SOLLYA_DIV(SOLLYA_SQRT(SOLLYA_CONST(3)), SOLLYA_CONST(2)));
   b = SOLLYA_CONST(1);
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
@@ -87,8 +87,8 @@ int main(void) {
   a = SOLLYA_SUB(SOLLYA_SIN(SOLLYA_DIV(SOLLYA_PI, SOLLYA_CONST(3))),
                  SOLLYA_DIV(SOLLYA_SQRT(SOLLYA_CONST(3)), SOLLYA_CONST(2)));
   b = SOLLYA_CONST(0);
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
@@ -96,8 +96,8 @@ int main(void) {
   a = SOLLYA_CONST(1);
   b = SOLLYA_SUB(SOLLYA_SIN(SOLLYA_DIV(SOLLYA_PI, SOLLYA_CONST(3))),
                  SOLLYA_DIV(SOLLYA_SQRT(SOLLYA_CONST(3)), SOLLYA_CONST(2)));
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
@@ -105,8 +105,8 @@ int main(void) {
   a = SOLLYA_CONST(0);
   b = SOLLYA_SUB(SOLLYA_SIN(SOLLYA_DIV(SOLLYA_PI, SOLLYA_CONST(3))),
                  SOLLYA_DIV(SOLLYA_SQRT(SOLLYA_CONST(3)), SOLLYA_CONST(2)));
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
@@ -114,16 +114,16 @@ int main(void) {
   /* Equality involving NaN produced by evaluation */
   a = SOLLYA_CONST(1);
   b = SOLLYA_LOG(SOLLYA_CONST(-17));
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
 
   a = SOLLYA_LOG(SOLLYA_CONST(-17));
   b = SOLLYA_CONST(1);
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
@@ -131,64 +131,64 @@ int main(void) {
   /* Equality involving infinity */
   a = SOLLYA_CONST(1);
   b = SOLLYA_POW(SOLLYA_TAN(SOLLYA_DIV(SOLLYA_PI, SOLLYA_CONST(2))), SOLLYA_CONST(2));
-    res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+    res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
 
   a = SOLLYA_CONST(1);
   b = SOLLYA_NEG(SOLLYA_POW(SOLLYA_TAN(SOLLYA_DIV(SOLLYA_PI, SOLLYA_CONST(2))), SOLLYA_CONST(2)));
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
 
   a = SOLLYA_POW(SOLLYA_TAN(SOLLYA_DIV(SOLLYA_PI, SOLLYA_CONST(2))), SOLLYA_CONST(2));
   b = SOLLYA_CONST(1);
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
 
   a = SOLLYA_NEG(SOLLYA_POW(SOLLYA_TAN(SOLLYA_DIV(SOLLYA_PI, SOLLYA_CONST(2))), SOLLYA_CONST(2)));
   b = SOLLYA_CONST(1);
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
 
   a = sollya_lib_parse_string("@Inf@;");
   b = SOLLYA_NEG(SOLLYA_POW(SOLLYA_TAN(SOLLYA_DIV(SOLLYA_PI, SOLLYA_CONST(2))), SOLLYA_CONST(2)));
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
 
   a = SOLLYA_NEG(SOLLYA_POW(SOLLYA_TAN(SOLLYA_DIV(SOLLYA_PI, SOLLYA_CONST(2))), SOLLYA_CONST(2)));
   b = sollya_lib_parse_string("@Inf@;");
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
 
   a = sollya_lib_parse_string("@Inf@;");
   b = SOLLYA_POW(SOLLYA_TAN(SOLLYA_DIV(SOLLYA_PI, SOLLYA_CONST(2))), SOLLYA_CONST(2));
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
 
   a = SOLLYA_POW(SOLLYA_TAN(SOLLYA_DIV(SOLLYA_PI, SOLLYA_CONST(2))), SOLLYA_CONST(2));
   b = sollya_lib_parse_string("@Inf@;");
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
@@ -196,24 +196,24 @@ int main(void) {
   /* Equality involving errors */
   a = sollya_lib_error();
   b = SOLLYA_CONST(17);
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
 
   a = sollya_lib_error();
   b = sollya_lib_error();
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
 
   a = SOLLYA_CONST(nan);
   b = sollya_lib_error();
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
@@ -221,16 +221,16 @@ int main(void) {
   /* Equality involving NaN */
   a = SOLLYA_CONST(nan);
   b =  SOLLYA_CONST(nan);
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
 
   a = SOLLYA_CONST(nan);
   b =  SOLLYA_CONST(1);
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
@@ -238,8 +238,8 @@ int main(void) {
   /* Commutativity */
   a = SOLLYA_ADD(SOLLYA_CONST(2), SOLLYA_X_);
   b = SOLLYA_ADD(SOLLYA_X_, SOLLYA_CONST(2));
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
@@ -252,8 +252,8 @@ int main(void) {
   mpfr_set_ui(tmp2, 2, GMP_RNDN);
   b = sollya_lib_range_from_bounds(tmp1, tmp2);
   mpfr_clear(tmp1); mpfr_clear(tmp2);
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b (even when bounds are stored at different precisions)\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b (even when bounds are stored at different precisions)\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
@@ -265,8 +265,8 @@ int main(void) {
   sollya_lib_clear_obj(c);
   b = sollya_lib_parse_string("sin(x + log(x^2))");
   b = SOLLYA_ADD(SOLLYA_CONST(1), SOLLYA_EXP(b));
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b (even when constructed at different precisions)\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b (even when constructed at different precisions)\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
@@ -274,8 +274,8 @@ int main(void) {
   /* Equality between strings */
   a = sollya_lib_string("Hello!");
   b = sollya_lib_string("Hella!");
-  res = sollya_lib_cmp_equal(a, b);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, b, res);
+  res = sollya_lib_cmp_not_equal(a, b);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, b, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(res);
@@ -284,8 +284,8 @@ int main(void) {
   b = sollya_lib_string("ello!");
   c = sollya_lib_string("H");
   d = sollya_lib_concat(c, b);
-  res = sollya_lib_cmp_equal(a, d);
-  sollya_lib_printf("%b == %b returns %b\n\n", a, d, res);
+  res = sollya_lib_cmp_not_equal(a, d);
+  sollya_lib_printf("%b != %b returns %b\n\n", a, d, res);
   sollya_lib_clear_obj(a);
   sollya_lib_clear_obj(b);
   sollya_lib_clear_obj(c);
