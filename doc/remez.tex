@@ -34,8 +34,8 @@ Parameters:
    greater than $n$.
    If \emph{L} is given and is a list of integers, $p$ is searched as a linear
    combination of monomials $X^k$ where $k$ belongs to \emph{L}.
-   In the case when \emph{L} is a list of integers, it may contain ellipses but cannot be
-   end-elliptic.
+   In the case when \emph{L} is a list of integers, it may contain ellipses but cannot
+   be end-elliptic.
    If \emph{L} is given and is a list of functions $g_k$, $p$ is searched as a
    linear combination of the $g_k$. In that case \emph{L} cannot contain ellipses.
    It is the user responsability to check that the $g_k$ are linearly independent
@@ -44,8 +44,8 @@ Parameters:
    algorithm might fail or even silently return a result as if it successfully
    found the minimax, though the returned $p$ is not optimal.
 
-\item The polynomial is obtained by a convergent iteration called Remez' algorithm
-   (and an extension of this algorithm, due to Stiefel).
+\item The polynomial is obtained by a convergent iteration called Remez'
+   algorithm (and an extension of this algorithm, due to Stiefel).
    The algorithm computes a sequence $p_1,\dots ,p_k,\dots$
    such that $e_k = \|p_k w-f\|_{\infty}$ converges towards
    the optimal value $e$. The algorithm is stopped when the relative error
