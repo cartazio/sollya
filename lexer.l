@@ -478,7 +478,7 @@ NOP             "nop"
 		}
 
 <readstate>.         { /* otherwise */
-			printMessage(1,"The character \"%s\" cannot be recognized. Will ignore it.\n",
+			printMessage(1,SOLLYA_MSG_A_CHARACTER_COULD_NOT_BE_RECOGNIZED,"The character \"%s\" cannot be recognized. Will ignore it.\n",
 				yytext);
 		}
 
@@ -487,13 +487,10 @@ NOP             "nop"
 		      demaskString(newReadFilenameTemp,newReadFilename);
 		      temp_fd = fopen(newReadFilenameTemp,"r");
 		      if (temp_fd == NULL) {
+                        printMessage(1,SOLLYA_MSG_A_FILE_COULD_NOT_BE_OPENED_FOR_READING,"Warning: the file \"%s\" could not be opened for reading: \"%s\".\nThe last command will have no effect. No memory will be lost.\n",
+                                     newReadFilenameTemp,strerror(errno));
                         if (verbosity >= 1) {
-                           changeToWarningMode();
-                           sollyaPrintf("Warning: the file \"%s\" could not be opened for reading: ",newReadFilenameTemp);
-                           sollyaPrintf("\"%s\".\n",strerror(errno));
-			   sollyaPrintf("The last command will have no effect. No memory will be lost.\n");
                            considerDyingOnError();
-                           restoreMode();
                         }
                         promptToBePrinted = 1;
 		      } else {
@@ -515,7 +512,7 @@ NOP             "nop"
 		}
 
 <readstate2>.         { /* otherwise */
-			printMessage(1,"The character \"%s\" cannot be recognized. Will ignore it.\n",
+			printMessage(1,SOLLYA_MSG_A_CHARACTER_COULD_NOT_BE_RECOGNIZED,"The character \"%s\" cannot be recognized. Will ignore it.\n",
 				yytext);
 		}
 
@@ -542,14 +539,14 @@ NOP             "nop"
 {MIDPOINTCONSTANT}                          {
 					      constBuffer2 = (char *) safeCalloc(yyleng+1,sizeof(char));
 					      if (removeSpaces(constBuffer2,yytext)) {
-						printMessage(2,"Information: removed spaces in scientific notation constant \"%s\", it will be considered as \"%s\"\n",yytext,constBuffer2);
+						printMessage(2,SOLLYA_MSG_SPACES_REMOVED_FROM_CONSTANT_IN_SCIENTIF_NOTAT,"Information: removed spaces in scientific notation constant \"%s\", it will be considered as \"%s\"\n",yytext,constBuffer2);
 					      }
 					      yylval->value = constBuffer2;
                                               newTokenLexed(); return MIDPOINTCONSTANTTOKEN; }
 {CONSTANT}                                  {
 					      constBuffer2 = (char *) safeCalloc(yyleng+1,sizeof(char));
 					      if (removeSpaces(constBuffer2,yytext)) {
-						printMessage(2,"Information: removed spaces in scientific notation constant \"%s\", it will be considered as \"%s\"\n",yytext,constBuffer2);
+						printMessage(2,SOLLYA_MSG_SPACES_REMOVED_FROM_CONSTANT_IN_SCIENTIF_NOTAT,"Information: removed spaces in scientific notation constant \"%s\", it will be considered as \"%s\"\n",yytext,constBuffer2);
 					      }
 					      yylval->value = constBuffer2;
                                               newTokenLexed(); return CONSTANTTOKEN; }
@@ -834,7 +831,7 @@ NOP             "nop"
 					      newTokenLexed(); return IDENTIFIERTOKEN; }
 
 .		{ /* otherwise */
-			printMessage(1,"The character \"%s\" cannot be recognized. Will ignore it.\n",
+			printMessage(1,SOLLYA_MSG_A_CHARACTER_COULD_NOT_BE_RECOGNIZED,"The character \"%s\" cannot be recognized. Will ignore it.\n",
 				yytext);
 		}
 

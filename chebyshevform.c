@@ -1251,7 +1251,7 @@ void chebyshevform(node **Ch, chain **errors, sollya_mpfi_t delta,
 
   /* Check if degree is at least 1, once it has been adjusted */
   if (n < 1) {
-    printMessage(1,"Warning: the degree of a Chebyshev Model must be at least 0.\n");
+    printMessage(1,SOLLYA_MSG_CHEBYSHEVFORM_DEGREE_MUST_NOT_BE_NEGATIVE,"Warning: the degree of a Chebyshev must not be negative.\n");
     *Ch = NULL;
     return;
   }
@@ -1265,7 +1265,7 @@ void chebyshevform(node **Ch, chain **errors, sollya_mpfi_t delta,
   
   
   if (mpfr_cmp(domR,domL)==0) {
-    printMessage(1,"Warning: the domain of a Chebyshev Model can not be a point interval.\n");
+    printMessage(1,SOLLYA_MSG_CHEBYSHEVFORM_DOMAIN_MUST_NOT_BE_POINT_INTERVAL,"Warning: the domain of a Chebyshev Model can not be a point interval.\n");
     mpfr_clear(domL);
     mpfr_clear(domR);
     *Ch = NULL;

@@ -192,7 +192,7 @@ int checkInequalityFast(int *res, node *a, node *b) {
   return okay;
 }
 
-node *parseString(char *str) {
+node *parseStringInternal(char *str) {
   node *result;
   node *oldMinitree;
   void *myScanner;
@@ -225,6 +225,16 @@ node *parseString(char *str) {
   return result;
 }
 
+node *parseString(char *str) {
+  node *res;
+
+  res = parseStringInternal(str);
+  if (res != NULL) return res;
+  
+  printMessage(1,SOLLYA_MSG_STRING_CANNOT_BE_PARSED_BY_MINIPARSER,"Warning: the string \"%s\" could not be parsed by the miniparser.\n",str);
+  return makeError();
+}
+
 rangetype guessDegreeWrapper(node *func, node *weight, mpfr_t a, mpfr_t b, mpfr_t eps, int bound) {
   rangetype result;
   jmp_buf oldEnvironment;
@@ -239,8 +249,8 @@ rangetype guessDegreeWrapper(node *func, node *weight, mpfr_t a, mpfr_t b, mpfr_
   } else {
     verbosity = oldVerbosity;
     defaultpoints = oldPoints;
-    printMessage(1,"Warning: some error occurred while executing guessdegree.\n");
-    printMessage(1,"Warning: the last command could not be executed. May leak memory.\n");
+    printMessage(1,SOLLYA_MSG_ERROR_ON_RUNNING_GUESSDEGREE,"Warning: some error occurred while executing guessdegree.\n");
+    printMessage(1,SOLLYA_MSG_CONTINUATION,"Warning: the last command could not be executed. May leak memory.\n");
     considerDyingOnError();
     result.a = NULL; result.b = NULL;
   }
@@ -290,7 +300,7 @@ void executeFile(FILE *fd) {
   res = executeCommand(tempThing);
 
   if (res) {
-    printMessage(1,"Warning: the execution of a file read by execute demanded stopping the interpretation but it is not stopped.\n");
+    printMessage(1,SOLLYA_MSG_FILE_EXECUTION_ASKED_FOR_QUIT_NOT_QUITTING,"Warning: the execution of a file read by execute demanded stopping the interpretation but it is not stopped.\n");
   }
 
   freeThing(tempThing);
@@ -2726,9 +2736,9 @@ int evaluateThingToConstant(mpfr_t result, node *tree, mpfr_t *defaultVal, int s
     if (!isConstant(simplified2)) {
       if (dirtyIsConstant(simplified2)) {
 	if (!noRoundingWarnings) {
-	  printMessage(1,"Warning: the given expression should be constant in this context.\n");
-	  printMessage(1,"The expression actually seems to be constant but no proof could be established.\n");
-	  printMessage(1,"The resulting syntax error might be unjustified.\n");
+	  printMessage(1,SOLLYA_MSG_EXPR_SHOULD_BE_CONSTANT_AND_SEEMS_CONSTANT,"Warning: the given expression should be constant in this context.\n");
+	  printMessage(1,SOLLYA_MSG_CONTINUATION,"The expression actually seems to be constant but no proof could be established.\n");
+	  printMessage(1,SOLLYA_MSG_CONTINUATION,"The resulting syntax error might be unjustified.\n");
 	}
       }
       mpfr_clear(tempResult);
@@ -2744,8 +2754,8 @@ int evaluateThingToConstant(mpfr_t result, node *tree, mpfr_t *defaultVal, int s
 
     if (!isConstant(simplified)) {
       if (!noRoundingWarnings) {
-	printMessage(1,"Warning: the given expression should be constant in this context.\nIt proves constant under floating point evaluation.\n");
-	printMessage(1,"In this evaluation, %s will be set to 1 when evaluating the expression to a constant.\n",((variablename == NULL) ? "_x_" : variablename));
+	printMessage(1,SOLLYA_MSG_EXPR_SHOULD_BE_CONSTANT_AND_IS_CONSTANT_ON_FP,"Warning: the given expression should be constant in this context.\nIt proves constant under floating point evaluation.\n");
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"In this evaluation, %s will be set to 1 when evaluating the expression to a constant.\n",((variablename == NULL) ? "_x_" : variablename));
 	noMessage = 1;
       }
     }
@@ -2786,24 +2796,24 @@ int evaluateThingToConstant(mpfr_t result, node *tree, mpfr_t *defaultVal, int s
 	  mpfr_set_ui(tempResult,0,GMP_RNDN);
 	  if (!noMessage) {
 	    if (!noRoundingWarnings) {
-	      printMessage(1,"Warning: the given expression is not a constant but an expression to evaluate\n");
-	      printMessage(1,"and a faithful evaluation is not possible. Will consider the constant to be 0.\n");
+	      printMessage(1,SOLLYA_MSG_EXPR_SHOULD_BE_CONSTANT_AND_IS_NOT_FAITHFUL,"Warning: the given expression is not a constant but an expression to evaluate\n");
+	      printMessage(1,SOLLYA_MSG_CONTINUATION,"and a faithful evaluation is not possible. Will consider the constant to be 0.\n");
 	    } 
 	  } else {
 	    if (!noRoundingWarnings) {
-	      printMessage(1,"Warning: the expression could not be faithfully evaluated.\n");
+	      printMessage(1,SOLLYA_MSG_SOME_EVALUATION_IS_NOT_FAITHFUL,"Warning: the expression could not be faithfully evaluated.\n");
 	    }
 	  }
 	} else {
 	  if (!noMessage) {
 	    if (!noRoundingWarnings) {
-	      printMessage(1,"Warning: the given expression is not a constant but an expression to evaluate\n");
-	      printMessage(1,"and a faithful evaluation is not possible.\n");
-              printMessage(1,"Will use a plain floating-point evaluation, which might yield a completely wrong value.\n");
+	      printMessage(1,SOLLYA_MSG_EXPR_SHOULD_BE_CONSTANT_NO_FAITHFUL_PLAIN_FP,"Warning: the given expression is not a constant but an expression to evaluate\n");
+	      printMessage(1,SOLLYA_MSG_CONTINUATION,"and a faithful evaluation is not possible.\n");
+              printMessage(1,SOLLYA_MSG_CONTINUATION,"Will use a plain floating-point evaluation, which might yield a completely wrong value.\n");
 	    } 
 	  } else {
 	    if (!noRoundingWarnings) {
-	      printMessage(1,"Warning: the expression could not be faithfully evaluated.\n");
+	      printMessage(1,SOLLYA_MSG_SOME_EVALUATION_IS_NOT_FAITHFUL,"Warning: the expression could not be faithfully evaluated.\n");
 	    }
 	  }
 	  evaluate(tempResult, simplified, tempMpfr, defaultprecision * 256);
@@ -2822,7 +2832,7 @@ int evaluateThingToConstant(mpfr_t result, node *tree, mpfr_t *defaultVal, int s
       if (simplified->nodeType != CONSTANT) {
 	if (!noMessage) {
 	  if ((!noRoundingWarnings) && (!silent)) {
-	    printMessage(1,"Warning: the given expression is not a constant but an expression to evaluate. A faithful evaluation will be used.\n");
+	    printMessage(1,SOLLYA_MSG_FAITHFUL_ROUNDING_FOR_EXPR_THAT_SHOULD_BE_CONST,"Warning: the given expression is not a constant but an expression to evaluate. A faithful evaluation will be used.\n");
 	  }
 	}
       }
@@ -2888,8 +2898,8 @@ int evaluateThingToInteger(int *result, node *tree, int *defaultVal) {
       mpfr_clear(resInt);
 
       if (!noRoundingWarnings) {
-	printMessage(1,"Warning: the given expression does not evaluate to a machine integer.\n");
-	printMessage(1,"Will round it to the nearest machine integer.\n");
+	printMessage(1,SOLLYA_MSG_CONSTANT_IS_NOT_MACHINE_INTEGER_WILL_ROUND,"Warning: the given expression does not evaluate to a machine integer.\n");
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"Will round it to the nearest machine integer.\n");
       }
     }
 
@@ -3161,8 +3171,8 @@ int evaluateThingToExtendedExpansionFormat(int *result, node *tree) {
       return 0;
     }
     if (resA < 2) {
-      printMessage(1,"Warning: the precision of numbers must be at least 2 bits.\n");
-      printMessage(1,"Will change the precision indication to 2 bits.\n");
+      printMessage(1,SOLLYA_MSG_PRECISION_OF_NUMBERS_MUST_BE_AT_LEAST_TWO_BITS,"Warning: the precision of numbers must be at least 2 bits.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"Will change the precision indication to 2 bits.\n");
       resA = 2;
     } 
     *result = resA + 6;
@@ -5717,7 +5727,7 @@ int assignThingToTable(char *identifier, node *thing) {
       (getFunction(identifier) != NULL) ||
       (getConstantFunction(identifier) != NULL) ||
       (getProcedure(identifier) != NULL)) {
-    printMessage(1,"Warning: the identifier \"%s\" is already bound to the free variable, to a library function, library constant or to an external procedure.\nThe command will have no effect.\n", identifier);
+    printMessage(1,SOLLYA_MSG_IDENTIFIER_ALREADY_BOUND,"Warning: the identifier \"%s\" is already bound to the free variable, to a library function, library constant or to an external procedure.\nThe command will have no effect.\n", identifier);
     considerDyingOnError();
     return 0;
   }
@@ -5728,7 +5738,7 @@ int assignThingToTable(char *identifier, node *thing) {
   }
 
   if (containsEntry(symbolTable, identifier)) {
-    printMessage(3,"Information: the identifier \"%s\" has already been assigned to. This a reassignment.\n",identifier);
+    printMessage(3,SOLLYA_MSG_IDENTIFIER_REASSIGNMENT,"Information: the identifier \"%s\" has already been assigned to. This a reassignment.\n",identifier);
     symbolTable = removeEntry(symbolTable, identifier, freeThingOnVoid);
   }
 
@@ -5927,14 +5937,14 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
 	      if (!noRoundingWarnings) {
 		if (!shown) {
 		  if ((!faithfulAlreadyKnown) || (!mpfr_zero_p(a))) {
-		    printMessage(1,"Warning: rounding has happened. The value displayed is a faithful rounding of the true result.\n");
+		    printMessage(1,SOLLYA_MSG_DISPLAYED_VALUE_IS_FAITHFULLY_ROUNDED,"Warning: rounding has happened. The value displayed is a faithful rounding of the true result.\n");
 		  }
 		}
 		shown = 1;
 	      }
 	    } else {
 	      if (mpfr_nan_p(a)) {
-		printMessage(1,"Warning: the given expression is undefined or numerically unstable.\n");
+		printMessage(1,SOLLYA_MSG_EXPRESSION_UNDEFINED_OR_UNSTABLE,"Warning: the given expression is undefined or numerically unstable.\n");
 	      }
 	    }
 	    printValue(&a);
@@ -5966,7 +5976,7 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
 		  mpfr_set_ui(a,0,GMP_RNDN);
 		  if (!noRoundingWarnings) {
 		    if (!shown) {
-		      printMessage(1,"Warning: rounding may have happened.\nIf there is rounding, the displayed value is *NOT* guaranteed to be a faithful rounding of the true result.\n");
+		      printMessage(1,SOLLYA_MSG_ROUNDING_MAY_HAVE_HAPPENED_AND_NOT_FAITHFUL,"Warning: rounding may have happened.\nIf there is rounding, the displayed value is *NOT* guaranteed to be a faithful rounding of the true result.\n");
 		      shown = 1;
 		    }
 		  }
@@ -5985,13 +5995,13 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
 		if (mpfr_number_p(a)) {
 		  if (!noRoundingWarnings) {
 		    if (!shown) {
-		      printMessage(1,"Warning: rounding has happened.\nThe displayed value is *NOT* guaranteed to be a faithful rounding of the true result.\n");
-		      if (extraMessage) printMessage(1,"The displayed value has been computed using plain floating-point arithmetic and might be completely wrong.\n");
+		      printMessage(1,SOLLYA_MSG_ROUNDING_MAY_HAVE_HAPPENED_AND_NOT_FAITHFUL,"Warning: rounding has happened.\nThe displayed value is *NOT* guaranteed to be a faithful rounding of the true result.\n");
+		      if (extraMessage) printMessage(1,SOLLYA_MSG_EVALUATION_WITH_PLAIN_FP_ARITHMETIC,"The displayed value has been computed using plain floating-point arithmetic and might be completely wrong.\n");
 		      shown = 1;
 		    }
 		  }
 		} else {
-		  printMessage(1,"Warning: the given expression is undefined or numerically unstable.\n");
+		  printMessage(1,SOLLYA_MSG_EXPRESSION_UNDEFINED_OR_UNSTABLE,"Warning: the given expression is undefined or numerically unstable.\n");
 		  if (!isAffine(tempNode5)) mpfr_set_nan(a);
 		}
 	      }  
@@ -6011,15 +6021,15 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
 
       if (!isSyntacticallyEqual(tempNode3,tempNode2)) {
 	if (!noRoundingWarnings) {
-	  if (!shown) printMessage(1,"Warning: rounding may have happened.\n");
+	  if (!shown) printMessage(1,SOLLYA_MSG_ROUNDING_MAY_HAVE_HAPPENED_SOMEWHERE,"Warning: rounding may have happened.\n");
 	  shown = 1;
 	}
       }
       if (treeSize(tempNode3) > MAXHORNERTREESIZE) {
 	if (canonical) 
-	  printMessage(1,"Warning: the expression is too big for being written in canonical form.\n");
+	  printMessage(1,SOLLYA_MSG_EXPRESSION_TOO_BIG_FOR_CANONICAL_FORM,"Warning: the expression is too big for being written in canonical form.\n");
 	else 
-	  printMessage(1,"Warning: the expression is too big for being written in Horner form.\n");
+	  printMessage(1,SOLLYA_MSG_EXPRESSION_TOO_BIG_FOR_HORNER_FORM,"Warning: the expression is too big for being written in Horner form.\n");
 	temp_node = copyTree(tempNode3);
       } else {
 	okay = 0;
@@ -6031,7 +6041,7 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
 	    tempNode4 = simplifyTree(temp_node);
 	  if (!isSyntacticallyEqual(tempNode4,temp_node)) {
 	    if (!noRoundingWarnings) {
-	      if (!shown) printMessage(1,"Warning: rounding may have happened.\n");
+	      if (!shown) printMessage(1,SOLLYA_MSG_ROUNDING_MAY_HAVE_HAPPENED_SOMEWHERE,"Warning: rounding may have happened.\n");
 	      shown = 1;
 	    }
 	    freeThing(temp_node);
@@ -6045,7 +6055,7 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
 	      }
 	    }
 	    if (!okay) {
-	      if (!shown2) printMessage(2,"Information: double simplification necessary\n");
+	      if (!shown2) printMessage(2,SOLLYA_MSG_DOUBLE_SIMPLIFICATION_NECESSARY,"Information: double simplification necessary\n");
 	      shown2 = 1;
 	      freeThing(tempNode3);
 	      tempNode3 = copyThing(tempNode4);
@@ -6309,7 +6319,7 @@ int executeCommand(node *tree) {
   if (!setjmp(recoverEnvironmentError)) {
     res = executeCommandInner(tree);
   } else {
-    printMessage(1,"Warning: the last command could not be executed. May leak memory.\n");
+    printMessage(1,SOLLYA_MSG_COMMAND_NOT_EXECUTABLE,"Warning: the last command could not be executed. May leak memory.\n");
     considerDyingOnError();
     res = 0;
   }
@@ -6329,10 +6339,10 @@ int timeCommand(mpfr_t time, node *tree) {
   before = safeMalloc(sizeof(struct timeval));
   after = safeMalloc(sizeof(struct timeval));
   if(gettimeofday(before,NULL)!=0)
-    printMessage(1, "Warning: unable to use the timer. Measures may be untrustable\n");
+    printMessage(1, SOLLYA_MSG_TIMER_UNUSABLE, "Warning: unable to use the timer. Measures may be untrustable\n");
   res = executeCommand(tree);
   if(gettimeofday(after,NULL)!=0)
-    printMessage(1, "Warning: unable to use the timer. Measures may be untrustable\n");
+    printMessage(1, SOLLYA_MSG_TIMER_UNUSABLE, "Warning: unable to use the timer. Measures may be untrustable\n");
 
   seconds = (long int)(after->tv_sec) - (long int)(before->tv_sec);
   microseconds = (long int)(after->tv_usec) - (long int)(before->tv_usec);
@@ -6471,7 +6481,7 @@ node *recomputeLeftHandSideForAssignmentInStructure(node *oldValue, node *newVal
     return createNestedStructure(newValue, idents); 
 
   if (!isStructure(oldValue)) {
-    printMessage(1,"Warning: cannot modify an element of something that is not a structure.\n");
+    printMessage(1,SOLLYA_MSG_CAN_MODIFY_ONLY_ELEMENTS_OF_STRUCTURES,"Warning: cannot modify an element of something that is not a structure.\n");
     return NULL;
   }
 
@@ -6515,7 +6525,7 @@ node *recomputeLeftHandSideForAssignmentInStructure(node *oldValue, node *newVal
 	    ((entry *) (currentAssoc->value))->value = copyThing(newValue);
 	  } else {
 	    okay = 0;
-	    printMessage(1,"Warning: cannot modify an element of something that is not a structure.\n");
+	    printMessage(1,SOLLYA_MSG_CAN_MODIFY_ONLY_ELEMENTS_OF_STRUCTURES,"Warning: cannot modify an element of something that is not a structure.\n");
 	    break;
 	  }
 	}
@@ -6587,8 +6597,8 @@ int executeCommandInner(node *tree) {
     result = 0;
     do {
       if (!evaluateThingToBoolean(&intTemp, tree->child1, NULL)) {
-	printMessage(1,"Warning: the given expression does not evaluate to a boolean.\n");
-	printMessage(1,"The while loop will not be executed.\n");
+	printMessage(1,SOLLYA_MSG_CONTROL_STRUCTURE_NOT_EXECUTABLE_EXPR_NO_BOOLEAN,"Warning: the given expression does not evaluate to a boolean.\n");
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"The while loop will not be executed.\n");
         considerDyingOnError();
 	break;
       }
@@ -6605,8 +6615,8 @@ int executeCommandInner(node *tree) {
     result = 0;
     curr = tree->arguments;
     if (!evaluateThingToBoolean(&intTemp, (node *) (curr->value), NULL)) {
-      printMessage(1,"Warning: the given expression does not evaluate to a boolean.\n");
-      printMessage(1,"Neither the if nor the else statement will be executed.\n");
+      printMessage(1,SOLLYA_MSG_CONTROL_STRUCTURE_NOT_EXECUTABLE_EXPR_NO_BOOLEAN,"Warning: the given expression does not evaluate to a boolean.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"Neither the if nor the else statement will be executed.\n");
       considerDyingOnError();
     } else {
       if (intTemp) {
@@ -6621,8 +6631,8 @@ int executeCommandInner(node *tree) {
   case IF:
     result = 0;
     if (!evaluateThingToBoolean(&intTemp, tree->child1, NULL)) {
-      printMessage(1,"Warning: the given expression does not evaluate to a boolean.\n");
-      printMessage(1,"The if statement will not be executed.\n");
+      printMessage(1,SOLLYA_MSG_CONTROL_STRUCTURE_NOT_EXECUTABLE_EXPR_NO_BOOLEAN,"Warning: the given expression does not evaluate to a boolean.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"The if statement will not be executed.\n");
       considerDyingOnError();
     } else {
       if (intTemp) {
@@ -6665,35 +6675,35 @@ int executeCommandInner(node *tree) {
 	    if (resA) {
 	      tempNode3 = makeConstant(a);
 	      if (!assignThingToTable(tree->string,tempNode3)) {
-		printMessage(1,"Warning: at the end of a for loop, the loop variable \"%s\" cannot longer be assigned to.\n",tree->string);
-		printMessage(1,"The for loop will no longer be executed.\n");
+		printMessage(1,SOLLYA_MSG_AT_END_OF_FOR_CNTRL_VAR_NO_LONGER_ASSIGNABLE,"Warning: at the end of a for loop, the loop variable \"%s\" cannot longer be assigned to.\n",tree->string);
+		printMessage(1,SOLLYA_MSG_CONTINUATION,"The for loop will no longer be executed.\n");
                 considerDyingOnError();
 		freeThing(tempNode3);
 		break;
 	      }
 	      freeThing(tempNode3);
 	    } else {
-	      printMessage(1,"Warning: at the end of a for loop, the loop variable \"%s\" decreased by the loop step does no longer evaluate to a constant.\n",tree->string);
-	      printMessage(1,"The for loop will no longer be executed.\n");
+	      printMessage(1,SOLLYA_MSG_AT_END_OF_FOR_CNTRL_VAR_NO_LONGER_CONSTANT,"Warning: at the end of a for loop, the loop variable \"%s\" decreased by the loop step does no longer evaluate to a constant.\n",tree->string);
+	      printMessage(1,SOLLYA_MSG_CONTINUATION,"The for loop will no longer be executed.\n");
               considerDyingOnError();
 	      break;
 	    }
 	  } else {
-	    printMessage(1,"Warning: the tool has been restarted inside a for loop.\n");
-	    printMessage(1,"The for loop will no longer be executed.\n");
+	    printMessage(1,SOLLYA_MSG_TOOL_HAS_BEEN_RESTARTED_INSIDE_LOOP,"Warning: the tool has been restarted inside a for loop.\n");
+	    printMessage(1,SOLLYA_MSG_CONTINUATION,"The for loop will no longer be executed.\n");
             considerDyingOnError();
 	    break;
 	  }
 	}
       } else {
-	printMessage(1,"Warning: the identifier \"%s\" cannot be assigned to.\n",tree->string);
-	printMessage(1,"The for loop will not be executed.\n");
+	printMessage(1,SOLLYA_MSG_CNTRL_VAR_OF_LOOP_CANNOT_BE_ASSIGNED,"Warning: the identifier \"%s\" cannot be assigned to.\n",tree->string);
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"The for loop will not be executed.\n");
         considerDyingOnError();
       }
       freeThing(tempNode);
     } else {
-      printMessage(1,"Warning: one of the arguments of the for loop does not evaluate to a constant.\n");
-      printMessage(1,"The for loop will not be executed.\n");
+      printMessage(1,SOLLYA_MSG_ARGS_OF_FOR_LOOP_NOT_CONSTANT,"Warning: one of the arguments of the for loop does not evaluate to a constant.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"The for loop will not be executed.\n");
       considerDyingOnError();
     }
     mpfr_clear(a);
@@ -6711,8 +6721,8 @@ int executeCommandInner(node *tree) {
 	    break;
 	  }
 	} else {
-	  printMessage(1,"Warning: the identifier \"%s\" can no longer be assigned to.\n",tree->string);
-	  printMessage(1,"The execution of the for loop will be stopped.\n");
+	  printMessage(1,SOLLYA_MSG_AT_END_OF_FOR_CNTRL_VAR_NO_LONGER_ASSIGNABLE,"Warning: the identifier \"%s\" can no longer be assigned to.\n",tree->string);
+	  printMessage(1,SOLLYA_MSG_CONTINUATION,"The execution of the for loop will be stopped.\n");
           considerDyingOnError();
 	  break;
 	}
@@ -6721,10 +6731,10 @@ int executeCommandInner(node *tree) {
       freeChain(tempList,freeThingOnVoid);
     } else {
       if (evaluateThingToEmptyList(tree->child1)) {
-	printMessage(2,"Information: executing a for in statement on an empty list.\n");
+	printMessage(2,SOLLYA_MSG_FOR_IN_LOOP_OVER_EMPTY_LIST,"Information: executing a for in statement on an empty list.\n");
       } else {
-	printMessage(1,"Warning: the expression given does not evaluate to a non-elliptic list.\n");
-	printMessage(1,"The loop will not be executed.\n");
+	printMessage(1,SOLLYA_MSG_FOR_IN_LOOP_OVER_END_ELLIPTIC_LIST_NOT_ALLOWED,"Warning: the expression given does not evaluate to a non-elliptic list.\n");
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"The loop will not be executed.\n");
         considerDyingOnError();
       }
     }
@@ -6740,24 +6750,24 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToInteger(&resA, tree->child1, &defaultVal)) {
       if (resA < 1) {
 	resA = 1;
-	printMessage(1,"Warning: at least 1 operation must be executed.\n");
+	printMessage(1,SOLLYA_MSG_AT_LEAST_ONE_OPERATION_MUST_BE_EXECUTED,"Warning: at least 1 operation must be executed.\n");
       }
       doNothing(resA);
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_MACHINE_INTEGER,"Warning: the expression given does not evaluate to a machine integer.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     result = 0;
     break;
   case FALSEQUIT:
-    printMessage(1,"Warning: a quit command has been used in a file read into another.\n");
-    printMessage(1,"This quit command will be neglected.\n");
+    printMessage(1,SOLLYA_MSG_QUIT_IN_FILE_READ_INTO_ANOTHER,"Warning: a quit command has been used in a file read into another.\n");
+    printMessage(1,SOLLYA_MSG_CONTINUATION,"This quit command will be neglected.\n");
     result = 0;
     break; 			
   case FALSERESTART:
-    printMessage(1,"Warning: a restart command has been used in a file read into another.\n");
-    printMessage(1,"This restart command will be neglected.\n");
+    printMessage(1,SOLLYA_MSG_RESTART_IN_FILE_READ_INTO_ANOTHER,"Warning: a restart command has been used in a file read into another.\n");
+    printMessage(1,SOLLYA_MSG_CONTINUATION,"This restart command will be neglected.\n");
     result = 0;
     break; 			
   case RESTART:
@@ -6770,22 +6780,22 @@ int executeCommandInner(node *tree) {
     curr = tree->arguments;
     while (curr != NULL) {
       if ((variablename != NULL) && (strcmp(variablename, (char *) (curr->value)) == 0)) {
-	printMessage(1,"Warning: the identifier \"%s\" is already bound to the current free variable.\nIt cannot be declared as a local variable. The declaration of \"%s\" will have no effect.\n",
+	printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_FREE_VAR_CANNOT_BE_LOCAL_VAR,"Warning: the identifier \"%s\" is already bound to the current free variable.\nIt cannot be declared as a local variable. The declaration of \"%s\" will have no effect.\n",
 		     (char *) (curr->value),(char *) (curr->value));
         considerDyingOnError();
       } else {
 	if (getFunction((char *) (curr->value)) != NULL) {
-	  printMessage(1,"Warning: the identifier \"%s\" is already bound to a library function.\nIt cannot be declared as a local variable. The declaration of \"%s\" will have no effect.\n",
+	  printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_LIBRARY_FUNC_CANNOT_BE_LOCAL_VAR,"Warning: the identifier \"%s\" is already bound to a library function.\nIt cannot be declared as a local variable. The declaration of \"%s\" will have no effect.\n",
 		     (char *) (curr->value),(char *) (curr->value));
           considerDyingOnError();
 	} else {
           if (getConstantFunction((char *) (curr->value)) != NULL) {
-            printMessage(1,"Warning: the identifier \"%s\" is already bound to a library constant.\nIt cannot be declared as a local variable. The declaration of \"%s\" will have no effect.\n",
+            printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_LIBRARY_CONST_CANNOT_BE_LOCAL_VAR,"Warning: the identifier \"%s\" is already bound to a library constant.\nIt cannot be declared as a local variable. The declaration of \"%s\" will have no effect.\n",
                          (char *) (curr->value),(char *) (curr->value));
             considerDyingOnError();
           } else {
             if (getProcedure((char *) (curr->value)) != NULL) {
-              printMessage(1,"Warning: the identifier \"%s\" is already bound to an external procedure.\nIt cannot be declared as a local variable. The declaration of \"%s\" will have no effect.\n",
+              printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_EXTERNAL_PROC_CANNOT_BE_LOCAL_VAR,"Warning: the identifier \"%s\" is already bound to an external procedure.\nIt cannot be declared as a local variable. The declaration of \"%s\" will have no effect.\n",
                            (char *) (curr->value),(char *) (curr->value));
               considerDyingOnError();
             } else {
@@ -6794,8 +6804,8 @@ int executeCommandInner(node *tree) {
                 declaredSymbolTable = declareNewEntry(declaredSymbolTable, (char *) (curr->value), tempNode, copyThingOnVoid);
                 freeThing(tempNode);
               } else {
-                printMessage(1,"Warning: previous command interruptions have corrupted the frame system.\n");
-                printMessage(1,"Local variable \"%s\" cannot be declared.\n",(char *) (curr->value));
+                printMessage(1,SOLLYA_MSG_FRAME_SYSTEM_CORRUPTED_LOCAL_VAR_NOT_DECLARED,"Warning: previous command interruptions have corrupted the frame system.\n");
+                printMessage(1,SOLLYA_MSG_CONTINUATION,"Local variable \"%s\" cannot be declared.\n",(char *) (curr->value));
                 considerDyingOnError();
               }
             }
@@ -6832,14 +6842,14 @@ int executeCommandInner(node *tree) {
 	sollyaFprintf(fd,"\n");
 	fclose(fd);
       } else {
-	printMessage(1,"Warning: the file \"%s\" could not be opened for writing.\n",tempString);
-	printMessage(1,"This command will have no effect.\n");
+	printMessage(1,SOLLYA_MSG_FILE_COULD_NOT_BE_OPENED_FOR_WRITING,"Warning: the file \"%s\" could not be opened for writing.\n",tempString);
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
         considerDyingOnError();
       }
       free(tempString);
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     } 
     break; 			
@@ -6858,14 +6868,14 @@ int executeCommandInner(node *tree) {
 	sollyaFprintf(fd,"\n");
 	fclose(fd);
       } else {
-	printMessage(1,"Warning: the file \"%s\" could not be opened for writing.\n",tempString);
-	printMessage(1,"This command will have no effect.\n");
+	printMessage(1,SOLLYA_MSG_FILE_COULD_NOT_BE_OPENED_FOR_WRITING,"Warning: the file \"%s\" could not be opened for writing.\n",tempString);
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
         considerDyingOnError();
       }
       free(tempString);
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     } 
     break; 			
@@ -6890,8 +6900,8 @@ int executeCommandInner(node *tree) {
 	  resC = 0;
 	}
       } else {
-	printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
-	printMessage(1,"This command will have no effect.\n");
+	printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
         considerDyingOnError();
       }
     } else {
@@ -6913,20 +6923,20 @@ int executeCommandInner(node *tree) {
 	      plotTree(tempList, a, b, defaultpoints, tools_precision, tempString, resD);
 	      freeChain(tempList,freeThingOnVoid);
 	    } else {
-	      printMessage(1,"Warning: the first argument is not a list of pure functions.\n");
-	      printMessage(1,"This command will have no effect.\n");
+	      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_LIST_OF_FUNCTIONS,"Warning: the first argument is not a list of pure functions.\n");
+	      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
               considerDyingOnError();
 	    }
 	  } else {
-	    printMessage(1,"Warning: at least one of the given expressions does not evaluate to a pure function.\n");
-	    printMessage(1,"Warning: the first argument is not a list of pure functions.\n");
-	    printMessage(1,"This command will have no effect.\n");
+	    printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_LIST_OF_FUNCTIONS,"Warning: at least one of the given expressions does not evaluate to a pure function.\n");
+	    printMessage(1,SOLLYA_MSG_CONTINUATION,"Warning: the first argument is not a list of pure functions.\n");
+	    printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
             considerDyingOnError();
 	  }
 	}
       } else {
-	printMessage(1,"Warning: the expression given does not evaluate to a range.\n");
-	printMessage(1,"This command will have no effect.\n");
+	printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_RANGE,"Warning: the expression given does not evaluate to a range.\n");
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
         considerDyingOnError();
       }
       mpfr_clear(a);
@@ -6960,8 +6970,8 @@ int executeCommandInner(node *tree) {
 		free(array);
 		resG = 0;
 	      }
-	      printMessage(1,"Warning: the file \"%s\" could not be opened for writing.\n",tempString2);
-	      printMessage(1,"This command will have no effect.\n");
+	      printMessage(1,SOLLYA_MSG_FILE_COULD_NOT_BE_OPENED_FOR_WRITING,"Warning: the file \"%s\" could not be opened for writing.\n",tempString2);
+	      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
 	      free(tempString2);
 	      considerDyingOnError();
 	      resC = 0;
@@ -6978,8 +6988,8 @@ int executeCommandInner(node *tree) {
 		free(array);
 		resG = 0;
 	      }
-	      printMessage(1,"Warning: the expression given does not evaluate to a string nor to a default value.\n");
-	      printMessage(1,"This command will have no effect.\n");
+	      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING_NOR_DEFAULT,"Warning: the expression given does not evaluate to a string nor to a default value.\n");
+	      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
 	      considerDyingOnError();
 	      resC = 0;
 	    }
@@ -6996,8 +7006,8 @@ int executeCommandInner(node *tree) {
 		free(array);
 		resG = 0;
 	      }
-	      printMessage(1,"Warning: the expression given does not evaluate to a string nor to a default value.\n");
-	      printMessage(1,"This command will have no effect.\n");
+	      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING_NOR_DEFAULT,"Warning: the expression given does not evaluate to a string nor to a default value.\n");
+	      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
 	      considerDyingOnError();
 	      resC = 0;
 	    } 
@@ -7030,7 +7040,7 @@ int executeCommandInner(node *tree) {
 	      free(array);
 	      resG = 0;
 	    }
-	    printMessage(1,"Warning: the implementation has not succeeded. The command could not be executed.\n");
+	    printMessage(1,SOLLYA_MSG_IMPLEMENTATION_HAS_NOT_SUCCEEDED,"Warning: the implementation has not succeeded. The command could not be executed.\n");
 	    considerDyingOnError();
 	  }
 	}
@@ -7045,8 +7055,8 @@ int executeCommandInner(node *tree) {
 	  free(array);
 	  resG = 0;
 	}
-	printMessage(1,"Warning: the expression given does not evaluate to a constant expression.\n");
-	printMessage(1,"This command will have no effect.\n");
+	printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_CONSTANT,"Warning: the expression given does not evaluate to a constant expression.\n");
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
         considerDyingOnError();
       }
     } else {
@@ -7056,8 +7066,8 @@ int executeCommandInner(node *tree) {
 	free(array);
 	resG = 0;
       }
-      printMessage(1,"Warning: the expression given does not evaluate to an expression.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_AN_EXPRESSION,"Warning: the expression given does not evaluate to an expression.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     if (resG) {
@@ -7072,8 +7082,8 @@ int executeCommandInner(node *tree) {
       outputMode();
       printDoubleInHexa(a);
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to a constant value.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_CONSTANT,"Warning: the expression given does not evaluate to a constant value.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     mpfr_clear(a);
@@ -7084,8 +7094,8 @@ int executeCommandInner(node *tree) {
       outputMode();
       printSimpleInHexa(a);
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to a constant value.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_CONSTANT,"Warning: the expression given does not evaluate to a constant value.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     mpfr_clear(a);
@@ -7096,8 +7106,8 @@ int executeCommandInner(node *tree) {
       outputMode();
       printBinary(a); sollyaPrintf("\n");
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to a constant value.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_CONSTANT,"Warning: the expression given does not evaluate to a constant value.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     mpfr_clear(a);
@@ -7107,14 +7117,14 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToPureTree(&tempNode, tree->child1)) {
       if (printPolynomialAsDoubleExpansion(tempNode, tools_precision) == 1) {
 	if (!noRoundingWarnings) {
-	  printMessage(1,"\nWarning: rounding occurred while printing.");
+	  printMessage(1,SOLLYA_MSG_ROUNDING_WHILE_PRINTING,"\nWarning: rounding occurred while printing.");
 	}
       }
       sollyaPrintf("\n");
       freeThing(tempNode);
     } else {
-      printMessage(1,"Warning: the given expression does not evaluate to a function.\n");
-      printMessage(1,"The command will not be executed.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_A_FUNCTION,"Warning: the given expression does not evaluate to a function.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"The command will not be executed.\n");
       considerDyingOnError();
     }
     break;
@@ -7123,11 +7133,11 @@ int executeCommandInner(node *tree) {
       outputMode();
       intTemp = bashExecute(tempString);
       normalMode(); outputMode();
-      printMessage(2,"Information: the bash return value is %d.\n",intTemp);
+      printMessage(2,SOLLYA_MSG_BASH_RETURNS_A_CERTAIN_RETURN_VALUE,"Information: the bash return value is %d.\n",intTemp);
       free(tempString);
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break; 			
@@ -7163,8 +7173,8 @@ int executeCommandInner(node *tree) {
 			  resD = 0;
 			}
 		      } else {
-			printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
-			printMessage(1,"This command will have no effect.\n");
+			printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
+			printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
                         considerDyingOnError();
 		      }
 		    }
@@ -7190,8 +7200,8 @@ int executeCommandInner(node *tree) {
 			  resD = 0;
 			}
 		      } else {
-			printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
-			printMessage(1,"This command will have no effect.\n");
+			printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
+			printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
                         considerDyingOnError();
 		      }
 		    } 
@@ -7205,32 +7215,32 @@ int executeCommandInner(node *tree) {
 	      }
 	      if (tempString2 != NULL) free(tempString2);
 	    } else {
-	      printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
-	      printMessage(1,"This command will have no effect.\n");
+	      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_MACHINE_INTEGER,"Warning: the expression given does not evaluate to a machine integer.\n");
+	      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
               considerDyingOnError();
 	    }
 	  } else {
-	    printMessage(1,"Warning: the expression given does not evaluate to a constant range.\n");
-	    printMessage(1,"This command will have no effect.\n");
+	    printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_RANGE,"Warning: the expression given does not evaluate to a constant range.\n");
+	    printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
             considerDyingOnError();
 	  }
 	  mpfr_clear(a);
 	  mpfr_clear(b);
 	  freeThing(tempNode);
 	} else {
-	  printMessage(1,"Warning: the expression given does not evaluate to a function.\n");
-	  printMessage(1,"This command will have no effect.\n");
+	  printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_A_FUNCTION,"Warning: the expression given does not evaluate to a function.\n");
+	  printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
           considerDyingOnError();
 	}
       } else {
-	printMessage(1,"Warning: the expression given does not evaluate to one of absolute or relative.\n");
-	printMessage(1,"This command will have no effect.\n");
+	printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_ABS_NOR_REL,"Warning: the expression given does not evaluate to one of absolute or relative.\n");
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
         considerDyingOnError();
       }
       free(tempString);
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     for (i=0;i<resA;i++)
@@ -7260,14 +7270,14 @@ int executeCommandInner(node *tree) {
 	}
 	fclose(fd);
       } else {
-	printMessage(1,"Warning: the file \"%s\" could not be opened for writing.\n",tempString);
-	printMessage(1,"This command will have no effect.\n");
+	printMessage(1,SOLLYA_MSG_FILE_COULD_NOT_BE_OPENED_FOR_WRITING,"Warning: the file \"%s\" could not be opened for writing.\n",tempString);
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
         considerDyingOnError();
       }
       free(tempString);
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     } 
     break;
@@ -7284,14 +7294,14 @@ int executeCommandInner(node *tree) {
 	}
 	fclose(fd);
       } else {
-	printMessage(1,"Warning: the file \"%s\" could not be opened for appending.\n",tempString);
-	printMessage(1,"This command will have no effect.\n");
+	printMessage(1,SOLLYA_MSG_FILE_COULD_NOT_BE_OPENED_FOR_APPENDING,"Warning: the file \"%s\" could not be opened for appending.\n",tempString);
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
         considerDyingOnError();
       }
       free(tempString);
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     } 
     break; 
@@ -7303,16 +7313,16 @@ int executeCommandInner(node *tree) {
       if (evaluateThingToRange(a, b, tree->child2)) {
 	asciiPlotTree(tempNode, a, b, tools_precision);
       } else {
-	printMessage(1,"Warning: the given expression does not evaluate to a constant range.\n");
-	printMessage(1,"The command will not be executed.\n");
+	printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_RANGE,"Warning: the given expression does not evaluate to a constant range.\n");
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"The command will not be executed.\n");
         considerDyingOnError();
       }
       freeThing(tempNode);
       mpfr_clear(a);
       mpfr_clear(b);
     } else {
-      printMessage(1,"Warning: the given expression does not evaluate to a function.\n");
-      printMessage(1,"The command will not be executed.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_A_FUNCTION,"Warning: the given expression does not evaluate to a function.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"The command will not be executed.\n");
       considerDyingOnError();
     }
     break;			
@@ -7323,8 +7333,8 @@ int executeCommandInner(node *tree) {
       printXml(tempNode);
       freeThing(tempNode);
     } else {
-      printMessage(1,"Warning: the given expression does not evaluate to a function.\n");
-      printMessage(1,"The command will not be executed.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_A_FUNCTION,"Warning: the given expression does not evaluate to a function.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"The command will not be executed.\n");
       considerDyingOnError();
     }
     break;	
@@ -7335,14 +7345,14 @@ int executeCommandInner(node *tree) {
 	executeFile(fd);
 	fclose(fd);
       } else {
-	printMessage(1,"Warning: the file \"%s\" could not be opened for reading.\n",tempString);
-	printMessage(1,"This command will have no effect.\n");
+	printMessage(1,SOLLYA_MSG_FILE_COULD_NOT_BE_OPENED_FOR_READING,"Warning: the file \"%s\" could not be opened for reading.\n",tempString);
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
         considerDyingOnError();
       }
       free(tempString);
     } else {
-      printMessage(1,"Warning: the given expression does not evaluate to a string.\n");
-      printMessage(1,"The command will not be executed.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the given expression does not evaluate to a string.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"The command will not be executed.\n");
       considerDyingOnError();
     }
     break;
@@ -7354,20 +7364,20 @@ int executeCommandInner(node *tree) {
 	  fPrintXml(fd,tempNode);
 	  fclose(fd);
 	} else {
-	  printMessage(1,"Warning: the file \"%s\" could not be opened for writing.\n",tempString);
-	  printMessage(1,"This command will have no effect.\n");
+	  printMessage(1,SOLLYA_MSG_FILE_COULD_NOT_BE_OPENED_FOR_WRITING,"Warning: the file \"%s\" could not be opened for writing.\n",tempString);
+	  printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
           considerDyingOnError();
 	}
 	free(tempString);
       } else {
-	printMessage(1,"Warning: the given expression does not evaluate to a string.\n");
-	printMessage(1,"The command will not be executed.\n");
+	printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the given expression does not evaluate to a string.\n");
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"The command will not be executed.\n");
         considerDyingOnError();
       }      
       freeThing(tempNode);
     } else {
-      printMessage(1,"Warning: the given expression does not evaluate to a function.\n");
-      printMessage(1,"The command will not be executed.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_A_FUNCTION,"Warning: the given expression does not evaluate to a function.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"The command will not be executed.\n");
       considerDyingOnError();
     }
     break;			
@@ -7379,20 +7389,20 @@ int executeCommandInner(node *tree) {
 	  fPrintXml(fd,tempNode);
 	  fclose(fd);
 	} else {
-	  printMessage(1,"Warning: the file \"%s\" could not be opened for writing.\n",tempString);
-	  printMessage(1,"This command will have no effect.\n");
+	  printMessage(1,SOLLYA_MSG_FILE_COULD_NOT_BE_OPENED_FOR_WRITING,"Warning: the file \"%s\" could not be opened for writing.\n",tempString);
+	  printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
           considerDyingOnError();
 	}
 	free(tempString);
       } else {
-	printMessage(1,"Warning: the given expression does not evaluate to a string.\n");
-	printMessage(1,"The command will not be executed.\n");
+	printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the given expression does not evaluate to a string.\n");
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"The command will not be executed.\n");
         considerDyingOnError();
       }      
       freeThing(tempNode);
     } else {
-      printMessage(1,"Warning: the given expression does not evaluate to a function.\n");
-      printMessage(1,"The command will not be executed.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_A_FUNCTION,"Warning: the given expression does not evaluate to a function.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"The command will not be executed.\n");
       considerDyingOnError();
     }
     break;			
@@ -7404,8 +7414,8 @@ int executeCommandInner(node *tree) {
       if (fd != NULL) {
 	resC = 1;
       } else {
-	printMessage(1,"Warning: the file \"%s\" could not be opened for writing.\n",(array[5])->string);
-	printMessage(1,"This command will have no effect.\n");
+	printMessage(1,SOLLYA_MSG_FILE_COULD_NOT_BE_OPENED_FOR_WRITING,"Warning: the file \"%s\" could not be opened for writing.\n",(array[5])->string);
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
         considerDyingOnError();
       }
     } else {
@@ -7436,34 +7446,34 @@ int executeCommandInner(node *tree) {
 		free(tempRange.a);
 		free(tempRange.b);
 	      } else {
-		printMessage(1,"Warning: the given expression does not evaluate to a constant.\n");
-		printMessage(1,"The command will not be executed.\n");
+		printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_CONSTANT,"Warning: the given expression does not evaluate to a constant.\n");
+		printMessage(1,SOLLYA_MSG_CONTINUATION,"The command will not be executed.\n");
                 considerDyingOnError();
 	      }
 	      mpfr_clear(e);			
 	    } else {
-	      printMessage(1,"Warning: the given expression does not evaluate to a constant.\n");
-	      printMessage(1,"The command will not be executed.\n");
+	      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_CONSTANT,"Warning: the given expression does not evaluate to a constant.\n");
+	      printMessage(1,SOLLYA_MSG_CONTINUATION,"The command will not be executed.\n");
               considerDyingOnError();
 	    }
 	    mpfr_clear(d);
 	  } else {
-	    printMessage(1,"Warning: the given expression does not evaluate to a constant range.\n");
-	    printMessage(1,"The command will not be executed.\n");
+	    printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_RANGE,"Warning: the given expression does not evaluate to a constant range.\n");
+	    printMessage(1,SOLLYA_MSG_CONTINUATION,"The command will not be executed.\n");
             considerDyingOnError();
 	  }
 	  mpfr_clear(b);
 	  mpfr_clear(c);
 	} else {
-	  printMessage(1,"Warning: the given expression does not evaluate to a constant.\n");
-	  printMessage(1,"The command will not be executed.\n");
+	  printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_CONSTANT,"Warning: the given expression does not evaluate to a constant.\n");
+	  printMessage(1,SOLLYA_MSG_CONTINUATION,"The command will not be executed.\n");
           considerDyingOnError();
 	}
 	mpfr_clear(a);
 	freeThing(tempNode);
       } else {
-	printMessage(1,"Warning: the given expression does not evaluate to a function.\n");
-	printMessage(1,"The command will not be executed.\n");
+	printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_A_FUNCTION,"Warning: the given expression does not evaluate to a function.\n");
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"The command will not be executed.\n");
         considerDyingOnError();
       }
       if (fd != NULL) fclose(fd);
@@ -7477,19 +7487,19 @@ int executeCommandInner(node *tree) {
     if (variablename == NULL) {
       variablename = (char *) safeCalloc(strlen((char *) (tree->arguments->value)) + 1,sizeof(char));
       strcpy(variablename,(char *) (tree->arguments->value));
-      printMessage(1,"Information: the free variable has been named \"%s\".\n", variablename);
+      printMessage(1,SOLLYA_MSG_FREE_VARIABLE_HAS_BEEN_NAMED_SOMEHOW,"Information: the free variable has been named \"%s\".\n", variablename);
     } else {
       if ((strcmp(variablename,tree->string) == 0) || (strcmp("_x_",tree->string) == 0)) {
 	tempString = variablename;
 	variablename = (char *) safeCalloc(strlen((char *) (tree->arguments->value)) + 1,sizeof(char));
 	strcpy(variablename,(char *) (tree->arguments->value));
-	printMessage(1,"Information: the free variable has been renamed from \"%s\" to \"%s\".\n",
+	printMessage(1,SOLLYA_MSG_FREE_VARIABLE_HAS_BEEN_RENAMED,"Information: the free variable has been renamed from \"%s\" to \"%s\".\n",
 		     tempString,(char *) (tree->arguments->value));
 	free(tempString);
       } else {
-	printMessage(1,"Warning: the current free variable is named \"%s\" and not \"%s\". Can only rename the free variable.\n",
+	printMessage(1,SOLLYA_MSG_CAN_RENAME_ONLY_FREE_VARIABLE,"Warning: the current free variable is named \"%s\" and not \"%s\". Can only rename the free variable.\n",
 		     variablename,tree->string);
-	printMessage(1,"The last command will have no effect.\n");
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"The last command will have no effect.\n");
         considerDyingOnError();
       }
     }
@@ -7589,40 +7599,40 @@ int executeCommandInner(node *tree) {
     break;  		
   case EXTERNALPROC:
     if ((variablename != NULL) && (strcmp(variablename,tree->string) == 0)) {
-      printMessage(1,"Warning: the identifier \"%s\" is already be bound as the current free variable.\n",variablename);
-      printMessage(1,"It cannot be bound to an external procedure. This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_FREE_VAR_CANNOT_BE_EXTERNAL,"Warning: the identifier \"%s\" is already be bound as the current free variable.\n",variablename);
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"It cannot be bound to an external procedure. This command will have no effect.\n");
       considerDyingOnError();
     } else {
       if (containsEntry(symbolTable, tree->string) || containsDeclaredEntry(declaredSymbolTable, tree->string)) {
-	printMessage(1,"Warning: the identifier \"%s\" is already assigned to.\n",tree->string);
-	printMessage(1,"It cannot be bound to an external procedure. This command will have no effect.\n");
+	printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_BOUND_TO_VAR_CANNOT_BE_EXTERNAL,"Warning: the identifier \"%s\" is already assigned to.\n",tree->string);
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"It cannot be bound to an external procedure. This command will have no effect.\n");
         considerDyingOnError();
       } else {
 	if (getFunction(tree->string) != NULL) {
-	  printMessage(1,"Warning: the identifier \"%s\" is already bound to a library function.\n",tree->string);
-	  printMessage(1,"It cannot be bound to an external procedure. This command will have no effect.\n");
+	  printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_LIBRARY_FUNC_CANNOT_BE_EXTERNAL,"Warning: the identifier \"%s\" is already bound to a library function.\n",tree->string);
+	  printMessage(1,SOLLYA_MSG_CONTINUATION,"It cannot be bound to an external procedure. This command will have no effect.\n");
           considerDyingOnError();
 	} else {
           if (getConstantFunction(tree->string) != NULL) {
-            printMessage(1,"Warning: the identifier \"%s\" is already bound to a library constant.\n",tree->string);
-            printMessage(1,"It cannot be bound to an external procedure. This command will have no effect.\n");
+            printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_LIBRARY_CONST_CANNOT_BE_EXTERNAL,"Warning: the identifier \"%s\" is already bound to a library constant.\n",tree->string);
+            printMessage(1,SOLLYA_MSG_CONTINUATION,"It cannot be bound to an external procedure. This command will have no effect.\n");
             considerDyingOnError();
           } else {
             if (getProcedure(tree->string) != NULL) {
-              printMessage(1,"Warning: the identifier \"%s\" is already bound to an external procedure.\n",tree->string);
-              printMessage(1,"It cannot be bound to an external procedure. This command will have no effect.\n");
+              printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_EXTERNAL_PROC_CANNOT_BE_EXTERNAL,"Warning: the identifier \"%s\" is already bound to an external procedure.\n",tree->string);
+              printMessage(1,SOLLYA_MSG_CONTINUATION,"It cannot be bound to an external procedure. This command will have no effect.\n");
               considerDyingOnError();
             } else {
               if (evaluateThingToString(&tempString, tree->child1)) {
                 tempLibraryProcedure = bindProcedure(tempString, tree->string, tree->arguments);
                 if(tempLibraryProcedure == NULL) {
-                  printMessage(1,"Warning: an error occurred. The last command will have no effect.\n");
+                  printMessage(1,SOLLYA_MSG_ERROR_OCCURRED_COMMAND_NOT_EXECUTED,"Warning: an error occurred. The last command will have no effect.\n");
                   considerDyingOnError();
                 }
                 free(tempString);
               } else {
-                printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
-                printMessage(1,"This command will have no effect.\n");
+                printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
+                printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
                 considerDyingOnError();
               }
             }
@@ -7635,7 +7645,7 @@ int executeCommandInner(node *tree) {
     tempNode = evaluateThing(tree->child1);
     if (!assignThingToTable(tree->string, tempNode)) {
       freeThing(tempNode);
-      printMessage(1,"Warning: the last assignment will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_ASSIGNMENT_WILL_HAVE_NO_EFFECT,"Warning: the last assignment will have no effect.\n");
       considerDyingOnError();
     } else {
       freeThing(tempNode);
@@ -7685,7 +7695,7 @@ int executeCommandInner(node *tree) {
       mpfr_clear(a);
     }
     if (!assignThingToTable(tree->string, tempNode)) {
-      printMessage(1,"Warning: the last assignment will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_ASSIGNMENT_WILL_HAVE_NO_EFFECT,"Warning: the last assignment will have no effect.\n");
       considerDyingOnError();
     }
     freeThing(tempNode);
@@ -7775,23 +7785,23 @@ int executeCommandInner(node *tree) {
 	      if (resC) {
 		curr = tree->arguments;
 		if (!assignThingToTable(((node *) (curr->value))->string, tempNode3)) {
-		  printMessage(1,"Warning: the last assignment will have no effect.\n");
+		  printMessage(1,SOLLYA_MSG_ASSIGNMENT_WILL_HAVE_NO_EFFECT,"Warning: the last assignment will have no effect.\n");
                   considerDyingOnError();
 		}
 		freeThing(tempNode3);
 	      } else {
-		printMessage(1,"Warning: assigning to indexed elements of lists is only allowed on indexes in the existing range.\n");
-		printMessage(1,"This command will have no effect.\n");
+		printMessage(1,SOLLYA_MSG_ASSIGNMENT_OF_INDEXED_ELEMENTS_NOT_IN_RANGE,"Warning: assigning to indexed elements of lists is only allowed on indexes in the existing range.\n");
+		printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
                 considerDyingOnError();
 	      }
 	    } else {
-	      printMessage(1,"Warning: assigning to indexed elements of lists is only allowed on indexes in the existing range.\n");
-	      printMessage(1,"This command will have no effect.\n");
+	      printMessage(1,SOLLYA_MSG_ASSIGNMENT_OF_INDEXED_ELEMENTS_NOT_IN_RANGE,"Warning: assigning to indexed elements of lists is only allowed on indexes in the existing range.\n");
+	      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
               considerDyingOnError();
 	    }
 	  } else {
-	    printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
-	    printMessage(1,"This command will have no effect.\n");
+	    printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_MACHINE_INTEGER,"Warning: the expression given does not evaluate to a machine integer.\n");
+	    printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
             considerDyingOnError();
 	  }
 	} else {
@@ -7805,18 +7815,18 @@ int executeCommandInner(node *tree) {
 		tempNode3 = makeList(addElement(NULL,tempNode2));
 		curr = tree->arguments;
 		if (!assignThingToTable(((node *) (curr->value))->string, tempNode3)) {
-		  printMessage(1,"Warning: the last assignment will have no effect.\n");
+		  printMessage(1,SOLLYA_MSG_ASSIGNMENT_WILL_HAVE_NO_EFFECT,"Warning: the last assignment will have no effect.\n");
                   considerDyingOnError();
 		}
 		freeThing(tempNode3);
 	      } else {
-		printMessage(1,"Warning: assigning to indexed elements of empty lists is only allowed on index 0.\n");
-		printMessage(1,"This command will have no effect.\n");
+		printMessage(1,SOLLYA_MSG_ASSIGNMENT_OF_INDEXED_EMPTY_LIST_ONLY_ON_ZERO,"Warning: assigning to indexed elements of empty lists is only allowed on index 0.\n");
+		printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
                 considerDyingOnError();
 	      }
 	    } else {
-	      printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
-	      printMessage(1,"This command will have no effect.\n");
+	      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_MACHINE_INTEGER,"Warning: the expression given does not evaluate to a machine integer.\n");
+	      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
               considerDyingOnError();
 	    }
 	  } else {
@@ -7840,36 +7850,36 @@ int executeCommandInner(node *tree) {
 		      }
 		      curr = tree->arguments;
 		      if (!assignThingToTable(((node *) (curr->value))->string, tempNode3)) {
-			printMessage(1,"Warning: the last assignment will have no effect.\n");
+			printMessage(1,SOLLYA_MSG_ASSIGNMENT_WILL_HAVE_NO_EFFECT,"Warning: the last assignment will have no effect.\n");
                         considerDyingOnError();
 		      }
 		      freeThing(tempNode3);
 		    } else {
-		      printMessage(1,"Warning: the string to be assigned is not of length 1.\n");
-		      printMessage(1,"This command will have no effect.\n");		      
+		      printMessage(1,SOLLYA_MSG_STRING_NOT_OF_LENGTH_ONE,"Warning: the string to be assigned is not of length 1.\n");
+		      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");		      
                       considerDyingOnError();
 		    }
 		    free(tempString);
 		  } else {
-		    printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
-		    printMessage(1,"This command will have no effect.\n");
+		    printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
+		    printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
                     considerDyingOnError();
 		  }
 		} else {
-		  printMessage(1,"Warning: assigning to indexed elements of strings is only allowed in the existing range.\n");
-		  printMessage(1,"This command will have no effect.\n");
+		  printMessage(1,SOLLYA_MSG_ASSIGNMENT_OF_INDEXED_ELEMENTS_NOT_IN_RANGE,"Warning: assigning to indexed elements of strings is only allowed in the existing range.\n");
+		  printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
                   considerDyingOnError();
 		}
 	      } else {
-		printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
-		printMessage(1,"This command will have no effect.\n");
+		printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_MACHINE_INTEGER,"Warning: the expression given does not evaluate to a machine integer.\n");
+		printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
                 considerDyingOnError();
 	      }	       
 	    } else {
 	      curr = tree->arguments;
-	      printMessage(1,"Warning: the identifier \"%s\" is not assigned to a (empty) list or a string.\n",
+	      printMessage(1,SOLLYA_MSG_IDENTIFIER_NOT_BOUND_TO_LIST_OR_STRING,"Warning: the identifier \"%s\" is not assigned to a (empty) list or a string.\n",
 			   ((node *) (curr->value))->string);
-	      printMessage(1,"The command will not be executed.\n");
+	      printMessage(1,SOLLYA_MSG_CONTINUATION,"The command will not be executed.\n");
               considerDyingOnError();
 	    }
 	  }
@@ -7877,13 +7887,13 @@ int executeCommandInner(node *tree) {
 	freeThing(tempNode);
       } else {
 	curr = tree->arguments;
-	printMessage(1,"Warning: the identifier \"%s\" is not assigned to.\n",((node *) (curr->value))->string);
-	printMessage(1,"This command will have no effect.\n");
+	printMessage(1,SOLLYA_MSG_IDENTIFIER_NOT_ASSIGNED_TO,"Warning: the identifier \"%s\" is not assigned to.\n",((node *) (curr->value))->string);
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
         considerDyingOnError();
       }
     } else {
-      printMessage(1,"Warning: the first element of the left-hand side is not an identifier.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_FIRST_ELMENT_OF_LEFT_SIDE_NOT_IDENTIFIER,"Warning: the first element of the left-hand side is not an identifier.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break;
@@ -8021,23 +8031,23 @@ int executeCommandInner(node *tree) {
 		  mpfr_clear(a);
 		}
 		if (!assignThingToTable(((node *) (curr->value))->string, tempNode3)) {
-		  printMessage(1,"Warning: the last assignment will have no effect.\n");
+		  printMessage(1,SOLLYA_MSG_ASSIGNMENT_WILL_HAVE_NO_EFFECT,"Warning: the last assignment will have no effect.\n");
                   considerDyingOnError();
 		}
 		freeThing(tempNode3);
 	      } else {
-		printMessage(1,"Warning: assigning to indexed elements of lists is only allowed on indexes in the existing range.\n");
-		printMessage(1,"This command will have no effect.\n");
+		printMessage(1,SOLLYA_MSG_ASSIGNMENT_OF_INDEXED_ELEMENTS_NOT_IN_RANGE,"Warning: assigning to indexed elements of lists is only allowed on indexes in the existing range.\n");
+		printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
                 considerDyingOnError();
 	      }
 	    } else {
-	      printMessage(1,"Warning: assigning to indexed elements of lists is only allowed on indexes in the existing range.\n");
-	      printMessage(1,"This command will have no effect.\n");
+	      printMessage(1,SOLLYA_MSG_ASSIGNMENT_OF_INDEXED_ELEMENTS_NOT_IN_RANGE,"Warning: assigning to indexed elements of lists is only allowed on indexes in the existing range.\n");
+	      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
               considerDyingOnError();
 	    }
 	  } else {
-	    printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
-	    printMessage(1,"This command will have no effect.\n");
+	    printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_MACHINE_INTEGER,"Warning: the expression given does not evaluate to a machine integer.\n");
+	    printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
             considerDyingOnError();
 	  }
 	} else { 
@@ -8100,18 +8110,18 @@ int executeCommandInner(node *tree) {
 		  mpfr_clear(a);
 		}
 		if (!assignThingToTable(((node *) (curr->value))->string, tempNode3)) {
-		  printMessage(1,"Warning: the last assignment will have no effect.\n");
+		  printMessage(1,SOLLYA_MSG_ASSIGNMENT_WILL_HAVE_NO_EFFECT,"Warning: the last assignment will have no effect.\n");
                   considerDyingOnError();
 		}
 		freeThing(tempNode3);
 	      } else {
-		printMessage(1,"Warning: assigning to indexed elements of empty lists is only allowed on index 0.\n");
-		printMessage(1,"This command will have no effect.\n");
+		printMessage(1,SOLLYA_MSG_ASSIGNMENT_OF_INDEXED_EMPTY_LIST_ONLY_ON_ZERO,"Warning: assigning to indexed elements of empty lists is only allowed on index 0.\n");
+		printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
                 considerDyingOnError();
 	      }
 	    } else {
-	      printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
-	      printMessage(1,"This command will have no effect.\n");
+	      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_MACHINE_INTEGER,"Warning: the expression given does not evaluate to a machine integer.\n");
+	      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
               considerDyingOnError();
 	    }
 	  } else {
@@ -8143,36 +8153,36 @@ int executeCommandInner(node *tree) {
 			mpfr_clear(a);
 		      }
 		      if (!assignThingToTable(((node *) (curr->value))->string, tempNode3)) {
-			printMessage(1,"Warning: the last assignment will have no effect.\n");
+			printMessage(1,SOLLYA_MSG_ASSIGNMENT_WILL_HAVE_NO_EFFECT,"Warning: the last assignment will have no effect.\n");
                         considerDyingOnError();
 		      }
 		      freeThing(tempNode3);
 		    } else {
-		      printMessage(1,"Warning: the string to be assigned is not of length 1.\n");
-		      printMessage(1,"This command will have no effect.\n");		      
+		      printMessage(1,SOLLYA_MSG_STRING_NOT_OF_LENGTH_ONE,"Warning: the string to be assigned is not of length 1.\n");
+		      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");		      
                       considerDyingOnError();
 		    }
 		    free(tempString);
 		  } else {
-		    printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
-		    printMessage(1,"This command will have no effect.\n");
+		    printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
+		    printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
                     considerDyingOnError();
 		  }
 		} else {
-		  printMessage(1,"Warning: assigning to indexed elements of strings is only allowed in the existing range.\n");
-		  printMessage(1,"This command will have no effect.\n");
+		  printMessage(1,SOLLYA_MSG_ASSIGNMENT_OF_INDEXED_ELEMENTS_NOT_IN_RANGE,"Warning: assigning to indexed elements of strings is only allowed in the existing range.\n");
+		  printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
                   considerDyingOnError();
 		}
 	      } else {
-		printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
-		printMessage(1,"This command will have no effect.\n");
+		printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_MACHINE_INTEGER,"Warning: the expression given does not evaluate to a machine integer.\n");
+		printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
                 considerDyingOnError();
 	      }	       
 	    } else {
 	      curr = tree->arguments;
-	      printMessage(1,"Warning: the identifier \"%s\" is not assigned to a (empty) list or a string.\n",
+	      printMessage(1,SOLLYA_MSG_IDENTIFIER_NOT_BOUND_TO_LIST_OR_STRING,"Warning: the identifier \"%s\" is not assigned to a (empty) list or a string.\n",
 			   ((node *) (curr->value))->string);
-	      printMessage(1,"The command will not be executed.\n");
+	      printMessage(1,SOLLYA_MSG_CONTINUATION,"The command will not be executed.\n");
               considerDyingOnError();
 	    }
 	  }
@@ -8180,13 +8190,13 @@ int executeCommandInner(node *tree) {
 	freeThing(tempNode);
       } else {
 	curr = tree->arguments;
-	printMessage(1,"Warning: the identifier \"%s\" is not assigned to.\n",((node *) (curr->value))->string);
-	printMessage(1,"This command will have no effect.\n");
+	printMessage(1,SOLLYA_MSG_IDENTIFIER_NOT_ASSIGNED_TO,"Warning: the identifier \"%s\" is not assigned to.\n",((node *) (curr->value))->string);
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
         considerDyingOnError();
       }
     } else {
-      printMessage(1,"Warning: the first element of the left-hand side is not an identifier.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_FIRST_ELMENT_OF_LEFT_SIDE_NOT_IDENTIFIER,"Warning: the first element of the left-hand side is not an identifier.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break;
@@ -8199,7 +8209,7 @@ int executeCommandInner(node *tree) {
 	freeThing(tempNode);
 	if (tempNode2 != NULL) freeThing(tempNode2);
 	freeThing(tempNode3);
-	printMessage(1,"Warning: the last assignment will have no effect.\n");
+	printMessage(1,SOLLYA_MSG_ASSIGNMENT_WILL_HAVE_NO_EFFECT,"Warning: the last assignment will have no effect.\n");
 	considerDyingOnError();
       } else {
 	freeThing(tempNode);
@@ -8209,7 +8219,7 @@ int executeCommandInner(node *tree) {
     } else {
       freeThing(tempNode);
       if (tempNode2 != NULL) freeThing(tempNode2);
-      printMessage(1,"Warning: the last assignment will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_ASSIGNMENT_WILL_HAVE_NO_EFFECT,"Warning: the last assignment will have no effect.\n");
       considerDyingOnError();
     }
     break; 	
@@ -8263,7 +8273,7 @@ int executeCommandInner(node *tree) {
 	freeThing(tempNode);
 	if (tempNode2 != NULL) freeThing(tempNode2);
 	freeThing(tempNode3);
-	printMessage(1,"Warning: the last assignment will have no effect.\n");
+	printMessage(1,SOLLYA_MSG_ASSIGNMENT_WILL_HAVE_NO_EFFECT,"Warning: the last assignment will have no effect.\n");
 	considerDyingOnError();
       } else {
 	freeThing(tempNode);
@@ -8273,7 +8283,7 @@ int executeCommandInner(node *tree) {
     } else {
       freeThing(tempNode);
       if (tempNode2 != NULL) freeThing(tempNode2);
-      printMessage(1,"Warning: the last assignment will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_ASSIGNMENT_WILL_HAVE_NO_EFFECT,"Warning: the last assignment will have no effect.\n");
       considerDyingOnError();
     }
     break;
@@ -8284,8 +8294,8 @@ int executeCommandInner(node *tree) {
       if (res) result = 1;
       freeThing(tempNode);
     } else {
-      printMessage(1,"Warning: the left-hand side is not an access to an element of a structured type.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_LEFT_HAND_SIDE_NOT_ELEMENT_OF_STRUCTURED_TYPE,"Warning: the left-hand side is not an access to an element of a structured type.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break;
@@ -8296,47 +8306,47 @@ int executeCommandInner(node *tree) {
       if (res) result = 1;
       freeThing(tempNode);
     } else {
-      printMessage(1,"Warning: the left-hand side is not an access to an element of a structured type.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_LEFT_HAND_SIDE_NOT_ELEMENT_OF_STRUCTURED_TYPE,"Warning: the left-hand side is not an access to an element of a structured type.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break;
   case LIBRARYBINDING:
     if ((variablename != NULL) && (strcmp(variablename,tree->string) == 0)) {
-      printMessage(1,"Warning: the identifier \"%s\" is already be bound as the current free variable.\n",variablename);
-      printMessage(1,"It cannot be bound to a library function. This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_FREE_VAR_CANNOT_BE_LIBRARY,"Warning: the identifier \"%s\" is already be bound as the current free variable.\n",variablename);
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"It cannot be bound to a library function. This command will have no effect.\n");
       considerDyingOnError();
     } else {
       if (containsEntry(symbolTable, tree->string) || containsDeclaredEntry(declaredSymbolTable, tree->string)) {
-	printMessage(1,"Warning: the identifier \"%s\" is already assigned to.\n",tree->string);
-	printMessage(1,"It cannot be bound to a library function. This command will have no effect.\n");
+	printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_BOUND_TO_VAR_CANNOT_BE_LIBRARY,"Warning: the identifier \"%s\" is already assigned to.\n",tree->string);
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"It cannot be bound to a library function. This command will have no effect.\n");
         considerDyingOnError();
       } else {
 	if (getProcedure(tree->string) != NULL) {
-	  printMessage(1,"Warning: the identifier \"%s\" is already bound to an external procedure.\n",tree->string);
-	  printMessage(1,"It cannot be bound to a library function. This command will have no effect.\n");
+	  printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_EXTERNAL_PROC_CANNOT_BE_LIBRARY,"Warning: the identifier \"%s\" is already bound to an external procedure.\n",tree->string);
+	  printMessage(1,SOLLYA_MSG_CONTINUATION,"It cannot be bound to a library function. This command will have no effect.\n");
           considerDyingOnError();
 	} else {
 	  if (getFunction(tree->string) != NULL) {
-	    printMessage(1,"Warning: the identifier \"%s\" is already bound to a library function.\n",tree->string);
-	    printMessage(1,"It cannot be bound to a library function. This command will have no effect.\n");
+	    printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_LIBRARY_FUNC_CANNOT_BE_LIBRARY,"Warning: the identifier \"%s\" is already bound to a library function.\n",tree->string);
+	    printMessage(1,SOLLYA_MSG_CONTINUATION,"It cannot be bound to a library function. This command will have no effect.\n");
             considerDyingOnError();
 	  } else {
             if (getConstantFunction(tree->string) != NULL) {
-              printMessage(1,"Warning: the identifier \"%s\" is already bound to a library function.\n",tree->string);
-              printMessage(1,"It cannot be bound to a library function. This command will have no effect.\n");
+              printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_LIBRARY_CONST_CANNOT_BE_LIBRARY,"Warning: the identifier \"%s\" is already bound to a library constant.\n",tree->string);
+              printMessage(1,SOLLYA_MSG_CONTINUATION,"It cannot be bound to a library function. This command will have no effect.\n");
               considerDyingOnError();
             } else {
               if (evaluateThingToString(&tempString, tree->child1)) {
                 tempLibraryFunction = bindFunction(tempString, tree->string);
                 if(tempLibraryFunction == NULL) {
-                  printMessage(1,"Warning: an error occurred. The last command will have no effect.\n");
+                  printMessage(1,SOLLYA_MSG_ERROR_OCCURRED_COMMAND_NOT_EXECUTED,"Warning: an error occurred. The last command will have no effect.\n");
                   considerDyingOnError();
                 }
                 free(tempString);
               } else {
-                printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
-                printMessage(1,"This command will have no effect.\n");
+                printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
+                printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
                 considerDyingOnError();
               }
             }
@@ -8347,41 +8357,41 @@ int executeCommandInner(node *tree) {
     break;  			
   case LIBRARYCONSTANTBINDING:
     if ((variablename != NULL) && (strcmp(variablename,tree->string) == 0)) {
-      printMessage(1,"Warning: the identifier \"%s\" is already bound as the current free variable.\n",variablename);
-      printMessage(1,"It cannot be bound to a library constant. This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_FREE_VAR_CANNOT_BE_LIBRARY,"Warning: the identifier \"%s\" is already bound as the current free variable.\n",variablename);
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"It cannot be bound to a library constant. This command will have no effect.\n");
       considerDyingOnError();
     } else {
       if (containsEntry(symbolTable, tree->string) || containsDeclaredEntry(declaredSymbolTable, tree->string)) {
-	printMessage(1,"Warning: the identifier \"%s\" is already assigned to.\n",tree->string);
-	printMessage(1,"It cannot be bound to a library constant. This command will have no effect.\n");
+	printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_BOUND_TO_VAR_CANNOT_BE_LIBRARY,"Warning: the identifier \"%s\" is already assigned to.\n",tree->string);
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"It cannot be bound to a library constant. This command will have no effect.\n");
         considerDyingOnError();
       } else {
 	if (getProcedure(tree->string) != NULL) {
-	  printMessage(1,"Warning: the identifier \"%s\" is already bound to an external procedure.\n",tree->string);
-	  printMessage(1,"It cannot be bound to a library constant. This command will have no effect.\n");
+	  printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_EXTERNAL_PROC_CANNOT_BE_LIBRARY,"Warning: the identifier \"%s\" is already bound to an external procedure.\n",tree->string);
+	  printMessage(1,SOLLYA_MSG_CONTINUATION,"It cannot be bound to a library constant. This command will have no effect.\n");
           considerDyingOnError();
 	} else {
 	  if (getFunction(tree->string) != NULL) {
-	    printMessage(1,"Warning: the identifier \"%s\" is already bound to a library function.\n",tree->string);
-	    printMessage(1,"It cannot be bound to a library constant. This command will have no effect.\n");
+	    printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_LIBRARY_FUNC_CANNOT_BE_LIBRARY,"Warning: the identifier \"%s\" is already bound to a library function.\n",tree->string);
+	    printMessage(1,SOLLYA_MSG_CONTINUATION,"It cannot be bound to a library constant. This command will have no effect.\n");
             considerDyingOnError();
 	  } else {
             if (getConstantFunction(tree->string) != NULL) {
-              printMessage(1,"Warning: the identifier \"%s\" is already bound to a library constant.\n",tree->string);
-              printMessage(1,"It cannot be bound to a library constant. This command will have no effect.\n");
+              printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_LIBRARY_CONST_CANNOT_BE_LIBRARY,"Warning: the identifier \"%s\" is already bound to a library constant.\n",tree->string);
+              printMessage(1,SOLLYA_MSG_CONTINUATION,"It cannot be bound to a library constant. This command will have no effect.\n");
               considerDyingOnError();
             } else {
               
               if (evaluateThingToString(&tempString, tree->child1)) {
                 tempLibraryFunction = bindConstantFunction(tempString, tree->string);
                 if(tempLibraryFunction == NULL) {
-                  printMessage(1,"Warning: an error occurred. The last command will have no effect.\n");
+                  printMessage(1,SOLLYA_MSG_ERROR_OCCURRED_COMMAND_NOT_EXECUTED,"Warning: an error occurred. The last command will have no effect.\n");
                   considerDyingOnError();
                 }
                 free(tempString);
               } else {
-                printMessage(1,"Warning: the expression given does not evaluate to a string.\n");
-                printMessage(1,"This command will have no effect.\n");
+                printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
+                printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
                 considerDyingOnError();
               }
             }
@@ -8395,15 +8405,15 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToInteger(&resA, tree->child1, &defaultVal)) {
       if (resA < 12) {
 	resA = 12;
-	printMessage(1,"Warning: the precision of the tool must be at least 12 bits.\n");
+	printMessage(1,SOLLYA_MSG_PREC_MUST_BE_AT_LEAST_TWELVE_BITS,"Warning: the precision of the tool must be at least 12 bits.\n");
       }
       defaultprecision = resA;
       tools_precision = resA;
       outputMode();
       sollyaPrintf("The precision has been set to %d bits.\n",resA);
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_MACHINE_INTEGER,"Warning: the expression given does not evaluate to a machine integer.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break; 			
@@ -8412,14 +8422,14 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToInteger(&resA, tree->child1, &defaultVal)) {
       if (resA < 3) {
 	resA = 3;
-	printMessage(1,"Warning: the number of points must be at least 3 points.\n");
+	printMessage(1,SOLLYA_MSG_POINTS_MUST_BE_AT_LEAST_THREE_POINTS,"Warning: the number of points must be at least 3 points.\n");
       }
       defaultpoints = resA;
       outputMode();
       sollyaPrintf("The number of points has been set to %d.\n",resA);
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_MACHINE_INTEGER,"Warning: the expression given does not evaluate to a machine integer.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break; 			
@@ -8435,8 +8445,8 @@ int executeCommandInner(node *tree) {
       sollyaPrintf("The diameter has been set to ");
       printMpfr(a);
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_CONSTANT,"Warning: the expression given does not evaluate to a constant.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     mpfr_clear(a);
@@ -8467,8 +8477,8 @@ int executeCommandInner(node *tree) {
 	sollyaPrintf("Display mode in unknown state.\n");
       }
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to default, dyadic, powers, hexadecimal or binary.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_DISPLAY_TYPE,"Warning: the expression given does not evaluate to default, dyadic, powers, hexadecimal or binary.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break; 			
@@ -8477,14 +8487,14 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToInteger(&resA, tree->child1, &defaultVal)) {
       if (resA < 0) {
 	resA = 0;
-	printMessage(1,"Warning: the verbosity of the tool must not be negative.\n");
+	printMessage(1,SOLLYA_MSG_VERBOSITY_MUST_NOT_BE_NEGATIVE,"Warning: the verbosity of the tool must not be negative.\n");
       }
       verbosity = resA;
       outputMode();
       sollyaPrintf("The verbosity level has been set to %d.\n",resA);
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_MACHINE_INTEGER,"Warning: the expression given does not evaluate to a machine integer.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break;  		
@@ -8498,8 +8508,8 @@ int executeCommandInner(node *tree) {
       else 
 	sollyaPrintf("Canonical automatic printing output has been deactivated.\n");
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_ON_OR_OFF,"Warning: the expression given does not evaluate to on or off.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break; 		
@@ -8513,8 +8523,8 @@ int executeCommandInner(node *tree) {
       else 
 	sollyaPrintf("Automatic pure tree simplification has been deactivated.\n");
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_ON_OR_OFF,"Warning: the expression given does not evaluate to on or off.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break;  		
@@ -8523,13 +8533,13 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToInteger(&resA, tree->child1, &defaultVal)) {
       if (resA < 0) {
 	resA = 0;
-	printMessage(1,"Warning: the number of recursions for Taylor evaluation must not be negative.\n");
+	printMessage(1,SOLLYA_MSG_TAYLOR_RECURSIONS_MUST_NOT_BE_NEGATIVE,"Warning: the number of recursions for Taylor evaluation must not be negative.\n");
       }
       taylorrecursions = resA;     outputMode();
       sollyaPrintf("The number of recursions for Taylor evaluation has been set to %d.\n",resA);
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_MACHINE_INTEGER,"Warning: the expression given does not evaluate to a machine integer.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break; 		
@@ -8542,8 +8552,8 @@ int executeCommandInner(node *tree) {
       else 
 	sollyaPrintf("Timing has been deactivated.\n");
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_ON_OR_OFF,"Warning: the expression given does not evaluate to on or off.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break; 			
@@ -8556,8 +8566,8 @@ int executeCommandInner(node *tree) {
       else 
 	sollyaPrintf("Full parentheses mode has been deactivated.\n");
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_ON_OR_OFF,"Warning: the expression given does not evaluate to on or off.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break;  		
@@ -8570,8 +8580,8 @@ int executeCommandInner(node *tree) {
       else 
 	sollyaPrintf("Midpoint mode has been deactivated.\n");
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_ON_OR_OFF,"Warning: the expression given does not evaluate to on or off.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break; 			
@@ -8584,8 +8594,8 @@ int executeCommandInner(node *tree) {
       else 
 	sollyaPrintf("Die-on-error mode has been deactivated.\n");
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_ON_OR_OFF,"Warning: the expression given does not evaluate to on or off.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break; 			
@@ -8598,8 +8608,8 @@ int executeCommandInner(node *tree) {
       else 
 	sollyaPrintf("Rational mode has been deactivated.\n");
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_ON_OR_OFF,"Warning: the expression given does not evaluate to on or off.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break; 			
@@ -8612,8 +8622,8 @@ int executeCommandInner(node *tree) {
       else 
 	sollyaPrintf("Rounding warning mode has been activated.\n");
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_ON_OR_OFF,"Warning: the expression given does not evaluate to on or off.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break; 			
@@ -8622,13 +8632,13 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToInteger(&resA, tree->child1, &defaultVal)) {
       if (resA < 0) {
 	resA = 0;
-	printMessage(1,"Warning: the number of recursions for Hopital's rule must not be negative.\n");
+	printMessage(1,SOLLYA_MSG_HOPITAL_RECURSIONS_MUST_NOT_BE_NEGATIVE,"Warning: the number of recursions for Hopital's rule must not be negative.\n");
       }
       hopitalrecursions = resA;     outputMode();
       sollyaPrintf("The number of recursions for Hopital's rule has been set to %d.\n",resA);
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_MACHINE_INTEGER,"Warning: the expression given does not evaluate to a machine integer.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break; 		
@@ -8637,13 +8647,13 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToInteger(&resA, tree->child1, &defaultVal)) {
       if (resA < 12) {
 	resA = 12;
-	printMessage(2,"Warning: the precision of the tool must be at least 12 bits.\n");
+	printMessage(2,SOLLYA_MSG_PREC_MUST_BE_AT_LEAST_TWELVE_BITS,"Warning: the precision of the tool must be at least 12 bits.\n");
       }
       defaultprecision = resA;
       tools_precision = resA;
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_MACHINE_INTEGER,"Warning: the expression given does not evaluate to a machine integer.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break; 		
@@ -8652,12 +8662,12 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToInteger(&resA, tree->child1, &defaultVal)) {
       if (resA < 3) {
 	resA = 3;
-	printMessage(2,"Warning: the number of points must be at least 3 points.\n");
+	printMessage(2,SOLLYA_MSG_POINTS_MUST_BE_AT_LEAST_THREE_POINTS,"Warning: the number of points must be at least 3 points.\n");
       }
       defaultpoints = resA;
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_MACHINE_INTEGER,"Warning: the expression given does not evaluate to a machine integer.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break; 		
@@ -8670,8 +8680,8 @@ int executeCommandInner(node *tree) {
       mpfr_init2(statediam,mpfr_get_prec(a));
       mpfr_set(statediam,a,GMP_RNDN);
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_CONSTANT,"Warning: the expression given does not evaluate to a constant.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     mpfr_clear(a);
@@ -8682,8 +8692,8 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToDisplayMode(&resA, tree->child1, &resB)) {
       dyadic = resA;
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to default, dyadic, powers, hexadecimal or binary.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_DISPLAY_TYPE,"Warning: the expression given does not evaluate to default, dyadic, powers, hexadecimal or binary.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break;  		
@@ -8692,12 +8702,12 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToInteger(&resA, tree->child1, &defaultVal)) {
       if (resA < 0) {
 	resA = 0;
-	printMessage(2,"Warning: the verbosity of the tool must not be negative.\n");
+	printMessage(2,SOLLYA_MSG_VERBOSITY_MUST_NOT_BE_NEGATIVE,"Warning: the verbosity of the tool must not be negative.\n");
       }
       verbosity = resA;
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_MACHINE_INTEGER,"Warning: the expression given does not evaluate to a machine integer.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break; 		
@@ -8706,8 +8716,8 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToOnOff(&resA, tree->child1, &defaultVal)) {
       canonical = resA;
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_ON_OR_OFF,"Warning: the expression given does not evaluate to on or off.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break; 		
@@ -8716,8 +8726,8 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToOnOff(&resA, tree->child1, &defaultVal)) {
       autosimplify = resA;
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_ON_OR_OFF,"Warning: the expression given does not evaluate to on or off.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break;  	
@@ -8726,12 +8736,12 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToInteger(&resA, tree->child1, &defaultVal)) {
       if (resA < 0) {
 	resA = 0;
-	printMessage(2,"Warning: the number of recursions for Taylor evaluation must not be negative.\n");
+	printMessage(2,SOLLYA_MSG_TAYLOR_RECURSIONS_MUST_NOT_BE_NEGATIVE,"Warning: the number of recursions for Taylor evaluation must not be negative.\n");
       }
       taylorrecursions = resA;
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_MACHINE_INTEGER,"Warning: the expression given does not evaluate to a machine integer.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break; 	
@@ -8740,8 +8750,8 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToOnOff(&resA, tree->child1, &defaultVal)) {
       timecounting = resA;
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_ON_OR_OFF,"Warning: the expression given does not evaluate to on or off.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break; 		
@@ -8750,8 +8760,8 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToOnOff(&resA, tree->child1, &defaultVal)) {
       fullParentheses = resA;
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_ON_OR_OFF,"Warning: the expression given does not evaluate to on or off.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break;  		
@@ -8760,8 +8770,8 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToOnOff(&resA, tree->child1, &defaultVal)) {
       midpointMode = resA;
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_ON_OR_OFF,"Warning: the expression given does not evaluate to on or off.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break; 		
@@ -8770,8 +8780,8 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToOnOff(&resA, tree->child1, &defaultVal)) {
       dieOnErrorMode = resA;
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_ON_OR_OFF,"Warning: the expression given does not evaluate to on or off.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break; 		
@@ -8780,8 +8790,8 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToOnOff(&resA, tree->child1, &defaultVal)) {
       rationalMode = resA;
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_ON_OR_OFF,"Warning: the expression given does not evaluate to on or off.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break; 		
@@ -8790,8 +8800,8 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToOnOff(&resA, tree->child1, &defaultVal)) {
       noRoundingWarnings = !resA;
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to on or off.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_ON_OR_OFF,"Warning: the expression given does not evaluate to on or off.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break; 		
@@ -8800,12 +8810,12 @@ int executeCommandInner(node *tree) {
     if (evaluateThingToInteger(&resA, tree->child1, &defaultVal)) {
       if (resA < 0) {
 	resA = 0;
-	printMessage(2,"Warning: the number of recursions for Hopital's rule must not be negative.\n");
+	printMessage(2,SOLLYA_MSG_HOPITAL_RECURSIONS_MUST_NOT_BE_NEGATIVE,"Warning: the number of recursions for Hopital's rule must not be negative.\n");
       }
       hopitalrecursions = resA;
     } else {
-      printMessage(1,"Warning: the expression given does not evaluate to a machine integer.\n");
-      printMessage(1,"This command will have no effect.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_MACHINE_INTEGER,"Warning: the expression given does not evaluate to a machine integer.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
     break;  	
@@ -13421,23 +13431,17 @@ node *evaluateThing(node *tree) {
       freeThing(evaluated);
       if ((tree->nodeType != ERRORSPECIAL) && 
           (tree->nodeType != TABLEACCESS)) {
-	printMessage(1,"Warning: the given expression or command could not be handled.\n");
+	printMessage(1,SOLLYA_MSG_EXPR_OR_COMMAND_COULD_NOT_BE_HANDLED,"Warning: the given expression or command could not be handled.\n");
         considerDyingOnError();
       } 
     } else {
-      printMessage(1,"Warning: at least one of the given expressions or a subexpression is not correctly typed\nor its evaluation has failed because of some error on a side-effect.\n");
-      if (verbosity >= 2) {
-	changeToWarningMode();
-	printMessage(2,"Information: the expression or a partial evaluation of it has been the following:\n");
-	printThing(evaluated);
-	sollyaPrintf("\n");     
-	restoreMode();
-      }
+      printMessage(1,SOLLYA_MSG_EXPR_NOT_CORRECTLY_TYPED,"Warning: at least one of the given expressions or a subexpression is not correctly typed\nor its evaluation has failed because of some error on a side-effect.\n");
+      printMessage(2,SOLLYA_MSG_CONTINUATION,"Information: the expression or a partial evaluation of it has been the following:\n%b\n",evaluated);
       freeThing(evaluated);
       considerDyingOnError();
     }
 
-    printMessage(3,"Information: evaluation creates an error special symbol.\n");
+    printMessage(3,SOLLYA_MSG_EVALUATION_CREATES_ERROR_SPECIAL_SYMBOL,"Information: evaluation creates an error special symbol.\n");
 
     evaluated = makeError();
   }
@@ -13448,7 +13452,7 @@ node *evaluateThing(node *tree) {
       freeThing(evaluated);
       evaluated = tempNode;
     } else {
-      printMessage(1,"Warning: the given expression is too big to be treated by the automatic simplification.\n");
+      printMessage(1,SOLLYA_MSG_EXPR_TOO_BIG_FOR_AUTOMATIC_SIMPLIFICATION,"Warning: the given expression is too big to be treated by the automatic simplification.\n");
     }
   } 
 
@@ -13463,13 +13467,12 @@ int evaluateFormatsListForFPminimax(chain **res, node *list, int n, int mode) {
   int *intptr;
 
   if( (list->nodeType==LIST) && (lengthChain(list->arguments) < n) ) {
-    printMessage(1, "Error in fpminimax: there is less formats indications than monomials\n");
+    printMessage(1, SOLLYA_MSG_FPMINIMAX_LESS_FORMATS_THAN_MONOMIALS, "Error in fpminimax: there is less formats indications than monomials\n");
     considerDyingOnError();
     return 0;
   }
   if( (list->nodeType==LIST) && (lengthChain(list->arguments) > n) ) {
-    printMessage(1, "Warning in fpminimax: there is more formats indications than monomials\n");
-    printMessage(1, "the formats list will be truncated\n");
+    printMessage(1, SOLLYA_MSG_FPMINIMAX_LESS_MONOMIALS_THAN_FORMATS, "Warning in fpminimax: there is more formats indications than monomials\nthe formats list will be truncated\n");
   }
 
   curr=list->arguments;
@@ -13485,7 +13488,7 @@ int evaluateFormatsListForFPminimax(chain **res, node *list, int n, int mode) {
     case DOUBLEEXTENDEDSYMBOL: a=64; break;
     default:
       if (! evaluateThingToInteger(&a, (node *)(curr->value), NULL) ) {
-	printMessage(1, "Error in fpminimax: the formats list must contains only integers or formats\n");
+	printMessage(1, SOLLYA_MSG_FPMINIMAX_FORMAT_LIST_MALFORMED, "Error in fpminimax: the formats list must contains only integers or formats\n");
         considerDyingOnError();
 	freeChain(result, freeIntPtr);
 	return 0;
@@ -13493,8 +13496,8 @@ int evaluateFormatsListForFPminimax(chain **res, node *list, int n, int mode) {
     }
 
     if ((a <= 0) && (mode == FLOATING)) {
-      printMessage(1, "Warning in fpminimax: a format indication is non-positive while floating-point coefficients are desired.\n");
-      printMessage(1, "The corresponding format is replaced by 1.\n");
+      printMessage(1, SOLLYA_MSG_FPMINIMAX_FORMAT_NEGATIVE_FOR_FP_COEFFS, "Warning in fpminimax: a format indication is non-positive while floating-point coefficients are desired.\n");
+      printMessage(1, SOLLYA_MSG_CONTINUATION, "The corresponding format is replaced by 1.\n");
       a = 1;
     }
     intptr = (int *)safeMalloc(sizeof(int));
@@ -13673,8 +13676,7 @@ int executeMatchBodyInner(node **resultThing, node *body, node *thingToReturn, c
 	isFalseQuit((node *) (curr->value)) ||
 	isRestart((node *) (curr->value)) ||
 	isFalseRestart((node *) (curr->value))) {
-      printMessage(1,"Warning: a quit or restart command may not be part of the body of a match-with construct.\n");
-      printMessage(1,"The match-with construct will not be executed.\n");
+      printMessage(1,SOLLYA_MSG_QUIT_OR_RESTART_MUST_NOT_BE_IN_MATCH,"Warning: a quit or restart command may not be part of the body of a match-with construct.\nThe match-with construct will not be executed.\n");
       considerDyingOnError();
       okay = 0;
       break;
@@ -13694,22 +13696,22 @@ int executeMatchBodyInner(node **resultThing, node *body, node *thingToReturn, c
   while (curr != NULL) {
     failure = 1;
     if ((variablename != NULL) && (strcmp(variablename, ((entry *) (curr->value))->name) == 0)) {
-      printMessage(1,"Warning: the identifier \"%s\" is already bound to the current free variable.\nIt cannot be used as a match variable. The match-with construct cannot be executed.\n",
+      printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_FREE_VAR_CANNOT_BE_MATCHED,"Warning: the identifier \"%s\" is already bound to the current free variable.\nIt cannot be used as a match variable. The match-with construct cannot be executed.\n",
 		   ((entry *) (curr->value))->name);
       considerDyingOnError();
     } else {
       if (getFunction(((entry *) (curr->value))->name) != NULL) {
-	printMessage(1,"Warning: the identifier \"%s\" is already bound to a library function.\nIt cannot be used as a match variable. The match-with construct cannot be executed.\n",
+	printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_LIBRARY_FUNC_CANNOT_BE_MATCHED,"Warning: the identifier \"%s\" is already bound to a library function.\nIt cannot be used as a match variable. The match-with construct cannot be executed.\n",
 		     ((entry *) (curr->value))->name);
         considerDyingOnError();
       } else {
         if (getConstantFunction(((entry *) (curr->value))->name) != NULL) {
-          printMessage(1,"Warning: the identifier \"%s\" is already bound to a library constant.\nIt cannot be used as a match variable. The match-with construct cannot be executed.\n",
+          printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_LIBRARY_CONST_CANNOT_BE_MATCHED,"Warning: the identifier \"%s\" is already bound to a library constant.\nIt cannot be used as a match variable. The match-with construct cannot be executed.\n",
                        ((entry *) (curr->value))->name);
           considerDyingOnError();
         } else {
           if (getProcedure(((entry *) (curr->value))->name) != NULL) {
-            printMessage(1,"Warning: the identifier \"%s\" is already bound to an external procedure.\nIt cannot be used as a match variable. The match-with cannot be executed.\n",
+            printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_EXTERNAL_PROC_CANNOT_BE_MATCHED,"Warning: the identifier \"%s\" is already bound to an external procedure.\nIt cannot be used as a match variable. The match-with cannot be executed.\n",
                          ((entry *) (curr->value))->name);
             considerDyingOnError();
           } else {
@@ -13717,8 +13719,8 @@ int executeMatchBodyInner(node **resultThing, node *body, node *thingToReturn, c
               failure = 0;
 	      declaredSymbolTable = declareNewEntry(declaredSymbolTable, ((entry *) (curr->value))->name, (node *) (((entry *) (curr->value))->value), copyThingOnVoid);
             } else {
-              printMessage(1,"Warning: previous command interruptions have corrupted the frame system.\n");
-              printMessage(1,"The match variable \"%s\" cannot be bound to its actual value.\nThe match-with cannot be executed.\n",((entry *) (curr->value))->name);      
+              printMessage(1,SOLLYA_MSG_FRAME_SYSTEM_CORRUPTED_MATCH_NOT_EXECUTED,"Warning: previous command interruptions have corrupted the frame system.\n");
+              printMessage(1,SOLLYA_MSG_CONTINUATION,"The match variable \"%s\" cannot be bound to its actual value.\nThe match-with cannot be executed.\n",((entry *) (curr->value))->name);      
               considerDyingOnError();
             }
           }
@@ -13747,8 +13749,7 @@ int executeMatchBodyInner(node **resultThing, node *body, node *thingToReturn, c
 	isFalseQuit((node *) (curr->value)) ||
 	isRestart((node *) (curr->value)) ||
 	isRestart((node *) (curr->value))) {
-      printMessage(1,"Warning: a quit or restart command may not be part of the body of a match-with construct.\n");
-      printMessage(1,"The match-with construct will no longer be executed.\n");
+      printMessage(1,SOLLYA_MSG_QUIT_OR_RESTART_MUST_NOT_BE_IN_MATCH,"Warning: a quit or restart command may not be part of the body of a match-with construct.\nThe match-with construct will no longer be executed.\n");
       failure = 1;
     } else {
       failure = executeCommand((node *) (curr->value));
@@ -13786,7 +13787,7 @@ int executeMatchBody(node **resultThing, node *body, node *thingToReturn, chain 
   if (!setjmp(recoverEnvironmentError)) {
     res = executeMatchBodyInner(resultThing, body, thingToReturn, associations);
   } else {
-    printMessage(1,"Warning: the last command could not be executed. May leak memory.\n");
+    printMessage(1,SOLLYA_MSG_COMMAND_NOT_EXECUTABLE,"Warning: the last command could not be executed. May leak memory.\n");
     considerDyingOnError();
     res = 0;
   }
@@ -13815,7 +13816,7 @@ int executeMatch(node **result, node *thingToMatch, node **matchers, node **code
     okay = executeMatchBody(result, codesToRun[i], thingsToReturn[i], associations);
     if (associations != NULL) freeChain(associations, freeEntryOnVoid);
   } else {
-    printMessage(1,"Warning: no matching expression found in a match-with construct and no default case given.\n");
+    printMessage(1,SOLLYA_MSG_NO_MATCHING_CASE_FOUND,"Warning: no matching expression found in a match-with construct and no default case given.\n");
     *result = makeError();
     okay = 1;
   }
@@ -13847,8 +13848,7 @@ int executeProcedureInner(node **resultThing, node *proc, chain *args, int ellip
 	isFalseQuit((node *) (curr->value)) ||
 	isRestart((node *) (curr->value)) ||
 	isFalseRestart((node *) (curr->value))) {
-      printMessage(1,"Warning: a quit or restart command may not be part of a procedure body.\n");
-      printMessage(1,"The procedure will not be executed.\n");
+      printMessage(1,SOLLYA_MSG_QUIT_OR_RESTART_MUST_NOT_BE_IN_PROC,"Warning: a quit or restart command may not be part of a procedure body.\nThe procedure will not be executed.\n");
       considerDyingOnError();
       result = 1;
       break;
@@ -13869,24 +13869,24 @@ int executeProcedureInner(node **resultThing, node *proc, chain *args, int ellip
   while (curr != NULL) {
     noError = 0;
     if ((variablename != NULL) && (strcmp(variablename, (char *) (curr->value)) == 0)) {
-      printMessage(1,"Warning: the identifier \"%s\" is already bound to the current free variable.\nIt cannot be used as a formal parameter of a procedure. The procedure cannot be executed.\n",
+      printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_FREE_VAR_CANNOT_BE_PARAMETER,"Warning: the identifier \"%s\" is already bound to the current free variable.\nIt cannot be used as a formal parameter of a procedure. The procedure cannot be executed.\n",
 		   (char *) (curr->value));
       considerDyingOnError();
     } else {
       if (getFunction((char *) (curr->value)) != NULL) {
-	printMessage(1,"Warning: the identifier \"%s\" is already bound to a library function.\nIt cannot be used as a formal parameter of a procedure. The procedure cannot be executed.\n",
+	printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_LIBRARY_FUNC_CANNOT_BE_PARAMETER,"Warning: the identifier \"%s\" is already bound to a library function.\nIt cannot be used as a formal parameter of a procedure. The procedure cannot be executed.\n",
 		     (char *) (curr->value));
         considerDyingOnError();
 	
       } else {
         if (getConstantFunction((char *) (curr->value)) != NULL) {
-          printMessage(1,"Warning: the identifier \"%s\" is already bound to a library constant.\nIt cannot be used as a formal parameter of a procedure. The procedure cannot be executed.\n",
+          printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_LIBRARY_CONST_CANNOT_BE_PARAMETER,"Warning: the identifier \"%s\" is already bound to a library constant.\nIt cannot be used as a formal parameter of a procedure. The procedure cannot be executed.\n",
                        (char *) (curr->value));
           considerDyingOnError();
           
         } else {
           if (getProcedure((char *) (curr->value)) != NULL) {
-            printMessage(1,"Warning: the identifier \"%s\" is already bound to an external procedure.\nIt cannot be used as a formal parameter of a procedure. The procedure cannot be executed.\n",
+            printMessage(1,SOLLYA_MSG_IDENTIFIER_IS_EXTERNAL_PROC_CANNOT_BE_PARAMETER,"Warning: the identifier \"%s\" is already bound to an external procedure.\nIt cannot be used as a formal parameter of a procedure. The procedure cannot be executed.\n",
                          (char *) (curr->value),(char *) (curr->value));
             considerDyingOnError();
             
@@ -13910,8 +13910,8 @@ int executeProcedureInner(node **resultThing, node *proc, chain *args, int ellip
                 }
               }
             } else {
-              printMessage(1,"Warning: previous command interruptions have corrupted the frame system.\n");
-              printMessage(1,"The formal parameter \"%s\" cannot be bound to its actual value.\nThe procedure cannot be executed.\n",(char *) (curr->value));      
+              printMessage(1,SOLLYA_MSG_FRAME_SYSTEM_CORRUPTED_PROC_NOT_EXECUTED,"Warning: previous command interruptions have corrupted the frame system.\n");
+              printMessage(1,SOLLYA_MSG_CONTINUATION,"The formal parameter \"%s\" cannot be bound to its actual value.\nThe procedure cannot be executed.\n",(char *) (curr->value));      
               considerDyingOnError();
             }
           }
@@ -13942,8 +13942,8 @@ int executeProcedureInner(node **resultThing, node *proc, chain *args, int ellip
 	isFalseQuit((node *) (curr->value)) ||
 	isRestart((node *) (curr->value)) ||
 	isRestart((node *) (curr->value))) {
-      printMessage(1,"Warning: a quit or restart command may not be part of a procedure body.\n");
-      printMessage(1,"The procedure will no longer be executed.\n");
+      printMessage(1,SOLLYA_MSG_QUIT_OR_RESTART_MUST_NOT_BE_IN_PROC,"Warning: a quit or restart command may not be part of a procedure body.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"The procedure will no longer be executed.\n");
       res = 1;
     } else {
       res = executeCommand((node *) (curr->value));
@@ -13979,7 +13979,7 @@ int executeProcedure(node **resultThing, node *proc, chain *args, int elliptic) 
   if (!setjmp(recoverEnvironmentError)) {
     res = executeProcedureInner(resultThing, proc, args, elliptic);
   } else {
-    printMessage(1,"Warning: the last command could not be executed. May leak memory.\n");
+    printMessage(1,SOLLYA_MSG_COMMAND_NOT_EXECUTABLE,"Warning: the last command could not be executed. May leak memory.\n");
       considerDyingOnError();
     res = 0;
   }
@@ -14517,7 +14517,7 @@ int executeExternalProcedure(node **resultThing, libraryProcedure *proc, chain *
   if (!setjmp(recoverEnvironmentError)) {
     res = executeExternalProcedureInner(resultThing, proc, args);
   } else {
-    printMessage(1,"Warning: the last command could not be executed. May leak memory.\n");
+    printMessage(1,SOLLYA_MSG_COMMAND_NOT_EXECUTABLE,"Warning: the last command could not be executed. May leak memory.\n");
       considerDyingOnError();
     res = 0;
   }
@@ -15946,12 +15946,12 @@ int evaluateThingToPseudoMonomialsList(chain **monom, node *tree) {
     prev = -1;
     for (curr = monomials; curr != NULL; curr = curr->next) {
       if (*(int *)(curr->value) < 0) {
-        printMessage(1,"Error: monomial degrees must be non-negative.\n");
+        printMessage(1,SOLLYA_MSG_REMEZ_MONOMIAL_DEGREES_MUST_NOT_BE_NEGATIVE,"Error: monomial degrees must be non-negative.\n");
         failure = 1;
         break;
       }
       if (*(int *)(curr->value) == prev) {
-        printMessage(1,"Error: monomial degree is given twice in argument to Remez algorithm.\n");
+        printMessage(1,SOLLYA_MSG_REMEZ_MONOMIAL_DEGREE_GIVEN_TWICE,"Error: monomial degree is given twice in argument to Remez algorithm.\n");
         failure = 1;
         break;
       }
@@ -16014,7 +16014,7 @@ node *evaluateThingInnerRemez(node *tree, char *timingString) {
   }
 
   if (curr != NULL) {
-    printMessage(1,"Warning: too many arguments given to remez command. The remaining arguments will be ignored.\n");
+    printMessage(1,SOLLYA_MSG_REMEZ_TOO_MANY_ARGUMENTS,"Warning: too many arguments given to remez command. The remaining arguments will be ignored.\n");
     considerDyingOnError();
   }
 
@@ -16040,7 +16040,7 @@ node *evaluateThingInnerRemez(node *tree, char *timingString) {
     if (!evaluateThingToInteger(&n, secondArg, NULL)) failure = 1;
     else {
       if (n<0) {
-        printMessage(1,"Error: the second argument of remez must be a non-negative integer or a list.\n");
+        printMessage(1,SOLLYA_MSG_REMEZ_SECND_ARG_MUST_BE_NONNEGATIVE_INT_OR_LIST,"Error: the second argument of remez must be a non-negative integer or a list.\n");
         failure = 1;
       }
       else { /* The second argument is a valid integer n. Converting it to a list. */
@@ -16150,7 +16150,7 @@ node *evaluateThingInnerFpminimax(node *tree, char *timingString) {
   }
 
  if (curr != NULL) {
-    printMessage(1,"Warning: too many arguments given to fpminimax command. The remaining arguments will be ignored.\n");
+   printMessage(1,SOLLYA_MSG_FPMINIMAX_TOO_MANY_ARGUMENTS,"Warning: too many arguments given to fpminimax command. The remaining arguments will be ignored.\n");
     considerDyingOnError();
   }
 
@@ -16169,7 +16169,7 @@ node *evaluateThingInnerFpminimax(node *tree, char *timingString) {
        freeThing(constrainedPartArg); constrainedPartArg = copyTree(fifthArg);
      }
      else {
-       printMessage(1, "Error in fpminimax: invalid fifth argument\n");
+       printMessage(1, SOLLYA_MSG_INVALID_FIFTH_ARGUMENT, "Error in fpminimax: invalid fifth argument\n");
        failure = 1;
      }
    }
@@ -16184,7 +16184,7 @@ node *evaluateThingInnerFpminimax(node *tree, char *timingString) {
        freeThing(constrainedPartArg); constrainedPartArg = copyTree(sixthArg);
      }
      else {
-       printMessage(1, "Error in fpminimax: invalid fifth argument\n");
+       printMessage(1, SOLLYA_MSG_INVALID_FIFTH_ARGUMENT, "Error in fpminimax: invalid fifth argument\n");
        failure = 1;
      }
    }
@@ -16199,7 +16199,7 @@ node *evaluateThingInnerFpminimax(node *tree, char *timingString) {
        freeThing(constrainedPartArg); constrainedPartArg = copyTree(seventhArg);
      }
      else {
-       printMessage(1, "Error in fpminimax: invalid fifth argument\n");
+       printMessage(1, SOLLYA_MSG_INVALID_FIFTH_ARGUMENT, "Error in fpminimax: invalid fifth argument\n");
        failure = 1;
      }
    }
@@ -16218,7 +16218,7 @@ node *evaluateThingInnerFpminimax(node *tree, char *timingString) {
     if (!evaluateThingToInteger(&n, secondArg, NULL)) failure = 1;
     else {
       if (n<0) {
-        printMessage(1,"Error: the second argument of fpminimax must be a non-negative integer or a list.\n");
+        printMessage(1,SOLLYA_MSG_FPMINIMAX_SECND_ARG_MUST_BE_NONNEG_INT_OR_LIST,"Error: the second argument of fpminimax must be a non-negative integer or a list.\n");
         failure = 1;
       }
       else { /* The second argument is a valid integer n. Converting it to a list. */
@@ -16236,7 +16236,7 @@ node *evaluateThingInnerFpminimax(node *tree, char *timingString) {
   if( (thirdArg->nodeType == LIST) || (thirdArg->nodeType == FINALELLIPTICLIST) )
     evaluateFormatsListForFPminimax(&formats, thirdArg, lengthChain(monomials), fpfixedArg);
   else {
-    printMessage(1, "Error in fpminimax: the third argument of fpminimax must be a list of formats indications.\n");
+    printMessage(1, SOLLYA_MSG_FPMINIMAX_THIRD_ARG_MUST_BE_FORMAT_INDICATIONS, "Error in fpminimax: the third argument of fpminimax must be a list of formats indications.\n");
     failure = 1;
   }
 
@@ -16246,7 +16246,7 @@ node *evaluateThingInnerFpminimax(node *tree, char *timingString) {
                                                                      value by evaluateThingToRange anyway */
   if (!evaluateThingToRange(a, b, fourthArg)) {
     if (!evaluateThingToConstantList(&pointsList, fourthArg)) {
-      printMessage(1, "Error in fpminimax: the fourth argument of fpminimax must be either an interval or a list of points\n");
+      printMessage(1, SOLLYA_MSG_FPMINIMAX_FOURTH_ARG_INTERVAL_OR_LIST_OF_POINTS, "Error in fpminimax: the fourth argument of fpminimax must be either an interval or a list of points\n");
       failure = 1;
     }
   }
@@ -17692,7 +17692,7 @@ node *evaluateThingInner(node *tree) {
     if (timingString != NULL) pushTimeCounter();
     if ((isError(copy->child1) && (!isError(tree->child1)) && (!isError(tree->child2))) ||
 	(isError(copy->child2) && (!isError(tree->child2)) && (!isError(tree->child1)))) {
-	  printMessage(1,"Warning: the evaluation of one of the sides of an equality test yields error due to a syntax error or an error on a side-effect.\nThe other side either also yields error due to an syntax or side-effect error or does not evaluate to error.\nThe boolean returned may be meaningless.\n");
+      printMessage(1,SOLLYA_MSG_TEST_COMPARES_ERROR_TO_SOMETHING,"Warning: the evaluation of one of the sides of an equality test yields error due to a syntax error or an error on a side-effect.\nThe other side either also yields error due to an syntax or side-effect error or does not evaluate to error.\nThe boolean returned may be meaningless.\n");
     } 
     if (isEqualThing(copy->child1,copy->child2)) {
       if (!isError(copy->child1)) {
@@ -17716,7 +17716,7 @@ node *evaluateThingInner(node *tree) {
           if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
               (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
             if ((resA == 3) || (resB == 3)) 
-              printMessage(1,"Warning: equality test relies on floating-point result that is not faithfully evaluated.\n");
+              printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: equality test relies on floating-point result that is not faithfully evaluated.\n");
             resC = mpfr_equal_p(a,b);
             if ((resA == 1) || (resB == 1)) {
               if (mpfr_number_p(a) && mpfr_number_p(b)) {
@@ -17742,11 +17742,11 @@ node *evaluateThingInner(node *tree) {
                   if (compareConstant(&resD, copy->child1, copy->child2)) {
                     resC = (resD == 0);
                   } else 
-                    printMessage(1,"Warning: equality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+                    printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: equality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
                 } else 
-                  printMessage(2,"Information: equality test relies on floating-point result.\n");
+                  printMessage(2,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT,"Information: equality test relies on floating-point result.\n");
               } else 
-                printMessage(1,"Warning: equality test relies on floating-point result that is faithfully evaluated and at least one of the sides is not a real number.\n");
+                printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_NOT_REAL,"Warning: equality test relies on floating-point result that is faithfully evaluated and at least one of the sides is not a real number.\n");
             }
             if (resC) {
               freeThing(copy);
@@ -17780,7 +17780,7 @@ node *evaluateThingInner(node *tree) {
       if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
 	  evaluateThingToRange(b,c,copy->child2)) {
 	if (resA == 3) 
-	  printMessage(1,"Warning: containment test relies on floating-point result that is not faithfully evaluated.\n");
+	  printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: containment test relies on floating-point result that is not faithfully evaluated.\n");
 	resC = ((mpfr_cmp(b,a) <= 0) && 
 		(mpfr_cmp(a,c) <= 0) && 
 		(!mpfr_unordered_p(a,b)) && 
@@ -17827,11 +17827,11 @@ node *evaluateThingInner(node *tree) {
 		compareConstant(&resB, copy->child1, tempNode2)) {
 	      resC = (resA <= 0) && (resB <= 0);
 	    } else
-	      printMessage(1,"Warning: containment test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+	      printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: containment test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
 	    freeThing(tempNode);
 	    freeThing(tempNode2);
 	  } else 
-	    printMessage(2,"Information: containment test relies on floating-point result.\n");
+	    printMessage(2,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT,"Information: containment test relies on floating-point result.\n");
 	  mpfr_clear(d);
 	}
 	if (resC) {
@@ -17897,7 +17897,7 @@ node *evaluateThingInner(node *tree) {
         if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
             (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
           if ((resA == 3) || (resB == 3)) 
-            printMessage(1,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
+            printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
           resC = ((mpfr_cmp(a,b) < 0) && (!mpfr_unordered_p(a,b)));
           if ((resA == 1) || (resB == 1)) {
             if (resC) {
@@ -17913,9 +17913,9 @@ node *evaluateThingInner(node *tree) {
               if (compareConstant(&resD, copy->child1, copy->child2)) {
                 resC = (resD < 0);
               } else 
-                printMessage(1,"Warning: inequality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+                printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: inequality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
             } else 
-              printMessage(2,"Information: inequality test relies on floating-point result.\n");
+              printMessage(2,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT,"Information: inequality test relies on floating-point result.\n");
           }
           if (resC) {
             freeThing(copy);
@@ -17968,7 +17968,7 @@ node *evaluateThingInner(node *tree) {
               if ((resA = evaluateThingToConstant(a,tempNode,NULL,1)) && 
                   (resB = evaluateThingToConstant(b,tempNode2,NULL,1))) {
                 if ((resA == 3) || (resB == 3)) 
-                  printMessage(1,"Warning: minimum computation relies on floating-point result that is not faithfully evaluated.\n");
+                  printMessage(1,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: minimum computation relies on floating-point result that is not faithfully evaluated.\n");
                 resC = ((mpfr_cmp(a,b) < 0) && (!mpfr_unordered_p(a,b)));
                 if ((resA == 1) || (resB == 1)) {
                   if (resC) {
@@ -17984,9 +17984,9 @@ node *evaluateThingInner(node *tree) {
                     if (compareConstant(&resD, tempNode, tempNode2)) {
                       resC = (resD < 0);
                     } else 
-                      printMessage(1,"Warning: minimum computation relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+                      printMessage(1,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: minimum computation relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
                   } else 
-                    printMessage(2,"Information: minimum computation relies on floating-point result.\n");
+                    printMessage(2,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT,"Information: minimum computation relies on floating-point result.\n");
                 }
                 if (!resC) {
                   tempNode = tempNode2;
@@ -18039,7 +18039,7 @@ node *evaluateThingInner(node *tree) {
               if ((resA = evaluateThingToConstant(a,tempNode,NULL,1)) && 
                   (resB = evaluateThingToConstant(b,tempNode2,NULL,1))) {
                 if ((resA == 3) || (resB == 3)) 
-                  printMessage(1,"Warning: minimum computation relies on floating-point result that is not faithfully evaluated.\n");
+                  printMessage(1,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: minimum computation relies on floating-point result that is not faithfully evaluated.\n");
                 resC = ((mpfr_cmp(a,b) < 0) && (!mpfr_unordered_p(a,b)));
                 if ((resA == 1) || (resB == 1)) {
                   if (resC) {
@@ -18055,9 +18055,9 @@ node *evaluateThingInner(node *tree) {
                     if (compareConstant(&resD, tempNode, tempNode2)) {
                       resC = (resD < 0);
                     } else 
-                      printMessage(1,"Warning: minimum computation relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+                      printMessage(1,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: minimum computation relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
                   } else 
-                    printMessage(2,"Information: minimum computation relies on floating-point result.\n");
+                    printMessage(2,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT,"Information: minimum computation relies on floating-point result.\n");
                 }
                 if (!resC) {
                   tempNode = tempNode2;
@@ -18117,7 +18117,7 @@ node *evaluateThingInner(node *tree) {
               if ((resA = evaluateThingToConstant(a,tempNode,NULL,1)) && 
                   (resB = evaluateThingToConstant(b,tempNode2,NULL,1))) {
                 if ((resA == 3) || (resB == 3)) 
-                  printMessage(1,"Warning: maximum computation relies on floating-point result that is not faithfully evaluated.\n");
+                  printMessage(1,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: maximum computation relies on floating-point result that is not faithfully evaluated.\n");
                 resC = ((mpfr_cmp(a,b) < 0) && (!mpfr_unordered_p(a,b)));
                 if ((resA == 1) || (resB == 1)) {
                   if (resC) {
@@ -18133,9 +18133,9 @@ node *evaluateThingInner(node *tree) {
                     if (compareConstant(&resD, tempNode, tempNode2)) {
                       resC = (resD < 0);
                     } else 
-                      printMessage(1,"Warning: maximum computation relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+                      printMessage(1,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: maximum computation relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
                   } else 
-                    printMessage(2,"Information: maximum computation relies on floating-point result.\n");
+                    printMessage(2,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT,"Information: maximum computation relies on floating-point result.\n");
                 }
                 if (resC) {
                   tempNode = tempNode2;
@@ -18188,7 +18188,7 @@ node *evaluateThingInner(node *tree) {
               if ((resA = evaluateThingToConstant(a,tempNode,NULL,1)) && 
                   (resB = evaluateThingToConstant(b,tempNode2,NULL,1))) {
                 if ((resA == 3) || (resB == 3)) 
-                  printMessage(1,"Warning: maximum computation relies on floating-point result that is not faithfully evaluated.\n");
+                  printMessage(1,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: maximum computation relies on floating-point result that is not faithfully evaluated.\n");
                 resC = ((mpfr_cmp(a,b) < 0) && (!mpfr_unordered_p(a,b)));
                 if ((resA == 1) || (resB == 1)) {
                   if (resC) {
@@ -18204,9 +18204,9 @@ node *evaluateThingInner(node *tree) {
                     if (compareConstant(&resD, tempNode, tempNode2)) {
                       resC = (resD < 0);
                     } else 
-                      printMessage(1,"Warning: maximum computation relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+                      printMessage(1,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: maximum computation relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
                   } else 
-                    printMessage(2,"Information: maximum computation relies on floating-point result.\n");
+                    printMessage(2,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT,"Information: maximum computation relies on floating-point result.\n");
                 }
                 if (resC) {
                   tempNode = tempNode2;
@@ -18251,7 +18251,7 @@ node *evaluateThingInner(node *tree) {
         if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
             (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
           if ((resA == 3) || (resB == 3)) 
-            printMessage(1,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
+            printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
           resC = ((mpfr_cmp(a,b) > 0) && (!mpfr_unordered_p(a,b)));
           if ((resA == 1) || (resB == 1)) {
             if (resC) {
@@ -18267,9 +18267,9 @@ node *evaluateThingInner(node *tree) {
               if (compareConstant(&resD, copy->child1, copy->child2)) {
                 resC = (resD > 0);
               } else 
-                printMessage(1,"Warning: inequality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+                printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: inequality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
             } else 
-              printMessage(2,"Information: inequality test relies on floating-point result.\n");
+              printMessage(2,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT,"Information: inequality test relies on floating-point result.\n");
           }
           if (resC) {
             freeThing(copy);
@@ -18307,7 +18307,7 @@ node *evaluateThingInner(node *tree) {
         if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
             (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
           if ((resA == 3) || (resB == 3)) 
-            printMessage(1,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
+            printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
           resC = ((mpfr_cmp(a,b) <= 0) && (!mpfr_unordered_p(a,b)));
           if ((resA == 1) || (resB == 1)) {
             if (resC) {
@@ -18323,9 +18323,9 @@ node *evaluateThingInner(node *tree) {
               if (compareConstant(&resD, copy->child1, copy->child2)) {
                 resC = (resD <= 0);
               } else 
-                printMessage(1,"Warning: inequality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+                printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: inequality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
             } else 
-              printMessage(2,"Information: inequality test relies on floating-point result.\n");
+              printMessage(2,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT,"Information: inequality test relies on floating-point result.\n");
           }
           if (resC) {
             freeThing(copy);
@@ -18363,7 +18363,7 @@ node *evaluateThingInner(node *tree) {
         if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
             (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
           if ((resA == 3) || (resB == 3)) 
-            printMessage(1,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
+            printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: inequality test relies on floating-point result that is not faithfully evaluated.\n");
           resC = ((mpfr_cmp(a,b) >= 0) && (!mpfr_unordered_p(a,b)));
           if ((resA == 1) || (resB == 1)) {
             if (resC) {
@@ -18379,9 +18379,9 @@ node *evaluateThingInner(node *tree) {
               if (compareConstant(&resD, copy->child1, copy->child2)) {
                 resC = (resD >= 0);
               } else  
-                printMessage(1,"Warning: inequality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+                printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: inequality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
             } else 
-              printMessage(2,"Information: inequality test relies on floating-point result.\n");
+              printMessage(2,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT,"Information: inequality test relies on floating-point result.\n");
           }
           if (resC) {
             freeThing(copy);
@@ -18403,7 +18403,7 @@ node *evaluateThingInner(node *tree) {
     if (timingString != NULL) pushTimeCounter();
     if ((isError(copy->child1) && (!isError(tree->child1)) && (!isError(tree->child2))) ||
 	(isError(copy->child2) && (!isError(tree->child2)) && (!isError(tree->child1)))) {
-	  printMessage(1,"Warning: the evaluation of one of the sides of an inequality test yields error due to a syntax error or an error on a side-effect.\nThe other side either also yields error due to an syntax or side-effect error or does not evaluate to error.\nThe boolean returned may be meaningless.\n");
+      printMessage(1,SOLLYA_MSG_TEST_COMPARES_ERROR_TO_SOMETHING,"Warning: the evaluation of one of the sides of an inequality test yields error due to a syntax error or an error on a side-effect.\nThe other side either also yields error due to an syntax or side-effect error or does not evaluate to error.\nThe boolean returned may be meaningless.\n");
     } 
     if (isEqualThing(copy->child1,copy->child2)) {
       if (!isError(copy->child1)) {
@@ -18427,7 +18427,7 @@ node *evaluateThingInner(node *tree) {
           if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
               (resB = evaluateThingToConstant(b,copy->child2,NULL,1))) {
             if ((resA == 3) || (resB == 3)) 
-              printMessage(1,"Warning: equality test relies on floating-point result that is not faithfully evaluated.\n");
+              printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: equality test relies on floating-point result that is not faithfully evaluated.\n");
             resC = !(mpfr_equal_p(a,b) || mpfr_unordered_p(a,b));
             if ((resA == 1) || (resB == 1)) {
               if (mpfr_number_p(a) && mpfr_number_p(b)) {
@@ -18453,11 +18453,11 @@ node *evaluateThingInner(node *tree) {
                   if (compareConstant(&resD, copy->child1, copy->child2)) {
                     resC = (resD != 0);
                   } else 
-                    printMessage(1,"Warning: equality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
+                    printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_TOGGLING,"Warning: equality test relies on floating-point result that is faithfully evaluated and different faithful roundings toggle the result.\n");
                 } else 
-                  printMessage(2,"Information: equality test relies on floating-point result.\n");
+                  printMessage(2,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT,"Information: equality test relies on floating-point result.\n");
               } else 
-                printMessage(1,"Warning: equality test relies on floating-point result that is faithfully evaluated and at least one of the sides is not a real number.\n");
+                printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_NOT_REAL,"Warning: equality test relies on floating-point result that is faithfully evaluated and at least one of the sides is not a real number.\n");
             }
             if (resC) {
               freeThing(copy);
@@ -18606,7 +18606,7 @@ node *evaluateThingInner(node *tree) {
 			      copy = tempNode2;
 			    } 
 			  } else {
-			    printMessage(1,"Warning: an error occurred while executing a procedure.\n");
+			    printMessage(1,SOLLYA_MSG_ERROR_WHILE_EXECUTING_A_PROCEDURE,"Warning: an error occurred while executing a procedure.\n");
                             considerDyingOnError();
 			    freeThing(copy);
 			    copy = makeError();
@@ -18623,7 +18623,7 @@ node *evaluateThingInner(node *tree) {
 				copy = tempNode2;
 			      } 
 			    } else {
-			      printMessage(1,"Warning: an error occurred while executing a procedure.\n");
+			      printMessage(1,SOLLYA_MSG_ERROR_WHILE_EXECUTING_A_PROCEDURE,"Warning: an error occurred while executing a procedure.\n");
                               considerDyingOnError();
 			      freeThing(copy);
 			      copy = makeError();
@@ -18810,8 +18810,8 @@ node *evaluateThingInner(node *tree) {
 	variablename = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
 	strcpy(variablename, tree->string);
       } else {
-	printMessage(1,"Warning: the identifier \"%s\" is neither assigned to, nor bound to a library function nor external procedure, nor equal to the current free variable.\n",tree->string);
-	printMessage(1,"Will interpret \"%s\" as \"%s\".\n",tree->string,variablename);
+	printMessage(1,SOLLYA_MSG_IDENTIFIER_NOT_ASSIGNED_TO,"Warning: the identifier \"%s\" is neither assigned to, nor bound to a library function nor external procedure, nor equal to the current free variable.\n",tree->string);
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"Will interpret \"%s\" as \"%s\".\n",tree->string,variablename);
       }
       tempNode = makeVariable();
     }
@@ -18857,8 +18857,8 @@ node *evaluateThingInner(node *tree) {
 	variablename = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
 	strcpy(variablename, tree->string);
       } else {
-	printMessage(1,"Warning: the identifier \"%s\" is neither assigned to, nor bound to a library function nor external procedure, nor equal to the current free variable.\n",tree->string);
-	printMessage(1,"Will interpret \"%s\" as \"%s\".\n",tree->string,variablename);
+	printMessage(1,SOLLYA_MSG_IDENTIFIER_NOT_ASSIGNED_TO,"Warning: the identifier \"%s\" is neither assigned to, nor bound to a library function nor external procedure, nor equal to the current free variable.\n",tree->string);
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"Will interpret \"%s\" as \"%s\".\n",tree->string,variablename);
       }
       tempNode = makeVariable();
     }
@@ -18873,10 +18873,10 @@ node *evaluateThingInner(node *tree) {
 	  free(copy);
 	  if (tempNode->nodeType == VARIABLE) {
 	    if (variablename != NULL) {
-	      printMessage(1,"Warning: the identifier \"%s\" is bound to the current free variable. In a functional context it will be considered as the identity function.\n",
+	      printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: the identifier \"%s\" is bound to the current free variable. In a functional context it will be considered as the identity function.\n",
 			   variablename);
 	    } else {
-	      printMessage(1,"Warning: \"_x_\" is the free variable. In a functional context it will be considered as the identity function.\n");
+	      printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: \"_x_\" is the free variable. In a functional context it will be considered as the identity function.\n");
 	    }
 	  }
 	  copy = substitute(tempNode, tempNode2);
@@ -18934,7 +18934,7 @@ node *evaluateThingInner(node *tree) {
 	    strcpy(copy->string,tree->string);
 	  }
 	} else {
-	  printMessage(1,"Warning: external procedure has signalized failure.\n");
+	  printMessage(1,SOLLYA_MSG_EXTERNAL_PROCEDURE_SIGNALED_FAILURE,"Warning: external procedure has signalized failure.\n");
           considerDyingOnError();
 	  free(copy);
 	  copy = makeError();
@@ -18955,7 +18955,7 @@ node *evaluateThingInner(node *tree) {
 	      strcpy(copy->string,tree->string);
 	    }
 	  } else {
-	    printMessage(1,"Warning: an error occurred while executing a procedure.\n");
+	    printMessage(1,SOLLYA_MSG_ERROR_WHILE_EXECUTING_A_PROCEDURE,"Warning: an error occurred while executing a procedure.\n");
             considerDyingOnError();
 	    free(copy);
 	    copy = makeError();
@@ -19026,10 +19026,10 @@ node *evaluateThingInner(node *tree) {
 	  free(copy);
 	  if (tempNode->nodeType == VARIABLE) {
 	    if (variablename != NULL) {
-	      printMessage(1,"Warning: the identifier \"%s\" is bound to the current free variable. In a functional context it will be considered as the identity function.\n",
+	      printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: the identifier \"%s\" is bound to the current free variable. In a functional context it will be considered as the identity function.\n",
 			   variablename);
 	    } else {
-	      printMessage(1,"Warning: \"_x_\" is the free variable. In a functional context it will be considered as the identity function.\n");
+	      printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: \"_x_\" is the free variable. In a functional context it will be considered as the identity function.\n");
 	    }
 	  }
 	  copy = substitute(tempNode, tempNode2);
@@ -19084,7 +19084,7 @@ node *evaluateThingInner(node *tree) {
 	    copy->child1 = copyThing(tempNode);
 	  }
 	} else {
-	  printMessage(1,"Warning: external procedure has signalized failure.\n");
+	  printMessage(1,SOLLYA_MSG_EXTERNAL_PROCEDURE_SIGNALED_FAILURE,"Warning: external procedure has signalized failure.\n");
           considerDyingOnError();
 	  free(copy);
 	  copy = makeError();
@@ -19104,7 +19104,7 @@ node *evaluateThingInner(node *tree) {
 	      copy->child1 = copyThing(tempNode);
 	    }
 	  } else {
-	    printMessage(1,"Warning: an error occurred while executing a procedure.\n");
+	    printMessage(1,SOLLYA_MSG_ERROR_WHILE_EXECUTING_A_PROCEDURE,"Warning: an error occurred while executing a procedure.\n");
             considerDyingOnError();
 	    free(copy);
 	    copy = makeError();
@@ -19142,7 +19142,7 @@ node *evaluateThingInner(node *tree) {
       resB = atoi(tempString4);
       free(tempString4);
       if (resB < 12) {
-	printMessage(1,"Warning: the precision of values in the tool must be at least 12 bits.\n");
+	printMessage(1,SOLLYA_MSG_PRECISION_OF_NUMS_MUST_BE_AT_LEAST_TWELVE_BITS,"Warning: the precision of values in the tool must be at least 12 bits.\n");
 	resB = 12;
       }
       pTemp = (mp_prec_t) resB;
@@ -19171,10 +19171,10 @@ node *evaluateThingInner(node *tree) {
       mpfr_set_str(b,tempString,10,GMP_RNDU);    
       if (mpfr_cmp(a,b) != 0) {
 	if (!noRoundingWarnings) {
-	  printMessage(1,
+	  printMessage(1,SOLLYA_MSG_ROUNDING_OCCURRED_WHILE_READING_A_CONSTANT,
 		       "Warning: Rounding occurred when converting the constant \"%s\" to floating-point with %d bits.\n",
 		       tempString,(int) pTemp);
-	  printMessage(1,"If safe computation is needed, try to increase the precision.\n");
+	  printMessage(1,SOLLYA_MSG_CONTINUATION,"If safe computation is needed, try to increase the precision.\n");
 	}
 	mpfr_set_str(a,tempString,10,GMP_RNDN);
       }
@@ -19200,7 +19200,7 @@ node *evaluateThingInner(node *tree) {
     mpfr_set_str(a,str1,10,GMP_RNDD);
     mpfr_set_str(b,str2,10,GMP_RNDU);    
     if (mpfr_cmp(a,b) > 0) {
-      printMessage(1,"Warning: the range bounds are given in inverse order. Will revert them.\n");
+      printMessage(1,SOLLYA_MSG_RANGE_BOUNDS_IN_INVERSE_ORDER,"Warning: the range bounds are given in inverse order. Will revert them.\n");
       str3 = str1;
       str1 = str2;
       str2 = str3;
@@ -19222,10 +19222,10 @@ node *evaluateThingInner(node *tree) {
     mpfr_set_str(b,str1,10,GMP_RNDU);    
     if (mpfr_cmp(a,b) != 0) {
       if (!noRoundingWarnings) {
-	printMessage(1,
+	printMessage(1,SOLLYA_MSG_ROUNDING_OCCURRED_WHILE_READING_A_CONSTANT,
 		     "Warning: Rounding occurred when converting the constant \"%s\" to floating-point with %d bits.\n",
 		     str1,(int) pTemp);
-	printMessage(1,"If safe computation is needed, try to increase the precision.\n");
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"The inclusion property is nevertheless satisfied.\n");
       }
       mpfr_set_str(a,str1,10,GMP_RNDD);
     }
@@ -19249,10 +19249,10 @@ node *evaluateThingInner(node *tree) {
     mpfr_set_str(b,str2,10,GMP_RNDU);    
     if (mpfr_cmp(a,b) != 0) {
       if (!noRoundingWarnings) {
-	printMessage(1,
+	printMessage(1,SOLLYA_MSG_ROUNDING_OCCURRED_WHILE_READING_A_CONSTANT,
 		     "Warning: Rounding occurred when converting the constant \"%s\" to floating-point with %d bits.\n",
 		     str2,(int) pTemp);
-	printMessage(1,"If safe computation is needed, try to increase the precision.\n");
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"The inclusion property is nevertheless satisfied.\n");
       }
       mpfr_set_str(a,str2,10,GMP_RNDU);
     }
@@ -19277,10 +19277,10 @@ node *evaluateThingInner(node *tree) {
     mpfr_init2(a,pTemp);
     if (!readDyadic(a,tree->string)) {
       if (!noRoundingWarnings) {
-	printMessage(1,
+	printMessage(1,SOLLYA_MSG_ROUNDING_OCCURRED_WHILE_READING_A_CONSTANT,
 		     "Warning: Rounding occurred when converting the dyadic constant \"%s\" to floating-point with %d bits.\n",
 		     tree->string,(int) pTemp);
-	printMessage(1,"If safe computation is needed, try to increase the precision.\n");
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"If safe computation is needed, try to increase the precision.\n");
       }
     }
     tempNode = makeConstant(a);
@@ -19296,10 +19296,10 @@ node *evaluateThingInner(node *tree) {
     mpfr_init2(a,pTemp);
     if (!readHexa(a,tree->string)) {
       if (!noRoundingWarnings) {
-	printMessage(1,
+	printMessage(1,SOLLYA_MSG_ROUNDING_OCCURRED_WHILE_READING_A_CONSTANT,
 		     "Warning: Rounding occurred when converting the hexadecimal constant \"%s\" to floating-point with %d bits.\n",
 		     tree->string,(int) pTemp);
-	printMessage(1,"If safe computation is needed, try to increase the precision.\n");
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"If safe computation is needed, try to increase the precision.\n");
       }
     }
     tempNode = makeConstant(a);
@@ -19315,10 +19315,10 @@ node *evaluateThingInner(node *tree) {
     mpfr_init2(a,pTemp);
     if (!readHexadecimal(a,tree->string)) {
       if (!noRoundingWarnings) {
-	printMessage(1,
+	printMessage(1,SOLLYA_MSG_ROUNDING_OCCURRED_WHILE_READING_A_CONSTANT,
 		     "Warning: Rounding occurred when converting the hexadecimal constant \"%s\" to floating-point with %d bits.\n",
 		     tree->string,(int) pTemp);
-	printMessage(1,"If safe computation is needed, try to increase the precision.\n");
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"If safe computation is needed, try to increase the precision.\n");
       }
     }
     tempNode = makeConstant(a);
@@ -19337,10 +19337,10 @@ node *evaluateThingInner(node *tree) {
     mpfr_set_str(b,tree->string,2,GMP_RNDU);    
     if (mpfr_cmp(a,b) != 0) {
       if (!noRoundingWarnings) {
-	printMessage(1,
+	printMessage(1,SOLLYA_MSG_ROUNDING_OCCURRED_WHILE_READING_A_CONSTANT,
 		     "Warning: Rounding occurred when converting the binary constant \"%s_2\" to floating-point with %d bits.\n",
 		     tree->string,(int) pTemp);
-	printMessage(1,"If safe computation is needed, try to increase the precision.\n");
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"If safe computation is needed, try to increase the precision.\n");
       }
       mpfr_set_str(a,tree->string,2,GMP_RNDN);
     }
@@ -19396,7 +19396,7 @@ node *evaluateThingInner(node *tree) {
       copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateEntryOnVoid);
       if (timingString != NULL) popTimeCounter(timingString);
     } else {
-      printMessage(1,"Warning: a literal structure contains at least one entry twice. This is not allowed.\n");
+      printMessage(1,SOLLYA_MSG_LITERAL_STRUCTURE_CONTAINS_ENTRY_TWICE,"Warning: a literal structure contains at least one entry twice. This is not allowed.\n");
       copy->arguments = copyChainWithoutReversal(tree->arguments, copyEntryOnVoid);
     }
     break;
@@ -19467,7 +19467,7 @@ node *evaluateThingInner(node *tree) {
         resB = atoi(tempString4);
         free(tempString4);
         if (resB < 12) {
-          printMessage(1,"Warning: the precision of values in the tool must be at least 12 bits.\n");
+          printMessage(1,SOLLYA_MSG_PRECISION_OF_NUMS_MUST_BE_AT_LEAST_TWELVE_BITS,"Warning: the precision of values in the tool must be at least 12 bits.\n");
           resB = 12;
         }
         pTemp = (mp_prec_t) resB;
@@ -19496,10 +19496,10 @@ node *evaluateThingInner(node *tree) {
         mpfr_set_str(b,tempString,10,GMP_RNDU);    
         if (mpfr_cmp(a,b) != 0) {
           if (!noRoundingWarnings) {
-            printMessage(1,
+            printMessage(1,SOLLYA_MSG_ROUNDING_OCCURRED_WHILE_READING_A_CONSTANT,
                          "Warning: Rounding occurred when converting the constant \"%s\" to floating-point with %d bits.\n",
                          tempString,(int) pTemp);
-            printMessage(1,"If safe computation is needed, try to increase the precision.\n");
+            printMessage(1,SOLLYA_MSG_CONTINUATION,"The inclusion property is nevertheless satisfied.\n");
           }
           mpfr_set_str(a,tempString,10,GMP_RNDD);
         }
@@ -19537,7 +19537,7 @@ node *evaluateThingInner(node *tree) {
         resB = atoi(tempString4);
         free(tempString4);
         if (resB < 12) {
-          printMessage(1,"Warning: the precision of values in the tool must be at least 12 bits.\n");
+          printMessage(1,SOLLYA_MSG_PRECISION_OF_NUMS_MUST_BE_AT_LEAST_TWELVE_BITS,"Warning: the precision of values in the tool must be at least 12 bits.\n");
           resB = 12;
         }
         pTemp = (mp_prec_t) resB;
@@ -19566,10 +19566,10 @@ node *evaluateThingInner(node *tree) {
         mpfr_set_str(b,tempString,10,GMP_RNDU);    
         if (mpfr_cmp(a,b) != 0) {
           if ((!noRoundingWarnings) && (!alreadyDisplayed)) {
-            printMessage(1,
+            printMessage(1,SOLLYA_MSG_ROUNDING_OCCURRED_WHILE_READING_A_CONSTANT,
                          "Warning: Rounding occurred when converting the constant \"%s\" to floating-point with %d bits.\n",
                          tempString,(int) pTemp);
-            printMessage(1,"If safe computation is needed, try to increase the precision.\n");
+            printMessage(1,SOLLYA_MSG_CONTINUATION,"The inclusion property is nevertheless satisfied.\n");
           }
           mpfr_set_str(a,tempString,10,GMP_RNDU);
         }
@@ -19618,7 +19618,7 @@ node *evaluateThingInner(node *tree) {
 	    evaluateRangeFunction(yrange, copy->child1, xrange, 256 * tools_precision); 
 	    evaluateRangeFunction(yrange2, copy->child2, xrange, 256 * tools_precision); 
 	    if (!noRoundingWarnings) {
-	      printMessage(1,"Warning: inclusion property is satisfied but the diameter may be greater than the least possible.\n");
+	      printMessage(1,SOLLYA_MSG_NOT_LEAST_POSSIBLE_INCLUSION_INTERVAL,"Warning: inclusion property is satisfied but the diameter may be greater than the least possible.\n");
 	    }
 	    sollya_mpfr_min(a,*(yrange.a),*(yrange2.a),GMP_RNDD);
 	    sollya_mpfr_max(b,*(yrange.b),*(yrange2.b),GMP_RNDU);
@@ -19638,7 +19638,7 @@ node *evaluateThingInner(node *tree) {
 	  freeThing(copy->child1);
 	  freeThing(copy->child2);
 	  if (mpfr_cmp(a,b) > 0) {
-	    printMessage(1,"Warning: the bounds of the given range are in wrong order. Will reverse them.\n");
+	    printMessage(1,SOLLYA_MSG_RANGE_BOUNDS_IN_INVERSE_ORDER,"Warning: the bounds of the given range are in wrong order. Will reverse them.\n");
 	    if (resA != 2) {
 	      mpfr_nextabove(a);
 	    }
@@ -19648,7 +19648,7 @@ node *evaluateThingInner(node *tree) {
 	    copy->child1 = makeConstant(b);
 	    copy->child2 = makeConstant(a);
 	    if (!(!((!(!(mpfr_nan_p(*(copy->child1->value))))) ^ (!(!(mpfr_nan_p(*(copy->child2->value)))))))) {
-	      printMessage(1,"Warning: one bound of a range is NaN while the other is not. Will normalize the range to have two NaN endpoints.\n");
+	      printMessage(1,SOLLYA_MSG_ONLY_ONE_ENDPOINT_OF_RANGE_IS_NAN,"Warning: one bound of a range is NaN while the other is not. Will normalize the range to have two NaN endpoints.\n");
 	      mpfr_set_nan(*(copy->child1->value));
 	      mpfr_set_nan(*(copy->child2->value));
 	    }
@@ -19662,7 +19662,7 @@ node *evaluateThingInner(node *tree) {
 	    copy->child1 = makeConstant(a);
 	    copy->child2 = makeConstant(b);
 	    if (!(!((!(!(mpfr_nan_p(*(copy->child1->value))))) ^ (!(!(mpfr_nan_p(*(copy->child2->value)))))))) {
-	      printMessage(1,"Warning: one bound of a range is NaN while the other is not. Will normalize the range to have two NaN endpoints.\n");
+	      printMessage(1,SOLLYA_MSG_ONLY_ONE_ENDPOINT_OF_RANGE_IS_NAN,"Warning: one bound of a range is NaN while the other is not. Will normalize the range to have two NaN endpoints.\n");
 	      mpfr_set_nan(*(copy->child1->value));
 	      mpfr_set_nan(*(copy->child2->value));
 	    }
@@ -19806,7 +19806,7 @@ node *evaluateThingInner(node *tree) {
 	  freeThing(copy);
 	  copy = tempNode;
 	} else {
-	  printMessage(2,"Information: the given tree is constant but cannot be evaluated faithfully.\n");
+	  printMessage(2,SOLLYA_MSG_TREE_IS_CONSTANT_BUT_CANNOT_DO_FAITHFUL_EVAL,"Information: the given tree is constant but cannot be evaluated faithfully.\n");
 	  tempNode = simplifyTree(copy->child1);
 	  freeThing(copy);
 	  copy = tempNode; 
@@ -19842,7 +19842,7 @@ node *evaluateThingInner(node *tree) {
     copy = makeConstant(a);
     mpfr_clear(a);
     if (resA) {
-      printMessage(1,"Warning: a command executed in a timed environment required quitting the tool. This is not possible. The quit command has been discarded.\n");
+      printMessage(1,SOLLYA_MSG_TIMED_COMMAND_HAS_QUIT_THE_TOOL,"Warning: a command executed in a timed environment required quitting the tool. This is not possible. The quit command has been discarded.\n");
     }
     break;
   case REMEZ:
@@ -19857,7 +19857,7 @@ node *evaluateThingInner(node *tree) {
     if (isProcedureNotIllim(copy->child1)) {
       tempNode = performBind(copy->child1,copy->string,copy->child2);
       if (tempNode == NULL) {
-	printMessage(1,"Warning: the given procedure has no argument named \"%s\". The procedure is returned unchanged.\n",copy->string);
+	printMessage(1,SOLLYA_MSG_PARAM_OF_PROCEDURE_DOES_NOT_EXIST,"Warning: the given procedure has no argument named \"%s\". The procedure is returned unchanged.\n",copy->string);
 	tempNode = copyThing(copy->child1);
       }
       freeThing(copy);
@@ -20219,12 +20219,13 @@ node *evaluateThingInner(node *tree) {
 	      freeThing(copy);
 	      copy = tempNode6;
 	    } else {
-	      printMessage(1,"Warning: an error occurred during computation of a Chebyshev form.\n");
+	      printMessage(1,SOLLYA_MSG_CHEBYSHEVFORM_ERROR_IN_COMPUTATION,"Warning: an error occurred during computation of a Chebyshev form.\n");
 	    }
 	    sollya_mpfi_clear(tempIA2);
 	  }
 	} else {
-          printMessage(1,"Warning: the degree of a Chebyshev form must not be negative.\n");
+	 printMessage(1,SOLLYA_MSG_CHEBYSHEVFORM_DEGREE_MUST_NOT_BE_NEGATIVE,"Warning: the degree of a Chebyshev must not be negative.\n");
+         //printMessage(1,"Warning: the degree of a Chebyshev form must not be negative.\n");
 	}
       }
     }
@@ -20283,7 +20284,7 @@ node *evaluateThingInner(node *tree) {
           mpfr_clear(a);
           mpfr_clear(b);
         } else {
-          printMessage(1,"Warning: the degree of differentiation in autodiff must not be negative.\n");
+          printMessage(1,SOLLYA_MSG_AUTODIFF_DEGREE_MUST_NOT_BE_NEGATIVE,"Warning: the degree of differentiation in autodiff must not be negative.\n");
         }
       }
     }
@@ -20307,8 +20308,7 @@ node *evaluateThingInner(node *tree) {
     if (isPureTree(copy->child1)) {
       if (timingString != NULL) pushTimeCounter();      
       if (!getNumeratorDenominator(&tempNode,&tempNode2,copy->child1)) {
-	printMessage(1,"Warning: the expression given is not a fraction. ");
-	printMessage(1,"Will consider it as a fraction with denominator 1.\n");
+	printMessage(1,SOLLYA_MSG_EXPR_IS_NO_FRACTION,"Warning: the expression given is not a fraction. Will consider it as a fraction with denominator 1.\n");
       } else {
 	freeThing(tempNode2);
       }
@@ -20322,8 +20322,7 @@ node *evaluateThingInner(node *tree) {
     if (isPureTree(copy->child1)) {
       if (timingString != NULL) pushTimeCounter();      
       if (!getNumeratorDenominator(&tempNode2,&tempNode,copy->child1)) {
-	printMessage(1,"Warning: the expression given is not a fraction. ");
-	printMessage(1,"Will consider it as a fraction with denominator 1.\n");
+	printMessage(1,SOLLYA_MSG_EXPR_IS_NO_FRACTION,"Warning: the expression given is not a fraction. Will consider it as a fraction with denominator 1.\n");
 	tempNode = makeConstantDouble(1.0);
       }
       freeThing(tempNode2);
@@ -20556,12 +20555,12 @@ node *evaluateThingInner(node *tree) {
 		  if (timingString != NULL) popTimeCounter(timingString);
 		  if (verbosity >= 2) {
 		    if (resE == 0) {
-		      printMessage(2,"Information: no rounding has happened.\n");
+		      printMessage(2,SOLLYA_MSG_NO_ROUNDING_HAS_HAPPENED,"Information: no rounding has happened.\n");
 		    } else {
 		      if (resE < 0) {
-			printMessage(2,"Information: rounding down has happened.\n");
+			printMessage(2,SOLLYA_MSG_ROUND_DOWN_HAS_HAPPENED,"Information: rounding down has happened.\n");
 		      } else {
-			printMessage(2,"Information: rounding up has happened.\n");
+			printMessage(2,SOLLYA_MSG_ROUND_UP_HAS_HAPPENED,"Information: rounding up has happened.\n");
 		      }
 		    }
 		  }
@@ -20582,12 +20581,12 @@ node *evaluateThingInner(node *tree) {
 		  if (timingString != NULL) popTimeCounter(timingString);
 		  if (verbosity >= 2) {
 		    if (resE == 0) {
-		      printMessage(2,"Information: no rounding has happened.\n");
+		      printMessage(2,SOLLYA_MSG_NO_ROUNDING_HAS_HAPPENED,"Information: no rounding has happened.\n");
 		    } else {
 		      if (resE < 0) {
-			printMessage(2,"Information: rounding down has happened.\n");
+			printMessage(2,SOLLYA_MSG_ROUND_DOWN_HAS_HAPPENED,"Information: rounding down has happened.\n");
 		      } else {
-			printMessage(2,"Information: rounding up has happened.\n");
+			printMessage(2,SOLLYA_MSG_ROUND_UP_HAS_HAPPENED,"Information: rounding up has happened.\n");
 		      }
 		    }
 		  }
@@ -20734,11 +20733,11 @@ node *evaluateThingInner(node *tree) {
     copy->child1 = evaluateThingInner(tree->child1);
     if (isString(copy->child1)) {
       if (timingString != NULL) pushTimeCounter();      
-      if ((tempNode = parseString(copy->child1->string)) != NULL) {
+      if ((tempNode = parseStringInternal(copy->child1->string)) != NULL) {
 	freeThing(copy);
 	copy = tempNode; 
       } else {
-	printMessage(1,"Warning: the string \"%s\" could not be parsed by the miniparser.\n",copy->child1->string);
+	printMessage(1,SOLLYA_MSG_STRING_CANNOT_BE_PARSED_BY_MINIPARSER,"Warning: the string \"%s\" could not be parsed by the miniparser.\n",copy->child1->string);
         considerDyingOnError();
       }
       if (timingString != NULL) popTimeCounter(timingString);
@@ -20752,7 +20751,7 @@ node *evaluateThingInner(node *tree) {
 	freeThing(copy);
 	copy = tempNode; 
       } else {
-	printMessage(1,"Warning: the file \"%s\" could not be read as an XML file.\n",copy->child1->string);
+	printMessage(1,SOLLYA_MSG_XML_FILE_CANNOT_BE_READ,"Warning: the file \"%s\" could not be read as an XML file.\n",copy->child1->string);
         considerDyingOnError();
       }
       if (timingString != NULL) popTimeCounter(timingString);
@@ -20801,7 +20800,7 @@ node *evaluateThingInner(node *tree) {
 	  if (evaluateThingToString(&tempString,fourthArg)) {
 	    resB = 1;
 	    if ((fd = fopen(tempString,"w")) == NULL) {
-	      printMessage(1,"Warning: the file \"%s\" could not be opened for writing. The proof argument will be ignored.\n",tempString);
+	      printMessage(1,SOLLYA_MSG_FILE_COULD_NOT_BE_OPENED_FOR_WRITING_IGNORING,"Warning: the file \"%s\" could not be opened for writing. The proof argument will be ignored.\n",tempString);
               considerDyingOnError();
 	    }
 	    free(tempString);
@@ -20905,7 +20904,7 @@ node *evaluateThingInner(node *tree) {
 		mpfr_clear(d);
 		mpfr_clear(e);
 	      } else {
-		printMessage(1,"Warning: the supremum norm on the error function between the given polynomial and the given function could not be computed.\n");
+		printMessage(1,SOLLYA_MSG_SUPNORM_DID_NOT_WORK_OUT_WELL,"Warning: the supremum norm on the error function between the given polynomial and the given function could not be computed.\n");
 		considerDyingOnError();
 		tempNode = makeError();
 		freeThing(copy);
@@ -21163,7 +21162,7 @@ node *evaluateThingInner(node *tree) {
     fd = NULL;
     if (tempString != NULL) {
       if ((fd = fopen(tempString,"w")) == NULL) {
-	printMessage(1,"Warning: the file \"%s\" could not be opened for writing. The proof argument will be ignored.\n",tempString);
+	printMessage(1,SOLLYA_MSG_FILE_COULD_NOT_BE_OPENED_FOR_WRITING_IGNORING,"Warning: the file \"%s\" could not be opened for writing. The proof argument will be ignored.\n",tempString);
         considerDyingOnError();
       }
       free(tempString);
@@ -21198,13 +21197,13 @@ node *evaluateThingInner(node *tree) {
 	  free(xrange.a);
 	  free(xrange.b);
 	  if (tempNode == NULL) {
-	    printMessage(1,"Warning: the implementation has not succeeded. The command could not be executed.\n");
+	    printMessage(1,SOLLYA_MSG_IMPLEMENTATION_HAS_NOT_SUCCEEDED,"Warning: the implementation has not succeeded. The command could not be executed.\n");
             considerDyingOnError();
 	    tempNode = makeError();
 	  }
 	  fclose(fd2);
 	} else {
-	  printMessage(1,"Warning: the file \"%s\" could not be opened for writing. The command cannot be executed.\n",tempString3);
+	  printMessage(1,SOLLYA_MSG_FILE_COULD_NOT_BE_OPENED_FOR_WRITING,"Warning: the file \"%s\" could not be opened for writing. The command cannot be executed.\n",tempString3);
           considerDyingOnError();
 	  tempNode = makeError();
 	}
@@ -21420,7 +21419,7 @@ node *evaluateThingInner(node *tree) {
 	  evaluateThingToConstant(c,thirdArg, NULL,0) &&
           evaluateThingToInteger(&resA,fifthArg,NULL)) {
         if (resA < 0) {
-          printMessage(1, "Error: guessdegree: the optional fifth argument must be a positive number.\n");
+          printMessage(1, SOLLYA_MSG_GUESSDEGREE_FIFTH_ARGUMENT_MUST_BE_NUMBER, "Error: guessdegree: the optional fifth argument must be a positive number.\n");
         }
         else {
           if (timingString != NULL) pushTimeCounter(); 
@@ -21512,7 +21511,7 @@ node *evaluateThingInner(node *tree) {
 	if (timingString != NULL) pushTimeCounter();      
 	if (!roundRangeCorrectly(c, a, b)) {
 	  if (!noRoundingWarnings) {
-	    printMessage(1,"Warning: correct rounding to nearest impossible with the given bounding.\n");
+	    printMessage(1,SOLLYA_MSG_ROUND_TO_NEAREST_IMPOSSIBLE_WITH_BOUNDING,"Warning: correct rounding to nearest impossible with the given bounding.\n");
 	  }
 	}
 	if (timingString != NULL) popTimeCounter(timingString);
@@ -21541,7 +21540,7 @@ node *evaluateThingInner(node *tree) {
 	}
 	fclose(fd);
       } else {
-	printMessage(1,"Warning: the file \"%s\" could not be opened for reading.\n",copy->child1->string);
+	printMessage(1,SOLLYA_MSG_FILE_COULD_NOT_BE_OPENED_FOR_READING,"Warning: the file \"%s\" could not be opened for reading.\n",copy->child1->string);
         considerDyingOnError();
       }
     }

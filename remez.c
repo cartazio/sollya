@@ -93,6 +93,19 @@ void printMatrix(mpfr_t *M, int n) {
   return;
 }
 
+void printMessageMatrix(int verb, mpfr_t *M, int n) {
+  int i,j;
+  printMessage(verb,SOLLYA_MSG_CONTINUATION,"[");
+  for(i=1;i<=n;i++) {
+    for(j=1;j<=n;j++) {
+      printMessage(verb,SOLLYA_MSG_CONTINUATION,"%.15v",M[coeff(i,j,n)]); if(j!=n) printMessage(verb,SOLLYA_MSG_CONTINUATION,", ");
+    }
+    if(i!=n) printMessage(verb,SOLLYA_MSG_CONTINUATION,";\n");
+  }
+  printMessage(verb,SOLLYA_MSG_CONTINUATION,"]\n");
+  return;
+}
+
 void system_solve(mpfr_t *res, mpfr_t *M, mpfr_t *b, int n, mp_prec_t prec) {
   chain *i_list=NULL;
   chain *j_list=NULL;
@@ -351,14 +364,10 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
   nbr_iter = 2;
   /* End of compiler happiness */
 
-  if(verbosity>=8) {
-    changeToWarningMode();
-    sollyaPrintf("Information (Newton's algorithm): entering in Newton's algorithm. Parameters are:\n");
-    sollyaPrintf("Information (Newton's algorithm): f = "); printTree(f); sollyaPrintf("\n");
-    sollyaPrintf("Information (Newton's algorithm): a = "); printMpfr(a);
-    sollyaPrintf("Information (Newton's algorithm): b = "); printMpfr(b);
-    if (x0!=NULL) { sollyaPrintf("Information (Newton's algorithm): x0 = "); printMpfr(*x0);}
-    restoreMode();
+  if (x0 != NULL) {
+    printMessage(8,SOLLYA_MSG_ENTERING_NEWTONS_ALGORITHM,"Information (Newton's algorithm): entering in Newton's algorithm. Parameters are:\nInformation (Newton's algorithm): f = %b\nInformation (Newton's algorithm): a = %v\nInformation (Newton's algorithm): b = %v\nInformation (Newton's algorithm): x0 = %v\n",f,a,b,*x0);
+  } else {
+    printMessage(8,SOLLYA_MSG_ENTERING_NEWTONS_ALGORITHM,"Information (Newton's algorithm): entering in Newton's algorithm. Parameters are:\nInformation (Newton's algorithm): f = %b\nInformation (Newton's algorithm): a = %v\nInformation (Newton's algorithm): b = %v\n",f,a,b);
   }
 
   prec_bounds = (mpfr_get_prec(a)>mpfr_get_prec(b)) ? mpfr_get_prec(a) : mpfr_get_prec(b);
@@ -441,7 +450,7 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
 	 ((sgnfepsa==1) && (sgnf0==0) && (sgnfepsb==3)) ||
 	 ((sgnfepsa==2) && (sgnf0==0) && (sgnfepsb==3)) ||
 	 ((sgnfepsa==3) && (sgnf0==0) && (sgnfepsb==3)) ) {
-      printMessage(5, "Information (Newton's algorithm): 0 is an exact 0.\n");
+      printMessage(5, SOLLYA_MSG_NEWTON_ZERO_IS_EXACT_ZERO, "Information (Newton's algorithm): 0 is an exact 0.\n");
       mpfr_set(res, zero_mpfr, GMP_RNDN);
       stop_algo = 1;
     }
@@ -457,7 +466,7 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
 	 ((sgnfepsa==0) && (sgnf0==1) && (sgnfepsb==3)) ||
 	 ((sgnfepsa==0) && (sgnf0==2) && (sgnfepsb==3)) ||
 	 ((sgnfepsa==0) && (sgnf0==3) && (sgnfepsb==3)) ) {
-      printMessage(5, "Information (Newton's algorithm): an exact 0 has been discovered.\n");
+      printMessage(5, SOLLYA_MSG_NEWTON_AN_EXACT_ZERO_HAS_BEEN_FOUND, "Information (Newton's algorithm): an exact 0 has been discovered.\n");
       mpfr_set(res, epsa, GMP_RNDN);
       stop_algo = 1;
     }
@@ -470,26 +479,26 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
 	 ((sgnfepsa==1) && (sgnf0==3) && (sgnfepsb==0)) ||
 	 ((sgnfepsa==2) && (sgnf0==3) && (sgnfepsb==0)) ||
 	 ((sgnfepsa==3) && (sgnf0==3) && (sgnfepsb==0)) ) {
-      printMessage(5, "Information (Newton's algorithm): an exact 0 has been discovered.\n");
+      printMessage(5, SOLLYA_MSG_NEWTON_AN_EXACT_ZERO_HAS_BEEN_FOUND, "Information (Newton's algorithm): an exact 0 has been discovered.\n");
       mpfr_set(res, epsb, GMP_RNDN);
       stop_algo = 1;
     }
     /* The cases (-sngfa, * *) and (* * sgnfa) can be separated into subcases : */
     if ((sgnfepsa==codeNegfa) && (sgnf0==3) && (sgnfepsb==codefa)) {
-      printMessage(3, "Warning (Newton's algorithm): the function has more than one zero in the interval.\n");
-      printMessage(3, "Warning (Newton's algorithm): 0 seems to be one of them but wa cannot prove it.\n");
+      printMessage(3, SOLLYA_MSG_NEWTON_FUNC_APPEARS_TO_HAVE_MORE_THAN_ONE_ZERO, "Warning (Newton's algorithm): the function has more than one zero in the interval.\n");
+      printMessage(3, SOLLYA_MSG_CONTINUATION, "Warning (Newton's algorithm): 0 seems to be one of them but wa cannot prove it.\n");
       mpfr_set(res, zero_mpfr, GMP_RNDN);
       stop_algo = 1;
     }
     if ((sgnfepsa==codeNegfa) && (sgnf0==codefa) && (sgnfepsb==codefa)) {
-      printMessage(3, "Warning (Newton's algorithm): the function has more than one zero in the interval.\n");
-      printMessage(3, "Warning (Newton's algorithm): one of them is too close to zero for being accurately determined.\n");
+      printMessage(3, SOLLYA_MSG_NEWTON_FUNC_APPEARS_TO_HAVE_MORE_THAN_ONE_ZERO, "Warning (Newton's algorithm): the function has more than one zero in the interval.\n");
+      printMessage(3, SOLLYA_MSG_CONTINUATION, "Warning (Newton's algorithm): one of them is too close to zero for being accurately determined.\n");
       mpfr_set(res, epsa, GMP_RNDU);
       stop_algo = 1;
     }
     if ((sgnfepsa==codeNegfa) && (sgnf0==codeNegfa) && (sgnfepsb==codefa)) {
-      printMessage(3, "Warning (Newton's algorithm): the function has more than one zero in the interval.\n");
-      printMessage(3, "Warning (Newton's algorithm): one of them is too close to zero for being accurately determined.\n");
+      printMessage(3, SOLLYA_MSG_NEWTON_FUNC_APPEARS_TO_HAVE_MORE_THAN_ONE_ZERO, "Warning (Newton's algorithm): the function has more than one zero in the interval.\n");
+      printMessage(3, SOLLYA_MSG_CONTINUATION, "Warning (Newton's algorithm): one of them is too close to zero for being accurately determined.\n");
       mpfr_set(res, epsb, GMP_RNDD);
       stop_algo = 1;
     }
@@ -514,66 +523,66 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
     /* End of the subcases */
     if ( ((sgnfepsa==codefa) && (sgnf0==codefa) && (sgnfepsb==codeNegfa)) ||
 	 ((sgnfepsa==3) && (sgnf0==codefa) && (sgnfepsb==codeNegfa)) ) {
-      printMessage(2, "Warning (Newton's algorithm): the zero of f is too close to zero for being accurately determined.\n");
+      printMessage(2, SOLLYA_MSG_NEWTON_ZERO_TOO_CLOSE_TO_ZERO_TO_BE_ACCURATE, "Warning (Newton's algorithm): the zero of f is too close to zero for being accurately determined.\n");
       mpfr_set(res, epsb, GMP_RNDN);
       stop_algo = 1;
     }
     if ( ((sgnfepsa==codefa) && (sgnf0==codeNegfa) && (sgnfepsb==codeNegfa)) ||
 	 ((sgnfepsa==codefa) && (sgnf0==codeNegfa) && (sgnfepsb==3)) ) {
-      printMessage(2, "Warning (Newton's algorithm): the zero of f is too close to zero for being accurately determined.\n");
+      printMessage(2, SOLLYA_MSG_NEWTON_ZERO_TOO_CLOSE_TO_ZERO_TO_BE_ACCURATE, "Warning (Newton's algorithm): the zero of f is too close to zero for being accurately determined.\n");
       mpfr_set(res, epsa, GMP_RNDN);
       stop_algo = 1;
     }
     if ((sgnfepsa==codefa) && (sgnf0==3) && (sgnfepsb==codeNegfa)) {
-      printMessage(2, "Warning (Newton's algorithm): 0 seems to be an exact zero but we cannot prove it.\n");
+      printMessage(2, SOLLYA_MSG_NEWTON_ZERO_SEEMS_TO_BE_ZERO_NO_PROOF, "Warning (Newton's algorithm): 0 seems to be an exact zero but we cannot prove it.\n");
       mpfr_set(res, zero_mpfr, GMP_RNDN);
       stop_algo = 1;
     }
     if ((sgnfepsa==codefa) && (sgnf0==3) && (sgnfepsb==3)) {
       if (mpfr_cmp_ui(b,0)==0) {
-	printMessage(2, "Warning (Newton's algorithm): 0 seems to be an exact zero but we cannot prove it.\n");
+	printMessage(2, SOLLYA_MSG_NEWTON_ZERO_SEEMS_TO_BE_ZERO_NO_PROOF, "Warning (Newton's algorithm): 0 seems to be an exact zero but we cannot prove it.\n");
 	mpfr_set(res, zero_mpfr, GMP_RNDN);
 	stop_algo = 1;
       }
       else {
-	sollyaFprintf(stderr, "Error (Newton's algorithm): numerical problems have been encountered. Failed.\n");
+	printMessage(-1, SOLLYA_MSG_NEWTON_ALGORITHM_FAILS_DUE_TO_NUMERICAL_ISSUES, "Error (Newton's algorithm): numerical problems have been encountered. Failed.\n");
 	mpfr_set_nan(res);
 	stop_algo = 1;
       }
     }
     if ((sgnfepsa==3) && (sgnf0==3) && (sgnfepsb==codeNegfa)) {
       if (mpfr_cmp_ui(a,0)==0) {
-	printMessage(2, "Warning (Newton's algorithm): 0 seems to be an exact zero but we cannot prove it.\n");
+	printMessage(2, SOLLYA_MSG_NEWTON_ZERO_SEEMS_TO_BE_ZERO_NO_PROOF, "Warning (Newton's algorithm): 0 seems to be an exact zero but we cannot prove it.\n");
 	mpfr_set(res, zero_mpfr, GMP_RNDN);
 	stop_algo = 1;
       }
       else {
-	sollyaFprintf(stderr, "Error (Newton's algorithm): numerical problems have been encountered. Failed.\n");
+	printMessage(-1, SOLLYA_MSG_NEWTON_ALGORITHM_FAILS_DUE_TO_NUMERICAL_ISSUES, "Error (Newton's algorithm): numerical problems have been encountered. Failed.\n");
 	mpfr_set_nan(res);
 	stop_algo = 1;
       }
     }
     if ((sgnfepsa==3) && (sgnf0==3) && (sgnfepsb==3)) {
       if ( (mpfr_cmp_ui(a,0)==0)&&(mpfr_cmp_ui(b,0)==0) ) {
-	printMessage(2, "Warning (Newton's algorithm): 0 seems to be an exact zero but we cannot prove it.\n");
+	printMessage(2, SOLLYA_MSG_NEWTON_ZERO_SEEMS_TO_BE_ZERO_NO_PROOF, "Warning (Newton's algorithm): 0 seems to be an exact zero but we cannot prove it.\n");
 	mpfr_set(res, zero_mpfr, GMP_RNDN);
 	stop_algo = 1;
       }
       else {
-	sollyaFprintf(stderr, "Error (Newton's algorithm): numerical problems have been encountered. Failed.\n");
+	printMessage(-1, SOLLYA_MSG_NEWTON_ALGORITHM_FAILS_DUE_TO_NUMERICAL_ISSUES, "Error (Newton's algorithm): numerical problems have been encountered. Failed.\n");
 	mpfr_set_nan(res);
 	stop_algo = 1;
       }
     }
     if ( ((sgnfepsa==codefa) && (sgnf0==codefa) && (sgnfepsb==3)) ||
 	 ((sgnfepsa==3) && (sgnf0==codefa) && (sgnfepsb==3)) ) {
-      sollyaFprintf(stderr, "Error (Newton's algorithm): failed to locate the zero\n");
+      printMessage(-1, SOLLYA_MSG_NEWTON_ALGORITHM_FAILS_TO_LOCATE_ZERO, "Error (Newton's algorithm): failed to locate the zero\n");
       mpfr_set_nan(res);
       stop_algo = 1;
     }
     if ( ((sgnfepsa==3) && (sgnf0==codeNegfa) && (sgnfepsb==codeNegfa)) ||
 	 ((sgnfepsa==3) && (sgnf0==codeNegfa) && (sgnfepsb==3)) ) {
-      sollyaFprintf(stderr, "Error (Newton's algorithm): failed to locate the zero\n");
+      printMessage(-1, SOLLYA_MSG_NEWTON_ALGORITHM_FAILS_TO_LOCATE_ZERO, "Error (Newton's algorithm): failed to locate the zero\n");
       mpfr_set_nan(res);
       stop_algo = 1;
     }
@@ -621,11 +630,11 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
       if(r==0) mpfr_set_d(xNew,0,GMP_RNDN);
 
       if( (mpfr_cmp(u,xNew)>0) || (mpfr_cmp(xNew,v)>0) || ((!mpfr_number_p(xNew)) && (r==1)) ) {
-	printMessage(5, "Information (Newton's algorithm): performing a bisection step\n");
+	printMessage(5, SOLLYA_MSG_NEWTON_PERFORMING_BISECTION_STEP, "Information (Newton's algorithm): performing a bisection step\n");
 	mpfr_add(xNew,u,v,GMP_RNDN);
 	mpfr_div_2ui(xNew, xNew, 1, GMP_RNDN);
 	if (mpfr_cmp(x, xNew)==0) {
-	  printMessage(5, "Warning (Newton's algorithm): performing a trisection step.\n");
+	  printMessage(5, SOLLYA_MSG_NEWTON_PERFORMING_TRISECTION_STEP, "Warning (Newton's algorithm): performing a trisection step.\n");
 	  mpfr_sub(xNew,v,u,GMP_RNDN);
 	  mpfr_div_ui(xNew, xNew, 3, GMP_RNDN);
 	  mpfr_add(xNew, u, xNew, GMP_RNDN);
@@ -637,7 +646,7 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
 
       if (mpfr_number_p(yNew)) {
 	if (mpfr_cmp_ui(yNew, 0)==0) {
-	  printMessage(5, "Information (Newton's algorithm): an exact 0 has been discovered.\n");
+	  printMessage(5, SOLLYA_MSG_NEWTON_AN_EXACT_ZERO_HAS_BEEN_FOUND, "Information (Newton's algorithm): an exact 0 has been discovered.\n");
 	  mpfr_set(res, xNew, GMP_RNDN);
 	  stop_algo = 1;
 	}
@@ -676,12 +685,8 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
   /*************************************************************************/
 
 
-  printMessage(7, "Information (Newton's algorithm): finished after %d steps.\n", nbr_iter);
-  if(verbosity>=8) {
-    changeToWarningMode();
-    sollyaPrintf("Information (Newton's algorithm): x = "); printMpfr(res);
-    restoreMode();
-  }
+  printMessage(7, SOLLYA_MSG_NEWTON_FINISHED_AFTER_NUMBER_OF_STEPS, "Information (Newton's algorithm): finished after %d steps.\n", nbr_iter);
+  printMessage(8, SOLLYA_MSG_CONTINUATION, "Information (Newton's algorithm): x = %v\n",res);
 
   mpfr_clear(zero_mpfr);
   mpfr_clear(u);
@@ -943,23 +948,11 @@ void single_step_remez(mpfr_t newx, mpfr_t err_newx, mpfr_t *x,
 
   // Introduce newx
   if(mpfr_sgn(err_newx)*mpfr_sgn(epsilon)==1) {
-    if(verbosity>=3) {
-      changeToWarningMode();
-      sollyaPrintf("Remez: exchange algorithm takes the minimum (");
-      myPrintValue(&mini, 53);
-      sollyaPrintf(") at place %d\n",argmini);
-      restoreMode();
-    }
+    printMessage(3,SOLLYA_MSG_REMEZ_EXCHANGE_TAKE_A_CERTAIN_MINIMUM,"Remez: exchange algorithm takes the minimum (%.16v) at place %d\n",mini,argmini);
     mpfr_set(x[argmini], newx, GMP_RNDN);
   }
   else {
-    if(verbosity>=3) {
-      changeToWarningMode();
-      sollyaPrintf("Remez: exchange algorithm takes the maximum (");
-      myPrintValue(&maxi, 53);
-      sollyaPrintf(") at place %d\n",argmaxi);
-      restoreMode();
-    }
+    printMessage(3,SOLLYA_MSG_REMEZ_EXCHANGE_TAKE_A_CERTAIN_MAXIMUM,"Remez: exchange algorithm takes the maximum (%.16v) at place %d\n",maxi,argmaxi);
     mpfr_set(x[argmaxi], newx, GMP_RNDN);
   }
 
@@ -1050,7 +1043,7 @@ void quickFindZeros(mpfr_t *res, mpfr_t *curr_points,
 	if (mpfr_sgn(z)*mpfr_sgn(alpha1)<0) {
 	  i++;
 	  if(i>deg+2)
-	    printMessage(1,"Warning: the function oscillates too much. Nevertheless, we try to continue.\n");
+	    printMessage(1,SOLLYA_MSG_REMEZ_FUNCTION_OSCILLATES_TOO_MUCH,"Warning: the function oscillates too much. Nevertheless, we try to continue.\n");
 	  else mpfr_set(res[i-1], x1, GMP_RNDN);
 	}
 	if (mpfr_cmpabs(z,maxi)>0) {
@@ -1060,6 +1053,9 @@ void quickFindZeros(mpfr_t *res, mpfr_t *curr_points,
 	  mpfr_set(argmaxi,x1,GMP_RNDN);
 	}
 
+	/* Attention when decommenting this code sequence again: the
+	   printMessages in it have not (or partially) been converted
+	   to the new style */
 	/* if(mpfr_sgn(y2)==0) {
 	     evaluateFaithfulWithCutOffFast(z, error, tree, x2, zero_mpfr, prec);
 	     if (mpfr_sgn(z)*mpfr_sgn(alpha2)<0) {
@@ -1083,7 +1079,7 @@ void quickFindZeros(mpfr_t *res, mpfr_t *curr_points,
 	  if (mpfr_sgn(z)*mpfr_sgn(alpha2)<0) {
 	    i++;
 	    if(i>deg+2)
-	      printMessage(1,"Warning: the function oscillates too much. Nevertheless, we try to continue.\n");
+	      printMessage(1,SOLLYA_MSG_REMEZ_FUNCTION_OSCILLATES_TOO_MUCH,"Warning: the function oscillates too much. Nevertheless, we try to continue.\n");
 	    else mpfr_set(res[i-1], x2, GMP_RNDN);
 	  }
 	  if (mpfr_cmpabs(z,maxi)>0) {
@@ -1100,7 +1096,7 @@ void quickFindZeros(mpfr_t *res, mpfr_t *curr_points,
 	  if (mpfr_sgn(z)*mpfr_sgn(alpha)<0) {
 	    i++;
 	    if(i>deg+2)
-	      printMessage(1,"Warning: the function oscillates too much. Nevertheless, we try to continue.\n");
+	      printMessage(1,SOLLYA_MSG_REMEZ_FUNCTION_OSCILLATES_TOO_MUCH,"Warning: the function oscillates too much. Nevertheless, we try to continue.\n");
 	    else mpfr_set(res[i-1], x, GMP_RNDN);
 	  }
 	  if (mpfr_cmpabs(z,maxi)>0) {
@@ -1125,13 +1121,8 @@ void quickFindZeros(mpfr_t *res, mpfr_t *curr_points,
        printMessage(1,"Check Haar condition and/or increase precision.\n");
        *crash_report = -1; */
     test=0;
-    printMessage(2, "Performing an exchange step...\n");
-    if (verbosity>=4) {
-      changeToWarningMode();
-      sollyaPrintf("Computed infinity norm : "); printMpfr(maxi);
-      sollyaPrintf("Reached at point "); printMpfr(argmaxi);
-      restoreMode();
-    }
+    printMessage(2, SOLLYA_MSG_REMEZ_PERFORMING_AN_EXCHANGE_STEP, "Performing an exchange step...\n");
+    printMessage(4,SOLLYA_MSG_REMEZ_COMPUTED_INFNORM_IS_A_CERTAIN_VALUE,"Computed infinity norm : %v\nReached at point %v\n",maxi,argmaxi);
     for(i=0;i<deg+2;i++) mpfr_set(res[i], curr_points[i], GMP_RNDN);
     single_step_remez(argmaxi, maxi, res, monomials_tree, w, lambdai_vect, epsilon, deg+2, prec);
   }
@@ -1176,13 +1167,8 @@ void quickFindZeros(mpfr_t *res, mpfr_t *curr_points,
       if ( mpfr_sgn(z)*mpfr_sgn(lambdai_vect[i])*mpfr_sgn(epsilon) >= 0 ) test=0;
     }
     if(!test) {
-      printMessage(2, "Failed to find pseudo-alternating points. Performing an exchange step...\n");
-      if (verbosity>=4) {
-	changeToWarningMode();
-	sollyaPrintf("Computed infinity norm : "); printMpfr(maxi);
-	sollyaPrintf("Reached at point "); printMpfr(argmaxi);
-	restoreMode();
-      }
+      printMessage(2, SOLLYA_MSG_REMEZ_FAILED_TO_FIND_PSEUDOALTERNATING_POINTS, "Failed to find pseudo-alternating points. Performing an exchange step...\n");
+      printMessage(4, SOLLYA_MSG_REMEZ_COMPUTED_INFNORM_IS_A_CERTAIN_VALUE, "Computed infinity norm : %v\nReached at point %v\n", maxi, argmaxi);
       for(i=0;i<deg+2;i++) mpfr_set(res[i], curr_points[i], GMP_RNDN);
       single_step_remez(argmaxi, maxi, res, monomials_tree, w, lambdai_vect, epsilon, deg+2, prec);
     }
@@ -1237,7 +1223,7 @@ int qualityOfError(mpfr_t computedQuality, mpfr_t infinityNorm, mpfr_t *x,
 
 
   // Construction of the trees corresponding to (poly*w-f)' and (poly*w-f)''
-  if(verbosity>=8) { 	changeToWarningMode(); sollyaPrintf("Constructing the error tree... \n"); restoreMode(); }
+  printMessage(8,SOLLYA_MSG_REMEZ_CONSTRUCTING_THE_ERROR_TREE,"Constructing the error tree...\n");
   error = safeMalloc(sizeof(node));
   error->nodeType = SUB;
   temp1 = safeMalloc(sizeof(node));
@@ -1251,19 +1237,19 @@ int qualityOfError(mpfr_t computedQuality, mpfr_t infinityNorm, mpfr_t *x,
   free_memory(error);
   error = temp1;
 
-  if(verbosity>=8) { 	changeToWarningMode(); sollyaPrintf("Constructing the error' tree...\n"); restoreMode(); }
+  printMessage(8,SOLLYA_MSG_REMEZ_CONSTRUCTING_THE_ERROR_PRIME_TREE,"Constructing the error' tree...\n");
   error_diff = differentiate(error);
   temp1 = simplifyTreeErrorfree(error_diff);
   free_memory(error_diff);
   error_diff = temp1;
 
-  if(verbosity>=8) { 	changeToWarningMode(); sollyaPrintf("Constructing the error'' trees...\n"); restoreMode(); }
+  printMessage(8,SOLLYA_MSG_REMEZ_CONSTRUCTING_THE_ERROR_SECOND_TREE,"Constructing the error'' tree...\n");
   error_diff2 = differentiate(error_diff);
   temp1 = simplifyTreeErrorfree(error_diff2);
   free_memory(error_diff2);
   error_diff2 = temp1;
 
-  if(verbosity>=6) { 	changeToWarningMode(); sollyaPrintf("Computing the yi...\n"); restoreMode(); }
+  printMessage(6, SOLLYA_MSG_REMEZ_COMPUTING_THE_YI, "Computing the yi...\n");
   // If x = [x1 ... xn], we construct [y0 y1 ... yn] by
   // y0 = (a+x1)/2, yn = (xn+b)/2 and yi = (xi + x(i+1))/2
   y = (mpfr_t *)safeMalloc((n+1)*sizeof(mpfr_t));
@@ -1281,14 +1267,9 @@ int qualityOfError(mpfr_t computedQuality, mpfr_t infinityNorm, mpfr_t *x,
   mpfr_add(y[n], x[n-1], b, GMP_RNDN);
   mpfr_div_2ui(y[n], y[n], 1, GMP_RNDN);
 
-  if(verbosity>=6) {
-    changeToWarningMode();
-    sollyaPrintf("The computed yi are : ");
-    for(i=0;i<=n;i++) {printMpfr(y[i]); sollyaPrintf(" ");}
-    sollyaPrintf("\n");
-    restoreMode();
-  }
-
+  printMessage(6,SOLLYA_MSG_REMEZ_THE_COMPUTED_YI_ARE_CERTAIN_VALUES,"The computed yi are: "); 
+  for (i=0;i<=n;i++) printMessage(6,SOLLYA_MSG_CONTINUATION,"%v ",y[i]);
+  printMessage(6,SOLLYA_MSG_CONTINUATION,"\n"); 
 
   // We call *case 1* the case where x1=a and xn=b
   // We call *case 2* the case where x1<>a and xn=b
@@ -1313,17 +1294,7 @@ int qualityOfError(mpfr_t computedQuality, mpfr_t infinityNorm, mpfr_t *x,
     }
   }
 
-  if(verbosity>=6) {
-    changeToWarningMode();
-    sollyaPrintf("We are in case : ");
-    if(case1) sollyaPrintf("1\n");
-    if(case2) sollyaPrintf("2\n");
-    if(case2b) sollyaPrintf("2bis\n");
-    if(case3) sollyaPrintf("3\n");
-    restoreMode();
-  }
-
-
+  printMessage(6, SOLLYA_MSG_REMEZ_ALGORITHM_IS_IN_A_CERTAIN_CASE, "We are in case %s\n", (case1 ? "1" : (case2 ? "2" : (case2b ? "2bis" : (case3 ? "3" : "unknown")))));
 
   // If one of error_diff(y0) .... error_diff(yn) is a real NaN
   // (i.e. if evaluateFaithfulWithCutOffFast returns 1 and store a NaN)
@@ -1360,18 +1331,14 @@ int qualityOfError(mpfr_t computedQuality, mpfr_t infinityNorm, mpfr_t *x,
     i++;
   }
 
-  if(verbosity>=6) {
-    changeToWarningMode();
-    if(test) {
-      sollyaPrintf("The computed signs are : ");
-      for(i=0;i<=n;i++) sollyaPrintf("%d  ",s[i]);
-      sollyaPrintf("\n");
-    }
-    else sollyaPrintf("Test is false because signs could not be evaluated\n");
-    restoreMode();
+  if (test) {
+    printMessage(6,SOLLYA_MSG_REMEZ_THE_COMPUTED_SIGNS_ARE_CERTAIN_VALUES,"The computed signs are: ");
+    for(i=0;i<=n;i++) printMessage(6,SOLLYA_MSG_CONTINUATION,"%d ",s[i]);
+    printMessage(6,SOLLYA_MSG_CONTINUATION,"\n");
+  } else {
+    printMessage(6,SOLLYA_MSG_REMEZ_SIGNS_COULD_NOT_BE_EVALUATED,"Test is false because signs could not be evaluated\n");
   }
-
-
+  
   if(test) {
     i = 1;
     while(test && (i<=n-2)) {
@@ -1443,7 +1410,7 @@ int qualityOfError(mpfr_t computedQuality, mpfr_t infinityNorm, mpfr_t *x,
     }
 
     if (!test) {
-      printMessage(1,"Warning in Remez: main heuristic failed. A slower algorithm is used for this step.\n");
+      printMessage(1,SOLLYA_MSG_REMEZ_MAIN_HEURISTIC_FAILED_USING_SLOWER_ALGO,"Warning in Remez: main heuristic failed. A slower algorithm is used for this step.\n");
       quickFindZeros(z, x, error, error_diff, error_diff2, monomials_tree, w, lambdai_vect, epsilon, HaarCompliant, freeDegrees-1, a, b, prec);
 
       if(crash_report==-1) {
@@ -1469,13 +1436,7 @@ int qualityOfError(mpfr_t computedQuality, mpfr_t infinityNorm, mpfr_t *x,
     }
   }
   else {
-    if(verbosity>=1) {
-      changeToWarningMode();
-      sollyaPrintf("Warning in Remez: a slower algorithm is used for this step");
-      if(!HaarCompliant) sollyaPrintf(" (pseudo-alternation condition changed)");
-      sollyaPrintf("\n");
-      restoreMode();
-    }
+    printMessage(1, SOLLYA_MSG_REMEZ_SLOWER_ALGORITHM_USED_FOR_A_STEP, "Warning in Remez: a slower algorithm is used for this step%s\n", ((!HaarCompliant) ? " (pseudo-alternation condition changed)" : ""));
 
     quickFindZeros(z, x, error, error_diff, error_diff2, monomials_tree, w, lambdai_vect, epsilon, HaarCompliant, freeDegrees-1, a, b, prec);
 
@@ -1501,13 +1462,9 @@ int qualityOfError(mpfr_t computedQuality, mpfr_t infinityNorm, mpfr_t *x,
     }
   }
 
-
-  if(verbosity>=3) {
-    changeToWarningMode();
-    sollyaPrintf("The new points are : ");
-    for(i=1; i<=n; i++) printMpfr(z[i-1]);
-    restoreMode();
-  }
+  printMessage(3,SOLLYA_MSG_REMEZ_THE_NEW_POINTS_ARE_CERTAIN_VALUES,"The new points are: ");
+  for(i=1; i<=n; i++) printMessage(3,SOLLYA_MSG_CONTINUATION,"%v ",z[i-1]);
+  printMessage(3,SOLLYA_MSG_CONTINUATION,"\n");
 
   // Test the quality of the current error
 
@@ -1530,16 +1487,7 @@ int qualityOfError(mpfr_t computedQuality, mpfr_t infinityNorm, mpfr_t *x,
   if(computedQuality!=NULL) mpfr_set(computedQuality, var_mpfr, GMP_RNDU);
   if(infinityNorm!=NULL) mpfr_set(infinityNorm, max_val, GMP_RNDU);
 
-  if(verbosity>=3) {
-    changeToWarningMode();
-    mpfr_set(dummy_mpfr2,max_val,GMP_RNDN);
-    sollyaPrintf("Current norm: "); printValue(&max_val); //myPrintValue(&dummy_mpfr2, 5) ;
-    mpfr_set(dummy_mpfr2,var_mpfr,GMP_RNDN);
-    sollyaPrintf(" (1 +/- "); myPrintValue(&dummy_mpfr2, 5);
-    sollyaPrintf(")\n");
-    restoreMode();
-  }
-
+  printMessage(3, SOLLYA_MSG_REMEZ_THE_CURRENT_NORM_TAKES_A_CERTAIN_VALUE, "Current norm: %v (1 +/- %.3v)\n",max_val,var_mpfr);
 
   free_memory(error);
   free_memory(error_diff);
@@ -1601,12 +1549,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 
   HaarCompliant=1;
 
-  if(verbosity>=3) {
-    changeToWarningMode();
-    sollyaPrintf("Entering in Remez function...\n");
-    sollyaPrintf("Required quality :"); printMpfr(quality);
-    restoreMode();
-  }
+  printMessage(3, SOLLYA_MSG_ENTERING_REMEZ_FUNCTION, "Entering in Remez function...\nRequired quality : %v\n",quality);
 
   // Initialisations and precomputations
   mpfr_init2(var1, prec);
@@ -1654,7 +1597,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
   mpfr_set_si(previous_lambdai_vect[freeDegrees],-1,GMP_RNDN);
 
   poly = NULL;
-  if(verbosity>=8)  { changeToWarningMode(); sollyaPrintf("Computing monomials...\n"); restoreMode(); }
+  printMessage(8, SOLLYA_MSG_REMEZ_COMPUTING_MONOMIALS, "Computing monomials...\n");
   pushTimeCounter();
   monomials_tree = safeMalloc(freeDegrees*sizeof(node *));
   curr = monomials;
@@ -1669,11 +1612,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 
   // Definition of the array x of the n+2 Chebychev points
 
-  if(verbosity>=8) {
-    changeToWarningMode();
-    sollyaPrintf("Computing an initial points set...\n");
-    restoreMode();
-  }
+  printMessage(8, SOLLYA_MSG_REMEZ_COMPUTING_INITIAL_POINT_SET, "Computing an initial points set...\n");
   pushTimeCounter();
 
   /*************************************************************/
@@ -1755,12 +1694,9 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
   /*************************************************************/
 
   popTimeCounter("Remez: computing initial points set");
-  if(verbosity>=4) {
-    changeToWarningMode();
-    sollyaPrintf("Computed points set:\n");
-    for(i=1;i<=freeDegrees+1;i++) printMpfr(x[i-1]);
-    restoreMode();
-  }
+  printMessage(4,SOLLYA_MSG_REMEZ_THE_COMPUTED_POINT_SET_IS_CERTAIN_VALUES,"Computed points set:\n");
+  for(i=1;i<=freeDegrees+1;i++) printMessage(4,SOLLYA_MSG_CONTINUATION,"%v ",x[i-1]);
+  printMessage(4,SOLLYA_MSG_CONTINUATION,"\n");
 
   mpfr_set_inf(infinityNorm, 1);
   mpfr_set_ui(ai_vect[freeDegrees], 0, GMP_RNDN);
@@ -1781,12 +1717,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
       // Definition of the matrices M and N of Remez algorithm
       // N lets us determine the modified alternation property
       // M lets us solve the interpolation problem
-      if(verbosity>=3) {
-	changeToWarningMode();
-	sollyaPrintf("Step %d\n",count);
-	sollyaPrintf("Computing the matrix...\n");
-	restoreMode();
-      }
+      printMessage(3, SOLLYA_MSG_REMEZ_COMPUTING_THE_MATRIX, "Step %d\nComputing the matrix...\n",count);
       pushTimeCounter();
 
       for (i=1 ; i <= freeDegrees+1 ; i++) {
@@ -1805,7 +1736,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 	    }
 	  }
 	  if((test==0) || (r==0) || (!mpfr_number_p(var2))) {
-	    printMessage(2,"Information: the construction of M[%d,%d] uses a slower algorithm\n",i,j);
+	    printMessage(2,SOLLYA_MSG_REMEZ_COMPUTAT_OF_MATRIX_ENTRY_USES_SLOWER_ALGO,"Information: the construction of M[%d,%d] uses a slower algorithm\n",i,j);
 	    temp_tree = safeMalloc(sizeof(node));
 	    temp_tree->nodeType = MUL;
 	    temp_tree->child1 = copyTree(monomials_tree[j-1]);
@@ -1844,31 +1775,23 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 	  if (mpfr_sgn(lambdai_vect[i-1])<0)
 	    mpfr_set_si(M[coeff(i, freeDegrees+1, freeDegrees+1)], -1 ,GMP_RNDN);
 	  else {
-	    printMessage(1,"Warning: degenerated system in a non Haar context. The algorithm may be incorrect.\n");
+	    printMessage(1,SOLLYA_MSG_REMEZ_DEGENERATED_SYSTEM_IN_NON_HAAR_CONTEXT,"Warning: degenerated system in a non Haar context. The algorithm may be incorrect.\n");
 	    mpfr_set_si(M[coeff(i, freeDegrees+1, freeDegrees+1)], 1 ,GMP_RNDN);
 	  }
 	}
       }
 
-      if(verbosity>=4) {
-	changeToWarningMode();
-	sollyaPrintf("Signs for pseudo-alternating condition : [");
-	for (i=1 ; i <= freeDegrees ; i++) {
-	  myPrintValue(&M[coeff(i, freeDegrees+1, freeDegrees+1)],10);
-	  sollyaPrintf(", ");
-	}
-	sollyaPrintf("-1]\n");
-	restoreMode();
+      printMessage(4,SOLLYA_MSG_REMEZ_SIGNS_FOR_PSEUDO_ALTERN_ARE_CERTAIN_VALS,"Signs for pseudo-alternating condition : [");
+      for (i=1 ; i <= freeDegrees ; i++) {
+	printMessage(4,SOLLYA_MSG_CONTINUATION,"%.3v, ",M[coeff(i, freeDegrees+1, freeDegrees+1)]);
       }
+      printMessage(4,SOLLYA_MSG_CONTINUATION,"-1]\n");
 
       popTimeCounter("Remez: computing the matrix");
 
-      if(verbosity>=7) {
-	changeToWarningMode();
-	sollyaPrintf("The computed matrix is "); printMatrix(M, freeDegrees+1);
-	restoreMode();
-      }
-
+      printMessage(7,SOLLYA_MSG_REMEZ_THE_COMPUTED_MATRIX_HAS_A_CERTAIN_VALUE,"The computed matrix is ");
+      printMessageMatrix(7,M,freeDegrees+1);
+      printMessage(7,SOLLYA_MSG_CONTINUATION,"\n");
 
       // Determination of the polynomial corresponding to M and x
       for (i=1 ; i <= freeDegrees+1 ; i++) {
@@ -1878,7 +1801,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 	mpfr_set(b[i-1],var1,GMP_RNDN);
       }
 
-      if(verbosity>=8) { changeToWarningMode(); sollyaPrintf("Resolving the system...\n"); restoreMode(); }
+      printMessage(8, SOLLYA_MSG_REMEZ_SOLVING_THE_SYSTEM, "Resolving the system...\n");
 
       pushTimeCounter();
       system_solve(ai_vect, M, b, freeDegrees+1, prec);
@@ -1886,16 +1809,8 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 
       poly = constructPolynomialFromArray(ai_vect, monomials_tree, freeDegrees);
 
-      if(verbosity>=4) {
-	changeToWarningMode();
-	sollyaPrintf("The computed polynomial is "); printTree(poly); sollyaPrintf("\n");
-	restoreMode();
-      }
-      if(verbosity>=3) {
-	changeToWarningMode();
-	sollyaPrintf("Current value of epsilon : "); myPrintValue(&ai_vect[freeDegrees],53); sollyaPrintf("\n");
-	restoreMode();
-      }
+      printMessage(4, SOLLYA_MSG_REMEZ_THE_COMPUTED_POLY_HAS_A_CERTAIN_VALUE, "The computed polynomial is %b\n",poly);
+      printMessage(3, SOLLYA_MSG_REMEZ_CURRENT_EPSILON_HAS_A_CERTAIN_VALUE, "Current value of epsilon : %.16v\n",ai_vect[freeDegrees]);
 
       // Plotting the error curve
       /*     node *plotTemp; */
@@ -1907,11 +1822,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
       //    freeChain(plotList, nothing);
 
       // Computing the useful derivatives of functions
-      if(verbosity>=8) {
-	changeToWarningMode();
-	sollyaPrintf("Differentiating the computed polynomial...\n");
-	restoreMode();
-      }
+      printMessage(8, SOLLYA_MSG_REMEZ_DIFFERENTIATING_THE_COMPUTED_POLYNOMIAL, "Differentiating the computed polynomial...\n");
 
       pushTimeCounter();
 
@@ -1921,11 +1832,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
          poly = temp_tree;
       */
 
-      if(verbosity>=8) {
-	changeToWarningMode();
-	sollyaPrintf("Searching extrema of the error function...\n");
-	restoreMode();
-      }
+      printMessage(8, SOLLYA_MSG_REMEZ_SEARCHING_FOR_EXTREMA_OF_ERROR_FUNCTION, "Searching extrema of the error function...\n");
 
       // Find extremas and tests the quality of the current approximation
       pushTimeCounter();
@@ -1943,13 +1850,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 	temp_tree = makeSub(makeMul(copyTree(poly), copyTree(w)), copyTree(f));
 	uncertifiedInfnorm(infinityNorm, temp_tree, u, v, getToolPoints(), prec);
 
-	if(verbosity>=1) {
-	  changeToWarningMode();
-	  sollyaPrintf("The best polynomial obtained gives an error of ");
-	  printMpfr(infinityNorm);
-	  sollyaPrintf("\n");
-	  restoreMode();
-	}
+	printMessage(1,SOLLYA_MSG_REMEZ_THE_BEST_POLY_GIVES_A_CERTAIN_ERROR,"The best polynomial obtained gives an error of %v\n",infinityNorm);
 
 	free_memory(temp_tree);
 	// end of the temporary check
@@ -2001,11 +1902,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 	recoverFromError();
       }
 
-      if(verbosity>=3) {
-	changeToWarningMode();
-	sollyaPrintf("Current quality: "); printMpfr(computedQuality);
-	restoreMode();
-      }
+      printMessage(3, SOLLYA_MSG_REMEZ_CURRENT_QUALITY_HAS_A_CERTAIN_VALUE, "Current quality: %v\n",computedQuality);
 
       count++;
       for(i=1; i<=freeDegrees+1; i++) {
@@ -2019,13 +1916,8 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
     /* We check if exited the loop because we proved the target_error to be unreachable */
     /* If so, we exit returning error */
     if(mpfr_cmpabs(ai_vect[freeDegrees],target_error)>0) {
-      if(verbosity>=2) {
-        changeToWarningMode();
-        sollyaPrintf("Remez finished after %d steps\n",count);
-        sollyaPrintf("The target error ("); myPrintValue((mpfr_t *)target_error, 53) ; sollyaPrintf(") has been proved unreachable.\n");
-        if(verbosity>=5) { sollyaPrintf("Last computed poly: "); printTree(poly); sollyaPrintf("\n");}
-        restoreMode();
-      }
+      printMessage(2, SOLLYA_MSG_REMEZ_FINISHES_AS_TARGET_ERROR_IS_NOT_REACHABLE, "Remez finished after %d steps\nThe target error (%.16v) has been proved unreachable.\n",count,target_error);
+      printMessage(5, SOLLYA_MSG_CONTINUATION,"Last computed poly: %b\n",poly);
 
       res = copyTree(poly); /* Alternatively, we could do res = makeError(); */
     }
@@ -2041,14 +1933,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
       /* We check if we exited the loop because we managed to find a satisfying error */
       /* If so we exit returning the current polynomial */
       if (mpfr_cmp(infinityNorm,satisfying_error)<=0) {
-        if(verbosity>=2) {
-          changeToWarningMode();
-          sollyaPrintf("Remez finished after %d steps\n",count);
-          sollyaPrintf("The following satisfying error ("); myPrintValue((mpfr_t *)satisfying_error, 53) ; sollyaPrintf(") has been reached.\n");
-          sollyaPrintf("Current infinity norm:"); myPrintValue(&infinityNorm, 53) ; sollyaPrintf("\n");
-          restoreMode();
-        }
-
+	printMessage(2, SOLLYA_MSG_REMEZ_FINISHES_AS_TARGET_ERROR_HAS_BEEN_REACHED, "Remez finished after %d steps\nThe following satisfying error (%.16v) has been reached.\nCurrent infinity norm: %v\n",count,satisfying_error,infinityNorm);
         res = copyTree(poly);
       }
     }
@@ -2059,24 +1944,15 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
       mpfr_sub_ui(computedQuality, computedQuality, 1, GMP_RNDU);
 
       if(mpfr_cmp(computedQuality, quality)<=0) {
-        if(verbosity>=2) {
-          changeToWarningMode();
-          sollyaPrintf("Remez finished after %d steps\n",count);
-          sollyaPrintf("The computed infnorm is "); myPrintValue(&infinityNorm, 53) ; sollyaPrintf("\n");
-          sollyaPrintf("The polynomial is optimal within a factor 1 +/- "); myPrintValue(&computedQuality, 5); sollyaPrintf("\n");
-          if(verbosity>=5) { sollyaPrintf("Computed poly: "); printTree(poly); sollyaPrintf("\n");}
-          restoreMode();
-        }
+	printMessage(2, SOLLYA_MSG_REMEZ_FINISHES_AS_QUALITY_HAS_BEEN_REACHED, "Remez finished after %d steps\nThe computed infnorm is %.16v\nThe polynomial is optimal within a factor 1 +/- %.3v\n",count,infinityNorm,computedQuality);
+	printMessage(5, SOLLYA_MSG_CONTINUATION, "Computed poly: %b\n",poly);
         res = copyTree(poly);
       }
     }
 
     if(res==NULL) {
-      changeToWarningMode();
-      printMessage(2, "Warning: Remez algorithm failed (too many oscillations?)\n");
-      printMessage(2, "Looping again\n");
+      printMessage(2, SOLLYA_MSG_REMEZ_FAILS_AND_LOOPS_AGAIN, "Warning: Remez algorithm failed (too many oscillations?)\nLooping again\n");
       HaarCompliant=2;
-      restoreMode();
     }
   }
 
@@ -2128,9 +2004,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
   mpfr_clear(infinityNorm);
 
   if (res == NULL) {
-    changeToWarningMode();
-    sollyaFprintf(stderr, "Error in Remez: the algorithm does not converge.\n");
-    restoreMode();
+    printMessage(-1, SOLLYA_MSG_REMEZ_DOES_NOT_CONVERGE, "Error in Remez: the algorithm does not converge.\n");
     res = makeError();
   }
 
@@ -2140,7 +2014,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 
 node *remez(node *func, node *weight, chain *monomials, mpfr_t a, mpfr_t b, mpfr_t quality, mpfr_t satisfying_error, mpfr_t target_error, mp_prec_t prec) {
   if (mpfr_equal_p(a,b))
-    printMessage(1,"Warning: the input interval is reduced to a single point. The algorithm may not converge.\n");
+    printMessage(1,SOLLYA_MSG_REMEZ_MAY_HAPPEN_NOT_TO_CONVRG_AS_DOM_IS_POINT,"Warning: the input interval is reduced to a single point. The algorithm may happen not to converge.\n");
 
   return remezAux(func, weight, monomials, a, b, prec, quality, satisfying_error, target_error);
 }
@@ -2267,7 +2141,7 @@ mpfr_t *remezMatrix(node *w, mpfr_t *x, node **monomials_tree, int n, mp_prec_t 
 	}
       }
       if((test==0) || (r==0) || (!mpfr_number_p(var2))) {
-	printMessage(2,"Information: the construction of M[%d,%d] uses a slower algorithm\n",i,j);
+	printMessage(2,SOLLYA_MSG_REMEZ_COMPUTAT_OF_MATRIX_ENTRY_USES_SLOWER_ALGO,"Information: the construction of M[%d,%d] uses a slower algorithm\n",i,j);
 	temp_tree = safeMalloc(sizeof(node));
 	temp_tree->nodeType = MUL;
 	temp_tree->child1 = copyTree(monomials_tree[j-1]);
@@ -2418,12 +2292,7 @@ rangetype guessDegree(node *func, node *weight, mpfr_t a, mpfr_t b, mpfr_t eps, 
      minimax problem achieve the required bound eps */
   pushTimeCounter();
   radiusBasicMinimaxChebychevsPoints(&h, func, weight, a, b, n, &prec);
-  if(verbosity>=4) {
-    changeToWarningMode();
-    sollyaPrintf("Information: guessdegree: trying degree %d. Found radius: ",n-1);
-    printMpfr(h);
-    restoreMode();
-  }
+  printMessage(4, SOLLYA_MSG_GUESSDEGREE_TRYING_A_CERTAIN_DEGREE, "Information: guessdegree: trying degree %d. Found radius: %v\n",n-1,h);
 
 
   /* If h<eps, we may be in a degenerated case (for instance, an even
@@ -2433,12 +2302,7 @@ rangetype guessDegree(node *func, node *weight, mpfr_t a, mpfr_t b, mpfr_t eps, 
   if(mpfr_cmp(h,eps)<0) {
     n=2;
     radiusBasicMinimaxChebychevsPoints(&h, func, weight, a, b, n, &prec);
-    if(verbosity>=4) {
-      changeToWarningMode();
-      sollyaPrintf("Information: guessdegree: trying degree %d. Found radius: ",n-1);
-      printMpfr(h);
-      restoreMode();
-    }
+    printMessage(4, SOLLYA_MSG_GUESSDEGREE_TRYING_A_CERTAIN_DEGREE, "Information: guessdegree: trying degree %d. Found radius: %v\n",n-1,h);
 
     if (mpfr_cmp(h,eps)<0) n=1; /* OK. Sorry. The system seems to be normal */
   }
@@ -2458,19 +2322,14 @@ rangetype guessDegree(node *func, node *weight, mpfr_t a, mpfr_t b, mpfr_t eps, 
       radiusBasicMinimaxChebychevsPoints(&h, func, weight, a, b, bound, &prec);
       break;
     }
-    if(verbosity>=4) {
-      changeToWarningMode();
-      sollyaPrintf("Information: guessdegree: trying degree %d. Found radius: ",n-1);
-      printMpfr(h);
-      restoreMode();
-    }
+    printMessage(4, SOLLYA_MSG_GUESSDEGREE_TRYING_A_CERTAIN_DEGREE, "Information: guessdegree: trying degree %d. Found radius: %v\n",n-1,h);
   }
 
   if (mpfr_cmp(h,eps) >=0) { /* Even n=bound does not achieve the discrete
                                 problem, a fortiori it does not achieve the
                                 continuous problem. Return [bound+1, +Inf]
                              */
-    printMessage(1, "Warning: guessdegree: none of the degrees smaller than %d satisfies the required error.\n", bound-1);
+    printMessage(1, SOLLYA_MSG_GUESSDEGREE_NONE_OF_LESSER_DEGS_SATISFIES_ERROR, "Warning: guessdegree: none of the degrees smaller than %d satisfies the required error.\n", bound-1);
     mpfr_clear(h);
     tempMpfr = (mpfr_t *)safeMalloc(sizeof(mpfr_t));
     mpfr_init2(*tempMpfr,128);
@@ -2497,12 +2356,7 @@ rangetype guessDegree(node *func, node *weight, mpfr_t a, mpfr_t b, mpfr_t eps, 
 
     while(n != n_min) {
       radiusBasicMinimaxChebychevsPoints(&h, func, weight, a, b, n, &prec);
-      if(verbosity>=4) {
-	changeToWarningMode();
-	sollyaPrintf("Information: guessdegree: trying degree %d (current bounds: [%d, %d]). Found radius: ",n-1,n_min-1,n_max-1);
-	printMpfr(h);
-	restoreMode();
-      }
+      printMessage(4, SOLLYA_MSG_GUESSDEGREE_TRYING_A_CERTAIN_DEG_WITHIN_BOUNDS, "Information: guessdegree: trying degree %d (current bounds: [%d, %d]). Found radius: %v\n",n-1,n_min-1,n_max-1,h);
       if(mpfr_cmp(h,eps) >= 0) n_min = n;
       else n_max = n;
 
@@ -2522,23 +2376,13 @@ rangetype guessDegree(node *func, node *weight, mpfr_t a, mpfr_t b, mpfr_t eps, 
 
   pushTimeCounter();
   firstStepContinuousMinimaxChebychevsPoints(&h, func, weight, a, b, n, &prec);
-  if(verbosity>=4) {
-    changeToWarningMode();
-    sollyaPrintf("Information: guessdegree: trying degree %d. Found infnorm: ",n-1);
-    printMpfr(h);
-    restoreMode();
-  }
+  printMessage(4, SOLLYA_MSG_GUESSDEGREE_TRYING_A_CERTAIN_DEGREE, "Information: guessdegree: trying degree %d. Found infnorm: %v\n",n-1,h);
 
   while(mpfr_cmp(h,eps) > 0) {
     n++;
     if (n>bound) break;
     firstStepContinuousMinimaxChebychevsPoints(&h, func, weight, a, b, n, &prec);
-    if(verbosity>=4) {
-      changeToWarningMode();
-      sollyaPrintf("Information: guessdegree: trying degree %d. Found infnorm: ",n-1);
-      printMpfr(h);
-      restoreMode();
-    }
+    printMessage(4, SOLLYA_MSG_GUESSDEGREE_TRYING_A_CERTAIN_DEGREE, "Information: guessdegree: trying degree %d. Found infnorm: %v\n",n-1,h);
   }
   popTimeCounter("finding an upper bound for guessdegree");
 
@@ -2548,7 +2392,7 @@ rangetype guessDegree(node *func, node *weight, mpfr_t a, mpfr_t b, mpfr_t eps, 
      continuous problem. We return [n_max, n];
   */
   if (n>bound)
-    printMessage(2, "Warning: guessdegree: we did not find a degree less than %d for which we can prove that the errror is satisfied.\n", bound-1);
+    printMessage(2, SOLLYA_MSG_GUESSDEG_NONE_OF_LESS_DEGS_SEEMS_TO_SATISFY_ERR, "Warning: guessdegree: we did not find a degree less than %d for which we can prove that the error is satisfied.\n", bound-1);
 
   mpfr_clear(h);
   tempMpfr = (mpfr_t *)safeMalloc(sizeof(mpfr_t));

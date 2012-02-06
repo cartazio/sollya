@@ -68,6 +68,8 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include "proof.h"
 #include "remez.h"
 #include "execute.h"
+#include <string.h>
+
 
 #include <stdio.h> /* fprintf, fopen, fclose, */
 #include <stdlib.h> /* exit, free, mktemp */
@@ -911,8 +913,6 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
 
   if (mpfr_zero_p(al)) xIsPoint = 1; else xIsPoint = 0;
 
-  if (xIsPoint) printMessage(12,"Information: while evaluating no decorrelation test will be performed because the ordinate interval is point.\n");
-
   switch (tree->nodeType) {
   case VARIABLE:
     sollya_mpfi_set(stack3,x);
@@ -971,7 +971,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
       leftExcludesConstant = evaluateI(leftConstantTerm, tree->child1, zI, prec, simplifiesA-1, simplifiesB, NULL, leftTheoConstant,noExcludes);
       rightExcludesConstant = evaluateI(rightConstantTerm, tree->child2, zI, prec, simplifiesA-1, simplifiesB, NULL, rightTheoConstant,noExcludes);
 
-      printMessage(12,"Information: Differentiating while evaluating for decorrelation.\n");
+      printMessage(12,SOLLYA_MSG_DIFFERENTIATING_FOR_DECORRELATION,"Information: Differentiating while evaluating for decorrelation.\n");
 
       derivLeft = differentiate(tree->child1);
       derivRight = differentiate(tree->child2);
@@ -992,24 +992,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
 
       if (mpfr_number_p(al) && mpfr_number_p(ar)) {
 
-	printMessage(8,"Information: decorrelating an interval addition.\n");
-	if (verbosity >= 12) {
-	  changeToWarningMode();
-	  sollyaPrintf("Decorrelating on function\n");
-	  printTree(tree);
-	  sollyaPrintf("\nconstant term:\n");
-	  printInterval(tempA);
-	  sollyaPrintf("\nlinear term:\n");
-	  printInterval(tempB);
-	  sollyaPrintf("\ntranslated interval:\n");
-	  printInterval(xMXZ);
-	  sollyaPrintf("\nTaylor evaluation:\n");
-	  printInterval(temp1);
-	  sollyaPrintf("\ndirect evaluation:\n");
-	  printInterval(stack3);
-	  sollyaPrintf("\n");
-	  restoreMode();
-	}
+	printMessage(8,SOLLYA_MSG_DECORRELATION_INTERVAL_ADDITION_OR_SUBTRACTION,"Information: decorrelating an interval addition.\n");
 
 	sollya_mpfi_intersect(stack3,stack3,temp1);
 	if (!noExcludes) {
@@ -1128,7 +1111,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
       leftExcludesConstant = evaluateI(leftConstantTerm, tree->child1, zI, prec, simplifiesA-1, simplifiesB, NULL, leftTheoConstant,noExcludes);
       rightExcludesConstant = evaluateI(rightConstantTerm, tree->child2, zI, prec, simplifiesA-1, simplifiesB, NULL, rightTheoConstant,noExcludes);
 
-      printMessage(12,"Information: Differentiating while evaluating for decorrelation.\n");
+      printMessage(12,SOLLYA_MSG_DIFFERENTIATING_FOR_DECORRELATION,"Information: Differentiating while evaluating for decorrelation.\n");
 
       derivLeft = differentiate(tree->child1);
       derivRight = differentiate(tree->child2);
@@ -1149,24 +1132,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
 
       if (mpfr_number_p(al) && mpfr_number_p(ar)) {
 
-	printMessage(8,"Information: decorrelating an interval substraction.\n");
-	if (verbosity >= 12) {
-	  changeToWarningMode();
-	  sollyaPrintf("Decorrelating on function\n");
-	  printTree(tree);
-	  sollyaPrintf("\nconstant term:\n");
-	  printInterval(tempA);
-	  sollyaPrintf("\nlinear term:\n");
-	  printInterval(tempB);
-	  sollyaPrintf("\ntranslated interval:\n");
-	  printInterval(xMXZ);
-	  sollyaPrintf("\nTaylor evaluation:\n");
-	  printInterval(temp1);
-	  sollyaPrintf("\ndirect evaluation:\n");
-	  printInterval(stack3);
-	  sollyaPrintf("\n");
-	  restoreMode();
-	}
+	printMessage(8,SOLLYA_MSG_DECORRELATION_INTERVAL_ADDITION_OR_SUBTRACTION,"Information: decorrelating an interval substraction.\n");
 
 	sollya_mpfi_intersect(stack3,stack3,temp1);
 	if (!noExcludes) {
@@ -1265,40 +1231,14 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
 	  (simplifiesB > 0)) {
 	/* [0;0] / [0;0] */
 
-	printMessage(12,"Information: Differentiating while evaluating for Hopital's rule.\n");
+	printMessage(12,SOLLYA_MSG_DIFFERENTIATING_FOR_HOPITALS_RULE,"Information: Differentiating while evaluating for Hopital's rule.\n");
 	derivNumerator = differentiate(tree->child1);
 	derivDenominator = differentiate(tree->child2);
 	
 	freeChain(leftExcludes,freeMpfiPtr);
 	freeChain(rightExcludes,freeMpfiPtr);
 
-	printMessage(8,"Information: using Hopital's rule on point division.\n");
-	if (verbosity >= 9) {
-	  changeToWarningMode();
-	  sollyaPrintf("Information: entering interval was \n");
-	  printInterval(x);
-	  sollyaPrintf("\n");
-	  restoreMode();
-	}
-
-	if (verbosity >= 12) {
-	  changeToWarningMode();
-	  sollyaPrintf("Hopital's rule is used on function\n");
-	  printTree(tree);
-	  sollyaPrintf("\n");
-	  restoreMode();
-	}
-
-	if (verbosity >= 15) {
-	  changeToWarningMode();
-	  sollyaPrintf("The derivative of the numerator is\n");
-	  printTree(derivNumerator);
-	  sollyaPrintf("\n");
-	  sollyaPrintf("The derivative of the denominator is\n");
-	  printTree(derivDenominator);
-	  sollyaPrintf("\n");
-	  restoreMode();
-	}
+	printMessage(8,SOLLYA_MSG_USING_HOPITALS_RULE_ON_POINT_DIVISION,"Information: using Hopital's rule on point division.\n");
 
 	if (internalTheo != NULL) {
 	  internalTheo->simplificationUsed = HOPITAL_ON_POINT;
@@ -1324,15 +1264,8 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
 	/* [0;0] / [bl;br], bl,br != 0 */
 	freeChain(rightExcludes,freeMpfiPtr);
 
-	printMessage(8,"Information: simplifying an interval division with 0 point numerator.\n");
-	if (verbosity >= 12) {
-	  changeToWarningMode();
-	  sollyaPrintf("Simplification on function\n");
-	  printTree(tree);
-	  sollyaPrintf("\n");
-	  restoreMode();
-	}
-
+	printMessage(8,SOLLYA_MSG_SIMPLIFYING_INTERVAL_DIV_WITH_ZERO_POINT_NUMERA, "Information: simplifying an interval division with 0 point numerator.\n");
+	printMessage(12,SOLLYA_MSG_CONTINUATION,"Simplification on function\n%b\n",tree);
 
 	sollya_mpfi_interv_d(stack3,0.0,0.0);
 	excludes = leftExcludes;
@@ -1355,7 +1288,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
 
 	if (mpfr_cmp(xl,xr) != 0) {
 	  
-	  printMessage(12,"Information: Differentiating while evaluating for Hopital's rule.\n");
+	  printMessage(12,SOLLYA_MSG_DIFFERENTIATING_FOR_HOPITALS_RULE,"Information: Differentiating while evaluating for Hopital's rule.\n");
 	  derivDenominator = differentiate(tree->child2);
 	  
 	  if ((simplifiesB == (hopitalrecursions + 1)) || (hopitalPoint == NULL)){
@@ -1396,7 +1329,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
 	    if (mpfr_zero_p(al) && mpfr_zero_p(ar) && mpfr_zero_p(bl) && mpfr_zero_p(br)) {
 	      /* Hopital's rule can be applied */
 
-	      printMessage(12,"Information: Differentiating while evaluating for Hopital's rule.\n");
+	      printMessage(12,SOLLYA_MSG_DIFFERENTIATING_FOR_HOPITALS_RULE,"Information: Differentiating while evaluating for Hopital's rule.\n");
 	      derivNumerator = differentiate(tree->child1);
 	      
 	      tempNode = (node *) safeMalloc(sizeof(node));
@@ -1432,33 +1365,11 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
 	      }
 
 	      if (simplifiesB == (hopitalrecursions + 1)) {
-		printMessage(8,"Information: using Hopital's rule (general case) on denominator zero.\n");
-		if (verbosity >= 10) {
-		  changeToWarningMode();
-		  sollyaPrintf("Hopital's rule is used on function\n");
-		  printTree(tree);
-		  sollyaPrintf(" in point ");
-		  printMpfr(z);
-		  restoreMode();
-		}
+		printMessage(8,SOLLYA_MSG_USING_HOPITALS_RULE_IN_GENERAL_CASE,"Information: using Hopital's rule (general case) on denominator zero.\n");
 	      }
 
 	      if (simplifiesB != (hopitalrecursions + 1)) {
-		printMessage(8,"Information: recursion on use of Hopital's rule\n");
-		if (verbosity >= 10) {
-		  changeToWarningMode();
-		  sollyaPrintf("Reused Hopital's rule point is ");
-		  printMpfr(*hopitalPoint);
-		  restoreMode();
-		}
-	      }
-
-	      if (verbosity >= 15) {
-		changeToWarningMode();
-		sollyaPrintf("Information in Hopital: The simplified function is\n");
-		printTree(tempNode);
-		sollyaPrintf("\n");
-		restoreMode();
+		printMessage(8,SOLLYA_MSG_RECURSION_ON_USE_OF_HOPITALS_RULE,"Information: recursion on use of Hopital's rule\n");
 	      }
 	      
 	      excludes = evaluateI(stack3, tempNode, x, prec, simplifiesA, simplifiesB-1, newHopitalPoint, leftTheoLinear,noExcludes);
@@ -1472,7 +1383,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
 		freeExprBoundTheo(rightTheoConstant);
 	      }
   
-	      printMessage(12,"Information: Differentiating while evaluating for Hopital's rule.\n");
+	      printMessage(12,SOLLYA_MSG_DIFFERENTIATING_FOR_HOPITALS_RULE,"Information: Differentiating while evaluating for Hopital's rule.\n");
 	      derivNumerator = differentiate(tree->child1);
 
 	      if ((simplifiesB == (hopitalrecursions + 1)) || (hopitalPoint == NULL)) {
@@ -1542,36 +1453,13 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
 		  }
 
 		  if (simplifiesB == (hopitalrecursions + 1)) {
-		    printMessage(8,"Information: using Hopital's rule (general case) on numerator zero.\n");
-		    if (verbosity >= 10) {
-		      changeToWarningMode();
-		      sollyaPrintf("Hopital's rule is used on function\n");
-		      printTree(tree);
-		      sollyaPrintf(" in point ");
-		      printMpfr(z);
-		      restoreMode();
-		    }
+		    printMessage(8,SOLLYA_MSG_USING_HOPITALS_RULE_IN_GENERAL_CASE,"Information: using Hopital's rule (general case) on numerator zero.\n");
 		  }
 
 		  if (simplifiesB != (hopitalrecursions + 1)) {
-		    printMessage(8,"Information: recursion on use of Hopital's rule\n");
-		    if (verbosity >= 10) {
-		      changeToWarningMode();
-		      sollyaPrintf("Reused Hopital's rule point is ");
-		      printMpfr(*hopitalPoint);
-		      restoreMode();
-		    }
+		    printMessage(8,SOLLYA_MSG_RECURSION_ON_USE_OF_HOPITALS_RULE,"Information: recursion on use of Hopital's rule\n");
 		  }
 		  
-		  if (verbosity >= 15) {
-		    changeToWarningMode();
-		    sollyaPrintf("Information in Hopital: The simplified function is\n");
-		    printTree(tempNode);
-		    sollyaPrintf("\n");
-		    restoreMode();
-		  }
-
-
 		  excludes = evaluateI(stack3, tempNode, x, prec, simplifiesA, simplifiesB-1, newHopitalPoint, leftTheoLinear,noExcludes);
 
 		  if (internalTheo != NULL) sollya_mpfi_set(*(internalTheo->boundLeftLinear),stack3);
@@ -2041,9 +1929,9 @@ chain* evaluateITaylor(sollya_mpfi_t result, node *func, node *deriv, sollya_mpf
 
   if ((mpfr_cmp(leftX,rightX) == 0) || (deriv == NULL)) {
     if (deriv != NULL) 
-      printMessage(25,"Information: avoiding using Taylor's formula on a point interval.\n");
+      printMessage(25,SOLLYA_MSG_AVOIDING_TAYLOR_EVALUATION_ON_POINT_INTERVAL,"Information: avoiding using Taylor's formula on a point interval.\n");
     else 
-      printMessage(25,"Warning: no Taylor evaluation is possible because no derivative has been given.\n");
+      printMessage(25,SOLLYA_MSG_NO_TAYLOR_EVALUATION_AS_NO_DERIVATIVE_GIVEN,"Warning: no Taylor evaluation is possible because no derivative has been given.\n");
     
     excludes = evaluateI(result, func, x, prec, 1, hopitalrecursions+1, NULL, theo,noExcludes);
     sollya_mpfi_nan_normalize(result);
@@ -2055,16 +1943,7 @@ chain* evaluateITaylor(sollya_mpfi_t result, node *func, node *deriv, sollya_mpf
   }
 
 
-  printMessage(13,"Information: evaluating a function in interval arithmetic using Taylor's formula.\n");
-  if (verbosity >= 15) {
-    changeToWarningMode();
-    sollyaPrintf("Information: the function is\n");
-    printTree(func);
-    sollyaPrintf("\nIts derivative is\n");
-    printTree(deriv);
-    sollyaPrintf("\n");
-    restoreMode();
-  }
+  printMessage(13,SOLLYA_MSG_USING_TAYLOR_EVALUATION,"Information: evaluating a function in interval arithmetic using Taylor's formula.\n");
 
   if (theo != NULL) {
     nullifyExprBoundTheo(theo);
@@ -2116,10 +1995,10 @@ chain* evaluateITaylor(sollya_mpfi_t result, node *func, node *deriv, sollya_mpf
     size = treeSize(nextderiv);
 
     if (size > DIFFSIZE) {
-	printMessage(1,"Waring: during recursive Taylor evaluation the expression of a derivative has become\n");
-	printMessage(1,"as great that it contains more than %d nodes.\n",DIFFSIZE);
-	printMessage(1,"Will now stop recursive Taylor evaluation on this expression.\n");
-	printMessage(2,"Information: the size of the derivative is %d, we had %d recursion(s) left.\n",size,recurse-1);
+      printMessage(1,SOLLYA_MSG_NO_TAYLOR_EVALUATION_AS_NO_DERIVATIVE_GETS_HUGE,"Waring: during recursive Taylor evaluation the expression of a derivative has become\n");
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"as great that it contains more than %d nodes.\n",DIFFSIZE);
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"Will now stop recursive Taylor evaluation on this expression.\n");
+	printMessage(2,SOLLYA_MSG_CONTINUATION,"Information: the size of the derivative is %d, we had %d recursion(s) left.\n",size,recurse-1);
 	taylorExcludesLinear = evaluateI(linearTerm, deriv, x, prec, 1, hopitalrecursions+1, NULL, linearTheo,noExcludes);
     } else {
       taylorExcludesLinear = evaluateITaylor(linearTerm, deriv, nextderiv, x, prec, recurse - 1, linearTheo,noExcludes);
@@ -2132,8 +2011,8 @@ chain* evaluateITaylor(sollya_mpfi_t result, node *func, node *deriv, sollya_mpf
 
   if ((sollya_mpfi_is_nonneg(linearTerm) || sollya_mpfi_is_nonpos(linearTerm)) && sollya_mpfi_bounded_p(linearTerm)) {
 
-    printMessage(12,"Information: the linear term during Taylor evaluation does not change its sign.\n");
-    printMessage(12,"Simplifying by taking the convex hull of the evaluations on the endpoints.\n");
+    printMessage(12,SOLLYA_MSG_DERIVATIVE_DOES_NOT_CHANGE_SIGN_ON_TAYLOR_EVAL,"Information: the linear term during Taylor evaluation does not change its sign.\n");
+    printMessage(12,SOLLYA_MSG_CONTINUATION,"Simplifying by taking the convex hull of the evaluations on the endpoints.\n");
 
  
     sollya_mpfi_init2(xZI2,prec);
@@ -2184,24 +2063,6 @@ chain* evaluateITaylor(sollya_mpfi_t result, node *func, node *deriv, sollya_mpf
       directExcludes = evaluateITaylorOnDiv(resultDirect, func, x, prec, recurse, directTheo,noExcludes);
     else 
       directExcludes = evaluateI(resultDirect, func, x, prec, 0, hopitalrecursions+1, NULL, directTheo,noExcludes);
-
-    if (verbosity >= 15) {
-      changeToWarningMode();
-      sollyaPrintf("Information: Taylor evaluation: domain:\n");
-      printInterval(x);
-      sollyaPrintf("\nconstant term:\n");
-      printInterval(constantTerm);
-      sollyaPrintf("\nlinear term:\n");
-      printInterval(linearTerm);
-      sollyaPrintf("\ntranslated interval:\n");
-      printInterval(temp);
-      sollyaPrintf("\nmultiplied linear term:\n");
-      printInterval(temp2);
-      sollyaPrintf("\ndirect evaluation:\n");
-      printInterval(resultDirect);
-      sollyaPrintf("\n");
-      restoreMode();
-    }
 
     sollya_mpfi_get_left(rTl,resultTaylor);
     sollya_mpfi_get_right(rTr,resultTaylor);
@@ -2320,9 +2181,7 @@ chain *findZerosUnsimplified(node *func, node *deriv, sollya_mpfi_t range, mp_pr
     excludes = evaluateITaylor(y, func, deriv, range, prec, taylorrecursions, theo,1);
     freeChain(excludes,freeMpfiPtr);
     if (!sollya_mpfi_bounded_p(y)) {
-      printMessage(1,"Warning: during zero-search the derivative of the function evaluated to NaN or Inf in the interval ");
-      if (verbosity >= 1) { 	changeToWarningMode(); printInterval(range); restoreMode(); }
-      printMessage(1,".\nThe function might not be continuously differentiable in this interval.\n");
+      printMessage(1,SOLLYA_MSG_NAN_OR_INF_ON_DERIVATIVE,"Warning: during zero-search the derivative of the function evaluated to NaN or Inf in the interval %w.\nThe function might not be continuously differentiable in this interval.\n",range);
     }
     if ((!sollya_mpfi_bounded_p(y)) || sollya_mpfi_has_zero(y)) {
       mpfr_init2(m,prec);
@@ -2387,9 +2246,9 @@ chain *findZeros(node *func, node *deriv, sollya_mpfi_t range, mp_prec_t prec, m
     noZeroProofs = NULL;
   }
 
-  printMessage(3,"Information: invoking the recursive interval zero search.\n");
+  printMessage(3,SOLLYA_MSG_INVOKING_RECURSIVE_INTERVAL_ZERO_SEARCH,"Information: invoking the recursive interval zero search.\n");
   temp = findZerosUnsimplified(funcSimplified,derivSimplified,range,prec,diam,noZeroProofs);
-  printMessage(3,"Information: the recursive interval zero search has finished.\n");
+  printMessage(3,SOLLYA_MSG_RECURSIVE_INTERVAL_ZERO_SEARCH_HAS_FINISHED,"Information: the recursive interval zero search has finished.\n");
   
   free_memory(funcSimplified);
   free_memory(derivSimplified);
@@ -2433,6 +2292,49 @@ void printInterval(sollya_mpfi_t interval) {
   mpfr_clear(l);
   mpfr_clear(r);
 }
+
+char *sprintInterval(sollya_mpfi_t interval) {
+  mpfr_t l,r;
+  mp_prec_t prec;
+  char *temp_string, *temp_string2;
+  char *res;
+
+  prec = sollya_mpfi_get_prec(interval);
+  mpfr_init2(l,prec);
+  mpfr_init2(r,prec);
+  sollya_mpfi_get_left(l,interval);
+  sollya_mpfi_get_right(r,interval);
+
+  if ((dyadic == 0) && (midpointMode == 1)) {
+    temp_string = sprintMidpointMode(l, r);
+    if (temp_string != NULL) {
+      res = temp_string;
+    } else {
+      temp_string = sprintValue(&l);
+      temp_string2 = sprintValue(&r);
+      res = safeCalloc(strlen(temp_string) + strlen(temp_string2) + 3 + 1,
+		       sizeof(char));
+      sprintf(res,"[%s;%s]",temp_string,temp_string2);
+      free(temp_string);
+      free(temp_string2);
+    }
+  } else {
+    temp_string = sprintValue(&l);
+    temp_string2 = sprintValue(&r);
+    res = safeCalloc(strlen(temp_string) + strlen(temp_string2) + 3 + 1,
+		     sizeof(char));
+    sprintf(res,"[%s;%s]",temp_string,temp_string2);
+    free(temp_string);
+    free(temp_string2);
+  }
+
+  mpfr_clear(l);
+  mpfr_clear(r);
+
+  return res;
+}
+
+
 
 
 void fprintInterval(FILE *fd, sollya_mpfi_t interval) {
@@ -2770,10 +2672,10 @@ void infnormI(sollya_mpfi_t infnormval, node *func, node *deriv,
   sollya_mpfr_min(innerLeft,innerLeft,tr,GMP_RNDU);
   sollya_mpfr_max(innerRight,innerRight,tl,GMP_RNDD); 
  
-  printMessage(3,"Information: invoking interval zero search.\n");
+  printMessage(3,SOLLYA_MSG_INVOKING_RECURSIVE_INTERVAL_ZERO_SEARCH,"Information: invoking interval zero search.\n");
   tempChain = findZeros(numeratorDeriv,derivNumeratorDeriv,range,prec,diam,noZeros); 
 
-  printMessage(3,"Information: interval zero search is done.\n");
+  printMessage(3,SOLLYA_MSG_RECURSIVE_INTERVAL_ZERO_SEARCH_HAS_FINISHED,"Information: interval zero search is done.\n");
   mpfr_init2(diamJoin,prec);
   mpfr_mul_2ui(diamJoin,diam,3,GMP_RNDN);
   tempChain2 = joinAdjacentIntervals(tempChain,diamJoin);
@@ -2786,25 +2688,11 @@ void infnormI(sollya_mpfi_t infnormval, node *func, node *deriv,
 
   i = 0;
   for (curr=zeros;curr!=NULL;curr=curr->next) i++;
-  printMessage(2,
+  printMessage(2,SOLLYA_MSG_CERTAIN_NUM_OF_INTVALS_ENCLOSING_ZEROS_OF_DERIV,
 	  "Information: %d interval(s) have (has) been found that possibly contain(s) the zeros of the derivative.\n",i);
 
   curr = zeros;
   while (curr != NULL) {
-
-    if (verbosity >= 7) {
-      changeToWarningMode();
-      sollyaPrintf("Information:\nCurrent inner enclosure: [");
-      printValue(&innerLeft);
-      sollyaPrintf(";");
-      printValue(&innerRight);
-      sollyaPrintf("]\nCurrent outer enclosure: [");
-      printValue(&outerLeft);
-      sollyaPrintf(";");
-      printValue(&outerRight);
-      sollyaPrintf("]\n");
-      restoreMode();
-    }
 
     if (theo != NULL) {
       currZeroTheo = (exprBoundTheo *) safeCalloc(1,sizeof(exprBoundTheo));
@@ -2815,16 +2703,6 @@ void infnormI(sollya_mpfi_t infnormval, node *func, node *deriv,
     currInterval = ((sollya_mpfi_t *) (curr->value));
     excludesTemp = evaluateITaylor(evalFuncOnInterval, func, deriv, *currInterval, prec, taylorrecursions, currZeroTheo,0); 
 
-    if (verbosity >= 7) {
-      changeToWarningMode();
-      sollyaPrintf("Information: The function evaluates on\n");
-      printInterval(*currInterval);
-      sollyaPrintf(" to\n");
-      printInterval(evalFuncOnInterval);
-      sollyaPrintf("\n");
-      restoreMode();
-    }
-
     excludes = concatChains(excludes,excludesTemp);
     sollya_mpfi_get_left(tl,evalFuncOnInterval);
     sollya_mpfi_get_right(tr,evalFuncOnInterval);
@@ -2834,7 +2712,7 @@ void infnormI(sollya_mpfi_t infnormval, node *func, node *deriv,
     }
 
     if (mpfr_nan_p(tl) || mpfr_nan_p(tr)) {
-      printMessage(1,"Warning: NaNs occurred during the interval evaluation of the zeros of the derivative.\n");
+      printMessage(1,SOLLYA_MSG_NAN_OR_INF_ON_DERIVATIVE,"Warning: NaNs occurred during the interval evaluation of the zeros of the derivative.\n");
     }
 
     sollya_mpfr_min(outerLeft,outerLeft,tl,GMP_RNDD);
@@ -2953,27 +2831,27 @@ void uncertifiedInfnorm(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned lon
 
   /**************************** Dealing with special cases ****************************/
   if ( (!mpfr_number_p(a)) || (!mpfr_number_p(b)) ) {
-    printMessage(1,"Warning: a bound of the interval is infinite or NaN.\n");
-    printMessage(1,"This command cannot handle such intervals.\n");
+    printMessage(1,SOLLYA_MSG_DOMAIN_IS_NO_CLOSED_INTERVAL_ON_THE_REALS,"Warning: a bound of the interval is infinite or NaN.\n");
+    printMessage(1,SOLLYA_MSG_CONTINUATION,"This command cannot handle such intervals.\n");
     mpfr_set_nan(result);
     return;
   }
 
   if (mpfr_equal_p(a,b)) {
-    printMessage(1,"Warning: the given interval is reduced to one point.\n");
+    printMessage(1,SOLLYA_MSG_DOMAIN_IS_REDUCED_TO_A_POINT_WILL_SIMPLY_EVAL,"Warning: the given interval is reduced to one point.\n");
     evaluateFaithful(result,f,a,prec);
     mpfr_abs(result,result,GMP_RNDU);
     return;
   }
 
   if (mpfr_greater_p(a,b)) {
-    printMessage(1,"Warning: the interval is empty.\n");
+    printMessage(1,SOLLYA_MSG_DOMAIN_IS_EMPTY,"Warning: the interval is empty.\n");
     mpfr_set_d(result,0.,GMP_RNDN);
     return;
   }
 
   if (isConstant(f)) {
-    printMessage(1,"Warning: the expression is constant.\n");
+    printMessage(1,SOLLYA_MSG_EXPRESSION_IS_CONSTANT,"Warning: the expression is constant.\n");
     evaluateFaithful(result,f,a,prec);
     mpfr_abs(result,result,GMP_RNDU);
     return;
@@ -3027,13 +2905,7 @@ void uncertifiedInfnorm(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned lon
     if (r==0) mpfr_set_d(y1, 0. , GMP_RNDN);
 
     if (!mpfr_number_p(y1)) {
-      if(verbosity >= 1) {
-        changeToWarningMode();
-	sollyaPrintf("Warning: the evaluation of the given function in ");
-	printValue(&x1); sollyaPrintf(" gives NaN.\n");
-	sollyaPrintf("This (possibly maximum) point will be excluded from the infnorm result.\n");
-        restoreMode();
-      }
+      printMessage(1,SOLLYA_MSG_EVALUATION_AT_POINT_GIVES_NAN_EXCLUDING_POINT,"Warning: the evaluation of the given function in %v gives NaN.\nThis (possibly maximum) point will be excluded from the infnorm result.\n",x1);
       mpfr_add(current_x, current_x, step, GMP_RNDU); /* rounding up ensures that x1(new) > x1(old) */
       mpfr_urandomb(perturb, random_state); mpfr_mul_2ui(perturb, perturb, 1, GMP_RNDN);
       mpfr_sub_ui(perturb, perturb, 1, GMP_RNDN); mpfr_div_2ui(perturb, perturb, 2, GMP_RNDN);
@@ -3043,12 +2915,7 @@ void uncertifiedInfnorm(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned lon
   } while ( (!mpfr_number_p(y1)) && (!stop_algo) );
 
   mpfr_abs(max, y1, GMP_RNDU);
-  if (verbosity >= 3) { 
-    changeToWarningMode();
-    sollyaPrintf("Information: current max is "); printValue(&max);
-    sollyaPrintf(" and is reached at "); printMpfr(x1);
-    restoreMode();
-  }
+  printMessage(3,SOLLYA_MSG_THE_CURRENT_MAXIMUM_IS_A_CERTAIN_VALUE,"Information: current max is %v and is reached at %v\n",max,x1);
 
   mpfr_div_2ui(cutoff, max, 1, GMP_RNDU);
 
@@ -3071,13 +2938,7 @@ void uncertifiedInfnorm(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned lon
     if (r==2) mpfr_set_d(y2, 0. , GMP_RNDN); /* under the cutoff */
     
     if (!mpfr_number_p(y2)) {
-      if(verbosity >= 1) {
-	changeToWarningMode();
-	sollyaPrintf("Warning: the evaluation of the given function in ");
-	printValue(&x2); sollyaPrintf(" gives NaN.\n");
-	sollyaPrintf("This (possibly maximum) point will be excluded from the infnorm result.\n");
-        restoreMode();
-      }
+      printMessage(1,SOLLYA_MSG_EVALUATION_AT_POINT_GIVES_NAN_EXCLUDING_POINT,"Warning: the evaluation of the given function in %v gives NaN.\nThis (possibly maximum) point will be excluded from the infnorm result.\n",x2);
     }
   } while ( ( (!mpfr_number_p(y2)) || mpfr_equal_p(y1,y2) )
 	    &&
@@ -3086,12 +2947,7 @@ void uncertifiedInfnorm(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned lon
 
   if (mpfr_cmpabs(y2, max) > 0) { /* evaluates to false when y2=NaN */
     mpfr_abs(max, y2, GMP_RNDU); 
-    if (verbosity >= 3) { 
-      changeToWarningMode();
-      sollyaPrintf("Information: current max is "); printValue(&max);
-      sollyaPrintf(" and is reached at "); printMpfr(x2);
-      restoreMode();
-    }
+    printMessage(3,SOLLYA_MSG_THE_CURRENT_MAXIMUM_IS_A_CERTAIN_VALUE,"Information: current max is %v and is reached at %v\n",max,x2);
     mpfr_div_2ui(cutoff, max, 1, GMP_RNDU);
   }
 
@@ -3104,7 +2960,7 @@ void uncertifiedInfnorm(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned lon
     do {
       count++;
       if (verbosity >= 2) {
-          if( count % 100 == 0) printMessage(2,"Information: %d out of %d points have been handled.\n",count,points);
+	if( count % 100 == 0) printMessage(2,SOLLYA_MSG_CERTAIN_AMOUNT_OF_CASES_HANDLED,"Information: %d out of %d points have been handled.\n",count,points);
       }
 
       mpfr_add(current_x, current_x, step, GMP_RNDU); /* rounding up ensures that x3 > x2 */
@@ -3122,13 +2978,7 @@ void uncertifiedInfnorm(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned lon
       if (r==2) mpfr_set_d(y3, 0. , GMP_RNDN); /* under the cutoff */
       
       if (!mpfr_number_p(y3)) {
-	if(verbosity >= 1) {
-	  changeToWarningMode();
-	  sollyaPrintf("Warning: the evaluation of the given function in ");
-	  printValue(&x3); sollyaPrintf(" gives NaN.\n");
-	  sollyaPrintf("This (possibly maximum) point will be excluded from the infnorm result.\n");
-          restoreMode();
-	}
+	printMessage(1,SOLLYA_MSG_EVALUATION_AT_POINT_GIVES_NAN_EXCLUDING_POINT,"Warning: the evaluation of the given function in %v gives NaN.\nThis (possibly maximum) point will be excluded from the infnorm result.\n",x3);
       }
     } while ( ( (!mpfr_number_p(y3))|| mpfr_equal_p(y2,y3) )
 	      &&
@@ -3137,12 +2987,7 @@ void uncertifiedInfnorm(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned lon
     
     if (mpfr_cmpabs(y3, max) > 0) { /* evaluates to false when y3=NaN */
       mpfr_abs(max, y3, GMP_RNDU); 
-      if (verbosity >= 3) { 
-	changeToWarningMode();
-	sollyaPrintf("Information: current max is "); printValue(&max);
-	sollyaPrintf(" and is reached at "); printMpfr(x3);
-	restoreMode();
-      }
+      printMessage(3,SOLLYA_MSG_THE_CURRENT_MAXIMUM_IS_A_CERTAIN_VALUE,"Information: current max is %v and is reached at %v\n",max,x3);
       mpfr_div_2ui(cutoff, max, 1, GMP_RNDU);
     }
     
@@ -3157,13 +3002,7 @@ void uncertifiedInfnorm(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned lon
       if (r==0) mpfr_set_d(y3diff, 0. , GMP_RNDN);
       
       if ( (!mpfr_number_p(y1diff)) || (!mpfr_number_p(y3diff)) ) {
-	if(verbosity >= 1) {
-          changeToWarningMode();
-	  sollyaPrintf("Warning: the evaluation of the derivative of the given function in ");
-	  printValue(&x1); sollyaPrintf(" or "); printValue(&x3); sollyaPrintf(" gives NaN.\n");
-	  sollyaPrintf("Newton's algorithm will not be used on this interval\n");
-          restoreMode();
-	}
+	printMessage(1,SOLLYA_MSG_EVALUATION_OF_DERIVATIVE_GIVES_NAN_NO_NEWTON,"Warning: the evaluation of the derivative of the given function in %v or %v gives NaN.\nNewton's algorithm will not be used on this interval.\n",x1,x3);
       }
       else if(mpfr_sgn(y1diff)*mpfr_sgn(y3diff)<0) { /* If y1diff=0 or y3diff=0, there is no need to */
                                                      /* use Newton's algorithm since we already have */
@@ -3178,22 +3017,11 @@ void uncertifiedInfnorm(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned lon
 	  if (r==2) mpfr_set_d(ystar, 0. , GMP_RNDN); /* under the cutoff */
 	  
 	  if (!mpfr_number_p(ystar)) {
-	    if(verbosity >= 1) {
-	      changeToWarningMode();
-	      sollyaPrintf("Warning: the evaluation of the given function in ");
-	      printValue(&xstar); sollyaPrintf(" gives NaN.\n");
-	      sollyaPrintf("This (possibly maximum) point will be excluded from the infnorm result.\n");
-              restoreMode();
-	    }
+	    printMessage(1,SOLLYA_MSG_EVALUATION_AT_POINT_GIVES_NAN_EXCLUDING_POINT,"Warning: the evaluation of the given function in %v gives NaN.\nThis (possibly maximum) point will be excluded from the infnorm result.\n",xstar);
 	  }
 	  if (mpfr_cmpabs(ystar, max) > 0) { /* evaluates to false when ystar=NaN */
 	    mpfr_abs(max, ystar, GMP_RNDU); 
-	    if (verbosity >= 3) { 
-	      changeToWarningMode();
-	      sollyaPrintf("Information: current max is "); printValue(&max);
-	      sollyaPrintf(" and is reached at "); printMpfr(xstar);
-	      restoreMode();
-	    }
+	    printMessage(3,SOLLYA_MSG_THE_CURRENT_MAXIMUM_IS_A_CERTAIN_VALUE,"Information: current max is %v and is reached at %v\n",max,xstar);
 	    mpfr_div_2ui(cutoff, max, 1, GMP_RNDU);
 	  }
 	}
@@ -3254,9 +3082,9 @@ rangetype infnorm(node *func, rangetype range, chain *excludes,
   mpfr_init2(*(res.b),prec);
 
   if ((!mpfr_number_p(*(range.a))) || (!mpfr_number_p(*(range.b)))) {
-    printMessage(1,"Warning: the bounds of the range an infinity norm is to be computed on are not numbers.\n");
+    printMessage(1,SOLLYA_MSG_DOMAIN_IS_NO_CLOSED_INTERVAL_ON_THE_REALS,"Warning: the bounds of the range an infinity norm is to be computed on are not numbers.\n");
     if (proof != NULL) {
-      printMessage(1,"Warning: no proof will be generated.\n");
+      printMessage(1,SOLLYA_MSG_NO_PROOF_WILL_BE_GENERATED,"Warning: no proof will be generated.\n");
     }
     mpfr_set_d(*(res.a),0.0,GMP_RNDN);
     mpfr_set_inf(*(res.b),1);
@@ -3279,8 +3107,8 @@ rangetype infnorm(node *func, rangetype range, chain *excludes,
 
   if (isTrivialInfnormCase(res, func)) {
     if (proof != NULL) {
-      printMessage(1,"Warning: the infnorm on the given function is trivially calculable.\n");
-      printMessage(1,"No proof will be generated.\n");
+      printMessage(1,SOLLYA_MSG_INFNORM_RESULT_IS_TRIVIAL,"Warning: the infnorm on the given function is trivially calculable.\n");
+      printMessage(1,SOLLYA_MSG_CONTINUATION,"No proof will be generated.\n");
     }
     return res;
   }
@@ -3308,9 +3136,9 @@ rangetype infnorm(node *func, rangetype range, chain *excludes,
   deriv = differentiate(func);
 
   if (getNumeratorDenominator(&numeratorDeriv,&denominatorDeriv,deriv)) {
-    printMessage(1,"Warning: the derivative of the function is a quotient, thus possibly not continuous in the interval.\n");
-    printMessage(1,"Only the zeros of the numerator will be searched and pole detection may fail.\n");
-    printMessage(1,"Be sure that the function is twice continuously differentiable if trusting the infnorm result.\n");
+    printMessage(1,SOLLYA_MSG_DERIVATIVE_IS_QUOTIENT,"Warning: the derivative of the function is a quotient, thus possibly not continuous in the interval.\n");
+    printMessage(1,SOLLYA_MSG_CONTINUATION,"Only the zeros of the numerator will be searched and pole detection may fail.\n");
+    printMessage(1,SOLLYA_MSG_CONTINUATION,"Be sure that the function is twice continuously differentiable if trusting the infnorm result.\n");
 
     mpfr_init2(z,prec);
     mpfr_init2(ya,prec);
@@ -3330,34 +3158,19 @@ rangetype infnorm(node *func, rangetype range, chain *excludes,
       mpfr_mul_ui(yb,yb,2,GMP_RNDN);
 
       if (mpfr_cmp(ya,yb) <= 0) {
-	if (verbosity >= 1) {
-	  changeToWarningMode();
-	  sollyaPrintf("Warning: the derivative of the function seems to have a extensible singularity in ");
-	  printValue(&z); 
-	  sollyaPrintf(".\n");
-	  sollyaPrintf("The infnorm result might not be trustful if the derivative cannot actually\n");
-	  sollyaPrintf("be extended in this point.\n");
-	  restoreMode(); 
-	}
+	printMessage(1,SOLLYA_MSG_DERIVATIVE_SEEMS_TO_HAVE_EXTENSIBLE_SINGULARITY,"Warning: the derivative of the function seems to have a extensible singularity in %v.\nThe infnorm result might not be trustful if the derivative cannot actually\nbe extended in this point.\n",z);
       } else {
-	if (verbosity >= 1) {
-	  changeToWarningMode(); 
-	  sollyaPrintf("Warning: the derivative of the function seems to have a singularity in ");
-	  printValue(&z); 
-	  sollyaPrintf(".\n");
-	  sollyaPrintf("The infnorm result is likely to be wrong.\n");
-	  restoreMode(); 
-	}
+	printMessage(1,SOLLYA_MSG_DERIVATIVE_SEEMS_TO_HAVE_SINGULARITY,"Warning: the derivative of the function seems to have a singularity in %v.\nThe infnorm result is likely to be wrong.\n",z);
       }
     } else {
       evaluate(ya,denominatorDeriv,*(range.a),prec);
       evaluate(yb,denominatorDeriv,*(range.b),prec);
 
       if (mpfr_sgn(ya) != mpfr_sgn(yb)) {
-	printMessage(1,"Warning: the derivative of the function seems to have a (extensible) singularity in the considered interval.\n");
-	printMessage(1,"The infnorm result might be not trustful if the function is not continuously differentiable.\n");
+	printMessage(1,SOLLYA_MSG_DERIVATIVE_SEEMS_TO_HAVE_EXTENSIBLE_SINGULARITY,"Warning: the derivative of the function seems to have a (extensible) singularity in the considered interval.\n");
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"The infnorm result might be not trustful if the function is not continuously differentiable.\n");
       } else {
-	printMessage(2,"Information: the derivative seems to have no (false) pole in the considered interval.\n");
+	printMessage(2,SOLLYA_MSG_DERIVATIVE_SEEMS_NOT_TO_HAVE_ANY_POLE,"Information: the derivative seems to have no (false) pole in the considered interval.\n");
       }
     }
 
@@ -3376,28 +3189,16 @@ rangetype infnorm(node *func, rangetype range, chain *excludes,
     theo = NULL;
   }
 
-  printMessage(3,"Information: invoking the interval infnorm subfunction.\n");
+  printMessage(3,SOLLYA_MSG_INVOKING_INFNORM_SUBFUNCTION,"Information: invoking the interval infnorm subfunction.\n");
 
   infnormI(resI,func,deriv,numeratorDeriv,derivNumeratorDeriv,rangeI,
 	   prec,rangeDiameter,initialExcludes,&mightExcludes,theo);
 
-  printMessage(3,"Information: interval infnorm subfunction has finished.\n");
+  printMessage(3,SOLLYA_MSG_INFNORM_SUBFUNCTION_HAS_FINISHED,"Information: interval infnorm subfunction has finished.\n");
 
   secondMightExcludes = NULL;
 
   if (mightExcludes != NULL) {
-    printMessage(1,"Warning: to get better infnorm quality, the following domains will be excluded additionally:\n");
-    if (verbosity >= 1) {
-      changeToWarningMode();
-      curr = mightExcludes;
-      while(curr != NULL) {
-	printInterval(*((sollya_mpfi_t *) (curr->value)));
-	sollyaPrintf("\n");
-	curr = curr->next;
-      }
-      sollyaPrintf("\n");
-      restoreMode();
-    }
     mightExcludes = concatChains(mightExcludes,initialExcludes);
     freeInitialExcludes = 0;
 
@@ -3408,33 +3209,19 @@ rangetype infnorm(node *func, rangetype range, chain *excludes,
       theo = NULL;
     }
     
-    printMessage(3,"Information: invoking the interval infnorm subfunction on additional excludes.\n");
+    printMessage(3,SOLLYA_MSG_INVOKING_INFNORM_SUBFUNCTION,"Information: invoking the interval infnorm subfunction on additional excludes.\n");
 
     infnormI(resI,func,deriv,numeratorDeriv,derivNumeratorDeriv,rangeI,
 	     2*prec,rangeDiameter,mightExcludes,&secondMightExcludes,theo);
 
-    printMessage(3,"Information: interval infnorm subfunction on additional excludes has finished.\n");
+    printMessage(3,SOLLYA_MSG_INFNORM_SUBFUNCTION_HAS_FINISHED,"Information: interval infnorm subfunction on additional excludes has finished.\n");
 
-    if (secondMightExcludes != NULL) {
-      printMessage(1,"Warning: the following domains remain the exclusion of which could improve the result.\n");
-      if (verbosity >= 1) {
-	changeToWarningMode();
-	curr = secondMightExcludes;
-	while(curr != NULL) {
-	  printInterval(*((sollya_mpfi_t *) (curr->value)));
-	  sollyaPrintf("\n");
-	  curr = curr->next;
-	}
-	sollyaPrintf("\n");
-	restoreMode();
-      }
-    }
   }
 
   if (proof != NULL) {
-    printMessage(2,"Information: started writing the proof.\n");
+    printMessage(2,SOLLYA_MSG_STARTING_TO_WRITE_THE_PROOF,"Information: started writing the proof.\n");
     fprintInfnormTheo(proof,theo,1);
-    printMessage(2,"Information: proof written.\n");
+    printMessage(2,SOLLYA_MSG_THE_PROOF_HAS_BEEN_WRITTEN,"Information: proof written.\n");
   }
   
   if (theo != NULL) freeInfnormTheo(theo);
@@ -3497,7 +3284,7 @@ void evaluateConstantExpressionToInterval(sollya_mpfi_t y, node *func) {
   sollya_mpfi_t x;
 
   if (!isConstant(func)) {
-    printMessage(1,"Warning: the given expression is not constant. Evaluating it at 1.\n");
+    printMessage(1,SOLLYA_MSG_THE_EXPRESSION_IS_NOT_CONSTANT,"Warning: the given expression is not constant. Evaluating it at 1.\n");
   }
 
   sollya_mpfi_init2(x,12);
@@ -3514,7 +3301,7 @@ void evaluateConstantExpressionToSharpInterval(sollya_mpfi_t y, node *func) {
   mp_prec_t prec;
 
   if (!isConstant(func)) {
-    printMessage(1,"Warning: the given expression is not constant. Evaluating it at 1.\n");
+    printMessage(1,SOLLYA_MSG_THE_EXPRESSION_IS_NOT_CONSTANT,"Warning: the given expression is not constant. Evaluating it at 1.\n");
   }
 
   sollya_mpfi_init2(x,12);
@@ -3734,15 +3521,7 @@ int checkInfnormI(node *func, node *deriv, sollya_mpfi_t infnormval, sollya_mpfi
 
   if (mpfr_cmp(diamRange,diam) <= 0) {
     /* Simple end case: the range to test is already smaller than diam but we could not check */
-    if (verbosity >= 2) {
-      changeToWarningMode();
-      sollyaPrintf("Information: could not check the infinity norm on the domain\n");
-      printInterval(range);
-      sollyaPrintf("\nThe function evaluates here to\n");
-      printInterval(evaluateOnRange);
-      sollyaPrintf("\n");
-      restoreMode();
-    }
+    printMessage(2,SOLLYA_MSG_COULD_NOT_CHECK_INFNORM_ON_A_CERTAIN_INTERVAL,"Information: could not check the infinity norm on the domain\n%w\nThe function evaluates here to\n%w.\n",range,evaluateOnRange);
     sollya_mpfi_clear(evaluateOnRange);
     mpfr_clear(diamRange);
     return 0;
@@ -3767,7 +3546,7 @@ int checkInfnormI(node *func, node *deriv, sollya_mpfi_t infnormval, sollya_mpfi
   resultRight = 0;
 
   resultLeft = checkInfnormI(func, deriv, infnormval, rangeLeft, diam, prec);
-  if (resultLeft || (verbosity >= 4)) resultRight = checkInfnormI(func, deriv, infnormval, rangeRight, diam, prec);
+  if (resultLeft) resultRight = checkInfnormI(func, deriv, infnormval, rangeRight, diam, prec);
 
   sollya_mpfi_clear(rangeRight);
   sollya_mpfi_clear(rangeLeft);
@@ -4040,23 +3819,11 @@ chain* fpFindZerosFunction(node *func, rangetype range, mp_prec_t prec) {
 	      addToList = 1;
 	    } else {
 	      removedFromList = 1;
-	      if (verbosity >= 2) {
-		changeToWarningMode();
-		printMessage(2,"Information: removing possible zero in ");
-		printMpfr(*((mpfr_t *) (fpZeros2->value)));
-		printMessage(3,"Information: removing because all signs are equal.\n");
-		restoreMode();
-	      }
+	      printMessage(2,SOLLYA_MSG_REMOVING_A_POSSIBLE_ZERO_AT_SOME_POINT,"Information: removing possible zero in %v.\nInformation: removing because all signs are equal.\n",*((mpfr_t *) (fpZeros2->value)));
 	    }
 	  } else {
 	    removedFromList = 1;
-	    if (verbosity >= 2) {
-	      changeToWarningMode();
-	      printMessage(2,"Information: removing possible zero in ");
-	      printMpfr(*((mpfr_t *) (fpZeros2->value)));
-	      printMessage(3,"Information: removing because predecessor and successor signs are equal.\n");
-	      restoreMode();
-	    }
+	    printMessage(2,SOLLYA_MSG_REMOVING_A_POSSIBLE_ZERO_AT_SOME_POINT,"Information: removing possible zero in %v.\nInformation: removing because predecessor and successor signs are equal.\n",*((mpfr_t *) (fpZeros2->value)));
 	  }
 	}
       }
@@ -4071,7 +3838,7 @@ chain* fpFindZerosFunction(node *func, rangetype range, mp_prec_t prec) {
   }
 
   if (removedFromList) {
-    printMessage(1,"Warning: actual zero filter has removed at least one possible zero of higher order.\n");
+    printMessage(1,SOLLYA_MSG_ZERO_FILTER_HAS_REMOVED_AT_LEAST_ONE_ZERO,"Warning: actual zero filter has removed at least one possible zero of higher order.\n");
   }
 
   mpfr_clear(before);
@@ -4518,7 +4285,7 @@ int evaluateFaithful(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
   mpfr_clear(cutoff);
 
   if (!res) {
-    printMessage(4,"Warning: evaluateFaithful returned NaN.\n");
+    printMessage(4,SOLLYA_MSG_FAITHFUL_EVALUATION_RETURNS_NAN,"Warning: evaluateFaithful returned NaN.\n");
     mpfr_set_nan(result);
   }
 
@@ -4575,7 +4342,7 @@ int accurateInfnorm(mpfr_t result, node *func, rangetype range, chain *excludes,
 
   if (p > prec) {
     prec = p;
-    printMessage(1,"Warning: starting intermediate precision increased to %d bits.\n",prec);
+    printMessage(1,SOLLYA_MSG_INTERMEDIATE_PRECISION_HAS_BEEN_INCREASED,"Warning: starting intermediate precision increased to %d bits.\n",prec);
   }
 
   res.a = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
@@ -4584,7 +4351,7 @@ int accurateInfnorm(mpfr_t result, node *func, rangetype range, chain *excludes,
   mpfr_init2(*(res.b),prec);
 
   if (isTrivialInfnormCase(res, func)) {
-    printMessage(2,"Information: the infnorm on the given function is trivially calculable.\n");
+    printMessage(2,SOLLYA_MSG_INFNORM_RESULT_IS_TRIVIAL,"Information: the infnorm on the given function is trivially calculable.\n");
     mpfr_set(result,*(res.a),GMP_RNDU);
     mpfr_clear(*(res.a));
     mpfr_clear(*(res.b));
@@ -4597,7 +4364,7 @@ int accurateInfnorm(mpfr_t result, node *func, rangetype range, chain *excludes,
   t = determineHeuristicTaylorRecursions(func);
   if ((t > oldtaylorrecursions) && (t < ((oldtaylorrecursions + 1) * 2))) {
     taylorrecursions = t;
-    printMessage(3,"Information: the number of Taylor recursions has temporarily been set to %d.\n",taylorrecursions);
+    printMessage(3,SOLLYA_MSG_TAYLOR_RECURSION_TEMPORARILY_SET_TO_A_VALUE,"Information: the number of Taylor recursions has temporarily been set to %d.\n",taylorrecursions);
   }
 
   curr = excludes;
@@ -4630,9 +4397,9 @@ int accurateInfnorm(mpfr_t result, node *func, rangetype range, chain *excludes,
   deriv = differentiate(func);
 
   if (getNumeratorDenominator(&numeratorDeriv,&denominatorDeriv,deriv)) {
-    printMessage(1,"Warning: the derivative of the function is a quotient, thus possibly not continuous in the interval.\n");
-    printMessage(1,"Only the zeros of the numerator will be searched and pole detection may fail.\n");
-    printMessage(1,"Be sure that the function is twice continuously differentiable if trusting the infnorm result.\n");
+    printMessage(1,SOLLYA_MSG_DERIVATIVE_IS_QUOTIENT,"Warning: the derivative of the function is a quotient, thus possibly not continuous in the interval.\n");
+    printMessage(1,SOLLYA_MSG_CONTINUATION,"Only the zeros of the numerator will be searched and pole detection may fail.\n");
+    printMessage(1,SOLLYA_MSG_CONTINUATION,"Be sure that the function is twice continuously differentiable if trusting the infnorm result.\n");
 
     mpfr_init2(z,prec);
     mpfr_init2(ya,prec);
@@ -4652,26 +4419,19 @@ int accurateInfnorm(mpfr_t result, node *func, rangetype range, chain *excludes,
       mpfr_mul_ui(yb,yb,2,GMP_RNDN);
 
       if (mpfr_cmp(ya,yb) <= 0) {
-	printMessage(1,"Warning: the derivative of the function seems to have a extensible singularity in ");
-	if (verbosity >= 1) { 	changeToWarningMode(); printValue(&z); restoreMode(); }
-	printMessage(1,".\n");
-	printMessage(1,"The infnorm result might not be trustful if the derivative cannot actually\n");
-	printMessage(1,"be extended in this point.\n");
+	printMessage(1,SOLLYA_MSG_DERIVATIVE_SEEMS_TO_HAVE_EXTENSIBLE_SINGULARITY,"Warning: the derivative of the function seems to have a extensible singularity in %v.\nThe infnorm result might not be trustful if the derivative cannot actually\nbe extended in this point.\n",z);
       } else {
-	printMessage(1,"Warning: the derivative of the function seems to have a singularity in ");
-	if (verbosity >= 1) { 	changeToWarningMode(); printValue(&z); restoreMode(); }
-	printMessage(1,".\n");
-	printMessage(1,"The infnorm result is likely to be wrong.\n");
+	printMessage(1,SOLLYA_MSG_DERIVATIVE_SEEMS_TO_HAVE_SINGULARITY,"Warning: the derivative of the function seems to have a singularity in %v.\nThe infnorm result is likely to be wrong.\n",z);
       }
     } else {
       evaluate(ya,denominatorDeriv,*(range.a),prec);
       evaluate(yb,denominatorDeriv,*(range.b),prec);
 
       if (mpfr_sgn(ya) != mpfr_sgn(yb)) {
-	printMessage(1,"Warning: the derivative of the function seems to have a (extensible) singularity in the considered interval.\n");
-	printMessage(1,"The infnorm result might be not trustful if the function is not continuously differentiable.\n");
+	printMessage(1,SOLLYA_MSG_DERIVATIVE_SEEMS_TO_HAVE_EXTENSIBLE_SINGULARITY,"Warning: the derivative of the function seems to have a (extensible) singularity in the considered interval.\n");
+	printMessage(1,SOLLYA_MSG_CONTINUATION,"The infnorm result might be not trustful if the function is not continuously differentiable.\n");
       } else {
-	printMessage(2,"Information: the derivative seems to have no (false) pole in the considered interval.\n");
+	printMessage(2,SOLLYA_MSG_DERIVATIVE_SEEMS_NOT_TO_HAVE_ANY_POLE,"Information: the derivative seems to have no (false) pole in the considered interval.\n");
       }
     }
 
@@ -4716,13 +4476,7 @@ int accurateInfnorm(mpfr_t result, node *func, rangetype range, chain *excludes,
     
       mpfr_div_2ui(currDiameter,currDiameter,2,GMP_RNDD);
 
-      printMessage(4,"Information: the absolute diameter is now ");
-      if (verbosity >= 4) {
-	changeToWarningMode();
-	printMpfr(currDiameter);
-	restoreMode();
-      }
-      printMessage(4,"The current intermediate precision is %d bits.\n",(int) prec);
+      printMessage(4,SOLLYA_MSG_ABS_DIAM_AND_PREC_SET_TO_CERTAIN_VALUES,"Information: the absolute diameter is now %v.\nThe current intermediate precision is %d bits.\n",currDiameter,(int) prec);
 
     }
 
@@ -4730,7 +4484,7 @@ int accurateInfnorm(mpfr_t result, node *func, rangetype range, chain *excludes,
 
     prec *= 2;
 
-    printMessage(4,"Information: the intermediate precision is now %d bits.\n",(int) prec);
+    printMessage(4,SOLLYA_MSG_INTERMEDIATE_PRECISION_HAS_BEEN_INCREASED,"Information: the intermediate precision is now %d bits.\n",(int) prec);
 
   }
 
@@ -4967,7 +4721,7 @@ int evaluateFaithfulWithCutOff(mpfr_t result, node *func, mpfr_t x, mpfr_t cutof
   int res;
 
   if ((2*startprec) < (mpfr_get_prec(result) + 10)) {
-    printMessage(12,"Information: Differentiating while evaluating because start precision (%d bits) too low.\n",
+    printMessage(12,SOLLYA_MSG_DIFFERENTIATING_FOR_EVAL_AS_START_PREC_LOW,"Information: Differentiating while evaluating because start precision (%d bits) too low.\n",
 		 (int)startprec);
     deriv = differentiate(func); 
   }else deriv = NULL;
