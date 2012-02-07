@@ -3086,6 +3086,15 @@ fp_eval_result_t sollya_lib_evaluate_function_at_point(mpfr_t y, sollya_obj_t ob
   sollya_mpfi_clear(xInt);
   sollya_mpfi_clear(yInt);
 
+  /* Check if we got a "point" infinity proof interval */
+  if (mpfr_inf_p(yLeft) && mpfr_inf_p(yRight) &&
+      (mpfr_sgn(yLeft) == mpfr_sgn(yRight))) {
+    mpfr_set(y, yLeft, GMP_RNDN); /* Copying an infinity */
+    mpfr_clear(yLeft);
+    mpfr_clear(yRight);
+    return FP_EVAL_INFINITY;
+  }
+
   /* Check if bounds are numbers */
   if ((!mpfr_number_p(yLeft)) || (!mpfr_number_p(yRight))) {
     /* Here, at least one of the bounds is not a real number. We

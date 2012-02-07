@@ -528,6 +528,7 @@ static const messageEntry messageTextsTable[] = {
   { SOLLYA_MSG_ROUNDING_ON_CONSTANT_RETRIEVAL                         , "A rounding occurred on retrieval of a constant" },
   { SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT_FAITHFUL_BUT_NOT_REAL          , "A minimum computation relies on floating-point result that is faithfully evaluated and at least one of the terms is not a real number" },
   { SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT_FAITHFUL_BUT_NOT_REAL          , "A maximum computation relies on floating-point result that is faithfully evaluated and at least one of the terms is not a real number" },
+  { SOLLYA_MSG_EXPRESSION_EVALUATES_TO_INFINITY                       , "An expression evaluates to infinity" },
 
   /* Add your new warning message texts above here. */
 

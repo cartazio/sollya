@@ -5960,6 +5960,7 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
   int okaySign, sign;
   int faithfulAlreadyKnown;
   node *simplCst;
+  int infinityCase;
 
   shown = 0; shown2 = 0;
   if (isPureTree(thing)) {
@@ -6036,6 +6037,7 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
 		mpfr_set_ui(*(xrange.b),1.0,GMP_RNDU);
 		evaluateRangeFunction(yrange, tempNode5, xrange, tools_precision * 256 + 10);
 		extraMessage = 0;
+		infinityCase = 0;
 		if (mpfr_number_p(*(yrange.a)) &&
 		    mpfr_number_p(*(yrange.b)) &&
 		    (mpfr_sgn(*(yrange.a)) * mpfr_sgn(*(yrange.b)) < 0)) {
@@ -6047,8 +6049,15 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
 		    }
 		  }
 		} else {
-		  evaluate(a,tempNode5,b,tools_precision * 256);
-		  if (!(mpfr_number_p(*(yrange.a)) && mpfr_number_p(*(yrange.b)))) extraMessage = 1;
+		  if (mpfr_inf_p(*(yrange.a)) &&
+		      mpfr_inf_p(*(yrange.b)) &&
+		      (mpfr_sgn(*(yrange.a)) == mpfr_sgn(*(yrange.b)))) {
+		    mpfr_set(a, *(yrange.a), GMP_RNDN); /* Copying an infinity, no rounding */
+		    infinityCase = 1;
+		  } else {
+		    evaluate(a,tempNode5,b,tools_precision * 256);
+		    if (!(mpfr_number_p(*(yrange.a)) && mpfr_number_p(*(yrange.b)))) extraMessage = 1;
+		  }
 		}
 		mpfr_clear(*(xrange.a));
 		mpfr_clear(*(xrange.b));
@@ -6067,8 +6076,14 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
 		    }
 		  }
 		} else {
-		  printMessage(1,SOLLYA_MSG_EXPRESSION_UNDEFINED_OR_UNSTABLE,"Warning: the given expression is undefined or numerically unstable.\n");
-		  if (!isAffine(tempNode5)) mpfr_set_nan(a);
+		  if (infinityCase) {
+		    printMessage(2,SOLLYA_MSG_EXPRESSION_EVALUATES_TO_INFINITY,"Information: the given expression evaluates to infinity.\n");
+		  } else {
+		    printMessage(1,SOLLYA_MSG_EXPRESSION_UNDEFINED_OR_UNSTABLE,"Warning: the given expression is undefined or numerically unstable.\n");
+		    if (!isAffine(tempNode5)) {
+		      mpfr_set_nan(a);
+		    }
+		  }
 		}
 	      }  
 	    }
@@ -21062,7 +21077,13 @@ node *evaluateThingInner(node *tree) {
 	      mpfr_set(*(xrange.b),a,GMP_RNDU);
 	      evaluateRangeFunction(yrange, copy->child1, xrange, tools_precision * 256);
 	      freeThing(copy);
-	      copy = makeRange(makeConstant(*(yrange.a)),makeConstant(*(yrange.b)));
+	      if (mpfr_inf_p(*(yrange.a)) &&
+		  mpfr_inf_p(*(yrange.b)) &&
+		  (mpfr_sgn(*(yrange.a)) == mpfr_sgn(*(yrange.b)))) {
+		copy = makeConstant(*(yrange.a));
+	      } else {
+		copy = makeRange(makeConstant(*(yrange.a)),makeConstant(*(yrange.b)));
+	      }
 	      mpfr_clear(*(xrange.a));
 	      mpfr_clear(*(xrange.b));
 	      mpfr_clear(*(yrange.a));
