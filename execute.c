@@ -16586,7 +16586,7 @@ node *evaluateThingInnerFpminimax(node *tree, char *timingString) {
 node *evaluateThingInner(node *tree) {
   node *copy, *tempNode, *tempNode2, *tempNode3, *tempNode4, *tempNode5, *tempNode6;
   int *intptr;
-  int resA, resB, i, resC, resD, resE, resF, resG, resH, resI, resJ;
+  int resA, resB, i, resC, resD, resE, resF, resG, resH, resI, resJ, resK, resL;
   char *tempString, *tempString2, *timingString, *tempString3, *tempString4, *tempString5;
   char *str1, *str2, *str3;
   mpfr_t a, b, c, d, e;
@@ -18288,18 +18288,21 @@ node *evaluateThingInner(node *tree) {
           copy = tempNode;
         } else {
           tempNode = (node *) (curr->value);
+	  resK = 0;
           curr = curr->next;
           while (curr != NULL) {
             tempNode2 = (node *) (curr->value);
             if (checkInequalityFast(&resF, tempNode, tempNode2)) {
               if (resF > 0) {
                 tempNode = tempNode2;
+		resK = 0;
               } 
             } else {
               mpfr_init2(a,tools_precision);
               mpfr_init2(b,tools_precision);
               if ((resA = evaluateThingToConstant(a,tempNode,NULL,1)) && 
                   (resB = evaluateThingToConstant(b,tempNode2,NULL,1))) {
+		resL = 0;
 		resI = ((mpfr_number_p(a) || (resA == 2)) && (mpfr_number_p(b) || (resB == 2)));
 		resJ = 0;
                 if ((resA == 3) || (resB == 3)) {
@@ -18329,7 +18332,7 @@ node *evaluateThingInner(node *tree) {
 		      resG = 1;
                     } else {
 		      if (resH) {
-			printMessage(1,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT_FAITHFUL_BUT_UNDECIDED,"Warning: the tool is unable to decide a minimum computation by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.\n");
+			resL = 1;
 			resC = 0;
 		      } else {
 			if ((!resI) && (!resJ)) {
@@ -18342,6 +18345,7 @@ node *evaluateThingInner(node *tree) {
                 }
                 if ((!resC) && (resG)) {
                   tempNode = tempNode2;
+		  resK = resL;
                 } 
               } else {
                 resE = 0;
@@ -18352,6 +18356,9 @@ node *evaluateThingInner(node *tree) {
             curr = curr->next;
           }
           if (resE) {
+	    if (resK) {
+	      printMessage(1,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT_FAITHFUL_BUT_UNDECIDED,"Warning: the tool is unable to decide a minimum computation by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.\n");
+	    }
             tempNode3 = copyThing(tempNode);
             freeThing(copy);
             copy = tempNode3;
@@ -18379,17 +18386,20 @@ node *evaluateThingInner(node *tree) {
         } else {
           tempNode = (node *) (curr->value);
           curr = curr->next;
+	  resK = 0;
           while (curr != NULL) {
             tempNode2 = (node *) (curr->value);
             if (checkInequalityFast(&resF, tempNode, tempNode2)) {
               if (resF > 0) {
                 tempNode = tempNode2;
+		resK = 0;
               } 
             } else {
               mpfr_init2(a,tools_precision);
               mpfr_init2(b,tools_precision);
               if ((resA = evaluateThingToConstant(a,tempNode,NULL,1)) && 
                   (resB = evaluateThingToConstant(b,tempNode2,NULL,1))) {
+		resL = 0;
 		resI = ((mpfr_number_p(a) || (resA == 2)) && (mpfr_number_p(b) || (resB == 2)));
 		resJ = 0;
                 if ((resA == 3) || (resB == 3))  {
@@ -18419,7 +18429,7 @@ node *evaluateThingInner(node *tree) {
 		      resG = 1;
                     } else {
 		      if (resH) {
-			printMessage(1,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT_FAITHFUL_BUT_UNDECIDED,"Warning: the tool is unable to decide a minimum computation by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.\n");
+			resL = 1;
 			resC = 0;
 		      } else {
 			if ((!resI) && (resJ)) {
@@ -18432,6 +18442,7 @@ node *evaluateThingInner(node *tree) {
                 }
                 if ((!resC) && (resG)) {
                   tempNode = tempNode2;
+		  resK = resL;
                 } 
               } else {
                 resE = 0;
@@ -18442,6 +18453,9 @@ node *evaluateThingInner(node *tree) {
             curr = curr->next;
           }
           if (resE) {
+	    if (resK) {
+	      printMessage(1,SOLLYA_MSG_MIN_RELIES_ON_FP_RESULT_FAITHFUL_BUT_UNDECIDED,"Warning: the tool is unable to decide a minimum computation by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.\n");
+	    }
             tempNode3 = copyThing(tempNode);
             freeThing(copy);
             copy = tempNode3;
@@ -18475,18 +18489,21 @@ node *evaluateThingInner(node *tree) {
           copy = tempNode;
         } else {
           tempNode = (node *) (curr->value);
+	  resK = 0;
           curr = curr->next;
           while (curr != NULL) {
             tempNode2 = (node *) (curr->value);
             if (checkInequalityFast(&resF, tempNode, tempNode2)) {
               if (resF < 0) {
                 tempNode = tempNode2;
+		resK = 0;
               } 
             } else {
               mpfr_init2(a,tools_precision);
               mpfr_init2(b,tools_precision);
               if ((resA = evaluateThingToConstant(a,tempNode,NULL,1)) && 
                   (resB = evaluateThingToConstant(b,tempNode2,NULL,1))) {
+		resL = 0;
 		resI = ((mpfr_number_p(a) || (resA == 2)) && (mpfr_number_p(b) || (resB == 2)));
 		resJ = 0;
                 if ((resA == 3) || (resB == 3)) {
@@ -18516,7 +18533,7 @@ node *evaluateThingInner(node *tree) {
 		      resG = 1;
                     } else {
 		      if (resH) {
-			printMessage(1,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT_FAITHFUL_BUT_UNDECIDED,"Warning: the tool is unable to decide a maximum computation by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.\n");
+			resL = 1;
 			resC = 0;
 		      } else {
 			if ((!resI) && (!resJ)) {
@@ -18529,6 +18546,7 @@ node *evaluateThingInner(node *tree) {
                 }
                 if (resC && resG) {
                   tempNode = tempNode2;
+		  resK = resL;
                 } 
               } else {
                 resE = 0;
@@ -18539,6 +18557,9 @@ node *evaluateThingInner(node *tree) {
             curr = curr->next;
           }
           if (resE) {
+	    if (resK) {
+	      printMessage(1,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT_FAITHFUL_BUT_UNDECIDED,"Warning: the tool is unable to decide a maximum computation by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.\n");
+	    }
             tempNode3 = copyThing(tempNode);
             freeThing(copy);
             copy = tempNode3;
@@ -18565,18 +18586,21 @@ node *evaluateThingInner(node *tree) {
           copy = tempNode;
         } else {
           tempNode = (node *) (curr->value);
+	  resK = 0;
           curr = curr->next;
           while (curr != NULL) {
             tempNode2 = (node *) (curr->value);
             if (checkInequalityFast(&resF, tempNode, tempNode2)) {
               if (resF < 0) {
                 tempNode = tempNode2;
+		resK = 0;
               } 
             } else {
               mpfr_init2(a,tools_precision);
               mpfr_init2(b,tools_precision);
               if ((resA = evaluateThingToConstant(a,tempNode,NULL,1)) && 
                   (resB = evaluateThingToConstant(b,tempNode2,NULL,1))) {
+		resL = 0;
 		resI = ((mpfr_number_p(a) || (resA == 2)) && (mpfr_number_p(b) || (resB == 2)));
 		resJ = 0;
                 if ((resA == 3) || (resB == 3)) {
@@ -18606,7 +18630,7 @@ node *evaluateThingInner(node *tree) {
 		      resG = 1;
                     } else {
 		      if (resH) {
-			printMessage(1,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT_FAITHFUL_BUT_UNDECIDED,"Warning: the tool is unable to decide a maximum computation by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.\n");
+			resL = 1;
 			resC = 0;
 		      } else {
 			if ((!resI) && (!resJ)) {
@@ -18619,6 +18643,7 @@ node *evaluateThingInner(node *tree) {
                 }
                 if (resC && resG) {
                   tempNode = tempNode2;
+		  resK = resL;
                 } 
               } else {
                 resE = 0;
@@ -18629,6 +18654,9 @@ node *evaluateThingInner(node *tree) {
             curr = curr->next;
           }
           if (resE) {
+	    if (resK) {
+	      printMessage(1,SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT_FAITHFUL_BUT_UNDECIDED,"Warning: the tool is unable to decide a maximum computation by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.\n");
+	    }
             tempNode3 = copyThing(tempNode);
             freeThing(copy);
             copy = tempNode3;

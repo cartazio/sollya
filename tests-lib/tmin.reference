@@ -24,8 +24,12 @@ One of the terms of the following test is hard to evaluate (probably min=0 at so
 The test will rely on pure FP evaluation.
 min([|sin((pi) / 3) - sqrt(3) / 2, 0|]) returns 0
 
+One of the terms of the following test is hard to evaluate (probably min=0 at some point of the algorithm).
+The test will rely on pure FP evaluation.
 min of 0, sin(pi/3)-sqrt(3)/2 and -1 returns -1
 
+One of the terms of the following test is hard to evaluate (probably min=0 at some point of the algorithm).
+The test will rely on pure FP evaluation.
 min([|0, sin((pi) / 3) - sqrt(3) / 2, -1|]) returns -1
 
 min of -1 and sin(pi/3)-sqrt(3)/2 and 0 returns -1
