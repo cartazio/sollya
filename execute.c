@@ -18086,78 +18086,96 @@ node *evaluateThingInner(node *tree) {
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
       mpfr_init2(c,tools_precision);
-      if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1)) && 
-	  evaluateThingToRange(b,c,copy->child2)) {
-	if (resA == 3) 
-	  printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: containment test relies on floating-point result that is not faithfully evaluated.\n");
-	resC = ((mpfr_cmp(b,a) <= 0) && 
-		(mpfr_cmp(a,c) <= 0) && 
-		(!mpfr_unordered_p(a,b)) && 
-		(!mpfr_unordered_p(a,c)));
-	resH = (mpfr_number_p(a) && mpfr_number_p(b) && mpfr_number_p(c));
-	resB = 0;
-	if (resA == 1) {
-	  mpfr_init2(d,mpfr_get_prec(a));
-	  mpfr_set(d,a,GMP_RNDN);
-	  if (resC) {
-	    /* b <= a <= c */
-	    mpfr_nextbelow(a);
-	    resB = (resC != ((mpfr_cmp(b,a) <= 0) && 
-			     (mpfr_cmp(a,c) <= 0) && 
-			     (!mpfr_unordered_p(a,b)) && 
-			     (!mpfr_unordered_p(a,c))));
-	    if (!resB) {
-	      mpfr_set(a,d,GMP_RNDN);
-	      mpfr_nextabove(a);
-	      resB = (resC != ((mpfr_cmp(b,a) <= 0) && 
-			     (mpfr_cmp(a,c) <= 0) && 
-			     (!mpfr_unordered_p(a,b)) && 
-			     (!mpfr_unordered_p(a,c))));
-	    }
+      if (evaluateThingToRange(b,c,copy->child2)) {
+	tempNode = makeConstant(b);
+	tempNode2 = makeConstant(c);
+	resI = ((checkInequalityFast(&resJ, tempNode, copy->child1)) && 
+		(checkInequalityFast(&resK, copy->child1, tempNode2)));
+	free_memory(tempNode);
+	free_memory(tempNode2);
+	if (resI) {
+	  if ((resJ <= 0) && (resK <= 0)) {
+	    freeThing(copy);
+	    copy = makeTrue();		    
 	  } else {
-	    /* a < b or c < a */
-	    mpfr_nextabove(a);
-	    resB = (resC != ((mpfr_cmp(b,a) <= 0) && 
-			     (mpfr_cmp(a,c) <= 0) && 
-			     (!mpfr_unordered_p(a,b)) && 
-			     (!mpfr_unordered_p(a,c))));
-	    if (!resB) {
-	      mpfr_set(a,d,GMP_RNDN);
-	      mpfr_nextbelow(a);
-	      resB = (resC != ((mpfr_cmp(b,a) <= 0) && 
-			     (mpfr_cmp(a,c) <= 0) && 
-			     (!mpfr_unordered_p(a,b)) && 
-			     (!mpfr_unordered_p(a,c))));
-	    }
+	    freeThing(copy);
+	    copy = makeFalse();		    
 	  }
-	  if (resB) {
-	    tempNode = makeConstant(b);
-	    tempNode2 = makeConstant(c);
-	    if (compareConstant(&resA, tempNode, copy->child1) && 
-		compareConstant(&resB, copy->child1, tempNode2)) {
-	      resC = (resA <= 0) && (resB <= 0);
-	    } else {
-	      if (resH) {
-		printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_UNDECIDED,"Warning: the tool is unable to decide a containment test by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.\n");
-		resC = 1;
-	      } else {
-		printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_NOT_REAL,"Warning: containment test relies on floating-point result that is faithfully evaluated and at least one of the sides is not a real number.\n");
-	      }
-	    }
-	    freeThing(tempNode);
-	    freeThing(tempNode2);
-	  } else 
-	    printMessage(2,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT,"Information: containment test relies on floating-point result.\n");
-	  mpfr_clear(d);
-	}
-	if (resC) {
-	  freeThing(copy);
-	  copy = makeTrue();		    
+	  resE = 1;
 	} else {
-	  freeThing(copy);
-	  copy = makeFalse();		    
+	  if (resA = evaluateThingToConstant(a,copy->child1,NULL,1)) {
+	    if (resA == 3) 
+	      printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: containment test relies on floating-point result that is not faithfully evaluated.\n");
+	    resC = ((mpfr_cmp(b,a) <= 0) && 
+		    (mpfr_cmp(a,c) <= 0) && 
+		    (!mpfr_unordered_p(a,b)) && 
+		    (!mpfr_unordered_p(a,c)));
+	    resH = (mpfr_number_p(a) && mpfr_number_p(b) && mpfr_number_p(c));
+	    resB = 0;
+	    if (resA == 1) {
+	      mpfr_init2(d,mpfr_get_prec(a));
+	      mpfr_set(d,a,GMP_RNDN);
+	      if (resC) {
+		/* b <= a <= c */
+		mpfr_nextbelow(a);
+		resB = (resC != ((mpfr_cmp(b,a) <= 0) && 
+				 (mpfr_cmp(a,c) <= 0) && 
+				 (!mpfr_unordered_p(a,b)) && 
+				 (!mpfr_unordered_p(a,c))));
+		if (!resB) {
+		  mpfr_set(a,d,GMP_RNDN);
+		  mpfr_nextabove(a);
+		  resB = (resC != ((mpfr_cmp(b,a) <= 0) && 
+				   (mpfr_cmp(a,c) <= 0) && 
+				   (!mpfr_unordered_p(a,b)) && 
+				   (!mpfr_unordered_p(a,c))));
+		}
+	      } else {
+		/* a < b or c < a */
+		mpfr_nextabove(a);
+		resB = (resC != ((mpfr_cmp(b,a) <= 0) && 
+				 (mpfr_cmp(a,c) <= 0) && 
+				 (!mpfr_unordered_p(a,b)) && 
+				 (!mpfr_unordered_p(a,c))));
+		if (!resB) {
+		  mpfr_set(a,d,GMP_RNDN);
+		  mpfr_nextbelow(a);
+		  resB = (resC != ((mpfr_cmp(b,a) <= 0) && 
+				   (mpfr_cmp(a,c) <= 0) && 
+				   (!mpfr_unordered_p(a,b)) && 
+				   (!mpfr_unordered_p(a,c))));
+		}
+	      }
+	      if (resB) {
+		tempNode = makeConstant(b);
+		tempNode2 = makeConstant(c);
+		if (compareConstant(&resA, tempNode, copy->child1) && 
+		    compareConstant(&resB, copy->child1, tempNode2)) {
+		  resC = (resA <= 0) && (resB <= 0);
+		} else {
+		  if (resH) {
+		    printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_UNDECIDED,"Warning: the tool is unable to decide a containment test by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.\n");
+		    resC = 1;
+		  } else {
+		    printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_NOT_REAL,"Warning: containment test relies on floating-point result that is faithfully evaluated and at least one of the sides is not a real number.\n");
+		  }
+		}
+		freeThing(tempNode);
+		freeThing(tempNode2);
+	      } else 
+		printMessage(2,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT,"Information: containment test relies on floating-point result.\n");
+	      mpfr_clear(d);
+	    }
+	    if (resC) {
+	      freeThing(copy);
+	      copy = makeTrue();		    
+	    } else {
+	      freeThing(copy);
+	      copy = makeFalse();		    
+	    }
+	    resE = 1;
+	  }
 	}
-	resE = 1;
       }
       mpfr_clear(a);
       mpfr_clear(b);
