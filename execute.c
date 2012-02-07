@@ -20167,7 +20167,7 @@ node *evaluateThingInner(node *tree) {
       copy = tempNode;
       if (timingString != NULL) popTimeCounter(timingString);
     } else {
-      if (isPureTree(copy->child1)) {
+      if (isPureTree(copy->child1) && isConstant(copy->child1)) {
 	tempNode = copyThing(copy->child1);
 	freeThing(copy);
 	copy = tempNode;
@@ -20244,7 +20244,7 @@ node *evaluateThingInner(node *tree) {
       copy = tempNode;
       if (timingString != NULL) popTimeCounter(timingString);
     } else {
-      if (isPureTree(copy->child1)) {
+      if (isPureTree(copy->child1) && isConstant(copy->child1)) {
 	tempNode = copyThing(copy->child1);
 	freeThing(copy);
 	copy = tempNode;
@@ -20260,7 +20260,7 @@ node *evaluateThingInner(node *tree) {
       copy = tempNode;
       if (timingString != NULL) popTimeCounter(timingString);
     } else {
-      if (isPureTree(copy->child1)) {
+      if (isPureTree(copy->child1) && isConstant(copy->child1)) {
 	tempNode = copyThing(copy->child1);
 	freeThing(copy);
 	copy = tempNode;
