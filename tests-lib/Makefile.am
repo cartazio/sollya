@@ -119,6 +119,7 @@ thalfprecision_obj.c \
 thexadecimal.c \
 thonorcoeffprec.c \
 thorner.c \
+tinf.c \
 tint_list_ops.c \
 tinterval_list_ops.c \
 tis_absolute.c \
@@ -153,12 +154,14 @@ tis_single_obj.c \
 tis_triple_double_obj.c \
 tis_true.c \
 tis_void.c \
+tlength.c \
 tlog10.c \
 tlog1p.c \
 tlog2.c \
 tlog.c \
 tmacros_build_function.c \
 tmax.c \
+tmid.c \
 tmin.c \
 tmul.c \
 tname_free_variable.c \
@@ -191,6 +194,7 @@ tquad_obj.c \
 trange_from_bounds.c \
 trange_from_interval.c \
 trelative.c \
+tremez.c \
 tround_down.c \
 tround_to_nearest.c \
 tround_towards_zero.c \
@@ -234,6 +238,7 @@ tsqrt.c \
 tstring.c \
 tstring_list_ops.c \
 tsub.c \
+tsup.c \
 tsubpoly.c \
 tsubstitute.c \
 ttan.c \
