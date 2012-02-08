@@ -396,7 +396,7 @@ int getCoefficientsInPseudoPolynomial(mpfr_t *coefficients, node *poly, chain *m
   int i = 0;
   for (curr = monomials; curr != NULL; curr = curr->next) {
     if (findCoeffInPseudoPolynomial(&coeff, poly, (node *)(curr->value))) {
-      evaluateThingToConstant(coefficients[i], coeff, NULL, 1);
+      evaluateThingToConstant(coefficients[i], coeff, NULL, 1, 0);
       free_memory(coeff);
       i++;
     }

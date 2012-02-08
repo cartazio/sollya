@@ -624,7 +624,7 @@ int isIntegerElement(int *res, node *thing) {
 
   okay = 0; i = 0;
   mpfr_init2(a, tools_precision);
-  if (evaluateThingToConstant(a, thing, NULL, 0)) {
+  if (evaluateThingToConstant(a, thing, NULL, 0, 0)) {
     if (mpfr_integer_p(a)) {
       i = mpfr_get_si(a, GMP_RNDN);
       mpfr_init2(b, 8 * sizeof(i) + 5);
@@ -655,14 +655,14 @@ int formConsecutiveIntegers(node *thing1, node *thing2) {
 
   okay = 0;
   mpfr_init2(a, tools_precision);
-  if (evaluateThingToConstant(a, thing1, NULL, 0)) {
+  if (evaluateThingToConstant(a, thing1, NULL, 0, 0)) {
     if (mpfr_integer_p(a)) {
       i = mpfr_get_si(a, GMP_RNDN);
       mpfr_init2(b, 8 * sizeof(i) + 5);
       mpfr_set_si(b, i, GMP_RNDN);
       if (mpfr_cmp(a, b) == 0) {
 	mpfr_init2(c, tools_precision);
-	if (evaluateThingToConstant(c, thing2, NULL, 0)) {
+	if (evaluateThingToConstant(c, thing2, NULL, 0, 0)) {
 	  if (mpfr_integer_p(c)) {
 	    j = mpfr_get_si(c, GMP_RNDN);
 	    mpfr_init2(d, 8 * sizeof(i) + 5);
@@ -832,7 +832,7 @@ int tryMatchList(chain **associations, node *thingToMatch, node *possibleMatcher
     integerSequence = 0;
     integerBase = 0;
     mpfr_init2(c, tools_precision);
-    if (evaluateThingToConstant(c, (node *) (lastThingToMatch->value), NULL, 0)) {
+    if (evaluateThingToConstant(c, (node *) (lastThingToMatch->value), NULL, 0, 0)) {
       if (mpfr_integer_p(c)) {
 	integerBase = mpfr_get_si(c, GMP_RNDN);
 	mpfr_init2(d, 8 * sizeof(i) + 5);

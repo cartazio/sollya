@@ -2167,7 +2167,7 @@ int sollya_lib_get_constant(mpfr_t value, sollya_obj_t obj1) {
   }
 
   mpfr_init2(myValue, mpfr_get_prec(value));
-  if (evaluateThingToConstant(myValue, simplifiedObj, NULL, 1)) {
+  if (evaluateThingToConstant(myValue, simplifiedObj, NULL, 1, 0)) {
     if (mpfr_set(value, myValue, GMP_RNDN) != 0) {
       if (!noRoundingWarnings) {
 	printMessage(1,SOLLYA_MSG_ROUNDING_ON_CONSTANT_RETRIEVAL,"Warning: rounding occurred on retrieval of a constant.\n");
