@@ -5,7 +5,7 @@
 char *tstring_list_ops_make_char_ptr(char *x) {
   char *res;
 
-  res = (char *) calloc(strlen(x) + 1, sizeof(mpfi_t));
+  res = (char *) calloc(strlen(x) + 1, sizeof(char));
   if (res == NULL) exit(1);
   
   strcpy(res, x);
