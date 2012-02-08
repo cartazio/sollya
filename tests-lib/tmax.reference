@@ -24,12 +24,8 @@ One of the terms of the following test is hard to evaluate (probably max=0 at so
 The test will rely on pure FP evaluation.
 max([|sin((pi) / 3) - sqrt(3) / 2, 0|]) returns sin((pi) / 3) - sqrt(3) / 2
 
-One of the terms of the following test is hard to evaluate (probably max=0 at some point of the algorithm).
-The test will rely on pure FP evaluation.
 max of 0, sin(pi/3)-sqrt(3)/2 and 1 returns 1
 
-One of the terms of the following test is hard to evaluate (probably max=0 at some point of the algorithm).
-The test will rely on pure FP evaluation.
 max([|0, sin((pi) / 3) - sqrt(3) / 2, 1|]) returns 1
 
 max of 1 and sin(pi/3)-sqrt(3)/2 and 0 returns 1
