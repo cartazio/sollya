@@ -5,12 +5,6 @@ int callback(int message) {
   case SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_FAITHFUL_BUT_UNDECIDED:
     sollya_lib_printf("The following test is not certified (both values are probably equal)\n");
     break;
-  case SOLLYA_MSG_EXPR_SHOULD_BE_CONSTANT_AND_IS_NOT_FAITHFUL:
-    sollya_lib_printf("One of the terms of the following test is hard to evaluate (probably both equal to 0)\n");
-    break;
-  case SOLLYA_MSG_EXPR_SHOULD_BE_CONSTANT_NO_FAITHFUL_PLAIN_FP:
-    sollya_lib_printf("One of the terms of the following test is hard to evaluate (probably NaN or Inf).\n");
-    break;
   case SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL:
     sollya_lib_printf("The test will rely on pure FP evaluation.\n");
     break;

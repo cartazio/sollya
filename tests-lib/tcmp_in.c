@@ -2,9 +2,6 @@
 
 int callback(int message) {
   switch(message) {
-  case SOLLYA_MSG_EXPR_SHOULD_BE_CONSTANT_AND_IS_NOT_FAITHFUL:
-    sollya_lib_printf("One of the terms of the following test is hard to evaluate (probably equal to one of the endpoints and equal to 0)\n");
-    break;
   case SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL:
     sollya_lib_printf("The test will rely on pure FP evaluation.\n");
     break;

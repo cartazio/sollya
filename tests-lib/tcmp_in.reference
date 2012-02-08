@@ -3,10 +3,8 @@
 17 + log2(13) / log2(9) in [18;19] returns true
 17 + log2(13) / log2(9) in [1;2] returns false
 sin((pi) / 3) - sqrt(3) / 2 in [1;2] returns false
-One of the terms of the following test is hard to evaluate (probably equal to one of the endpoints and equal to 0)
 The test will rely on pure FP evaluation.
 sin((pi) / 3) - sqrt(3) / 2 in [0;2] returns true
-One of the terms of the following test is hard to evaluate (probably equal to one of the endpoints and equal to 0)
 The test will rely on pure FP evaluation.
 sin((pi) / 3) - sqrt(3) / 2 in [-1;0] returns true
 sin((pi) / 3) - sqrt(3) / 2 in [-1;1] returns true

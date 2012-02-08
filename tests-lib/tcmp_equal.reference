@@ -11,53 +11,41 @@ sin((pi) / 3) == sqrt(3) / 2 * (1 + 6.223015277861141707144064053780124240590252
 
 sin((pi) / 3) - sqrt(3) / 2 == 1 returns false
 
-One of the terms of the following test is hard to evaluate (probably both equal to 0)
 The test will rely on pure FP evaluation.
 sin((pi) / 3) - sqrt(3) / 2 == 0 returns true
 
 1 == sin((pi) / 3) - sqrt(3) / 2 returns false
 
-One of the terms of the following test is hard to evaluate (probably both equal to 0)
 The test will rely on pure FP evaluation.
 0 == sin((pi) / 3) - sqrt(3) / 2 returns true
 
-One of the terms of the following test is hard to evaluate (probably NaN or Inf).
 Warning: the following test involves a NaN
 1 == log(-17) returns false
 
-One of the terms of the following test is hard to evaluate (probably NaN or Inf).
 Warning: the following test involves a NaN
 log(-17) == 1 returns false
 
-One of the terms of the following test is hard to evaluate (probably NaN or Inf).
 The test will rely on pure FP evaluation.
 1 == tan((pi) / 2)^2 returns false
 
-One of the terms of the following test is hard to evaluate (probably NaN or Inf).
 The test will rely on pure FP evaluation.
 1 == -(tan((pi) / 2)^2) returns false
 
-One of the terms of the following test is hard to evaluate (probably NaN or Inf).
 The test will rely on pure FP evaluation.
 tan((pi) / 2)^2 == 1 returns false
 
-One of the terms of the following test is hard to evaluate (probably NaN or Inf).
 The test will rely on pure FP evaluation.
 -(tan((pi) / 2)^2) == 1 returns false
 
-One of the terms of the following test is hard to evaluate (probably NaN or Inf).
 The test will rely on pure FP evaluation.
 @Inf@ == -(tan((pi) / 2)^2) returns false
 
-One of the terms of the following test is hard to evaluate (probably NaN or Inf).
 The test will rely on pure FP evaluation.
 -(tan((pi) / 2)^2) == @Inf@ returns false
 
-One of the terms of the following test is hard to evaluate (probably NaN or Inf).
 The test will rely on pure FP evaluation.
 @Inf@ == tan((pi) / 2)^2 returns false
 
-One of the terms of the following test is hard to evaluate (probably NaN or Inf).
 The test will rely on pure FP evaluation.
 tan((pi) / 2)^2 == @Inf@ returns false
 
