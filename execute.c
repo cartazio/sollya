@@ -18328,8 +18328,8 @@ node *evaluateThingInner(node *tree) {
             if (checkInequalityFast(&resF, tempNode, tempNode2)) {
               if (resF > 0) {
                 tempNode = tempNode2;
-		resK = 0;
               } 
+	      resK = 0;
             } else {
               mpfr_init2(a,tools_precision);
               mpfr_init2(b,tools_precision);
@@ -18378,8 +18378,8 @@ node *evaluateThingInner(node *tree) {
                 }
                 if ((!resC) && (resG)) {
                   tempNode = tempNode2;
-		  resK = resL;
                 } 
+		resK = resL;
               } else {
                 resE = 0;
               }
@@ -18425,8 +18425,8 @@ node *evaluateThingInner(node *tree) {
             if (checkInequalityFast(&resF, tempNode, tempNode2)) {
               if (resF > 0) {
                 tempNode = tempNode2;
-		resK = 0;
               } 
+	      resK = 0;
             } else {
               mpfr_init2(a,tools_precision);
               mpfr_init2(b,tools_precision);
@@ -18475,8 +18475,8 @@ node *evaluateThingInner(node *tree) {
                 }
                 if ((!resC) && (resG)) {
                   tempNode = tempNode2;
-		  resK = resL;
                 } 
+		resK = resL;
               } else {
                 resE = 0;
               }
@@ -18529,8 +18529,8 @@ node *evaluateThingInner(node *tree) {
             if (checkInequalityFast(&resF, tempNode, tempNode2)) {
               if (resF < 0) {
                 tempNode = tempNode2;
-		resK = 0;
               } 
+	      resK = 0;
             } else {
               mpfr_init2(a,tools_precision);
               mpfr_init2(b,tools_precision);
@@ -18579,8 +18579,8 @@ node *evaluateThingInner(node *tree) {
                 }
                 if (resC && resG) {
                   tempNode = tempNode2;
-		  resK = resL;
                 } 
+		resK = resL;
               } else {
                 resE = 0;
               }
@@ -18626,8 +18626,8 @@ node *evaluateThingInner(node *tree) {
             if (checkInequalityFast(&resF, tempNode, tempNode2)) {
               if (resF < 0) {
                 tempNode = tempNode2;
-		resK = 0;
               } 
+	      resK = 0;
             } else {
               mpfr_init2(a,tools_precision);
               mpfr_init2(b,tools_precision);
@@ -18676,8 +18676,8 @@ node *evaluateThingInner(node *tree) {
                 }
                 if (resC && resG) {
                   tempNode = tempNode2;
-		  resK = resL;
                 } 
+		resK = resL;
               } else {
                 resE = 0;
               }
