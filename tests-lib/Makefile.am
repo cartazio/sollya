@@ -160,6 +160,7 @@ tlog1p.c \
 tlog2.c \
 tlog.c \
 tmacros_build_function.c \
+tmantissa_and_exponent.c \
 tmax.c \
 tmid.c \
 tmin.c \

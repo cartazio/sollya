@@ -18023,8 +18023,8 @@ node *evaluateThingInner(node *tree) {
         } else {
           mpfr_init2(a,tools_precision);
           mpfr_init2(b,tools_precision);
-          if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1,0)) && 
-              (resB = evaluateThingToConstant(b,copy->child2,NULL,1,0))) {
+          if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1,1)) && 
+              (resB = evaluateThingToConstant(b,copy->child2,NULL,1,1))) {
             if ((resA == 3) || (resB == 3)) {
 	      if ((mpfr_number_p(a) || (resA == 2)) && (mpfr_number_p(b) || (resB == 2))) {
 		printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: equality test relies on floating-point result that is not faithfully evaluated.\n");
@@ -18122,7 +18122,7 @@ node *evaluateThingInner(node *tree) {
 	  }
 	  resE = 1;
 	} else {
-	  if (resA = evaluateThingToConstant(a,copy->child1,NULL,1,0)) {
+	  if (resA = evaluateThingToConstant(a,copy->child1,NULL,1,1)) {
 	    if (resA == 3) 
 	      printMessage(1,SOLLYA_MSG_TEST_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL,"Warning: containment test relies on floating-point result that is not faithfully evaluated.\n");
 	    resC = ((mpfr_cmp(b,a) <= 0) && 
@@ -18247,8 +18247,8 @@ node *evaluateThingInner(node *tree) {
       } else {
         mpfr_init2(a,tools_precision);
         mpfr_init2(b,tools_precision);
-        if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1,0)) && 
-            (resB = evaluateThingToConstant(b,copy->child2,NULL,1,0))) {
+        if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1,1)) && 
+            (resB = evaluateThingToConstant(b,copy->child2,NULL,1,1))) {
 	  resI = ((mpfr_number_p(a) || (resA == 2)) && (mpfr_number_p(b) || (resB == 2)));
 	  resJ = 0;
           if ((resA == 3) || (resB == 3)) { 
@@ -18758,8 +18758,8 @@ node *evaluateThingInner(node *tree) {
       } else {
         mpfr_init2(a,tools_precision);
         mpfr_init2(b,tools_precision);
-        if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1,0)) && 
-            (resB = evaluateThingToConstant(b,copy->child2,NULL,1,0))) {
+        if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1,1)) && 
+            (resB = evaluateThingToConstant(b,copy->child2,NULL,1,1))) {
 	  resI = ((mpfr_number_p(a) || (resA == 2)) && (mpfr_number_p(b) || (resB == 2)));
 	  resJ = 0;
           if ((resA == 3) || (resB == 3)) {
@@ -18831,8 +18831,8 @@ node *evaluateThingInner(node *tree) {
       } else {
         mpfr_init2(a,tools_precision);
         mpfr_init2(b,tools_precision);
-        if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1,0)) && 
-            (resB = evaluateThingToConstant(b,copy->child2,NULL,1,0))) {
+        if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1,1)) && 
+            (resB = evaluateThingToConstant(b,copy->child2,NULL,1,1))) {
 	  resI = ((mpfr_number_p(a) || (resA == 2)) && (mpfr_number_p(b) || (resB == 2)));
 	  resJ = 0;
           if ((resA == 3) || (resB == 3)) {
@@ -18904,8 +18904,8 @@ node *evaluateThingInner(node *tree) {
       } else {
         mpfr_init2(a,tools_precision);
         mpfr_init2(b,tools_precision);
-        if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1,0)) && 
-            (resB = evaluateThingToConstant(b,copy->child2,NULL,1,0))) {
+        if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1,1)) && 
+            (resB = evaluateThingToConstant(b,copy->child2,NULL,1,1))) {
 	  resI = ((mpfr_number_p(a) || (resA == 2)) && (mpfr_number_p(b) || (resB == 2)));
 	  resJ = 0;
           if ((resA == 3) || (resB == 3)) {
@@ -18986,8 +18986,8 @@ node *evaluateThingInner(node *tree) {
         } else {
           mpfr_init2(a,tools_precision);
           mpfr_init2(b,tools_precision);
-          if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1,0)) && 
-              (resB = evaluateThingToConstant(b,copy->child2,NULL,1,0))) {
+          if ((resA = evaluateThingToConstant(a,copy->child1,NULL,1,1)) && 
+              (resB = evaluateThingToConstant(b,copy->child2,NULL,1,1))) {
 	    resI = ((mpfr_number_p(a) || (resA == 2)) && (mpfr_number_p(b) || (resB == 2)));
             if ((resA == 3) || (resB == 3)) {
               if (resI) {
