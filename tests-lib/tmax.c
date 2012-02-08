@@ -3,23 +3,16 @@
 int callback(int message) {
   switch(message) {
   case SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT_FAITHFUL_BUT_UNDECIDED:
-    sollya_lib_printf("The following test is not certified (probably two equal maximal values at some point of the algorithm).\n");
+    sollya_lib_printf("The following test is not certified (probably because the max is reached by two equal values).\n");
     break;
   case SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT_THAT_IS_NOT_FAITHFUL:
-    sollya_lib_printf("The test will rely on pure FP evaluation.\n");
+    sollya_lib_printf("The test will rely on pure FP evaluation (probably because 0 is the maximum but it is hard to prove it).\n");
     break;
   case SOLLYA_MSG_MAX_RELIES_ON_FP_RESULT_FAITHFUL_BUT_NOT_REAL:
     sollya_lib_printf("Warning: the following test involves a NaN\n");
     break;
-
   case SOLLYA_MSG_EXPR_NOT_CORRECTLY_TYPED:
     sollya_lib_printf("The following expression is not correctly typed.\n");
-    break;
-  case SOLLYA_MSG_EXPR_SHOULD_BE_CONSTANT_AND_IS_NOT_FAITHFUL:
-    sollya_lib_printf("One of the terms of the following test is hard to evaluate (probably max=0 at some point of the algorithm).\n");
-    break;
-  case SOLLYA_MSG_EXPR_SHOULD_BE_CONSTANT_NO_FAITHFUL_PLAIN_FP:
-    sollya_lib_printf("One of the terms of the following test is hard to evaluate (probably NaN or Inf).\n");
     break;
   default:
     sollya_lib_printf("Unexpected warning %d\n", message);
