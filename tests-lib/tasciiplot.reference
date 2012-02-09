@@ -1,6 +1,6 @@
                                       |  xxxxxxxx                           
-                                      xxx        xx                         
-                                     x|            xxx                      
+                                      |xx        xxx                        
+                                     xx             xx                      
                                    xx |               x                     
                                   x   |                xx                   
                                 xx    |                  x                  
@@ -9,23 +9,23 @@
                              x        |                     x               
                             x         |                      xx             
                            x          |                        x            
-                          x           |                         x           
--------------------------x------------+--------------------------x----------
-                       xx             |                           x         
+--------------------------x-----------+-------------------------x-----------
+                        xx            |                          x          
+                       x              |                           x         
                       x               |                            x        
                      x                |                             x       
-                    x                 |                              xx     
-                   x                  |                                x    
+                    x                 |                              x      
+                   x                  |                               xx    
                  xx                   |                                 x   
                 x                     |                                  x  
               xx                      |                                   xx
-             x                        |                                     
-xx       xxxx                         |                                     
-  xxxxxxx                             |                                     
+            xx                        |                                     
+xx        xx                          |                                     
+  xxxxxxxx                            |                                     
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                                       |  xxxxxxxx                           
-                                      xxx        xx                         
-                                     x|            xxx                      
+                                      |xx        xxx                        
+                                     xx             xx                      
                                    xx |               x                     
                                   x   |                xx                   
                                 xx    |                  x                  
@@ -35,56 +35,31 @@ xx       xxxx                         |
                             x         |                      xx             
                            x          |                        x            
                           x           |                         x           
-                         x            |                          x          
-                       xx             |                           x         
+                        xx            |                          x          
+                       x              |                           x         
                       x               |                            x        
                      x                |                             x       
-                    x                 |                              xx     
-                   x                  |                                x    
+                    x                 |                              x      
+                   x                  |                               xx    
                  xx                   |                                 x   
                 x                     |                                  x  
               xx                      |                                   xx
-             x                        |                                     
-xx       xxxx                         |                                     
-  xxxxxxx                             |                                     
+            xx                        |                                     
+xx        xx                          |                                     
+  xxxxxxxx                            |                                     
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                                                                       xxxxxx
-x                                                                  xxx      
- xxx                                                             xx         
+xx                                                                 xxx      
+  xx                                                             xx         
     x                                                           x           
-     x                                                        xx            
-      xx                                                     x              
+     xx                                                       xx            
+       x                                                     x              
         x                                                   x               
          x                                                xx                
           x                                              x                  
            xx                                           x                   
-                                                       x                    
-             xx                                       x                     
----------------x-------------------------------------x----------------------
-                x                                   x                       
-                 x                                 x                        
-                  x                               x                         
-                   x                            xx                          
-                    xx                         x                            
-                      x                       x                             
-                       xx                   xx                              
-                         x                 x                                
-                          xx             xx                                 
-                            xxx       xxx                                   
-                               xxxxxxx                                      
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                                                                      xxxxxx
-x                                                                  xxx      
- xxx                                                             xx         
-    x                                                           x           
-     x                                                        xx            
-      xx                                                     x              
-        x                                                   x               
-         x                                                xx                
-          x                                              x                  
-           xx                                           x                   
-                                                       x                    
-             xx                                       x                     
+             x                                         x                    
+--------------x---------------------------------------x---------------------
                x                                     x                      
                 x                                   x                       
                  x                                 x                        
@@ -92,8 +67,33 @@ x                                                                  xxx
                    x                            xx                          
                     xx                         x                            
                       x                       x                             
-                       xx                   xx                              
-                         x                 x                                
+                       x                    xx                              
+                        xx                 x                                
+                          xx             xx                                 
+                            xxx       xxx                                   
+                               xxxxxxx                                      
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                                                                      xxxxxx
+xx                                                                 xxx      
+  xx                                                             xx         
+    x                                                           x           
+     xx                                                       xx            
+       x                                                     x              
+        x                                                   x               
+         x                                                xx                
+          x                                              x                  
+           xx                                           x                   
+             x                                         x                    
+              x                                       x                     
+               x                                     x                      
+                x                                   x                       
+                 x                                 x                        
+                  x                               x                         
+                   x                            xx                          
+                    xx                         x                            
+                      x                       x                             
+                       x                    xx                              
+                        xx                 x                                
                           xx             xx                                 
                             xxx       xxx                                   
                                xxxxxxx                                      
