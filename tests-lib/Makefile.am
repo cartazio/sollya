@@ -243,6 +243,7 @@ tsub.c \
 tsup.c \
 tsubpoly.c \
 tsubstitute.c \
+ttail.c \
 ttan.c \
 ttanh.c \
 ttriple_double.c \
