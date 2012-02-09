@@ -196,6 +196,7 @@ tquad_obj.c \
 trange_from_bounds.c \
 trange_from_interval.c \
 trelative.c \
+trevert.c \
 tround_down.c \
 tround_to_nearest.c \
 tround_towards_zero.c \
