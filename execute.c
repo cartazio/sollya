@@ -20173,10 +20173,10 @@ node *evaluateThingInner(node *tree) {
     if (isPureTree(copy->child1) && 
 	isPureTree(copy->child2)) {
       if (timingString != NULL) pushTimeCounter();
-      mpfr_init2(a,tools_precision);
+      mpfr_init2(a,tools_precision + 5);
       resA = evaluateThingToConstant(a,copy->child1,NULL,0,0);
       if(resA) {
-	mpfr_init2(b,tools_precision);
+	mpfr_init2(b,tools_precision + 5);
         if (isSyntacticallyEqual(copy->child1,copy->child2)) {
           resB = resA;
           mpfr_set_prec(b,mpfr_get_prec(a));
@@ -20225,9 +20225,15 @@ node *evaluateThingInner(node *tree) {
 	  if (mpfr_cmp(a,b) > 0) {
 	    printMessage(1,SOLLYA_MSG_RANGE_BOUNDS_IN_INVERSE_ORDER,"Warning: the bounds of the given range are in wrong order. Will reverse them.\n");
 	    if (resA != 2) {
+	      if (tools_precision > mpfr_get_prec(a)) {
+		mpfr_prec_round(a, tools_precision, GMP_RNDU); /* No rounding as precision always higher */
+	      }
 	      mpfr_nextabove(a);
 	    }
 	    if (resB != 2) {
+	      if (tools_precision > mpfr_get_prec(b)) {
+		mpfr_prec_round(b, tools_precision, GMP_RNDU); /* No rounding as precision always higher */
+	      }
 	      mpfr_nextbelow(b);
 	    }
 	    copy->child1 = makeConstant(b);
@@ -20239,9 +20245,15 @@ node *evaluateThingInner(node *tree) {
 	    }
 	  } else {
 	    if (resA != 2) {
+	      if (tools_precision > mpfr_get_prec(a)) {
+		mpfr_prec_round(a, tools_precision, GMP_RNDU); /* No rounding as precision always higher */
+	      }
 	      mpfr_nextbelow(a);
 	    }
 	    if (resB != 2) {
+	      if (tools_precision > mpfr_get_prec(b)) {
+		mpfr_prec_round(b, tools_precision, GMP_RNDU); /* No rounding as precision always higher */
+	      }
 	      mpfr_nextabove(b);
 	    }
 	    copy->child1 = makeConstant(a);
