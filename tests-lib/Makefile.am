@@ -116,6 +116,7 @@ tget_timing.c \
 tget_verbosity.c \
 thalfprecision.c \
 thalfprecision_obj.c \
+thead.c \
 thexadecimal.c \
 thonorcoeffprec.c \
 thorner.c \
