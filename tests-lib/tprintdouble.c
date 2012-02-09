@@ -17,7 +17,7 @@ int main(void) {
   sollya_obj_t a[6];
   int i;
   double huge = 1e300;
-  double infval, nanval;
+  volatile double infval, nanval;
   uint64_t specialval = 0x3ff6a09e667f3bcdull;
 
   sollya_lib_init();
