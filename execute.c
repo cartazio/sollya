@@ -20232,7 +20232,7 @@ node *evaluateThingInner(node *tree) {
 	    }
 	    if (resB != 2) {
 	      if (tools_precision > mpfr_get_prec(b)) {
-		mpfr_prec_round(b, tools_precision, GMP_RNDU); /* No rounding as precision always higher */
+		mpfr_prec_round(b, tools_precision, GMP_RNDD); /* No rounding as precision always higher */
 	      }
 	      mpfr_nextbelow(b);
 	    }
@@ -20246,7 +20246,7 @@ node *evaluateThingInner(node *tree) {
 	  } else {
 	    if (resA != 2) {
 	      if (tools_precision > mpfr_get_prec(a)) {
-		mpfr_prec_round(a, tools_precision, GMP_RNDU); /* No rounding as precision always higher */
+		mpfr_prec_round(a, tools_precision, GMP_RNDD); /* No rounding as precision always higher */
 	      }
 	      mpfr_nextbelow(a);
 	    }
