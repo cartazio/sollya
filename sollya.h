@@ -426,6 +426,7 @@ extern "C" {
   sollya_obj_t sollya_lib_sort(sollya_obj_t);
   sollya_obj_t sollya_lib_mantissa(sollya_obj_t);
   sollya_obj_t sollya_lib_exponent(sollya_obj_t);
+  sollya_obj_t sollya_lib_precision(sollya_obj_t);
   sollya_obj_t sollya_lib_tail(sollya_obj_t);
   sollya_obj_t sollya_lib_range(sollya_obj_t, sollya_obj_t);
   sollya_obj_t sollya_lib_sqrt(sollya_obj_t);

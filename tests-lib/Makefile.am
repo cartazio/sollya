@@ -188,6 +188,7 @@ tpostscript.c \
 tpostscriptfile.c \
 tpow.c \
 tpowers.c \
+tprecision.c \
 tprintdouble.c \
 tprintexpansion.c \
 tprintsingle.c \

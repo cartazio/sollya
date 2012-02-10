@@ -1294,6 +1294,14 @@ sollya_obj_t sollya_lib_mantissa(sollya_obj_t obj1) {
   return evaluatedThing;
 }
 
+sollya_obj_t sollya_lib_precision(sollya_obj_t obj1) {
+  node *thingToEvaluate, *evaluatedThing;
+  thingToEvaluate = makePrecision(copyThing(obj1));
+  evaluatedThing = evaluateThing(thingToEvaluate);
+  freeThing(thingToEvaluate);
+  return evaluatedThing;
+}
+
 sollya_obj_t sollya_lib_exponent(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   thingToEvaluate = makeExponent(copyThing(obj1));
