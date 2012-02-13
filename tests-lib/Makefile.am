@@ -238,6 +238,7 @@ tsin.c \
 tsingle.c \
 tsingle_obj.c \
 tsinh.c \
+tsort.c \
 tsqrt.c \
 tstring.c \
 tstring_list_ops.c \
