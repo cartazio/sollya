@@ -95,6 +95,7 @@ tfile.c \
 tfixed.c \
 tfloating.c \
 tfloor.c \
+tfpminimax.c \
 tfree_variable.c \
 tget_autosimplify.c \
 tget_canonical.c \
@@ -253,6 +254,7 @@ ttanh.c \
 ttriple_double.c \
 ttriple_double_obj.c \
 ttrue.c \
+tv_fpminimax.c \
 tv_max.c \
 tv_min.c \
 tv_remez.c \
