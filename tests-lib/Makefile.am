@@ -255,6 +255,7 @@ ttriple_double_obj.c \
 ttrue.c \
 tv_max.c \
 tv_min.c \
+tv_remez.c \
 tvoid.c
 
 EXTRA_DIST = check.proto $(TESTFILES) $(TESTFILES:.c=.reference)

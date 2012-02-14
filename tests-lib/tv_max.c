@@ -1,5 +1,4 @@
 #include <sollya.h>
-#include <sollya.h>
 #include <stdarg.h>
 
 sollya_obj_t stupid_wrapper(sollya_obj_t arg1, ...) {
