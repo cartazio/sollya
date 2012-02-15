@@ -1,9 +1,12 @@
 #include <sollya.h>
 
-#define NB_OF_TESTS 7
+#define NB_OF_TESTS 8
 
 int callback(int message) {
   switch(message) {
+  case SOLLYA_MSG_DOMAIN_IS_NO_CLOSED_INTERVAL_ON_THE_REALS:
+    sollya_lib_printf("Caught the message: the given domain is not a closed subset of the reals.\n");
+    break;
   default:
     sollya_lib_printf("Unexpected warning %d.\n", message);
   }
@@ -37,6 +40,9 @@ int main(void) {
 
   a[6] = SOLLYA_EXP(SOLLYA_X_);
   b[6] = sollya_lib_parse_string("[1;infty]");
+
+  a[7] = sollya_lib_parse_string("1/sqrt(_x_)");
+  b[7] = sollya_lib_parse_string("[0;1]");
 
   for (i=0;i<NB_OF_TESTS;i++) {
     c[i] = sollya_lib_dirtyintegral(a[i],b[i]);
