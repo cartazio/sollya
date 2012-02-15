@@ -172,6 +172,7 @@ tname_free_variable.c \
 tnearestint.c \
 tneg.c \
 tnegate.c \
+tnumberroots.c \
 tnumerator.c \
 tobj_is_end_elliptic_list.c \
 tobj_is_error.c \
