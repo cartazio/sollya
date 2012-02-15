@@ -1208,7 +1208,7 @@ sollya_obj_t sollya_lib_zerodenominators(sollya_obj_t obj1, sollya_obj_t obj2) {
 
 sollya_obj_t sollya_lib_searchgal(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, sollya_obj_t obj4, sollya_obj_t obj5, sollya_obj_t obj6) {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeSearchGal(addElement(addElement(addElement(addElement(addElement(addElement(NULL,copyThing(obj5)),copyThing(obj5)),copyThing(obj4)),
+  thingToEvaluate = makeSearchGal(addElement(addElement(addElement(addElement(addElement(addElement(NULL,copyThing(obj6)),copyThing(obj5)),copyThing(obj4)),
 								   copyThing(obj3)),copyThing(obj2)),copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
