@@ -125,6 +125,7 @@ thonorcoeffprec.c \
 thorner.c \
 tinf.c \
 tint_list_ops.c \
+tintegral.c \
 tinterval_list_ops.c \
 tis_absolute.c \
 tis_binary.c \
