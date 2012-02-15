@@ -1,6 +1,6 @@
 #include <sollya.h>
 
-#define NB_OF_TESTS 8
+#define NB_OF_TESTS 7
 
 int callback(int message) {
   switch(message) {
@@ -40,9 +40,6 @@ int main(void) {
 
   a[6] = SOLLYA_EXP(SOLLYA_X_);
   b[6] = sollya_lib_parse_string("[1;infty]");
-
-  a[7] = sollya_lib_parse_string("1/sqrt(_x_)");
-  b[7] = sollya_lib_parse_string("[0;1]");
 
   for (i=0;i<NB_OF_TESTS;i++) {
     c[i] = sollya_lib_dirtyintegral(a[i],b[i]);

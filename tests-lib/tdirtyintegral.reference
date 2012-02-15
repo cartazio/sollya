@@ -7,4 +7,3 @@ Caught the message: the given domain is not a closed subset of the reals.
 The integral "int exp(_x_) d _x_ over [-@Inf@;1]" gets approximated with dirtyintegral by @NaN@
 Caught the message: the given domain is not a closed subset of the reals.
 The integral "int exp(_x_) d _x_ over [1;@Inf@]" gets approximated with dirtyintegral by @NaN@
-The integral "int 1 / sqrt(_x_) d _x_ over [0;1]" gets approximated with dirtyintegral by 2.000000000
