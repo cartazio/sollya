@@ -77,6 +77,7 @@ tdefault.c \
 tdegree.c \
 tdenominator.c \
 tdirtyinfnorm.c \
+tdirtyintegral.c \
 tdiv.c \
 tdouble.c \
 tdouble_double.c \
