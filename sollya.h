@@ -415,8 +415,7 @@ extern "C" {
   sollya_obj_t sollya_lib_v_implementpoly(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
   sollya_obj_t sollya_lib_checkinfnorm(sollya_obj_t, sollya_obj_t, sollya_obj_t);
   sollya_obj_t sollya_lib_zerodenominators(sollya_obj_t, sollya_obj_t);
-  sollya_obj_t sollya_lib_searchgal(sollya_obj_t, ...);
-  sollya_obj_t sollya_lib_v_searchgal(sollya_obj_t, va_list);
+  sollya_obj_t sollya_lib_searchgal(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t);
   sollya_obj_t sollya_lib_guessdegree(sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
   sollya_obj_t sollya_lib_v_guessdegree(sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
   sollya_obj_t sollya_lib_dirtyfindzeros(sollya_obj_t, sollya_obj_t);

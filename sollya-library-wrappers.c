@@ -1206,21 +1206,10 @@ sollya_obj_t sollya_lib_zerodenominators(sollya_obj_t obj1, sollya_obj_t obj2) {
   return evaluatedThing;
 }
 
-sollya_obj_t sollya_lib_searchgal(sollya_obj_t obj1, ...) {
+sollya_obj_t sollya_lib_searchgal(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, sollya_obj_t obj4, sollya_obj_t obj5, sollya_obj_t obj6) {
   node *thingToEvaluate, *evaluatedThing;
-  MAKE_THINGLIST_DECLS(thinglist);
-  MAKE_THINGLIST_FROM_VARIADIC(obj1);
-  thingToEvaluate = makeSearchGal(thinglist);
-  evaluatedThing = evaluateThing(thingToEvaluate);
-  freeThing(thingToEvaluate);
-  return evaluatedThing;
-}
-
-sollya_obj_t sollya_lib_v_searchgal(sollya_obj_t obj1, va_list varlist) {
-  node *thingToEvaluate, *evaluatedThing;
-  MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
-  MAKE_THINGLIST_FROM_VA_LIST(obj1,varlist);
-  thingToEvaluate = makeSearchGal(thinglist);
+  thingToEvaluate = makeSearchGal(addElement(addElement(addElement(addElement(addElement(addElement(NULL,copyThing(obj5)),copyThing(obj5)),copyThing(obj4)),
+								   copyThing(obj3)),copyThing(obj2)),copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
