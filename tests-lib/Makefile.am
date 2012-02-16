@@ -209,6 +209,7 @@ tround_to_nearest.c \
 tround_towards_zero.c \
 tround_up.c \
 troundcoefficients.c \
+tsearchgal.c \
 tset_autosimplify_and_print.c \
 tset_autosimplify.c \
 tset_canonical_and_print.c \
