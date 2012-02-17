@@ -3013,10 +3013,14 @@ fp_eval_result_t sollya_lib_evaluate_function_at_point(mpfr_t y, sollya_obj_t ob
   mpfr_t myCutOff;
   sollya_mpfi_t xInt, yInt;
   mpfr_t yLeft, yRight;
-  mp_prec_t prec;
+  mp_prec_t prec, p;
+  mpfr_t threshold;
 
   /* Check if object is a function */
-  if (!isPureTree(obj1)) return FP_EVAL_OBJ_NO_FUNCTION;
+  if (!isPureTree(obj1)) {
+    mpfr_set_nan(y);
+    return FP_EVAL_OBJ_NO_FUNCTION;
+  }
 
   /* Determine start precision */
   prec = mpfr_get_prec(y) + 10;
@@ -3026,8 +3030,12 @@ fp_eval_result_t sollya_lib_evaluate_function_at_point(mpfr_t y, sollya_obj_t ob
     mpfr_init2(myCutOff, 12);
     mpfr_set_ui(myCutOff, 0, GMP_RNDN);
   } else {
+    if (mpfr_nan_p(*cutoff)) {
+      mpfr_set_nan(y);
+      return FP_EVAL_CUTOFF_IS_NAN;
+    }
     mpfr_init2(myCutOff, mpfr_get_prec(*cutoff));
-    mpfr_set(myCutOff, *cutoff, GMP_RNDN);
+    mpfr_abs(myCutOff, *cutoff, GMP_RNDN);
   }
 
   /* Try to perform faithful evaluation */
@@ -3044,21 +3052,15 @@ fp_eval_result_t sollya_lib_evaluate_function_at_point(mpfr_t y, sollya_obj_t ob
     break;
   case 2:
     /* Result was shown to be smaller than cutoff */
+    mpfr_set_ui(y,0,GMP_RNDN); /* Set to zero because we are below the cutoff */
     return FP_EVAL_BELOW_CUTOFF;
-    break;
-  case 3:
-    /* Here, at least one of the bounds of the proof
-       interval was something else but a number.
-       We consider the function to be unstable at this point.
-    */
-    return FP_EVAL_FAILURE;
     break;
   default:
     break;
   }
 
   /* If we are here, we could not acheive faithful rounding nor get
-     below the cutoff nor show that all evaluations will lead to NaN.
+     below the cutoff.
 
      We have to perform an additional interval evaluation and see
      if we get real numbers as bounds and if zero is in that interval
@@ -3068,7 +3070,8 @@ fp_eval_result_t sollya_lib_evaluate_function_at_point(mpfr_t y, sollya_obj_t ob
   if (prec < tools_precision) prec = tools_precision;
   sollya_mpfi_init2(xInt, mpfr_get_prec(x));
   sollya_mpfi_set_fr(xInt, x);
-  sollya_mpfi_init2(yInt, 256 * prec + 10);
+  p = 256 * prec + 10;
+  sollya_mpfi_init2(yInt, p);
 
   /* Perform interval evaluation */
   evaluateInterval(yInt, obj1, NULL, xInt);
@@ -3092,14 +3095,24 @@ fp_eval_result_t sollya_lib_evaluate_function_at_point(mpfr_t y, sollya_obj_t ob
     return FP_EVAL_INFINITY;
   }
 
-  /* Check if bounds are numbers */
+  /* Check if one of the bounds is a NaN */
+  if (mpfr_nan_p(yLeft) || mpfr_nan_p(yRight)) {
+    mpfr_set_nan(y);
+    return FP_EVAL_FAILURE;
+  }
+
+  /* Check if we have an infinity left over */
   if ((!mpfr_number_p(yLeft)) || (!mpfr_number_p(yRight))) {
-    /* Here, at least one of the bounds is not a real number. We
-       consider that evaluation is not possible at this point.
+    /* Here we have [-Inf;Inf] or [4;Inf] or [-Inf;4] 
+
+       We return the floating-point evaluation of (inf(I) + sup(I))/2.
+       This means we will produce NaN for [-Inf;Inf].
     */
+    mpfr_add(yLeft, yLeft, yRight, GMP_RNDN); 
+    mpfr_div_2ui(y, yLeft, 1, GMP_RNDN);
     mpfr_clear(yLeft);
     mpfr_clear(yRight);
-    return FP_EVAL_FAILURE;
+    return FP_EVAL_NOT_FAITHFUL_INFINITY_CONTAINED;
   }
 
   /* Here, both bounds of the proof interval are numbers.
@@ -3108,14 +3121,40 @@ fp_eval_result_t sollya_lib_evaluate_function_at_point(mpfr_t y, sollya_obj_t ob
 
   */
   if (mpfr_sgn(yLeft) * mpfr_sgn(yRight) < 0) {
-    /* Zero is in the proof interval. Take zero as the evaluation
-       result even if it cannot be shown that zero is a faithful
-       rounding of the mathematical result value.
+    /* Zero is in the proof interval. 
+
+       Separate the case if max(abs(yLeft),abs(yRight)) is less than
+       2^(-p/2) or not. Here, p is the computing precision we used for
+       the last interval evaluation.
+
+     */
+    mpfr_init2(threshold, 12); /* Will store a power of 2 */
+    mpfr_set_ui(threshold,1,GMP_RNDN);
+    mpfr_div_2ui(threshold,threshold,(p >> 1),GMP_RNDN); /* exact: power of 2 */
+    if ((mpfr_cmp_abs(yLeft, threshold) < 0) && (mpfr_cmp_abs(yRight, threshold) < 0)) {
+      mpfr_clear(threshold);
+      /* Here both bounds are in magnitude less than the threshold = 2^(-p/2) 
+
+	 We return 0.
+	 
+      */
+      mpfr_set_ui(y,0,GMP_RNDN);
+      mpfr_clear(yLeft);
+      mpfr_clear(yRight);
+      return FP_EVAL_NOT_FAITHFUL_ZERO_CONTAINED_BELOW_THRESHOLD;
+    } 
+    mpfr_clear(threshold);
+
+    /* Here, at least one of the bounds is not below the threshold.
+
+       We return the floating-point midpoint of the proof interval.
+
     */
-    mpfr_set_ui(y, 0, GMP_RNDN);
+    mpfr_add(yLeft, yLeft, yRight, GMP_RNDN);
+    mpfr_div_2ui(y, yLeft, 1, GMP_RNDN);
     mpfr_clear(yLeft);
     mpfr_clear(yRight);
-    return FP_EVAL_NOT_FAITHFUL_ZERO;
+    return FP_EVAL_NOT_FAITHFUL_ZERO_CONTAINED_NOT_BELOW_THRESHOLD; 
   }
 
   /* Here, zero is not in the proof interval. Take the approximate
@@ -3127,7 +3166,7 @@ fp_eval_result_t sollya_lib_evaluate_function_at_point(mpfr_t y, sollya_obj_t ob
   mpfr_div_2ui(y, yLeft, 1, GMP_RNDN);
   mpfr_clear(yLeft);
   mpfr_clear(yRight);
-  return FP_EVAL_NOT_FAITHFUL_NOT_ZERO;
+  return FP_EVAL_NOT_FAITHFUL_ZERO_NOT_CONTAINED;
 }
 
 ia_eval_result_t sollya_lib_evaluate_function_over_interval(mpfi_t y, sollya_obj_t obj1, mpfi_t op_x) {
@@ -3136,7 +3175,10 @@ ia_eval_result_t sollya_lib_evaluate_function_over_interval(mpfi_t y, sollya_obj
   mp_prec_t prec, p;
 
   /* Check if object is a function */
-  if (!isPureTree(obj1)) return INT_EVAL_OBJ_NO_FUNCTION;
+  if (!isPureTree(obj1)) {
+    sollya_mpfi_set_nan(y);
+    return INT_EVAL_OBJ_NO_FUNCTION;
+  }
 
   /* Convert entering mpfi_t interval to sollya_mpfi_t */
   sollya_init_and_convert_interval(x, op_x);
