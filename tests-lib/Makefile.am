@@ -123,6 +123,7 @@ thead.c \
 thexadecimal.c \
 thonorcoeffprec.c \
 thorner.c \
+timplementpoly.c \
 tinf.c \
 tint_list_ops.c \
 tintegral.c \
@@ -260,6 +261,7 @@ ttriple_double.c \
 ttriple_double_obj.c \
 ttrue.c \
 tv_fpminimax.c \
+tv_implementpoly.c \
 tv_max.c \
 tv_min.c \
 tv_remez.c \
