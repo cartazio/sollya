@@ -69,7 +69,7 @@ int main(void) {
   mpfr_set_d(x, 3, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   mpfr_set_d(cutoff, 1., GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf(" -- expecting one of 105414357 * 2^(-25) or 843314857 * 2^(-28)\n");
   sollya_lib_clear_obj(f);
@@ -79,7 +79,7 @@ int main(void) {
   mpfr_set_d(x, 3, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   mpfr_set_d(cutoff, 4., GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf(" -- expecting one of 105414357 * 2^(-25) or 843314857 * 2^(-28)\n");
   sollya_lib_printf("\n");
@@ -100,7 +100,7 @@ int main(void) {
   mpfr_set_d(x, 3, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   mpfr_set_d(cutoff, 0.01, GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf(" -- expecting one of 858993459 * 2^(-33) or 214748365 * 2^(-31)\n");
   sollya_lib_clear_obj(f);
@@ -110,7 +110,7 @@ int main(void) {
   mpfr_set_d(x, 3, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   mpfr_set_d(cutoff, 4., GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf("\n");
   sollya_lib_printf("\n");
@@ -131,7 +131,7 @@ int main(void) {
   mpfr_set_d(x, 3, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   mpfr_set_d(cutoff, 0.01, GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf("\n");
   sollya_lib_clear_obj(f);
@@ -141,7 +141,7 @@ int main(void) {
   mpfr_set_d(x, 3, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   mpfr_set_d(cutoff, 4., GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf("\n");
   sollya_lib_printf("\n");
@@ -166,7 +166,7 @@ int main(void) {
   mpfr_set_d(x, 3, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   mpfr_set_d(cutoff, 0.01, GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf("\n");
   sollya_lib_printf("\n");
@@ -177,7 +177,7 @@ int main(void) {
   /* Evaluate an expression */
   f = SOLLYA_EXP( SOLLYA_COS(SOLLYA_X_));
   mpfr_set_d(x, 3, GMP_RNDN);
-  mpfr_set_d(y, -17, GMP_RNDN);;
+  mpfr_set_d(y, -17, GMP_RNDN);
   res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff NULL: returns %v (%s)", f, x, y, get_status(res));
   sollya_lib_printf(" -- expecting one of 797960855 * 2^(-31) or 99745107 * 2^(-28)\n");
@@ -188,7 +188,7 @@ int main(void) {
   mpfr_set_d(x, 3, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   mpfr_set_d(cutoff, 0.01, GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf(" -- expecting one of 797960855 * 2^(-31) or 99745107 * 2^(-28)\n");
   sollya_lib_clear_obj(f);
@@ -198,7 +198,7 @@ int main(void) {
   mpfr_set_d(x, 3, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   mpfr_set_d(cutoff, 4., GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf(" -- expecting one of 797960855 * 2^(-31) or 99745107 * 2^(-28)\n");
   sollya_lib_printf("\n");
@@ -219,7 +219,7 @@ int main(void) {
   mpfr_set_d(x, -100, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   mpfr_set_d(cutoff, 1e-50, GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf(" -- expecting one of 890781225 * 2^(-174) or 445390613 * 2^(-173)\n");
   sollya_lib_clear_obj(f);
@@ -229,7 +229,7 @@ int main(void) {
   mpfr_set_d(x, -100, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   mpfr_set_d(cutoff, 4., GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf(" -- expecting one of 890781225 * 2^(-174) or 445390613 * 2^(-173)\n");
   sollya_lib_printf("\n");
@@ -250,7 +250,7 @@ int main(void) {
   mpfr_set_d(x, -100, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   mpfr_set_d(cutoff, 1e-50, GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf("\n");
   sollya_lib_clear_obj(f);
@@ -260,7 +260,7 @@ int main(void) {
   mpfr_set_d(x, -100, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   mpfr_set_d(cutoff, 4., GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf("\n");
   sollya_lib_printf("\n");
@@ -281,7 +281,7 @@ int main(void) {
   mpfr_set_d(x, 0, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   mpfr_set_d(cutoff, 1e-50, GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf("\n");
   sollya_lib_clear_obj(f);
@@ -291,7 +291,7 @@ int main(void) {
   mpfr_set_d(x, 0, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   mpfr_set_d(cutoff, 4., GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf("\n");
   sollya_lib_printf("\n");
@@ -314,7 +314,7 @@ int main(void) {
   mpfr_set_d(x, 0, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   mpfr_set_d(cutoff, 1e-50, GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf("\n");
   sollya_lib_clear_obj(f);
@@ -324,7 +324,7 @@ int main(void) {
   mpfr_set_d(x, 0, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   mpfr_set_d(cutoff, 4., GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf("\n");
   sollya_lib_printf("\n");
@@ -345,7 +345,7 @@ int main(void) {
   mpfr_set_d(x, 0, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   mpfr_set_d(cutoff, 1e-50, GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf("\n");
   sollya_lib_clear_obj(f);
@@ -355,7 +355,7 @@ int main(void) {
   mpfr_set_d(x, 0, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   mpfr_set_d(cutoff, 4., GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf("\n");
   sollya_lib_printf("\n");
@@ -377,7 +377,7 @@ int main(void) {
   mpfr_set_d(x, -1, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   mpfr_set_d(cutoff, 1e-50, GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf("\n");
   sollya_lib_clear_obj(f);
@@ -387,7 +387,7 @@ int main(void) {
   mpfr_set_d(x, -1, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);
   mpfr_set_d(cutoff, 4., GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf("\n");
   sollya_lib_printf("\n");
@@ -409,7 +409,7 @@ int main(void) {
   mpfr_set_d(x, 0.5, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   mpfr_set_d(cutoff, 1e-50, GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf("\n");
   sollya_lib_clear_obj(f);
@@ -419,7 +419,7 @@ int main(void) {
   mpfr_set_d(x, 0.5, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);
   mpfr_set_d(cutoff, 4., GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf("\n");
   sollya_lib_printf("\n");
@@ -427,8 +427,16 @@ int main(void) {
 
 
 
-  /* Evaluate an expression at a point where it is very close to 0, but not zero */
+  /* Evaluate tricky expressions. */
   f = sollya_lib_parse_string("(sin(pi/6)-x)*1b100000+3");
+  mpfr_set_d(x, 0.5, GMP_RNDN);
+  mpfr_set_d(y, -17, GMP_RNDN);;
+  res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
+  sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff NULL: returns %v (%s)", f, x, y, get_status(res));
+  sollya_lib_printf("\n");
+  sollya_lib_clear_obj(f);
+
+  f = sollya_lib_parse_string("(sin(pi/6)-x)*1b100000+1b50000");
   mpfr_set_d(x, 0.5, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
@@ -443,9 +451,42 @@ int main(void) {
   res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff NULL: returns %v (%s)", f, x, y, get_status(res));
   sollya_lib_printf("\n");
+  sollya_lib_printf("\n");
   sollya_lib_clear_obj(f);
 
-  
+
+  /* Trying negative cutoff, infinite cutoff and NaN cutoff */
+  f = sollya_lib_parse_string("sin(pi/6)-x+1b-100000");
+  mpfr_set_d(x, 0.5, GMP_RNDN);
+  mpfr_set_d(y, -17, GMP_RNDN);
+  mpfr_set_d(cutoff, -4., GMP_RNDN);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
+  sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
+  sollya_lib_printf("\n");
+  sollya_lib_clear_obj(f);
+
+
+  f = sollya_lib_parse_string("sin(pi/6)-x+1b-100000");
+  mpfr_set_d(x, 0.5, GMP_RNDN);
+  mpfr_set_d(y, -17, GMP_RNDN);
+  mpfr_set_inf(cutoff, 1);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
+  sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
+  sollya_lib_printf("\n");
+  sollya_lib_clear_obj(f);
+
+
+  f = sollya_lib_parse_string("sin(pi/6)-x+1b-100000");
+  mpfr_set_d(x, 0.5, GMP_RNDN);
+  mpfr_set_d(y, -17, GMP_RNDN);
+  mpfr_set_nan(cutoff);
+  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
+  sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
+  sollya_lib_printf("\n");
+  sollya_lib_clear_obj(f);
+
+
+
   mpfr_clear(x);
   mpfr_clear(y);
   mpfr_clear(cutoff);
