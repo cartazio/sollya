@@ -442,7 +442,7 @@ char *maskString(char *src) {
   
   res = (char *) safeCalloc(strlen(buf)+1,sizeof(char));
   strcpy(res,buf);
-  free(buf);
+  safeFree(buf);
 
   return res;
 }
@@ -907,9 +907,9 @@ void popTimeCounter(char *s) {
 
     prev = timeStack;
     timeStack = timeStack->next;
-    free(prev);
-    free(buf_init);
-    free(buf_final);
+    safeFree(prev);
+    safeFree(buf_init);
+    safeFree(buf_final);
   }
   return;
 }
@@ -1000,8 +1000,8 @@ void blockSignals() {
 }
 
 void freeTool() {
-  if(variablename != NULL) free(variablename);
-  if(newReadFilename != NULL) free(newReadFilename);
+  if(variablename != NULL) safeFree(variablename);
+  if(newReadFilename != NULL) safeFree(newReadFilename);
   if(suppressedMessages != NULL) freeBitfield(suppressedMessages);
 
   if (!(eliminatePromptBackup == 1)) {
@@ -1011,13 +1011,13 @@ void freeTool() {
   while ((readStack != NULL) && (readStack2 != NULL)) {
     temp_fd = *((FILE **) (readStack2->value));
     fclose(temp_fd);
-    free(readStack2->value);
+    safeFree(readStack2->value);
     readStackTemp = readStack2->next;
-    free(readStack2);
+    safeFree(readStack2);
     readStack2 = readStackTemp;
-    free(readStack->value);
+    safeFree(readStack->value);
     readStackTemp = readStack->next;
-    free(readStack);
+    safeFree(readStack);
     readStack = readStackTemp;
   }
   yylex_destroy(scanner);
@@ -1035,7 +1035,7 @@ void freeTool() {
 }
 
 void initToolDefaults() {
-  if(variablename != NULL) free(variablename); 
+  if(variablename != NULL) safeFree(variablename); 
   variablename = NULL;
   if(suppressedMessages != NULL) freeBitfield(suppressedMessages);
   suppressedMessages = NULL;
@@ -1284,8 +1284,8 @@ int initializeLibraryMode() {
 }
 
 int finalizeLibraryMode() {
-  if(variablename != NULL) free(variablename);
-  if(newReadFilename != NULL) free(newReadFilename);
+  if(variablename != NULL) safeFree(variablename);
+  if(newReadFilename != NULL) safeFree(newReadFilename);
   if(suppressedMessages != NULL) freeBitfield(suppressedMessages);
 
   if (!(eliminatePromptBackup == 1)) {
@@ -1295,13 +1295,13 @@ int finalizeLibraryMode() {
   while ((readStack != NULL) && (readStack2 != NULL)) {
     temp_fd = *((FILE **) (readStack2->value));
     fclose(temp_fd);
-    free(readStack2->value);
+    safeFree(readStack2->value);
     readStackTemp = readStack2->next;
-    free(readStack2);
+    safeFree(readStack2);
     readStack2 = readStackTemp;
-    free(readStack->value);
+    safeFree(readStack->value);
     readStackTemp = readStack->next;
-    free(readStack);
+    safeFree(readStack);
     readStack = readStackTemp;
   }
   freeFunctionLibraries();

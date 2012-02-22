@@ -64,8 +64,8 @@ bitfield initializeBitfield() {
 }
 
 void freeBitfield(bitfield bf) {
-  free(bf->fields);
-  free(bf);
+  safeFree(bf->fields);
+  safeFree(bf);
 }
 
 void setBitInBitfield(bitfield bf, unsigned int bit) {
@@ -81,7 +81,7 @@ void setBitInBitfield(bitfield bf, unsigned int bit) {
       newFields[i] = bf->fields[i];
     }
     bf->limbs = (bit >> 6) + 1;
-    free(bf->fields);
+    safeFree(bf->fields);
     bf->fields = newFields;
   }
   

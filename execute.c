@@ -218,7 +218,7 @@ node *parseStringInternal(char *str) {
   }
   miniyylex_destroy(myScanner);
   minitree = oldMinitree;
-  free(myStr);
+  safeFree(myStr);
   initSignalHandler();
 
   return result;
@@ -316,7 +316,7 @@ char *readFileIntoString(FILE *fd) {
 	i = strlen(newString);
 	tempString = (char *) safeCalloc(i + readChars + 1,sizeof(char));
 	strcpy(tempString,newString);
-	free(newString);
+	safeFree(newString);
 	newString = tempString;
 	tempString = newString + i;
 	strncpy(tempString,readBuf,readChars * sizeof(char));
@@ -327,7 +327,7 @@ char *readFileIntoString(FILE *fd) {
 
   if (newString == NULL) newString = safeCalloc(1,sizeof(char));
 
-  free(readBuf);
+  safeFree(readBuf);
 
   return newString;
 }
@@ -1225,9 +1225,9 @@ void *evaluateEntryOnVoid(void *ptr) {
 }
 
 void freeEntryOnVoid(void *ptr) {
-  free(((entry *) ptr)->name);
+  safeFree(((entry *) ptr)->name);
   freeThing((node *) (((entry *) ptr)->value));
-  free(ptr);
+  safeFree(ptr);
 }
 
 
@@ -2841,10 +2841,10 @@ int evaluateThingToConstant(mpfr_t result, node *tree, mpfr_t *defaultVal, int s
 	mpfr_clear(*(xrange.b));
 	mpfr_clear(*(yrange.a));
 	mpfr_clear(*(yrange.b));
-	free(xrange.a);
-	free(xrange.b);
-	free(yrange.a);
-	free(yrange.b);
+	safeFree(xrange.a);
+	safeFree(xrange.b);
+	safeFree(yrange.a);
+	safeFree(yrange.b);
 	notfaithful = 1;
       }
     } else {
@@ -2928,7 +2928,7 @@ int evaluateThingToInteger(int *result, node *tree, int *defaultVal) {
 
   if (defaultValMpfr != NULL) {
     mpfr_clear(*defaultValMpfr);
-    free(defaultValMpfr);
+    safeFree(defaultValMpfr);
   }
 
   mpfr_clear(resultMpfr);
@@ -3267,7 +3267,7 @@ int evaluateThingToPureListOfThings(chain **ch, node *tree) {
 
   if (isPureList(evaluatedResult)) {
     *ch = evaluatedResult->arguments;
-    free(evaluatedResult);
+    safeFree(evaluatedResult);
     return 1;
   }
 
@@ -3283,7 +3283,7 @@ int evaluateThingToPureListOfPureTrees(chain **ch, node *tree) {
 
   if (isPureList(evaluatedResult)) {
     *ch = evaluatedResult->arguments;
-    free(evaluatedResult);
+    safeFree(evaluatedResult);
     curr = *ch;
     while (curr != NULL) {
       if (!isPureTree((node *) (curr->value))) {
@@ -3325,7 +3325,7 @@ int evaluateThingToIntegerList(chain **ch, int *finalelliptic, node *tree) {
       while (curr != NULL) {
 	if (!evaluateThingToInteger(&resA,(node *) (curr->value),NULL)) {
 	  freeThing(evaluatedResult);
-	  free(arrayRes);
+	  safeFree(arrayRes);
 	  return 0;
 	} else {
 	  arrayRes[i] = resA;
@@ -3339,7 +3339,7 @@ int evaluateThingToIntegerList(chain **ch, int *finalelliptic, node *tree) {
 	*resPtr = arrayRes[i];
 	curr = addElement(curr, resPtr);
       }
-      free(arrayRes);
+      safeFree(arrayRes);
       *ch = curr;
       freeThing(evaluatedResult);
       return 1;
@@ -3362,7 +3362,7 @@ int evaluateThingToIntegerList(chain **ch, int *finalelliptic, node *tree) {
       while (curr != NULL) {
 	if (!evaluateThingToInteger(&resA,(node *) (curr->value),NULL)) {
 	  freeThing(evaluatedResult);
-	  free(arrayRes);
+	  safeFree(arrayRes);
 	  return 0;
 	} else {
 	  arrayRes[i] = resA;
@@ -3376,7 +3376,7 @@ int evaluateThingToIntegerList(chain **ch, int *finalelliptic, node *tree) {
 	*resPtr = arrayRes[i];
 	curr = addElement(curr, resPtr);
       }
-      free(arrayRes);
+      safeFree(arrayRes);
       freeThing(evaluatedResult);
       *ch = curr;
       return 1;
@@ -3412,7 +3412,7 @@ int evaluateThingToBooleanList(chain **ch, node *tree) {
     while (curr != NULL) {
       if (!evaluateThingToBoolean(&resA,(node *) (curr->value),NULL)) {
 	freeThing(evaluatedResult);
-	free(arrayRes);
+	safeFree(arrayRes);
 	return 0;
       } else {
 	arrayRes[i] = resA;
@@ -3426,7 +3426,7 @@ int evaluateThingToBooleanList(chain **ch, node *tree) {
       *resPtr = arrayRes[i];
       curr = addElement(curr, resPtr);
     }
-    free(arrayRes);
+    safeFree(arrayRes);
     *ch = curr;
     freeThing(evaluatedResult);
     return 1;
@@ -3463,7 +3463,7 @@ int evaluateThingToExpansionFormatList(chain **ch, node *tree) {
     while (curr != NULL) {
       if (!evaluateThingToExpansionFormat(&resA,(node *) (curr->value))) {
 	freeThing(evaluatedResult);
-	free(arrayRes);
+	safeFree(arrayRes);
 	return 0;
       } else {
 	arrayRes[i] = resA;
@@ -3482,7 +3482,7 @@ int evaluateThingToExpansionFormatList(chain **ch, node *tree) {
       *resPtr = -1;
       curr = addElement(curr, resPtr);
     }
-    free(arrayRes);
+    safeFree(arrayRes);
     freeThing(evaluatedResult);
     *ch = curr;
     return 1;
@@ -3519,7 +3519,7 @@ int evaluateThingToExtendedExpansionFormatList(chain **ch, node *tree) {
     while (curr != NULL) {
       if (!evaluateThingToExtendedExpansionFormat(&resA,(node *) (curr->value))) {
 	freeThing(evaluatedResult);
-	free(arrayRes);
+	safeFree(arrayRes);
 	return 0;
       } else {
 	arrayRes[i] = resA;
@@ -3538,7 +3538,7 @@ int evaluateThingToExtendedExpansionFormatList(chain **ch, node *tree) {
       *resPtr = -1;
       curr = addElement(curr, resPtr);
     }
-    free(arrayRes);
+    safeFree(arrayRes);
     freeThing(evaluatedResult);
     *ch = curr;
     return 1;
@@ -3562,7 +3562,7 @@ void printThingWithFullStrings(node *thing) {
 	temp = sprintMidpointMode(*(thing->child1->value), *(thing->child2->value));
 	if (temp != NULL) {
 	  sollyaPrintf("%s",temp);
-	  free(temp);
+	  safeFree(temp);
 	} else {
 	  sollyaPrintf("[");
 	  printValue(thing->child1->value);
@@ -3630,7 +3630,7 @@ void printThing(node *thing) {
 	temp = sprintMidpointMode(*(thing->child1->value), *(thing->child2->value));
 	if (temp != NULL) {
 	  sollyaPrintf("%s",temp);
-	  free(temp);
+	  safeFree(temp);
 	} else {
 	  sollyaPrintf("[");
 	  printValue(thing->child1->value);
@@ -3704,8 +3704,8 @@ char *concatAndFree(char *str1, char *str2) {
   newStr = (char *) safeCalloc(strlen(str1) + strlen(str2) + 1, sizeof(char));
   sprintf(newStr,"%s%s", str1, str2);
 
-  free(str1); 
-  free(str2);
+  safeFree(str1); 
+  safeFree(str2);
   
   return newStr;
 }
@@ -5467,8 +5467,8 @@ char *sPrintThingWithFullStrings(node *thing) {
 	  temp2 = sprintValue(thing->child2->value);
 	  temp = (char *) safeCalloc(strlen(temp1) + strlen(temp2) + 3 + 1, sizeof(char));
 	  sprintf(temp, "[%s;%s]",temp1,temp2);
-	  free(temp1);
-	  free(temp2);
+	  safeFree(temp1);
+	  safeFree(temp2);
 	  return temp;
 	}
       } else {
@@ -5476,8 +5476,8 @@ char *sPrintThingWithFullStrings(node *thing) {
 	  temp2 = sprintValue(thing->child2->value);
 	  temp = (char *) safeCalloc(strlen(temp1) + strlen(temp2) + 3 + 1, sizeof(char));
 	  sprintf(temp, "[%s;%s]",temp1,temp2);
-	  free(temp1);
-	  free(temp2);
+	  safeFree(temp1);
+	  safeFree(temp2);
 	  return temp;
       }
     } else {
@@ -5489,20 +5489,20 @@ char *sPrintThingWithFullStrings(node *thing) {
 	  temp1 = sPrintThingWithFullStrings((node *) (curr->value));
 	  temp2 = (char *) safeCalloc(strlen(temp) + strlen(temp1) + 1, sizeof(char));
 	  sprintf(temp2,"%s%s",temp,temp1);
-	  free(temp);
-	  free(temp1);
+	  safeFree(temp);
+	  safeFree(temp1);
 	  temp = temp2;
 	  if (curr->next != NULL) {
 	    temp2 = (char *) safeCalloc(strlen(temp) + 2 + 1, sizeof(char));
 	    sprintf(temp2,"%s, ",temp);
-	    free(temp);
+	    safeFree(temp);
 	    temp = temp2;
 	  }
 	  curr = curr->next;
 	}
 	temp2 = (char *) safeCalloc(strlen(temp) + 2 + 1, sizeof(char));
 	sprintf(temp2,"%s|]",temp);
-	free(temp);
+	safeFree(temp);
 	temp = temp2;
 	return temp;
       } else {
@@ -5514,20 +5514,20 @@ char *sPrintThingWithFullStrings(node *thing) {
 	    temp1 = sPrintThingWithFullStrings((node *) (curr->value));
 	    temp2 = (char *) safeCalloc(strlen(temp) + strlen(temp1) + 1, sizeof(char));
 	    sprintf(temp2,"%s%s",temp,temp1);
-	    free(temp);
-	    free(temp1);
+	    safeFree(temp);
+	    safeFree(temp1);
 	    temp = temp2;
 	    if (curr->next != NULL) {
 	      temp2 = (char *) safeCalloc(strlen(temp) + 2 + 1, sizeof(char));
 	      sprintf(temp2,"%s, ",temp);
-	      free(temp);
+	      safeFree(temp);
 	      temp = temp2;
 	    }
 	    curr = curr->next;
 	  }
 	  temp2 = (char *) safeCalloc(strlen(temp) + 5 + 1, sizeof(char));
 	  sprintf(temp2,"%s...|]",temp);
-	  free(temp);
+	  safeFree(temp);
 	  temp = temp2;
 	  return temp;
 	} else {
@@ -5557,8 +5557,8 @@ char *sPrintThing(node *thing) {
 	  temp2 = sprintValue(thing->child2->value);
 	  temp = (char *) safeCalloc(strlen(temp1) + strlen(temp2) + 3 + 1, sizeof(char));
 	  sprintf(temp, "[%s;%s]",temp1,temp2);
-	  free(temp1);
-	  free(temp2);
+	  safeFree(temp1);
+	  safeFree(temp2);
 	  return temp;
 	}
       } else {
@@ -5566,8 +5566,8 @@ char *sPrintThing(node *thing) {
 	  temp2 = sprintValue(thing->child2->value);
 	  temp = (char *) safeCalloc(strlen(temp1) + strlen(temp2) + 3 + 1, sizeof(char));
 	  sprintf(temp, "[%s;%s]",temp1,temp2);
-	  free(temp1);
-	  free(temp2);
+	  safeFree(temp1);
+	  safeFree(temp2);
 	  return temp;
       }
     } else {
@@ -5579,20 +5579,20 @@ char *sPrintThing(node *thing) {
 	  temp1 = sPrintThingWithFullStrings((node *) (curr->value));
 	  temp2 = (char *) safeCalloc(strlen(temp) + strlen(temp1) + 1, sizeof(char));
 	  sprintf(temp2,"%s%s",temp,temp1);
-	  free(temp);
-	  free(temp1);
+	  safeFree(temp);
+	  safeFree(temp1);
 	  temp = temp2;
 	  if (curr->next != NULL) {
 	    temp2 = (char *) safeCalloc(strlen(temp) + 2 + 1, sizeof(char));
 	    sprintf(temp2,"%s, ",temp);
-	    free(temp);
+	    safeFree(temp);
 	    temp = temp2;
 	  }
 	  curr = curr->next;
 	}
 	temp2 = (char *) safeCalloc(strlen(temp) + 2 + 1, sizeof(char));
 	sprintf(temp2,"%s|]",temp);
-	free(temp);
+	safeFree(temp);
 	temp = temp2;
 	return temp;
       } else {
@@ -5604,20 +5604,20 @@ char *sPrintThing(node *thing) {
 	    temp1 = sPrintThingWithFullStrings((node *) (curr->value));
 	    temp2 = (char *) safeCalloc(strlen(temp) + strlen(temp1) + 1, sizeof(char));
 	    sprintf(temp2,"%s%s",temp,temp1);
-	    free(temp);
-	    free(temp1);
+	    safeFree(temp);
+	    safeFree(temp1);
 	    temp = temp2;
 	    if (curr->next != NULL) {
 	      temp2 = (char *) safeCalloc(strlen(temp) + 2 + 1, sizeof(char));
 	      sprintf(temp2,"%s, ",temp);
-	      free(temp);
+	      safeFree(temp);
 	      temp = temp2;
 	    }
 	    curr = curr->next;
 	  }
 	  temp2 = (char *) safeCalloc(strlen(temp) + 5 + 1, sizeof(char));
 	  sprintf(temp2,"%s...|]",temp);
-	  free(temp);
+	  safeFree(temp);
 	  temp = temp2;
 	  return temp;
 	} else {
@@ -5651,7 +5651,7 @@ void fPrintThingWithFullStrings(FILE *fd, node *thing) {
 	temp = sprintMidpointMode(*(thing->child1->value), *(thing->child2->value));
 	if (temp != NULL) {
 	  sollyaFprintf(fd,"%s",temp);
-	  free(temp);
+	  safeFree(temp);
 	} else {
 	  sollyaFprintf(fd,"[");
 	  fprintValueWithPrintMode(fd,*(thing->child1->value));
@@ -5719,7 +5719,7 @@ void fPrintThing(FILE *fd, node *thing) {
 	temp = sprintMidpointMode(*(thing->child1->value), *(thing->child2->value));
 	if (temp != NULL) {
 	  sollyaFprintf(fd,"%s",temp);
-	  free(temp);
+	  safeFree(temp);
 	} else {
 	  sollyaFprintf(fd,"[");
 	  fprintValueWithPrintMode(fd,*(thing->child1->value));
@@ -6067,10 +6067,10 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
 		mpfr_clear(*(xrange.b));
 		mpfr_clear(*(yrange.a));
 		mpfr_clear(*(yrange.b));
-		free(xrange.a);
-		free(xrange.b);
-		free(yrange.a);
-		free(yrange.b);
+		safeFree(xrange.a);
+		safeFree(xrange.b);
+		safeFree(yrange.a);
+		safeFree(yrange.b);
 		if (mpfr_number_p(a)) {
 		  if (!noRoundingWarnings) {
 		    if (!shown) {
@@ -6259,10 +6259,10 @@ int evaluateThingToConstantList(chain **ch, node *tree) {
 	for (k=0;k<number;k++) {
 	  freeThing(arrayTrees[k]);
 	  mpfr_clear(*(arrayMpfr[k]));
-	  free(arrayMpfr[k]);
+	  safeFree(arrayMpfr[k]);
 	}
-	free(arrayTrees);
-	free(arrayMpfr);
+	safeFree(arrayTrees);
+	safeFree(arrayMpfr);
 	freeThing(evaluated);
 	return 0;
       }
@@ -6271,10 +6271,10 @@ int evaluateThingToConstantList(chain **ch, node *tree) {
     for (k=number-1;k>=0;k--) {
       newChain = addElement(newChain,arrayMpfr[k]);
     }
-    free(arrayMpfr);
+    safeFree(arrayMpfr);
     *ch = newChain;
     for (i=0;i<number;i++) freeThing(arrayTrees[i]);
-    free(arrayTrees);
+    safeFree(arrayTrees);
     freeThing(evaluated);
     return 1;
   }
@@ -6309,10 +6309,10 @@ int evaluateThingToRangeList(chain **ch, node *tree) {
 	for (k=0;k<number;k++) {
 	  freeThing(arrayTrees[k]);
 	  sollya_mpfi_clear(*(arrayMpfi[k]));
-	  free(arrayMpfi[k]);
+	  safeFree(arrayMpfi[k]);
 	}
-	free(arrayTrees);
-	free(arrayMpfi);
+	safeFree(arrayTrees);
+	safeFree(arrayMpfi);
 	freeThing(evaluated);
 	mpfr_clear(a);
 	mpfr_clear(b);
@@ -6325,10 +6325,10 @@ int evaluateThingToRangeList(chain **ch, node *tree) {
     for (k=number-1;k>=0;k--) {
       newChain = addElement(newChain,arrayMpfi[k]);
     }
-    free(arrayMpfi);
+    safeFree(arrayMpfi);
     *ch = newChain;
     for (i=0;i<number;i++) freeThing(arrayTrees[i]);
-    free(arrayTrees);
+    safeFree(arrayTrees);
     mpfr_clear(a);
     mpfr_clear(b);
     return 1;
@@ -6353,13 +6353,13 @@ int evaluateThingToStringList(chain **ch, node *tree) {
     for (i=0;i<number;i++) {
       if (!evaluateThingToString(&(arrayString[i]),arrayTrees[i])) {
 	for (k=0;k<i;k++) {
-	  free(arrayString[k]);
+	  safeFree(arrayString[k]);
 	}
 	for (k=0;k<number;k++) {
 	  freeThing(arrayTrees[k]);
 	}
-	free(arrayTrees);
-	free(arrayString);
+	safeFree(arrayTrees);
+	safeFree(arrayString);
 	freeThing(evaluated);
 	return 0;
       }
@@ -6368,10 +6368,10 @@ int evaluateThingToStringList(chain **ch, node *tree) {
     for (k=number-1;k>=0;k--) {
       newChain = addElement(newChain,arrayString[k]);
     }
-    free(arrayString);
+    safeFree(arrayString);
     *ch = newChain;
     for (i=0;i<number;i++) freeThing(arrayTrees[i]);
-    free(arrayTrees);
+    safeFree(arrayTrees);
     return 1;
   }
 
@@ -6422,8 +6422,8 @@ int timeCommand(mpfr_t time, node *tree) {
 
   seconds = (long int)(after->tv_sec) - (long int)(before->tv_sec);
   microseconds = (long int)(after->tv_usec) - (long int)(before->tv_usec);
-  free(before);
-  free(after);
+  safeFree(before);
+  safeFree(after);
   
   if (microseconds < 0) {
     microseconds += 1000000l;
@@ -6951,7 +6951,7 @@ int executeCommandInner(node *tree) {
     freeChain(tempChain,freeIntPtr);
     for (i=0;i<resA;i++)
       freeThing(array[i]);
-    free(array);
+    safeFree(array);
     break; 				
   case UNSUPPRESSMESSAGE:
     evaluateThingListToThingArray(&resA, &array, tree->arguments);
@@ -6985,7 +6985,7 @@ int executeCommandInner(node *tree) {
     freeChain(tempChain,freeIntPtr);
     for (i=0;i<resA;i++)
       freeThing(array[i]);
-    free(array);
+    safeFree(array);
     break; 				
   case NEWFILEPRINT:
     if (evaluateThingToString(&tempString, tree->child1)) {
@@ -7006,7 +7006,7 @@ int executeCommandInner(node *tree) {
 	printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
         considerDyingOnError();
       }
-      free(tempString);
+      safeFree(tempString);
     } else {
       printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
       printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
@@ -7032,7 +7032,7 @@ int executeCommandInner(node *tree) {
 	printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
         considerDyingOnError();
       }
-      free(tempString);
+      safeFree(tempString);
     } else {
       printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
       printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
@@ -7102,10 +7102,10 @@ int executeCommandInner(node *tree) {
       mpfr_clear(a);
       mpfr_clear(b);
     }
-    if (tempString != NULL) free(tempString);
+    if (tempString != NULL) safeFree(tempString);
     for (i=0;i<resA;i++)
       freeThing(array[i]);
-    free(array);
+    safeFree(array);
     break;			
   case IMPLEMENTCONST:
     evaluateThingListToThingArray(&resA, &array, tree->arguments);
@@ -7120,19 +7120,19 @@ int executeCommandInner(node *tree) {
 	  if (evaluateThingToString(&tempString2, array[1])) {
 	    fd = fopen(tempString2,"w");
 	    if (fd != NULL) {
-	      free(tempString2);
+	      safeFree(tempString2);
 	      resB = 1;
 	    } else {
 	      if (resD) { freeThing(tempNode); resD = 0; }
 	      if (resG) {
 		for (i=0;i<resA;i++)
 		  freeThing(array[i]);
-		free(array);
+		safeFree(array);
 		resG = 0;
 	      }
 	      printMessage(1,SOLLYA_MSG_FILE_COULD_NOT_BE_OPENED_FOR_WRITING,"Warning: the file \"%s\" could not be opened for writing.\n",tempString2);
 	      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
-	      free(tempString2);
+	      safeFree(tempString2);
 	      considerDyingOnError();
 	      resC = 0;
 	    }
@@ -7145,7 +7145,7 @@ int executeCommandInner(node *tree) {
 	      if (resG) {
 		for (i=0;i<resA;i++)
 		  freeThing(array[i]);
-		free(array);
+		safeFree(array);
 		resG = 0;
 	      }
 	      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING_NOR_DEFAULT,"Warning: the expression given does not evaluate to a string nor to a default value.\n");
@@ -7163,7 +7163,7 @@ int executeCommandInner(node *tree) {
 	      if (resG) {
 		for (i=0;i<resA;i++)
 		  freeThing(array[i]);
-		free(array);
+		safeFree(array);
 		resG = 0;
 	      }
 	      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING_NOR_DEFAULT,"Warning: the expression given does not evaluate to a string nor to a default value.\n");
@@ -7192,12 +7192,12 @@ int executeCommandInner(node *tree) {
 	  if (timingString != NULL) popTimeCounter(timingString);
 	  if (resF) {
 	    if (resB) { fclose(fd); resB = 0; }
-	    if (resE) { free(tempString); resE = 0; }
+	    if (resE) { safeFree(tempString); resE = 0; }
 	    if (resD) { freeThing(tempNode); resD = 0; }
 	    if (resG) {
 	      for (i=0;i<resA;i++)
 		freeThing(array[i]);
-	      free(array);
+	      safeFree(array);
 	      resG = 0;
 	    }
 	    printMessage(1,SOLLYA_MSG_IMPLEMENTATION_HAS_NOT_SUCCEEDED,"Warning: the implementation has not succeeded. The command could not be executed.\n");
@@ -7205,14 +7205,14 @@ int executeCommandInner(node *tree) {
 	  }
 	}
 	if (resB) { fclose(fd); resB = 0; }
-	if (resE) { free(tempString); resE = 0; }
+	if (resE) { safeFree(tempString); resE = 0; }
 	if (resD) { freeThing(tempNode); resD = 0; }
       } else {
 	if (resD) { freeThing(tempNode); resD = 0; }
 	if (resG) {
 	  for (i=0;i<resA;i++)
 	    freeThing(array[i]);
-	  free(array);
+	  safeFree(array);
 	  resG = 0;
 	}
 	printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_CONSTANT,"Warning: the expression given does not evaluate to a constant expression.\n");
@@ -7223,7 +7223,7 @@ int executeCommandInner(node *tree) {
       if (resG) {
 	for (i=0;i<resA;i++)
 	  freeThing(array[i]);
-	free(array);
+	safeFree(array);
 	resG = 0;
       }
       printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_AN_EXPRESSION,"Warning: the expression given does not evaluate to an expression.\n");
@@ -7233,7 +7233,7 @@ int executeCommandInner(node *tree) {
     if (resG) {
       for (i=0;i<resA;i++)
 	freeThing(array[i]);
-      free(array);
+      safeFree(array);
     }
     break;
   case PRINTHEXA:
@@ -7294,7 +7294,7 @@ int executeCommandInner(node *tree) {
       intTemp = bashExecute(tempString);
       normalMode(); outputMode();
       printMessage(2,SOLLYA_MSG_BASH_RETURNS_A_CERTAIN_RETURN_VALUE,"Information: the bash return value is %d.\n",intTemp);
-      free(tempString);
+      safeFree(tempString);
     } else {
       printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
       printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
@@ -7373,7 +7373,7 @@ int executeCommandInner(node *tree) {
 	      if (resD) {
 		externalPlot(tempString, a, b, (mp_prec_t) resB, resC, tempNode, resF, tools_precision, tempString2, resE);
 	      }
-	      if (tempString2 != NULL) free(tempString2);
+	      if (tempString2 != NULL) safeFree(tempString2);
 	    } else {
 	      printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_MACHINE_INTEGER,"Warning: the expression given does not evaluate to a machine integer.\n");
 	      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
@@ -7397,7 +7397,7 @@ int executeCommandInner(node *tree) {
 	printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
         considerDyingOnError();
       }
-      free(tempString);
+      safeFree(tempString);
     } else {
       printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
       printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
@@ -7405,7 +7405,7 @@ int executeCommandInner(node *tree) {
     }
     for (i=0;i<resA;i++)
       freeThing(array[i]);
-    free(array);
+    safeFree(array);
     break; 
   case WRITE:
     outputMode();
@@ -7434,7 +7434,7 @@ int executeCommandInner(node *tree) {
 	printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
         considerDyingOnError();
       }
-      free(tempString);
+      safeFree(tempString);
     } else {
       printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
       printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
@@ -7458,7 +7458,7 @@ int executeCommandInner(node *tree) {
 	printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
         considerDyingOnError();
       }
-      free(tempString);
+      safeFree(tempString);
     } else {
       printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
       printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
@@ -7509,7 +7509,7 @@ int executeCommandInner(node *tree) {
 	printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
         considerDyingOnError();
       }
-      free(tempString);
+      safeFree(tempString);
     } else {
       printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the given expression does not evaluate to a string.\n");
       printMessage(1,SOLLYA_MSG_CONTINUATION,"The command will not be executed.\n");
@@ -7528,7 +7528,7 @@ int executeCommandInner(node *tree) {
 	  printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
           considerDyingOnError();
 	}
-	free(tempString);
+	safeFree(tempString);
       } else {
 	printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the given expression does not evaluate to a string.\n");
 	printMessage(1,SOLLYA_MSG_CONTINUATION,"The command will not be executed.\n");
@@ -7553,7 +7553,7 @@ int executeCommandInner(node *tree) {
 	  printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
           considerDyingOnError();
 	}
-	free(tempString);
+	safeFree(tempString);
       } else {
 	printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the given expression does not evaluate to a string.\n");
 	printMessage(1,SOLLYA_MSG_CONTINUATION,"The command will not be executed.\n");
@@ -7603,8 +7603,8 @@ int executeCommandInner(node *tree) {
 		printWorstCases(tempNode, a, tempRange, d, e, tools_precision, fd);
 		mpfr_clear(*(tempRange.a));
 		mpfr_clear(*(tempRange.b));
-		free(tempRange.a);
-		free(tempRange.b);
+		safeFree(tempRange.a);
+		safeFree(tempRange.b);
 	      } else {
 		printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_CONSTANT,"Warning: the given expression does not evaluate to a constant.\n");
 		printMessage(1,SOLLYA_MSG_CONTINUATION,"The command will not be executed.\n");
@@ -7640,7 +7640,7 @@ int executeCommandInner(node *tree) {
     }
     for (i=0;i<resA;i++)
       freeThing(array[i]);
-    free(array);
+    safeFree(array);
     sollyaPrintf("\n");
     break; 			
   case RENAME:
@@ -7655,7 +7655,7 @@ int executeCommandInner(node *tree) {
 	strcpy(variablename,(char *) (tree->arguments->value));
 	printMessage(1,SOLLYA_MSG_FREE_VARIABLE_HAS_BEEN_RENAMED,"Information: the free variable has been renamed from \"%s\" to \"%s\".\n",
 		     tempString,(char *) (tree->arguments->value));
-	free(tempString);
+	safeFree(tempString);
       } else {
 	printMessage(1,SOLLYA_MSG_CAN_RENAME_ONLY_FREE_VARIABLE,"Warning: the current free variable is named \"%s\" and not \"%s\". Can only rename the free variable.\n",
 		     variablename,tree->string);
@@ -7789,7 +7789,7 @@ int executeCommandInner(node *tree) {
                   printMessage(1,SOLLYA_MSG_ERROR_OCCURRED_COMMAND_NOT_EXECUTED,"Warning: an error occurred. The last command will have no effect.\n");
                   considerDyingOnError();
                 }
-                free(tempString);
+                safeFree(tempString);
               } else {
                 printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
                 printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
@@ -8003,7 +8003,7 @@ int executeCommandInner(node *tree) {
 			strcpy(tempString2,tempNode->string);
 			tempString2[resB] = tempString[0];
 			tempNode3 = makeString(tempString2);
-			free(tempString2);
+			safeFree(tempString2);
 		      } else {
 			tempNode3 = makeString(tempNode->string);
 			(tempNode3->string)[resB] = tempString[0];
@@ -8019,7 +8019,7 @@ int executeCommandInner(node *tree) {
 		      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");		      
                       considerDyingOnError();
 		    }
-		    free(tempString);
+		    safeFree(tempString);
 		  } else {
 		    printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
 		    printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
@@ -8298,7 +8298,7 @@ int executeCommandInner(node *tree) {
 			strcpy(tempString2,tempNode->string);
 			tempString2[resB] = tempString[0];
 			tempNode3 = makeString(tempString2);
-			free(tempString2);
+			safeFree(tempString2);
 		      } else {
 			tempNode3 = makeString(tempNode->string);
 			(tempNode3->string)[resB] = tempString[0];
@@ -8322,7 +8322,7 @@ int executeCommandInner(node *tree) {
 		      printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");		      
                       considerDyingOnError();
 		    }
-		    free(tempString);
+		    safeFree(tempString);
 		  } else {
 		    printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
 		    printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
@@ -8503,7 +8503,7 @@ int executeCommandInner(node *tree) {
                   printMessage(1,SOLLYA_MSG_ERROR_OCCURRED_COMMAND_NOT_EXECUTED,"Warning: an error occurred. The last command will have no effect.\n");
                   considerDyingOnError();
                 }
-                free(tempString);
+                safeFree(tempString);
               } else {
                 printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
                 printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
@@ -8548,7 +8548,7 @@ int executeCommandInner(node *tree) {
                   printMessage(1,SOLLYA_MSG_ERROR_OCCURRED_COMMAND_NOT_EXECUTED,"Warning: an error occurred. The last command will have no effect.\n");
                   considerDyingOnError();
                 }
-                free(tempString);
+                safeFree(tempString);
               } else {
                 printMessage(1,SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_STRING,"Warning: the expression given does not evaluate to a string.\n");
                 printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
@@ -9011,7 +9011,7 @@ int executeCommandInner(node *tree) {
   
   if (timingString != NULL) {
     popTimeCounter(timingString);
-    free(timingString);
+    safeFree(timingString);
   }
 
   return result;
@@ -11626,1097 +11626,1097 @@ void freeThing(node *tree) {
   if (tree == NULL) return;
   switch (tree->nodeType) {
   case VARIABLE:
-    free(tree);
+    safeFree(tree);
     break;
   case CONSTANT:
     mpfr_clear(*(tree->value));
-    free(tree->value);
-    free(tree);
+    safeFree(tree->value);
+    safeFree(tree);
     break;
   case ADD:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break;
   case SUB:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break;
   case MUL:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break;
   case DIV:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break;
   case SQRT:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case EXP:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case LOG:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case LOG_2:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case LOG_10:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case SIN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case COS:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case TAN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case ASIN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case ACOS:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case ATAN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case SINH:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case COSH:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case TANH:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case ASINH:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case ACOSH:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case ATANH:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case POW:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break;
   case NEG:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case ABS:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case DOUBLE:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case SINGLE:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case HALFPRECISION:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;  
   case QUAD:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case DOUBLEDOUBLE:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case TRIPLEDOUBLE:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case ERF: 
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case ERFC:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case LOG_1P:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case EXP_M1:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case DOUBLEEXTENDED:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case LIBRARYFUNCTION:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case LIBRARYCONSTANT:
-    free(tree);
+    safeFree(tree);
     break;
   case PROCEDUREFUNCTION:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break;
   case CEIL:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case FLOOR:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case NEARESTINT:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case PI_CONST:
-    free(tree);
+    safeFree(tree);
     break;
   case COMMANDLIST:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break;			
   case WHILE:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break;				
   case IFELSE:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 				
   case IF:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 				
   case FOR:
-    free(tree->string);
+    safeFree(tree->string);
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 				
   case FORIN:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree->string);
-    free(tree);
+    safeFree(tree->string);
+    safeFree(tree);
     break;  				
   case QUIT:
-    free(tree);
+    safeFree(tree);
     break; 
   case NOP:
-    free(tree);
+    safeFree(tree);
     break;
   case NOPARG:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case FALSEQUIT:
-    free(tree);
+    safeFree(tree);
     break; 			
   case FALSERESTART:
-    free(tree);
+    safeFree(tree);
     break; 			
   case RESTART:
-    free(tree);
+    safeFree(tree);
     break;  			
   case PRINT:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 
   case SUPPRESSMESSAGE:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 	
   case UNSUPPRESSMESSAGE:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 	
   case VARIABLEDECLARATION:
     freeChain(tree->arguments, free);
-    free(tree);
+    safeFree(tree);
     break; 				
   case NEWFILEPRINT:
     freeChain(tree->arguments, freeThingOnVoid);
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			
   case APPENDFILEPRINT:
     freeChain(tree->arguments, freeThingOnVoid);
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			
   case PLOT:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break;			
   case PRINTHEXA:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 
   case PRINTFLOAT:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 
   case PRINTBINARY:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			
   case PRINTEXPANSION:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case BASHEXECUTE:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			
   case EXTERNALPLOT:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 
   case WRITE:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 			
   case NEWFILEWRITE:
     freeChain(tree->arguments, freeThingOnVoid);
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;
   case APPENDFILEWRITE:
     freeChain(tree->arguments, freeThingOnVoid);
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 
   case ASCIIPLOT:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break;			
   case PRINTXML:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;			
   case PRINTXMLNEWFILE:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break;			
   case PRINTXMLAPPENDFILE:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break;			
   case WORSTCASE:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 			
   case RENAME:
-    free(tree->string);
+    safeFree(tree->string);
     freeChain(tree->arguments, free);
-    free(tree);
+    safeFree(tree);
     break; 				
   case AUTOPRINT:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break;  			
   case ASSIGNMENT:
     freeThing(tree->child1);
-    free(tree->string);
-    free(tree);
+    safeFree(tree->string);
+    safeFree(tree);
     break; 			
   case FLOATASSIGNMENT:
     freeThing(tree->child1);
-    free(tree->string);
-    free(tree);
+    safeFree(tree->string);
+    safeFree(tree);
     break; 			
   case EXTERNALPROC:
     freeThing(tree->child1);
-    free(tree->string);
+    safeFree(tree->string);
     freeChain(tree->arguments, freeIntPtr);
-    free(tree);
+    safeFree(tree);
     break; 			
   case LIBRARYBINDING:
     freeThing(tree->child1);
-    free(tree->string);
-    free(tree);
+    safeFree(tree->string);
+    safeFree(tree);
     break;  			
   case LIBRARYCONSTANTBINDING:
     freeThing(tree->child1);
-    free(tree->string);
-    free(tree);
+    safeFree(tree->string);
+    safeFree(tree);
     break;  			
   case PRECASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			
   case POINTSASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			
   case DIAMASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;			
   case DISPLAYASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			
   case VERBOSITYASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;  		
   case CANONICALASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 		
   case AUTOSIMPLIFYASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;  		
   case SHOWMESSAGENUMBERSASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;  		
   case TAYLORRECURSASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 		
   case TIMINGASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			
   case FULLPARENASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;  		
   case MIDPOINTASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			
   case DIEONERRORMODEASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			
   case RATIONALMODEASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			
   case SUPPRESSWARNINGSASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			
   case HOPITALRECURSASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 		
   case PRECSTILLASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 		
   case POINTSSTILLASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 		
   case DIAMSTILLASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 		
   case DISPLAYSTILLASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;  		
   case VERBOSITYSTILLASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 		
   case CANONICALSTILLASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 		
   case AUTOSIMPLIFYSTILLASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;  	
   case SHOWMESSAGENUMBERSSTILLASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;  	
   case TAYLORRECURSSTILLASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 	
   case TIMINGSTILLASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 		
   case FULLPARENSTILLASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;  		
   case MIDPOINTSTILLASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 		
   case DIEONERRORMODESTILLASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 		
   case RATIONALMODESTILLASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 		
   case SUPPRESSWARNINGSSTILLASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 		
   case HOPITALRECURSSTILLASSIGN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;  	
   case AND:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 				
   case OR:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break;				
   case NEGATION:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			
   case INDEX:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 				
   case COMPAREEQUAL:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 			
   case COMPAREIN:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 			
   case COMPARELESS:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 			
   case COMPAREGREATER:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 			
   case COMPARELESSEQUAL:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 		
   case COMPAREGREATEREQUAL:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break;		
   case COMPARENOTEQUAL:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break;		
   case CONCAT:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 			
   case ADDTOLIST:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 			
   case PREPEND:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 			
   case APPEND:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 			
   case ON:
-    free(tree);
+    safeFree(tree);
     break; 				
   case OFF:
-    free(tree);
+    safeFree(tree);
     break; 				
   case DYADIC:
-    free(tree);
+    safeFree(tree);
     break;  				
   case POWERS:
-    free(tree);
+    safeFree(tree);
     break; 				
   case BINARY:
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case HEXADECIMAL:
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case FILESYM:
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case POSTSCRIPT:
-    free(tree);
+    safeFree(tree);
     break;  			
   case POSTSCRIPTFILE:
-    free(tree);
+    safeFree(tree);
     break; 			
   case PERTURB:
-    free(tree);
+    safeFree(tree);
     break; 			
   case ROUNDDOWN:
-    free(tree);
+    safeFree(tree);
     break; 			
   case ROUNDUP:
-    free(tree);
+    safeFree(tree);
     break; 			
   case ROUNDTOZERO:
-    free(tree);
+    safeFree(tree);
     break;  			
   case ROUNDTONEAREST:
-    free(tree);
+    safeFree(tree);
     break; 			
   case HONORCOEFF:
-    free(tree);
+    safeFree(tree);
     break; 			
   case TRUE:
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case UNIT:
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case FALSE:
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case DEFAULT:
-    free(tree);
+    safeFree(tree);
     break; 			
   case DECIMAL:
-    free(tree);
+    safeFree(tree);
     break; 			
   case ABSOLUTESYM:
-    free(tree);
+    safeFree(tree);
     break; 			
   case RELATIVESYM:
-    free(tree);
+    safeFree(tree);
     break; 
   case FIXED:
-    free(tree);
+    safeFree(tree);
     break; 
   case FLOATING:
-    free(tree);
+    safeFree(tree);
     break; 			
   case ERRORSPECIAL:
-    free(tree);
+    safeFree(tree);
     break; 			
   case DOUBLESYMBOL:
-    free(tree);
+    safeFree(tree);
     break;  			
   case SINGLESYMBOL:
-    free(tree);
+    safeFree(tree);
     break;  			
   case HALFPRECISIONSYMBOL:
-    free(tree);
+    safeFree(tree);
     break;  			
   case QUADSYMBOL:
-    free(tree);
+    safeFree(tree);
     break;  			
   case DOUBLEEXTENDEDSYMBOL:
-    free(tree);
+    safeFree(tree);
     break;  			
   case DOUBLEDOUBLESYMBOL:
-    free(tree);
+    safeFree(tree);
     break; 		
   case TRIPLEDOUBLESYMBOL:
-    free(tree);
+    safeFree(tree);
     break; 		
   case STRING:
-    free(tree->string);
-    free(tree);
+    safeFree(tree->string);
+    safeFree(tree);
     break; 			 	
   case TABLEACCESS:
-    free(tree->string);
-    free(tree);
+    safeFree(tree->string);
+    safeFree(tree);
     break;  			
   case ISBOUND:
-    free(tree->string);
-    free(tree);
+    safeFree(tree->string);
+    safeFree(tree);
     break;  			
   case TABLEACCESSWITHSUBSTITUTE:
-    free(tree->string);
+    safeFree(tree->string);
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break;  	
   case STRUCTACCESS:
-    free(tree->string);
+    safeFree(tree->string);
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;  	
   case APPLY:
     freeThing(tree->child1);
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break;  	
   case DECIMALCONSTANT:
-    free(tree->string);
-    free(tree);
+    safeFree(tree->string);
+    safeFree(tree);
     break; 		
   case MIDPOINTCONSTANT:
-    free(tree->string);
-    free(tree);
+    safeFree(tree->string);
+    safeFree(tree);
     break; 		
   case DYADICCONSTANT:
-    free(tree->string);
-    free(tree);
+    safeFree(tree->string);
+    safeFree(tree);
     break; 			
   case HEXCONSTANT:
-    free(tree->string);
-    free(tree);
+    safeFree(tree->string);
+    safeFree(tree);
     break; 			
   case HEXADECIMALCONSTANT:
-    free(tree->string);
-    free(tree);
+    safeFree(tree->string);
+    safeFree(tree);
     break; 			
   case BINARYCONSTANT:
-    free(tree->string);
-    free(tree);
+    safeFree(tree->string);
+    safeFree(tree);
     break; 			
   case EMPTYLIST:
-    free(tree);
+    safeFree(tree);
     break; 			
   case LIST:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case STRUCTURE:
     freeChain(tree->arguments, freeEntryOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case FINALELLIPTICLIST:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 		
   case ELLIPTIC:
-    free(tree);
+    safeFree(tree);
     break; 			
   case RANGE:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case DEBOUNDMAX:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;  			
   case EVALCONST:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;  			
   case DEBOUNDMIN:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			
   case DEBOUNDMID:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			
   case DIFF:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case BASHEVALUATE:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 
   case GETSUPPRESSEDMESSAGES:
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case SIMPLIFY:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;  			
   case SIMPLIFYSAFE:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;  			
   case TIME:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break;  			
   case REMEZ:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 
   case MATCH:
     freeThing(tree->child1);
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 		
   case MATCHELEMENT:
     freeThing(tree->child1);
     freeThing(tree->child2);
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case MIN:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case MAX:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case FPMINIMAX:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case HORNER:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case CANONICAL:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			
   case EXPAND:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case TAYLOR:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case TAYLORFORM:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case AUTODIFF:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case DEGREE:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case NUMERATOR:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			
   case DENOMINATOR:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			
   case SUBSTITUTE:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break;			
   case COMPOSEPOLYNOMIALS:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break;			
   case COEFF:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case SUBPOLY:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 			
   case ROUNDCOEFFICIENTS:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 		
   case RATIONALAPPROX:    
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 			
   case ACCURATEINFNORM:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 		
   case ROUNDTOFORMAT:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break;			
   case EVALUATE:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 			
   case PARSE:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			 
   case READXML:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case EXECUTE:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case INFNORM:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 			
   case SUPNORM:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 			
   case FINDZEROS:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 			
   case FPFINDZEROS:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 			
   case DIRTYINFNORM:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 			
   case NUMBERROOTS:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 			
   case INTEGRAL:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 			
   case DIRTYINTEGRAL:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break;  			
   case IMPLEMENTPOLY:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 			
   case IMPLEMENTCONST:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 			
   case CHECKINFNORM:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 			
   case ZERODENOMINATORS:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break;  		
   case ISEVALUABLE:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 			
   case SEARCHGAL:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 			
   case GUESSDEGREE:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 	
   case ASSIGNMENTININDEXING:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 			
   case FLOATASSIGNMENTININDEXING:
     freeChain(tree->arguments, freeThingOnVoid);
-    free(tree);
+    safeFree(tree);
     break; 	
   case ASSIGNMENTINSTRUCTURE:
     freeChain(tree->arguments, freeStringPtr);
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 				
   case FLOATASSIGNMENTINSTRUCTURE:
     freeChain(tree->arguments, freeStringPtr);
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 					
   case PROTOASSIGNMENTINSTRUCTURE:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 				
   case PROTOFLOATASSIGNMENTINSTRUCTURE:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 					
   case DIRTYFINDZEROS:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree);
+    safeFree(tree);
     break; 			
   case HEAD:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case ROUNDCORRECTLY:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case READFILE:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case REVERT:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case SORT:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case MANTISSA:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case EXPONENT:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case PRECISION:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case TAIL:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 			 	
   case LENGTH:
     freeThing(tree->child1);
-    free(tree);
+    safeFree(tree);
     break; 	
   case EXTERNALPROCEDUREUSAGE:
-    free(tree);
+    safeFree(tree);
     break;
   case PROC:
     freeThing(tree->child1);
     freeThing(tree->child2);
     freeChain(tree->arguments, free);
-    free(tree);
+    safeFree(tree);
     break;
   case BIND:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    free(tree->string);
-    free(tree);    
+    safeFree(tree->string);
+    safeFree(tree);    
     break;
   case PROCILLIM:
     freeThing(tree->child1);
     freeThing(tree->child2);
     freeChain(tree->arguments, free);
-    free(tree);
+    safeFree(tree);
     break;
   case PRECDEREF:
-    free(tree);
+    safeFree(tree);
     break; 			
   case POINTSDEREF:
-    free(tree);
+    safeFree(tree);
     break; 			
   case DIAMDEREF:
-    free(tree);
+    safeFree(tree);
     break; 			
   case DISPLAYDEREF:
-    free(tree);
+    safeFree(tree);
     break; 			
   case VERBOSITYDEREF:
-    free(tree);
+    safeFree(tree);
     break; 			
   case CANONICALDEREF:
-    free(tree);
+    safeFree(tree);
     break; 			
   case AUTOSIMPLIFYDEREF:
-    free(tree);
+    safeFree(tree);
     break; 		
   case SHOWMESSAGENUMBERSDEREF:
-    free(tree);
+    safeFree(tree);
     break; 		
   case TAYLORRECURSDEREF:
-    free(tree);
+    safeFree(tree);
     break; 		
   case TIMINGDEREF:
-    free(tree);
+    safeFree(tree);
     break; 			
   case FULLPARENDEREF:
-    free(tree);
+    safeFree(tree);
     break; 			
   case MIDPOINTDEREF:
-    free(tree);
+    safeFree(tree);
     break; 			
   case DIEONERRORMODEDEREF:
-    free(tree);
+    safeFree(tree);
     break; 			
   case RATIONALMODEDEREF:
-    free(tree);
+    safeFree(tree);
     break; 			
   case SUPPRESSWARNINGSDEREF:
-    free(tree);
+    safeFree(tree);
     break; 			
   case HOPITALRECURSDEREF:
-    free(tree);
+    safeFree(tree);
     break;  	       
   default:
     sollyaFprintf(stderr,"Error: freeThing: unknown identifier (%d) in the tree\n",tree->nodeType);
@@ -12733,7 +12733,7 @@ void fRawPrintThing(FILE *fd, node *tree) {
   if (tree == NULL) return;
   str = sRawPrintThing(tree);
   sollyaFprintf(fd,"%s",str);
-  free(str);
+  safeFree(str);
   return;
 }
 
@@ -13798,7 +13798,7 @@ int evaluateArgumentForExternalProc(void **res, node *argument, int type) {
     retVal = evaluateThingToConstant(*((mpfr_t *) (*res)), argument, NULL, 0,0);
     if (!retVal) {
       mpfr_clear(*((mpfr_t *) (*res)));
-      free(*res);
+      safeFree(*res);
     }
     break;
   case FUNCTION_TYPE:
@@ -13824,7 +13824,7 @@ int evaluateArgumentForExternalProc(void **res, node *argument, int type) {
     *res = safeMalloc(sizeof(int));
     retVal = evaluateThingToInteger((int *) (*res), argument, NULL);
     if (!retVal) {
-      free(*res);
+      safeFree(*res);
     }
     break;
   case STRING_TYPE:
@@ -13834,7 +13834,7 @@ int evaluateArgumentForExternalProc(void **res, node *argument, int type) {
     *res = safeMalloc(sizeof(int));
     retVal = evaluateThingToBoolean((int *) (*res), argument, NULL);    
     if (!retVal) {
-      free(*res);
+      safeFree(*res);
     }
     break;
   case CONSTANT_LIST_TYPE:
@@ -13901,7 +13901,7 @@ void freeArgumentForExternalProc(void* arg, int type) {
     break;
   case CONSTANT_TYPE:
     mpfr_clear(*((mpfr_t *) arg));
-    free(arg);
+    safeFree(arg);
     break;
   case FUNCTION_TYPE:
     freeThing((node *) arg);
@@ -13911,16 +13911,16 @@ void freeArgumentForExternalProc(void* arg, int type) {
     break;
   case RANGE_TYPE:
     sollya_mpfi_clear(*((sollya_mpfi_t *) arg));
-    free(arg);
+    safeFree(arg);
     break;
   case INTEGER_TYPE:
-    free(arg);
+    safeFree(arg);
     break;
   case STRING_TYPE:
-    free(arg);
+    safeFree(arg);
     break;
   case BOOLEAN_TYPE:
-    free(arg);
+    safeFree(arg);
     break;
   case CONSTANT_LIST_TYPE:
     freeChain((chain *) arg, freeMpfrPtr);
@@ -14367,7 +14367,7 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	k++;
 	curr2 = curr2->next;
       }
-      free(arguments);
+      safeFree(arguments);
       freeChain(myArgSignature, freeIntPtr);
       *resultThing = NULL;
       return 1;
@@ -14390,7 +14390,7 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	*resultThing = makeConstant(*((mpfr_t *) resultSpace));
       }
       mpfr_clear(*((mpfr_t *) resultSpace));
-      free(resultSpace);
+      safeFree(resultSpace);
       break;
     case FUNCTION_TYPE:
       externalResult = ((int (*)(node **, void **))(proc->code))((node **) (&resultSpace),arguments);
@@ -14418,7 +14418,7 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	mpfr_clear(a);
       }
       sollya_mpfi_clear(*((sollya_mpfi_t *) resultSpace));
-      free(resultSpace);
+      safeFree(resultSpace);
       break;
     case INTEGER_TYPE:
       resultSpace = safeMalloc(sizeof(int));
@@ -14429,13 +14429,13 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	*resultThing = makeConstant(a);
 	mpfr_clear(a);
       }
-      free(resultSpace);
+      safeFree(resultSpace);
       break;
     case STRING_TYPE:
       externalResult = ((int (*)(char **, void **))(proc->code))((char **) (&resultSpace),arguments);
       if (externalResult) {
 	*resultThing = makeString((char *) resultSpace);
-	free(resultSpace);
+	safeFree(resultSpace);
       }
       break;
     case BOOLEAN_TYPE:
@@ -14448,7 +14448,7 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	  *resultThing = makeFalse();
 	}
       }
-      free(resultSpace);
+      safeFree(resultSpace);
       break;
     case CONSTANT_LIST_TYPE:
       externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) (&resultSpace),arguments);
@@ -14595,7 +14595,7 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	*resultThing = makeConstant(*((mpfr_t *) resultSpace));
       }
       mpfr_clear(*((mpfr_t *) resultSpace));
-      free(resultSpace);
+      safeFree(resultSpace);
       break;
     case FUNCTION_TYPE:
       externalResult = ((int (*)(node **))(proc->code))((node **) (&resultSpace));
@@ -14623,7 +14623,7 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	mpfr_clear(a);
       }
       sollya_mpfi_clear(*((sollya_mpfi_t *) resultSpace));
-      free(resultSpace);
+      safeFree(resultSpace);
       break;
     case INTEGER_TYPE:
       resultSpace = safeMalloc(sizeof(int));
@@ -14634,13 +14634,13 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	*resultThing = makeConstant(a);
 	mpfr_clear(a);
       }
-      free(resultSpace);
+      safeFree(resultSpace);
       break;
     case STRING_TYPE:
       externalResult = ((int (*)(char **))(proc->code))((char **) (&resultSpace));
       if (externalResult) {
 	*resultThing = makeString((char *) resultSpace);
-	free(resultSpace);
+	safeFree(resultSpace);
       }
       break;
     case BOOLEAN_TYPE:
@@ -14653,7 +14653,7 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	  *resultThing = makeFalse();
 	}
       }
-      free(resultSpace);
+      safeFree(resultSpace);
       break;
     case CONSTANT_LIST_TYPE:
       externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
@@ -14794,7 +14794,7 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       k++;
       curr2 = curr2->next;
     }
-    free(arguments);
+    safeFree(arguments);
   }
 
   freeChain(myArgSignature, freeIntPtr);
@@ -15168,14 +15168,14 @@ node *preevaluateMatcher(node *tree) {
   case HEXCONSTANT:
   case HEXADECIMALCONSTANT:
   case BINARYCONSTANT:
-    free(copy);
+    safeFree(copy);
     copy = evaluateThing(tree);
     break; 			
   case RANGE:
     rangeEvaluateLeft = !variableUsePreventsPreevaluation(tree->child1);
     rangeEvaluateRight = !variableUsePreventsPreevaluation(tree->child2);
     if (rangeEvaluateLeft && rangeEvaluateRight) {
-      free(copy);
+      safeFree(copy);
       copy = evaluateThing(tree);
       if (copy->nodeType != RANGE) {
 	freeThing(copy);
@@ -15198,7 +15198,7 @@ node *preevaluateMatcher(node *tree) {
 	if (tempNode2->nodeType == RANGE) {
 	  copy->child1 = tempNode2->child1;
 	  freeThing(tempNode2->child2);
-	  free(tempNode2);
+	  safeFree(tempNode2);
 	} else {
 	  copy->child1 = preevaluateMatcher(tree->child1);
 	  freeThing(tempNode2);
@@ -15218,7 +15218,7 @@ node *preevaluateMatcher(node *tree) {
 	  if (tempNode2->nodeType == RANGE) {
 	    copy->child2 = tempNode2->child2;
 	    freeThing(tempNode2->child1);
-	    free(tempNode2);
+	    safeFree(tempNode2);
 	  } else {
 	    copy->child2 = preevaluateMatcher(tree->child2);
 	    freeThing(tempNode2);
@@ -15239,7 +15239,7 @@ node *preevaluateMatcher(node *tree) {
 	  ((variablename != NULL) && 
 	   ((tree->child1->child1->nodeType == TABLEACCESS) && 
 	    (!strcmp(variablename,tree->child1->child1->string))))) {
-	free(copy);
+	safeFree(copy);
 	copy = evaluateThing(tree);
       } else {
 	copy->child1 = preevaluateMatcher(tree->child1);
@@ -16704,10 +16704,10 @@ node *evaluateThingInner(node *tree) {
 	mpfr_clear(*(xrange.b));
 	mpfr_clear(*(yrange.a));
 	mpfr_clear(*(yrange.b));
-	free(xrange.a);
-	free(xrange.b);
-	free(yrange.a);
-	free(yrange.b);
+	safeFree(xrange.a);
+	safeFree(xrange.b);
+	safeFree(yrange.a);
+	safeFree(yrange.b);
       } else {
 	if (isRangeNonEmpty(copy->child2) && 
 	    isPureTree(copy->child1) && 
@@ -16731,10 +16731,10 @@ node *evaluateThingInner(node *tree) {
 	  mpfr_clear(*(xrange.b));
 	  mpfr_clear(*(yrange.a));
 	  mpfr_clear(*(yrange.b));
-	  free(xrange.a);
-	  free(xrange.b);
-	  free(yrange.a);
-	  free(yrange.b);
+	  safeFree(xrange.a);
+	  safeFree(xrange.b);
+	  safeFree(yrange.a);
+	  safeFree(yrange.b);
 	}
       }
     }
@@ -16789,10 +16789,10 @@ node *evaluateThingInner(node *tree) {
 	mpfr_clear(*(xrange.b));
 	mpfr_clear(*(yrange.a));
 	mpfr_clear(*(yrange.b));
-	free(xrange.a);
-	free(xrange.b);
-	free(yrange.a);
-	free(yrange.b);
+	safeFree(xrange.a);
+	safeFree(xrange.b);
+	safeFree(yrange.a);
+	safeFree(yrange.b);
       } else {
 	if (isRangeNonEmpty(copy->child2) && 
 	    isPureTree(copy->child1) && 
@@ -16816,10 +16816,10 @@ node *evaluateThingInner(node *tree) {
 	  mpfr_clear(*(xrange.b));
 	  mpfr_clear(*(yrange.a));
 	  mpfr_clear(*(yrange.b));
-	  free(xrange.a);
-	  free(xrange.b);
-	  free(yrange.a);
-	  free(yrange.b);
+	  safeFree(xrange.a);
+	  safeFree(xrange.b);
+	  safeFree(yrange.a);
+	  safeFree(yrange.b);
 	}
       }
     }
@@ -16874,10 +16874,10 @@ node *evaluateThingInner(node *tree) {
 	mpfr_clear(*(xrange.b));
 	mpfr_clear(*(yrange.a));
 	mpfr_clear(*(yrange.b));
-	free(xrange.a);
-	free(xrange.b);
-	free(yrange.a);
-	free(yrange.b);
+	safeFree(xrange.a);
+	safeFree(xrange.b);
+	safeFree(yrange.a);
+	safeFree(yrange.b);
       } else {
 	if (isRangeNonEmpty(copy->child2) && 
 	    isPureTree(copy->child1) && 
@@ -16901,10 +16901,10 @@ node *evaluateThingInner(node *tree) {
 	  mpfr_clear(*(xrange.b));
 	  mpfr_clear(*(yrange.a));
 	  mpfr_clear(*(yrange.b));
-	  free(xrange.a);
-	  free(xrange.b);
-	  free(yrange.a);
-	  free(yrange.b);
+	  safeFree(xrange.a);
+	  safeFree(xrange.b);
+	  safeFree(yrange.a);
+	  safeFree(yrange.b);
 	}
       }
     }
@@ -16959,10 +16959,10 @@ node *evaluateThingInner(node *tree) {
 	mpfr_clear(*(xrange.b));
 	mpfr_clear(*(yrange.a));
 	mpfr_clear(*(yrange.b));
-	free(xrange.a);
-	free(xrange.b);
-	free(yrange.a);
-	free(yrange.b);
+	safeFree(xrange.a);
+	safeFree(xrange.b);
+	safeFree(yrange.a);
+	safeFree(yrange.b);
       } else {
 	if (isRangeNonEmpty(copy->child2) && 
 	    isPureTree(copy->child1) && 
@@ -16986,10 +16986,10 @@ node *evaluateThingInner(node *tree) {
 	  mpfr_clear(*(xrange.b));
 	  mpfr_clear(*(yrange.a));
 	  mpfr_clear(*(yrange.b));
-	  free(xrange.a);
-	  free(xrange.b);
-	  free(yrange.a);
-	  free(yrange.b);
+	  safeFree(xrange.a);
+	  safeFree(xrange.b);
+	  safeFree(yrange.a);
+	  safeFree(yrange.b);
 	}
       }
     }
@@ -17418,10 +17418,10 @@ node *evaluateThingInner(node *tree) {
 	mpfr_clear(*(xrange.b));
 	mpfr_clear(*(yrange.a));
 	mpfr_clear(*(yrange.b));
-	free(xrange.a);
-	free(xrange.b);
-	free(yrange.a);
-	free(yrange.b);
+	safeFree(xrange.a);
+	safeFree(xrange.b);
+	safeFree(yrange.a);
+	safeFree(yrange.b);
       } else {
 	if (isRangeNonEmpty(copy->child2) && 
 	    isPureTree(copy->child1) && 
@@ -17445,10 +17445,10 @@ node *evaluateThingInner(node *tree) {
 	  mpfr_clear(*(xrange.b));
 	  mpfr_clear(*(yrange.a));
 	  mpfr_clear(*(yrange.b));
-	  free(xrange.a);
-	  free(xrange.b);
-	  free(yrange.a);
-	  free(yrange.b);
+	  safeFree(xrange.a);
+	  safeFree(xrange.b);
+	  safeFree(yrange.a);
+	  safeFree(yrange.b);
 	}
       }
     }
@@ -19091,7 +19091,7 @@ node *evaluateThingInner(node *tree) {
 	  freeThing(copy->child2);
 	  copy->nodeType = STRING;
 	  copy->string = tempString;
-	  free(tempString2);
+	  safeFree(tempString2);
 	}
 	mpfr_clear(a);
 	if (timingString != NULL) popTimeCounter(timingString);
@@ -19107,7 +19107,7 @@ node *evaluateThingInner(node *tree) {
 	    freeThing(copy->child2);
 	    copy->nodeType = STRING;
 	    copy->string = tempString;
-	    free(tempString2);
+	    safeFree(tempString2);
 	  }
 	  mpfr_clear(a);
 	  if (timingString != NULL) popTimeCounter(timingString);
@@ -19124,7 +19124,7 @@ node *evaluateThingInner(node *tree) {
 	      freeThing(copy->child2);
 	      copy->nodeType = STRING;
 	      copy->string = tempString;
-	      free(tempString2);
+	      safeFree(tempString2);
 	    } 
 	    if (timingString != NULL) popTimeCounter(timingString);
 	  } else {
@@ -19140,7 +19140,7 @@ node *evaluateThingInner(node *tree) {
 		freeThing(copy->child2);
 		copy->nodeType = STRING;
 		copy->string = tempString;
-		free(tempString2);
+		safeFree(tempString2);
 	      } 
 	      if (timingString != NULL) popTimeCounter(timingString);
 	    } else {
@@ -19153,30 +19153,30 @@ node *evaluateThingInner(node *tree) {
 		  copy->nodeType = copy->child2->nodeType;
 		  copy->arguments = copy->child2->arguments;
 		  freeThing(copy->child1);
-		  free(copy->child2);
+		  safeFree(copy->child2);
 		} else {
 		  if (isEmptyList(copy->child2) && isList(copy->child1)) {
 		    if (timingString != NULL) pushTimeCounter();
 		    copy->nodeType = LIST;
 		    copy->arguments = copy->child1->arguments;
 		    freeThing(copy->child2);
-		    free(copy->child1);
+		    safeFree(copy->child1);
 		    if (timingString != NULL) popTimeCounter(timingString);
 		  } else {
 		    if (isList(copy->child1) && isList(copy->child2)) {
 		      if (timingString != NULL) pushTimeCounter();
 		      copy->nodeType = LIST;
 		      copy->arguments = concatChains(copy->child1->arguments, copy->child2->arguments);
-		      free(copy->child1);
-		      free(copy->child2);
+		      safeFree(copy->child1);
+		      safeFree(copy->child2);
 		      if (timingString != NULL) popTimeCounter(timingString);
 		    } else {
 		      if (isList(copy->child1) && isFinalEllipticList(copy->child2)) {
 			if (timingString != NULL) pushTimeCounter();
 			copy->nodeType = FINALELLIPTICLIST;
 			copy->arguments = concatChains(copy->child1->arguments, copy->child2->arguments);
-			free(copy->child1);
-			free(copy->child2);
+			safeFree(copy->child1);
+			safeFree(copy->child2);
 			if (timingString != NULL) popTimeCounter(timingString);
 		      } else {
 			if (isProcedure(copy->child1) && 
@@ -19234,7 +19234,7 @@ node *evaluateThingInner(node *tree) {
       if (timingString != NULL) pushTimeCounter();
       copy->nodeType = LIST;
       copy->arguments = addElement(copy->child2->arguments,copy->child1);
-      free(copy->child2);
+      safeFree(copy->child2);
       if (timingString != NULL) popTimeCounter(timingString);
     } else {
       if (isEmptyList(copy->child2)) {
@@ -19248,7 +19248,7 @@ node *evaluateThingInner(node *tree) {
 	  if (timingString != NULL) pushTimeCounter();
 	  copy->nodeType = FINALELLIPTICLIST;
 	  copy->arguments = addElement(copy->child2->arguments,copy->child1);
-	  free(copy->child2);
+	  safeFree(copy->child2);
 	  if (timingString != NULL) popTimeCounter(timingString);
 	} else {
 	  if (isList(copy->child1)) {
@@ -19279,7 +19279,7 @@ node *evaluateThingInner(node *tree) {
       if (timingString != NULL) pushTimeCounter();
       copy->nodeType = LIST;
       copy->arguments = addElement(copy->child2->arguments,copy->child1);
-      free(copy->child2);
+      safeFree(copy->child2);
       if (timingString != NULL) popTimeCounter(timingString);
     } else {
       if (isEmptyList(copy->child2)) {
@@ -19293,7 +19293,7 @@ node *evaluateThingInner(node *tree) {
 	  if (timingString != NULL) pushTimeCounter();
 	  copy->nodeType = FINALELLIPTICLIST;
 	  copy->arguments = addElement(copy->child2->arguments,copy->child1);
-	  free(copy->child2);
+	  safeFree(copy->child2);
 	  if (timingString != NULL) popTimeCounter(timingString);
 	} 
       }
@@ -19400,7 +19400,7 @@ node *evaluateThingInner(node *tree) {
       }
       tempNode = makeVariable();
     }
-    free(copy);
+    safeFree(copy);
     copy = evaluateThingInner(tempNode);
     freeThing(tempNode);
     if (timingString != NULL) popTimeCounter(timingString);
@@ -19418,7 +19418,7 @@ node *evaluateThingInner(node *tree) {
 	tempNode = makeFalse();
       }
     }
-    free(copy);
+    safeFree(copy);
     copy = tempNode;
     if (timingString != NULL) popTimeCounter(timingString);
     break;
@@ -19434,7 +19434,7 @@ node *evaluateThingInner(node *tree) {
     }
     if ((tempNode = getThingFromTable(tree->string)) == NULL) {
       if (undoVariableTrick) {
-	free(variablename);
+	safeFree(variablename);
 	variablename = NULL;
 	undoVariableTrick = 0;
       }
@@ -19448,14 +19448,14 @@ node *evaluateThingInner(node *tree) {
       tempNode = makeVariable();
     }
     if (undoVariableTrick) {
-      free(variablename);
+      safeFree(variablename);
       variablename = NULL;
       undoVariableTrick = 0;
     }
     if (isPureTree(tempNode)) {
       if (lengthChain(tree->arguments) == 1) {
 	if (evaluateThingToPureTree(&tempNode2,(node *) (tree->arguments->value))) {
-	  free(copy);
+	  safeFree(copy);
 	  if (tempNode->nodeType == VARIABLE) {
 	    if (variablename != NULL) {
 	      printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: the identifier \"%s\" is bound to the current free variable. In a functional context it will be considered as the identity function.\n",
@@ -19481,16 +19481,16 @@ node *evaluateThingInner(node *tree) {
 	    mpfr_set(*(xrange.a),a,GMP_RNDD);
 	    mpfr_set(*(xrange.b),b,GMP_RNDU);
 	    evaluateRangeFunction(yrange, tempNode, xrange, tools_precision);
-	    free(copy);
+	    safeFree(copy);
 	    copy = makeRange(makeConstant(*(yrange.a)),makeConstant(*(yrange.b)));
 	    mpfr_clear(*(xrange.a));
 	    mpfr_clear(*(xrange.b));
 	    mpfr_clear(*(yrange.a));
 	    mpfr_clear(*(yrange.b));
-	    free(xrange.a);
-	    free(xrange.b);
-	    free(yrange.a);
-	    free(yrange.b);
+	    safeFree(xrange.a);
+	    safeFree(xrange.b);
+	    safeFree(yrange.a);
+	    safeFree(yrange.b);
 	  } else { 
 	    copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
 	    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
@@ -19510,7 +19510,7 @@ node *evaluateThingInner(node *tree) {
 	tempNode2 = NULL;
 	if (executeExternalProcedure(&tempNode2, tempNode->libProc, tempChain)) {
 	  if (tempNode2 != NULL) {
-	    free(copy);
+	    safeFree(copy);
 	    copy = tempNode2;
 	    freeChain(tempChain, freeThingOnVoid);
 	  } else {
@@ -19521,7 +19521,7 @@ node *evaluateThingInner(node *tree) {
 	} else {
 	  printMessage(1,SOLLYA_MSG_EXTERNAL_PROCEDURE_SIGNALED_FAILURE,"Warning: external procedure has signalized failure.\n");
           considerDyingOnError();
-	  free(copy);
+	  safeFree(copy);
 	  copy = makeError();
 	  freeChain(tempChain, freeThingOnVoid);
 	}
@@ -19531,7 +19531,7 @@ node *evaluateThingInner(node *tree) {
 	  tempNode2 = NULL;
 	  if (executeProcedure(&tempNode2, tempNode, tempChain, 0)) {
 	    if (tempNode2 != NULL) {
-	      free(copy);
+	      safeFree(copy);
 	      copy = tempNode2;
 	      freeChain(tempChain, freeThingOnVoid);
 	    } else {
@@ -19542,7 +19542,7 @@ node *evaluateThingInner(node *tree) {
 	  } else {
 	    printMessage(1,SOLLYA_MSG_ERROR_WHILE_EXECUTING_A_PROCEDURE,"Warning: an error occurred while executing a procedure.\n");
             considerDyingOnError();
-	    free(copy);
+	    safeFree(copy);
 	    copy = makeError();
 	    freeChain(tempChain, freeThingOnVoid);
 	  }
@@ -19569,7 +19569,7 @@ node *evaluateThingInner(node *tree) {
 	tempChain = tempChain->next;
       }
       if ((resA) && (tempNode != NULL)) {
-	free(copy);
+	safeFree(copy);
 	copy = evaluateThing(tempNode);
       } else {
 	  copy->child1 = evaluateThingInner(tree->child1);
@@ -19608,7 +19608,7 @@ node *evaluateThingInner(node *tree) {
     if (isPureTree(tempNode)) {
       if (lengthChain(tree->arguments) == 1) {
 	if (evaluateThingToPureTree(&tempNode2,(node *) (tree->arguments->value))) {
-	  free(copy);
+	  safeFree(copy);
 	  if (tempNode->nodeType == VARIABLE) {
 	    if (variablename != NULL) {
 	      printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: the identifier \"%s\" is bound to the current free variable. In a functional context it will be considered as the identity function.\n",
@@ -19634,16 +19634,16 @@ node *evaluateThingInner(node *tree) {
 	    mpfr_set(*(xrange.a),a,GMP_RNDD);
 	    mpfr_set(*(xrange.b),b,GMP_RNDU);
 	    evaluateRangeFunction(yrange, tempNode, xrange, tools_precision);
-	    free(copy);
+	    safeFree(copy);
 	    copy = makeRange(makeConstant(*(yrange.a)),makeConstant(*(yrange.b)));
 	    mpfr_clear(*(xrange.a));
 	    mpfr_clear(*(xrange.b));
 	    mpfr_clear(*(yrange.a));
 	    mpfr_clear(*(yrange.b));
-	    free(xrange.a);
-	    free(xrange.b);
-	    free(yrange.a);
-	    free(yrange.b);
+	    safeFree(xrange.a);
+	    safeFree(xrange.b);
+	    safeFree(yrange.a);
+	    safeFree(yrange.b);
 	  } else { 
 	    copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
 	    copy->child1 = copyThing(tempNode);
@@ -19661,7 +19661,7 @@ node *evaluateThingInner(node *tree) {
 	tempNode2 = NULL;
 	if (executeExternalProcedure(&tempNode2, tempNode->libProc, tempChain)) {
 	  if (tempNode2 != NULL) {
-	    free(copy);
+	    safeFree(copy);
 	    copy = tempNode2;
 	    freeChain(tempChain, freeThingOnVoid);
 	  } else {
@@ -19671,7 +19671,7 @@ node *evaluateThingInner(node *tree) {
 	} else {
 	  printMessage(1,SOLLYA_MSG_EXTERNAL_PROCEDURE_SIGNALED_FAILURE,"Warning: external procedure has signalized failure.\n");
           considerDyingOnError();
-	  free(copy);
+	  safeFree(copy);
 	  copy = makeError();
 	  freeChain(tempChain, freeThingOnVoid);
 	}
@@ -19681,7 +19681,7 @@ node *evaluateThingInner(node *tree) {
 	  tempNode2 = NULL;
 	  if (executeProcedure(&tempNode2, tempNode, tempChain, 0)) {
 	    if (tempNode2 != NULL) {
-	      free(copy);
+	      safeFree(copy);
 	      copy = tempNode2;
 	      freeChain(tempChain, freeThingOnVoid);
 	    } else {
@@ -19691,7 +19691,7 @@ node *evaluateThingInner(node *tree) {
 	  } else {
 	    printMessage(1,SOLLYA_MSG_ERROR_WHILE_EXECUTING_A_PROCEDURE,"Warning: an error occurred while executing a procedure.\n");
             considerDyingOnError();
-	    free(copy);
+	    safeFree(copy);
 	    copy = makeError();
 	    freeChain(tempChain, freeThingOnVoid);
 	  }
@@ -19725,7 +19725,7 @@ node *evaluateThingInner(node *tree) {
 	tempString5++; tempString2++;
       }
       resB = atoi(tempString4);
-      free(tempString4);
+      safeFree(tempString4);
       if (resB < 12) {
 	printMessage(1,SOLLYA_MSG_PRECISION_OF_NUMS_MUST_BE_AT_LEAST_TWELVE_BITS,"Warning: the precision of values in the tool must be at least 12 bits.\n");
 	resB = 12;
@@ -19769,10 +19769,10 @@ node *evaluateThingInner(node *tree) {
       mpfr_clear(c);
       mpfr_clear(b);
       mpfr_clear(a);
-      free(copy);
+      safeFree(copy);
       copy = tempNode;
     }
-    free(tempString);
+    safeFree(tempString);
     if (timingString != NULL) popTimeCounter(timingString);
     break; 		
   case MIDPOINTCONSTANT:
@@ -19850,9 +19850,9 @@ node *evaluateThingInner(node *tree) {
     mpfr_clear(b);
     mpfr_clear(a);
     tempNode3 = makeRange(tempNode,tempNode2);
-    free(copy);
+    safeFree(copy);
     copy = tempNode3;
-    free(str1); free(str2);
+    safeFree(str1); safeFree(str2);
     if (timingString != NULL) popTimeCounter(timingString);
     break; 		
   case DYADICCONSTANT:
@@ -19870,7 +19870,7 @@ node *evaluateThingInner(node *tree) {
     }
     tempNode = makeConstant(a);
     mpfr_clear(a);
-    free(copy);
+    safeFree(copy);
     copy = tempNode;
     if (timingString != NULL) popTimeCounter(timingString);
     break; 			
@@ -19889,7 +19889,7 @@ node *evaluateThingInner(node *tree) {
     }
     tempNode = makeConstant(a);
     mpfr_clear(a);
-    free(copy);
+    safeFree(copy);
     copy = tempNode;
     if (timingString != NULL) popTimeCounter(timingString);
     break; 			
@@ -19908,7 +19908,7 @@ node *evaluateThingInner(node *tree) {
     }
     tempNode = makeConstant(a);
     mpfr_clear(a);
-    free(copy);
+    safeFree(copy);
     copy = tempNode;
     if (timingString != NULL) popTimeCounter(timingString);
     break; 			
@@ -19932,7 +19932,7 @@ node *evaluateThingInner(node *tree) {
     tempNode = makeConstant(a);
     mpfr_clear(b);
     mpfr_clear(a);
-    free(copy);
+    safeFree(copy);
     copy = tempNode;
     if (timingString != NULL) popTimeCounter(timingString);
     break; 			
@@ -20050,7 +20050,7 @@ node *evaluateThingInner(node *tree) {
           tempString5++; tempString2++;
         }
         resB = atoi(tempString4);
-        free(tempString4);
+        safeFree(tempString4);
         if (resB < 12) {
           printMessage(1,SOLLYA_MSG_PRECISION_OF_NUMS_MUST_BE_AT_LEAST_TWELVE_BITS,"Warning: the precision of values in the tool must be at least 12 bits.\n");
           resB = 12;
@@ -20096,7 +20096,7 @@ node *evaluateThingInner(node *tree) {
         mpfr_clear(a);
         copy->child1 = tempNode;
       }
-      free(tempString);
+      safeFree(tempString);
     } else {
       copy->child1 = evaluateThingInner(tree->child1);
     }
@@ -20120,7 +20120,7 @@ node *evaluateThingInner(node *tree) {
           tempString5++; tempString2++;
         }
         resB = atoi(tempString4);
-        free(tempString4);
+        safeFree(tempString4);
         if (resB < 12) {
           printMessage(1,SOLLYA_MSG_PRECISION_OF_NUMS_MUST_BE_AT_LEAST_TWELVE_BITS,"Warning: the precision of values in the tool must be at least 12 bits.\n");
           resB = 12;
@@ -20166,7 +20166,7 @@ node *evaluateThingInner(node *tree) {
         mpfr_clear(a);
         copy->child2 = tempNode;
       }
-      free(tempString);
+      safeFree(tempString);
     } else {
       copy->child2 = evaluateThingInner(tree->child2);
     }
@@ -20209,16 +20209,16 @@ node *evaluateThingInner(node *tree) {
 	    sollya_mpfr_max(b,*(yrange.b),*(yrange2.b),GMP_RNDU);
 	    mpfr_clear(*(xrange.a));
 	    mpfr_clear(*(xrange.b));
-	    free(xrange.a);
-	    free(xrange.b);
+	    safeFree(xrange.a);
+	    safeFree(xrange.b);
 	    mpfr_clear(*(yrange.a));
 	    mpfr_clear(*(yrange.b));
-	    free(yrange.a);
-	    free(yrange.b);
+	    safeFree(yrange.a);
+	    safeFree(yrange.b);
 	    mpfr_clear(*(yrange2.a));
 	    mpfr_clear(*(yrange2.b));
-	    free(yrange2.a);
-	    free(yrange2.b);
+	    safeFree(yrange2.a);
+	    safeFree(yrange2.b);
 	  }
 	  freeThing(copy->child1);
 	  freeThing(copy->child2);
@@ -20332,19 +20332,19 @@ node *evaluateThingInner(node *tree) {
 	  copy = tempNode2;
 	} else {
 	  tempNode2 = copy->child1;
-	  free(copy);
+	  safeFree(copy);
 	  copy = tempNode2;
 	}
 	mpfr_clear(a);
       } else {
 	tempNode2 = copy->child1;
-	free(copy);
+	safeFree(copy);
 	copy = tempNode2;
       }
       freeThing(tempNode);
     } else {
       tempNode2 = copy->child1;
-      free(copy);
+      safeFree(copy);
       copy = tempNode2;
     }
     break;
@@ -20435,7 +20435,7 @@ node *evaluateThingInner(node *tree) {
     if (timingString != NULL) pushTimeCounter();      
     resA = timeCommand(a,tree->child1);
     if (timingString != NULL) popTimeCounter(timingString);
-    free(copy);
+    safeFree(copy);
     copy = makeConstant(a);
     mpfr_clear(a);
     if (resA) {
@@ -20443,7 +20443,7 @@ node *evaluateThingInner(node *tree) {
     }
     break;
   case REMEZ:
-    free(copy);
+    safeFree(copy);
     copy = evaluateThingInnerRemez(tree, timingString);
     break;
   case BIND:
@@ -20501,9 +20501,9 @@ node *evaluateThingInner(node *tree) {
 	for (resC=0;resC<resB;resC++) {
 	  freeThing(thingArray1[resC]);
 	}
-	free(thingArray1);
-	free(thingArray2);
-	free(thingArray3);
+	safeFree(thingArray1);
+	safeFree(thingArray2);
+	safeFree(thingArray3);
       }
     }
     break;
@@ -20513,7 +20513,7 @@ node *evaluateThingInner(node *tree) {
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break;
   case FPMINIMAX:
-    free(copy);
+    safeFree(copy);
     copy = evaluateThingInnerFpminimax(tree, timingString);
     break;
   case HORNER:
@@ -20720,7 +20720,7 @@ node *evaluateThingInner(node *tree) {
               }
               if (tmpInterv2 != NULL) {
                 sollya_mpfi_clear(*tmpInterv2);
-                free(tmpInterv2);
+                safeFree(tmpInterv2);
               }
             }
             if (tmpInterv1 != NULL) sollya_mpfi_clear(*tmpInterv1);
@@ -20777,7 +20777,7 @@ node *evaluateThingInner(node *tree) {
             for (resB=0;resB<resA+1;resB++) {
               sollya_mpfi_clear(tmpInterv1[resB]);
             }
-            free(tmpInterv1);
+            safeFree(tmpInterv1);
             sollya_mpfi_clear(tempIA);
             if (timingString != NULL) popTimeCounter(timingString);
           } 
@@ -21012,8 +21012,8 @@ node *evaluateThingInner(node *tree) {
 	    }
 	    mpfr_clear(*(xrange.a));
 	    mpfr_clear(*(xrange.b));
-	    free(xrange.a);
-	    free(xrange.b);
+	    safeFree(xrange.a);
+	    safeFree(xrange.b);
 	    if (newChain != NULL) freeChain(newChain,freeRangetypePtr);
 	    tempNode = makeConstant(c);
 	    freeThing(copy);
@@ -21140,10 +21140,10 @@ node *evaluateThingInner(node *tree) {
 	      mpfr_clear(*(xrange.b));
 	      mpfr_clear(*(yrange.a));
 	      mpfr_clear(*(yrange.b));
-	      free(xrange.a);
-	      free(xrange.b);
-	      free(yrange.a);
-	      free(yrange.b);
+	      safeFree(xrange.a);
+	      safeFree(xrange.b);
+	      safeFree(yrange.a);
+	      safeFree(yrange.b);
 	    }
 	    if (timingString != NULL) popTimeCounter(timingString);
 	    mpfr_clear(b);
@@ -21182,10 +21182,10 @@ node *evaluateThingInner(node *tree) {
 	      mpfr_clear(*(xrange.b));
 	      mpfr_clear(*(yrange.a));
 	      mpfr_clear(*(yrange.b));
-	      free(xrange.a);
-	      free(xrange.b);
-	      free(yrange.a);
-	      free(yrange.b);
+	      safeFree(xrange.a);
+	      safeFree(xrange.b);
+	      safeFree(yrange.a);
+	      safeFree(yrange.b);
 	      freeThing(copy);
 	      mpfr_init2(c,tools_precision);
 	      mpfr_init2(d,tools_precision);
@@ -21225,10 +21225,10 @@ node *evaluateThingInner(node *tree) {
 	    mpfr_clear(*(xrange.b));
 	    mpfr_clear(*(yrange.a));
 	    mpfr_clear(*(yrange.b));
-	    free(xrange.a);
-	    free(xrange.b);
-	    free(yrange.a);
-	    free(yrange.b);
+	    safeFree(xrange.a);
+	    safeFree(xrange.b);
+	    safeFree(yrange.a);
+	    safeFree(yrange.b);
 	  }
 	  if (timingString != NULL) popTimeCounter(timingString);
 	}
@@ -21309,7 +21309,7 @@ node *evaluateThingInner(node *tree) {
 	      printMessage(1,SOLLYA_MSG_FILE_COULD_NOT_BE_OPENED_FOR_WRITING_IGNORING,"Warning: the file \"%s\" could not be opened for writing. The proof argument will be ignored.\n",tempString);
               considerDyingOnError();
 	    }
-	    free(tempString);
+	    safeFree(tempString);
 	  }
 	}
 	if (resB) {
@@ -21340,12 +21340,12 @@ node *evaluateThingInner(node *tree) {
 	  tempNode = makeRange(makeConstant(*(yrange.a)),makeConstant(*(yrange.b)));
 	  mpfr_clear(*(yrange.a));
 	  mpfr_clear(*(yrange.b));
-	  free(yrange.a);
-	  free(yrange.b);
+	  safeFree(yrange.a);
+	  safeFree(yrange.b);
 	  mpfr_clear(*(xrange.a));
 	  mpfr_clear(*(xrange.b));
-	  free(xrange.a);
-	  free(xrange.b);
+	  safeFree(xrange.a);
+	  safeFree(xrange.b);
 	  if (newChain != NULL) freeChain(newChain,freeRangetypePtr);
 	  freeThing(copy);
 	  copy = tempNode;
@@ -21461,8 +21461,8 @@ node *evaluateThingInner(node *tree) {
 	freeChain(tempChain,freeRangetypePtr);
 	mpfr_clear(*(xrange.a));
 	mpfr_clear(*(xrange.b));
-	free(xrange.a);
-	free(xrange.b);
+	safeFree(xrange.a);
+	safeFree(xrange.b);
 	freeThing(copy);
 	copy = tempNode;
       } 
@@ -21504,8 +21504,8 @@ node *evaluateThingInner(node *tree) {
 	freeChain(tempChain,freeMpfrPtr);
 	mpfr_clear(*(xrange.a));
 	mpfr_clear(*(xrange.b));
-	free(xrange.a);
-	free(xrange.b);
+	safeFree(xrange.a);
+	safeFree(xrange.b);
 	freeThing(copy);
 	copy = tempNode;
       } 
@@ -21580,12 +21580,12 @@ node *evaluateThingInner(node *tree) {
 	tempNode = makeRange(makeConstant(*(yrange.a)),makeConstant(*(yrange.b)));
 	mpfr_clear(*(yrange.a));
 	mpfr_clear(*(yrange.b));
-	free(yrange.a);
-	free(yrange.b);
+	safeFree(yrange.a);
+	safeFree(yrange.b);
 	mpfr_clear(*(xrange.a));
 	mpfr_clear(*(xrange.b));
-	free(xrange.a);
-	free(xrange.b);
+	safeFree(xrange.a);
+	safeFree(xrange.b);
 	freeThing(copy);
 	copy = tempNode;
       } 
@@ -21671,7 +21671,7 @@ node *evaluateThingInner(node *tree) {
 	printMessage(1,SOLLYA_MSG_FILE_COULD_NOT_BE_OPENED_FOR_WRITING_IGNORING,"Warning: the file \"%s\" could not be opened for writing. The proof argument will be ignored.\n",tempString);
         considerDyingOnError();
       }
-      free(tempString);
+      safeFree(tempString);
     }
     if (isPureTree(firstArg) &&
 	isRange(secondArg) &&
@@ -21700,8 +21700,8 @@ node *evaluateThingInner(node *tree) {
 	  if (timingString != NULL) popTimeCounter(timingString);
 	  mpfr_clear(*(xrange.a));
 	  mpfr_clear(*(xrange.b));
-	  free(xrange.a);
-	  free(xrange.b);
+	  safeFree(xrange.a);
+	  safeFree(xrange.b);
 	  if (tempNode == NULL) {
 	    printMessage(1,SOLLYA_MSG_IMPLEMENTATION_HAS_NOT_SUCCEEDED,"Warning: the implementation has not succeeded. The command could not be executed.\n");
             considerDyingOnError();
@@ -21713,8 +21713,8 @@ node *evaluateThingInner(node *tree) {
           considerDyingOnError();
 	  tempNode = makeError();
 	}
-	free(tempString2);
-	free(tempString3);
+	safeFree(tempString2);
+	safeFree(tempString3);
 	freeThing(copy);
 	copy = tempNode;
       }
@@ -21751,8 +21751,8 @@ node *evaluateThingInner(node *tree) {
 	  if (timingString != NULL) popTimeCounter(timingString);
 	  mpfr_clear(*(xrange.a));
 	  mpfr_clear(*(xrange.b));
-	  free(xrange.a);
-	  free(xrange.b);
+	  safeFree(xrange.a);
+	  safeFree(xrange.b);
 	  freeThing(copy);
 	  if (resA) 
 	    copy = makeTrue();
@@ -21937,8 +21937,8 @@ node *evaluateThingInner(node *tree) {
             copy = tempNode;
             mpfr_clear(*(yrange.a));
             mpfr_clear(*(yrange.b));
-            free(yrange.a);
-            free(yrange.b);
+            safeFree(yrange.a);
+            safeFree(yrange.b);
           }
         }
       }
@@ -22040,7 +22040,7 @@ node *evaluateThingInner(node *tree) {
 	if (timingString != NULL) popTimeCounter(timingString);
 	if (tempString != NULL) {
 	  tempNode = makeString(tempString);
-	  free(tempString);
+	  safeFree(tempString);
 	  freeThing(copy);
 	  copy = tempNode;
 	}
@@ -22071,7 +22071,7 @@ node *evaluateThingInner(node *tree) {
 	if (timingString != NULL) popTimeCounter(timingString);
 	if (tempString != NULL) {
 	  tempNode = makeString(tempString);
-	  free(tempString);
+	  safeFree(tempString);
 	  freeThing(copy);
 	  copy = tempNode;
 	} 
@@ -22489,11 +22489,11 @@ node *evaluateThingInner(node *tree) {
     if (timingString != NULL) popTimeCounter(timingString);
     break;  	 
   case PROC:
-    free(copy);
+    safeFree(copy);
     copy = copyThing(tree);
     break;
   case PROCILLIM:
-    free(copy);
+    safeFree(copy);
     copy = copyThing(tree);
     break;
   default:
@@ -22501,7 +22501,7 @@ node *evaluateThingInner(node *tree) {
     exit(1);
   }
 
-  if (timingString != NULL) free(timingString);
+  if (timingString != NULL) safeFree(timingString);
 
   return copy;
 }

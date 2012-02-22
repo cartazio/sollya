@@ -86,7 +86,7 @@ char *messageNumberToText(int msgNum) {
   sprintf(temp, defaultMessage, msgNum);
   res = (char *) safeCalloc(strlen(temp) + 1, sizeof(char));
   strcpy(res, temp);
-  free(temp);
+  safeFree(temp);
   return res;
 }
 

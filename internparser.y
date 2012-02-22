@@ -509,17 +509,17 @@ ifcommand:              thing THENTOKEN command
 forcommand:             IDENTIFIERTOKEN FROMTOKEN thing TOTOKEN thing DOTOKEN command
                           {
 			    $$ = makeFor($1, $3, $5, makeConstantDouble(1.0), $7);
-			    free($1);
+			    safeFree($1);
                           }
                       | IDENTIFIERTOKEN FROMTOKEN thing TOTOKEN thing BYTOKEN thing DOTOKEN command
                           {
 			    $$ = makeFor($1, $3, $5, $7, $9);
-			    free($1);
+			    safeFree($1);
                           }
                       | IDENTIFIERTOKEN INTOKEN thing DOTOKEN command
                           {
 			    $$ = makeForIn($1, $3, $5);
-			    free($1);
+			    safeFree($1);
                           }
 ;
 
@@ -768,18 +768,18 @@ simplecommand:          FALSEQUITTOKEN
                       | RENAMETOKEN LPARTOKEN IDENTIFIERTOKEN COMMATOKEN IDENTIFIERTOKEN RPARTOKEN
                           {
 			    $$ = makeRename($3, $5);
-			    free($3);
-			    free($5);
+			    safeFree($3);
+			    safeFree($5);
 			  }
                       | RENAMETOKEN LPARTOKEN FREEVARTOKEN COMMATOKEN IDENTIFIERTOKEN RPARTOKEN
                           {
 			    $$ = makeRename("_x_", $5);
-			    free($5);
+			    safeFree($5);
 			  }
                       | EXTERNALPROCTOKEN LPARTOKEN IDENTIFIERTOKEN COMMATOKEN thing COMMATOKEN externalproctypelist MINUSTOKEN RIGHTANGLETOKEN extendedexternalproctype RPARTOKEN
                           {
 			    $$ = makeExternalProc($3, $5, addElement($7, $10));
-			    free($3);
+			    safeFree($3);
 			  }
                       | assignment
                           {
@@ -792,7 +792,7 @@ simplecommand:          FALSEQUITTOKEN
                       | PROCEDURETOKEN IDENTIFIERTOKEN procbody
                           {
 			    $$ = makeAssignment($2, $3);
-			    free($2);
+			    safeFree($2);
 			  }
 ;
 
@@ -817,32 +817,32 @@ assignment:             stateassignment
 simpleassignment:       IDENTIFIERTOKEN EQUALTOKEN thing
                           {
 			    $$ = makeAssignment($1, $3);
-			    free($1);
+			    safeFree($1);
 			  }
                       | IDENTIFIERTOKEN ASSIGNEQUALTOKEN thing
                           {
 			    $$ = makeFloatAssignment($1, $3);
-			    free($1);
+			    safeFree($1);
 			  }
                       | IDENTIFIERTOKEN EQUALTOKEN LIBRARYTOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeLibraryBinding($1, $5);
-			    free($1);
+			    safeFree($1);
 			  }
                       | IDENTIFIERTOKEN EQUALTOKEN LIBRARYCONSTANTTOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeLibraryConstantBinding($1, $5);
-			    free($1);
+			    safeFree($1);
 			  }
                       | indexing EQUALTOKEN thing
                           {
 			    $$ = makeAssignmentInIndexing($1->a,$1->b,$3);
-			    free($1);
+			    safeFree($1);
 			  }
                       | indexing ASSIGNEQUALTOKEN thing
                           {
 			    $$ = makeFloatAssignmentInIndexing($1->a,$1->b,$3);
-			    free($1);
+			    safeFree($1);
 			  }
                       | structuring EQUALTOKEN thing
                           {
@@ -857,7 +857,7 @@ simpleassignment:       IDENTIFIERTOKEN EQUALTOKEN thing
 structuring:            basicthing DOTTOKEN IDENTIFIERTOKEN 
 		          {
 			    $$ = makeStructAccess($1,$3);
-			    free($3);
+			    safeFree($3);
 			  }
 ;
 
@@ -1028,7 +1028,7 @@ structelement:          DOTTOKEN IDENTIFIERTOKEN EQUALTOKEN thing
 			    $$ = (entry *) safeMalloc(sizeof(entry));
 			    $$->name = (char *) safeCalloc(strlen($2) + 1, sizeof(char));
 			    strcpy($$->name,$2);
-			    free($2);
+			    safeFree($2);
 			    $$->value = (void *) ($4);
 			  }
 ;
@@ -1358,12 +1358,12 @@ basicthing:             ONTOKEN
                           {
 			    tempString = safeCalloc(strlen($1) + 1, sizeof(char));
 			    strcpy(tempString, $1);
-			    free($1);
+			    safeFree($1);
 			    tempString2 = safeCalloc(strlen(tempString) + 1, sizeof(char));
 			    strcpy(tempString2, tempString);
-			    free(tempString);
+			    safeFree(tempString);
 			    $$ = makeString(tempString2);
-			    free(tempString2);
+			    safeFree(tempString2);
 			  }
                       | constant
                           {
@@ -1372,22 +1372,22 @@ basicthing:             ONTOKEN
                       | IDENTIFIERTOKEN
                           {
 			    $$ = makeTableAccess($1);
-			    free($1);
+			    safeFree($1);
 			  }
                       | ISBOUNDTOKEN LPARTOKEN IDENTIFIERTOKEN RPARTOKEN
                           {
 			    $$ = makeIsBound($3);
-			    free($3);
+			    safeFree($3);
 			  }
                       | IDENTIFIERTOKEN LPARTOKEN thinglist RPARTOKEN
                           {
 			    $$ = makeTableAccessWithSubstitute($1, $3);
-			    free($1);
+			    safeFree($1);
 			  }
                       | IDENTIFIERTOKEN LPARTOKEN RPARTOKEN
                           {
 			    $$ = makeTableAccessWithSubstitute($1, NULL);
-			    free($1);
+			    safeFree($1);
 			  }
                       | list
                           {
@@ -1420,17 +1420,17 @@ basicthing:             ONTOKEN
                       | indexing
                           {
 			    $$ = makeIndex($1->a, $1->b);
-			    free($1);
+			    safeFree($1);
 			  }
                       | basicthing DOTTOKEN IDENTIFIERTOKEN 
 		          {
 			    $$ = makeStructAccess($1,$3);
-			    free($3);
+			    safeFree($3);
 			  }
                       | basicthing DOTTOKEN IDENTIFIERTOKEN LPARTOKEN thinglist RPARTOKEN
 		          {
 			    $$ = makeApply(makeStructAccess($1,$3),$5);
-			    free($3);
+			    safeFree($3);
 			  }
                       | LPARTOKEN thing RPARTOKEN LPARTOKEN thinglist RPARTOKEN
                           {
@@ -1497,12 +1497,12 @@ matchelement:          thing COLONTOKEN beginsymbol variabledeclarationlist comm
 constant:               CONSTANTTOKEN
                           {
 			    $$ = makeDecimalConstant($1);
-			    free($1);
+			    safeFree($1);
 			  }
                       | MIDPOINTCONSTANTTOKEN
                           {
 			    $$ = makeMidpointConstant($1);
-			    free($1);
+			    safeFree($1);
 			  }
                       | DYADICCONSTANTTOKEN
                           {
@@ -1627,7 +1627,7 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | BINDTOKEN LPARTOKEN thing COMMATOKEN IDENTIFIERTOKEN COMMATOKEN thing RPARTOKEN
                           {
 			    $$ = makeBind($3, $5, $7);
-			    free($5);
+			    safeFree($5);
 			  }
                       | MINTOKEN LPARTOKEN thinglist RPARTOKEN
                           {

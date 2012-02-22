@@ -74,7 +74,7 @@ int myMessageCallback(int msg) {
   char *str;
   str = sollya_lib_msg_number_to_text(msg);
   sollya_lib_printf("Got message #%d - \"%s\"\n", msg, str);
-  free(str);
+  safeFree(str);
   return 1;
 }
 

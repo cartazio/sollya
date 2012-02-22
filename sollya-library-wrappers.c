@@ -182,7 +182,7 @@ int sollya_lib_cmp_objs_structurally(sollya_obj_t obj1, sollya_obj_t obj2) {
 
 void sollya_lib_name_free_variable(const char *str) {
   if (variablename != NULL) {
-    free(variablename);
+    safeFree(variablename);
     variablename = NULL;
   }
   variablename = (char *) safeCalloc(strlen(str) + 1, sizeof(char));

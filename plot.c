@@ -310,9 +310,9 @@ void plotTree(chain *treeList, mpfr_t a, mpfr_t b, unsigned long int points, mp_
     }
   }
   
-  free(gplotname);
-  free(dataname);
-  free(outputname);
+  safeFree(gplotname);
+  safeFree(dataname);
+  safeFree(outputname);
   return;
 }
 
@@ -328,7 +328,7 @@ void removePlotFiles(void) {
     remove(name);
   }
 
-  free(name);
+  safeFree(name);
   return;
 }
 
@@ -497,8 +497,8 @@ void asciiPlotTree(node *tree, mpfr_t a, mpfr_t b, mp_prec_t prec) {
 
   restoreMode();
 
-  for (k=0;k<sizeY-1;k++) free(lines[k]);
-  free(lines);
+  for (k=0;k<sizeY-1;k++) safeFree(lines[k]);
+  safeFree(lines);
   mpfr_clear(minValue);
   mpfr_clear(maxValue);
   mpfr_clear(y);
@@ -507,6 +507,6 @@ void asciiPlotTree(node *tree, mpfr_t a, mpfr_t b, mp_prec_t prec) {
   for (i=0;i<sizeX-1;i++) {
     mpfr_clear(values[i]);
   }
-  free(values);
+  safeFree(values);
   return;
 }

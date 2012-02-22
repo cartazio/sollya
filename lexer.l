@@ -483,7 +483,7 @@ NOP             "nop"
                 }
 
 <readstate>{STRING}  {
-                       if (newReadFilename != NULL) free(newReadFilename);
+                       if (newReadFilename != NULL) safeFree(newReadFilename);
 		       newReadFilename = NULL;
 		       newReadFilename = (char*) safeCalloc(yyleng - 1,sizeof(char));
 		       strncpy(newReadFilename,yytext+1,yyleng-2);
@@ -520,7 +520,7 @@ NOP             "nop"
 			yyin = temp_fd;
 			yy_switch_to_buffer(yy_create_buffer(yyin, YY_BUF_SIZE, scanner), scanner);
 		      }
-		      free(newReadFilenameTemp);
+		      safeFree(newReadFilenameTemp);
 		      BEGIN(INITIAL);
                 }
 
@@ -539,15 +539,15 @@ NOP             "nop"
 		      } else {
 			fclose(yyin);
 			yyin = *((FILE **) (readStack2->value));
-			free(readStack2->value);
+			safeFree(readStack2->value);
 			readStackTemp = readStack2->next;
-			free(readStack2);
+			safeFree(readStack2);
 			readStack2 = readStackTemp;
 			yy_delete_buffer(YY_CURRENT_BUFFER, scanner);
 			yy_switch_to_buffer(*((YY_BUFFER_STATE *) (readStack->value)),scanner);
-			free(readStack->value);
+			safeFree(readStack->value);
 			readStackTemp = readStack->next;
-			free(readStack);
+			safeFree(readStack);
 			readStack = readStackTemp;
 		      }
                 }
@@ -591,7 +591,7 @@ NOP             "nop"
 					      constBuffer2 = (char *) safeCalloc(yyleng-1,sizeof(char));
 					      strncpy(constBuffer2,yytext+1,yyleng-2);
 					      demaskString(constBuffer,constBuffer2);
-					      free(constBuffer2);
+					      safeFree(constBuffer2);
 					      yylval->value = constBuffer;
                                               newTokenLexed(); return STRINGTOKEN; }
 

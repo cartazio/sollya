@@ -727,7 +727,7 @@ chain *normalizeFinalEllipticList(chain *list) {
     copy = addElement(copy,copyThing(thingArray[i]));
   }
   for (i=0;i<len;i++) freeThing(thingArray[i]);
-  free(thingArray);
+  safeFree(thingArray);
 
   return copy;
 }
@@ -954,7 +954,7 @@ int tryMatchAppend(chain **associations, node *thingToMatch, node *possibleMatch
       curr = addElement(curr,copyThing(elementArray[i]));
     }
     headList = makeList(curr);
-    free(elementArray);
+    safeFree(elementArray);
   } else {
     /* The list of things to match has only one element, so the head
        list is the empty list. The tail element is easy to get, too. 
@@ -1012,8 +1012,8 @@ int tryEvaluateRecursiveConcatMatcherToString(char **concatenatedString, node *t
       }
       okay = 1;
     }
-    if (okayLeft) free(bufLeft);
-    if (okayRight) free(bufRight);
+    if (okayLeft) safeFree(bufLeft);
+    if (okayRight) safeFree(bufRight);
 
     return okay;
   }
@@ -1069,11 +1069,11 @@ int tryCutPostfix(char **rest, char *mainString, char *postfix) {
   okay = tryCutPrefix(&revRest, revMainString, revPostfix);
   if (okay) {
     *rest = revertString(revRest);
-    free(revRest);
+    safeFree(revRest);
   }
   
-  free(revMainString);
-  free(revPostfix);
+  safeFree(revMainString);
+  safeFree(revPostfix);
 
   return okay;
 }
@@ -1089,7 +1089,7 @@ int tryMatchConcatOnString(chain **associations, char *stringToMatch, node *poss
   okayFullEvaluate = tryEvaluateRecursiveConcatMatcherToString(&stringFullEvaluate, possibleMatcher);
   if (okayFullEvaluate) {
     okay = !strcmp(stringToMatch,stringFullEvaluate);
-    free(stringFullEvaluate);
+    safeFree(stringFullEvaluate);
     return okay;
   }
 
@@ -1114,10 +1114,10 @@ int tryMatchConcatOnString(chain **associations, char *stringToMatch, node *poss
 	okay = tryMatch(&myAssociations,restStringThing,possibleMatcher->child1);
       }
       freeThing(restStringThing);
-      free(restString);
+      safeFree(restString);
     }
-    if (okayLeftEvaluate) free(stringLeftEvaluate);
-    if (okayRightEvaluate) free(stringRightEvaluate);
+    if (okayLeftEvaluate) safeFree(stringLeftEvaluate);
+    if (okayRightEvaluate) safeFree(stringRightEvaluate);
     if (okay) {
       *associations = myAssociations;
     } else {
@@ -1304,7 +1304,7 @@ int tryCutPostfixList(chain **associations, node **restList, node *mainList, nod
 	  }
 	  possibleRest = makeList(possibleRestList);
 	}
-	free(mainListArray);
+	safeFree(mainListArray);
 
 	okay = tryMatch(associations, possibleThingToMatch, postfix); 
 	freeThing(possibleThingToMatch);
