@@ -4612,15 +4612,28 @@ int evaluateFaithfulWithCutOffFastOld(mpfr_t result, node *func, node *deriv, mp
   return okay;
 }
 
-int evaluateFaithfulWithCutOffFast(mpfr_t result, node *func, node *deriv, mpfr_t x, mpfr_t cutoff, mp_prec_t startprec) {
+int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *func, node *deriv, mpfr_t x, mpfr_t cutoff, mp_prec_t startprec, node *altX) {
   mp_prec_t p, prec;
-  sollya_mpfi_t yI, xI, cutoffI;
+  sollya_mpfi_t yI, xI, cutoffI, dummyI;
   int okay;
   mpfr_t resUp, resDown;
   mpfr_t cutoffLeft, cutoffRight;
   mpfr_t yILeft, yIRight;
   int testCutOff;
   
+  /* Check if we have a constant expression to evaluate at and if so,
+     check if it is constant 
+  */
+  if ((altX != NULL) && (!isConstant(altX))) {
+    /* Here the alternate abscissa expression is not constant */
+    mpfr_set_nan(result);
+    return 0;
+  }
+
+  /* We need a dummy interval for some evaluations */
+  sollya_mpfi_init2(dummyI,12);
+  sollya_mpfi_set_ui(dummyI,1);
+
   /* We test the cutoff only if it is not zero */
   testCutOff = 1;
 
@@ -4644,11 +4657,7 @@ int evaluateFaithfulWithCutOffFast(mpfr_t result, node *func, node *deriv, mpfr_
   mpfr_init2(resUp,prec);
   mpfr_init2(resDown,prec);
 
-  /* Copy x into an interval with its own precision */
-  p = mpfr_get_prec(x);
-  sollya_mpfi_init2(xI,p);
-  sollya_mpfi_interv_fr(xI,x,x);
-
+  /* Determine a starting precision */
   if (startprec > prec) prec = startprec;
 
   /* Testing (comparing the final prec with the startprec on the examples in the check files)
@@ -4664,10 +4673,40 @@ int evaluateFaithfulWithCutOffFast(mpfr_t result, node *func, node *deriv, mpfr_
   sollya_mpfi_init2(yI,startprec*16);
   mpfr_init2(yILeft,startprec*16);
   mpfr_init2(yIRight,startprec*16);
+
+  /* Initialize an interval for the abscissa point we evaluate at */
+  if (altX == NULL) {
+    /* If we have no alternate abscissa point, copy x into an interval
+       with its own precision 
+    */
+    p = mpfr_get_prec(x);
+    sollya_mpfi_init2(xI,p);
+    sollya_mpfi_interv_fr(xI,x,x);
+  } else {
+    /* Otherwise, initialize an interval with a little more than the
+       starting precision and then set the precision to the starting
+       precision. This allows for the first subsequent mpf*_set_prec
+       not to malloc which saves a couple of mallocs and copies.
+    */
+    sollya_mpfi_init2(xI,startprec * 16);
+    sollya_mpfi_set_prec(xI,startprec);
+  }
+
+  /* Start the rounding loop */
   p=startprec;
   okay = 0;
   while (p < prec * 512) {
     sollya_mpfi_set_prec(yI,p);
+    
+    /* If we evaluate at a constant expression instead of a point,
+       evaluate the constant expression to the current (loop)
+       precision.
+    */
+    if (altX != NULL) {
+      sollya_mpfi_set_prec(xI,p);
+      evaluateInterval(xI, altX, NULL, dummyI);
+    }
+
     mpfr_set_prec(yILeft,p);
     mpfr_set_prec(yIRight,p);
     evaluateInterval(yI, func, deriv, xI);
@@ -4707,7 +4746,7 @@ int evaluateFaithfulWithCutOffFast(mpfr_t result, node *func, node *deriv, mpfr_
   mpfr_clear(yIRight);
 
   if (okay > 0) {
-    /* This rouning annihilates the effect of taking always the upper value */
+    /* This rounding annihilates the effect of taking always the upper value */
     mpfr_set(result,resUp,GMP_RNDN);
   } else {
     mpfr_set_nan(result);
@@ -4717,9 +4756,22 @@ int evaluateFaithfulWithCutOffFast(mpfr_t result, node *func, node *deriv, mpfr_
   mpfr_clear(resUp);
   mpfr_clear(resDown);
   sollya_mpfi_clear(cutoffI);
+  sollya_mpfi_clear(dummyI);
   return okay;
 }
 
+int evaluateFaithfulWithCutOffFast(mpfr_t result, node *func, node *deriv, mpfr_t x, mpfr_t cutoff, mp_prec_t startprec) {
+  return evaluateFaithfulWithCutOffFastInternalImplementation(result, func, deriv, x, cutoff, startprec, NULL);
+}
+
+int evaluateFaithfulAtConstantExpression(mpfr_t result, node *func, node *deriv, node *x, mpfr_t cutoff, mp_prec_t startprec) {
+  mpfr_t dummy;
+  if (x == NULL) {
+    mpfr_set_nan(result);
+    return 0;
+  }
+  return evaluateFaithfulWithCutOffFastInternalImplementation(result, func, deriv, dummy, cutoff, startprec, x);
+}
 
 int evaluateFaithfulWithCutOff(mpfr_t result, node *func, mpfr_t x, mpfr_t cutoff, mp_prec_t startprec) {
   node *deriv;
