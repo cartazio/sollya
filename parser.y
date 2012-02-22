@@ -75,12 +75,15 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 extern void *parserCalloc(size_t, size_t);
 extern void *parserMalloc(size_t);
 extern void *parserRealloc(void *, size_t);
+extern void parserFree(void *);
 #undef malloc
 #undef realloc
 #undef calloc
+#undef free
 #define malloc parserMalloc
 #define realloc parserRealloc
 #define calloc parserCalloc
+#define free parserFree
 /* End of the malloc mess */
 
 #define YYERROR_VERBOSE 1

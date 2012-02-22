@@ -11866,7 +11866,7 @@ void freeThing(node *tree) {
     safeFree(tree);
     break; 	
   case VARIABLEDECLARATION:
-    freeChain(tree->arguments, free);
+    freeChain(tree->arguments, safeFree);
     safeFree(tree);
     break; 				
   case NEWFILEPRINT:
@@ -11946,7 +11946,7 @@ void freeThing(node *tree) {
     break; 			
   case RENAME:
     safeFree(tree->string);
-    freeChain(tree->arguments, free);
+    freeChain(tree->arguments, safeFree);
     safeFree(tree);
     break; 				
   case AUTOPRINT:
@@ -12655,7 +12655,7 @@ void freeThing(node *tree) {
   case PROC:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    freeChain(tree->arguments, free);
+    freeChain(tree->arguments, safeFree);
     safeFree(tree);
     break;
   case BIND:
@@ -12667,7 +12667,7 @@ void freeThing(node *tree) {
   case PROCILLIM:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    freeChain(tree->arguments, free);
+    freeChain(tree->arguments, safeFree);
     safeFree(tree);
     break;
   case PRECDEREF:
@@ -13938,7 +13938,7 @@ void freeArgumentForExternalProc(void* arg, int type) {
     freeChain((chain *) arg, freeIntPtr);
     break;
   case STRING_LIST_TYPE:
-    freeChain((chain *) arg, free);
+    freeChain((chain *) arg, safeFree);
     break;
   case BOOLEAN_LIST_TYPE:
     freeChain((chain *) arg, freeIntPtr);
@@ -14548,7 +14548,7 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	  }
 	  *resultThing = makeList(copyChain(curr2, copyThingOnVoid));
 	  freeChain(curr2, freeThingOnVoid);
-	  freeChain((chain *) resultSpace, free);
+	  freeChain((chain *) resultSpace, safeFree);
 	}
       }
       break;
@@ -14753,7 +14753,7 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	  }
 	  *resultThing = makeList(copyChain(curr2, copyThingOnVoid));
 	  freeChain(curr2, freeThingOnVoid);
-	  freeChain((chain *) resultSpace, free);
+	  freeChain((chain *) resultSpace, safeFree);
 	}
       }
       break;
@@ -16181,7 +16181,7 @@ node *performBind(node *proc, char *ident, node *thing) {
   
   /* The list of new arguments is inverted, we have to revert it */
   curr = copyChain(newArgs, copyString);
-  freeChain(newArgs, free);
+  freeChain(newArgs, safeFree);
   newArgs = curr;
 
   /* Now we have to build the list of things to apply to the 

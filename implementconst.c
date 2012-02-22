@@ -188,9 +188,9 @@ void free_implementCsteInstruction(void *instr) {
   if (ptr->strval != NULL )  safeFree(ptr->strval);
 
   freeChain(ptr->prog1.instructions, free_implementCsteInstruction);
-  freeChain(ptr->prog1.precisions, free);
+  freeChain(ptr->prog1.precisions, safeFree);
   freeChain(ptr->prog2.instructions, free_implementCsteInstruction);
-  freeChain(ptr->prog2.precisions, free);
+  freeChain(ptr->prog2.precisions, safeFree);
 
   safeFree(ptr);
   return;
@@ -594,7 +594,7 @@ int implementconst(node *c, FILE *fd, char *name) {
   res = constantImplementer(c, 0, &program);
   if (res) {   /* Something went wrong */
     freeChain(program.instructions, free_implementCsteInstruction);
-    freeChain(program.precisions, free);
+    freeChain(program.precisions, safeFree);
     return res;
   }
 
@@ -641,7 +641,7 @@ int implementconst(node *c, FILE *fd, char *name) {
   sollyaFprintf(output, "}\n");
 
   freeChain(program.instructions, free_implementCsteInstruction);
-  freeChain(program.precisions, free);
+  freeChain(program.precisions, safeFree);
   return 0;
 }
 

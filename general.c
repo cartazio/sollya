@@ -369,9 +369,12 @@ void *parserMalloc(size_t size) {
 }
 
 void *parserRealloc(void *ptr, size_t size) {
-  safeRealloc(ptr, size);
+  return safeRealloc(ptr, size);
 }
 
+void parserFree(void *ptr) {
+  safeFree(ptr);
+}
 
 char *maskString(char *src) {
   char *buf;
@@ -846,7 +849,7 @@ char *mpfr_to_binary_str(mpfr_t x) {
 }
 
 void freeCounter(void) {
-  freeChain(timeStack, free);
+  freeChain(timeStack, safeFree);
   timeStack=NULL;
   return;
 }
