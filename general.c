@@ -187,6 +187,19 @@ node *minitree;
 
 /* GLOBAL VARIABLES FOR THE MEMORY ALLOCATION FUNCTIONS */
 
+void *wrapSafeRealloc(void *ptr, size_t old_size, size_t new_size);
+void wrapSafeFree(void *ptr, size_t size);
+
+void *(*actualCalloc)(size_t, size_t) = calloc;
+void *(*actualMalloc)(size_t) = malloc;
+void (*actualFree)(void *) = free;
+void *(*actualRealloc)(void *, size_t) = realloc;
+void (*actualFreeWithSize)(void *, size_t) = wrapSafeFree;
+void *(*actualReallocWithSize)(void *, size_t, size_t) = wrapSafeRealloc;
+
+void *(*oldGMPMalloc)(size_t) = NULL;
+void *(*oldGMPRealloc)(void *, size_t, size_t) = NULL;
+void (*oldGMPFree)(void *, size_t) = NULL;
 
 /* END OF GLOBAL VARIABLES FOR THE MEMORY ALLOCATION FUNCTIONS */
 
@@ -314,7 +327,14 @@ void warningMode() {
 
 void *safeCalloc (size_t nmemb, size_t size) {
   void *ptr;
-  ptr = calloc(nmemb,size);
+  size_t myNmemb, mySize;
+
+  myNmemb = nmemb;
+  if (myNmemb == 0) myNmemb = 1;
+  mySize = size;
+  if (mySize == 0) mySize = 1;
+ 
+  ptr = actualCalloc(myNmemb,mySize);
   if (ptr == NULL) {
     sollyaFprintf(stderr,"Error: calloc could not succeed. No more memory left.\n");
     exit(1);
@@ -325,9 +345,9 @@ void *safeCalloc (size_t nmemb, size_t size) {
 void *safeMalloc (size_t size) {
   void *ptr;
   if (size == 0) 
-    ptr = malloc(1);
+    ptr = actualMalloc(1);
   else
-    ptr = malloc(size);
+    ptr = actualMalloc(size);
   if (ptr == NULL) {
     sollyaFprintf(stderr,"Error: malloc could not succeed. No more memory left.\n");
     exit(1);
@@ -346,7 +366,7 @@ void *safeRealloc (void *ptr, size_t size) {
 }
 
 void safeFree(void *ptr) {
-  free(ptr);
+  actualFree(ptr);
 }
 
 /* The gmp signature for realloc is strange, we have to wrap our function */
@@ -355,7 +375,31 @@ void *wrapSafeRealloc(void *ptr, size_t old_size, size_t new_size) {
   return (void *) safeRealloc(ptr,new_size);
 }
 
-/* Provide functions for the parsers 
+/* Same for GMP's free */
+void wrapSafeFree(void *ptr, size_t size) {
+  UNUSED_PARAM(size);
+  safeFree(ptr);
+}
+
+/* Wrap the GMP mp_set_memory_functions function into one that not
+   only installs the functions but also stores the old values into the
+   global backup variables. Do nothing if the backup function pointers
+   are not NULL (i.e. if they have already been set.)
+*/
+void wrap_mp_set_memory_functions(void *(*alloc_func_ptr) (size_t),
+				  void *(*realloc_func_ptr) (void *, size_t, size_t),
+				  void (*free_func_ptr) (void *, size_t)) {
+  if ((oldGMPMalloc != NULL) ||
+      (oldGMPRealloc != NULL) ||
+      (oldGMPFree != NULL)) {
+    return;
+  }
+
+  mp_get_memory_functions(&oldGMPMalloc,&oldGMPRealloc,&oldGMPFree);
+  mp_set_memory_functions(alloc_func_ptr, realloc_func_ptr, free_func_ptr);
+}
+
+/* Provide memory management functions for the parsers 
 
    These functions are wrappers that are currently provided to cope
    with special behavior of memory allocation in the future.
@@ -376,6 +420,8 @@ void parserFree(void *ptr) {
   safeFree(ptr);
 }
 
+
+/* Other legacy stuff */
 char *maskString(char *src) {
   char *buf;
   char *res;
@@ -1106,7 +1152,7 @@ void initTool() {
   
   initSignalHandler();
   blockSignals();
-  mp_set_memory_functions(safeMalloc,wrapSafeRealloc,NULL);
+  wrap_mp_set_memory_functions(safeMalloc,wrapSafeRealloc,wrapSafeFree);
   initToolDefaults();
   noColor = 1;
 }
@@ -1267,8 +1313,19 @@ void invalidateRecoverEnvironment() {
   exitInsteadOfRecover = 1;
 }
 
-int initializeLibraryMode() {
+int initializeLibraryMode(void *(*myActualMalloc)(size_t),
+			  void *(*myActualCalloc)(size_t, size_t),
+			  void *(*myActualRealloc)(void *, size_t),
+			  void (*myActualFree)(void*),
+			  void *(*myActualReallocWithSize)(void *, size_t, size_t),
+			  void (*myActualFreeWithSize)(void *, size_t)) {
   libraryMode = 1;
+  if (myActualMalloc != NULL) actualMalloc = myActualMalloc;
+  if (myActualCalloc != NULL) actualCalloc = myActualCalloc;
+  if (myActualRealloc != NULL) actualRealloc = myActualRealloc;
+  if (myActualFree != NULL) actualFree = myActualFree;
+  if (myActualReallocWithSize != NULL) actualReallocWithSize = myActualReallocWithSize;
+  if (myActualFreeWithSize != NULL) actualFreeWithSize = myActualFreeWithSize;
   messageCallback = NULL;
   lastMessageCallbackResult = 1;
   lastMessageSuppressedResult = -1;
@@ -1278,7 +1335,7 @@ int initializeLibraryMode() {
   printMode = PRINT_MODE_LEGACY;
   warnFile = NULL;
   eliminatePromptBackup = 1;
-  mp_set_memory_functions(safeMalloc,wrapSafeRealloc,NULL);
+  wrap_mp_set_memory_functions(safeMalloc,wrapSafeRealloc,wrapSafeFree);
   initToolDefaults();
   handlingCtrlC = 0;
   lastHandledSignal = 0;
@@ -1317,6 +1374,7 @@ int finalizeLibraryMode() {
   declaredSymbolTable = NULL;
   mpfr_clear(statediam);
   mpfr_free_cache();
+  mp_set_memory_functions(oldGMPMalloc,oldGMPRealloc,oldGMPFree);
   libraryMode = 0;
   return 1;
 }
@@ -1472,7 +1530,7 @@ int general(int argc, char *argv[]) {
   }
   initSignalHandler();
   blockSignals();
-  mp_set_memory_functions(safeMalloc,wrapSafeRealloc,NULL);
+  wrap_mp_set_memory_functions(safeMalloc,wrapSafeRealloc,wrapSafeFree);
   initToolDefaults();
 
   exitInsteadOfRecover = 0;
@@ -1610,6 +1668,8 @@ int general(int argc, char *argv[]) {
     fclose(warnFile);
     warnFile = NULL;
   }
+
+  mp_set_memory_functions(oldGMPMalloc,oldGMPRealloc,oldGMPFree);
 
   if (lastWasError) {
     if (lastCorrectlyExecuted) {

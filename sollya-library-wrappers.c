@@ -102,8 +102,17 @@
 
 /* Actual wrapper functions */
 
+int sollya_lib_init_with_custom_memory_functions(void *(*myMalloc)(size_t),
+						 void *(*myCalloc)(size_t, size_t),
+						 void *(*myRealloc)(void *, size_t),
+						 void (*myFree)(void*),
+						 void *(*myReallocWithSize)(void *, size_t, size_t),
+						 void (*myFreeWithSize)(void *, size_t)) {
+  return initializeLibraryMode(myMalloc, myCalloc, myRealloc, myFree, myReallocWithSize, myFreeWithSize);
+}
+
 int sollya_lib_init() {
-  return initializeLibraryMode();
+  return sollya_lib_init_with_custom_memory_functions(NULL, NULL, NULL, NULL, NULL, NULL);
 }
 
 int sollya_lib_close() {

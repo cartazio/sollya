@@ -243,6 +243,12 @@ extern "C" {
   
   /* Initialization and finalization functions */
   int sollya_lib_init();
+  int sollya_lib_init_with_custom_memory_functions(void *(*custom_malloc)(size_t),
+						   void *(*custom_calloc)(size_t, size_t),
+						   void *(*custom_realloc)(void *, size_t),
+						   void (*custom_free)(void *),
+						   void *(*custom_realloc_with_size)(void *, size_t, size_t),
+						   void (*custom_free_with_size)(void *, size_t));
   int sollya_lib_close();
 
   /* Functions to install and uninstall a call-back for the messages

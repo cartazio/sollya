@@ -193,7 +193,12 @@ void setDisplayColor(int);
 int installMessageCallback(int (*msgHandler) (int));
 int uninstallMessageCallback();
 int (*getMessageCallback())(int);
-int initializeLibraryMode();
+int initializeLibraryMode(void *(*)(size_t),
+			  void *(*)(size_t, size_t),
+			  void *(*)(void *, size_t),
+			  void (*)(void*),
+			  void *(*)(void *, size_t, size_t),
+			  void (*)(void *, size_t));
 int finalizeLibraryMode();
 mp_prec_t getToolPrecision();
 void setToolPrecision(mp_prec_t prec);
