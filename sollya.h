@@ -177,7 +177,8 @@ extern "C" {
     FP_EVAL_NOT_FAITHFUL_INFINITY_CONTAINED,
     FP_EVAL_INFINITY,
     FP_EVAL_FAILURE,
-    FP_EVAL_CUTOFF_IS_NAN
+    FP_EVAL_CUTOFF_IS_NAN,
+    FP_EVAL_EXPRESSION_NOT_CONSTANT
   };
 
   /* Define an enumeration type for the status
@@ -646,10 +647,11 @@ extern "C" {
   int sollya_lib_is_pi(sollya_obj_t);
 
   /* Functions to evaluate Sollya objects that are mathematical
-     functions at points or over intervals 
+     functions at points, over intervals or at points given by constant expressions
   */
   fp_eval_result_t sollya_lib_evaluate_function_at_point(mpfr_t, sollya_obj_t, mpfr_t, mpfr_t *);
   ia_eval_result_t sollya_lib_evaluate_function_over_interval(mpfi_t, sollya_obj_t, mpfi_t);
+  fp_eval_result_t sollya_lib_evaluate_function_at_constant_expression(mpfr_t, sollya_obj_t, sollya_obj_t, mpfr_t *);
 
   /* Functions to manipulate lists
 
