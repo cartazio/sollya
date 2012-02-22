@@ -55,6 +55,7 @@ tbuild_function_tanh.c \
 tbuild_function_triple_double.c \
 tcanonical.c \
 tceil.c \
+tcheckinfnorm.c \
 tcmp_equal.c \
 tcmp_greater.c \
 tcmp_greater_equal.c \
