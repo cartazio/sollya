@@ -2,15 +2,6 @@
 #include <stdlib.h>
 #include <sollya.h>
 
-/*
-[-1, 3]
-[2, 45]
-[+Inf]
-[3, +Inf]
-[-1b-1000, 1b-10000]
-[-Inf, Inf]
-[NaN, NaN]
-*/
 
 const char *get_status(fp_eval_result_t s) {
   switch(s) {
@@ -117,32 +108,12 @@ int main(void) {
   sollya_lib_clear_obj(f);
 
 
-  /* Evaluate a constant expression */
+  /* Evaluate a string */
   f = sollya_lib_string("Hello");
   mpfr_set_d(x, 3, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
   sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff NULL: returns %v (%s)", f, x, y, get_status(res));
-  sollya_lib_printf("\n");
-  sollya_lib_clear_obj(f);
-
-
-  f = sollya_lib_string("Hello");
-  mpfr_set_d(x, 3, GMP_RNDN);
-  mpfr_set_d(y, -17, GMP_RNDN);;
-  mpfr_set_d(cutoff, 0.01, GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
-  sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
-  sollya_lib_printf("\n");
-  sollya_lib_clear_obj(f);
-
-
-  f = sollya_lib_string("Hello");
-  mpfr_set_d(x, 3, GMP_RNDN);
-  mpfr_set_d(y, -17, GMP_RNDN);;
-  mpfr_set_d(cutoff, 4., GMP_RNDN);
-  res = sollya_lib_evaluate_function_at_point(y, f, x, &cutoff);
-  sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf("\n");
   sollya_lib_printf("\n");
   sollya_lib_clear_obj(f);
@@ -449,7 +420,7 @@ int main(void) {
   mpfr_set_d(y, -17, GMP_RNDN);
   mpfr_set_d(cutoff, 4., GMP_RNDN);
   res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
-  sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff NULL: returns %v (%s)", f, x, y, get_status(res));
+  sollya_lib_printf("Trying to faithfuly evaluate %b at %v with cutoff %.1g: returns %v (%s)", f, x, mpfr_get_d(cutoff, GMP_RNDN), y, get_status(res));
   sollya_lib_printf("\n");
   sollya_lib_printf("\n");
   sollya_lib_clear_obj(f);

@@ -89,6 +89,7 @@ tdyadic.c \
 terf.c \
 terfc.c \
 terror.c \
+tevaluate_function_at_constant_expression.c \
 tevaluate_function_at_point.c \
 texp.c \
 texpand.c \
