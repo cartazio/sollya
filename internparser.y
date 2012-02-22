@@ -67,6 +67,18 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include "execute.h"
 #include "internparser.h"
 
+/* Mess with the mallocs used by the parser */
+extern void *parserCalloc(size_t, size_t);
+extern void *parserMalloc(size_t);
+extern void *parserRealloc(void *, size_t);
+#undef malloc
+#undef realloc
+#undef calloc
+#define malloc parserMalloc
+#define realloc parserRealloc
+#define calloc parserCalloc
+/* End of the malloc mess */
+
 #define YYERROR_VERBOSE 1
   // #define YYPARSE_PARAM scanner
   // #define YYLEX_PARAM   scanner

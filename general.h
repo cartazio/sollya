@@ -152,6 +152,7 @@ extern int flushOutput;
 extern void *rpl_malloc(size_t n);
 extern void *rpl_realloc(void *, size_t n);
 
+
 int general(int argc, char *argv[]);
 void printPrompt(void);
 void recoverFromError(void);
@@ -159,6 +160,7 @@ void demaskString(char*, char*);
 char *maskString(char *);
 void *safeCalloc (size_t nmemb, size_t size);
 void *safeMalloc (size_t size);
+void safeFree(void *ptr);
 int printMessage(int verb, int msgNum, const char *format, ...);
 int sollyaVfprintf(FILE *fd, const char *format, va_list varlist);
 int sollyaPrintf(const char *format, ...);

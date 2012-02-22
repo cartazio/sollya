@@ -185,6 +185,10 @@ node *minitree;
 
 /* END OF HELPER VARIABLES */
 
+/* GLOBAL VARIABLES FOR THE MEMORY ALLOCATION FUNCTIONS */
+
+
+/* END OF GLOBAL VARIABLES FOR THE MEMORY ALLOCATION FUNCTIONS */
 
 extern int yyparse();
 extern void yylex_destroy(void *);
@@ -341,11 +345,33 @@ void *safeRealloc (void *ptr, size_t size) {
   return newPtr;
 }
 
+void safeFree(void *ptr) {
+  free(ptr);
+}
+
 /* The gmp signature for realloc is strange, we have to wrap our function */
 void *wrapSafeRealloc(void *ptr, size_t old_size, size_t new_size) {
   UNUSED_PARAM(old_size);
   return (void *) safeRealloc(ptr,new_size);
 }
+
+/* Provide functions for the parsers 
+
+   These functions are wrappers that are currently provided to cope
+   with special behavior of memory allocation in the future.
+*/
+void *parserCalloc(size_t nmemb, size_t size) {
+  return safeCalloc(nmemb, size);
+}
+
+void *parserMalloc(size_t size) {
+  return safeMalloc(size);
+}
+
+void *parserRealloc(void *ptr, size_t size) {
+  safeRealloc(ptr, size);
+}
+
 
 char *maskString(char *src) {
   char *buf;
