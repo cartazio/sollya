@@ -203,7 +203,6 @@ false
 true
 true
 Warning: the tool is unable to decide an equality test by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.
-Warning: the tool is unable to decide an equality test by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.
 true
 Warning: the tool is unable to decide an inequality test by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.
 true
@@ -213,26 +212,6 @@ Warning: the tool is unable to decide an inequality test by evaluation even thou
 true
 Warning: the tool is unable to decide an inequality test by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.
 false
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
 The tool has been restarted.
 =============== Test number 251 ================
 5.53427734375e1
