@@ -275,6 +275,17 @@ extern "C" {
   /* A function to clear Sollya_objects */
   void sollya_lib_clear_obj(sollya_obj_t);
 
+  /* Some Sollya library functions allocate memory when returning
+     arrays or character strings. This memory must be freed by the
+     user. However, the freeing must not be done using the traditional
+     system free() but the following Sollya free.
+
+     The Sollya free function will call back the memory deallocation
+     function that might have been registered with the Sollya library
+     upon library initialization.
+  */
+  void sollya_lib_free(void *);
+
   /* A function to structurally compare two Sollya objects */
   int sollya_lib_cmp_objs_structurally(sollya_obj_t, sollya_obj_t);
 

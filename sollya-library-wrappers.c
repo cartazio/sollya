@@ -181,6 +181,10 @@ void sollya_lib_clear_obj(sollya_obj_t obj1) {
   freeThing(obj1);
 }
 
+void sollya_lib_free(void *ptr) {
+  safeFree(ptr);
+}
+
 sollya_obj_t sollya_lib_copy_obj(sollya_obj_t obj1) {
   return copyThing(obj1);
 }
