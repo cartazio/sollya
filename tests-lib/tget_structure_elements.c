@@ -1,5 +1,4 @@
 #include <sollya.h>
-#include <stdlib.h>
 
 
 int main(void) {
@@ -43,20 +42,20 @@ int main(void) {
 
   if (ea != NULL) {
     for (i=0;i<na;i++) sollya_lib_clear_obj(ea[i]);
-    free(ea);
+    sollya_lib_free(ea);
   }
   if (ia != NULL) {
-    for (i=0;i<na;i++) free(ia[i]);
-    free(ia);
+    for (i=0;i<na;i++) sollya_lib_free(ia[i]);
+    sollya_lib_free(ia);
   }
 
   if (eb != NULL) {
     for (i=0;i<nb;i++) sollya_lib_clear_obj(eb[i]);
-    free(eb);
+    sollya_lib_free(eb);
   }
   if (ib != NULL) {
-    for (i=0;i<nb;i++) free(ib[i]);
-    free(ib);
+    for (i=0;i<nb;i++) sollya_lib_free(ib[i]);
+    sollya_lib_free(ib);
   }
 
   sollya_lib_clear_obj(a);

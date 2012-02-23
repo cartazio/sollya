@@ -1,5 +1,4 @@
 #include <sollya.h>
-#include <stdlib.h>
 
 #define A_DIM 15
 
@@ -130,7 +129,7 @@ int main(void) {
     for (i=0;i<resElementsNum;i++) {
       sollya_lib_clear_obj(resElements[i]);
     }
-    free(resElements);
+    sollya_lib_free(resElements);
   }
 
   sollya_lib_close();
