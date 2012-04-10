@@ -1,0 +1,18 @@
+Before even thinking of performing the release:
+  * Close bugs that can be closed.
+  * Check that all modifications have been reported in the documenation.
+  * Compile with verbose options and check that no warning remains.
+
+When the release seems ready:
+  * Check that 'make check' passes on several architectures (especially cygwin).
+  * Check that all modifications to sollya.tex have been reported into sollya.php.
+  * Recompile the doc.
+  * Check that the version number of Sollya is correctly set.
+  * Check that copyrights and email addresses are up to date.
+  * Generate the Changelog file, and the human-readable NEWS file.
+  * Build the release. Try to install it and test it on several architectures (especially cygwin).
+  * Put it online and make announcements.
+
+
+
+
