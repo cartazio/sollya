@@ -1,5 +1,5 @@
 /*
- Copyright 2011 by 
+ Copyright 2012 by 
   
   Centre de recherche INRIA Sophia-Antipolis Mediterranee, equipe APICS,
   Sophia Antipolis, France.
@@ -164,9 +164,8 @@ if (chebM!=NULL) if ((*chebM)!=NULL) *(t->cheb_matrix)=*chebM;
 return t;
 }
 
-/*This function dealocates a cheb model, without
-  touching the memory referenced by 
-  cheb_array and cheb_matrix parts
+/*This function dealocates a cheb model, without touching the memory
+ referenced by cheb_array and cheb_matrix parts
 */
 void clearcModelLight(chebModel *t){
   int i;
@@ -209,28 +208,23 @@ void clearcModelComplete(chebModel *t){
 */
 void printcModel(chebModel *t){
   int i;
-  printf("\nChebModel of order %d in Chebyshev basis ", t->n);
-  printf("over ");
-  printInterval(t->x);
-  printf("\nCoeffs:");
+  sollyaPrintf("\nChebModel of order %d in Chebyshev basis ", t->n);
+  sollyaPrintf("over %w", t->x);
+  sollyaPrintf("\nCoeffs:");
   for(i=0;i<t->n;i++) {
-    printInterval(t->poly_array[i]);
-    printf(",");
+    sollyaPrintf(" %w,",t->poly_array[i]);
   }  
-  printf("r=");
-  printInterval(t->rem_bound);
-  printf(",b=");
-  printInterval(t->poly_bound);  
-  printf("\n");  
+  sollyaPrintf(" r= %w ",t->rem_bound);
+  sollyaPrintf(",b= %w \n", t->poly_bound);  
   }
 
-/* The convention for all the following functions is:
-the cmodel given as parameter has to be created previously 
-*/
+/***************************************************************/
+/*******The convention for all the following functions is:******/
+/***the cmodel given as parameter must be previously created ***/ 
+/***************************************************************/
+/***************************************************************/
 
-
-/*This function sets the chebModel t 
-  with constant ct;
+/*This function sets the chebModel t with constant ct;
   It updates the bound.
 */
 
@@ -248,7 +242,8 @@ void constcModel(chebModel*t, sollya_mpfi_t ct){
 }
 
 
-/* Check that models are compatible one with another: i.e. they can be added, mulitplied, copied, etc. */
+/* Check that models are compatible one with another: 
+i.e. they can be added, mulitplied, copied, etc. */
 int cModelsAreCompatible(chebModel *t1, chebModel *t2) {
     return ((t1 != NULL) && (t2 != NULL) && 
             (sollya_mpfi_equal_p(t1->x, t2->x) || (sollya_mpfi_nan_p(t1->x) && sollya_mpfi_nan_p(t2->x))) &&
@@ -263,9 +258,9 @@ void copycModel(chebModel *t, chebModel *tt){
   int i;
   
   if (!cModelsAreCompatible(t, tt)) {
-    printf( "Error in chebModels: trying to copy incompatible models.\n");
-    printf( "No modification is made.\n");
-    return;
+   printMessage(-1, SOLLYA_MSG_ERROR_IN_CHEBYSHEVFORM_COPYING_INCOMPAT_MODELS, "Error in chebyshevform: trying to copy incompatible models.\n");
+   printMessage(-1, SOLLYA_MSG_CONTINUATION, "No modification is made.\n");
+   return;
   }
   
   for(i=0;i<tt->n;i++) {
@@ -279,11 +274,9 @@ if (tt->cheb_matrix!=NULL) if ((*tt->cheb_matrix)!=NULL) *(t->cheb_matrix)=*tt->
 if (tt->cheb_array!=NULL) if ((*tt->cheb_array)!=NULL) *(t->cheb_array)=*tt->cheb_array;
 }
 
-
-/***************************************************/
-/******************Operations on ChebModels*********/
-/***************************************************/
-/***************************************************/
+/***************************************************************/
+/*********************Operations on ChebModels******************/
+/***************************************************************/
 
 /*Compute the cm for addition of two given cms. 
   Updates the resulting polynomial bound.
@@ -293,9 +286,9 @@ void addition_CM(chebModel *t,chebModel *child1_tm, chebModel *child2_tm, mp_pre
   int n;
   chebModel *tt;
   if ( (!cModelsAreCompatible(child1_tm, child2_tm)) || (!cModelsAreCompatible(t, child1_tm)) ) {
-    printf( "Error in chebModels: trying to add incompatible models.\n");
-    printf( "No modification is made.\n");
-    return;
+    printMessage(-1, SOLLYA_MSG_ERROR_IN_CHEBYSHEVFORM_COPYING_INCOMPAT_MODELS, "Error in chebyshevform: trying to copy incompatible models.\n");
+    printMessage(-1, SOLLYA_MSG_CONTINUATION, "No modification is made.\n");
+   return;
   }
   n=t->n;
   tt=createEmptycModelPrecomp(n,t->x, child1_tm->cheb_array,child1_tm->cheb_matrix, prec);
@@ -326,11 +319,11 @@ void ctMultiplication_CM(chebModel*d, chebModel*s, sollya_mpfi_t c, mp_prec_t pr
 }
 
 /*This function multiplies two given cms;
--- parameter boundLevel controls the algorithm used for bounding polynomials
--- the parameter forComposition specifies whether:
-   forComposition=1 means we are using the multiplication inside a composition,
-   then we suppose the bounds for the polynomials are already updated inside the models
-   OTHERWISE we rebound them
+-- parameter *boundLevel* controls the algorithm used for bounding polynomials
+-- parameter *forComposition* specifies whether:
+   forComposition=1 --> we are using the multiplication inside a composition,
+   we suppose bounds for the polynomials are already updated inside models
+   OTHERWISE --> we rebound them
 */
 
 
@@ -341,8 +334,8 @@ void  multiplication_CM(chebModel *t,chebModel *c1, chebModel *c2, int boundLeve
   sollya_mpfi_t temp1, temp2;
   sollya_mpfi_t *r;
   if ( (!cModelsAreCompatible(c2, c1)) || (!cModelsAreCompatible(t, c1)) ) {
-    printf( "Error in chebModels: trying to multiply incompatible models.\n");
-    printf( "No modification is made.\n");
+    printMessage(-1, SOLLYA_MSG_ERROR_IN_CHEBYSHEVFORM_COPYING_INCOMPAT_MODELS, "Error in chebyshevform: trying to copy incompatible models.\n");
+    printMessage(-1, SOLLYA_MSG_CONTINUATION, "No modification is made.\n");
     return;
   }
   n=t->n;
@@ -370,7 +363,8 @@ void  multiplication_CM(chebModel *t,chebModel *c1, chebModel *c2, int boundLeve
     chebPolynomialBound(c1->poly_bound, n, c1->poly_array, boundLevel);
     chebPolynomialBound(c2->poly_bound, n, c2->poly_array, boundLevel);
    }
-   /*if we use multiplication inside a composition, we suppose the the bounds are already computed*/
+   /*if we use multiplication inside a composition,
+   we suppose the the bounds are already computed*/
    
    /*compute in temp2 delta1*B(C2)*/
    
@@ -446,11 +440,11 @@ void  multiplication_CM(chebModel *t,chebModel *c1, chebModel *c2, int boundLeve
    We suppose here that the image for f is already computed tightly, 
    and will not be recomputed here.
    */
-
+/*NOTE: targetRem is a parameter that will stop the composition 
+        of the computed remainder gets too large;
+        currently, it is not used, but this should change in the future*/
 void composition_CM(chebModel *t,chebModel *g, chebModel *f, int boundLevel, mpfr_t targetRem, mp_prec_t prec){
 
-/*TODO: targetRem is a parameter that will stop the composition of the computed remainder gets too large
-        currently, it is not used, but this should change in the future*/
   int i;
   int n,m;
   
@@ -607,10 +601,9 @@ void computeMonotoneRemainderCheb(sollya_mpfi_t *bound, int typeOfFunction, int 
   sollya_mpfi_set_fr(xinf, xinfFr);  sollya_mpfi_set_fr(xsup, xsupFr);  
   
   evaluateChebPolynomialClenshaw(bound1, n, poly_array, x,xinf); /* enclosure of p(xinf) */
-  //printf("\nthe value in xinf is:"); printInterval(bound1);
-  
+    
   evaluateChebPolynomialClenshaw(bound2, n, poly_array, x,xsup); /* enclosure of p(xsup) */
-  //printf("\nthe value in xsup is:"); printInterval(bound2); 
+  
   /* enclosure of f(xinf) and f(xsup) */
   switch(typeOfFunction) {
   case MONOTONE_REMAINDER_BASE_FUNCTION:
@@ -640,13 +633,13 @@ void computeMonotoneRemainderCheb(sollya_mpfi_t *bound, int typeOfFunction, int 
     sollya_mpfi_pow(boundf2, p_interv, xsup);
     break;
   default:
-    printf("Error in chebModels: unkown type of function used with Zumkeller's technique\n");
+    printMessage(-1, SOLLYA_MSG_ERROR_IN_CHEBYSHEVFORM_UNKNOWN_FUNC_FOR_ZUMKELLER, "Error in chebyshev: unkown type of function used with Zumkeller's technique\n");
     return;
   }
   
   
-  sollya_mpfi_sub(bound1,boundf1,bound1);                          /* enclosure of f(xinf)-p(xinf-x0) */
-  sollya_mpfi_sub(bound2,boundf2,bound2);                          /* enclosure of f(xsup)-p(xsup-x0) */
+  sollya_mpfi_sub(bound1,boundf1,bound1); /* enclosure of f(xinf)-p(xinf-x0) */
+  sollya_mpfi_sub(bound2,boundf2,bound2); /* enclosure of f(xsup)-p(xsup-x0) */
 
   sollya_mpfi_abs(bound1, bound1);
   sollya_mpfi_abs(bound2, bound2);
@@ -730,7 +723,7 @@ void base_CMAux(chebModel *t, int typeOfFunction, int nodeType, node *f, mpfr_t 
     }
     break;
   default: 
-    printf( "Error in ChebModels: unkown type of function used with Zumkeller's technique\n");
+    printMessage(-1, SOLLYA_MSG_ERROR_IN_CHEBYSHEVFORM_UNKNOWN_FUNC_FOR_ZUMKELLER, "Error in chebyshev: unkown type of function used with Zumkeller's technique\n");
     return;
   }
   /*compute the values of the coefficients*/
@@ -739,18 +732,16 @@ void base_CMAux(chebModel *t, int typeOfFunction, int nodeType, node *f, mpfr_t 
   /* Use Zumkeller technique to improve the bound in the absolute case,
      when the (n+1)th derivative has constant sign */
   if((sollya_mpfi_is_nonpos(nDeriv[n+1]) > 0)||(sollya_mpfi_is_nonneg(nDeriv[n+1]) > 0)){ 
-    if (verbosity>10) {
-      printf("\nthe remainder is monotone\n");
-    }
+  /*Debugging of Z technique*/
+  /*    if (verbosity>10) {*/
+  /*      printf("\nthe remainder is monotone\n");*/
+  /*    }*/
     computeMonotoneRemainderCheb(&tt->rem_bound, typeOfFunction, nodeType, f, p, n, tt->poly_array, x);
   }
   else{
-    /* just keep the bound obtained using AD */
-    /*df:=unapply(simplify(diff(f(x),[x$n])),x);*/
-    /*diffValue:=compute_naive_interval_range(df,X)&/(n!);
-      diffValue:=(2&*diffValue&*((op(2,X)-op(1,X))^(n)))&/(4^n );*/
-    
-    
+    /* just keep the bound obtained using AD, nDeriv[n] */
+    /* diffValue:=(2*nDeriv[n]*((op(2,X)-op(1,X))^(n)))/(4^n );*/
+   
     sollya_mpfi_set(tt->rem_bound, nDeriv[n]);
     mpfr_init2(a, sollya_mpfi_get_prec(x));
     mpfr_init2(b, sollya_mpfi_get_prec(x));
@@ -776,10 +767,8 @@ void base_CMAux(chebModel *t, int typeOfFunction, int nodeType, node *f, mpfr_t 
     mpfr_clear(b);
      
   }
-   
-  
-  /* We do not bound the polynomial obtained here*/
  
+  /* We do not bound the polynomial obtained here*/
   
   copycModel(t,tt);
   clearcModelLight(tt);
@@ -793,6 +782,10 @@ void base_CMAux(chebModel *t, int typeOfFunction, int nodeType, node *f, mpfr_t 
   free(fValues);
 }
 
+/*This function computes a chebyshevform of order n, over x, for a function f;
+  It uses precision prec for computations, it displays aux informations based on 
+  verbosity level and bounds the polynomials appearing based on boundLevel
+*/
 void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int boundLevel, int verbosity, mp_prec_t prec) {
   int i;
   
@@ -818,6 +811,7 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int boundLevel, i
     tt=createEmptycModelPrecomp(n,t->x, t->cheb_array, t->cheb_matrix, prec);
     getNChebCoeffsFromPolynomial(tt->poly_array, tt->rem_bound, f, x,n,boundLevel);
     copycModel(t,tt);
+    /*NOTE: The following printing is for debugging - we can cut it if necessary*/
     if (verbosity>10) {
       printf("\nPolynomial model\n");
       printcModel(t);
@@ -841,6 +835,7 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int boundLevel, i
       sollya_mpfi_neg(tt->rem_bound,child1_tm->rem_bound);
     
       copycModel(t,tt);
+      /*NOTE: The following printing is for debugging - we can cut it if necessary*/
       if (verbosity>10) {
         printf("\nNegation model\n");
         printcModel(t);

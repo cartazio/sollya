@@ -484,5 +484,7 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #define SOLLYA_MSG_CHEBYSHEVFORM_DEGREE_MUST_NOT_BE_NEGATIVE       424       /* The degree of a Chebyshev form must be at least zero. */
 #define SOLLYA_MSG_CHEBYSHEVFORM_DOMAIN_MUST_NOT_BE_POINT_INTERVAL 425       /* The domain of a Chebyshev Model can not be a point interval*/
 #define SOLLYA_MSG_CHEBYSHEVFORM_ERROR_IN_COMPUTATION              426        /* An error occurred during computation of a Chebyshev form.*/
+#define SOLLYA_MSG_ERROR_IN_CHEBYSHEVFORM_COPYING_INCOMPAT_MODELS  427       /* Error in Chebyshev form computation: copy of incompatible models. */
+#define SOLLYA_MSG_ERROR_IN_CHEBYSHEVFORM_UNKNOWN_FUNC_FOR_ZUMKELLER  428       /* Error in Chebyshev form computation: unkown type of function used with Zumkeller's technique. */
 
 #endif /* ifdef MESSAGE_NUMBERS_H*/

@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2013 by 
+Copyright 2011-2012 by 
   
   Centre de recherche INRIA Sophia-Antipolis Mediterranee, equipe APICS,
   Sophia Antipolis, France.
@@ -74,20 +74,120 @@ rem_bound - bound for the remainder
 poly_bound - bound for the polynomial (helpful for computations)
 */
 typedef struct cmdl {
-int n; 
-sollya_mpfi_t x;
-sollya_mpfi_t **cheb_array;
-sollya_mpfi_t **cheb_matrix;
-sollya_mpfi_t *poly_array;
-sollya_mpfi_t rem_bound;
-sollya_mpfi_t poly_bound;
+  int n; 
+  sollya_mpfi_t x;
+  sollya_mpfi_t **cheb_array;
+  sollya_mpfi_t **cheb_matrix;
+  sollya_mpfi_t *poly_array;
+  sollya_mpfi_t rem_bound;
+  sollya_mpfi_t poly_bound;
 } chebModel;
 
+/***************************************************************/
+/***************************************************************/
+/**********Functions related to Chebyshev Models****************/
+/***************************************************************/
+/***************************************************************/
+  
+/* This function creates an empty cheb model */
+chebModel* createEmptycModel(int n,sollya_mpfi_t x, mp_prec_t p);
 
+/*This function creates an empty chebyshev model 
+  and depending on two flags: flag_points, flag_matrix,
+  with convention 1= compute, 0=do not compute
+  computes the chebyshev points of order n over x, x_i^{[a,b]}
+  and the chebMatrix (T_j(x_i)), i=0..n-1, j=0..n-1 
+*/
+chebModel* createEmptycModelCompute(int n,sollya_mpfi_t x, int flag_points, 
+  int flag_matrix,  mp_prec_t p);
+
+
+/*This function creates an empty chebyshev model
+and makes the link from chebpoints and chebMatrix into the new cmodel
+(this function assumes that we have already computed 
+chebpoints and chebMatrix (if the respective pointers are not NULL)
+*/
+chebModel* createEmptycModelPrecomp(int n,sollya_mpfi_t x, 
+  sollya_mpfi_t **chebPoints, sollya_mpfi_t **chebM,  mp_prec_t p);
+
+/*This function dealocates a cheb model, without touching the memory 
+  referenced by cheb_array and cheb_matrix parts
+*/
+void clearcModelLight(chebModel *t);
+
+/*This function dealocates a cheb model, distroying
+  the cheb_array and cheb_matrix parts
+*/
+void clearcModelComplete(chebModel *t);
+
+/*This function pretty prints a cheb model
+*/
+void printcModel(chebModel *t);
+
+/***************************************************************/
+/*******The convention for all the following functions is:******/
+/***the cmodel given as parameter must be previously created ***/ 
+/***************************************************************/
+/***************************************************************/
+
+/*This function sets the chebModel t with constant ct;
+  It updates the bound.
+*/
+void constcModel(chebModel*t, sollya_mpfi_t ct);
+
+/* Check that models are compatible one with another:
+ i.e. they can be added, mulitplied, copied, etc. */
+int cModelsAreCompatible(chebModel *t1, chebModel *t2);
+
+/*This function sets a cm t with the values given by anoter cm tt
+they should have the same basis and interval, 
+if an incompatibility is detected, no modification is made.
+*/
+void copycModel(chebModel *t, chebModel *tt);
+/***************************************************************/
+/*********************Operations on ChebModels******************/
+/***************************************************************/
+
+/* Compute the multiplication of a cm by a constant */
+void ctMultiplication_CM(chebModel*d, chebModel*s, sollya_mpfi_t c, mp_prec_t prec);
+
+
+/*Compute the cm for addition of two given cms. 
+  Updates the resulting polynomial bound.
+*/
+void addition_CM(chebModel *t,chebModel *child1_tm, chebModel *child2_tm, mp_prec_t prec);
+
+/*This function multiplies two given cms;
+-- parameter *boundLevel* controls the algorithm used for bounding polynomials
+-- parameter *forComposition* specifies whether:
+   forComposition=1 --> we are using the multiplication inside a composition,
+   we suppose bounds for the polynomials are already updated inside models
+   OTHERWISE --> we rebound them
+*/
+void  multiplication_CM(chebModel *t,chebModel *c1, chebModel *c2, int boundLevel, int forComposition, mp_prec_t prec);
+
+/* composition: g o f
+   VERY IMPORTANT ASSUMPTIONS:
+   We are given a cm for the function f over x, order n
+   and a cm for basic function g over y, order n with:
+       range(f->poly)+ f->rem_bound \subseteq y
+
+   Note that these assumptions ARE NOT CHECKED inside the function.
+   If these assumptions are true, it returns a valid tm for g(f(x)) over x.
+   
+   Note that it is indicated to bound f tightly before, 
+   such that the image over which g is computed is small.
+   We suppose here that the image for f is already computed tightly, 
+   and will not be recomputed here.
+   */
+/*NOTE: targetRem is a parameter that will stop the composition 
+        of the computed remainder gets too large;
+        currently, it is not used, but this should change in the future*/
+void composition_CM(chebModel *t,chebModel *g, chebModel *f, int boundLevel, mpfr_t targetRem, mp_prec_t prec);
 
 
 void chebyshevform(node **Ch, chain **errors, sollya_mpfi_t delta, 
-		   chain **chebyshevCoefficients, node *f, int n, 
-		   sollya_mpfi_t dom, mp_prec_t prec);
+  chain **chebyshevCoefficients, node *f, int n, 
+  sollya_mpfi_t dom, mp_prec_t prec);
 
 #endif /* CHEBYSHEVFORM_H */
