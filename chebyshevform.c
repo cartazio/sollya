@@ -859,6 +859,7 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int boundLevel, i
       tt=createEmptycModelPrecomp(n,child1_tm->x, child1_tm->cheb_array,child1_tm->cheb_matrix, prec);
       addition_CM(tt,child1_tm, child2_tm, prec);
       copycModel(t,tt);
+      /*NOTE: The following printing is for debugging - we can cut it if necessary*/
       if (verbosity>10) {
         printf("\nADD model\n");
         printcModel(t);
@@ -885,6 +886,7 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int boundLevel, i
       ctMultiplication_CM(child2_tm,child2_tm, minusOne, prec);
       tt=createEmptycModelPrecomp(n,child1_tm->x, child1_tm->cheb_array, child1_tm->cheb_matrix, prec);
       addition_CM(tt,child1_tm, child2_tm, prec);
+      /*NOTE: The following printing is for debugging - we can cut it if necessary*/
       if (verbosity>10) {
         printf("\nSUB model\n");
         printcModel(t);
@@ -914,6 +916,8 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int boundLevel, i
      multiplication_CM(tt,child1_tm, child2_tm,boundLevel,0,prec);
      
      copycModel(t,tt);
+
+     /*NOTE: The following printing is for debugging - we can cut it if necessary*/
      if (verbosity>10) {
         printf("\nMultiplication model\n");
         printcModel(t);
@@ -947,7 +951,8 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int boundLevel, i
       /*Composition of models*/  
       ttt=createEmptycModelPrecomp(n,child2_tm->x, child2_tm->cheb_array,child2_tm->cheb_matrix, prec);
       composition_CM(ttt,inv_tm, child2_tm, boundLevel, NULL,prec);
-      
+ 
+      /*NOTE: The following printing is for debugging - we can cut it if necessary*/
       if (verbosity>10) {
         printf("\nIn inverse Composition model\n");
         printcModel(ttt);
@@ -963,11 +968,14 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int boundLevel, i
       clearcModelComplete(inv_tm);
       clearcModelLight(ttt);
       copycModel(t,tt);
+
+      /*NOTE: The following printing is for debugging - we can cut it if necessary*/
       if (verbosity>10) {
         printf("\nInverse model\n");
         printcModel(t);
         printf("\n****************\n");
       }
+
       clearcModelLight(tt);
       sollya_mpfi_clear(rangeg);
       break;
@@ -1011,6 +1019,7 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int boundLevel, i
          else
           base_CMAux(child1_tm, MONOTONE_REMAINDER_BASE_FUNCTION, f->nodeType, NULL, NULL, n,x, verbosity,prec);
 
+         /*NOTE: The following printing is for debugging - we can cut it if necessary*/
          if (verbosity>10) {
           printf("\nIn Basic function of x\n");
           printcModel(child1_tm);
@@ -1026,6 +1035,8 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int boundLevel, i
     
       /*call cheb_model on the child*/
       cheb_model(child1_tm, f->child1,n,x,boundLevel, verbosity, prec);
+ 
+      /*NOTE: The following printing is for debugging - we can cut it if necessary*/
       if (verbosity>10) {
         printf("\nIn Base function, child model\n");
         printcModel(child1_tm);
@@ -1035,7 +1046,9 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int boundLevel, i
       
       chebPolynomialBound(child1_tm->poly_bound, n, child1_tm->poly_array, boundLevel);
       sollya_mpfi_add(rangeg,child1_tm->rem_bound, child1_tm->poly_bound);
-       if (verbosity>12) {
+
+      /*NOTE: The following printing is for debugging - we can cut it if necessary*/
+      if (verbosity>12) {
         printf("\n We compute the cheb model over:");
         printInterval(rangeg);
         printf("\n");
@@ -1048,7 +1061,8 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int boundLevel, i
       else
         base_CMAux(child2_tm, MONOTONE_REMAINDER_BASE_FUNCTION, f->nodeType, NULL, NULL, n,rangeg, verbosity,prec);
 
-       if (verbosity>10) {
+      /*NOTE: The following printing is for debugging - we can cut it if necessary*/
+      if (verbosity>10) {
         printf("\nIn Basic function, parent model\n");
         printcModel(child2_tm);
         printf("****************\n");
@@ -1197,8 +1211,8 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int boundLevel, i
     break;
     
   default:
-   printf("Error: TM: unknown identifier (%d) in the tree\n",f->nodeType);
-   exit(1);
+  sollyaFprintf(stderr,"Error: CM: unknown identifier (%d) in the tree\n",f->nodeType);
+  exit(1);
   }
 }
   return;
