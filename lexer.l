@@ -67,6 +67,21 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 #define YY_NO_UNPUT 1
 
+/* Mess with the mallocs used by the lexer */
+extern void *parserCalloc(size_t, size_t);
+extern void *parserMalloc(size_t);
+extern void *parserRealloc(void *, size_t);
+extern void parserFree(void *);
+#undef malloc
+#undef realloc
+#undef calloc
+#undef free
+#define malloc parserMalloc
+#define realloc parserRealloc
+#define calloc parserCalloc
+#define free parserFree
+/* End of the malloc mess */
+
 %}
 
 %option noyywrap
@@ -153,6 +168,8 @@ ASSIGNEQUAL     ":="
 SEMICOLON       ";"
 QUIT            "quit"
 PRINT           "print"
+SUPPRESSMESSAGE "suppressmessage"
+UNSUPPRESSMESSAGE "unsuppressmessage"
 DIFF            "diff"
 SIMPLIFY        "simplify"
 CANONICAL       "canonical"
@@ -234,6 +251,7 @@ STRING          ({STRINGDELIMITER})((("\\\\")|(("\\")[\"\'\?ntabfrv])|(("\\")({O
 
 
 VERBOSITY       "verbosity"
+SHOWMESSAGENUMBERS "showmessagenumbers"
 
 WORSTCASE       "worstcase"
 
@@ -287,6 +305,7 @@ PRINTEXPANSION  "printexpansion"
 
 BASHEXECUTE     "bashexecute"
 BASHEVALUATE    "bashevaluate"
+GETSUPPRESSEDMESSAGES "getsuppressedmessages"
 EXTERNALPLOT    "externalplot"
 PERTURB         "perturb"
 
@@ -420,6 +439,7 @@ EXTERNALPROC    "externalproc"
 VOID            "void"
 CONSTANTTYPE    "constant"
 FUNCTION        "function"
+OBJECT          "object"
 RANGE           "range"
 INTEGER         "integer"
 STRINGTYPE      "string"
@@ -467,7 +487,7 @@ NOP             "nop"
                 }
 
 <readstate>{STRING}  {
-                       if (newReadFilename != NULL) free(newReadFilename);
+                       if (newReadFilename != NULL) safeFree(newReadFilename);
 		       newReadFilename = NULL;
 		       newReadFilename = (char*) safeCalloc(yyleng - 1,sizeof(char));
 		       strncpy(newReadFilename,yytext+1,yyleng-2);
@@ -504,7 +524,7 @@ NOP             "nop"
 			yyin = temp_fd;
 			yy_switch_to_buffer(yy_create_buffer(yyin, YY_BUF_SIZE, scanner), scanner);
 		      }
-		      free(newReadFilenameTemp);
+		      safeFree(newReadFilenameTemp);
 		      BEGIN(INITIAL);
                 }
 
@@ -523,15 +543,15 @@ NOP             "nop"
 		      } else {
 			fclose(yyin);
 			yyin = *((FILE **) (readStack2->value));
-			free(readStack2->value);
+			safeFree(readStack2->value);
 			readStackTemp = readStack2->next;
-			free(readStack2);
+			safeFree(readStack2);
 			readStack2 = readStackTemp;
 			yy_delete_buffer(YY_CURRENT_BUFFER, scanner);
 			yy_switch_to_buffer(*((YY_BUFFER_STATE *) (readStack->value)),scanner);
-			free(readStack->value);
+			safeFree(readStack->value);
 			readStackTemp = readStack->next;
-			free(readStack);
+			safeFree(readStack);
 			readStack = readStackTemp;
 		      }
                 }
@@ -575,7 +595,7 @@ NOP             "nop"
 					      constBuffer2 = (char *) safeCalloc(yyleng-1,sizeof(char));
 					      strncpy(constBuffer2,yytext+1,yyleng-2);
 					      demaskString(constBuffer,constBuffer2);
-					      free(constBuffer2);
+					      safeFree(constBuffer2);
 					      yylval->value = constBuffer;
                                               newTokenLexed(); return STRINGTOKEN; }
 
@@ -659,6 +679,7 @@ NOP             "nop"
 {DIAM}            			    { newTokenLexed(); return DIAMTOKEN; }
 {DISPLAY}          			    { newTokenLexed(); return DISPLAYTOKEN; }
 {VERBOSITY}       			    { newTokenLexed(); return VERBOSITYTOKEN; }
+{SHOWMESSAGENUMBERS}			    { newTokenLexed(); return SHOWMESSAGENUMBERSTOKEN; }
 {CANONICAL}       			    { newTokenLexed(); return CANONICALTOKEN; }
 {AUTOSIMPLIFY}    			    { newTokenLexed(); return AUTOSIMPLIFYTOKEN; }
 {TAYLORRECURSIONS}			    { newTokenLexed(); return TAYLORRECURSIONSTOKEN; }
@@ -756,6 +777,8 @@ NOP             "nop"
 {PARSE}           			    { newTokenLexed(); return PARSETOKEN; }
 
 {PRINT}           			    { newTokenLexed(); return PRINTTOKEN; }
+{SUPPRESSMESSAGE}           		    { newTokenLexed(); return SUPPRESSMESSAGETOKEN; }
+{UNSUPPRESSMESSAGE}           		    { newTokenLexed(); return UNSUPPRESSMESSAGETOKEN; }
 {PRINTXML}           			    { newTokenLexed(); return PRINTXMLTOKEN; }
 {EXECUTE}           			    { newTokenLexed(); return EXECUTETOKEN; }
 {PLOT}            			    { newTokenLexed(); return PLOTTOKEN; }
@@ -765,6 +788,7 @@ NOP             "nop"
 {PRINTEXPANSION}  			    { newTokenLexed(); return PRINTEXPANSIONTOKEN; }
 {BASHEXECUTE}     			    { newTokenLexed(); return BASHEXECUTETOKEN; }
 {BASHEVALUATE}     			    { newTokenLexed(); return BASHEVALUATETOKEN; }
+{GETSUPPRESSEDMESSAGES}     		    { newTokenLexed(); return GETSUPPRESSEDMESSAGESTOKEN; }
 {EXTERNALPLOT}    			    { newTokenLexed(); return EXTERNALPLOTTOKEN; }
 {WRITE}           			    { newTokenLexed(); return WRITETOKEN; }
 {ASCIIPLOT}       			    { newTokenLexed(); return ASCIIPLOTTOKEN; }
@@ -808,6 +832,7 @@ NOP             "nop"
 {VOID}                                      { newTokenLexed(); return VOIDTOKEN; }
 {CONSTANTTYPE}                              { newTokenLexed(); return CONSTANTTYPETOKEN; }
 {FUNCTION}                                  { newTokenLexed(); return FUNCTIONTOKEN; }
+{OBJECT}                                    { newTokenLexed(); return OBJECTTOKEN; }
 {RANGE}                                     { newTokenLexed(); return RANGETOKEN; }
 {INTEGER}                                   { newTokenLexed(); return INTEGERTOKEN; }
 {STRINGTYPE}                                { newTokenLexed(); return STRINGTYPETOKEN; }

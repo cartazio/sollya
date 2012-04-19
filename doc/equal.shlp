@@ -2,6 +2,8 @@
 #QUICK_DESCRIPTION equality test operator
 #CALLING <expr1> $COMMAND <expr2>
 #TYPE ($ANY_TYPE, $ANY_TYPE) -> $BOOLEAN_TYPE
+#LIBRARYNAME sollya_obj_t sollya_lib_cmp_equal(sollya_obj_t, sollya_obj_t)
+
 #PARAMETERS <expr1> and <expr2> represent expressions
 
 
@@ -29,10 +31,11 @@ asin(1) * 2 == pi;
 exp(5) == log(4);
 
 #EXAMPLE
-sin(pi/6) == 1/2 * sqrt(3);
+sin(pi/6) == 1/4;
 
 #EXAMPLE
 prec = 12;
+verbosity = 1!;
 16384.1 == 16385.1;
 
 #EXAMPLE

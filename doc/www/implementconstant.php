@@ -4,6 +4,8 @@
 <span class="smallDescription">implements a constant in arbitrary precision 
 </span> 
 </div> 
+<div class="divLibraryName"> 
+</div> 
 <div class="divUsage"> 
 <h2 class="category">Usage: </h2> 
 <span class="commandline"><?php linkTo("command","implementconstant","implementconstant");?>(<span class="arg">expr</span>) : <span class="type">constant</span> -&gt; <span class="type">void</span></span> 
@@ -191,16 +193,58 @@ code on one machine whilst it has been produced on another.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mpfr_t tmp3;<br> 
 &nbsp;&nbsp;&nbsp;<br> 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/* Initializations */<br> 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mpfr_init2 (tmp2, prec+8);<br> 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mpfr_init2 (tmp3, prec+8);<br> 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mpfr_init2 (tmp1, prec+8);<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (prec &gt;= 2147483640+MPFR_PREC_MIN)<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mpfr_init2 (tmp2, prec-2147483640);<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mpfr_init2 (tmp2, MPFR_PREC_MIN);<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (prec &gt;= 2147483640+MPFR_PREC_MIN)<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mpfr_init2 (tmp3, prec-2147483640);<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mpfr_init2 (tmp3, MPFR_PREC_MIN);<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (prec &gt;= 2147483640+MPFR_PREC_MIN)<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mpfr_init2 (tmp1, prec-2147483640);<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mpfr_init2 (tmp1, MPFR_PREC_MIN);<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br> 
 &nbsp;&nbsp;&nbsp;<br> 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/* Core */<br> 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mpfr_set_prec (tmp2, prec+8);<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (prec &gt;= 2147483640+MPFR_PREC_MIN)<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mpfr_set_prec (tmp2, prec-2147483640);<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mpfr_set_prec (tmp2, MPFR_PREC_MIN);<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br> 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mpfr_const_pi (tmp2, MPFR_RNDN);<br> 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mpfr_set_prec (tmp3, prec+8);<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (prec &gt;= 2147483640+MPFR_PREC_MIN)<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mpfr_set_prec (tmp3, prec-2147483640);<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mpfr_set_prec (tmp3, MPFR_PREC_MIN);<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br> 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mpfr_set_ui (tmp3, 3, MPFR_RNDN);<br> 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mpfr_set_prec (tmp1, prec+8);<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (prec &gt;= 2147483640+MPFR_PREC_MIN)<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mpfr_set_prec (tmp1, prec-2147483640);<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mpfr_set_prec (tmp1, MPFR_PREC_MIN);<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br> 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mpfr_div (tmp1, tmp2, tmp3, MPFR_RNDN);<br> 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mpfr_set_prec (y, prec+2);<br> 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mpfr_asin (y, tmp1, MPFR_RNDN);<br> 

@@ -203,8 +203,8 @@ int exact_system_solve(mpq_t *res, mpq_t *M, mpq_t *b, int p, int n) {
       freeChain(j_list, freeIntPtr);
       mpq_clear(max);
       mpq_clear(lambda);
-      free(order_i);
-      free(order_j);
+      safeFree(order_i);
+      safeFree(order_j);
       return 1;
     }
 
@@ -257,8 +257,8 @@ int exact_system_solve(mpq_t *res, mpq_t *M, mpq_t *b, int p, int n) {
     }
   }
 
-  free(order_i);
-  free(order_j);
+  safeFree(order_i);
+  safeFree(order_j);
   freeChain(i_list, freeIntPtr);
   mpq_clear(max);
   mpq_clear(lambda);
@@ -396,7 +396,7 @@ int getCoefficientsInPseudoPolynomial(mpfr_t *coefficients, node *poly, chain *m
   int i = 0;
   for (curr = monomials; curr != NULL; curr = curr->next) {
     if (findCoeffInPseudoPolynomial(&coeff, poly, (node *)(curr->value))) {
-      evaluateThingToConstant(coefficients[i], coeff, NULL, 1);
+      evaluateThingToConstant(coefficients[i], coeff, NULL, 1, 0);
       free_memory(coeff);
       i++;
     }
@@ -644,7 +644,7 @@ node *FPminimax(node *f,
     freeChain(correctedFormats, freeIntPtr);
     if (res!=NULL) freeChain(newFormats, freeIntPtr);
     for(i=0; i<dim; i++) mpfr_clear(coefficients[i]);
-    free(coefficients);
+    safeFree(coefficients);
   }
 
   free_memory(g);
@@ -762,13 +762,13 @@ node *FPminimaxMain(node *f,
   pushTimeCounter();
   for (i=1; i <= nbpoints; i++) {
     r = evaluateFaithfulWithCutOffFast(var1, w, NULL, x[i-1], zero_mpfr, prec);
-    if((r==1) && (mpfr_number_p(var1))) test=1;
+    if(((r==1) || (r==4) || (r==5) || (r==6) || (r==7)) && (mpfr_number_p(var1))) test=1;
     else test=0;
 
     for (j=1; j <= dim; j++) {
       if(test==1) {
 	r = evaluateFaithfulWithCutOffFast(var2, monomials_tree[j-1], NULL, x[i-1], zero_mpfr, prec);
-	if((r==1) && (mpfr_number_p(var2))) {
+	if(((r==1) || (r==4) || (r==5) || (r==6) || (r==7)) && (mpfr_number_p(var2))) {
 	  mpfr_mul(var2, var1, var2, GMP_RNDN);
 	  mpfr_set(M[coeff(i,j,dim+1)],var2,GMP_RNDN);
 	}
@@ -907,24 +907,24 @@ node *FPminimaxMain(node *f,
       mpq_clear(exactMatrix[coeff(i,j,dim+1)]);
     }
   }
-  free(M);
-  free(exactMatrix);
+  safeFree(M);
+  safeFree(exactMatrix);
 
 
   for(j=1; j<=dim; j++)   free_memory(monomials_tree[j-1]);
-  free(monomials_tree);
+  safeFree(monomials_tree);
 
   for(i=1; i<=nbpoints; i++)  mpfr_clear(x[i-1]);
-  free(x);
+  safeFree(x);
 
   for(j=1;j<=dim+1; j++) mpq_clear(coefficients[j-1]);
-  free(coefficients);
+  safeFree(coefficients);
 
   for(i=1; i<=nbpoints+1; i++)   mpq_clear(reducedVect[i-1]);
-  free(reducedVect);
+  safeFree(reducedVect);
 
   for(j=1; j<=dim; j++)   mpfr_clear(mpfr_coefficients[j-1]);
-  free(mpfr_coefficients);
+  safeFree(mpfr_coefficients);
 
   mpz_clear(mpzval);
 

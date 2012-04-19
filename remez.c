@@ -204,8 +204,8 @@ void system_solve(mpfr_t *res, mpfr_t *M, mpfr_t *b, int n, mp_prec_t prec) {
     }
   }
 
-  free(order_i);
-  free(order_j);
+  safeFree(order_i);
+  safeFree(order_j);
   freeChain(i_list, freeIntPtr);
   freeChain(j_list, freeIntPtr);
   mpfr_clear(max);
@@ -629,7 +629,7 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
       r = evaluateFaithfulWithCutOffFast(xNew, iterator, NULL, x, zero_mpfr, prec);
       if(r==0) mpfr_set_d(xNew,0,GMP_RNDN);
 
-      if( (mpfr_cmp(u,xNew)>0) || (mpfr_cmp(xNew,v)>0) || ((!mpfr_number_p(xNew)) && (r==1)) ) {
+      if( (mpfr_cmp(u,xNew)>0) || (mpfr_cmp(xNew,v)>0) || ((!mpfr_number_p(xNew)) && ((r==1) || (r==4) || (r==5) || (r==6) || (r==7))) ) {
 	printMessage(5, SOLLYA_MSG_NEWTON_PERFORMING_BISECTION_STEP, "Information (Newton's algorithm): performing a bisection step\n");
 	mpfr_add(xNew,u,v,GMP_RNDN);
 	mpfr_div_2ui(xNew, xNew, 1, GMP_RNDN);
@@ -861,13 +861,13 @@ void single_step_remez(mpfr_t newx, mpfr_t err_newx, mpfr_t *x,
   // Computation of the matrix
   for (i=1 ; i <= freeDegrees ; i++) {
     r = evaluateFaithfulWithCutOffFast(var1, w, NULL, x[i-1], zero_mpfr, prec);
-    if((r==1) && (mpfr_number_p(var1))) test=1;
+    if(((r==1) || (r==4) || (r==5) || (r==6) || (r==7)) && (mpfr_number_p(var1))) test=1;
     else test=0;
 
     for (j=1 ; j <= freeDegrees ; j++) {
       if(test==1) {
 	r = evaluateFaithfulWithCutOffFast(var2, monomials_tree[j-1], NULL, x[i-1], zero_mpfr, prec);
-	if((r==1) && (mpfr_number_p(var2))) {
+	if(((r==1) || (r==4) || (r==5) || (r==6) || (r==7)) && (mpfr_number_p(var2))) {
 	  mpfr_mul(var2, var1, var2, GMP_RNDN);
 	  mpfr_set(N[coeff(j,i,freeDegrees)],var2,GMP_RNDN);
 	}
@@ -893,13 +893,13 @@ void single_step_remez(mpfr_t newx, mpfr_t err_newx, mpfr_t *x,
 
   // Computation of the vector corresponding to the new point
   r = evaluateFaithfulWithCutOffFast(var1, w, NULL, newx, zero_mpfr, prec);
-  if((r==1) && (mpfr_number_p(var1))) test=1;
+  if(((r==1) || (r==4) || (r==5) || (r==6) || (r==7)) && (mpfr_number_p(var1))) test=1;
   else test=0;
 
   for (j=1 ; j <= freeDegrees ; j++) {
     if(test==1) {
       r = evaluateFaithfulWithCutOffFast(var2, monomials_tree[j-1], NULL, newx, zero_mpfr, prec);
-      if((r==1) && (mpfr_number_p(var2))) {
+      if(((r==1) || (r==4) || (r==5) || (r==6) || (r==7)) && (mpfr_number_p(var2))) {
 	mpfr_mul(var2, var1, var2, GMP_RNDN);
 	mpfr_set(c[j-1],var2,GMP_RNDN);
       }
@@ -968,9 +968,9 @@ void single_step_remez(mpfr_t newx, mpfr_t err_newx, mpfr_t *x,
     mpfr_clear(c[j-1]);
     mpfr_clear(mui_vect[j-1]);
   }
-  free(N);
-  free(c);
-  free(mui_vect);
+  safeFree(N);
+  safeFree(c);
+  safeFree(mui_vect);
 
   mpfr_clear(zero_mpfr);
   mpfr_clear(var1);
@@ -1237,19 +1237,19 @@ int qualityOfError(mpfr_t computedQuality, mpfr_t infinityNorm, mpfr_t *x,
   free_memory(error);
   error = temp1;
 
-  printMessage(8,SOLLYA_MSG_REMEZ_CONSTRUCTING_THE_ERROR_PRIME_TREE,"Constructing the error' tree...\n");
+  if(verbosity>=8) { 	changeToWarningMode(); sollyaPrintf("Constructing the error' tree...\n"); restoreMode(); }
   error_diff = differentiate(error);
   temp1 = simplifyTreeErrorfree(error_diff);
   free_memory(error_diff);
   error_diff = temp1;
 
-  printMessage(8,SOLLYA_MSG_REMEZ_CONSTRUCTING_THE_ERROR_SECOND_TREE,"Constructing the error'' tree...\n");
+  if(verbosity>=8) { 	changeToWarningMode(); sollyaPrintf("Constructing the error'' trees...\n"); restoreMode(); }
   error_diff2 = differentiate(error_diff);
   temp1 = simplifyTreeErrorfree(error_diff2);
   free_memory(error_diff2);
   error_diff2 = temp1;
 
-  printMessage(6, SOLLYA_MSG_REMEZ_COMPUTING_THE_YI, "Computing the yi...\n");
+  if(verbosity>=6) { 	changeToWarningMode(); sollyaPrintf("Computing the yi...\n"); restoreMode(); }
   // If x = [x1 ... xn], we construct [y0 y1 ... yn] by
   // y0 = (a+x1)/2, yn = (xn+b)/2 and yi = (xi + x(i+1))/2
   y = (mpfr_t *)safeMalloc((n+1)*sizeof(mpfr_t));
@@ -1323,7 +1323,7 @@ int qualityOfError(mpfr_t computedQuality, mpfr_t infinityNorm, mpfr_t *x,
   i = 0;
   while(test && (i<=n)) {
     r = evaluateFaithfulWithCutOffFast(dummy_mpfr, error_diff, error_diff2, y[i], zero_mpfr, prec);
-    if((!mpfr_number_p(dummy_mpfr)) && (r==1)) test=0;
+    if((!mpfr_number_p(dummy_mpfr)) && ((r==1) || (r==4) || (r==5) || (r==6) || (r==7))) test=0;
     else {
       if(r==0) s[i]=0;
       else s[i] = mpfr_sgn(dummy_mpfr);
@@ -1352,7 +1352,7 @@ int qualityOfError(mpfr_t computedQuality, mpfr_t infinityNorm, mpfr_t *x,
 
   if(test && (case1 || case2b) && (s[0]*s[1]>0)) {
     r = evaluateFaithfulWithCutOffFast(dummy_mpfr, error, error_diff, y[0], zero_mpfr, prec);
-    if((!mpfr_number_p(dummy_mpfr)) && (r==1)) test=0;
+    if((!mpfr_number_p(dummy_mpfr)) && ((r==1) || (r==4) || (r==5) || (r==6) || (r==7))) test=0;
     else {
       if((r!=0) && (mpfr_sgn(dummy_mpfr)*s[0] > 0)) test=0;
     }
@@ -1360,7 +1360,7 @@ int qualityOfError(mpfr_t computedQuality, mpfr_t infinityNorm, mpfr_t *x,
 
   if(test && (case1 || case2) && (s[n-1]*s[n]>0)) {
     r = evaluateFaithfulWithCutOffFast(dummy_mpfr, error, error_diff, y[n], zero_mpfr, prec);
-    if((!mpfr_number_p(dummy_mpfr)) && (r==1)) test=0;
+    if((!mpfr_number_p(dummy_mpfr)) && ((r==1) || (r==4) || (r==5) || (r==6) || (r==7))) test=0;
     else {
       if((r!=0) && (mpfr_sgn(dummy_mpfr)*s[n] < 0)) test=0;
     }
@@ -1422,14 +1422,14 @@ int qualityOfError(mpfr_t computedQuality, mpfr_t infinityNorm, mpfr_t *x,
 	mpfr_clear(dummy_mpfr);
 	mpfr_clear(dummy_mpfr2);
 	mpfr_clear(max_val);
-	free(s);
+	safeFree(s);
 
 	for(i=0;i<=n;i++)  mpfr_clear(y[i]);
-	free(y);
+	safeFree(y);
 	for(i=1;i<=n;i++) {
 	  mpfr_clear(z[i-1]);
 	}
-	free(z);
+	safeFree(z);
 
 	return -1;
       }
@@ -1449,14 +1449,14 @@ int qualityOfError(mpfr_t computedQuality, mpfr_t infinityNorm, mpfr_t *x,
       mpfr_clear(dummy_mpfr);
       mpfr_clear(dummy_mpfr2);
       mpfr_clear(max_val);
-      free(s);
+      safeFree(s);
 
       for(i=0;i<=n;i++)  mpfr_clear(y[i]);
-      free(y);
+      safeFree(y);
       for(i=1;i<=n;i++) {
 	mpfr_clear(z[i-1]);
       }
-      free(z);
+      safeFree(z);
 
       return -1;
     }
@@ -1497,15 +1497,15 @@ int qualityOfError(mpfr_t computedQuality, mpfr_t infinityNorm, mpfr_t *x,
   mpfr_clear(dummy_mpfr);
   mpfr_clear(dummy_mpfr2);
   mpfr_clear(max_val);
-  free(s);
+  safeFree(s);
 
   for(i=0;i<=n;i++)  mpfr_clear(y[i]);
-  free(y);
+  safeFree(y);
   for(i=1;i<=n;i++) {
     mpfr_set(x[i-1], z[i-1], GMP_RNDN);
     mpfr_clear(z[i-1]);
   }
-  free(z);
+  safeFree(z);
 
   return 0;
 }
@@ -1722,13 +1722,13 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 
       for (i=1 ; i <= freeDegrees+1 ; i++) {
 	r = evaluateFaithfulWithCutOffFast(var1, w, NULL, x[i-1], zero_mpfr, prec);
-	if((r==1) && (mpfr_number_p(var1))) test=1;
+	if(((r==1) || (r==4) || (r==5) || (r==6) || (r==7)) && (mpfr_number_p(var1))) test=1;
 	else test=0;
 
 	for (j=1 ; j <= freeDegrees ; j++) {
 	  if(test==1) {
 	    r = evaluateFaithfulWithCutOffFast(var2, monomials_tree[j-1], NULL, x[i-1], zero_mpfr, prec);
-	    if((r==1) && (mpfr_number_p(var2))) {
+	    if(((r==1) || (r==4) || (r==5) || (r==6) || (r==7)) && (mpfr_number_p(var2))) {
 	      mpfr_mul(var2, var1, var2, GMP_RNDN);
 	      mpfr_set(M[coeff(i,j,freeDegrees+1)],var2,GMP_RNDN);
 	      if (i<=freeDegrees) mpfr_set(N[coeff(j,i,freeDegrees)],var2,GMP_RNDN);
@@ -1859,10 +1859,10 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 	for(j=0;j<freeDegrees;j++) {
 	  free_memory(monomials_tree[j]);
 	}
-	free(monomials_tree);
+	safeFree(monomials_tree);
 
 	for(j=1;j<=freeDegrees+1;j++) mpfr_clear(x[j-1]);
-	free(x);
+	safeFree(x);
 
 	mpfr_clear(zero_mpfr);
 	mpfr_clear(var1);
@@ -1878,9 +1878,9 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 	  mpfr_clear(b[j-1]);
 	  mpfr_clear(ai_vect[j-1]);
 	}
-	free(M);
-	free(b);
-	free(ai_vect);
+	safeFree(M);
+	safeFree(b);
+	safeFree(ai_vect);
 
 	for(j=1; j <= freeDegrees ; j++) {
 	  for(i=1; i<= freeDegrees; i++) {
@@ -1892,14 +1892,19 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 	}
 	mpfr_clear(lambdai_vect[freeDegrees]);
 	mpfr_clear(previous_lambdai_vect[freeDegrees]);
-	free(N);
-	free(c);
-	free(lambdai_vect);
-	free(previous_lambdai_vect);
+	safeFree(N);
+	safeFree(c);
+	safeFree(lambdai_vect);
+	safeFree(previous_lambdai_vect);
 
 	gmp_randclear(random_state);
 
-	recoverFromError();
+	/* Christoph: replacing a recoverFromError with a construction
+	   of the error special symbol and a return.  I am not 100%
+	   sure that all memory has been freed at this point, as it
+	   should be.
+	*/
+	return makeError();
       }
 
       printMessage(3, SOLLYA_MSG_REMEZ_CURRENT_QUALITY_HAS_A_CERTAIN_VALUE, "Current quality: %v\n",computedQuality);
@@ -1933,7 +1938,14 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
       /* We check if we exited the loop because we managed to find a satisfying error */
       /* If so we exit returning the current polynomial */
       if (mpfr_cmp(infinityNorm,satisfying_error)<=0) {
-	printMessage(2, SOLLYA_MSG_REMEZ_FINISHES_AS_TARGET_ERROR_HAS_BEEN_REACHED, "Remez finished after %d steps\nThe following satisfying error (%.16v) has been reached.\nCurrent infinity norm: %v\n",count,satisfying_error,infinityNorm);
+        if(verbosity>=2) {
+          changeToWarningMode();
+          sollyaPrintf("Remez finished after %d steps\n",count);
+          sollyaPrintf("The following satisfying error ("); myPrintValue((mpfr_t *)satisfying_error, 53) ; sollyaPrintf(") has been reached.\n");
+          sollyaPrintf("Current infinity norm:"); myPrintValue(&infinityNorm, 53) ; sollyaPrintf("\n");
+          restoreMode();
+        }
+
         res = copyTree(poly);
       }
     }
@@ -1944,8 +1956,14 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
       mpfr_sub_ui(computedQuality, computedQuality, 1, GMP_RNDU);
 
       if(mpfr_cmp(computedQuality, quality)<=0) {
-	printMessage(2, SOLLYA_MSG_REMEZ_FINISHES_AS_QUALITY_HAS_BEEN_REACHED, "Remez finished after %d steps\nThe computed infnorm is %.16v\nThe polynomial is optimal within a factor 1 +/- %.3v\n",count,infinityNorm,computedQuality);
-	printMessage(5, SOLLYA_MSG_CONTINUATION, "Computed poly: %b\n",poly);
+        if(verbosity>=2) {
+          changeToWarningMode();
+          sollyaPrintf("Remez finished after %d steps\n",count);
+          sollyaPrintf("The computed infnorm is "); myPrintValue(&infinityNorm, 53) ; sollyaPrintf("\n");
+          sollyaPrintf("The polynomial is optimal within a factor 1 +/- "); myPrintValue(&computedQuality, 5); sollyaPrintf("\n");
+          if(verbosity>=5) { sollyaPrintf("Computed poly: "); printTree(poly); sollyaPrintf("\n");}
+          restoreMode();
+        }
         res = copyTree(poly);
       }
     }
@@ -1960,12 +1978,12 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
   for(j=0;j<freeDegrees;j++) {
     free_memory(monomials_tree[j]);
   }
-  free(monomials_tree);
+  safeFree(monomials_tree);
 
   for(i=1; i<=freeDegrees+1; i++) {
     mpfr_clear(x[i-1]);
   }
-  free(x);
+  safeFree(x);
 
 
   mpfr_clear(zero_mpfr);
@@ -1980,9 +1998,9 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
     mpfr_clear(b[j-1]);
     mpfr_clear(ai_vect[j-1]);
   }
-  free(M);
-  free(b);
-  free(ai_vect);
+  safeFree(M);
+  safeFree(b);
+  safeFree(ai_vect);
 
   for(j=1; j <= freeDegrees ; j++) {
     for(i=1; i<= freeDegrees; i++) {
@@ -1994,10 +2012,10 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
   }
   mpfr_clear(lambdai_vect[freeDegrees]);
   mpfr_clear(previous_lambdai_vect[freeDegrees]);
-  free(N);
-  free(c);
-  free(lambdai_vect);
-  free(previous_lambdai_vect);
+  safeFree(N);
+  safeFree(c);
+  safeFree(lambdai_vect);
+  safeFree(previous_lambdai_vect);
 
   gmp_randclear(random_state);
   mpfr_clear(computedQuality);
@@ -2127,7 +2145,7 @@ mpfr_t *remezMatrix(node *w, mpfr_t *x, node **monomials_tree, int n, mp_prec_t 
     else mpfr_set_si(M[coeff(i,n+1,n+1)], -1, GMP_RNDN);
 
     r = evaluateFaithfulWithCutOffFast(var1, w, NULL, x[i-1], zero_mpfr, prec);
-    if((r==1) && (mpfr_number_p(var1))) test=1;
+    if(((r==1) || (r==4) || (r==5) || (r==6) || (r==7)) && (mpfr_number_p(var1))) test=1;
     else test=0;
 
     for (j=1 ; j <= n ; j++) {
@@ -2135,7 +2153,7 @@ mpfr_t *remezMatrix(node *w, mpfr_t *x, node **monomials_tree, int n, mp_prec_t 
 
       if(test==1) {
 	r = evaluateFaithfulWithCutOffFast(var2, monomials_tree[j-1], NULL, x[i-1], zero_mpfr, prec);
-	if((r==1) && (mpfr_number_p(var2))) {
+	if(((r==1) || (r==4) || (r==5) || (r==6) || (r==7)) && (mpfr_number_p(var2))) {
 	  mpfr_mul(var2, var1, var2, GMP_RNDN);
 	  mpfr_set(M[coeff(i,j,n+1)],var2,GMP_RNDN);
 	}
@@ -2203,15 +2221,15 @@ node *elementaryStepRemezAlgorithm(mpfr_t *h,
   if (h!=NULL)   mpfr_set(*h, ai_vect[n], GMP_RNDU);
 
   for(i=0;i<=n;i++) mpfr_clear(b[i]);
-  free(b);
+  safeFree(b);
 
   for(i=0;i<=n;i++) mpfr_clear(ai_vect[i]);
-  free(ai_vect);
+  safeFree(ai_vect);
 
   for(i=1;i<=n+1;i++) {
     for(j=1;j<=n+1;j++) mpfr_clear(M[coeff(i,j,n+1)]);
   }
-  free(M);
+  safeFree(M);
 
   mpfr_clear(zero_mpfr);
   return poly;
@@ -2236,10 +2254,10 @@ void radiusBasicMinimaxChebychevsPoints(mpfr_t *h, node *func, node *weight, mpf
   free_memory(poly);
 
   for(i=0;i<n;i++) free_memory(monomials_tree[i]);
-  free(monomials_tree);
+  safeFree(monomials_tree);
 
   for(i=0;i<=n;i++) mpfr_clear(x[i]);
-  free(x);
+  safeFree(x);
 
   return;
 }
@@ -2265,10 +2283,10 @@ void firstStepContinuousMinimaxChebychevsPoints(mpfr_t *h, node *func, node *wei
   free_memory(poly);
 
   for(i=0;i<n;i++) free_memory(monomials_tree[i]);
-  free(monomials_tree);
+  safeFree(monomials_tree);
 
   for(i=0;i<=n;i++) mpfr_clear(x[i]);
-  free(x);
+  safeFree(x);
 
   return;
 }

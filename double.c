@@ -65,6 +65,7 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include <stdlib.h>
 #include <string.h>
 #include "expression.h"
+#include "execute.h"
 #include "double.h"
 #include "general.h"
 #include "infnorm.h"
@@ -926,7 +927,7 @@ node *roundPolynomialCoefficients(node *poly, chain *formats, mp_prec_t prec) {
     }
   }
 
-  free(tempArray);
+  safeFree(tempArray);
 
   getCoefficients(&deg,&coefficients,poly);
 
@@ -935,7 +936,7 @@ node *roundPolynomialCoefficients(node *poly, chain *formats, mp_prec_t prec) {
     for (i=0;i<=deg;i++) {
       if (coefficients[i] != NULL) free_memory(coefficients[i]);
     }
-    free(coefficients);
+    safeFree(coefficients);
     return copyTree(poly);
   }
 
@@ -1012,7 +1013,7 @@ node *roundPolynomialCoefficients(node *poly, chain *formats, mp_prec_t prec) {
     }
   }
 
-  free(coefficients);
+  safeFree(coefficients);
 
   if (res) {
     if (!noRoundingWarnings) {
@@ -1027,8 +1028,8 @@ node *roundPolynomialCoefficients(node *poly, chain *formats, mp_prec_t prec) {
   roundedPoly = makePolynomial(fpcoefficients, degree);
 
   for (i=0;i<=degree;i++) mpfr_clear(fpcoefficients[i]);
-  free(fpcoefficients);
-  free(formatsArray);
+  safeFree(fpcoefficients);
+  safeFree(formatsArray);
   mpfr_clear(tempMpfr);
   return roundedPoly;
 }
@@ -1180,7 +1181,6 @@ int printPolynomialAsDoubleExpansion(node *poly, mp_prec_t prec) {
       } else {
 	if (!isConstant(tempNode)) {
 	  printMessage(1,SOLLYA_MSG_POLY_COEFF_IS_NOT_CONSTANT,"Error: a coefficient of a polynomial is not constant.\n");
-	  recoverFromError();
 	}
 	if (!evaluateFaithful(tempValue, tempNode, tempValue2, prec)) {
 	  if (!noRoundingWarnings) {
@@ -1205,7 +1205,7 @@ int printPolynomialAsDoubleExpansion(node *poly, mp_prec_t prec) {
   for (i=0;i<l;i++) 
     sollyaPrintf(")");
 
-  free(coefficients);
+  safeFree(coefficients);
   mpfr_clear(tempValue);
   mpfr_clear(tempValue2);
   free_memory(myTree);
@@ -1386,6 +1386,8 @@ void continuedFrac(mpq_t q, sollya_mpfi_t x) {
   mpz_t u;
 
   t = sollya_mpfi_get_prec(x);
+  if (t<= tools_precision) t=tools_precision;
+
   sollya_mpfi_init2(xprime,t);
   mpfr_init2(a,t);
   mpfr_init2(b,t);
@@ -1399,7 +1401,7 @@ void continuedFrac(mpq_t q, sollya_mpfi_t x) {
   mpfr_floor(m1,a);
   mpfr_floor(m2,b);
 
-  if (mpfr_equal_p(m1,m2) && !mpfr_equal_p(a,m1)) {
+  if (mpfr_equal_p(m1,m2) && (!mpfr_equal_p(a, m1))) {
     mpfr_get_z(u,m1,GMP_RNDN); //exact
     mpfr_sub(a,a,m1,GMP_RNDD);
     mpfr_sub(b,b,m1,GMP_RNDU);
@@ -1412,9 +1414,11 @@ void continuedFrac(mpq_t q, sollya_mpfi_t x) {
     mpq_set_den(q,u);
     mpq_add(q,q,res);
   }
-  else {
-    mpfr_add(m1,a,b,GMP_RNDN);
-    mpfr_div_2ui(m1,m1,1,GMP_RNDN);
+  else { 
+    /* According to http://en.wikipedia.org/wiki/Continued_fraction,
+       section "Best rational within an interval", the best fraction
+       is given by taking the smallest integer in [a,b] */
+    if (!mpfr_equal_p(a,m1))  mpfr_add_ui(m1, m1,1,GMP_RNDU);
     mpfr_get_z(u,m1,GMP_RNDN);
     mpq_set_num(q,u);
     mpz_set_ui(u,1);
@@ -1431,7 +1435,8 @@ void continuedFrac(mpq_t q, sollya_mpfi_t x) {
   return;
 }
 
-node *rationalApprox(mpfr_t x, unsigned int n) {
+
+node *rationalApprox(mpfr_t x, int n) {
   mpq_t q;
   mpz_t u;
   sollya_mpfi_t xprime;
@@ -1441,12 +1446,20 @@ node *rationalApprox(mpfr_t x, unsigned int n) {
   mpfr_t *numerator;
   mpfr_t *denominator;
 
+  /* n should be >= 2 */
+  if (n<2) {
+    printMessage(1, SOLLYA_MSG_RATIONALAPPROX_SECOND_ARG_MUST_BE_GREATER_THAN_ONE, "Error in rationalapprox: the second argument of rationalapprox must be greater or equal to 2.\n");
+    return makeError();
+  }
+
   if ( (!mpfr_number_p(x)) || mpfr_zero_p(x) )  return makeConstant(x);
   mpq_init(q);
   mpz_init(u);
-  sollya_mpfi_init2(xprime,(mp_prec_t)n);
+  sollya_mpfi_init2(xprime,(mp_prec_t)(n+1));
 
-  sollya_mpfi_set_fr(xprime,x);
+  sollya_mpfi_set_fr(xprime,x); /* The bounds of xprime are two consecutive FP numbers at precision n+1.
+                                   Hence sup(xprime)-inf(xprime) <= 2^(1-(n+1))*inf(abs(xprime))
+                                   Hence, for any t in xprime, |x-t| <= 2^(-n)*|x| */
   continuedFrac(q,xprime);
  
   mpq_get_num(u,q);

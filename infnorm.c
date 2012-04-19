@@ -1,6 +1,6 @@
 /*
 
-Copyright 2006-2011 by
+Copyright 2006-2012 by
 
 Laboratoire de l'Informatique du Parallelisme,
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
@@ -191,13 +191,17 @@ void sollya_mpfi_pow(sollya_mpfi_t z, sollya_mpfi_t x, sollya_mpfi_t y) {
 
 void sollya_mpfi_round_to_double(sollya_mpfi_t rop, sollya_mpfi_t op) {
   mpfr_t l,r, lres, rres;
-  mp_prec_t prec;
+  mp_prec_t prec, p, pp;
 
   prec = sollya_mpfi_get_prec(op) + 10;
+  pp = sollya_mpfi_get_prec(rop);
+  p = prec;
+  if (pp > p) p = pp;
+  if (64 > p) p = 64;
   mpfr_init2(l,prec);
   mpfr_init2(r,prec);
-  mpfr_init2(lres,prec);
-  mpfr_init2(rres,prec);
+  mpfr_init2(lres,p);
+  mpfr_init2(rres,p);
 
   sollya_mpfi_get_left(l,op);
   sollya_mpfi_get_right(r,op);
@@ -216,13 +220,17 @@ void sollya_mpfi_round_to_double(sollya_mpfi_t rop, sollya_mpfi_t op) {
 
 void sollya_mpfi_round_to_single(sollya_mpfi_t rop, sollya_mpfi_t op) {
   mpfr_t l,r, lres, rres;
-  mp_prec_t prec;
+  mp_prec_t prec, p, pp;
 
   prec = sollya_mpfi_get_prec(op) + 10;
+  pp = sollya_mpfi_get_prec(rop);
+  p = prec;
+  if (pp > p) p = pp;
+  if (64 > p) p = 64;
   mpfr_init2(l,prec);
   mpfr_init2(r,prec);
-  mpfr_init2(lres,prec);
-  mpfr_init2(rres,prec);
+  mpfr_init2(lres,p);
+  mpfr_init2(rres,p);
 
   sollya_mpfi_get_left(l,op);
   sollya_mpfi_get_right(r,op);
@@ -240,13 +248,17 @@ void sollya_mpfi_round_to_single(sollya_mpfi_t rop, sollya_mpfi_t op) {
 
 void sollya_mpfi_round_to_quad(sollya_mpfi_t rop, sollya_mpfi_t op) {
   mpfr_t l,r, lres, rres;
-  mp_prec_t prec;
+  mp_prec_t prec, p, pp;
 
   prec = sollya_mpfi_get_prec(op) + 10;
+  pp = sollya_mpfi_get_prec(rop);
+  p = prec;
+  if (pp > p) p = pp;
+  if (128 > p) p = 128;
   mpfr_init2(l,prec);
   mpfr_init2(r,prec);
-  mpfr_init2(lres,prec);
-  mpfr_init2(rres,prec);
+  mpfr_init2(lres,p);
+  mpfr_init2(rres,p);
 
   sollya_mpfi_get_left(l,op);
   sollya_mpfi_get_right(r,op);
@@ -264,13 +276,17 @@ void sollya_mpfi_round_to_quad(sollya_mpfi_t rop, sollya_mpfi_t op) {
 
 void sollya_mpfi_round_to_halfprecision(sollya_mpfi_t rop, sollya_mpfi_t op) {
   mpfr_t l,r, lres, rres;
-  mp_prec_t prec;
+  mp_prec_t prec, p, pp;
 
   prec = sollya_mpfi_get_prec(op) + 10;
+  pp = sollya_mpfi_get_prec(rop);
+  p = prec;
+  if (pp > p) p = pp;
+  if (64 > p) p = 64;
   mpfr_init2(l,prec);
   mpfr_init2(r,prec);
-  mpfr_init2(lres,prec);
-  mpfr_init2(rres,prec);
+  mpfr_init2(lres,p);
+  mpfr_init2(rres,p);
 
   sollya_mpfi_get_left(l,op);
   sollya_mpfi_get_right(r,op);
@@ -288,13 +304,17 @@ void sollya_mpfi_round_to_halfprecision(sollya_mpfi_t rop, sollya_mpfi_t op) {
 
 void sollya_mpfi_round_to_doubledouble(sollya_mpfi_t rop, sollya_mpfi_t op) {
   mpfr_t l,r, lres, rres;
-  mp_prec_t prec;
+  mp_prec_t prec, p, pp;
 
   prec = sollya_mpfi_get_prec(op) + 10;
+  pp = sollya_mpfi_get_prec(rop);
+  p = prec;
+  if (pp > p) p = pp;
+  if (129 > p) p = 129;
   mpfr_init2(l,prec);
   mpfr_init2(r,prec);
-  mpfr_init2(lres,prec);
-  mpfr_init2(rres,prec);
+  mpfr_init2(lres,p);
+  mpfr_init2(rres,p);
 
   sollya_mpfi_get_left(l,op);
   sollya_mpfi_get_right(r,op);
@@ -312,13 +332,17 @@ void sollya_mpfi_round_to_doubledouble(sollya_mpfi_t rop, sollya_mpfi_t op) {
 
 void sollya_mpfi_round_to_tripledouble(sollya_mpfi_t rop, sollya_mpfi_t op) {
   mpfr_t l,r, lres, rres;
-  mp_prec_t prec;
+  mp_prec_t prec, p, pp;
 
   prec = sollya_mpfi_get_prec(op) + 10;
+  pp = sollya_mpfi_get_prec(rop);
+  p = prec;
+  if (pp > p) p = pp;
+  if (200 > p) p = 200;
   mpfr_init2(l,prec);
   mpfr_init2(r,prec);
-  mpfr_init2(lres,prec);
-  mpfr_init2(rres,prec);
+  mpfr_init2(lres,p);
+  mpfr_init2(rres,p);
 
   sollya_mpfi_get_left(l,op);
   sollya_mpfi_get_right(r,op);
@@ -336,13 +360,17 @@ void sollya_mpfi_round_to_tripledouble(sollya_mpfi_t rop, sollya_mpfi_t op) {
 
 void sollya_mpfi_round_to_doubleextended(sollya_mpfi_t rop, sollya_mpfi_t op) {
   mpfr_t l,r, lres, rres;
-  mp_prec_t prec;
+  mp_prec_t prec, p, pp;
 
   prec = sollya_mpfi_get_prec(op) + 10;
+  pp = sollya_mpfi_get_prec(rop);
+  p = prec;
+  if (pp > p) p = pp;
+  if (128 > p) p = 128;
   mpfr_init2(l,prec);
   mpfr_init2(r,prec);
-  mpfr_init2(lres,prec);
-  mpfr_init2(rres,prec);
+  mpfr_init2(lres,p);
+  mpfr_init2(rres,p);
 
   sollya_mpfi_get_left(l,op);
   sollya_mpfi_get_right(r,op);
@@ -834,7 +862,7 @@ void makeMpfiAroundMpfr(sollya_mpfi_t res, mpfr_t x, unsigned int thousandUlps) 
 
 
 chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t prec, int simplifiesA, int simplifiesB, mpfr_t *hopitalPoint, exprBoundTheo *theo, int noExcludes) {
-  sollya_mpfi_t stack1, stack2;
+  sollya_mpfi_t stack1, stack2, tempI, tempI2;
   sollya_mpfi_t stack3, zI, numeratorInZI, denominatorInZI, newExcludeTemp, xMXZ, temp1, temp2, tempA, tempB;
   sollya_mpfi_t *newExclude;
   sollya_mpfi_t leftConstantTerm, rightConstantTerm;
@@ -1772,7 +1800,12 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
     break;
   case LIBRARYFUNCTION:
     excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    tree->libFun->code(stack3, stack1, tree->libFunDeriv);
+    mpfi_init2(tempI, sollya_mpfi_get_prec(stack3));
+    tree->libFun->code(tempI, stack1, tree->libFunDeriv);
+    sollya_init_and_convert_interval(tempI2, tempI);
+    sollya_mpfi_set(stack3, tempI2);
+    sollya_mpfi_clear(tempI2);
+    mpfi_clear(tempI);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
@@ -2273,7 +2306,7 @@ void printInterval(sollya_mpfi_t interval) {
     temp_string = sprintMidpointMode(l, r);
     if (temp_string != NULL) {
       sollyaPrintf("%s ",temp_string);
-      free(temp_string);
+      safeFree(temp_string);
     } else {
       sollyaPrintf("[");
       printValue(&l);
@@ -2315,8 +2348,8 @@ char *sprintInterval(sollya_mpfi_t interval) {
       res = safeCalloc(strlen(temp_string) + strlen(temp_string2) + 3 + 1,
 		       sizeof(char));
       sprintf(res,"[%s;%s]",temp_string,temp_string2);
-      free(temp_string);
-      free(temp_string2);
+      safeFree(temp_string);
+      safeFree(temp_string2);
     }
   } else {
     temp_string = sprintValue(&l);
@@ -2324,8 +2357,8 @@ char *sprintInterval(sollya_mpfi_t interval) {
     res = safeCalloc(strlen(temp_string) + strlen(temp_string2) + 3 + 1,
 		     sizeof(char));
     sprintf(res,"[%s;%s]",temp_string,temp_string2);
-    free(temp_string);
-    free(temp_string2);
+    safeFree(temp_string);
+    safeFree(temp_string2);
   }
 
   mpfr_clear(l);
@@ -2552,8 +2585,8 @@ chain *excludeIntervals(chain *mainIntervals, chain *excludeIntervals) {
 		/* We are not the first interval in the chain */
 		previous->next = curr->next;
 		sollya_mpfi_clear(*interval);
-		free(interval);
-		free(curr);
+		safeFree(interval);
+		safeFree(curr);
 		curr = previous;
 	      } else {
 		/* We are the first interval in the chain */
@@ -2561,15 +2594,15 @@ chain *excludeIntervals(chain *mainIntervals, chain *excludeIntervals) {
 		  /* We have a successor that will become the head of the chain */
 		  mainIntervals = curr->next;
 		  sollya_mpfi_clear(*interval);
-		  free(interval);
-		  free(curr);
+		  safeFree(interval);
+		  safeFree(curr);
 		  curr = mainIntervals;
 		} else {
 		  /* We are the first and the last element in the chain, which will be empty */
 		  
 		  sollya_mpfi_clear(*interval);
-		  free(interval);
-		  free(curr);
+		  safeFree(interval);
+		  safeFree(curr);
 		  mpfr_clear(il);
 		  mpfr_clear(ir);
 		  mpfr_clear(el);
@@ -3370,8 +3403,8 @@ void evaluateRangeFunction(rangetype yrange, node *func, rangetype xrange, mp_pr
         if (mpfr_sgn(*(myrange.a)) * mpfr_sgn(*(myrange.b)) == 1) {
           mpfr_clear(*(myrange.a));
           mpfr_clear(*(myrange.b));
-          free(myrange.a);
-          free(myrange.b);
+          safeFree(myrange.a);
+          safeFree(myrange.b);
           mpfr_set_d(*(yrange.a),1.0,GMP_RNDD);
           mpfr_set_d(*(yrange.b),1.0,GMP_RNDU);
           free_memory(numerator);
@@ -3394,8 +3427,8 @@ void evaluateRangeFunction(rangetype yrange, node *func, rangetype xrange, mp_pr
         if (mpfr_sgn(*(myrange.a)) * mpfr_sgn(*(myrange.b)) == 1) {
           mpfr_clear(*(myrange.a));
           mpfr_clear(*(myrange.b));
-          free(myrange.a);
-          free(myrange.b);
+          safeFree(myrange.a);
+          safeFree(myrange.b);
           mpfr_set_d(*(yrange.a),1.0,GMP_RNDD);
           mpfr_set_d(*(yrange.b),1.0,GMP_RNDU);
           free_memory(numerator);
@@ -3408,8 +3441,8 @@ void evaluateRangeFunction(rangetype yrange, node *func, rangetype xrange, mp_pr
           if (mpfr_zero_p(*(myrange.a)) && mpfr_zero_p(*(myrange.b))) {
             mpfr_clear(*(myrange.a));
             mpfr_clear(*(myrange.b));
-            free(myrange.a);
-            free(myrange.b);
+            safeFree(myrange.a);
+            safeFree(myrange.b);
             mpfr_set_nan(*(yrange.a));
             mpfr_set_nan(*(yrange.b));
             free_memory(numerator);
@@ -3421,8 +3454,8 @@ void evaluateRangeFunction(rangetype yrange, node *func, rangetype xrange, mp_pr
           } else {
             mpfr_clear(*(myrange.a));
             mpfr_clear(*(myrange.b));
-            free(myrange.a);
-            free(myrange.b);
+            safeFree(myrange.a);
+            safeFree(myrange.b);
             f = copyTree(temp2);
           }
         }
@@ -3642,10 +3675,10 @@ void evaluateConstantWithErrorEstimate(mpfr_t res, mpfr_t err, node *func, mpfr_
   mpfr_clear(*(yrange.a));
   mpfr_clear(*(yrange.b));
   mpfr_init2(temp,prec);
-  free(xrange.a);
-  free(xrange.b);
-  free(yrange.a);
-  free(yrange.b);
+  safeFree(xrange.a);
+  safeFree(xrange.b);
+  safeFree(yrange.a);
+  safeFree(yrange.b);
 }
 
 chain* findZerosByNewton(node *func, mpfr_t a, mpfr_t b, mp_prec_t prec) {
@@ -3743,11 +3776,11 @@ chain* fpFindZerosFunction(node *func, rangetype range, mp_prec_t prec) {
     fpZeros = concatChains(fpZeros, fpZerosOnInterval);
     mpfr_clear(*(((rangetype *) (intervalZeros->value))->a));
     mpfr_clear(*(((rangetype *) (intervalZeros->value))->b));
-    free(((rangetype *) (intervalZeros->value))->a);
-    free(((rangetype *) (intervalZeros->value))->b);
-    free(intervalZeros->value);
+    safeFree(((rangetype *) (intervalZeros->value))->a);
+    safeFree(((rangetype *) (intervalZeros->value))->b);
+    safeFree(intervalZeros->value);
     temp = intervalZeros->next;
-    free(intervalZeros);
+    safeFree(intervalZeros);
     intervalZeros = temp;
   }
   
@@ -3776,9 +3809,9 @@ chain* fpFindZerosFunction(node *func, rangetype range, mp_prec_t prec) {
 
   while (fpZeros != NULL) {
     mpfr_clear(*((mpfr_t*) (fpZeros->value)));
-    free((fpZeros->value));
+    safeFree((fpZeros->value));
     temp = fpZeros->next;
-    free(fpZeros);
+    safeFree(fpZeros);
     fpZeros = temp;
   }
 
@@ -3833,7 +3866,7 @@ chain* fpFindZerosFunction(node *func, rangetype range, mp_prec_t prec) {
       fpZeros = addElement(fpZeros,fpZeros2->value);
     }
     temp = fpZeros2->next;
-    free(fpZeros2);
+    safeFree(fpZeros2);
     fpZeros2 = temp;
   }
 
@@ -3863,9 +3896,9 @@ chain* fpFindZerosFunction(node *func, rangetype range, mp_prec_t prec) {
 
   while (fpZeros != NULL) {
     mpfr_clear(*((mpfr_t*) (fpZeros->value)));
-    free((fpZeros->value));
+    safeFree((fpZeros->value));
     temp = fpZeros->next;
-    free(fpZeros);
+    safeFree(fpZeros);
     fpZeros = temp;
   }
 
@@ -3916,8 +3949,8 @@ chain *uncertifiedZeroDenominators(node *tree, mpfr_t a, mpfr_t b, mp_prec_t pre
     newZeros = fpFindZerosFunction(tree->child2, range, prec);
     mpfr_clear(*(range.a));
     mpfr_clear(*(range.b));
-    free(range.a);
-    free(range.b);
+    safeFree(range.a);
+    safeFree(range.b);
     leftPoles = concatChains(leftPoles,rightPoles);
     return concatChains(leftPoles,newZeros);
     break;
@@ -4077,10 +4110,10 @@ int isEvaluable(node *func, mpfr_t x, mpfr_t *y, mp_prec_t prec) {
       mpfr_clear(*(xrange.b));
       mpfr_clear(*(yrange.a));
       mpfr_clear(*(yrange.b));
-      free(xrange.a);
-      free(xrange.b);
-      free(yrange.a);
-      free(yrange.b);
+      safeFree(xrange.a);
+      safeFree(xrange.b);
+      safeFree(yrange.a);
+      safeFree(yrange.b);
       return ISNOTEVALUABLE;
     }
     if (y != NULL) {
@@ -4091,10 +4124,10 @@ int isEvaluable(node *func, mpfr_t x, mpfr_t *y, mp_prec_t prec) {
     mpfr_clear(*(xrange.b));
     mpfr_clear(*(yrange.a));
     mpfr_clear(*(yrange.b));
-    free(xrange.a);
-    free(xrange.b);
-    free(yrange.a);
-    free(yrange.b);
+    safeFree(xrange.a);
+    safeFree(xrange.b);
+    safeFree(yrange.a);
+    safeFree(yrange.b);
     return ISHOPITALEVALUABLE;
   } 
 
@@ -4103,168 +4136,11 @@ int isEvaluable(node *func, mpfr_t x, mpfr_t *y, mp_prec_t prec) {
   mpfr_clear(*(xrange.b));
   mpfr_clear(*(yrange.a));
   mpfr_clear(*(yrange.b));
-  free(xrange.a);
-  free(xrange.b);
-  free(yrange.a);
-  free(yrange.b);
+  safeFree(xrange.a);
+  safeFree(xrange.b);
+  safeFree(yrange.a);
+  safeFree(yrange.b);
   return ISNOTEVALUABLE;
-}
-
-int evaluateWithAccuracyEstimate(node *func, mpfr_t x, mpfr_t y, mpfr_t accur, mp_prec_t prec) {
-  rangetype xrange, yrange;
-
-  xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-  xrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-  yrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-  yrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-
-  mpfr_init2(*(xrange.a),prec);
-  mpfr_init2(*(xrange.b),prec);
-  mpfr_init2(*(yrange.a),prec);
-  mpfr_init2(*(yrange.b),prec);
-
-  mpfr_set(*(xrange.a),x,GMP_RNDD);
-  mpfr_set(*(xrange.b),x,GMP_RNDU);
-
-  evaluateRangeFunction(yrange, func, xrange, prec);
-
-  mpfr_add(*(xrange.a),*(yrange.a),*(yrange.b),GMP_RNDN);
-  mpfr_div_2ui(*(xrange.a),*(xrange.a),1,GMP_RNDN);
-  mpfr_set(y,*(xrange.a),GMP_RNDN);
-
-  /* We have a zero in the output interval or are not a number */
-  if ((mpfr_sgn(*(yrange.a)) != mpfr_sgn(*(yrange.b))) || (!mpfr_number_p(y))) {
-    mpfr_clear(*(xrange.a));
-    mpfr_clear(*(xrange.b));
-    mpfr_clear(*(yrange.a));
-    mpfr_clear(*(yrange.b));
-    free(xrange.a);
-    free(xrange.b);
-    free(yrange.a);
-    free(yrange.b);
-    return 0;
-  }
-  
-  /* We have the exact interval [0;0] with an error of 0 */
-  if (mpfr_zero_p(*(yrange.a)) && mpfr_zero_p(*(yrange.b))) {
-    mpfr_set_d(accur,0.0,GMP_RNDN);
-    mpfr_clear(*(xrange.a));
-    mpfr_clear(*(xrange.b));
-    mpfr_clear(*(yrange.a));
-    mpfr_clear(*(yrange.b));
-    free(xrange.a);
-    free(xrange.b);
-    free(yrange.a);
-    free(yrange.b);
-    return 1;
-  }
-
-  if (mpfr_cmp(y,*(yrange.b)) > 0) {
-    mpfr_set(*(yrange.b),y,GMP_RNDU);
-  }
-
-  if (mpfr_cmp(y,*(yrange.a)) < 0) {
-    mpfr_set(*(yrange.a),y,GMP_RNDD);
-  }
-
-  mpfr_abs(*(yrange.a),*(yrange.a),GMP_RNDD);
-  mpfr_abs(*(yrange.b),*(yrange.b),GMP_RNDD);
-  sollya_mpfr_min(*(xrange.a),*(yrange.a),*(yrange.b),GMP_RNDD);
-  sollya_mpfr_max(*(xrange.b),*(yrange.a),*(yrange.b),GMP_RNDU);
-
-  mpfr_sub(*(xrange.b),*(xrange.b),*(xrange.a),GMP_RNDU);
-
-  mpfr_div(*(xrange.b),*(xrange.b),*(xrange.a),GMP_RNDU);
-  mpfr_mul_2ui(*(xrange.b),*(xrange.b),1,GMP_RNDU);
-  mpfr_set(accur,*(xrange.b),GMP_RNDU);
-
-  mpfr_clear(*(xrange.a));
-  mpfr_clear(*(xrange.b));
-  mpfr_clear(*(yrange.a));
-  mpfr_clear(*(yrange.b));
-  free(xrange.a);
-  free(xrange.b);
-  free(yrange.a);
-  free(yrange.b);
-
-  return 1;
-}
-
-
-int evaluateWithAccuracy(node *func, mpfr_t x, mpfr_t y, mpfr_t accur, 
-			 mp_prec_t minprec, mp_prec_t maxprec, mp_prec_t *needPrec) {
-  mpfr_t temp, currY, currX, currAccur, resY;
-  mp_prec_t p;
-  int res, okay;
-
-  if (mpfr_sgn(accur) <= 0) return 0;
-
-  mpfr_init2(temp,minprec);
-  mpfr_set_d(temp,1.0,GMP_RNDN);
-  p = mpfr_get_prec(y);
-  if (maxprec < p) p = maxprec;
-  mpfr_div_2ui(temp,temp,p,GMP_RNDN);
-  if (mpfr_cmp(accur,temp) < 0) {
-    mpfr_clear(temp);
-    return 0;
-  }
-  mpfr_clear(temp);
-
-  mpfr_init2(currAccur,mpfr_get_prec(accur));
-
-  p = minprec;
-  if ((mpfr_get_prec(y) + 10) > minprec) minprec = mpfr_get_prec(y) + 10;
-
-  res = 0; okay = 0;
-  while (p <= maxprec) {
-    mpfr_init2(currY,p);
-    mpfr_init2(currX,p);
-    mpfr_set(currX,x,GMP_RNDN);
-    res = evaluateWithAccuracyEstimate(func, currX, currY, currAccur, p);
-    mpfr_clear(currX);
-
-    if (res && (mpfr_cmp(currAccur,accur) <= 0)) {
-      mpfr_init2(resY,mpfr_get_prec(currY));
-      mpfr_set(resY,currY,GMP_RNDN);
-      mpfr_clear(currY);
-      okay = 1;
-      break;
-    }
-    mpfr_clear(currY);
-    p *= 2;
-  }
-  
-  if (okay) {
-    mpfr_set(y,resY,GMP_RNDN);
-    mpfr_clear(resY);
-    if (needPrec != NULL) {
-      *needPrec = p;
-    }
-  }
-
-  mpfr_clear(currAccur);
-  return okay;
-}
-
-
-int evaluateFaithfulOrFail(node *func, mpfr_t x, mpfr_t y, unsigned int precFactor, mp_prec_t *needPrec) {
-  mp_prec_t startPrec, endPrec, p;
-  mpfr_t accur;
-  int res;
-
-  p = mpfr_get_prec(y);
-  startPrec = p + 10;
-  endPrec = startPrec * precFactor;
-
-  mpfr_init2(accur,startPrec);
-  mpfr_set_d(accur,1.0,GMP_RNDN);
-  mpfr_div_2ui(accur,accur,p,GMP_RNDD);
-
-  res = evaluateWithAccuracy(func, x, y, accur, startPrec, endPrec, needPrec);
-  
-  mpfr_clear(accur);
-  
-  return res;
 }
 
 int evaluateFaithful(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
@@ -4355,8 +4231,8 @@ int accurateInfnorm(mpfr_t result, node *func, rangetype range, chain *excludes,
     mpfr_set(result,*(res.a),GMP_RNDU);
     mpfr_clear(*(res.a));
     mpfr_clear(*(res.b));
-    free(res.a);
-    free(res.b);
+    safeFree(res.a);
+    safeFree(res.b);
     return 1;
   }
 
@@ -4492,8 +4368,8 @@ int accurateInfnorm(mpfr_t result, node *func, rangetype range, chain *excludes,
 
   mpfr_clear(*(res.a));
   mpfr_clear(*(res.b));
-  free(res.a);
-  free(res.b);
+  safeFree(res.a);
+  safeFree(res.b);
 
   mpfr_clear(stopDiameter);
   mpfr_clear(currDiameter);
@@ -4511,111 +4387,56 @@ int accurateInfnorm(mpfr_t result, node *func, rangetype range, chain *excludes,
   return okay;
 }
 
-/* Tries to evaluate func(x) with faithful rounding to the precision of result                            */
-/* If it can be proven that |func(x)|<cutoff, the returned value is 2 and result ~ func(x)                */
-/* If the faithful value can successfully be computed, it is stored in result and the returned value is 1 */
-/* If after increasing the precision many times, a satisfying value has not been obtained, result is set  */
-/* to NaN and the returned value is:                                                                      */
-/*    3 if the last computed value was NaN, or Inf                                                        */
-/*    0 if the last computed value was a regular number (in which case, func(x) might be an exact 0)      */
-int evaluateFaithfulWithCutOffFastOld(mpfr_t result, node *func, node *deriv, mpfr_t x, mpfr_t cutoff, mp_prec_t startprec) {
-  mp_prec_t p, prec, oldPrec, oldPrec2;
-  rangetype xrange, yrange;
+/* Return values:
+
+   0 -> evaluation did not allow for a faithful evaluation nor to get
+        below the threshold but the proof interval was a closed subset
+        of the reals or an exact infinity
+
+   1 -> evaluation gave a faithful result, we do not know if it is
+        exact or inexact
+
+   2 -> evaluation got the proof interval below the cutoff
+
+   3 -> evaluation did not allow to conclude on a function as it
+        evaluated to NaN or Inf
+
+   4 -> evaluation gave a faithfully resp. correctly rounded result
+        and we know that it is exact
+
+   5 -> evaluation gave a faithful result and we know that it is
+        inexact 
+
+   6 -> evaluation gave a correctly rounded result, we do not know if
+        it is inexact
+	
+   7 -> evaluation gave a correctly rounded result and we know that it
+        is inexact
+
+*/
+int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *func, node *deriv, mpfr_t x, mpfr_t cutoff, mp_prec_t startprec, node *altX) {
+  mp_prec_t p, prec, pTemp;
+  sollya_mpfi_t yI, xI, cutoffI, dummyI;
   int okay;
-  mpfr_t resUp, resDown;
-
-
-  prec = mpfr_get_prec(result);
-  mpfr_init2(resUp,prec);
-  mpfr_init2(resDown,prec);
-
-  p = mpfr_get_prec(x);
-  xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-  xrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-  mpfr_init2(*(xrange.a),p);
-  mpfr_init2(*(xrange.b),p);
-  mpfr_set(*(xrange.a),x,GMP_RNDD);
-  mpfr_set(*(xrange.b),x,GMP_RNDU);
-
-  if (p > prec) prec = p;
-  if (startprec > prec) prec = startprec;
-
-  oldPrec = tools_precision;
-  oldPrec2 = defaultprecision;
-
-  // tools_precision = prec;
-  // defaultprecision = prec;
-
-
-  yrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-  yrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-
-  p=startprec;
-  okay = 0;
-  while (p < prec * 512) {
-    mpfr_init2(*(yrange.a),p);
-    mpfr_init2(*(yrange.b),p);
-    evaluateRangeFunctionFast(yrange, func, deriv, xrange, p);
-    mpfr_set(resDown,*(yrange.a),GMP_RNDN);
-    mpfr_set(resUp,*(yrange.b),GMP_RNDN);
-    if ((mpfr_number_p(resDown)) &&
-	(mpfr_number_p(resUp)) &&
-	(mpfr_number_p(*(yrange.a))) &&
-	(mpfr_number_p(*(yrange.b)))
-	) {
-      if (mpfr_cmp(resDown,resUp) == 0)
-	okay = 1;
-      mpfr_nextabove(resDown);
-      if (mpfr_cmp(resDown,resUp) == 0)
-	okay = 1;
-      if (okay == 0) {
-	if ((mpfr_cmpabs(*(yrange.a),cutoff) < 0) && (mpfr_cmpabs(*(yrange.b),cutoff) < 0)) {
-	  mpfr_add(*(yrange.a),*(yrange.b),*(yrange.a),GMP_RNDN);
-	  mpfr_div_2ui(*(yrange.a),*(yrange.a),1,GMP_RNDN);
-	  mpfr_set(resUp,*(yrange.a),GMP_RNDN);
-	  okay = 2;
-	}
-      }
-    }
-    mpfr_clear(*(yrange.a));
-    mpfr_clear(*(yrange.b));
-    if (okay > 0) break;
-    p *= 2;
-  }
-  mpfr_clear(*(xrange.a));
-  mpfr_clear(*(xrange.b));
-
-  if (okay > 0) {
-    mpfr_set(result,resUp,GMP_RNDN);
-  } else {
-    mpfr_set_nan(result);
-    if( (!mpfr_number_p(resUp)) || (!mpfr_number_p(resDown))) okay=3;
-  }
-  
-  free(yrange.a);
-  free(yrange.b);
-  free(xrange.a);
-  free(xrange.b);
-
-  mpfr_clear(resUp);
-  mpfr_clear(resDown);
-
-
-  // tools_precision = oldPrec;
-  // defaultprecision = oldPrec2;
-
-  return okay;
-}
-
-int evaluateFaithfulWithCutOffFast(mpfr_t result, node *func, node *deriv, mpfr_t x, mpfr_t cutoff, mp_prec_t startprec) {
-  mp_prec_t p, prec;
-  sollya_mpfi_t yI, xI, cutoffI;
-  int okay;
-  mpfr_t resUp, resDown;
+  mpfr_t resUp, resDown, resUpFaith, resDownFaith, resDownTemp;
   mpfr_t cutoffLeft, cutoffRight;
-  mpfr_t yILeft, yIRight;
+  mpfr_t yILeft, yIRight, yILeftCheck, yIRightCheck;
   int testCutOff;
+  int correctlyRounded;
   
+  /* Check if we have a constant expression to evaluate at and if so,
+     check if it is constant 
+  */
+  if ((altX != NULL) && (!isConstant(altX))) {
+    /* Here the alternate abscissa expression is not constant */
+    mpfr_set_nan(result);
+    return 0;
+  }
+
+  /* We need a dummy interval for some evaluations */
+  sollya_mpfi_init2(dummyI,12);
+  sollya_mpfi_set_ui(dummyI,1);
+
   /* We test the cutoff only if it is not zero */
   testCutOff = 1;
 
@@ -4634,16 +4455,15 @@ int evaluateFaithfulWithCutOffFast(mpfr_t result, node *func, node *deriv, mpfr_
   mpfr_clear(cutoffLeft);
   mpfr_clear(cutoffRight);
 
-  /* Need a little more because we always take the upper value below */
-  prec = mpfr_get_prec(result)+5;
+  /* Initialize the variables that hold the possible roundings */
+  prec = mpfr_get_prec(result);
   mpfr_init2(resUp,prec);
   mpfr_init2(resDown,prec);
+  mpfr_init2(resUpFaith,prec);
+  mpfr_init2(resDownFaith,prec);
+  mpfr_init2(resDownTemp,prec);
 
-  /* Copy x into an interval with its own precision */
-  p = mpfr_get_prec(x);
-  sollya_mpfi_init2(xI,p);
-  sollya_mpfi_interv_fr(xI,x,x);
-
+  /* Determine a starting precision */
   if (startprec > prec) prec = startprec;
 
   /* Testing (comparing the final prec with the startprec on the examples in the check files)
@@ -4659,10 +4479,42 @@ int evaluateFaithfulWithCutOffFast(mpfr_t result, node *func, node *deriv, mpfr_
   sollya_mpfi_init2(yI,startprec*16);
   mpfr_init2(yILeft,startprec*16);
   mpfr_init2(yIRight,startprec*16);
+
+  /* Initialize an interval for the abscissa point we evaluate at */
+  if (altX == NULL) {
+    /* If we have no alternate abscissa point, copy x into an interval
+       with its own precision 
+    */
+    p = mpfr_get_prec(x);
+    sollya_mpfi_init2(xI,p);
+    sollya_mpfi_interv_fr(xI,x,x);
+  } else {
+    /* Otherwise, initialize an interval with a little more than the
+       starting precision and then set the precision to the starting
+       precision. This allows for the first subsequent mpf*_set_prec
+       not to malloc which saves a couple of mallocs and copies.
+    */
+    sollya_mpfi_init2(xI,startprec * 16);
+    sollya_mpfi_set_prec(xI,startprec);
+  }
+
+  /* Start the rounding loop */
   p=startprec;
   okay = 0;
   while (p < prec * 512) {
+    correctlyRounded = 0;
+
     sollya_mpfi_set_prec(yI,p);
+    
+    /* If we evaluate at a constant expression instead of a point,
+       evaluate the constant expression to the current (loop)
+       precision.
+    */
+    if (altX != NULL) {
+      sollya_mpfi_set_prec(xI,p);
+      evaluateInterval(xI, altX, NULL, dummyI);
+    }
+
     mpfr_set_prec(yILeft,p);
     mpfr_set_prec(yIRight,p);
     evaluateInterval(yI, func, deriv, xI);
@@ -4679,42 +4531,305 @@ int evaluateFaithfulWithCutOffFast(mpfr_t result, node *func, node *deriv, mpfr_
      */
     if ((mpfr_number_p(resDown)) &&
 	(mpfr_number_p(resUp)) &&
-	(sollya_mpfi_bounded_p(yI))
-	) {
-      if (mpfr_cmp(resDown,resUp) == 0) 
+	(sollya_mpfi_bounded_p(yI))) {
+      /* Check if correct rounding is already possible */
+      if (mpfr_cmp(resDown,resUp) == 0) {
+	/* Correct rounding is possible, resDown = resUp is that
+	   correct rounding 
+	*/
 	okay = 1;
-      mpfr_nextabove(resDown);
-      if (mpfr_cmp(resDown,resUp) == 0) 
-	okay = 1;
-      if (testCutOff && (okay == 0)) {
-	if (sollya_mpfi_is_inside(yI,cutoffI)) {
-	  sollya_mpfi_mid(resUp,yI);
-	  okay = 2;
-	} 
+	correctlyRounded = 1;
+      } else {
+	/* Check if faithful rounding is already possible because the
+           proof interval is between two consecutive floating-point
+           numbers in the target format. 
+	*/
+	sollya_mpfi_get_left(resDownFaith,yI);
+	sollya_mpfi_get_right(resUpFaith,yI);
+	mpfr_set(resDownTemp, resDownFaith, GMP_RNDN); /* exact, same precision */
+	mpfr_nextabove(resDownTemp);
+	if (mpfr_number_p(resDownFaith) && 
+	    mpfr_number_p(resUpFaith) && 
+	    (mpfr_cmp(resDownTemp,resUpFaith) == 0)) {
+	  /* A faithful rounding is already possible because the 
+	     proof interval is between two consecutive floating-point
+	     numbers in the target format.
+
+	     As the rounding process implemented here will start with
+             some small precision (yielding large proof intervals at
+             first) and increase that precision more and more until
+             correct or faithful rounding becomes possible and since
+             faithful rounding is easier than correct rounding, there
+             are more chances to fall into this case of faithful
+             rounding than into the case for correct rounding.
+
+	     In order to allow for correct rounding in most cases
+	     anyway, we are hence going to try to recompute the proof
+	     interval at a slightly higher precision to see if we
+	     can't get correct rounding "for just one dollar more."
+	     
+	   */
+	  pTemp = p + (p >> 2); /* That is 25% more of precision */
+	  
+	  /* Recompute at that slightly higher precision */
+	  sollya_mpfi_set_prec(yI,pTemp);
+	  
+	  /* If we evaluate at a constant expression instead of a point,
+	     evaluate the constant expression to the current (loop)
+	     precision.
+	  */
+	  if (altX != NULL) {
+	    sollya_mpfi_set_prec(xI,pTemp);
+	    evaluateInterval(xI, altX, NULL, dummyI);
+	  }
+	  
+	  mpfr_set_prec(yILeft,pTemp);
+	  mpfr_set_prec(yIRight,pTemp);
+	  evaluateInterval(yI, func, deriv, xI);
+	  sollya_mpfi_get_left(yILeft,yI);
+	  sollya_mpfi_get_right(yIRight,yI);
+	  mpfr_set(resDown,yILeft,GMP_RNDN);
+	  mpfr_set(resUp,yIRight,GMP_RNDN);
+
+	  /* Check if we have a correct rounding now. */
+	  if (mpfr_number_p(resDown) &&
+	      mpfr_number_p(resUp) &&
+	      sollya_mpfi_bounded_p(yI) && 
+	      (mpfr_cmp(resDown,resUp) == 0)) {
+	    /* We did find a correct rounding now, which we're gonna
+	       use. 
+	    */
+	    okay = 1;
+	    correctlyRounded = 1;
+	  } else {
+	    /* We couldn't find a correct rounding with a
+	       recomputation at a slightly higher precision. So we'll
+	       go for our faithful rounding. 
+	    */
+	    okay = 1;
+	    mpfr_set(resDown, resDownFaith, GMP_RNDN); /* exact, same precision */
+	    mpfr_set(resUp, resUpFaith, GMP_RNDN); /* exact, same precision */
+	  }
+	} else {
+	  /* Check if faithful rounding is already possible because
+	     the proof interval contains a single floating-point
+	     number in the target format.
+	  */
+	  mpfr_set(resDownFaith,yILeft,GMP_RNDU);
+	  mpfr_set(resUpFaith,yIRight,GMP_RNDD);
+	  if (mpfr_number_p(resDownFaith) && 
+	      mpfr_number_p(resUpFaith) && 
+	      (mpfr_cmp(resDownFaith,resUpFaith) == 0)) {
+	    /* A faithful rounding is already possible because the
+	       proof interval contains a single floating-point number
+	       in the target format.
+
+	       As the rounding process implemented here will start with
+	       some small precision (yielding large proof intervals at
+	       first) and increase that precision more and more until
+	       correct or faithful rounding becomes possible and since
+	       faithful rounding is easier than correct rounding, there
+	       are more chances to fall into this case of faithful
+	       rounding than into the case for correct rounding.
+
+	       In order to allow for correct rounding in most cases
+	       anyway, we are hence going to try to recompute the proof
+	       interval at a slightly higher precision to see if we
+	       can't get correct rounding "for just one dollar more."
+	     
+	    */
+	    pTemp = p + (p >> 2); /* That is 25% more of precision */
+	  
+	    /* Recompute at that slightly higher precision */
+	    sollya_mpfi_set_prec(yI,pTemp);
+	  
+	    /* If we evaluate at a constant expression instead of a point,
+	       evaluate the constant expression to the current (loop)
+	       precision.
+	    */
+	    if (altX != NULL) {
+	      sollya_mpfi_set_prec(xI,pTemp);
+	      evaluateInterval(xI, altX, NULL, dummyI);
+	    }
+	  
+	    mpfr_set_prec(yILeft,pTemp);
+	    mpfr_set_prec(yIRight,pTemp);
+	    evaluateInterval(yI, func, deriv, xI);
+	    sollya_mpfi_get_left(yILeft,yI);
+	    sollya_mpfi_get_right(yIRight,yI);
+	    mpfr_set(resDown,yILeft,GMP_RNDN);
+	    mpfr_set(resUp,yIRight,GMP_RNDN);
+
+	    /* Check if we have a correct rounding now. */
+	    if (mpfr_number_p(resDown) &&
+		mpfr_number_p(resUp) &&
+		sollya_mpfi_bounded_p(yI) && 
+		(mpfr_cmp(resDown,resUp) == 0)) {
+	      /* We did find a correct rounding now, which we're gonna
+		 use. 
+	      */
+	      okay = 1;
+	      correctlyRounded = 1;
+	    } else {
+	      /* We couldn't find a correct rounding with a
+		 recomputation at a slightly higher precision. So we'll
+		 go for our faithful rounding. 
+	      */
+	      okay = 1;
+	      mpfr_set(resDown, resDownFaith, GMP_RNDN); /* exact, same precision */
+	      mpfr_set(resUp, resUpFaith, GMP_RNDN); /* exact, same precision */
+	    }
+	  } else {
+	    /* Check if the proof interval is already contained in the
+	       cutoff interval 
+	    */
+	    if (testCutOff && (okay == 0)) {
+	      if (sollya_mpfi_is_inside(yI,cutoffI)) {
+		sollya_mpfi_mid(resUp,yI);
+		mpfr_set(resDown, resUp, GMP_RNDN); /* exact, same precision */
+		okay = 2;
+	      } 
+	    }
+	  }
+	}
       }
     }
     if (okay > 0) break;
     p <<= 1;
   }
   sollya_mpfi_clear(xI);
-  sollya_mpfi_clear(yI);
   mpfr_clear(yILeft);
   mpfr_clear(yIRight);
 
   if (okay > 0) {
-    /* This rouning annihilates the effect of taking always the upper value */
-    mpfr_set(result,resUp,GMP_RNDN);
+    /* Now compute the correct rounding wherever possible and the
+       correct rounding of the midpoint of both possible answers
+       otherwise 
+
+       To do so, compute the midpoint of resUp and resDown and round
+       it to the target precision.
+
+       There are 3 possible cases:
+
+       a) The loop above has been left because both endpoints of the 
+          proof interval rounded to the same value, resUp = resDown.
+          In this case, the midpoint of resUp and resDown is 
+	  resUp = resDown, which is also the correct rounding.
+
+       b) The loop above has been left because resUp was the 
+          next floating-point number above resDown. resDown
+          and resUp are the two possible answers for a faithful
+	  rounding. Their midpoint is the point where the rounding 
+	  changes. The proof interval contained that midpoint.
+          Returning the correct rounding of the midpoint to the 
+          nearest floating-point value hence chooses the even of 
+          both possible faithful roundings.
+
+       c) The loop above has been left because the proof interval
+          was contained in [-cutoff,cutoff]. In this case, resUp and 
+	  resDown have both been set to the midpoint of the proof 
+          interval, which is certainly less than cutoff in magnitude.
+	  Computing the midpoint of resUp and resDown and rounding 
+          to target precision does not change anything to that value.
+    */
+    mpfr_div_2ui(resDown, resDown, 1, GMP_RNDN); /* exact, power of 2 */
+    mpfr_div_2ui(resUp, resUp, 1, GMP_RNDN); /* exact, power of 2 */
+    mpfr_add(result,resDown, resUp, GMP_RNDN); /* Computes the midpoint and rounds it to target precision */
+
+    /* Now check if we are in a case when we can tell if the result is
+       an exact or inexact one. We do this check only if we had a
+       correct or faithful result; we do nothing for the case when 
+       the proof interval was below the threshold.
+    */
+    if (okay == 1) {
+      /* We have a correctly or faithfully rounded result in result and we 
+	 want to check if the proof interval we had, yI allows anything 
+	 else to be said than just "it's a faithful rounding".
+
+	 We won't do the additional check if there are quantities
+	 involved that are no real numbers.
+      */
+      p = sollya_mpfi_get_prec(yI);
+      mpfr_init2(yILeftCheck, p);
+      mpfr_init2(yIRightCheck, p);
+      sollya_mpfi_get_left(yILeftCheck,yI);
+      sollya_mpfi_get_right(yIRightCheck,yI);
+      if (mpfr_number_p(result) && 
+	  mpfr_number_p(yILeftCheck) &&
+	  mpfr_number_p(yIRightCheck)) {
+	/* Here, we have real numbers to work on */
+	if (mpfr_equal_p(yILeftCheck, yIRightCheck)) {
+	  /* Here, the proof interval is reduced to a point */
+	  if (mpfr_equal_p(result, yILeftCheck)) {
+	    /* The result is exact as it is equal to both bounds of
+	       the proof interval. 
+	    */
+	    okay = 4;
+	  } else {
+	    /* The result is inexact as it is unequal to both bounds
+	       of the proof interval which are themselves equal one to
+	       another.
+	    */
+	    okay = 5;
+	  }
+	} else {
+	  /* Given the correctly or faithfully rounded result, check
+	     if the proof interval is sufficiently small to prove that
+	     the result is not in the proof interval, which means that
+	     the result must be inexact.
+	  */
+	  if (!((mpfr_cmp(yILeftCheck, result) <= 0) && (mpfr_cmp(result, yIRightCheck) <= 0))) {
+	    /* Here, the result is not in the proof interval and
+	       therefore it is necessarily inexact. 
+	    */
+	    okay = 5;
+	  }
+	}
+      }
+      mpfr_clear(yILeftCheck);
+      mpfr_clear(yIRightCheck);
+    }
+
+    /* If we got a correctly rounded result, we can express this fact
+       with the return code 
+    */
+    if (correctlyRounded) {
+      if (okay == 1) {
+	okay = 6;
+      } else {
+	if (okay == 5) {
+	  okay = 7;
+	}
+      }
+    }
   } else {
     mpfr_set_nan(result);
     if( (!mpfr_number_p(resUp)) || (!mpfr_number_p(resDown))) okay=3;
   }
  
+  sollya_mpfi_clear(yI);
   mpfr_clear(resUp);
   mpfr_clear(resDown);
+  mpfr_clear(resUpFaith);
+  mpfr_clear(resDownFaith);
+  mpfr_clear(resDownTemp);
   sollya_mpfi_clear(cutoffI);
+  sollya_mpfi_clear(dummyI);
   return okay;
 }
 
+int evaluateFaithfulWithCutOffFast(mpfr_t result, node *func, node *deriv, mpfr_t x, mpfr_t cutoff, mp_prec_t startprec) {
+  return evaluateFaithfulWithCutOffFastInternalImplementation(result, func, deriv, x, cutoff, startprec, NULL);
+}
+
+int evaluateFaithfulAtConstantExpression(mpfr_t result, node *func, node *deriv, node *x, mpfr_t cutoff, mp_prec_t startprec) {
+  mpfr_t dummy;
+  if (x == NULL) {
+    mpfr_set_nan(result);
+    return 0;
+  }
+  return evaluateFaithfulWithCutOffFastInternalImplementation(result, func, deriv, dummy, cutoff, startprec, x);
+}
 
 int evaluateFaithfulWithCutOff(mpfr_t result, node *func, mpfr_t x, mpfr_t cutoff, mp_prec_t startprec) {
   node *deriv;
@@ -4914,7 +5029,7 @@ int compareConstant(int *cmp, node *func1, node *func2) {
 		    }
 		    for (i=0;i<=degree;i++) 
 		      if (coefficients[i] != NULL) free_memory(coefficients[i]);
-		    free(coefficients);
+		    safeFree(coefficients);
 		  }
 		}
 		free_memory(tempNode);

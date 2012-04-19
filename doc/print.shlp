@@ -6,6 +6,7 @@
 #TYPE ($ANY_TYPE,..., $ANY_TYPE, $STRING_TYPE) -> $VOID_TYPE
 #CALLING $COMMAND(<expr1>,...,<exprn>) §§>>§$>>$§§ <filename>
 #TYPE ($ANY_TYPE,...,$ANY_TYPE, $STRING_TYPE) -> $VOID_TYPE
+
 #PARAMETERS <expr> represents an expression
 #PARAMETERS <filename> represents a character sequence indicating a file name
 

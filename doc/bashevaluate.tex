@@ -1,7 +1,10 @@
 \subsection{bashevaluate}
 \label{labbashevaluate}
 \noindent Name: \textbf{bashevaluate}\\
-executes a shell command and returns its output as a string\\
+\phantom{aaa}executes a shell command and returns its output as a string\\[0.2cm]
+\noindent Library names:\\
+\verb|   sollya_obj_t sollya_lib_bashevaluate(sollya_obj_t, ...)|\\
+\verb|   sollya_obj_t sollya_lib_v_bashevaluate(sollya_obj_t, va_list)|\\[0.2cm]
 \noindent Usage: 
 \begin{center}
 \textbf{bashevaluate}(\emph{command}) : \textsf{string} $\rightarrow$ \textsf{string}\\
@@ -34,7 +37,7 @@ Parameters:
 \noindent Example 1: 
 \begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > bashevaluate("LANG=C date");
-Mon Feb  6 20:12:11 CET 2012
+Thu Apr 19 02:01:57 CEST 2012
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 2: 

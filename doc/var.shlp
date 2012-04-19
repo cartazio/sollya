@@ -2,6 +2,7 @@
 #QUICK_DESCRIPTION declaration of a local variable in a scope
 #CALLING $COMMAND <identifier1>, <identifier2>,... , <identifiern>
 #TYPE $VOID_TYPE
+
 #PARAMETERS <identifier1>, <identifier2>,... , <identifiern> represent variable identifiers
 
 

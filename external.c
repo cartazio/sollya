@@ -188,7 +188,7 @@ char *evaluateStringAsBashCommand(char *command, char *input) {
 		  len = strlen(res);
 		  buf = safeCalloc(len + readLen + 1, sizeof(char));
 		  strcpy(buf,res);
-		  free(res);
+		  safeFree(res);
 		  res = buf;
 		  buf += len;
 		}
@@ -214,7 +214,7 @@ char *evaluateStringAsBashCommand(char *command, char *input) {
 		  len = strlen(res);
 		  buf = safeCalloc(len + readLen + 1, sizeof(char));
 		  strcpy(buf,res);
-		  free(res);
+		  safeFree(res);
 		  res = buf;
 		  buf += len;
 		}
@@ -248,7 +248,7 @@ char *evaluateStringAsBashCommand(char *command, char *input) {
   }
 
   if (!okay) {
-    if (res != NULL) free(res);
+    if (res != NULL) safeFree(res);
     res = NULL;
   }
 
@@ -370,7 +370,13 @@ void externalPlot(char *library, mpfr_t a, mpfr_t b, mp_prec_t samplingPrecision
     if (xd <= -MAX_VALUE_GNUPLOT) xd = -MAX_VALUE_GNUPLOT;
     sollyaFprintf(file, "%1.50e",xd);
     if (!mpfr_number_p(temp)) {
-      printMessage(2,SOLLYA_MSG_A_FUNCTION_COULD_NOT_BE_PLOTTED_AT_A_POINT,"Information: function undefined or not evaluable in point %s = %v\nThis point will not be plotted.\n",((variablename == NULL) ? "_x_" : variablename),x);
+      if (verbosity >= 2) {
+	changeToWarningMode();
+	sollyaPrintf("Information: function undefined or not evaluable in point %s = ",((variablename == NULL) ? "_x_" : variablename));
+	printValue(&x);
+	sollyaPrintf("\nThis point will not be plotted.\n");
+	restoreMode();
+      }
     }
     yd = mpfr_get_d(temp, GMP_RNDN);
     if (yd >= MAX_VALUE_GNUPLOT) yd = MAX_VALUE_GNUPLOT;
@@ -415,8 +421,8 @@ void externalPlot(char *library, mpfr_t a, mpfr_t b, mp_prec_t samplingPrecision
     }
   }
   
-  free(gplotname);
-  free(dataname);
-  free(outputname);
+  safeFree(gplotname);
+  safeFree(dataname);
+  safeFree(outputname);
   return;
 }

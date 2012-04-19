@@ -1,7 +1,7 @@
 \subsection{isevaluable}
 \label{labisevaluable}
 \noindent Name: \textbf{isevaluable}\\
-tests whether a function can be evaluated at a point \\
+\phantom{aaa}tests whether a function can be evaluated at a point \\[0.2cm]
 \noindent Usage: 
 \begin{center}
 \textbf{isevaluable}(\emph{function}, \emph{constant}) : (\textsf{function}, \textsf{constant}) $\rightarrow$ \textsf{boolean}\\
@@ -17,6 +17,11 @@ Parameters:
    a boolean indicating whether or not a subsequent call to \textbf{evaluate} on the
    same function \emph{function} and constant \emph{constant} will produce a numerical
    result or NaN. This means \textbf{isevaluable} returns false iff \textbf{evaluate} will return NaN.
+
+\item The command \textbf{isevaluable} is now considered DEPRECATED in \sollya.
+   As checks for NaNs are now possible in Sollya, the command \textbf{isevaluable}
+   can be fully emulated with a call to evaluate and a couple of tests, 
+   as shown below in the last example.
 \end{itemize}
 \noindent Example 1: 
 \begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
@@ -41,6 +46,22 @@ true
 false
 > print(evaluate(sin(pi * 1/x), 0));
 [@NaN@;@NaN@]
+\end{Verbatim}
+\end{minipage}\end{center}
+\noindent Example 4: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> procedure isEvaluableEmulation(f, c) {
+        return match evaluate(f, c) with 
+                   NaN : (false)
+                 [NaN;NaN] : (false)
+                 default : (true);
+  };
+> isEvaluableEmulation(sin(pi * 1/x), 0.75);
+true
+> isEvaluableEmulation(sin(pi * 1/x), 0.5);
+true
+> isEvaluableEmulation(sin(pi * 1/x), 0);
+false
 \end{Verbatim}
 \end{minipage}\end{center}
 See also: \textbf{evaluate} (\ref{labevaluate})

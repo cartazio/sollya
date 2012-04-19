@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([sollya], [3.0], [christoph.lauter@ens-lyon.org, sylvain.chevillard@ens-lyon.org, mioara.joldes@ens-lyon.fr])
+AC_INIT([sollya], [4.0-alpha], [christoph.lauter@ens-lyon.org, sylvain.chevillard@ens-lyon.org, mioara.joldes@ens-lyon.fr])
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE([1.6 no-define dist-zip dist-bzip2])
 
@@ -25,6 +25,9 @@ AC_MSG_ERROR(no)
 ])
 AC_LANG_POP([C++])	
 AC_PROG_LEX
+if test "$missing_dir" = ""; then
+   missing_dir="."
+fi
 if test "$LEX" != flex; then
   LEX="$SHELL $missing_dir/missing flex"
   AC_SUBST(LEX_OUTPUT_ROOT, lex.yy)
@@ -65,6 +68,7 @@ fi
 
 # withs...
 FPLLLVERSIONSTRING=""
+FPLLLJUSTHEADER=yes
 
 WITH_LIB_GIVEN="no"
 AC_ARG_WITH(gmp-include,
@@ -222,7 +226,7 @@ LDFLAGS="$AM_LDFLAGS $LDFLAGS"
 
 dlopen_ok="yes"
 AC_CHECK_LIB([c], [dlopen], [], [dlopen_ok="no"])
-if [[ $dlopen_ok == "no" ]] ; then
+if test "x${dlopen_ok}y" == "xnoy" ; then
   AC_CHECK_LIB([dl], [dlopen], [], AC_MSG_ERROR([libdl unusable]))
 fi
 AC_CHECK_LIB([gmp], [__gmpz_init], [], AC_MSG_ERROR([libgmp unusable]))
@@ -256,7 +260,7 @@ AC_MSG_RESULT(no) ])
 CFLAGS="$FPLLLOLDCFLAGS"
 CPPFLAGS="$FPLLLOLDCPPFLAGS"
 LDFLAGS="$FPLLLOLDLDFLAGS"
-if [[ $FPLLLISREALLIB == "no" ]] ; then
+if test "x${FPLLLISREALLIB}y" == "xnoy" ; then
 AC_MSG_CHECKING([for fplll support, fplll being just a header file])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdlib.h>]]
 [[#include <fplll.h>]] 
@@ -271,8 +275,9 @@ else
 # Add -lfplll to LFLAGS
 AM_LDFLAGS="-lfplll $AM_LDFLAGS"	
 FPLLLVERSIONSTRING="FPLLL: a real library, linked with -lfplll$FPLLLVERSIONSTRING"
+FPLLLJUSTHEADER=no
 fi
-if [[ $FPLLLUSABLE == "no" ]] ; then
+if test "x${FPLLLUSABLE}y" == "xnoy" ; then
 FPLLLSPECIALINCLUDE="yes"
 AC_MSG_CHECKING([for Debian-like fplll support, fplll being just a header file])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdlib.h>]]
@@ -287,12 +292,23 @@ AC_MSG_ERROR([fplll unusable (or g++ too new -- see README)])
 FPLLLVERSIONSTRING="FPLLL: unusable or g++ too new, $FPLLLVERSIONSTRING"
 ])
 fi
-if [[ $FPLLLSPECIALINCLUDE == "yes" ]] ; then 
+if test "x${FPLLLSPECIALINCLUDE}y" == "xyesy" ; then 
 AC_DEFINE([HAVE_SPECIAL_FPLLL_INCLUDE],[1],[Define for determining a special version of FPLLL])
 else
 AC_DEFINE([HAVE_SPECIAL_FPLLL_INCLUDE],[0],[Define for determining a special version of FPLLL])
 fi
 AC_DEFINE_UNQUOTED([HAVE_FPLLL_VERSION_STRING],["$FPLLLVERSIONSTRING"],[Define a kind of a version string for FPLLL])
+
+
+if test "x${FPLLLJUSTHEADER}y" == "xyesy" ; then 
+AC_DISABLE_STATIC
+AC_PROG_LIBTOOL
+if test "x${enable_shared}y" == "xnoy" ; then 
+AC_MSG_ERROR([fplll too old to be used in static libraries. Try to enable construction of shared libraries or update fplll])
+fi
+fi
+
+
 AC_LANG_POP([C++])	
 
 
@@ -371,10 +387,10 @@ AC_TYPE_SIGNAL
 AC_FUNC_VPRINTF
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
-AC_CHECK_FUNCS([gettimeofday memmove memset strchr strerror strrchr strtol backtrace dup2])
+AC_CHECK_FUNCS([gettimeofday memmove memset strchr strerror strrchr strtol backtrace dup2 strstr])
 
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(AM_CFLAGS)
 AC_SUBST(AM_LDFLAGS)
-AC_CONFIG_FILES([Makefile doc/Makefile tests/Makefile])
+AC_CONFIG_FILES([Makefile doc/Makefile tests-tool/Makefile tests-lib/Makefile])
 AC_OUTPUT
