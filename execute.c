@@ -1,6 +1,6 @@
 /*
 
-Copyright 2007-2011 by
+Copyright 2007-2012 by
 
 Laboratoire de l'Informatique du Parallelisme,
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
@@ -334,12 +334,21 @@ char *readFileIntoString(FILE *fd) {
   return newString;
 }
 
-
+node *copyThingInner(node *);
 
 node *copyThing(node *tree) {
+  return addMemRef(copyThingInner(tree));
+}
+
+node *copyThingInner(node *tree) {
   node *copy;
 
   if (tree == NULL) return NULL;
+
+  if (tree->nodeType == MEMREF) {
+    tree->libFunDeriv++;
+    return tree;
+  }
 
   copy = (node *) safeMalloc(sizeof(node));
   copy->nodeType = tree->nodeType;
@@ -1241,6 +1250,10 @@ char *getTimingStringForThing(node *tree) {
 
   if (tree == NULL) return NULL;
 
+  if (tree->nodeType == MEMREF) {
+    return getTimingStringForThing(tree->child1);
+  }
+
   switch (tree->nodeType) {
   case VARIABLE:
     constString = NULL;
@@ -2071,6 +2084,9 @@ char *getTimingStringForThing(node *tree) {
 
 int isPureTree(node *tree) {
   switch (tree->nodeType) {
+  case MEMREF:
+    return isPureTree(tree->child1);
+    break;
   case VARIABLE:
     return 1;
     break;
@@ -2210,6 +2226,9 @@ int isPureTree(node *tree) {
 
 int isExtendedPureTree(node *tree) {
   switch (tree->nodeType) {
+  case MEMREF:
+    return isExtendedPureTree(tree->child1);
+    break;
   case DEFAULT:
     return 1;
     break;
@@ -2372,6 +2391,7 @@ int isMatchable(node *);
 
 int isMatchableList(node *tree) {
   chain *curr;
+  if (tree->nodeType == MEMREF) return isMatchableList(tree->child1);
   if (isEmptyList(tree)) return 1;
   if (!(isPureList(tree) || isPureFinalEllipticList(tree))) return 0;
   for (curr=tree->arguments;curr!=NULL;curr=curr->next) {
@@ -2383,6 +2403,7 @@ int isMatchableList(node *tree) {
 int isString(node *);
 
 int isMatchableConcat(node *tree) {
+  if (tree->nodeType == MEMREF) return isMatchableConcat(tree->child1);
   if (tree->nodeType != CONCAT) return 0;
   if (((tree->child1->nodeType == TABLEACCESS) || (tree->child1->nodeType == DEFAULT)) && 
       ((tree->child2->nodeType == TABLEACCESS) || (tree->child2->nodeType == DEFAULT))) return 0;
@@ -2405,6 +2426,7 @@ int isMatchableConcat(node *tree) {
 }
 
 int isMatchablePrepend(node *tree) {
+  if (tree->nodeType == MEMREF) return isMatchablePrepend(tree->child1);
   if (tree->nodeType != PREPEND) return 0;
   if (isMatchable(tree->child1) && 
       (isMatchableList(tree->child2) || 
@@ -2416,6 +2438,7 @@ int isMatchablePrepend(node *tree) {
 }
 
 int isMatchableAppend(node *tree) {
+  if (tree->nodeType == MEMREF) return isMatchableAppend(tree->child1);
   if (tree->nodeType != APPEND) return 0;
   if (isMatchable(tree->child2) && 
       ((isMatchableList(tree->child1) && (!isPureFinalEllipticList(tree->child1))) || 
@@ -2428,7 +2451,7 @@ int isMatchableAppend(node *tree) {
 
 int isMatchableStructure(node *tree) {
   chain *curr;
-
+  if (tree->nodeType == MEMREF) return isMatchableStructure(tree->child1);
   if (tree->nodeType != STRUCTURE) return 0;
   if (associationContainsDoubleEntries(tree->arguments)) return 0;
   for (curr=tree->arguments; curr != NULL; curr = curr->next) {
@@ -2438,6 +2461,7 @@ int isMatchableStructure(node *tree) {
 }
 
 int isMatchable(node *tree) {
+  if (tree->nodeType == MEMREF) return isMatchable(tree->child1);
   if (isExtendedPureTree(tree)) return 1;
   if (isCorrectlyTypedBaseSymbol(tree)) return 1;
   if ((tree->nodeType == RANGE) && 
@@ -2456,36 +2480,45 @@ int isMatchable(node *tree) {
 }
 
 int isDefault(node *tree) {
+  if (tree->nodeType == MEMREF) return isDefault(tree->child1);
   return (tree->nodeType == DEFAULT);
 }
 
 int isString(node *tree) {
+  if (tree->nodeType == MEMREF) return isString(tree->child1);
   return (tree->nodeType == STRING);
 }
 
 int isList(node *tree) {
+  if (tree->nodeType == MEMREF) return isList(tree->child1);
   return (tree->nodeType == LIST);
 }
 
 int isMatchElement(node *tree) {
+  if (tree->nodeType == MEMREF) return isMatchElement(tree->child1);
   return (tree->nodeType == MATCHELEMENT);
 }
 
 int isStructure(node *tree) {
+  if (tree->nodeType == MEMREF) return isStructure(tree->child1);
   return (tree->nodeType == STRUCTURE);
 }
 
 int isEmptyList(node *tree) {
+  if (tree->nodeType == MEMREF) return isEmptyList(tree->child1);
   return (tree->nodeType == EMPTYLIST);
 }
 
 int isElliptic(node *tree) {
+  if (tree->nodeType == MEMREF) return isElliptic(tree->child1);
   return (tree->nodeType == ELLIPTIC);
 }
 
 
 int isPureList(node *tree) {
   chain *curr;
+
+  if (tree->nodeType == MEMREF) return isPureList(tree->child1);
 
   if (!isList(tree)) return 0;
 
@@ -2499,11 +2532,14 @@ int isPureList(node *tree) {
 }
 
 int isFinalEllipticList(node *tree) {
+  if (tree->nodeType == MEMREF) return isFinalEllipticList(tree->child1);
   return (tree->nodeType == FINALELLIPTICLIST);
 }
 
 int isPureFinalEllipticList(node *tree) {
   chain *curr;
+
+  if (tree->nodeType == MEMREF) return isPureFinalEllipticList(tree->child1);
 
   if (!isFinalEllipticList(tree)) return 0;
 
@@ -2520,6 +2556,7 @@ int isPureFinalEllipticList(node *tree) {
 
 
 int isRange(node *tree) {
+  if (tree->nodeType == MEMREF) return isRange(tree->child1);
   if (tree->nodeType != RANGE) return 0;
   if (tree->child1->nodeType != CONSTANT) return 0;
   if (tree->child2->nodeType != CONSTANT) return 0;
@@ -2527,6 +2564,7 @@ int isRange(node *tree) {
 }
 
 int isRangeNonEmpty(node *tree) {
+  if (tree->nodeType == MEMREF) return isRangeNonEmpty(tree->child1);
   if (!isRange(tree)) return 0;
   if (mpfr_nan_p(*(tree->child1->value)) || 
       mpfr_nan_p(*(tree->child2->value))) return 1;
@@ -2536,72 +2574,85 @@ int isRangeNonEmpty(node *tree) {
 
 
 int isError(node *tree) {
+    if (tree->nodeType == MEMREF) return isError(tree->child1);
   if (tree->nodeType == ERRORSPECIAL) return 1;
   return 0;
 }
 
 
 int isBoolean(node *tree) {
+  if (tree->nodeType == MEMREF) return isBoolean(tree->child1);
   if (tree->nodeType == TRUE) return 1;
   if (tree->nodeType == FALSE) return 1;
   return 0;
 }
 
 int isUnit(node *tree) {
+  if (tree->nodeType == MEMREF) return isUnit(tree->child1);
   if (tree->nodeType == UNIT) return 1;
   return 0;
 }
 
 int isQuit(node *tree) {
+  if (tree->nodeType == MEMREF) return isQuit(tree->child1);
   if (tree->nodeType == QUIT) return 1;
   return 0;
 }
 
 int isRestart(node *tree) {
+  if (tree->nodeType == MEMREF) return isRestart(tree->child1);
   if (tree->nodeType == RESTART) return 1;
   return 0;
 }
 
 int isFalseQuit(node *tree) {
+  if (tree->nodeType == MEMREF) return isFalseQuit(tree->child1);
   if (tree->nodeType == FALSEQUIT) return 1;
   return 0;
 }
 
 int isFalseRestart(node *tree) {
+  if (tree->nodeType == MEMREF) return isFalseRestart(tree->child1);
   if (tree->nodeType == FALSERESTART) return 1;
   return 0;
 }
 
 
 int isExternalProcedureUsage(node *tree) {
+  if (tree->nodeType == MEMREF) return isExternalProcedureUsage(tree->child1);
   if (tree->nodeType == EXTERNALPROCEDUREUSAGE) return 1;
   return 0;
 }
 
 int isProcedure(node *tree) {
+  if (tree->nodeType == MEMREF) return isProcedure(tree->child1);
   if (tree->nodeType == PROC) return 1;
   if (tree->nodeType == PROCILLIM) return 1;
   return 0;
 }
 
 int isProcedureNotIllim(node *tree) {
+  if (tree->nodeType == MEMREF) return isProcedureNotIllim(tree->child1);
   if (tree->nodeType == PROC) return 1;
   return 0;
 }
 
 int isHonorcoeffprec(node *tree) {
+  if (tree->nodeType == MEMREF) return isHonorcoeffprec(tree->child1);
   if (tree->nodeType == HONORCOEFF) return 1;
   return 0;
 }
 
 
 int isOnOff(node *tree) {
+  if (tree->nodeType == MEMREF) return isOnOff(tree->child1);
   if (tree->nodeType == ON) return 1;
   if (tree->nodeType == OFF) return 1;
   return 0;
 }
 
 int isDisplayMode(node *tree) {
+  if (tree->nodeType == MEMREF) return isDisplayMode(tree->child1);
   if (tree->nodeType == DECIMAL) return 1;
   if (tree->nodeType == DYADIC) return 1;
   if (tree->nodeType == POWERS) return 1;
@@ -2611,6 +2662,7 @@ int isDisplayMode(node *tree) {
 }
 
 int isRoundingSymbol(node *tree) {
+  if (tree->nodeType == MEMREF) return isRoundingSymbol(tree->child1);
   if (tree->nodeType == ROUNDTONEAREST) return 1;
   if (tree->nodeType == ROUNDDOWN) return 1;
   if (tree->nodeType == ROUNDUP) return 1;
@@ -2619,6 +2671,7 @@ int isRoundingSymbol(node *tree) {
 }
 
 int isExpansionFormat(node *tree) {
+  if (tree->nodeType == MEMREF) return isExpansionFormat(tree->child1);
   if (tree->nodeType == SINGLESYMBOL) return 1;
   if (tree->nodeType == HALFPRECISIONSYMBOL) return 1;
   if (tree->nodeType == QUADSYMBOL) return 1;
@@ -2630,6 +2683,7 @@ int isExpansionFormat(node *tree) {
 }
 
 int isExtendedExpansionFormat(node *tree) {
+  if (tree->nodeType == MEMREF) return isExtendedExpansionFormat(tree->child1);
   if (tree->nodeType == SINGLESYMBOL) return 1;
   if (tree->nodeType == HALFPRECISIONSYMBOL) return 1;
   if (tree->nodeType == QUADSYMBOL) return 1;
@@ -2643,6 +2697,7 @@ int isExtendedExpansionFormat(node *tree) {
 
 
 int isRestrictedExpansionFormat(node *tree) {
+  if (tree->nodeType == MEMREF) return isRestrictedExpansionFormat(tree->child1);
   if (tree->nodeType == DOUBLESYMBOL) return 1;
   if (tree->nodeType == DOUBLEDOUBLESYMBOL) return 1;
   if (tree->nodeType == TRIPLEDOUBLESYMBOL) return 1;
@@ -2651,6 +2706,7 @@ int isRestrictedExpansionFormat(node *tree) {
 
 
 int isFilePostscriptFile(node *tree) {
+  if (tree->nodeType == MEMREF) return isFilePostscriptFile(tree->child1);
   if (tree->nodeType == FILESYM) return 1;
   if (tree->nodeType == POSTSCRIPT) return 1;
   if (tree->nodeType == POSTSCRIPTFILE) return 1;
@@ -2658,11 +2714,11 @@ int isFilePostscriptFile(node *tree) {
 }
 
 int isExternalPlotMode(node *tree) {
+  if (tree->nodeType == MEMREF) return isExternalPlotMode(tree->child1);
   if (tree->nodeType == ABSOLUTESYM) return 1;
   if (tree->nodeType == RELATIVESYM) return 1;
   return 0;
 }
-
 
 int evaluateThingToPureTree(node **result, node *tree) {
   node *evaluatedResult;
@@ -2787,12 +2843,12 @@ int evaluateThingToConstant(mpfr_t result, node *tree, mpfr_t *defaultVal, int s
       }
     }
 
-    if (simplified->nodeType == CONSTANT) {
-      if (mpfr_get_prec(*(simplified->value)) > mpfr_get_prec(result)) {
-	mpfr_set_prec(tempResult, mpfr_get_prec(*(simplified->value)));
-	mpfr_set_prec(result, mpfr_get_prec(*(simplified->value)));
+    if (accessThruMemRef(simplified)->nodeType == CONSTANT) {
+      if (mpfr_get_prec(*(accessThruMemRef(simplified)->value)) > mpfr_get_prec(result)) {
+	mpfr_set_prec(tempResult, mpfr_get_prec(*(accessThruMemRef(simplified)->value)));
+	mpfr_set_prec(result, mpfr_get_prec(*(accessThruMemRef(simplified)->value)));
       }
-      mpfr_set(tempResult,*(simplified->value),GMP_RNDN);
+      mpfr_set(tempResult,*(accessThruMemRef(simplified)->value),GMP_RNDN);
       exact = 1;
       res = 1;
     } else {
@@ -2856,7 +2912,7 @@ int evaluateThingToConstant(mpfr_t result, node *tree, mpfr_t *defaultVal, int s
 	notfaithful = 1;
       }
     } else {
-      if (simplified->nodeType != CONSTANT) {
+      if (accessThruMemRef(simplified)->nodeType != CONSTANT) {
 	if (!noMessage) {
 	  if ((!noRoundingWarnings) && (!silent) && (!superSilent)) {
 	    printMessage(1,SOLLYA_MSG_FAITHFUL_ROUNDING_FOR_EXPR_THAT_SHOULD_BE_CONST,"Warning: the given expression is not a constant but an expression to evaluate. A faithful evaluation will be used.\n");
@@ -2951,8 +3007,8 @@ int evaluateThingToString(char **result, node *tree) {
   evaluatedResult = evaluateThing(tree);
 
   if (isString(evaluatedResult)) {
-    *result = (char *) safeCalloc(strlen(evaluatedResult->string)+1,sizeof(char));
-    strcpy(*result,evaluatedResult->string);
+    *result = (char *) safeCalloc(strlen(accessThruMemRef(evaluatedResult)->string)+1,sizeof(char));
+    strcpy(*result,accessThruMemRef(evaluatedResult)->string);
     freeThing(evaluatedResult);
     return 1;
   }
@@ -2967,8 +3023,8 @@ int evaluateThingToStringWithDefault(char **result, node *tree, char *defaultVal
   evaluatedResult = evaluateThing(tree);
 
   if (isString(evaluatedResult)) {
-    *result = (char *) safeCalloc(strlen(evaluatedResult->string)+1,sizeof(char));
-    strcpy(*result,evaluatedResult->string);
+    *result = (char *) safeCalloc(strlen(accessThruMemRef(evaluatedResult)->string)+1,sizeof(char));
+    strcpy(*result,accessThruMemRef(evaluatedResult)->string);
     freeThing(evaluatedResult);
     return 1;
   } 
@@ -2990,10 +3046,10 @@ int evaluateThingToRange(mpfr_t a, mpfr_t b, node *tree) {
   evaluatedResult = evaluateThing(tree);
 
   if (isRange(evaluatedResult)) {
-    mpfr_set_prec(a,mpfr_get_prec(*((mpfr_t *) (evaluatedResult->child1->value))));
-    mpfr_set_prec(b,mpfr_get_prec(*((mpfr_t *) (evaluatedResult->child2->value))));
-    mpfr_set(a,*((mpfr_t *) (evaluatedResult->child1->value)),GMP_RNDN);
-    mpfr_set(b,*((mpfr_t *) (evaluatedResult->child2->value)),GMP_RNDN);
+    mpfr_set_prec(a,mpfr_get_prec(*((mpfr_t *) (accessThruMemRef(evaluatedResult)->child1->value))));
+    mpfr_set_prec(b,mpfr_get_prec(*((mpfr_t *) (accessThruMemRef(evaluatedResult)->child2->value))));
+    mpfr_set(a,*((mpfr_t *) (accessThruMemRef(evaluatedResult)->child1->value)),GMP_RNDN);
+    mpfr_set(b,*((mpfr_t *) (accessThruMemRef(evaluatedResult)->child2->value)),GMP_RNDN);
     freeThing(evaluatedResult);
     return 1;
   }
@@ -3014,7 +3070,7 @@ int evaluateThingToBoolean(int *result, node *tree, int *defaultVal) {
   }
 
   if (isBoolean(evaluatedResult)) {
-    if (evaluatedResult->nodeType == TRUE) 
+    if (accessThruMemRef(evaluatedResult)->nodeType == TRUE) 
       *result = 1;
     else
       *result = 0;
@@ -3039,7 +3095,7 @@ int evaluateThingToOnOff(int *result, node *tree, int *defaultVal) {
   }
 
   if (isOnOff(evaluatedResult)) {
-    if (evaluatedResult->nodeType == ON) 
+    if (accessThruMemRef(evaluatedResult)->nodeType == ON) 
       *result = 1;
     else
       *result = 0;
@@ -3063,7 +3119,7 @@ int evaluateThingToExternalPlotMode(int *result, node *tree, int *defaultVal) {
   }
 
   if (isExternalPlotMode(evaluatedResult)) {
-    switch (evaluatedResult->nodeType) {
+    switch (accessThruMemRef(evaluatedResult)->nodeType) {
     case ABSOLUTESYM:
       *result = ABSOLUTE;
       break;
@@ -3091,7 +3147,7 @@ int evaluateThingToDisplayMode(int *result, node *tree, int *defaultVal) {
   }
 
   if (isDisplayMode(evaluatedResult)) {
-    switch (evaluatedResult->nodeType) {
+    switch (accessThruMemRef(evaluatedResult)->nodeType) {
     case DECIMAL:
       *result = 0;
       break;
@@ -3129,7 +3185,7 @@ int evaluateThingToRoundingSymbol(int *result, node *tree, int *defaultVal) {
   }
 
   if (isRoundingSymbol(evaluatedResult)) {
-    switch (evaluatedResult->nodeType) {
+    switch (accessThruMemRef(evaluatedResult)->nodeType) {
     case ROUNDTONEAREST:
       *result = GMP_RNDN;
       break;
@@ -3157,7 +3213,7 @@ int evaluateThingToExpansionFormat(int *result, node *tree) {
   evaluatedResult = evaluateThing(tree);
 
   if (isExpansionFormat(evaluatedResult)) {
-    switch (evaluatedResult->nodeType) {
+    switch (accessThruMemRef(evaluatedResult)->nodeType) {
     case DOUBLESYMBOL:
       *result = 1;
       break;
@@ -3204,13 +3260,13 @@ int evaluateThingToExtendedExpansionFormat(int *result, node *tree) {
       printMessage(1,SOLLYA_MSG_CONTINUATION,"Will change the precision indication to 2 bits.\n");
       resA = 2;
     } 
-    *result = resA + 6;
+    *result = resA + 6; // WHAT THE F**K?
     freeThing(evaluatedResult);
     return 1;
   }
 
   if (isExtendedExpansionFormat(evaluatedResult)) {
-    switch (evaluatedResult->nodeType) {
+    switch (accessThruMemRef(evaluatedResult)->nodeType) {
     case DOUBLESYMBOL:
       *result = 1;
       break;
@@ -3248,7 +3304,7 @@ int evaluateThingToRestrictedExpansionFormat(int *result, node *tree) {
   evaluatedResult = evaluateThing(tree);
 
   if (isRestrictedExpansionFormat(evaluatedResult)) {
-    switch (evaluatedResult->nodeType) {
+    switch (accessThruMemRef(evaluatedResult)->nodeType) {
     case DOUBLESYMBOL:
       *result = 1;
       break;
@@ -3273,8 +3329,8 @@ int evaluateThingToPureListOfThings(chain **ch, node *tree) {
 
   evaluatedResult = evaluateThing(tree);
 
-  if (isPureList(evaluatedResult)) {
-    *ch = evaluatedResult->arguments;
+  if (isPureList(evaluatedResult)) { // TODO
+    *ch = accessThruMemRef(evaluatedResult)->arguments;
     safeFree(evaluatedResult);
     return 1;
   }
@@ -3289,8 +3345,8 @@ int evaluateThingToPureListOfPureTrees(chain **ch, node *tree) {
 
   evaluatedResult = evaluateThing(tree);
 
-  if (isPureList(evaluatedResult)) {
-    *ch = evaluatedResult->arguments;
+  if (isPureList(evaluatedResult)) { // TODO
+    *ch = accessThruMemRef(evaluatedResult)->arguments;
     safeFree(evaluatedResult);
     curr = *ch;
     while (curr != NULL) {
@@ -3318,7 +3374,7 @@ int evaluateThingToIntegerList(chain **ch, int *finalelliptic, node *tree) {
 
   if (finalelliptic == NULL) {
     if (isPureList(evaluatedResult)) {
-      curr = evaluatedResult->arguments;
+      curr = accessThruMemRef(evaluatedResult)->arguments;
       i = 0;
       while (curr != NULL) {
 	if (!isPureTree((node *) (curr->value))) {
@@ -3329,7 +3385,7 @@ int evaluateThingToIntegerList(chain **ch, int *finalelliptic, node *tree) {
 	curr = curr->next;
       }
       arrayRes = (int *) safeCalloc(i,sizeof(int));
-      curr = evaluatedResult->arguments; i = 0;
+      curr = accessThruMemRef(evaluatedResult)->arguments; i = 0;
       while (curr != NULL) {
 	if (!evaluateThingToInteger(&resA,(node *) (curr->value),NULL)) {
 	  freeThing(evaluatedResult);
@@ -3355,7 +3411,7 @@ int evaluateThingToIntegerList(chain **ch, int *finalelliptic, node *tree) {
   } else {
     if (isPureList(evaluatedResult) || isPureFinalEllipticList(evaluatedResult)) {
       if (isList(evaluatedResult)) *finalelliptic = 0; else *finalelliptic = 1;
-      curr = evaluatedResult->arguments;
+      curr = accessThruMemRef(evaluatedResult)->arguments;
       i = 0;
       while (curr != NULL) {
 	if (!isPureTree((node *) (curr->value))) {
@@ -3366,7 +3422,7 @@ int evaluateThingToIntegerList(chain **ch, int *finalelliptic, node *tree) {
 	curr = curr->next;
       }
       arrayRes = (int *) safeCalloc(i,sizeof(int));
-      curr = evaluatedResult->arguments; i = 0;
+      curr = accessThruMemRef(evaluatedResult)->arguments; i = 0;
       while (curr != NULL) {
 	if (!evaluateThingToInteger(&resA,(node *) (curr->value),NULL)) {
 	  freeThing(evaluatedResult);
@@ -3405,7 +3461,7 @@ int evaluateThingToBooleanList(chain **ch, node *tree) {
   evaluatedResult = evaluateThing(tree);
 
   if (isPureList(evaluatedResult)) {
-    curr = evaluatedResult->arguments;
+    curr = accessThruMemRef(evaluatedResult)->arguments;
     i = 0;
     while (curr != NULL) {
       if (!isPureTree((node *) (curr->value))) {
@@ -3416,7 +3472,7 @@ int evaluateThingToBooleanList(chain **ch, node *tree) {
       curr = curr->next;
     }
     arrayRes = (int *) safeCalloc(i,sizeof(int));
-    curr = evaluatedResult->arguments; i = 0;
+    curr = accessThruMemRef(evaluatedResult)->arguments; i = 0;
     while (curr != NULL) {
       if (!evaluateThingToBoolean(&resA,(node *) (curr->value),NULL)) {
 	freeThing(evaluatedResult);
@@ -3456,7 +3512,7 @@ int evaluateThingToExpansionFormatList(chain **ch, node *tree) {
 
   if (isPureList(evaluatedResult) || isPureFinalEllipticList(evaluatedResult)) {
     if (isList(evaluatedResult)) finalelliptic = 0; else finalelliptic = 1;
-    curr = evaluatedResult->arguments;
+    curr = accessThruMemRef(evaluatedResult)->arguments;
     i = 0;
     while (curr != NULL) {
       if (!isExpansionFormat((node *) (curr->value))) {
@@ -3467,7 +3523,7 @@ int evaluateThingToExpansionFormatList(chain **ch, node *tree) {
       curr = curr->next;
     }
     arrayRes = (int *) safeCalloc(i,sizeof(int));
-    curr = evaluatedResult->arguments; i = 0;
+    curr = accessThruMemRef(evaluatedResult)->arguments; i = 0;
     while (curr != NULL) {
       if (!evaluateThingToExpansionFormat(&resA,(node *) (curr->value))) {
 	freeThing(evaluatedResult);
@@ -3512,7 +3568,7 @@ int evaluateThingToExtendedExpansionFormatList(chain **ch, node *tree) {
 
   if (isPureList(evaluatedResult) || isPureFinalEllipticList(evaluatedResult)) {
     if (isList(evaluatedResult)) finalelliptic = 0; else finalelliptic = 1;
-    curr = evaluatedResult->arguments;
+    curr = accessThruMemRef(evaluatedResult)->arguments;
     i = 0;
     while (curr != NULL) {
       if (!isExtendedExpansionFormat((node *) (curr->value))) {
@@ -3523,7 +3579,7 @@ int evaluateThingToExtendedExpansionFormatList(chain **ch, node *tree) {
       curr = curr->next;
     }
     arrayRes = (int *) safeCalloc(i,sizeof(int));
-    curr = evaluatedResult->arguments; i = 0;
+    curr = accessThruMemRef(evaluatedResult)->arguments; i = 0;
     while (curr != NULL) {
       if (!evaluateThingToExtendedExpansionFormat(&resA,(node *) (curr->value))) {
 	freeThing(evaluatedResult);
@@ -3567,27 +3623,27 @@ void printThingWithFullStrings(node *thing) {
   } else {
     if (isRange(thing)) {
       if (midpointMode && (dyadic == 0)) {
-	temp = sprintMidpointMode(*(thing->child1->value), *(thing->child2->value));
+	temp = sprintMidpointMode(*(accessThruMemRef(thing)->child1->value), *(accessThruMemRef(thing)->child2->value));
 	if (temp != NULL) {
 	  sollyaPrintf("%s",temp);
 	  safeFree(temp);
 	} else {
 	  sollyaPrintf("[");
-	  printValue(thing->child1->value);
+	  printValue(accessThruMemRef(thing)->child1->value);
 	  sollyaPrintf(";");
-	  printValue(thing->child2->value);
+	  printValue(accessThruMemRef(thing)->child2->value);
 	  sollyaPrintf("]");
 	}
       } else {
 	sollyaPrintf("[");
-	printValue(thing->child1->value);
+	printValue(accessThruMemRef(thing)->child1->value);
 	sollyaPrintf(";");
-	printValue(thing->child2->value);
+	printValue(accessThruMemRef(thing)->child2->value);
 	sollyaPrintf("]");
       }
     } else {
       if (isList(thing)) {
-	curr = thing->arguments;
+	curr = accessThruMemRef(thing)->arguments;
 	sollyaPrintf("[|");
 	while (curr != NULL) {
 	  printThingWithFullStrings((node *) (curr->value));
@@ -3597,7 +3653,7 @@ void printThingWithFullStrings(node *thing) {
 	sollyaPrintf("|]");
       } else {
 	if (isFinalEllipticList(thing)) {
-	  curr = thing->arguments;
+	  curr = accessThruMemRef(thing)->arguments;
 	  sollyaPrintf("[|");
 	  while (curr != NULL) {
 	    printThingWithFullStrings((node *) (curr->value));
@@ -3608,7 +3664,7 @@ void printThingWithFullStrings(node *thing) {
 	} else {
 	  if (isStructure(thing)) {
 	    sollyaPrintf("{ ");
-	    curr = thing->arguments;
+	    curr = accessThruMemRef(thing)->arguments;
 	    while (curr != NULL) {
 	      sollyaPrintf(".%s = ", ((entry *) (curr->value))->name);
 	      printThingWithFullStrings((node *) (((entry *) (curr->value))->value));
@@ -3635,27 +3691,27 @@ void printThing(node *thing) {
   } else {
     if (isRange(thing)) {
       if (midpointMode && (dyadic == 0)) {
-	temp = sprintMidpointMode(*(thing->child1->value), *(thing->child2->value));
+	temp = sprintMidpointMode(*(accessThruMemRef(thing)->child1->value), *(accessThruMemRef(thing)->child2->value));
 	if (temp != NULL) {
 	  sollyaPrintf("%s",temp);
 	  safeFree(temp);
 	} else {
 	  sollyaPrintf("[");
-	  printValue(thing->child1->value);
+	  printValue(accessThruMemRef(thing)->child1->value);
 	  sollyaPrintf(";");
-	  printValue(thing->child2->value);
+	  printValue(accessThruMemRef(thing)->child2->value);
 	  sollyaPrintf("]");
 	}
       } else {
 	sollyaPrintf("[");
-	printValue(thing->child1->value);
+	printValue(accessThruMemRef(thing)->child1->value);
 	sollyaPrintf(";");
-	printValue(thing->child2->value);
+	printValue(accessThruMemRef(thing)->child2->value);
 	sollyaPrintf("]");
       }
     } else {
       if (isList(thing)) {
-	curr = thing->arguments;
+	curr = accessThruMemRef(thing)->arguments;
 	sollyaPrintf("[|");
 	while (curr != NULL) {
 	  printThingWithFullStrings((node *) (curr->value));
@@ -3665,7 +3721,7 @@ void printThing(node *thing) {
 	sollyaPrintf("|]");
       } else {
 	if (isFinalEllipticList(thing)) {
-	  curr = thing->arguments;
+	  curr = accessThruMemRef(thing)->arguments;
 	  sollyaPrintf("[|");
 	  while (curr != NULL) {
 	    printThingWithFullStrings((node *) (curr->value));
@@ -3675,11 +3731,11 @@ void printThing(node *thing) {
 	  sollyaPrintf("...|]");
 	} else {
 	  if (isString(thing)) {
-	    sollyaPrintf("%s",thing->string);
+	    sollyaPrintf("%s",accessThruMemRef(thing)->string);
 	  } else {
 	    if (isStructure(thing)) {
 	      sollyaPrintf("{ ");
-	      curr = thing->arguments;
+	      curr = accessThruMemRef(thing)->arguments;
 	      while (curr != NULL) {
 		sollyaPrintf(".%s = ", ((entry *) (curr->value))->name);
 		printThingWithFullStrings((node *) (((entry *) (curr->value))->value));
@@ -3727,6 +3783,10 @@ char *sRawPrintThing(node *tree) {
   if (tree == NULL) {
     res = (char *) safeCalloc(1, sizeof(char));
     return res;
+  }
+
+  if (tree->nodeType == MEMREF) {
+    return sRawPrintThing(tree->child1);
   }
 
   switch (tree->nodeType) {
@@ -5477,12 +5537,12 @@ char *sPrintThingWithFullStrings(node *thing) {
   } else {
     if (isRange(thing)) {
       if (midpointMode && (dyadic == 0)) {
-	temp = sprintMidpointMode(*(thing->child1->value), *(thing->child2->value));
+	temp = sprintMidpointMode(*(accessThruMemRef(thing)->child1->value), *(accessThruMemRef(thing)->child2->value));
 	if (temp != NULL) {
 	  return temp;
 	} else {
-	  temp1 = sprintValue(thing->child1->value);
-	  temp2 = sprintValue(thing->child2->value);
+	  temp1 = sprintValue(accessThruMemRef(thing)->child1->value);
+	  temp2 = sprintValue(accessThruMemRef(thing)->child2->value);
 	  temp = (char *) safeCalloc(strlen(temp1) + strlen(temp2) + 3 + 1, sizeof(char));
 	  sprintf(temp, "[%s;%s]",temp1,temp2);
 	  safeFree(temp1);
@@ -5490,17 +5550,17 @@ char *sPrintThingWithFullStrings(node *thing) {
 	  return temp;
 	}
       } else {
-	  temp1 = sprintValue(thing->child1->value);
-	  temp2 = sprintValue(thing->child2->value);
-	  temp = (char *) safeCalloc(strlen(temp1) + strlen(temp2) + 3 + 1, sizeof(char));
-	  sprintf(temp, "[%s;%s]",temp1,temp2);
-	  safeFree(temp1);
-	  safeFree(temp2);
-	  return temp;
+	temp1 = sprintValue(accessThruMemRef(thing)->child1->value);
+	temp2 = sprintValue(accessThruMemRef(thing)->child2->value);
+	temp = (char *) safeCalloc(strlen(temp1) + strlen(temp2) + 3 + 1, sizeof(char));
+	sprintf(temp, "[%s;%s]",temp1,temp2);
+	safeFree(temp1);
+	safeFree(temp2);
+	return temp;
       }
     } else {
       if (isList(thing)) {
-	curr = thing->arguments;
+	curr = accessThruMemRef(thing)->arguments;
 	temp = (char *) safeCalloc(2 + 1, sizeof(char));
 	sprintf(temp,"[|");
 	while (curr != NULL) {
@@ -5525,7 +5585,7 @@ char *sPrintThingWithFullStrings(node *thing) {
 	return temp;
       } else {
 	if (isFinalEllipticList(thing)) {
-	  curr = thing->arguments;
+	  curr = accessThruMemRef(thing)->arguments;
 	  temp = (char *) safeCalloc(2 + 1, sizeof(char));
 	  sprintf(temp,"[|");
 	  while (curr != NULL) {
@@ -5567,12 +5627,12 @@ char *sPrintThing(node *thing) {
   } else {
     if (isRange(thing)) {
       if (midpointMode && (dyadic == 0)) {
-	temp = sprintMidpointMode(*(thing->child1->value), *(thing->child2->value));
+	temp = sprintMidpointMode(*(accessThruMemRef(thing)->child1->value), *(accessThruMemRef(thing)->child2->value));
 	if (temp != NULL) {
 	  return temp;
 	} else {
-	  temp1 = sprintValue(thing->child1->value);
-	  temp2 = sprintValue(thing->child2->value);
+	  temp1 = sprintValue(accessThruMemRef(thing)->child1->value);
+	  temp2 = sprintValue(accessThruMemRef(thing)->child2->value);
 	  temp = (char *) safeCalloc(strlen(temp1) + strlen(temp2) + 3 + 1, sizeof(char));
 	  sprintf(temp, "[%s;%s]",temp1,temp2);
 	  safeFree(temp1);
@@ -5580,17 +5640,17 @@ char *sPrintThing(node *thing) {
 	  return temp;
 	}
       } else {
-	  temp1 = sprintValue(thing->child1->value);
-	  temp2 = sprintValue(thing->child2->value);
-	  temp = (char *) safeCalloc(strlen(temp1) + strlen(temp2) + 3 + 1, sizeof(char));
-	  sprintf(temp, "[%s;%s]",temp1,temp2);
-	  safeFree(temp1);
-	  safeFree(temp2);
-	  return temp;
+	temp1 = sprintValue(accessThruMemRef(thing)->child1->value);
+	temp2 = sprintValue(accessThruMemRef(thing)->child2->value);
+	temp = (char *) safeCalloc(strlen(temp1) + strlen(temp2) + 3 + 1, sizeof(char));
+	sprintf(temp, "[%s;%s]",temp1,temp2);
+	safeFree(temp1);
+	safeFree(temp2);
+	return temp;
       }
     } else {
       if (isList(thing)) {
-	curr = thing->arguments;
+	curr = accessThruMemRef(thing)->arguments;
 	temp = (char *) safeCalloc(2 + 1, sizeof(char));
 	sprintf(temp,"[|");
 	while (curr != NULL) {
@@ -5615,7 +5675,7 @@ char *sPrintThing(node *thing) {
 	return temp;
       } else {
 	if (isFinalEllipticList(thing)) {
-	  curr = thing->arguments;
+	  curr = accessThruMemRef(thing)->arguments;
 	  temp = (char *) safeCalloc(2 + 1, sizeof(char));
 	  sprintf(temp,"[|");
 	  while (curr != NULL) {
@@ -5640,7 +5700,7 @@ char *sPrintThing(node *thing) {
 	  return temp;
 	} else {
 	  if (isString(thing)) {
-	    temp = (char *) safeCalloc(strlen(thing->string) + 1, sizeof(char));
+	    temp = (char *) safeCalloc(strlen(accessThruMemRef(thing)->string) + 1, sizeof(char));
 	    sprintf(temp,"%s",thing->string);
 	    return temp;
 	  } else {
@@ -5651,8 +5711,6 @@ char *sPrintThing(node *thing) {
     }  
   }
 }
-
-
 
 
 void fRawPrintThing(FILE *fd, node *thing);
@@ -5666,27 +5724,27 @@ void fPrintThingWithFullStrings(FILE *fd, node *thing) {
   } else {
     if (isRange(thing)) {
       if (midpointMode && (dyadic == 0)) {
-	temp = sprintMidpointMode(*(thing->child1->value), *(thing->child2->value));
+	temp = sprintMidpointMode(*(accessThruMemRef(thing)->child1->value), *(accessThruMemRef(thing)->child2->value));
 	if (temp != NULL) {
 	  sollyaFprintf(fd,"%s",temp);
 	  safeFree(temp);
 	} else {
 	  sollyaFprintf(fd,"[");
-	  fprintValueWithPrintMode(fd,*(thing->child1->value));
+	  fprintValueWithPrintMode(fd,*(accessThruMemRef(thing)->child1->value));
 	  sollyaFprintf(fd,";");
-	  fprintValueWithPrintMode(fd,*(thing->child2->value));
+	  fprintValueWithPrintMode(fd,*(accessThruMemRef(thing)->child2->value));
 	  sollyaFprintf(fd,"]");
 	}
       } else {
 	sollyaFprintf(fd,"[");
-	fprintValueWithPrintMode(fd,*(thing->child1->value));
+	fprintValueWithPrintMode(fd,*(accessThruMemRef(thing)->child1->value));
 	sollyaFprintf(fd,";");
-	fprintValueWithPrintMode(fd,*(thing->child2->value));
+	fprintValueWithPrintMode(fd,*(accessThruMemRef(thing)->child2->value));
 	sollyaFprintf(fd,"]");
       }
     } else {
       if (isList(thing)) {
-	curr = thing->arguments;
+	curr = accessThruMemRef(thing)->arguments;
 	sollyaFprintf(fd,"[|");
 	while (curr != NULL) {
 	  fPrintThingWithFullStrings(fd,(node *) (curr->value));
@@ -5696,7 +5754,7 @@ void fPrintThingWithFullStrings(FILE *fd, node *thing) {
 	sollyaFprintf(fd,"|]");
       } else {
 	if (isFinalEllipticList(thing)) {
-	  curr = thing->arguments;
+	  curr = accessThruMemRef(thing)->arguments;
 	  sollyaFprintf(fd,"[|");
 	  while (curr != NULL) {
 	    fPrintThingWithFullStrings(fd,(node *) (curr->value));
@@ -5707,7 +5765,7 @@ void fPrintThingWithFullStrings(FILE *fd, node *thing) {
 	} else {
 	  if (isStructure(thing)) {
 	    sollyaFprintf(fd,"{ ");
-	    curr = thing->arguments;
+	    curr = accessThruMemRef(thing)->arguments;
 	    while (curr != NULL) {
 	      sollyaFprintf(fd,".%s = ", ((entry *) (curr->value))->name);
 	      fPrintThingWithFullStrings(fd,(node *) (((entry *) (curr->value))->value));
@@ -5734,27 +5792,27 @@ void fPrintThing(FILE *fd, node *thing) {
   } else {
     if (isRange(thing)) {
       if (midpointMode && (dyadic == 0)) {
-	temp = sprintMidpointMode(*(thing->child1->value), *(thing->child2->value));
+	temp = sprintMidpointMode(*(accessThruMemRef(thing)->child1->value), *(accessThruMemRef(thing)->child2->value));
 	if (temp != NULL) {
 	  sollyaFprintf(fd,"%s",temp);
 	  safeFree(temp);
 	} else {
 	  sollyaFprintf(fd,"[");
-	  fprintValueWithPrintMode(fd,*(thing->child1->value));
+	  fprintValueWithPrintMode(fd,*(accessThruMemRef(thing)->child1->value));
 	  sollyaFprintf(fd,";");
-	  fprintValueWithPrintMode(fd,*(thing->child2->value));
+	  fprintValueWithPrintMode(fd,*(accessThruMemRef(thing)->child2->value));
 	  sollyaFprintf(fd,"]");
 	}
       } else {
 	sollyaFprintf(fd,"[");
-	fprintValueWithPrintMode(fd,*(thing->child1->value));
+	fprintValueWithPrintMode(fd,*(accessThruMemRef(thing)->child1->value));
 	sollyaFprintf(fd,";");
-	fprintValueWithPrintMode(fd,*(thing->child2->value));
+	fprintValueWithPrintMode(fd,*(accessThruMemRef(thing)->child2->value));
 	sollyaFprintf(fd,"]");
       }
     } else {
       if (isList(thing)) {
-	curr = thing->arguments;
+	curr = accessThruMemRef(thing)->arguments;
 	sollyaFprintf(fd,"[|");
 	while (curr != NULL) {
 	  fPrintThingWithFullStrings(fd,(node *) (curr->value));
@@ -5764,7 +5822,7 @@ void fPrintThing(FILE *fd, node *thing) {
 	sollyaFprintf(fd,"|]");
       } else {
 	if (isFinalEllipticList(thing)) {
-	  curr = thing->arguments;
+	  curr = accessThruMemRef(thing)->arguments;
 	  sollyaFprintf(fd,"[|");
 	  while (curr != NULL) {
 	    fPrintThingWithFullStrings(fd,(node *) (curr->value));
@@ -5774,11 +5832,11 @@ void fPrintThing(FILE *fd, node *thing) {
 	  sollyaFprintf(fd,"...|]");
 	} else {
 	  if (isString(thing)) {
-	    sollyaFprintf(fd,"%s",thing->string);
+	    sollyaFprintf(fd,"%s",accessThruMemRef(thing)->string);
 	  } else {
 	    if (isStructure(thing)) {
 	      sollyaFprintf(fd,"{ ");
-	      curr = thing->arguments;
+	      curr = accessThruMemRef(thing)->arguments;
 	      while (curr != NULL) {
 		sollyaFprintf(fd,".%s = ", ((entry *) (curr->value))->name);
 		fPrintThingWithFullStrings(fd,(node *) (((entry *) (curr->value))->value));
@@ -5864,8 +5922,8 @@ node *getThingFromTable(char *identifier) {
 void printExternalProcedureUsage(node *tree) {
   chain *curr;
   if (isExternalProcedureUsage(tree)) {
-    sollyaPrintf("%s(",tree->libProc->procedureName);
-    curr = tree->libProc->signature->next;
+    sollyaPrintf("%s(",accessThruMemRef(tree)->libProc->procedureName);
+    curr = accessThruMemRef(tree)->libProc->signature->next;
     while (curr != NULL) {
       switch (*((int *) (curr->value))) {
       case VOID_TYPE:
@@ -5920,7 +5978,7 @@ void printExternalProcedureUsage(node *tree) {
       curr = curr->next;
     }
     sollyaPrintf(") -> ");
-    switch (*((int *) (tree->libProc->signature->value))) {
+    switch (*((int *) (accessThruMemRef(tree)->libProc->signature->value))) {
     case VOID_TYPE:
       sollyaPrintf("void");
       break;
@@ -5995,16 +6053,16 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
     }
 
     if (isConstant(tempNode2)) {
-      if (tempNode2->nodeType == CONSTANT) {
-	printValue(tempNode2->value);
+      if (accessThruMemRef(tempNode2)->nodeType == CONSTANT) {
+	printValue(accessThruMemRef(tempNode2)->value);
       } else { 
 	if (rationalMode && 
-	    (tempNode2->nodeType == DIV) &&
-	    (tempNode2->child1->nodeType == CONSTANT) &&
-	    (tempNode2->child2->nodeType == CONSTANT) && 
-	    mpfr_number_p(*(tempNode2->child1->value)) && 
-	    mpfr_number_p(*(tempNode2->child2->value)) && 
-	    (!mpfr_zero_p(*(tempNode2->child2->value)))) {
+	    (accessThruMemRef(tempNode2)->nodeType == DIV) &&
+	    (accessThruMemRef(tempNode2)->child1->nodeType == CONSTANT) &&
+	    (accessThruMemRef(tempNode2)->child2->nodeType == CONSTANT) && 
+	    mpfr_number_p(*(accessThruMemRef(tempNode2)->child1->value)) && 
+	    mpfr_number_p(*(accessThruMemRef(tempNode2)->child2->value)) && 
+	    (!mpfr_zero_p(*(accessThruMemRef(tempNode2)->child2->value)))) {
 	    printTree(tempNode2);
 	} else {
 	  mpfr_init2(a,tools_precision);
@@ -6013,9 +6071,9 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
 	  faithfulAlreadyKnown = 0;
 	  if ((func != NULL) && (cst != NULL)) {
 	    simplCst = simplifyTreeErrorfree(cst);
-	    if ((simplCst->nodeType == CONSTANT) &&
-		mpfr_number_p(*(simplCst->value))) {
-	      if (evaluateFaithful(a,func,*(simplCst->value),tools_precision)) {
+	    if ((accessThruMemRef(simplCst)->nodeType == CONSTANT) &&
+		mpfr_number_p(*(accessThruMemRef(simplCst)->value))) {
+	      if (evaluateFaithful(a,func,*(accessThruMemRef(simplCst)->value),tools_precision)) {
 		faithfulAlreadyKnown = 1;
 	      }
 	    }
@@ -6039,9 +6097,9 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
 	    printValue(&a);
 	  } else {
 	    tempNode5 = simplifyRationalErrorfree(tempNode2);
-	    if (tempNode5->nodeType == CONSTANT) {
-	      mpfr_set_prec(a,mpfr_get_prec(*(tempNode5->value)));
-	      mpfr_set(a,*(tempNode5->value),GMP_RNDN);
+	    if (accessThruMemRef(tempNode5)->nodeType == CONSTANT) {
+	      mpfr_set_prec(a,mpfr_get_prec(*(accessThruMemRef(tempNode5)->value)));
+	      mpfr_set(a,*(accessThruMemRef(tempNode5)->value),GMP_RNDN);
 	    } else {
 	      okaySign = evaluateSign(&sign,tempNode2);
 	      if (okaySign && (sign == 0)) {
@@ -6177,7 +6235,7 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
   } else {
     if (isList(thing)) {
       sollyaPrintf("[|");
-      curr = thing->arguments;
+      curr = accessThruMemRef(thing)->arguments;
       while (curr != NULL) {
 	autoprint((node *) (curr->value),1,NULL,NULL);
 	if (curr->next != NULL) sollyaPrintf(", ");
@@ -6187,7 +6245,7 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
     } else {
       if (isFinalEllipticList(thing)) {
 	sollyaPrintf("[|");
-	curr = thing->arguments;
+	curr = accessThruMemRef(thing)->arguments;
 	while (curr != NULL) {
 	  autoprint((node *) (curr->value),1,NULL,NULL);
 	  if (curr->next != NULL) sollyaPrintf(", ");
@@ -6197,7 +6255,7 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
       } else {
 	if (isStructure(thing)) {
 	  sollyaPrintf("{ ");
-	  curr = thing->arguments;
+	  curr = accessThruMemRef(thing)->arguments;
 	  while (curr != NULL) {
 	    sollyaPrintf(".%s = ", ((entry *) (curr->value))->name);
 	    autoprint((node *) (((entry *) (curr->value))->value),1,NULL,NULL);
@@ -6266,7 +6324,7 @@ int evaluateThingToConstantList(chain **ch, node *tree) {
   evaluated = evaluateThing(tree);
 
   if (isPureList(evaluated)) {
-    evaluateThingListToThingArray(&number, &arrayTrees, evaluated->arguments); 
+    evaluateThingListToThingArray(&number, &arrayTrees, accessThruMemRef(evaluated)->arguments); 
     arrayMpfr = (mpfr_t **) safeCalloc(number,sizeof(mpfr_t *));
     for (i=0;i<number;i++) {
       arrayMpfr[i] = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
@@ -6316,7 +6374,7 @@ int evaluateThingToRangeList(chain **ch, node *tree) {
   if (isPureList(evaluated)) {
     mpfr_init2(a, tools_precision);
     mpfr_init2(b, tools_precision);
-    evaluateThingListToThingArray(&number, &arrayTrees, evaluated->arguments); 
+    evaluateThingListToThingArray(&number, &arrayTrees, accessThruMemRef(evaluated)->arguments); 
     arrayMpfi = (sollya_mpfi_t **) safeCalloc(number,sizeof(sollya_mpfi_t *));
     for (i=0;i<number;i++) {
       arrayMpfi[i] = (sollya_mpfi_t *) safeMalloc(sizeof(sollya_mpfi_t));
@@ -6336,7 +6394,7 @@ int evaluateThingToRangeList(chain **ch, node *tree) {
 	mpfr_clear(b);
 	return 0;
       } else {
-	sollya_mpfi_interv_fr_safe(*(arrayMpfi[i]),a,b);
+	sollya_mpfi_interv_fr_safe(*(arrayMpfi[i]),a,b); // ANYONE TO UNDERSTAND THIS LINE?
       }
     }
     newChain = NULL;
@@ -6366,7 +6424,7 @@ int evaluateThingToStringList(chain **ch, node *tree) {
   evaluated = evaluateThing(tree);
 
   if (isPureList(evaluated)) {
-    evaluateThingListToThingArray(&number, &arrayTrees, evaluated->arguments); 
+    evaluateThingListToThingArray(&number, &arrayTrees, accessThruMemRef(evaluated)->arguments); 
     arrayString = (char **) safeCalloc(number,sizeof(char *));
     for (i=0;i<number;i++) {
       if (!evaluateThingToString(&(arrayString[i]),arrayTrees[i])) {
@@ -6484,6 +6542,10 @@ int tryToRewriteLeftHandStructAccessInner(chain **idents, node *thing) {
   char *buf;
   chain *tempChain;
 
+  if (thing->nodeType == MEMREF) {
+    return tryToRewriteLeftHandStructAccessInner(idents, thing->child1);
+  }
+
   okay = 0;
 
   switch (thing->nodeType) {
@@ -6559,6 +6621,8 @@ node *createNestedStructure(node *value, chain *idents) {
 
   return structure;
 }
+
+// CONTINUE FROM HERE
 
 node *recomputeLeftHandSideForAssignmentInStructure(node *oldValue, node *newValue, chain *idents) {
   chain *currentIdent;
