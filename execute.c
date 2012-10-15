@@ -1214,7 +1214,884 @@ node *copyThingInner(node *tree) {
   return copy;
 }
 
+void *deepCopyThingOnVoid(void *);
 
+node *deepCopyThing(node *tree) {
+  node *copy;
+
+  if (tree == NULL) return NULL;
+
+  if (tree->nodeType == MEMREF) {
+    return deepCopyThing(tree->child1);
+  }
+
+  copy = (node *) safeMalloc(sizeof(node));
+  copy->nodeType = tree->nodeType;
+
+  switch (tree->nodeType) {
+  case VARIABLE:
+    break;
+  case CONSTANT:
+    copy->value = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+    mpfr_init2(*(copy->value),mpfr_get_prec(*(tree->value)));
+    mpfr_set(*(copy->value),*(tree->value),GMP_RNDN);
+    break;
+  case ADD:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break;
+  case SUB:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break;
+  case MUL:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break;
+  case DIV:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break;
+  case SQRT:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case EXP:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case LOG:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case LOG_2:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case LOG_10:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case SIN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case COS:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case TAN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case ASIN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case ACOS:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case ATAN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case SINH:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case COSH:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case TANH:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case ASINH:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case ACOSH:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case ATANH:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case POW:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break;
+  case NEG:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case ABS:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case DOUBLE:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case SINGLE:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case HALFPRECISION:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case QUAD:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case DOUBLEDOUBLE:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case TRIPLEDOUBLE:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case ERF: 
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case ERFC:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case LOG_1P:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case EXP_M1:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case DOUBLEEXTENDED:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case LIBRARYFUNCTION:
+    copy->libFun = tree->libFun;
+    copy->libFunDeriv = tree->libFunDeriv;
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case LIBRARYCONSTANT:
+    copy->libFun = tree->libFun;
+    break;
+  case PROCEDUREFUNCTION:
+    copy->libFunDeriv = tree->libFunDeriv;
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break;
+  case CEIL:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case FLOOR:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case NEARESTINT:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case PI_CONST:
+    break;
+  case COMMANDLIST:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break;			
+  case WHILE:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break;				
+  case IFELSE:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 				
+  case IF:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 				
+  case FOR:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 				
+  case FORIN:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;  				
+  case QUIT:
+    break;  				
+  case FALSEQUIT:
+    break; 			
+  case FALSERESTART:
+    break; 			
+  case RESTART:
+    break;  			
+  case PRINT:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 
+  case SUPPRESSMESSAGE:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 	
+  case UNSUPPRESSMESSAGE:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 	
+  case VARIABLEDECLARATION:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
+    break; 	
+  case NOP:
+    break;
+  case NOPARG:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case NEWFILEPRINT:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			
+  case APPENDFILEPRINT:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 			
+  case PLOT:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break;			
+  case PRINTHEXA:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 
+  case PRINTFLOAT:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 
+  case PRINTBINARY:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			
+  case PRINTEXPANSION:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case BASHEXECUTE:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			
+  case EXTERNALPLOT:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 
+  case WRITE:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 			
+  case NEWFILEWRITE:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break;
+  case APPENDFILEWRITE:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 
+  case ASCIIPLOT:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break;			
+  case PRINTXML:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;			
+  case PRINTXMLNEWFILE:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break;			
+  case PRINTXMLAPPENDFILE:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break;			
+  case WORSTCASE:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 			
+  case RENAME:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
+    break; 				
+  case AUTOPRINT:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 
+  case EXTERNALPROC:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyIntPtrOnVoid);
+    break;
+  case ASSIGNMENT:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break; 			
+  case FLOATASSIGNMENT:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break; 			
+  case LIBRARYBINDING:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;  			
+  case LIBRARYCONSTANTBINDING:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;  			
+  case PRECASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			
+  case POINTSASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			
+  case DIAMASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;			
+  case DISPLAYASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			
+  case VERBOSITYASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;  		
+  case CANONICALASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 		
+  case AUTOSIMPLIFYASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;  		
+  case SHOWMESSAGENUMBERSASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;  		
+  case TAYLORRECURSASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 		
+  case TIMINGASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			
+  case FULLPARENASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;  		
+  case MIDPOINTASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case DIEONERRORMODEASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case RATIONALMODEASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			 			
+  case SUPPRESSWARNINGSASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			
+  case HOPITALRECURSASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 		
+  case PRECSTILLASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 		
+  case POINTSSTILLASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 		
+  case DIAMSTILLASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 		
+  case DISPLAYSTILLASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;  		
+  case VERBOSITYSTILLASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 		
+  case CANONICALSTILLASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 		
+  case AUTOSIMPLIFYSTILLASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;  	
+  case SHOWMESSAGENUMBERSSTILLASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;  	
+  case TAYLORRECURSSTILLASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 	
+  case TIMINGSTILLASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 		
+  case FULLPARENSTILLASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;  		
+  case MIDPOINTSTILLASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case DIEONERRORMODESTILLASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;
+  case RATIONALMODESTILLASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 		 		
+  case SUPPRESSWARNINGSSTILLASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 		
+  case HOPITALRECURSSTILLASSIGN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;  	
+  case AND:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 				
+  case OR:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break;				
+  case NEGATION:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			
+  case INDEX:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 
+  case COMPAREEQUAL:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 			
+  case COMPAREIN:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 			
+  case COMPARELESS:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 			
+  case COMPAREGREATER:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 			
+  case COMPARELESSEQUAL:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 		
+  case COMPAREGREATEREQUAL:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break;		
+  case COMPARENOTEQUAL:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break;		
+  case CONCAT:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 			
+  case ADDTOLIST:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 			
+  case PREPEND:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 			
+  case APPEND:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 			
+  case ON:
+    break; 				
+  case OFF:
+    break; 				
+  case DYADIC:
+    break;  				
+  case POWERS:
+    break; 				
+  case BINARY:
+    break; 			 	
+  case HEXADECIMAL:
+    break; 			 	
+  case FILESYM:
+    break; 			 	
+  case POSTSCRIPT:
+    break;  			
+  case POSTSCRIPTFILE:
+    break; 			
+  case PERTURB:
+    break; 			
+  case ROUNDDOWN:
+    break; 			
+  case ROUNDUP:
+    break; 			
+  case ROUNDTOZERO:
+    break;  			
+  case ROUNDTONEAREST:
+    break; 			
+  case HONORCOEFF:
+    break; 			
+  case TRUE:
+    break; 
+  case UNIT:
+    break; 			 	
+  case FALSE:
+    break; 			 	
+  case DEFAULT:
+    break; 			
+  case DECIMAL:
+    break; 			
+  case ABSOLUTESYM:
+    break; 			
+  case RELATIVESYM:
+    break;
+  case FIXED:
+    break;
+  case FLOATING:
+    break;
+  case ERRORSPECIAL:
+    break; 			
+  case DOUBLESYMBOL:
+    break;  			
+  case SINGLESYMBOL:
+    break;  			
+  case QUADSYMBOL:
+    break;  			
+  case HALFPRECISIONSYMBOL:
+    break;  			
+  case DOUBLEEXTENDEDSYMBOL:
+    break;  			
+  case DOUBLEDOUBLESYMBOL:
+    break; 		
+  case TRIPLEDOUBLESYMBOL:
+    break; 		
+  case STRING:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break; 			 	
+  case TABLEACCESS:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;  		
+  case ISBOUND:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;  			
+  case TABLEACCESSWITHSUBSTITUTE:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;  	
+  case STRUCTACCESS:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;  	
+  case APPLY:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    copy->child1 = deepCopyThing(tree->child1);
+    break;  	
+  case DECIMALCONSTANT:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break; 		
+  case MIDPOINTCONSTANT:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break; 		
+  case DYADICCONSTANT:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break; 			
+  case HEXCONSTANT:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break; 			
+  case HEXADECIMALCONSTANT:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break; 			
+  case BINARYCONSTANT:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break; 			
+  case EMPTYLIST:
+    break; 			
+  case LIST:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 	
+  case STRUCTURE:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyEntryOnVoid);
+    break; 			 	
+  case FINALELLIPTICLIST:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 		
+  case ELLIPTIC:
+    break; 			
+  case RANGE:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 			 	
+  case DEBOUNDMAX:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;  			
+  case DEBOUNDMIN:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			
+  case DEBOUNDMID:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			
+  case EVALCONST:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			
+  case DIFF:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 
+  case BASHEVALUATE:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 
+  case GETSUPPRESSEDMESSAGES:
+    break; 			 	
+  case SIMPLIFY:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;  			
+  case SIMPLIFYSAFE:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;  			
+  case TIME:
+    copy->child1 = deepCopyThing(tree->child1);
+    break;  			
+  case REMEZ:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 			 	
+  case MATCH:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 			 	
+  case MATCHELEMENT:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 			 	
+  case MIN:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 			 	
+  case MAX:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 			 	
+  case FPMINIMAX:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 			 	
+  case HORNER:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			 	
+  case CANONICAL:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			
+  case EXPAND:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			 	
+  case TAYLOR:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 			 	
+  case TAYLORFORM:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 	
+  case CHEBYSHEVFORM:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 			 			 	
+  case AUTODIFF:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 			 	
+  case DEGREE:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			 	
+  case NUMERATOR:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			
+  case DENOMINATOR:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			
+  case SUBSTITUTE:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break;	
+  case COMPOSEPOLYNOMIALS:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break;			
+  case COEFF:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 			 	
+  case SUBPOLY:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 			
+  case ROUNDCOEFFICIENTS:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 		
+  case RATIONALAPPROX:    
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 			
+  case ACCURATEINFNORM:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 		
+  case ROUNDTOFORMAT:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break;			
+  case EVALUATE:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 			
+  case PARSE:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			 	
+  case READXML:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			 	
+  case EXECUTE:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			 	
+  case INFNORM:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 			
+  case SUPNORM:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 			
+  case FINDZEROS:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 			
+  case FPFINDZEROS:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 			
+  case DIRTYINFNORM:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 			
+  case NUMBERROOTS:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 			
+  case INTEGRAL:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 			
+  case DIRTYINTEGRAL:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break;  			
+  case IMPLEMENTPOLY:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 			
+  case IMPLEMENTCONST:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 			
+  case CHECKINFNORM:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 			
+  case ZERODENOMINATORS:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break;  		
+  case ISEVALUABLE:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 			
+  case SEARCHGAL:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 			
+  case GUESSDEGREE:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 			
+  case ASSIGNMENTININDEXING:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 			
+  case FLOATASSIGNMENTININDEXING:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break; 	
+  case ASSIGNMENTINSTRUCTURE:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
+    break; 			
+  case FLOATASSIGNMENTINSTRUCTURE:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
+    break; 				
+  case PROTOASSIGNMENTINSTRUCTURE:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 			
+  case PROTOFLOATASSIGNMENTINSTRUCTURE:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 				
+  case DIRTYFINDZEROS:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break; 			
+  case HEAD:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			 	
+  case ROUNDCORRECTLY:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			 	
+  case READFILE:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			 	
+  case REVERT:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 	
+  case SORT:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			 			 	
+  case MANTISSA:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			 	
+  case EXPONENT:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			 	
+  case PRECISION:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			 	
+  case TAIL:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 			 	
+  case LENGTH:
+    copy->child1 = deepCopyThing(tree->child1);
+    break; 	
+  case EXTERNALPROCEDUREUSAGE:
+    copy->libProc = tree->libProc;
+    break;
+  case PROC:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
+    break;
+  case BIND:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;
+  case PROCILLIM:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
+    break;
+  case PRECDEREF:
+    break; 			
+  case POINTSDEREF:
+    break; 			
+  case DIAMDEREF:
+    break; 			
+  case DISPLAYDEREF:
+    break; 			
+  case VERBOSITYDEREF:
+    break; 			
+  case CANONICALDEREF:
+    break; 			
+  case AUTOSIMPLIFYDEREF:
+    break; 	
+  case SHOWMESSAGENUMBERSDEREF:
+    break; 		
+  case TAYLORRECURSDEREF:
+    break; 		
+  case TIMINGDEREF:
+    break; 			
+  case FULLPARENDEREF:
+    break; 			
+  case MIDPOINTDEREF:
+    break;
+  case DIEONERRORMODEDEREF:
+    break;
+  case RATIONALMODEDEREF:
+    break;
+  case SUPPRESSWARNINGSDEREF:
+    break; 			
+  case HOPITALRECURSDEREF:
+    break;  	       
+  default:
+    sollyaFprintf(stderr,"Error: deepCopyThing: unknown identifier (%d) in the tree\n",tree->nodeType);
+    exit(1);
+  }
+
+  return copy;
+}
+
+void *deepCopyThingOnVoid(void *tree) {
+  return (void *) deepCopyThing((node *) tree);
+}
 
 void *copyThingOnVoid(void *tree) {
   return (void *) copyThing((node *) tree);
@@ -3329,9 +4206,9 @@ int evaluateThingToPureListOfThings(chain **ch, node *tree) {
 
   evaluatedResult = evaluateThing(tree);
 
-  if (isPureList(evaluatedResult)) { // TODO
-    *ch = accessThruMemRef(evaluatedResult)->arguments;
-    safeFree(evaluatedResult);
+  if (isPureList(evaluatedResult)) { 
+    *ch = copyChainWithoutReversal(accessThruMemRef(evaluatedResult)->arguments, copyThingOnVoid);
+    freeThing(evaluatedResult);
     return 1;
   }
 
@@ -3345,9 +4222,9 @@ int evaluateThingToPureListOfPureTrees(chain **ch, node *tree) {
 
   evaluatedResult = evaluateThing(tree);
 
-  if (isPureList(evaluatedResult)) { // TODO
-    *ch = accessThruMemRef(evaluatedResult)->arguments;
-    safeFree(evaluatedResult);
+  if (isPureList(evaluatedResult)) { 
+    *ch = copyChainWithoutReversal(accessThruMemRef(evaluatedResult)->arguments, copyThingOnVoid);
+    freeThing(evaluatedResult);
     curr = *ch;
     while (curr != NULL) {
       if (!isPureTree((node *) (curr->value))) {
@@ -6622,7 +7499,6 @@ node *createNestedStructure(node *value, chain *idents) {
   return structure;
 }
 
-// CONTINUE FROM HERE
 
 node *recomputeLeftHandSideForAssignmentInStructure(node *oldValue, node *newValue, chain *idents) {
   chain *currentIdent;
@@ -6644,7 +7520,7 @@ node *recomputeLeftHandSideForAssignmentInStructure(node *oldValue, node *newVal
   }
 
   okay = 1;
-  res = copyThing(oldValue);
+  res = deepCopyThing(oldValue); 
   currentStruct = res;
   currentIdent = idents;
   while (okay && (currentIdent != NULL)) {
@@ -6754,6 +7630,10 @@ int executeCommandInner(node *tree) {
   /* Make compiler happy */
   fd = NULL;
   /* End of compiler happiness */
+
+  if (tree->nodeType == MEMREF) {
+    return executeCommandInner(tree->child1);
+  }
 
   result = 0;
 
@@ -7139,7 +8019,7 @@ int executeCommandInner(node *tree) {
       if (evaluateThingToString(&tempString, array[resA-1])) {
 	resB = resA - 2;
 	resC = 1;
-	switch ((array[resA-2])->nodeType) {
+	switch ((accessThruMemRef(array[resA-2]))->nodeType) { 
 	case FILESYM:
 	  resD = PLOTFILE;
 	  break;
@@ -7406,13 +8286,13 @@ int executeCommandInner(node *tree) {
 	    if (evaluateThingToInteger(&resB, array[4], NULL)) {
 	      resC = 0; resD = 0; tempString2 = NULL; resE = PLOTFILE;
 	      if (resA >= 6) {
-		if ((array[5])->nodeType == PERTURB) {
+		if ((accessThruMemRef(array[5]))->nodeType == PERTURB) {
 		  resC = 1;
 		  if (resA >= 8) {
 		    if (isFilePostscriptFile(array[6])) {
 		      if (evaluateThingToString(&tempString2,array[7])) {
 			resD = 1;
-			switch ((array[6])->nodeType) {
+			switch ((accessThruMemRef(array[6]))->nodeType) {
 			case FILESYM:
 			  resE = PLOTFILE;
 			  break;
@@ -7439,7 +8319,7 @@ int executeCommandInner(node *tree) {
 		    if (isFilePostscriptFile(array[5])) {
 		      if (evaluateThingToString(&tempString2,array[6])) {
 			resD = 1;
-			switch ((array[5])->nodeType) {
+			switch ((accessThruMemRef(array[5]))->nodeType) {
 			case FILESYM:
 			  resE = PLOTFILE;
 			  break;
@@ -7663,7 +8543,7 @@ int executeCommandInner(node *tree) {
     evaluateThingListToThingArray(&resA, &array, tree->arguments);
     resC = 0;
     if ((resA >= 6) && (isString(array[5]))) {
-      fd = fopen((array[5])->string,"w");
+      fd = fopen((accessThruMemRef(array[5]))->string,"w");
       if (fd != NULL) {
 	resC = 1;
       } else {
@@ -7764,15 +8644,15 @@ int executeCommandInner(node *tree) {
       autoprintAlreadyDone = 0;
       if (isPureTree(tempNode) && 
 	  isConstant(tempNode) && 
-	  ((((node *) (curr->value))->nodeType == TABLEACCESSWITHSUBSTITUTE) || 
-	   (((node *) (curr->value))->nodeType == APPLY)) &&
-	  (lengthChain(((node *) (curr->value))->arguments) == 1)) {
-	if (((node *) (curr->value))->nodeType == APPLY) {
-	  tempNode2 = copyThing(((node *) (curr->value))->child1);
-	  tempNode3 = copyThing((node *) ((((node *) (curr->value))->arguments)->value));
+	  (((accessThruMemRef((node *) (curr->value)))->nodeType == TABLEACCESSWITHSUBSTITUTE) || 
+	   ((accessThruMemRef((node *) (curr->value)))->nodeType == APPLY)) &&
+	  (lengthChain((accessThruMemRef((node *) (curr->value)))->arguments) == 1)) {
+	if ((accessThruMemRef((node *) (curr->value)))->nodeType == APPLY) {
+	  tempNode2 = copyThing((accessThruMemRef((node *) (curr->value)))->child1);
+	  tempNode3 = copyThing(accessThruMemRef((node *) (((accessThruMemRef((node *) (curr->value)))->arguments)->value)));
 	} else {
-	  tempNode2 = makeTableAccess(((node *) (curr->value))->string);
-	  tempNode3 = copyThing((node *) ((((node *) (curr->value))->arguments)->value));
+	  tempNode2 = makeTableAccess((accessThruMemRef((node *) (curr->value)))->string);
+	  tempNode3 = copyThing(accessThruMemRef((node *) (((accessThruMemRef((node *) (curr->value)))->arguments)->value)));
 	}
 	tempNode4 = evaluateThing(tempNode2);
 	tempNode5 = evaluateThing(tempNode3);
@@ -7809,15 +8689,15 @@ int executeCommandInner(node *tree) {
 	autoprintAlreadyDone = 0;
 	if (isPureTree(tempNode) && 
 	    isConstant(tempNode) && 
-	    ((((node *) (curr->value))->nodeType == TABLEACCESSWITHSUBSTITUTE) || 
-	     (((node *) (curr->value))->nodeType == APPLY)) &&
-	    (lengthChain(((node *) (curr->value))->arguments) == 1)) {
-	  if (((node *) (curr->value))->nodeType == APPLY) {
-	    tempNode2 = copyThing(((node *) (curr->value))->child1);
-	    tempNode3 = copyThing((node *) ((((node *) (curr->value))->arguments)->value));
+	    (((accessThruMemRef((node *) (curr->value)))->nodeType == TABLEACCESSWITHSUBSTITUTE) || 
+	     ((accessThruMemRef((node *) (curr->value)))->nodeType == APPLY)) &&
+	    (lengthChain((accessThruMemRef((node *) (curr->value)))->arguments) == 1)) {
+	  if ((accessThruMemRef((node *) (curr->value)))->nodeType == APPLY) {
+	    tempNode2 = copyThing((accessThruMemRef((node *) (curr->value)))->child1);
+	    tempNode3 = copyThing(accessThruMemRef((node *) (((accessThruMemRef((node *) (curr->value)))->arguments)->value)));
 	  } else {
-	    tempNode2 = makeTableAccess(((node *) (curr->value))->string);
-	    tempNode3 = copyThing((node *) ((((node *) (curr->value))->arguments)->value));
+	    tempNode2 = makeTableAccess((accessThruMemRef((node *) (curr->value)))->string);
+	    tempNode3 = copyThing(accessThruMemRef((node *) (((accessThruMemRef((node *) (curr->value)))->arguments)->value)));
 	  }
 	  tempNode4 = evaluateThing(tempNode2);
 	  tempNode5 = evaluateThing(tempNode3);
@@ -7911,15 +8791,15 @@ int executeCommandInner(node *tree) {
       floatingPointEvaluationAlreadyDone = 0;
       if (isPureTree(tempNode) && 
 	  isConstant(tempNode) && 
-	  ((tree->child1->nodeType == TABLEACCESSWITHSUBSTITUTE) || 
-	   (tree->child1->nodeType == APPLY)) &&
-	  (lengthChain(tree->child1->arguments) == 1)) {
-	if (tree->child1->nodeType == APPLY) {
-	  tempNode2 = copyThing(tree->child1->child1);
-	  tempNode3 = copyThing((node *) ((tree->child1->arguments)->value));
+	  ((accessThruMemRef(tree->child1)->nodeType == TABLEACCESSWITHSUBSTITUTE) || 
+	   (accessThruMemRef(tree->child1)->nodeType == APPLY)) &&
+	  (lengthChain(accessThruMemRef(tree->child1)->arguments) == 1)) {
+	if (accessThruMemRef(tree->child1)->nodeType == APPLY) {
+	  tempNode2 = copyThing(accessThruMemRef(tree->child1)->child1);
+	  tempNode3 = copyThing(accessThruMemRef((node *) ((accessThruMemRef(tree->child1)->arguments)->value)));
 	} else {
-	  tempNode2 = makeTableAccess(tree->child1->string);
-	  tempNode3 = copyThing((node *) ((tree->child1->arguments)->value));
+	  tempNode2 = makeTableAccess(accessThruMemRef(tree->child1)->string);
+	  tempNode3 = copyThing(accessThruMemRef((node *) ((accessThruMemRef(tree->child1)->arguments)->value)));
 	}
 	tempNode4 = evaluateThing(tempNode2);
 	tempNode5 = evaluateThing(tempNode3);
@@ -7928,9 +8808,9 @@ int executeCommandInner(node *tree) {
 	    (!isConstant(tempNode4)) && 
 	    isConstant(tempNode5)) {
 	  tempNode6 = simplifyTreeErrorfree(tempNode5);
-	  if ((tempNode6->nodeType == CONSTANT) &&
-	      mpfr_number_p(*(tempNode6->value))) {
-	    if (evaluateFaithful(a, tempNode4, *(tempNode6->value), tools_precision)) {
+	  if ((accessThruMemRef(tempNode6)->nodeType == CONSTANT) &&
+	      mpfr_number_p(*(accessThruMemRef(tempNode6)->value))) {
+	    if (evaluateFaithful(a, tempNode4, *(accessThruMemRef(tempNode6)->value), tools_precision)) {
 	      floatingPointEvaluationAlreadyDone = 1;
 	    }
 	  }
@@ -7955,45 +8835,45 @@ int executeCommandInner(node *tree) {
     break; 	
   case ASSIGNMENTININDEXING:
     curr = tree->arguments;
-    if (((node *) (curr->value))->nodeType == TABLEACCESS) {
-      if ((tempNode = getThingFromTable(((node *) (curr->value))->string)) != NULL) {
+    if ((accessThruMemRef((node *) (curr->value)))->nodeType == TABLEACCESS) {
+      if ((tempNode = getThingFromTable((accessThruMemRef((node *) (curr->value)))->string)) != NULL) {
 	if (isPureList(tempNode) || isPureFinalEllipticList(tempNode)) {
 	  curr = tree->arguments;
 	  curr = curr->next;
-	  if (evaluateThingToInteger(&resB, (node *) (curr->value), NULL)) {
+	  if (evaluateThingToInteger(&resB, accessThruMemRef((node *) (curr->value)), NULL)) {
 	    resC = 0;
 	    if (resB >= 0) {
 	      curr = curr->next; 
-	      tempNode2 = evaluateThing((node *) (curr->value));
-	      if (resB == lengthChain(tempNode->arguments)) {
-		tempList = addElement(copyChain(tempNode->arguments,copyThingOnVoid),copyThing(tempNode2));
+	      tempNode2 = evaluateThing(accessThruMemRef((node *) (curr->value)));
+	      if (resB == lengthChain(accessThruMemRef(tempNode)->arguments)) {
+		tempList = addElement(copyChain(accessThruMemRef(tempNode)->arguments,copyThingOnVoid),copyThing(tempNode2));
 		tempList2 = copyChain(tempList,copyThingOnVoid);
 		freeChain(tempList,freeThingOnVoid);
 		tempNode3 = makeList(tempList2);
-		tempNode3->nodeType = tempNode->nodeType;
+		tempNode3->nodeType = accessThruMemRef(tempNode)->nodeType;
 		resC = 1;
 	      } else {
-		if (resB < lengthChain(tempNode->arguments)) {
-		  tempNode3 = makeList(copyChainAndReplaceNth(tempNode->arguments, resB, tempNode2, copyThingOnVoid));
-		  tempNode3->nodeType = tempNode->nodeType;
+		if (resB < lengthChain(accessThruMemRef(tempNode)->arguments)) {
+		  tempNode3 = makeList(copyChainAndReplaceNth(accessThruMemRef(tempNode)->arguments, resB, tempNode2, copyThingOnVoid));
+		  tempNode3->nodeType = accessThruMemRef(tempNode)->nodeType;
 		  resC = 1;
 		} else {
 		  if (isFinalEllipticList(tempNode)) {
 		    resE = 0;
-		    if (isPureTree((node *) accessInList(tempNode->arguments, 
-							 lengthChain(tempNode->arguments) - 1))) {
+		    if (isPureTree((node *) accessInList(accessThruMemRef(tempNode)->arguments, 
+							 lengthChain(accessThruMemRef(tempNode)->arguments) - 1))) {
 		      mpfr_init2(a, tools_precision);
 		      if (evaluateThingToConstant(a, 
-						  (node *) accessInList(tempNode->arguments, 
-									lengthChain(tempNode->arguments) - 1), 
+						  (node *) accessInList(accessThruMemRef(tempNode)->arguments, 
+									lengthChain(accessThruMemRef(tempNode)->arguments) - 1), 
 						  NULL,0,0)) {
 			if (mpfr_integer_p(a)) {
 			  resD = mpfr_get_si(a, GMP_RNDN);
 			  mpfr_init2(b, 8 * sizeof(resD) + 5);
 			  mpfr_set_si(b, resD, GMP_RNDN);
 			  if (mpfr_cmp(a, b) == 0) {
-			    tempList = copyChain(tempNode->arguments,copyThingOnVoid);
-			    for (i=lengthChain(tempNode->arguments);i<resB;i++) {
+			    tempList = copyChain(accessThruMemRef(tempNode)->arguments,copyThingOnVoid);
+			    for (i=lengthChain(accessThruMemRef(tempNode)->arguments);i<resB;i++) {
 			      resD++;
 			      mpfr_set_si(b, resD, GMP_RNDN);
 			      tempList = addElement(tempList,makeConstant(b));
@@ -8002,7 +8882,7 @@ int executeCommandInner(node *tree) {
 			    tempList2 = copyChain(tempList,copyThingOnVoid);
 			    freeChain(tempList,freeThingOnVoid);
 			    tempNode3 = makeList(tempList2);
-			    tempNode3->nodeType = tempNode->nodeType;
+			    tempNode3->nodeType = accessThruMemRef(tempNode)->nodeType;
 			    resC = 1;
 			  } else {
 			    resE = 1;
@@ -8019,9 +8899,9 @@ int executeCommandInner(node *tree) {
 		      resE = 1;
 		    }		    
 		    if (resE) {
-		      tempNode4 = (node *) accessInList(tempNode->arguments, lengthChain(tempNode->arguments) - 1);
-		      tempList = copyChain(tempNode->arguments,copyThingOnVoid);
-		      for (i=lengthChain(tempNode->arguments);i<resB;i++) {
+		      tempNode4 = (node *) accessInList(accessThruMemRef(tempNode)->arguments, lengthChain(accessThruMemRef(tempNode)->arguments) - 1);
+		      tempList = copyChain(accessThruMemRef(tempNode)->arguments,copyThingOnVoid);
+		      for (i=lengthChain(accessThruMemRef(tempNode)->arguments);i<resB;i++) {
 			tempList = addElement(tempList,copyThing(tempNode4));
 		      }
 		      tempList = addElement(tempList, copyThing(tempNode2));
@@ -8087,19 +8967,19 @@ int executeCommandInner(node *tree) {
 	      curr = tree->arguments;
 	      curr = curr->next;
 	      if (evaluateThingToInteger(&resB, (node *) (curr->value), NULL)) {
-		if ((resB >= 0) && (resB <= (int)strlen(tempNode->string))) {
+		if ((resB >= 0) && (resB <= (int)strlen(accessThruMemRef(tempNode)->string))) {
 		  curr = curr->next; 
 		  if (evaluateThingToString(&tempString,(node *) (curr->value))) {
 		    if (strlen(tempString) == 1) {
-		      if (resB == (int)strlen(tempNode->string)) {
+		      if (resB == (int)strlen(accessThruMemRef(tempNode)->string)) {
 			tempString2 = (char *) safeCalloc(resB + 2,sizeof(char));
-			strcpy(tempString2,tempNode->string);
+			strcpy(tempString2,accessThruMemRef(tempNode)->string);
 			tempString2[resB] = tempString[0];
 			tempNode3 = makeString(tempString2);
 			safeFree(tempString2);
 		      } else {
-			tempNode3 = makeString(tempNode->string);
-			(tempNode3->string)[resB] = tempString[0];
+			tempNode3 = makeString(accessThruMemRef(tempNode)->string);
+			(accessThruMemRef(tempNode3)->string)[resB] = tempString[0];
 		      }
 		      curr = tree->arguments;
 		      if (!assignThingToTable(((node *) (curr->value))->string, tempNode3)) {
@@ -8131,7 +9011,7 @@ int executeCommandInner(node *tree) {
 	    } else {
 	      curr = tree->arguments;
 	      printMessage(1,SOLLYA_MSG_IDENTIFIER_NOT_BOUND_TO_LIST_OR_STRING,"Warning: the identifier \"%s\" is not assigned to a (empty) list or a string.\n",
-			   ((node *) (curr->value))->string);
+			   (accessThruMemRef((node *) (curr->value)))->string);
 	      printMessage(1,SOLLYA_MSG_CONTINUATION,"The command will not be executed.\n");
               considerDyingOnError();
 	    }
@@ -8140,7 +9020,7 @@ int executeCommandInner(node *tree) {
 	freeThing(tempNode);
       } else {
 	curr = tree->arguments;
-	printMessage(1,SOLLYA_MSG_IDENTIFIER_NOT_ASSIGNED_TO,"Warning: the identifier \"%s\" is not assigned to.\n",((node *) (curr->value))->string);
+	printMessage(1,SOLLYA_MSG_IDENTIFIER_NOT_ASSIGNED_TO,"Warning: the identifier \"%s\" is not assigned to.\n",(accessThruMemRef((node *) (curr->value)))->string);
 	printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
         considerDyingOnError();
       }
@@ -8152,8 +9032,8 @@ int executeCommandInner(node *tree) {
     break;
   case FLOATASSIGNMENTININDEXING:
     curr = tree->arguments;
-    if (((node *) (curr->value))->nodeType == TABLEACCESS) {
-      if ((tempNode = getThingFromTable(((node *) (curr->value))->string)) != NULL) {
+    if ((accessThruMemRef((node *) (curr->value)))->nodeType == TABLEACCESS) {
+      if ((tempNode = getThingFromTable((accessThruMemRef((node *) (curr->value)))->string)) != NULL) {
 	if (isPureList(tempNode) || isPureFinalEllipticList(tempNode)) {
 	  curr = tree->arguments;
 	  curr = curr->next;
@@ -8167,15 +9047,15 @@ int executeCommandInner(node *tree) {
 		floatingPointEvaluationAlreadyDone = 0;
 		if (isPureTree(tempNode2) && 
 		    isConstant(tempNode2) && 
-		    ((((node *) (curr->value))->nodeType == TABLEACCESSWITHSUBSTITUTE) || 
-		     (((node *) (curr->value))->nodeType == APPLY)) &&
-		    (lengthChain(((node *) (curr->value))->arguments) == 1)) {
-		  if (((node *) (curr->value))->nodeType == APPLY) {
-		    tempNode7 = copyThing(((node *) (curr->value))->child1);
-		    tempNode3 = copyThing((node *) ((((node *) (curr->value))->arguments)->value));
+		    (((accessThruMemRef((node *) (curr->value)))->nodeType == TABLEACCESSWITHSUBSTITUTE) || 
+		     ((accessThruMemRef((node *) (curr->value)))->nodeType == APPLY)) &&
+		    (lengthChain((accessThruMemRef((node *) (curr->value)))->arguments) == 1)) {
+		  if ((accessThruMemRef((node *) (curr->value)))->nodeType == APPLY) {
+		    tempNode7 = copyThing((accessThruMemRef((node *) (curr->value)))->child1);
+		    tempNode3 = copyThing(accessThruMemRef((node *) (((accessThruMemRef((node *) (curr->value)))->arguments)->value)));
 		  } else {
-		    tempNode7 = makeTableAccess(((node *) (curr->value))->string);
-		    tempNode3 = copyThing((node *) ((((node *) (curr->value))->arguments)->value));
+		    tempNode7 = makeTableAccess((accessThruMemRef((node *) (curr->value)))->string);
+		    tempNode3 = copyThing(accessThruMemRef((node *) (((accessThruMemRef((node *) (curr->value)))->arguments)->value)));
 		  }
 		  tempNode4 = evaluateThing(tempNode7);
 		  tempNode5 = evaluateThing(tempNode3);
@@ -8184,9 +9064,9 @@ int executeCommandInner(node *tree) {
 		      (!isConstant(tempNode4)) && 
 		      isConstant(tempNode5)) {
 		    tempNode6 = simplifyTreeErrorfree(tempNode5);
-		    if ((tempNode6->nodeType == CONSTANT) &&
-			mpfr_number_p(*(tempNode6->value))) {
-		      if (evaluateFaithful(a, tempNode4, *(tempNode6->value), tools_precision)) {
+		    if ((accessThruMemRef(tempNode6)->nodeType == CONSTANT) &&
+			mpfr_number_p(*(accessThruMemRef(tempNode6)->value))) {
+		      if (evaluateFaithful(a, tempNode4, *(accessThruMemRef(tempNode6)->value), tools_precision)) {
 			floatingPointEvaluationAlreadyDone = 1;
 		      }
 		    }
@@ -8203,35 +9083,35 @@ int executeCommandInner(node *tree) {
 		}
 		mpfr_clear(a);
 	      }
-	      if (resB == lengthChain(tempNode->arguments)) {
-		tempList = addElement(copyChain(tempNode->arguments,copyThingOnVoid),copyThing(tempNode2));
+	      if (resB == lengthChain(accessThruMemRef(tempNode)->arguments)) {
+		tempList = addElement(copyChain(accessThruMemRef(tempNode)->arguments,copyThingOnVoid),copyThing(tempNode2));
 		tempList2 = copyChain(tempList,copyThingOnVoid);
 		freeChain(tempList,freeThingOnVoid);
 		tempNode3 = makeList(tempList2);
-		tempNode3->nodeType = tempNode->nodeType;
+		tempNode3->nodeType = accessThruMemRef(tempNode)->nodeType;
 		resC = 1;
 	      } else {
-		if (resB < lengthChain(tempNode->arguments)) {
-		  tempNode3 = makeList(copyChainAndReplaceNth(tempNode->arguments, resB, tempNode2, copyThingOnVoid));
-		  tempNode3->nodeType = tempNode->nodeType;
+		if (resB < lengthChain(accessThruMemRef(tempNode)->arguments)) {
+		  tempNode3 = makeList(copyChainAndReplaceNth(accessThruMemRef(tempNode)->arguments, resB, tempNode2, copyThingOnVoid));
+		  tempNode3->nodeType = accessThruMemRef(tempNode)->nodeType;
 		  resC = 1;
 		} else {
 		  if (isFinalEllipticList(tempNode)) {
 		    resE = 0;
-		    if (isPureTree((node *) accessInList(tempNode->arguments, 
-							 lengthChain(tempNode->arguments) - 1))) {
+		    if (isPureTree((node *) accessInList(accessThruMemRef(tempNode)->arguments, 
+							 lengthChain(accessThruMemRef(tempNode)->arguments) - 1))) {
 		      mpfr_init2(a, tools_precision);
 		      if (evaluateThingToConstant(a, 
-						  (node *) accessInList(tempNode->arguments, 
-									lengthChain(tempNode->arguments) - 1), 
+						  (node *) accessInList(accessThruMemRef(tempNode)->arguments, 
+									lengthChain(accessThruMemRef(tempNode)->arguments) - 1), 
 						  NULL,0,0)) {
 			if (mpfr_integer_p(a)) {
 			  resD = mpfr_get_si(a, GMP_RNDN);
 			  mpfr_init2(b, 8 * sizeof(resD) + 5);
 			  mpfr_set_si(b, resD, GMP_RNDN);
 			  if (mpfr_cmp(a, b) == 0) {
-			    tempList = copyChain(tempNode->arguments,copyThingOnVoid);
-			    for (i=lengthChain(tempNode->arguments);i<resB;i++) {
+			    tempList = copyChain(accessThruMemRef(tempNode)->arguments,copyThingOnVoid);
+			    for (i=lengthChain(accessThruMemRef(tempNode)->arguments);i<resB;i++) {
 			      resD++;
 			      mpfr_set_si(b, resD, GMP_RNDN);
 			      tempList = addElement(tempList,makeConstant(b));
@@ -8240,7 +9120,7 @@ int executeCommandInner(node *tree) {
 			    tempList2 = copyChain(tempList,copyThingOnVoid);
 			    freeChain(tempList,freeThingOnVoid);
 			    tempNode3 = makeList(tempList2);
-			    tempNode3->nodeType = tempNode->nodeType;
+			    tempNode3->nodeType = accessThruMemRef(tempNode)->nodeType;
 			    resC = 1;
 			  } else {
 			    resE = 1;
@@ -8257,16 +9137,16 @@ int executeCommandInner(node *tree) {
 		      resE = 1;
 		    }		    
 		    if (resE) {
-		      tempNode4 = (node *) accessInList(tempNode->arguments, lengthChain(tempNode->arguments) - 1);
-		      tempList = copyChain(tempNode->arguments,copyThingOnVoid);
-		      for (i=lengthChain(tempNode->arguments);i<resB;i++) {
+		      tempNode4 = (node *) accessInList(accessThruMemRef(tempNode)->arguments, lengthChain(accessThruMemRef(tempNode)->arguments) - 1);
+		      tempList = copyChain(accessThruMemRef(tempNode)->arguments,copyThingOnVoid);
+		      for (i=lengthChain(accessThruMemRef(tempNode)->arguments);i<resB;i++) {
 			tempList = addElement(tempList,copyThing(tempNode4));
 		      }
 		      tempList = addElement(tempList, copyThing(tempNode2));
 		      tempList2 = copyChain(tempList,copyThingOnVoid);
 		      freeChain(tempList,freeThingOnVoid);
 		      tempNode3 = makeList(tempList2);
-		      tempNode3->nodeType = tempNode->nodeType;
+		      tempNode3->nodeType = accessThruMemRef(tempNode)->nodeType;
 		      resC = 1;
 		    }
 		  }
@@ -8283,7 +9163,7 @@ int executeCommandInner(node *tree) {
 		  }
 		  mpfr_clear(a);
 		}
-		if (!assignThingToTable(((node *) (curr->value))->string, tempNode3)) {
+		if (!assignThingToTable((accessThruMemRef((node *) (curr->value)))->string, tempNode3)) {
 		  printMessage(1,SOLLYA_MSG_ASSIGNMENT_WILL_HAVE_NO_EFFECT,"Warning: the last assignment will have no effect.\n");
                   considerDyingOnError();
 		}
@@ -8316,15 +9196,15 @@ int executeCommandInner(node *tree) {
 		  floatingPointEvaluationAlreadyDone = 0;
 		  if (isPureTree(tempNode2) && 
 		      isConstant(tempNode2) && 
-		      ((((node *) (curr->value))->nodeType == TABLEACCESSWITHSUBSTITUTE) || 
-		       (((node *) (curr->value))->nodeType == APPLY)) &&
-		      (lengthChain(((node *) (curr->value))->arguments) == 1)) {
-		    if (((node *) (curr->value))->nodeType == APPLY) {
-		      tempNode7 = copyThing(((node *) (curr->value))->child1);
-		      tempNode3 = copyThing((node *) ((((node *) (curr->value))->arguments)->value));
+		      (((accessThruMemRef((node *) (curr->value)))->nodeType == TABLEACCESSWITHSUBSTITUTE) || 
+		       ((accessThruMemRef((node *) (curr->value)))->nodeType == APPLY)) &&
+		      (lengthChain((accessThruMemRef((node *) (curr->value)))->arguments) == 1)) {
+		    if ((accessThruMemRef((node *) (curr->value)))->nodeType == APPLY) {
+		      tempNode7 = copyThing((accessThruMemRef((node *) (curr->value)))->child1);
+		      tempNode3 = copyThing(accessThruMemRef((node *) (((accessThruMemRef((node *) (curr->value)))->arguments)->value)));
 		    } else {
-		      tempNode7 = makeTableAccess(((node *) (curr->value))->string);
-		      tempNode3 = copyThing((node *) ((((node *) (curr->value))->arguments)->value));
+		      tempNode7 = makeTableAccess((accessThruMemRef((node *) (curr->value)))->string);
+		      tempNode3 = copyThing(accessThruMemRef((node *) (((accessThruMemRef((node *) (curr->value)))->arguments)->value)));
 		    }
 		    tempNode4 = evaluateThing(tempNode7);
 		    tempNode5 = evaluateThing(tempNode3);
@@ -8333,9 +9213,9 @@ int executeCommandInner(node *tree) {
 			(!isConstant(tempNode4)) && 
 			isConstant(tempNode5)) {
 		      tempNode6 = simplifyTreeErrorfree(tempNode5);
-		      if ((tempNode6->nodeType == CONSTANT) &&
-			  mpfr_number_p(*(tempNode6->value))) {
-			if (evaluateFaithful(a, tempNode4, *(tempNode6->value), tools_precision)) {
+		      if ((accessThruMemRef(tempNode6)->nodeType == CONSTANT) &&
+			  mpfr_number_p(*(accessThruMemRef(tempNode6)->value))) {
+			if (evaluateFaithful(a, tempNode4, *(accessThruMemRef(tempNode6)->value), tools_precision)) {
 			  floatingPointEvaluationAlreadyDone = 1;
 			}
 		      }
@@ -8362,7 +9242,7 @@ int executeCommandInner(node *tree) {
 		  }
 		  mpfr_clear(a);
 		}
-		if (!assignThingToTable(((node *) (curr->value))->string, tempNode3)) {
+		if (!assignThingToTable((accessThruMemRef((node *) (curr->value)))->string, tempNode3)) {
 		  printMessage(1,SOLLYA_MSG_ASSIGNMENT_WILL_HAVE_NO_EFFECT,"Warning: the last assignment will have no effect.\n");
                   considerDyingOnError();
 		}
@@ -8382,19 +9262,19 @@ int executeCommandInner(node *tree) {
 	      curr = tree->arguments;
 	      curr = curr->next;
 	      if (evaluateThingToInteger(&resB, (node *) (curr->value), NULL)) {
-		if ((resB >= 0) && (resB <= (int)strlen(tempNode->string))) {
+		if ((resB >= 0) && (resB <= (int)strlen(accessThruMemRef(tempNode)->string))) {
 		  curr = curr->next; 
-		  if (evaluateThingToString(&tempString,(node *) (curr->value))) {
+		  if (evaluateThingToString(&tempString,accessThruMemRef((node *) (curr->value)))) {
 		    if (strlen(tempString) == 1) {
-		      if (resB == (int)strlen(tempNode->string)) {
+		      if (resB == (int)strlen(accessThruMemRef(tempNode)->string)) {
 			tempString2 = (char *) safeCalloc(resB + 2,sizeof(char));
-			strcpy(tempString2,tempNode->string);
+			strcpy(tempString2,accessThruMemRef(tempNode)->string);
 			tempString2[resB] = tempString[0];
 			tempNode3 = makeString(tempString2);
 			safeFree(tempString2);
 		      } else {
-			tempNode3 = makeString(tempNode->string);
-			(tempNode3->string)[resB] = tempString[0];
+			tempNode3 = makeString(accessThruMemRef(tempNode)->string);
+			(accessThruMemRef(tempNode3)->string)[resB] = tempString[0];
 		      }
 		      curr = tree->arguments;
 		      if (isPureTree(tempNode3) && isConstant(tempNode3)) {
@@ -8452,7 +9332,7 @@ int executeCommandInner(node *tree) {
       printMessage(1,SOLLYA_MSG_CONTINUATION,"This command will have no effect.\n");
       considerDyingOnError();
     }
-    break;
+    break; 
   case ASSIGNMENTINSTRUCTURE:
     tempNode = evaluateThing(tree->child1);
     tempNode2 = getThingFromTable((char *) (tree->arguments->value));
@@ -8483,15 +9363,15 @@ int executeCommandInner(node *tree) {
       floatingPointEvaluationAlreadyDone = 0;
       if (isPureTree(tempNode) && 
 	  isConstant(tempNode) && 
-	  ((tree->child1->nodeType == TABLEACCESSWITHSUBSTITUTE) || 
-	   (tree->child1->nodeType == APPLY)) &&
-	  (lengthChain(tree->child1->arguments) == 1)) {
-	if (tree->child1->nodeType == APPLY) {
-	  tempNode2 = copyThing(tree->child1->child1);
-	  tempNode3 = copyThing((node *) ((tree->child1->arguments)->value));
+	  ((accessThruMemRef(tree->child1)->nodeType == TABLEACCESSWITHSUBSTITUTE) || 
+	   (accessThruMemRef(tree->child1)->nodeType == APPLY)) &&
+	  (lengthChain(accessThruMemRef(tree->child1)->arguments) == 1)) {
+	if (accessThruMemRef(tree->child1)->nodeType == APPLY) {
+	  tempNode2 = copyThing(accessThruMemRef(tree->child1)->child1);
+	  tempNode3 = copyThing(accessThruMemRef((node *) ((accessThruMemRef(tree->child1)->arguments)->value)));
 	} else {
-	  tempNode2 = makeTableAccess(tree->child1->string);
-	  tempNode3 = copyThing((node *) ((tree->child1->arguments)->value));
+	  tempNode2 = makeTableAccess(accessThruMemRef(tree->child1)->string);
+	  tempNode3 = copyThing(accessThruMemRef((node *) ((accessThruMemRef(tree->child1)->arguments)->value)));
 	}
 	tempNode4 = evaluateThing(tempNode2);
 	tempNode5 = evaluateThing(tempNode3);
@@ -8500,9 +9380,9 @@ int executeCommandInner(node *tree) {
 	    (!isConstant(tempNode4)) && 
 	    isConstant(tempNode5)) {
 	  tempNode6 = simplifyTreeErrorfree(tempNode5);
-	  if ((tempNode6->nodeType == CONSTANT) &&
-	      mpfr_number_p(*(tempNode6->value))) {
-	    if (evaluateFaithful(a, tempNode4, *(tempNode6->value), tools_precision)) {
+	  if ((accessThruMemRef(tempNode6)->nodeType == CONSTANT) &&
+	      mpfr_number_p(*(accessThruMemRef(tempNode6)->value))) {
+	    if (evaluateFaithful(a, tempNode4, *(accessThruMemRef(tempNode6)->value), tools_precision)) {
 	      floatingPointEvaluationAlreadyDone = 1;
 	    }
 	  }
@@ -11728,6 +12608,16 @@ void freeThingOnVoid(void *tree) {
 
 void freeThing(node *tree) {
   if (tree == NULL) return;
+
+  if (tree->nodeType == MEMREF) {
+    tree->libFunDeriv--;
+    if (tree->libFunDeriv < 1) {
+      free_memory(tree->child1);
+      safeFree(tree);
+    } 
+    return;
+  }
+
   switch (tree->nodeType) {
   case VARIABLE:
     safeFree(tree);
@@ -12861,6 +13751,16 @@ int isEqualThing(node *tree, node *tree2) {
   if (tree == NULL) return 0;
   if (tree2 == NULL) return 0;
 
+  if (tree == tree2) return 1;
+
+  if (tree->nodeType == MEMREF) {
+    return isEqualThing(tree->child1, tree2);
+  }
+
+  if (tree2->nodeType == MEMREF) {
+    return isEqualThing(tree, tree2->child1);
+  }
+
   if (tree->nodeType != tree2->nodeType) return 0;
 
   switch (tree->nodeType) {
@@ -13703,6 +14603,10 @@ int isCorrectlyTypedBaseSymbol(node *tree) {
 
   if (tree == NULL) return 0;
 
+  if (tree->nodeType == MEMREF) {
+    return isCorrectlyTypedBaseSymbol(tree->child1);
+  }
+
   switch (tree->nodeType) {
   case ON:
   case OFF:
@@ -13770,7 +14674,7 @@ int isCorrectlyTyped(node *tree) {
   if (isCorrectlyTypedBaseSymbol(tree)) return 1;
   if (isRange(tree)) return 1;
   if (isPureList(tree)) {
-    curr = tree->arguments;
+    curr = accessThruMemRef(tree)->arguments; 
     while (curr != NULL) {
       if ((!isCorrectlyTyped((node *) (curr->value))) && (!isError((node *) (curr->value)))) return 0;
       curr = curr->next;
@@ -13778,8 +14682,8 @@ int isCorrectlyTyped(node *tree) {
     return 1;
   }
   if (isStructure(tree)) {
-    if (associationContainsDoubleEntries(tree->arguments)) return 0;
-    curr = tree->arguments;
+    if (associationContainsDoubleEntries(accessThruMemRef(tree)->arguments)) return 0;
+    curr = accessThruMemRef(tree)->arguments;
     while (curr != NULL) {
       if ((!isCorrectlyTyped((node *) (((entry *) (curr->value))->value))) && (!isError((node *) (((entry *) (curr->value))->value)))) return 0;
       curr = curr->next;
@@ -13787,7 +14691,7 @@ int isCorrectlyTyped(node *tree) {
     return 1;
   }
   if (isPureFinalEllipticList(tree)) {
-    curr = tree->arguments;
+    curr = accessThruMemRef(tree)->arguments;
     while (curr != NULL) {
       if ((!isCorrectlyTyped((node *) (curr->value))) && (!isError((node *) (curr->value)))) return 0;
       curr = curr->next;
@@ -13798,18 +14702,16 @@ int isCorrectlyTyped(node *tree) {
   return 0;
 }
 
-
-
 node *evaluateThing(node *tree) {
   node *evaluated, *tempNode;
 
   evaluated = evaluateThingInner(tree);
 
   if (!isCorrectlyTyped(evaluated)) {
-    if (evaluated->nodeType == ERRORSPECIAL) {
+    if (accessThruMemRef(evaluated)->nodeType == ERRORSPECIAL) {
       freeThing(evaluated);
-      if ((tree->nodeType != ERRORSPECIAL) && 
-          (tree->nodeType != TABLEACCESS)) {
+      if ((accessThruMemRef(tree)->nodeType != ERRORSPECIAL) && 
+          (accessThruMemRef(tree)->nodeType != TABLEACCESS)) {
 	printMessage(1,SOLLYA_MSG_EXPR_OR_COMMAND_COULD_NOT_BE_HANDLED,"Warning: the given expression or command could not be handled.\n");
         considerDyingOnError();
       } 
@@ -13845,19 +14747,19 @@ int evaluateFormatsListForFPminimax(chain **res, node *list, int n, int mode) {
   int i, a;
   int *intptr;
 
-  if( (list->nodeType==LIST) && (lengthChain(list->arguments) < n) ) {
+  if( (accessThruMemRef(list)->nodeType==LIST) && (lengthChain(accessThruMemRef(list)->arguments) < n) ) {
     printMessage(1, SOLLYA_MSG_FPMINIMAX_LESS_FORMATS_THAN_MONOMIALS, "Error in fpminimax: there is less formats indications than monomials\n");
     considerDyingOnError();
     return 0;
   }
-  if( (list->nodeType==LIST) && (lengthChain(list->arguments) > n) ) {
+  if( (accessThruMemRef(list)->nodeType==LIST) && (lengthChain(accessThruMemRef(list)->arguments) > n) ) {
     printMessage(1, SOLLYA_MSG_FPMINIMAX_LESS_MONOMIALS_THAN_FORMATS, "Warning in fpminimax: there is more formats indications than monomials\nthe formats list will be truncated\n");
   }
 
-  curr=list->arguments;
+  curr=accessThruMemRef(list)->arguments;
   i = 1;
   while(i <= n) {
-    switch(((node *)(curr->value))->nodeType) {
+    switch((accessThruMemRef((node *)(curr->value)))->nodeType) {
     case SINGLESYMBOL: a=24; break;
     case QUADSYMBOL: a=113; break;
     case HALFPRECISIONSYMBOL: a=11; break;
@@ -14065,7 +14967,7 @@ int executeMatchBodyInner(node **resultThing, node *body, node *thingToReturn, c
   int okay, failure;
   chain *curr;
 
-  curr = body->arguments;
+  curr = accessThruMemRef(body)->arguments;
   okay = 1;
   while (curr != NULL) {
     if (isQuit((node *) (curr->value)) ||
@@ -14138,7 +15040,7 @@ int executeMatchBodyInner(node **resultThing, node *body, node *thingToReturn, c
 
   declaredSymbolTable = pushFrame(declaredSymbolTable);
 
-  curr = body->arguments;
+  curr = accessThruMemRef(body)->arguments;
   okay = 1;
   while (curr != NULL) {
     if (isQuit((node *) (curr->value)) ||
@@ -14215,18 +15117,18 @@ int executeProcedureInner(node **resultThing, node *proc, chain *args, int ellip
   chain *curr, *curr2;
   node *tempNode;
   
-  if (proc->nodeType != PROCILLIM) {
-    if (lengthChain(proc->arguments) != lengthChain(args)) {
+  if (accessThruMemRef(proc)->nodeType != PROCILLIM) {
+    if (lengthChain(accessThruMemRef(proc)->arguments) != lengthChain(args)) {
       if (!((lengthChain(args) == 1) && 
 	    (isUnit((node *) (args->value))) && 
-	    (lengthChain(proc->arguments) == 0))) {
+	    (lengthChain(accessThruMemRef(proc)->arguments) == 0))) {
 	*resultThing = NULL;
 	return 1;
       }
     }
   }
 
-  curr = proc->child1->arguments;
+  curr = accessThruMemRef(proc)->child1->arguments;
   result = 0;
   while (curr != NULL) {
     if (isQuit((node *) (curr->value)) ||
@@ -14249,7 +15151,7 @@ int executeProcedureInner(node **resultThing, node *proc, chain *args, int ellip
   declaredSymbolTable = pushFrame(declaredSymbolTable);
 
   result = 0;
-  curr = proc->arguments;
+  curr = accessThruMemRef(proc)->arguments;
   curr2 = args;
   while (curr != NULL) {
     noError = 0;
@@ -14278,7 +15180,7 @@ int executeProcedureInner(node **resultThing, node *proc, chain *args, int ellip
           } else {
             if (declaredSymbolTable != NULL) {
               noError = 1;
-              if (proc->nodeType != PROCILLIM) {
+              if (accessThruMemRef(proc)->nodeType != PROCILLIM) {
                 declaredSymbolTable = declareNewEntry(declaredSymbolTable, (char *) (curr->value), (node *) (curr2->value), copyThingOnVoid);
               } else {
                 if (curr2 == NULL) {
@@ -14308,7 +15210,7 @@ int executeProcedureInner(node **resultThing, node *proc, chain *args, int ellip
       break;
     }
 
-    if (proc->nodeType == PROCILLIM) break;
+    if (accessThruMemRef(proc)->nodeType == PROCILLIM) break;
 
     curr = curr->next;
     curr2 = curr2->next;
@@ -14320,7 +15222,7 @@ int executeProcedureInner(node **resultThing, node *proc, chain *args, int ellip
     return 0;
   }
    
-  curr = proc->child1->arguments;
+  curr = accessThruMemRef(proc)->child1->arguments;
   result = 0;
   while (curr != NULL) {
     if (isQuit((node *) (curr->value)) ||
@@ -14393,7 +15295,7 @@ void computeFunctionWithProcedure(sollya_mpfi_t y, node *proc, sollya_mpfi_t x, 
     if (res) {
       if (resThing != NULL) {
 	if (isRange(resThing)) {
-	  sollya_mpfi_interv_fr_safe(y,*(resThing->child1->value),*(resThing->child2->value));
+	  sollya_mpfi_interv_fr_safe(y,*(accessThruMemRef(resThing)->child1->value),*(accessThruMemRef(resThing)->child2->value));
 	} else {
 	  sollya_mpfi_set_nan(y);
 	}
@@ -14931,9 +15833,12 @@ void *preevaluateMatcherOnVoid(void *tree) {
   return (void *) preevaluateMatcher((node *) tree);
 }
 
-
 int variableUsePreventsPreevaluation(node *tree) {
   chain *curr;
+
+  if (tree->nodeType == MEMREF) {
+    return variableUsePreventsPreevaluation(tree->child1);
+  }
 
   switch (tree->nodeType) {
   case RENAME:
@@ -15270,6 +16175,10 @@ node *preevaluateMatcher(node *tree) {
 
   if (tree == NULL) return NULL;
 
+  if (tree->nodeType == MEMREF) {
+    return preevaluateMatcher(tree->child1);
+  }
+
   copy = (node *) safeMalloc(sizeof(node));
   copy->nodeType = tree->nodeType;
 
@@ -15283,7 +16192,7 @@ node *preevaluateMatcher(node *tree) {
     safeFree(copy);
     copy = evaluateThing(tree);
     break; 			
-  case RANGE:
+  case RANGE: // CONTINUE FROM HERE
     rangeEvaluateLeft = !variableUsePreventsPreevaluation(tree->child1);
     rangeEvaluateRight = !variableUsePreventsPreevaluation(tree->child2);
     if (rangeEvaluateLeft && rangeEvaluateRight) {
