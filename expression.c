@@ -520,6 +520,9 @@ void fprintHeadFunction(FILE *fd,node *tree, char *x, char *y) {
 
 int precedence(node *tree) {
   switch (tree->nodeType) {
+  case MEMREF:
+    return precedence(tree->child1);
+    break;
   case CONSTANT:
   case VARIABLE:
   case PI_CONST:
@@ -552,6 +555,9 @@ int isInfix(node *tree) {
   char *str;
   int res;
   switch(tree->nodeType) {
+  case MEMREF:
+    return isInfix(tree->child1);
+    break;
   case CONSTANT: 
     if (mpfr_sgn(*(tree->value)) < 0) return 1;
     if ((dyadic == 2) || (dyadic == 3)) {
@@ -1622,10 +1628,10 @@ void printTree(node *tree) {
     printValue(tree->value);
     break;
   case ADD:
-    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (tree->child1->nodeType != CONSTANT)) 
+    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (accessThruMemRef(tree->child1)->nodeType != CONSTANT)) 
       sollyaPrintf("(");
     printTree(tree->child1);
-    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (tree->child1->nodeType != CONSTANT)) 
+    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (accessThruMemRef(tree->child1)->nodeType != CONSTANT)) 
       sollyaPrintf(")");
     sollyaPrintf(" + ");
     if (isInfix(tree->child2) && (precedence(tree->child2) < pred)) 
@@ -1635,10 +1641,10 @@ void printTree(node *tree) {
       sollyaPrintf(")");
     break;
   case SUB:
-    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (tree->child1->nodeType != CONSTANT)) 
+    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (accessThruMemRef(tree->child1)->nodeType != CONSTANT)) 
       sollyaPrintf("(");
     printTree(tree->child1);
-    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (tree->child1->nodeType != CONSTANT)) 
+    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (accessThruMemRef(tree->child1)->nodeType != CONSTANT)) 
       sollyaPrintf(")");
     sollyaPrintf(" - ");
     if (isInfix(tree->child2) && (precedence(tree->child2) <= pred)) 
@@ -1648,10 +1654,10 @@ void printTree(node *tree) {
       sollyaPrintf(")");
     break;
   case MUL:
-    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (tree->child1->nodeType != CONSTANT)) 
+    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (accessThruMemRef(tree->child1)->nodeType != CONSTANT)) 
       sollyaPrintf("(");
     printTree(tree->child1);
-    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (tree->child1->nodeType != CONSTANT)) 
+    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (accessThruMemRef(tree->child1)->nodeType != CONSTANT)) 
       sollyaPrintf(")");
     sollyaPrintf(" * ");
     if (isInfix(tree->child2) && (precedence(tree->child2) < pred)) 
@@ -1661,10 +1667,10 @@ void printTree(node *tree) {
       sollyaPrintf(")");
     break;
   case DIV:
-    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (tree->child1->nodeType != CONSTANT)) 
+    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (accessThruMemRef(tree->child1)->nodeType != CONSTANT)) 
       sollyaPrintf("(");
     printTree(tree->child1);
-    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (tree->child1->nodeType != CONSTANT)) 
+    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (accessThruMemRef(tree->child1)->nodeType != CONSTANT)) 
       sollyaPrintf(")");
     sollyaPrintf(" / ");
     if (isInfix(tree->child2) && (precedence(tree->child2) <= pred)) 
@@ -1766,13 +1772,13 @@ void printTree(node *tree) {
       sollyaPrintf(")");
     sollyaPrintf("^");
     if (isInfix(tree->child2) && ((precedence(tree->child2) <= pred)
-				  || ((tree->child2->nodeType == CONSTANT) 
+				  || ((accessThruMemRef(tree->child2)->nodeType == CONSTANT) 
 				      && ((dyadic == 2) || (dyadic == 3))))) {
       sollyaPrintf("(");
     }
     printTree(tree->child2);
     if (isInfix(tree->child2) && ((precedence(tree->child2) <= pred)
-				  || ((tree->child2->nodeType == CONSTANT) 
+				  || ((accessThruMemRef(tree->child2)->nodeType == CONSTANT) 
 				      && ((dyadic == 2) || (dyadic == 3))))) {
       sollyaPrintf(")");
     }
@@ -1847,7 +1853,7 @@ void printTree(node *tree) {
     break;
   case LIBRARYFUNCTION:
     {
-      if (tree->child1->nodeType == VARIABLE) {
+      if (accessThruMemRef(tree->child1)->nodeType == VARIABLE) {
 	for (i=1;i<=tree->libFunDeriv;i++) {
 	  sollyaPrintf("diff(");
 	}
@@ -1878,7 +1884,7 @@ void printTree(node *tree) {
     break;
   case PROCEDUREFUNCTION:
     {
-      if (tree->child1->nodeType == VARIABLE) {
+      if (accessThruMemRef(tree->child1)->nodeType == VARIABLE) {
 	for (i=1;i<=tree->libFunDeriv;i++) {
 	  sollyaPrintf("diff(");
 	}
@@ -1970,10 +1976,10 @@ char *sprintTree(node *tree) {
     buffer2 = sprintTree(tree->child2);
     buffer = (char *) safeCalloc(strlen(buffer1) + strlen(buffer2) + 9, sizeof(char));
     tempBuf = buffer;
-    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (tree->child1->nodeType != CONSTANT)) 
+    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (accessThruMemRef(tree->child1)->nodeType != CONSTANT)) 
       tempBuf += sprintf(tempBuf,"(");
     tempBuf += sprintf(tempBuf,"%s",buffer1);
-    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (tree->child1->nodeType != CONSTANT)) 
+    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (accessThruMemRef(tree->child1)->nodeType != CONSTANT)) 
       tempBuf += sprintf(tempBuf,")");
     tempBuf += sprintf(tempBuf," + ");
     if (isInfix(tree->child2) && (precedence(tree->child2) < pred)) 
@@ -1987,10 +1993,10 @@ char *sprintTree(node *tree) {
     buffer2 = sprintTree(tree->child2);
     buffer = (char *) safeCalloc(strlen(buffer1) + strlen(buffer2) + 9, sizeof(char));
     tempBuf = buffer;
-    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (tree->child1->nodeType != CONSTANT)) 
+    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (accessThruMemRef(tree->child1)->nodeType != CONSTANT)) 
       tempBuf += sprintf(tempBuf,"(");
     tempBuf += sprintf(tempBuf,"%s",buffer1);
-    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (tree->child1->nodeType != CONSTANT)) 
+    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (accessThruMemRef(tree->child1)->nodeType != CONSTANT)) 
       tempBuf += sprintf(tempBuf,")");
     tempBuf += sprintf(tempBuf," - ");
     if (isInfix(tree->child2) && (precedence(tree->child2) <= pred)) 
@@ -2004,10 +2010,10 @@ char *sprintTree(node *tree) {
     buffer2 = sprintTree(tree->child2);
     buffer = (char *) safeCalloc(strlen(buffer1) + strlen(buffer2) + 9, sizeof(char));
     tempBuf = buffer;
-    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (tree->child1->nodeType != CONSTANT)) 
+    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (accessThruMemRef(tree->child1)->nodeType != CONSTANT)) 
       tempBuf += sprintf(tempBuf,"(");
     tempBuf += sprintf(tempBuf,"%s",buffer1);
-    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (tree->child1->nodeType != CONSTANT)) 
+    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (accessThruMemRef(tree->child1)->nodeType != CONSTANT)) 
       tempBuf += sprintf(tempBuf,")");
     tempBuf += sprintf(tempBuf," * ");
     if (isInfix(tree->child2) && (precedence(tree->child2) < pred)) 
@@ -2021,10 +2027,10 @@ char *sprintTree(node *tree) {
     buffer2 = sprintTree(tree->child2);
     buffer = (char *) safeCalloc(strlen(buffer1) + strlen(buffer2) + 9, sizeof(char));
     tempBuf = buffer;
-    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (tree->child1->nodeType != CONSTANT)) 
+    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (accessThruMemRef(tree->child1)->nodeType != CONSTANT)) 
       tempBuf += sprintf(tempBuf,"(");
     tempBuf += sprintf(tempBuf,"%s",buffer1);
-    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (tree->child1->nodeType != CONSTANT)) 
+    if (isInfix(tree->child1) && (precedence(tree->child1) < pred) && (accessThruMemRef(tree->child1)->nodeType != CONSTANT)) 
       tempBuf += sprintf(tempBuf,")");
     tempBuf += sprintf(tempBuf," / ");
     if (isInfix(tree->child2) && (precedence(tree->child2) <= pred)) 
@@ -2130,12 +2136,12 @@ char *sprintTree(node *tree) {
       tempBuf += sprintf(tempBuf,")");
     tempBuf += sprintf(tempBuf,"^");
     if (isInfix(tree->child2) && ((precedence(tree->child2) <= pred)
-				  || ((tree->child2->nodeType == CONSTANT) 
+				  || ((accessThruMemRef(tree->child2)->nodeType == CONSTANT) 
 				      && ((dyadic == 2) || (dyadic == 3))))) 
       tempBuf += sprintf(tempBuf,"(");
     tempBuf += sprintf(tempBuf,"%s",buffer2);
     if (isInfix(tree->child2) && ((precedence(tree->child2) <= pred)
-				  || ((tree->child2->nodeType == CONSTANT) 
+				  || ((accessThruMemRef(tree->child2)->nodeType == CONSTANT) 
 				      && ((dyadic == 2) || (dyadic == 3))))) 
       tempBuf += sprintf(tempBuf,")");
     break;
@@ -2559,7 +2565,7 @@ void fprintTree(FILE *fd, node *tree) {
     break;
     case LIBRARYFUNCTION:
     {
-      if (tree->child1->nodeType == VARIABLE) {
+      if (accessThruMemRef(tree->child1)->nodeType == VARIABLE) {
 	for (i=1;i<=tree->libFunDeriv;i++) {
 	  sollyaFprintf(fd,"diff(");
 	}
@@ -2590,7 +2596,7 @@ void fprintTree(FILE *fd, node *tree) {
     break;
   case PROCEDUREFUNCTION:
     {
-      if (tree->child1->nodeType == VARIABLE) {
+      if (accessThruMemRef(tree->child1)->nodeType == VARIABLE) {
 	for (i=1;i<=tree->libFunDeriv;i++) {
 	  sollyaFprintf(fd,"diff(");
 	}
@@ -2964,6 +2970,10 @@ int tryEvaluateConstantTermToMpq(mpq_t res, node *tree) {
 
   if (tree == NULL) return 0;
 
+  if (tree->nodeType == MEMREF) {
+    return tryEvaluateConstantTermToMpq(res, tree->child1);
+  }
+
   mpq_init(resA);
   mpq_init(resB);
   mpq_init(resC);
@@ -3080,6 +3090,10 @@ node *dividePolynomialByPowerOfVariableUnsafe(node *tree, int alpha);
 int containsNotANumbers(node * tree) {
   int numberChilds;
 
+  if (tree->nodeType == MEMREF) {
+    return containsNotANumbers(tree->child1);
+  }
+
   if (tree->nodeType == CONSTANT) {
     if (mpfr_nan_p(*(tree->value))) 
       return 1;
@@ -3111,7 +3125,25 @@ int containsNotANumbers(node * tree) {
   return 1;
 }
 
+node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational);
+
 node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
+  node *res;
+
+  res = simplifyTreeErrorfreeInnerst(tree, rec, doRational);
+
+  if ((tree != NULL) && (res != NULL) &&
+      (tree->nodeType == MEMREF) && 
+      isSyntacticallyEqual(tree,res)) {  
+    free_memory(res);
+    res = copyTree(tree);
+  }
+
+  return addMemRef(res);
+}
+
+
+node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   node *simplChild1, *simplChild2, *simplified, *recsimplified;
   mpfr_t *value;
   mpfr_t temp;
@@ -3135,14 +3167,14 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
     case 0:
       break;
     case 1:
-      if ((tree->child1->nodeType == CONSTANT) && (mpfr_nan_p(*(tree->child1->value)))) return copyTree(tree->child1);
+      if ((accessThruMemRef(tree->child1)->nodeType == CONSTANT) && (mpfr_nan_p(*(accessThruMemRef(tree->child1)->value)))) return copyTree(tree->child1);
       break;
     case 2:
-      if ((tree->child1->nodeType == CONSTANT) && (mpfr_nan_p(*(tree->child1->value)))) {
+      if ((accessThruMemRef(tree->child1)->nodeType == CONSTANT) && (mpfr_nan_p(*(accessThruMemRef(tree->child1)->value)))) {
 	if (isConstant(tree)) return copyTree(tree->child1);
 	return copyTree(tree);
       }
-      if ((tree->child2->nodeType == CONSTANT) && (mpfr_nan_p(*(tree->child2->value)))) {
+      if ((accessThruMemRef(tree->child2)->nodeType == CONSTANT) && (mpfr_nan_p(*(accessThruMemRef(tree->child2)->value)))) {
 	if (isConstant(tree)) return copyTree(tree->child2);
 	return copyTree(tree);
       }
@@ -3300,19 +3332,19 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplChild2 = simplifyTreeErrorfreeInner(tree->child2,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if ((simplChild1->nodeType == CONSTANT) && (simplChild2->nodeType == CONSTANT)) {
+    if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (accessThruMemRef(simplChild2)->nodeType == CONSTANT)) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       prec = 2 * tools_precision;
-      p = 2 * mpfr_get_prec(*(simplChild1->value));
+      p = 2 * mpfr_get_prec(*(accessThruMemRef(simplChild1)->value));
       if (p > prec) prec = p;
-      p = 2 * mpfr_get_prec(*(simplChild2->value));
+      p = 2 * mpfr_get_prec(*(accessThruMemRef(simplChild2)->value));
       if (p > prec) prec = p;
       prec += 10;
       if (prec > 256 * tools_precision) prec = 256 * tools_precision;
       mpfr_init2(*value,prec);
       simplified->value = value;
-      if ((mpfr_add(*value, *(simplChild1->value), *(simplChild2->value), GMP_RNDN) != 0) || 
+      if ((mpfr_add(*value, *(accessThruMemRef(simplChild1)->value), *(accessThruMemRef(simplChild2)->value), GMP_RNDN) != 0) || 
 	  (!mpfr_number_p(*value))) {
 	simplified->nodeType = ADD;
 	simplified->child1 = simplChild1;
@@ -3324,20 +3356,20 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
 	free_memory(simplChild2);
       }
     } else {
-      if ((simplChild1->nodeType == CONSTANT) && (mpfr_zero_p(*(simplChild1->value)))) {
+      if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (mpfr_zero_p(*(accessThruMemRef(simplChild1)->value)))) {
 	free_memory(simplChild1);
 	safeFree(simplified);
 	simplified = simplChild2;
       } else {
-	if ((simplChild2->nodeType == CONSTANT) && (mpfr_zero_p(*(simplChild2->value)))) {
+	if ((accessThruMemRef(simplChild2)->nodeType == CONSTANT) && (mpfr_zero_p(*(accessThruMemRef(simplChild2)->value)))) {
 	  free_memory(simplChild2);
 	  safeFree(simplified);
 	  simplified = simplChild1;
 	} else {
-	  if (simplChild1->nodeType == NEG) {
+	  if (accessThruMemRef(simplChild1)->nodeType == NEG) {
 	    simplified->nodeType = SUB;
 	    simplified->child1 = simplChild2;
-	    simplified->child2 = copyTree(simplChild1->child1);
+	    simplified->child2 = copyTree(accessThruMemRef(simplChild1)->child1);
 	    free_memory(simplChild1);
 	    if (rec > 0) {
 	      recsimplified = simplifyTreeErrorfreeInner(simplified,rec-1, doRational);
@@ -3345,10 +3377,10 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
 	      simplified = recsimplified;
 	    }
 	  } else {
-	    if (simplChild2->nodeType == NEG) {
+	    if (accessThruMemRef(simplChild2)->nodeType == NEG) {
 	      simplified->nodeType = SUB;
 	      simplified->child1 = simplChild1;
-	      simplified->child2 = copyTree(simplChild2->child1);
+	      simplified->child2 = copyTree(accessThruMemRef(simplChild2)->child1);
 	      free_memory(simplChild2);
 	      if (rec > 0) {
 		recsimplified = simplifyTreeErrorfreeInner(simplified,rec-1, doRational);
@@ -3385,19 +3417,19 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplChild2 = simplifyTreeErrorfreeInner(tree->child2,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if ((simplChild1->nodeType == CONSTANT) && (simplChild2->nodeType == CONSTANT)) {
+    if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (accessThruMemRef(simplChild2)->nodeType == CONSTANT)) {
       simplified->nodeType = CONSTANT;
       prec = 2 * tools_precision;
-      p = 2 * mpfr_get_prec(*(simplChild1->value));
+      p = 2 * mpfr_get_prec(*(accessThruMemRef(simplChild1)->value));
       if (p > prec) prec = p;
-      p = 2 * mpfr_get_prec(*(simplChild2->value));
+      p = 2 * mpfr_get_prec(*(accessThruMemRef(simplChild2)->value));
       if (p > prec) prec = p;
       prec += 10;
       if (prec > 256 * tools_precision) prec = 256 * tools_precision;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,prec);
       simplified->value = value;
-      if ((mpfr_sub(*value, *(simplChild1->value), *(simplChild2->value), GMP_RNDN) != 0) || 
+      if ((mpfr_sub(*value, *(accessThruMemRef(simplChild1)->value), *(accessThruMemRef(simplChild2)->value), GMP_RNDN) != 0) || 
 	  (!mpfr_number_p(*value))) {
 	simplified->nodeType = SUB;
 	simplified->child1 = simplChild1;
@@ -3409,12 +3441,12 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
 	free_memory(simplChild2);
       }
     } else {
-      if ((simplChild1->nodeType == CONSTANT) && (mpfr_zero_p(*(simplChild1->value)))) {
+      if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (mpfr_zero_p(*(accessThruMemRef(simplChild1)->value)))) {
 	free_memory(simplChild1);
 	simplified->nodeType = NEG;
 	simplified->child1 = simplChild2;
       } else {
-	if ((simplChild2->nodeType == CONSTANT) && (mpfr_zero_p(*(simplChild2->value)))) {
+	if ((accessThruMemRef(simplChild2)->nodeType == CONSTANT) && (mpfr_zero_p(*(accessThruMemRef(simplChild2)->value)))) {
 	  free_memory(simplChild2);
 	  safeFree(simplified);
 	  simplified = simplChild1;
@@ -3428,18 +3460,18 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
 	    simplified->value = value;
 	    mpfr_set_d(*value,0.0,GMP_RNDN);
 	  } else {
-	    if (simplChild2->nodeType == NEG) {
+	    if (accessThruMemRef(simplChild2)->nodeType == NEG) {
 	      simplified->nodeType = ADD;
 	      simplified->child1 = simplChild1;
-	      simplified->child2 = copyTree(simplChild2->child1);
+	      simplified->child2 = copyTree(accessThruMemRef(simplChild2)->child1);
 	      free_memory(simplChild2);
 	    } else {
-	      if ((simplChild1->nodeType == EXP) &&
-		  (simplChild2->nodeType == CONSTANT) &&
-		  (mpfr_cmp_d(*(simplChild2->value),1.0) == 0) &&
-		  (!mpfr_nan_p(*(simplChild2->value)))) {
+	      if ((accessThruMemRef(simplChild1)->nodeType == EXP) &&
+		  (accessThruMemRef(simplChild2)->nodeType == CONSTANT) &&
+		  (mpfr_cmp_d(*(accessThruMemRef(simplChild2)->value),1.0) == 0) &&
+		  (!mpfr_nan_p(*(accessThruMemRef(simplChild2)->value)))) {
 		simplified->nodeType = EXP_M1;
-		simplified->child1 = copyTree(simplChild1->child1);
+		simplified->child1 = copyTree(accessThruMemRef(simplChild1)->child1);
 		free_memory(simplChild1);
 		free_memory(simplChild2);
 	      } else {
@@ -3457,7 +3489,7 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplChild2 = simplifyTreeErrorfreeInner(tree->child2,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if ((simplChild1->nodeType == CONSTANT) && (simplChild2->nodeType == CONSTANT)) {
+    if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (accessThruMemRef(simplChild2)->nodeType == CONSTANT)) {
       simplified->nodeType = CONSTANT;
       prec = 2 * tools_precision;
       p = 2 * mpfr_get_prec(*(simplChild1->value));
@@ -3469,7 +3501,7 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,prec);
       simplified->value = value;
-      if ((mpfr_mul(*value, *(simplChild1->value), *(simplChild2->value), GMP_RNDN) != 0) || 
+      if ((mpfr_mul(*value, *(accessThruMemRef(simplChild1)->value), *(accessThruMemRef(simplChild2)->value), GMP_RNDN) != 0) || 
 	  (!mpfr_number_p(*value))) {
 	simplified->nodeType = MUL;
 	simplified->child1 = simplChild1;
@@ -3481,9 +3513,9 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
 	free_memory(simplChild2);
       }
     } else {
-      if (((simplChild1->nodeType == CONSTANT) && (mpfr_zero_p(*(simplChild1->value)))) ||
-	  ((simplChild2->nodeType == CONSTANT) && (mpfr_zero_p(*(simplChild2->value))))) {
-	free_memory(simplChild1);
+      if (((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (mpfr_zero_p(*(accessThruMemRef(simplChild1)->value)))) ||
+	  ((accessThruMemRef(simplChild2)->nodeType == CONSTANT) && (mpfr_zero_p(*(accessThruMemRef(simplChild2)->value))))) {
+	free_memory(simplChild1); 
 	free_memory(simplChild2);
 	simplified->nodeType = CONSTANT;
 	value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
@@ -3491,125 +3523,135 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
 	simplified->value = value;
 	mpfr_set_d(*value,0.0,GMP_RNDN);
       } else {
-	if ((simplChild1->nodeType == CONSTANT) && (mpfr_cmp_d(*(simplChild1->value),1.0) == 0) && (!mpfr_nan_p(*(simplChild1->value)))) {
+	if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (mpfr_cmp_d(*(accessThruMemRef(simplChild1)->value),1.0) == 0) && (!mpfr_nan_p(*(accessThruMemRef(simplChild1)->value)))) {
 	  free_memory(simplChild1);
 	  safeFree(simplified);
 	  simplified = simplChild2;
 	} else {
-	  if ((simplChild2->nodeType == CONSTANT) && (mpfr_cmp_d(*(simplChild2->value),1.0) == 0) && (!mpfr_nan_p(*(simplChild2->value)))) {
+	  if ((accessThruMemRef(simplChild2)->nodeType == CONSTANT) && (mpfr_cmp_d(*(accessThruMemRef(simplChild2)->value),1.0) == 0) && (!mpfr_nan_p(*(accessThruMemRef(simplChild2)->value)))) {
 	    free_memory(simplChild2);
 	    safeFree(simplified);
 	    simplified = simplChild1;
 	  } else {
-	    if ((simplChild1->nodeType == DIV) &&
-		(simplChild1->child1->nodeType == CONSTANT) &&
-		(mpfr_cmp_d(*(simplChild1->child1->value),1.0) == 0) &&
-		(!mpfr_nan_p(*(simplChild1->child1->value)))) {
+	    if ((accessThruMemRef(simplChild1)->nodeType == DIV) &&
+		(accessThruMemRef(accessThruMemRef(simplChild1)->child1)->nodeType == CONSTANT) &&
+		(mpfr_cmp_d(*(accessThruMemRef(accessThruMemRef(simplChild1)->child1)->value),1.0) == 0) &&
+		(!mpfr_nan_p(*(accessThruMemRef(accessThruMemRef(simplChild1)->child1)->value)))) {
 	      simplified->nodeType = DIV;
 	      simplified->child1 = simplChild2;
-	      simplified->child2 = copyTree(simplChild1->child2);
+	      simplified->child2 = copyTree(accessThruMemRef(simplChild1)->child2);
 	      free_memory(simplChild1);
 	    } else {
-	      if ((simplChild2->nodeType == DIV) &&
-		  (simplChild2->child1->nodeType == CONSTANT) &&
-		  (mpfr_cmp_d(*(simplChild2->child1->value),1.0) == 0) &&
-		  (!mpfr_nan_p(*(simplChild2->child1->value)))) {
+	      if ((accessThruMemRef(simplChild2)->nodeType == DIV) &&
+		  (accessThruMemRef(accessThruMemRef(simplChild2)->child1)->nodeType == CONSTANT) &&
+		  (mpfr_cmp_d(*(accessThruMemRef(accessThruMemRef(simplChild2)->child1)->value),1.0) == 0) &&
+		  (!mpfr_nan_p(*(accessThruMemRef(accessThruMemRef(simplChild2)->child1)->value)))) {
 		simplified->nodeType = DIV;
 		simplified->child1 = simplChild1;
-		simplified->child2 = copyTree(simplChild2->child2);
+		simplified->child2 = copyTree(accessThruMemRef(simplChild2)->child2);
 		free_memory(simplChild2);
 	      } else {
-		if ((simplChild1->nodeType == NEG) &&
-		    (simplChild2->nodeType == NEG)) {
+		if ((accessThruMemRef(simplChild1)->nodeType == NEG) &&
+		    (accessThruMemRef(simplChild2)->nodeType == NEG)) {
 		  simplified->nodeType = MUL;
-		  simplified->child1 = copyTree(simplChild1->child1);
-		  simplified->child2 = copyTree(simplChild2->child1);
+		  simplified->child1 = copyTree(accessThruMemRef(simplChild1)->child1);
+		  simplified->child2 = copyTree(accessThruMemRef(simplChild2)->child1);
 		  free_memory(simplChild1);
 		  free_memory(simplChild2);
 		} else {
-		  if (simplChild1->nodeType == NEG) {
+		  if (accessThruMemRef(simplChild1)->nodeType == NEG) {
 		    simplified->nodeType = NEG;
 		    simplified->child1 = (node *) safeMalloc(sizeof(node));
 		    simplified->child1->nodeType = MUL;
-		    simplified->child1->child1 = copyTree(simplChild1->child1);
+		    simplified->child1->child1 = copyTree(accessThruMemRef(simplChild1)->child1);
 		    simplified->child1->child2 = simplChild2;
 		    free_memory(simplChild1);
 		  } else {
-		    if (simplChild2->nodeType == NEG) {
+		    if (accessThruMemRef(simplChild2)->nodeType == NEG) {
 		      simplified->nodeType = NEG;
 		      simplified->child1 = (node *) safeMalloc(sizeof(node));
 		      simplified->child1->nodeType = MUL;
-		      simplified->child1->child2 = copyTree(simplChild2->child1);
+		      simplified->child1->child2 = copyTree(accessThruMemRef(simplChild2)->child1);
 		      simplified->child1->child1 = simplChild1;
 		      free_memory(simplChild2);
 		    } else {
-		      if ((simplChild1->nodeType == MUL) &&
+		      if ((accessThruMemRef(simplChild1)->nodeType == MUL) &&
 			  (isConstant(simplChild2)) &&
-			  (isConstant(simplChild1->child1))) {
+			  (isConstant(accessThruMemRef(simplChild1)->child1))) {
 			simplified->nodeType = MUL;
-			simplified->child2 = simplChild1->child2;
-			simplified->child1 = simplChild1;
-			simplChild1->child2 = simplChild2;
+			simplified->child1 = (node *) safeMalloc(sizeof(node));
+			simplified->child1->nodeType = MUL;
+			simplified->child1->child2 = simplChild2;
+			simplified->child1->child1 = copyTree(accessThruMemRef(simplChild1)->child1);
+			simplified->child2 = copyTree(accessThruMemRef(simplChild1)->child2);
+			free_memory(simplChild1);
 			if (rec > 0) {
 			  recsimplified = simplifyTreeErrorfreeInner(simplified,rec-1, doRational);
 			  free_memory(simplified);
 			  simplified = recsimplified;
 			}
 		      } else {
-			if ((simplChild1->nodeType == MUL) &&
+			if ((accessThruMemRef(simplChild1)->nodeType == MUL) &&
 			    (isConstant(simplChild2)) &&
-			    (isConstant(simplChild1->child2))) {
+			    (isConstant(accessThruMemRef(simplChild1)->child2))) {
 			  simplified->nodeType = MUL;
-			  simplified->child2 = simplChild1->child1;
-			  simplified->child1 = simplChild1;
-			  simplChild1->child1 = simplChild2;
+			  simplified->child1 = (node *) safeMalloc(sizeof(node));
+			  simplified->child1->nodeType = MUL;
+			  simplified->child1->child1 = simplChild2;
+			  simplified->child1->child2 = copyTree(accessThruMemRef(simplChild1)->child2);
+			  simplified->child2 = copyTree(accessThruMemRef(simplChild1)->child1);
+			  free_memory(simplChild1);
 			  if (rec > 0) {
 			    recsimplified = simplifyTreeErrorfreeInner(simplified,rec-1, doRational);
 			    free_memory(simplified);
 			    simplified = recsimplified;
 			  }
 			} else {
-			  if ((simplChild2->nodeType == MUL) &&
+			  if ((accessThruMemRef(simplChild2)->nodeType == MUL) &&
 			      (isConstant(simplChild1)) &&
-			      (isConstant(simplChild2->child1))) {
+			      (isConstant(accessThruMemRef(simplChild2)->child1))) {
 			    simplified->nodeType = MUL;
-			    simplified->child1 = simplChild2->child2;
-			    simplified->child2 = simplChild2;
-			    simplChild2->child2 = simplChild1;
+			    simplified->child2 = (node *) safeMalloc(sizeof(node));
+			    simplified->child2->nodeType = MUL;
+			    simplified->child2->child2 = simplChild1;
+			    simplified->child2->child1 = copyTree(accessThruMemRef(simplChild2)->child1);
+			    simplified->child1 = copyTree(accessThruMemRef(simplChild2)->child2);
+			    free_memory(simplChild2);
 			    if (rec > 0) {
 			      recsimplified = simplifyTreeErrorfreeInner(simplified,rec-1, doRational);
 			      free_memory(simplified);
 			      simplified = recsimplified;
 			    }
 			  } else {
-			    if ((simplChild2->nodeType == MUL) &&
+			    if ((accessThruMemRef(simplChild2)->nodeType == MUL) &&
 				(isConstant(simplChild1)) &&
-				(isConstant(simplChild2->child2))) {
+				(isConstant(accessThruMemRef(simplChild2)->child2))) {
 			      simplified->nodeType = MUL;
-			      simplified->child1 = simplChild2->child1;
-			      simplified->child2 = simplChild2;
-			      simplChild2->child1 = simplChild1;
+			      simplified->child2 = (node *) safeMalloc(sizeof(node));
+			      simplified->child2->nodeType = MUL;
+			      simplified->child2->child1 = simplChild1;
+			      simplified->child2->child2 = copyTree(accessThruMemRef(simplChild2)->child2);
+			      simplified->child1 = copyTree(accessThruMemRef(simplChild2)->child1);
+			      free_memory(simplChild2);
 			      if (rec > 0) {
 				recsimplified = simplifyTreeErrorfreeInner(simplified,rec-1, doRational);
 				free_memory(simplified);
 				simplified = recsimplified;
 			      }
 			    } else {
-			      if ((simplChild2->nodeType == DIV) && 
-				  (isSyntacticallyEqual(simplChild1,simplChild2->child2))) {
+			      if ((accessThruMemRef(simplChild2)->nodeType == DIV) && 
+				  (isSyntacticallyEqual(simplChild1,accessThruMemRef(simplChild2)->child2))) {
 				safeFree(simplified);
 				free_memory(simplChild1);
-				free_memory(simplChild2->child2);
-				simplified = simplChild2->child1;
-				safeFree(simplChild2);
+				simplified = copyTree(accessThruMemRef(simplChild2)->child1);
+				free_memory(simplChild2); 
 			      } else {
-				if ((simplChild1->nodeType == DIV) && 
-				    (isSyntacticallyEqual(simplChild2,simplChild1->child2))) {
+				if ((accessThruMemRef(simplChild1)->nodeType == DIV) && 
+				    (isSyntacticallyEqual(simplChild2,accessThruMemRef(simplChild1)->child2))) {
 				  safeFree(simplified);
 				  free_memory(simplChild2);
-				  free_memory(simplChild1->child2);
-				  simplified = simplChild1->child1;
-				  safeFree(simplChild1);
+				  simplified = copyTree(accessThruMemRef(simplChild1)->child1);
+				  free_memory(simplChild1); 
 				} else {
 				  simplified->nodeType = MUL;
 				  simplified->child1 = simplChild1;
@@ -3630,7 +3672,7 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
       }
     }
     break;
-  case DIV:
+  case DIV: // CONTINUE FROM HERE
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplChild2 = simplifyTreeErrorfreeInner(tree->child2,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));

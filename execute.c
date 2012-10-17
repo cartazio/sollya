@@ -16260,10 +16260,10 @@ node *preevaluateMatcher(node *tree) {
     switch (accessThruMemRef(tree->child1)->nodeType) { 
     case LIBRARYFUNCTION:
     case PROCEDUREFUNCTION:
-      if ((accessThruMemRef(tree->child1->child1)->nodeType == VARIABLE) ||
+      if ((accessThruMemRef(accessThruMemRef(tree->child1)->child1)->nodeType == VARIABLE) ||
 	  ((variablename != NULL) && 
-	   ((accessThruMemRef(tree->child1->child1)->nodeType == TABLEACCESS) && 
-	    (!strcmp(variablename,accessThruMemRef(tree->child1->child1)->string))))) {
+	   ((accessThruMemRef(accessThruMemRef(tree->child1)->child1)->nodeType == TABLEACCESS) && 
+	    (!strcmp(variablename,accessThruMemRef(accessThruMemRef(tree->child1)->child1)->string))))) {
 	safeFree(copy);
 	copy = evaluateThing(tree);
       } else {
@@ -17667,7 +17667,18 @@ node *evaluateThingInnerRationalapprox(node *tree, char *timingString) {
 node *evaluateThingInnerst(node *);
 
 node *evaluateThingInner(node *tree) {
-  return addMemRef(evaluateThingInnerst(tree));
+  node *res;
+
+  res = evaluateThingInnerst(tree);
+
+  if ((tree != NULL) && (res != NULL) &&
+      (tree->nodeType == MEMREF) && 
+      isEqualThing(tree,res)) { 
+    freeThing(res);
+    res = copyThing(tree);
+  }
+
+  return addMemRef(res);
 }
 
 node *evaluateThingInnerst(node *tree) {
