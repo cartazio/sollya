@@ -73,13 +73,20 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #define MAXDIFFSIMPLDEGREE 25
 
 node* addMemRef(node *tree) {
+  if (tree == NULL) return NULL;
+  if (tree->nodeType == MEMREF) return tree;
   // TODO
   return tree;
 }
 
 node* accessThruMemRef(node *tree) {
-  // TODO
-  return tree;
+  node *res;
+  if (tree == NULL) return NULL;
+  res = tree;
+  while (res->nodeType == MEMREF) {
+    res = res->child1;
+  }
+  return res;
 }
 
 void simplifyMpfrPrec(mpfr_t rop, mpfr_t op) {
@@ -3672,11 +3679,11 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
       }
     }
     break;
-  case DIV: // CONTINUE FROM HERE
+  case DIV: 
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplChild2 = simplifyTreeErrorfreeInner(tree->child2,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if ((simplChild1->nodeType == CONSTANT) && (simplChild2->nodeType == CONSTANT)) {
+    if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (accessThruMemRef(simplChild2)->nodeType == CONSTANT)) {
       simplified->nodeType = CONSTANT;
       prec = 2 * tools_precision;
       p = 2 * mpfr_get_prec(*(simplChild1->value));
@@ -3688,7 +3695,7 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,prec);
       simplified->value = value;
-      if ((mpfr_div(*value, *(simplChild1->value), *(simplChild2->value), GMP_RNDN) != 0) || 
+      if ((mpfr_div(*value, *(accessThruMemRef(simplChild1)->value), *(accessThruMemRef(simplChild2)->value), GMP_RNDN) != 0) || 
 	  (!mpfr_number_p(*value))) {
 	simplified->nodeType = DIV;
 	simplified->child1 = simplChild1;
@@ -3700,7 +3707,7 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
 	free_memory(simplChild2);
       }
     } else {
-      if ((simplChild1->nodeType == CONSTANT) && (mpfr_zero_p(*(simplChild1->value)))) {
+      if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (mpfr_zero_p(*(accessThruMemRef(simplChild1)->value)))) {
 	if (!isConstant(simplChild2)) {
 	  free_memory(simplChild1);
 	  free_memory(simplChild2);
@@ -3726,7 +3733,7 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
 	  }
 	}
       } else {
-	if ((simplChild2->nodeType == CONSTANT) && (mpfr_cmp_d(*(simplChild2->value),1.0) == 0) && (!mpfr_nan_p(*(simplChild2->value)))) {
+	if ((accessThruMemRef(simplChild2)->nodeType == CONSTANT) && (mpfr_cmp_d(*(accessThruMemRef(simplChild2)->value),1.0) == 0) && (!mpfr_nan_p(*(accessThruMemRef(simplChild2)->value)))) {
 	  free_memory(simplChild2);
 	  safeFree(simplified);
 	  simplified = simplChild1;
@@ -3740,49 +3747,52 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
 	    free_memory(simplChild1);
 	    free_memory(simplChild2);
 	  } else {
-	    if ((simplChild1->nodeType == NEG) &&
-		(simplChild2->nodeType == NEG)) {
+	    if ((accessThruMemRef(simplChild1)->nodeType == NEG) &&
+		(accessThruMemRef(simplChild2)->nodeType == NEG)) {
 	      simplified->nodeType = DIV;
-	      simplified->child1 = copyTree(simplChild1->child1);
-	      simplified->child2 = copyTree(simplChild2->child1);
+	      simplified->child1 = copyTree(accessThruMemRef(simplChild1)->child1);
+	      simplified->child2 = copyTree(accessThruMemRef(simplChild2)->child1);
 	      free_memory(simplChild1);
 	      free_memory(simplChild2);
 	    } else {
-	      if (simplChild1->nodeType == NEG) {
+	      if (accessThruMemRef(simplChild1)->nodeType == NEG) {
 		simplified->nodeType = NEG;
 		simplified->child1 = (node *) safeMalloc(sizeof(node));
 		simplified->child1->nodeType = DIV;
-		simplified->child1->child1 = copyTree(simplChild1->child1);
+		simplified->child1->child1 = copyTree(accessThruMemRef(simplChild1)->child1);
 		simplified->child1->child2 = simplChild2;
 		free_memory(simplChild1);
 	      } else {
-		if (simplChild2->nodeType == NEG) {
+		if (accessThruMemRef(simplChild2)->nodeType == NEG) {
 		  simplified->nodeType = NEG;
 		  simplified->child1 = (node *) safeMalloc(sizeof(node));
 		  simplified->child1->nodeType = DIV;
-		  simplified->child1->child2 = copyTree(simplChild2->child1);
+		  simplified->child1->child2 = copyTree(accessThruMemRef(simplChild2)->child1);
 		  simplified->child1->child1 = simplChild1;
 		  free_memory(simplChild2);
 		} else {
-		  if (simplChild2->nodeType == DIV) {
+		  if (accessThruMemRef(simplChild2)->nodeType == DIV) { 
 		    simplified->nodeType = MUL;
 		    simplified->child1 = simplChild1;
-		    simplified->child2 = simplChild2->child2;
-		    simplChild2->child2 = simplChild2->child1;
-		    simplChild2->child1 = simplified->child2;
-		    simplified->child2 = simplChild2;
+		    simplified->child2 = (node *) safeMalloc(sizeof(node));
+		    simplified->child2->nodeType = DIV;
+		    simplified->child2->child1 = copyTree(accessThruMemRef(simplChild2)->child2);
+		    simplified->child2->child2 = copyTree(accessThruMemRef(simplChild2)->child1);
+		    free_memory(simplChild2);
 		    if (rec > 0) {
 		      recsimplified = simplifyTreeErrorfreeInner(simplified,rec, doRational);
 		      free_memory(simplified);
 		      simplified = recsimplified;
 		    }
 		  } else {
-		    if (simplChild1->nodeType == DIV) {
+		    if (accessThruMemRef(simplChild1)->nodeType == DIV) {
 		      simplified->nodeType = DIV;
-		      simplified->child1 = simplChild1->child1;
-		      simplified->child2 = simplChild1;
-		      simplChild1->nodeType = MUL;
-		      simplChild1->child1 = simplChild2;
+		      simplified->child1 = copyTree(accessThruMemRef(simplChild1)->child1);
+		      simplified->child2 = (node *) safeMalloc(sizeof(node));
+		      simplified->child2->nodeType = MUL;
+		      simplified->child2->child1 = simplChild2;
+		      simplified->child2->child2 = copyTree(accessThruMemRef(simplChild1)->child2);
+		      free_memory(simplChild1);
 		      if (rec > 0) {
 			recsimplified = simplifyTreeErrorfreeInner(simplified,rec, doRational);
 			free_memory(simplified);
@@ -3791,9 +3801,9 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
 		    } else {
 		      if ((simplChild1->nodeType == SIN) &&
 			  (simplChild2->nodeType == COS) &&
-			  (isSyntacticallyEqual(simplChild1->child1,simplChild2->child1))) {
+			  (isSyntacticallyEqual(accessThruMemRef(simplChild1)->child1,accessThruMemRef(simplChild2)->child1))) {
 			simplified->nodeType = TAN;
-			simplified->child1 = copyTree(simplChild1->child1);
+			simplified->child1 = copyTree(accessThruMemRef(simplChild1)->child1);
 			free_memory(simplChild1);
 			free_memory(simplChild2);
 		      } else {
@@ -3810,22 +3820,21 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
 	}
       }
     }
-    // sollyaPrintf("simplified "); printTree(tree); sollyaPrintf(" into "); printTree(simplified); sollyaPrintf("\n");
     break;
-  case SQRT:
+  case SQRT: 
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       prec = tools_precision;
-      p = mpfr_get_prec(*(simplChild1->value));
+      p = mpfr_get_prec(*(accessThruMemRef(simplChild1)->value));
       if (p > prec) prec = p;
       prec += 10;
       if (prec > 256 * tools_precision) prec = 256 * tools_precision;
       mpfr_init2(*value,prec);
       simplified->value = value;
-      if ((mpfr_sqrt(*value, *(simplChild1->value), GMP_RNDN) != 0) || 
+      if ((mpfr_sqrt(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) || 
 	  (!mpfr_number_p(*value))) {
 	simplified->nodeType = SQRT;
 	simplified->child1 = simplChild1;
@@ -3835,12 +3844,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
 	free_memory(simplChild1);
       }
     } else {
-      if ((simplChild1->nodeType == POW) &&
-	  (simplChild1->child2->nodeType == CONSTANT) &&
-	  (mpfr_cmp_d(*(simplChild1->child2->value),2.0) == 0.0) && 
-	  (!mpfr_nan_p(*(simplChild1->child2->value)))) {
+      if ((accessThruMemRef(simplChild1)->nodeType == POW) &&
+	  (accessThruMemRef(accessThruMemRef(simplChild1)->child2)->nodeType == CONSTANT) &&
+	  (mpfr_cmp_d(*(accessThruMemRef(accessThruMemRef(simplChild1)->child2)->value),2.0) == 0.0) && 
+	  (!mpfr_nan_p(*(accessThruMemRef(accessThruMemRef(simplChild1)->child2)->value)))) {
 	simplified->nodeType = ABS;
-	simplified->child1 = copyTree(simplChild1->child1);
+	simplified->child1 = copyTree(accessThruMemRef(simplChild1)->child1);
 	free_memory(simplChild1);
       } else {
 	simplified->nodeType = SQRT;
@@ -3851,12 +3860,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case EXP:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      if ((mpfr_exp(*value, *(simplChild1->value), GMP_RNDN) != 0) || 
+      if ((mpfr_exp(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) || 
 	  (!mpfr_number_p(*value))) {
 	simplified->nodeType = EXP;
 	simplified->child1 = simplChild1;
@@ -3873,12 +3882,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case LOG:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      if ((mpfr_log(*value, *(simplChild1->value), GMP_RNDN) != 0) || 
+      if ((mpfr_log(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) || 
 	  (!mpfr_number_p(*value))) {
 	simplified->nodeType = LOG;
 	simplified->child1 = simplChild1;
@@ -3888,25 +3897,25 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
 	free_memory(simplChild1);
       }
     } else {
-      if ((simplChild1->nodeType == ADD) &&
-	  (simplChild1->child1->nodeType == CONSTANT) &&
-	  (mpfr_cmp_d(*(simplChild1->child1->value),1.0) == 0.0) &&
-	  (!mpfr_nan_p(*(simplChild1->child1->value)))) {
+      if ((accessThruMemRef(simplChild1)->nodeType == ADD) &&
+	  (accessThruMemRef(accessThruMemRef(simplChild1)->child1)->nodeType == CONSTANT) &&
+	  (mpfr_cmp_d(*(accessThruMemRef(accessThruMemRef(simplChild1)->child1)->value),1.0) == 0.0) &&
+	  (!mpfr_nan_p(*(accessThruMemRef(accessThruMemRef(simplChild1)->child1)->value)))) {
 	simplified->nodeType = LOG_1P;
-	simplified->child1 = copyTree(simplChild1->child2);
+	simplified->child1 = copyTree(accessThruMemRef(simplChild1)->child2);
 	free_memory(simplChild1);
       } else {
-	if ((simplChild1->nodeType == ADD) &&
-	    (simplChild1->child2->nodeType == CONSTANT) &&
-	    (mpfr_cmp_d(*(simplChild1->child2->value),1.0) == 0.0) &&
-	    (!mpfr_nan_p(*(simplChild1->child2->value)))) {
+	if ((accessThruMemRef(simplChild1)->nodeType == ADD) &&
+	    (accessThruMemRef(accessThruMemRef(simplChild1)->child2)->nodeType == CONSTANT) &&
+	    (mpfr_cmp_d(*(accessThruMemRef(accessThruMemRef(simplChild1)->child2)->value),1.0) == 0.0) &&
+	    (!mpfr_nan_p(*(accessThruMemRef(accessThruMemRef(simplChild1)->child2)->value)))) {
 	  simplified->nodeType = LOG_1P;
-	  simplified->child1 = copyTree(simplChild1->child1);
+	  simplified->child1 = copyTree(accessThruMemRef(simplChild1)->child1);
 	  free_memory(simplChild1);
 	} else {
-	  if (simplChild1->nodeType == EXP) {
+	  if (accessThruMemRef(simplChild1)->nodeType == EXP) {
 	    safeFree(simplified);
-	    simplified = copyTree(simplChild1->child1);
+	    simplified = copyTree(accessThruMemRef(simplChild1)->child1);
 	    free_memory(simplChild1);
 	  } else {
 	    simplified->nodeType = LOG;
@@ -3919,12 +3928,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case LOG_2:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      if ((mpfr_log2(*value, *(simplChild1->value), GMP_RNDN) != 0) || 
+      if ((mpfr_log2(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) || 
 	  (!mpfr_number_p(*value))) {
 	simplified->nodeType = LOG_2;
 	simplified->child1 = simplChild1;
@@ -3941,12 +3950,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case LOG_10:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      if ((mpfr_log10(*value, *(simplChild1->value), GMP_RNDN) != 0) || 
+      if ((mpfr_log10(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) || 
 	  (!mpfr_number_p(*value))) {
 	simplified->nodeType = LOG_10;
 	simplified->child1 = simplChild1;
@@ -3963,12 +3972,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case SIN:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      if ((mpfr_sin(*value, *(simplChild1->value), GMP_RNDN) != 0) || 
+      if ((mpfr_sin(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) || 
 	  (!mpfr_number_p(*value))) {
 	simplified->nodeType = SIN;
 	simplified->child1 = simplChild1;
@@ -3985,12 +3994,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case COS:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      if ((mpfr_cos(*value, *(simplChild1->value), GMP_RNDN) != 0) || 
+      if ((mpfr_cos(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) || 
 	  (!mpfr_number_p(*value))) {
 	simplified->nodeType = COS;
 	simplified->child1 = simplChild1;
@@ -4007,12 +4016,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case TAN:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      if ((mpfr_tan(*value, *(simplChild1->value), GMP_RNDN) != 0) || 
+      if ((mpfr_tan(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) || 
 	  (!mpfr_number_p(*value))) {
 	simplified->nodeType = TAN;
 	simplified->child1 = simplChild1;
@@ -4029,20 +4038,28 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case ASIN:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       mpfr_init2(temp,53);
       mpfr_set_ui(temp,1,GMP_RNDN);
-      if ((mpfr_cmp(temp, *(simplChild1->value)) == 0) && (!mpfr_nan_p(*(simplChild1->value)))) {
-	mpfr_set_ui(*(simplChild1->value),2,GMP_RNDN);
-	simplified->child2 = simplChild1;
+      if ((mpfr_cmp(temp, *(accessThruMemRef(simplChild1)->value)) == 0) && (!mpfr_nan_p(*(accessThruMemRef(simplChild1)->value)))) {
+	free_memory(simplChild1);
+	simplified->child2 = (node *) safeMalloc(sizeof(node));
+	simplified->child2->nodeType = CONSTANT;
+	simplified->child2->value = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+	mpfr_init2(*(simplified->child2->value),53);
+	mpfr_set_si(*(simplified->child2->value),2,GMP_RNDN);
 	simplified->nodeType = DIV;
 	simplified->child1 = (node *) safeMalloc(sizeof(node));
 	simplified->child1->nodeType = PI_CONST;
       } else {
 	mpfr_set_si(temp,-1,GMP_RNDN);
-	if ((mpfr_cmp(temp, *(simplChild1->value)) == 0) && (!mpfr_nan_p(*(simplChild1->value)))) {
-	  mpfr_set_si(*(simplChild1->value),-2,GMP_RNDN);
-	  simplified->child2 = simplChild1;
+	if ((mpfr_cmp(temp, *(accessThruMemRef(simplChild1)->value)) == 0) && (!mpfr_nan_p(*(accessThruMemRef(simplChild1)->value)))) {
+	  free_memory(simplChild1);
+	  simplified->child2 = (node *) safeMalloc(sizeof(node));
+	  simplified->child2->nodeType = CONSTANT;
+	  simplified->child2->value = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+	  mpfr_init2(*(simplified->child2->value),53);
+	  mpfr_set_si(*(simplified->child2->value),-2,GMP_RNDN);
 	  simplified->nodeType = DIV;
 	  simplified->child1 = (node *) safeMalloc(sizeof(node));
 	  simplified->child1->nodeType = PI_CONST;
@@ -4051,7 +4068,7 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
 	  value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
 	  mpfr_init2(*value,tools_precision);
 	  simplified->value = value;
-	  if ((mpfr_asin(*value, *(simplChild1->value), GMP_RNDN) != 0) || 
+	  if ((mpfr_asin(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) || 
 	      (!mpfr_number_p(*value))) {
 	    simplified->nodeType = ASIN;
 	    simplified->child1 = simplChild1;
@@ -4071,21 +4088,18 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case ACOS:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       mpfr_init2(temp,53);
       mpfr_set_si(temp,-1,GMP_RNDN);
-      if ((mpfr_cmp(temp, *(simplChild1->value)) == 0) && (!mpfr_nan_p(*(simplChild1->value)))) {
-	mpfr_set_ui(*(simplChild1->value),1,GMP_RNDN);
-	simplified->child2 = simplChild1;
-	simplified->nodeType = DIV;
-	simplified->child1 = (node *) safeMalloc(sizeof(node));
-	simplified->child1->nodeType = PI_CONST;
+      if ((mpfr_cmp(temp, *(accessThruMemRef(simplChild1)->value)) == 0) && (!mpfr_nan_p(*(accessThruMemRef(simplChild1)->value)))) {
+	free_memory(simplChild1);
+	simplified->nodeType = PI_CONST;
       } else {
 	simplified->nodeType = CONSTANT;
 	value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
 	mpfr_init2(*value,tools_precision);
 	simplified->value = value;
-	if ((mpfr_acos(*value, *(simplChild1->value), GMP_RNDN) != 0) || 
+	if ((mpfr_acos(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) || 
 	    (!mpfr_number_p(*value))) {
 	  simplified->nodeType = ACOS;
 	  simplified->child1 = simplChild1;
@@ -4101,23 +4115,31 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
       simplified->child1 = simplChild1;
     }
     break;
-  case ATAN:
+  case ATAN: 
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       mpfr_init2(temp,53);
       mpfr_set_ui(temp,1,GMP_RNDN);
-      if ((mpfr_cmp(temp, *(simplChild1->value)) == 0) && (!mpfr_nan_p(*(simplChild1->value)))) {
-	mpfr_set_ui(*(simplChild1->value),4,GMP_RNDN);
-	simplified->child2 = simplChild1;
+      if ((mpfr_cmp(temp, *(accessThruMemRef(simplChild1)->value)) == 0) && (!mpfr_nan_p(*(accessThruMemRef(simplChild1)->value)))) {
+	free_memory(simplChild1);
+	simplified->child2 = (node *) safeMalloc(sizeof(node));
+	simplified->child2->nodeType = CONSTANT;
+	simplified->child2->value = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+	mpfr_init2(*(simplified->child2->value),53);
+	mpfr_set_si(*(simplified->child2->value),4,GMP_RNDN);
 	simplified->nodeType = DIV;
 	simplified->child1 = (node *) safeMalloc(sizeof(node));
 	simplified->child1->nodeType = PI_CONST;
       } else {
 	mpfr_set_si(temp,-1,GMP_RNDN);
-	if ((mpfr_cmp(temp, *(simplChild1->value)) == 0) && (!mpfr_nan_p(*(simplChild1->value)))) {
-	  mpfr_set_si(*(simplChild1->value),-4,GMP_RNDN);
-	  simplified->child2 = simplChild1;
+	if ((mpfr_cmp(temp, *(accessThruMemRef(simplChild1)->value)) == 0) && (!mpfr_nan_p(*(accessThruMemRef(simplChild1)->value)))) {
+	  free_memory(simplChild1);
+	  simplified->child2 = (node *) safeMalloc(sizeof(node));
+	  simplified->child2->nodeType = CONSTANT;
+	  simplified->child2->value = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+	  mpfr_init2(*(simplified->child2->value),53);
+	  mpfr_set_si(*(simplified->child2->value),-4,GMP_RNDN);
 	  simplified->nodeType = DIV;
 	  simplified->child1 = (node *) safeMalloc(sizeof(node));
 	  simplified->child1->nodeType = PI_CONST;
@@ -4126,7 +4148,7 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
 	  value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
 	  mpfr_init2(*value,tools_precision);
 	  simplified->value = value;
-	  if ((mpfr_atan(*value, *(simplChild1->value), GMP_RNDN) != 0) || 
+	  if ((mpfr_atan(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) || 
 	      (!mpfr_number_p(*value))) {
 	    simplified->nodeType = ATAN;
 	    simplified->child1 = simplChild1;
@@ -4146,12 +4168,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case SINH:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      if ((mpfr_sinh(*value, *(simplChild1->value), GMP_RNDN) != 0) || 
+      if ((mpfr_sinh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) || 
 	  (!mpfr_number_p(*value))) {
 	simplified->nodeType = SINH;
 	simplified->child1 = simplChild1;
@@ -4168,12 +4190,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case COSH:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      if ((mpfr_cosh(*value, *(simplChild1->value), GMP_RNDN) != 0) || 
+      if ((mpfr_cosh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) || 
 	  (!mpfr_number_p(*value))) {
 	simplified->nodeType = COSH;
 	simplified->child1 = simplChild1;
@@ -4190,12 +4212,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case TANH:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      if ((mpfr_tanh(*value, *(simplChild1->value), GMP_RNDN) != 0) || 
+      if ((mpfr_tanh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) || 
 	  (!mpfr_number_p(*value))) {
 	simplified->nodeType = TANH;
 	simplified->child1 = simplChild1;
@@ -4212,12 +4234,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case ASINH:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      if ((mpfr_asinh(*value, *(simplChild1->value), GMP_RNDN) != 0) || 
+      if ((mpfr_asinh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) || 
 	  (!mpfr_number_p(*value))) {
 	simplified->nodeType = ASINH;
 	simplified->child1 = simplChild1;
@@ -4234,12 +4256,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case ACOSH:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      if ((mpfr_acosh(*value, *(simplChild1->value), GMP_RNDN) != 0) || 
+      if ((mpfr_acosh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) || 
 	  (!mpfr_number_p(*value))) {
 	simplified->nodeType = ACOSH;
 	simplified->child1 = simplChild1;
@@ -4256,12 +4278,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case ATANH:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      if ((mpfr_atanh(*value, *(simplChild1->value), GMP_RNDN) != 0) || 
+      if ((mpfr_atanh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) || 
 	  (!mpfr_number_p(*value))) {
 	simplified->nodeType = ATANH;
 	simplified->child1 = simplChild1;
@@ -4279,13 +4301,13 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplChild2 = simplifyTreeErrorfreeInner(tree->child2,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if ((simplChild1->nodeType == CONSTANT) && (simplChild2->nodeType == CONSTANT)) {
+    if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (accessThruMemRef(simplChild2)->nodeType == CONSTANT)) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      if ((mpfr_pow(*value, *(simplChild1->value), *(simplChild2->value), GMP_RNDN) != 0) || 
-	  (!mpfr_number_p(*value)) || (!mpfr_number_p(*(simplChild1->value)))) {
+      if ((mpfr_pow(*value, *(accessThruMemRef(simplChild1)->value), *(accessThruMemRef(simplChild2)->value), GMP_RNDN) != 0) || 
+	  (!mpfr_number_p(*value)) || (!mpfr_number_p(*(accessThruMemRef(simplChild1)->value)))) {
 	simplified->nodeType = POW;
 	simplified->child1 = simplChild1;
 	simplified->child2 = simplChild2;
@@ -4296,32 +4318,33 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
 	free_memory(simplChild2);
       }
     } else {
-      if ((simplChild2->nodeType == CONSTANT) && (mpfr_cmp_d(*(simplChild2->value),1.0) == 0) && (!mpfr_nan_p(*(simplChild2->value)))) {
+      if ((accessThruMemRef(simplChild2)->nodeType == CONSTANT) && (mpfr_cmp_d(*(accessThruMemRef(simplChild2)->value),1.0) == 0) && (!mpfr_nan_p(*(accessThruMemRef(simplChild2)->value)))) {
 	safeFree(simplified);
 	free_memory(simplChild2);
 	simplified = simplChild1;
       } else {
 	value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
 	mpfr_init2(*value,tools_precision);
-	if ((simplChild2->nodeType == CONSTANT) &&
-	    (simplChild1->nodeType == POW) && 
-	    (simplChild1->child2->nodeType == CONSTANT) &&
-	    (mpfr_mul(*value,*(simplChild2->value),*(simplChild1->child2->value),GMP_RNDN) == 0)) {
-	  safeFree(simplified);
-	  simplified = simplChild1;
-	  mpfr_clear(*(simplified->child2->value));
-	  safeFree(simplified->child2->value);
+	if ((accessThruMemRef(simplChild2)->nodeType == CONSTANT) &&
+	    (accessThruMemRef(simplChild1)->nodeType == POW) && 
+	    (accessThruMemRef(accessThruMemRef(simplChild1)->child2)->nodeType == CONSTANT) &&
+	    (mpfr_mul(*value,*(accessThruMemRef(simplChild2)->value),*(accessThruMemRef(accessThruMemRef(simplChild1)->child2)->value),GMP_RNDN) == 0)) {
+	  simplified->nodeType = POW;
+	  simplified->child1 = copyTree(accessThruMemRef(simplChild1)->child1);
+	  simplified->child2 = (node *) safeMalloc(sizeof(node));
+	  simplified->child2->nodeType = CONSTANT;
 	  simplified->child2->value = value;
+	  free_memory(simplChild1);
 	  free_memory(simplChild2);
 	} else {
 	  mpfr_clear(*value);
 	  safeFree(value);
-	  if ((simplChild2->nodeType == CONSTANT) &&
-	      (mpfr_cmp_d(*(simplChild2->value),2.0) == 0) &&
-	      (!mpfr_nan_p(*(simplChild2->value))) &&
-	      (simplChild1->nodeType == SQRT)) {	    
+	  if ((accessThruMemRef(simplChild2)->nodeType == CONSTANT) &&
+	      (mpfr_cmp_d(*(accessThruMemRef(simplChild2)->value),2.0) == 0) &&
+	      (!mpfr_nan_p(*(accessThruMemRef(simplChild2)->value))) &&
+	      (accessThruMemRef(simplChild1)->nodeType == SQRT)) {	    
 	    safeFree(simplified);
-	    simplified = copyTree(simplChild1->child1);
+	    simplified = copyTree(accessThruMemRef(simplChild1)->child1);
 	    free_memory(simplChild1);
 	    free_memory(simplChild2);
 	  } else {
@@ -4336,17 +4359,17 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case NEG:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       prec = tools_precision;
-      p = mpfr_get_prec(*(simplChild1->value));
+      p = mpfr_get_prec(*(accessThruMemRef(simplChild1)->value));
       if (p > prec) prec = p;
       prec += 10;
       if (prec > 256 * tools_precision) prec = 256 * tools_precision;
       mpfr_init2(*value,prec);
       simplified->value = value;
-      if ((mpfr_neg(*value, *(simplChild1->value), GMP_RNDN) != 0) || 
+      if ((mpfr_neg(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) || 
 	  (mpfr_nan_p(*value))) {
 	simplified->nodeType = NEG;
 	simplified->child1 = simplChild1;
@@ -4356,9 +4379,9 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
 	free_memory(simplChild1);
       }
     } else {
-      if (simplChild1->nodeType == NEG) {
+      if (accessThruMemRef(simplChild1)->nodeType == NEG) {
 	safeFree(simplified);
-	simplified = copyTree(simplChild1->child1);
+	simplified = copyTree(accessThruMemRef(simplChild1)->child1);
 	free_memory(simplChild1);
       } else {
 	simplified->nodeType = NEG;
@@ -4369,12 +4392,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case ABS:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      if ((mpfr_abs(*value, *(simplChild1->value), GMP_RNDN) != 0) || 
+      if ((mpfr_abs(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) || 
 	  (!mpfr_number_p(*value))) {
 	simplified->nodeType = ABS;
 	simplified->child1 = simplChild1;
@@ -4384,9 +4407,9 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
 	free_memory(simplChild1);
       }
     } else {
-      if (simplChild1->nodeType == ABS) {
+      if (accessThruMemRef(simplChild1)->nodeType == ABS) {
 	simplified->nodeType = ABS;
-	simplified->child1 = copyTree(simplChild1->child1);
+	simplified->child1 = copyTree(accessThruMemRef(simplChild1)->child1);
 	free_memory(simplChild1);
       } else {
 	simplified->nodeType = ABS;
@@ -4397,12 +4420,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case DOUBLE:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
       simplified->value = value;
-      mpfr_round_to_double(*value, *(simplChild1->value)); 
+      mpfr_round_to_double(*value, *(accessThruMemRef(simplChild1)->value)); 
       if (!mpfr_number_p(*value)) {
 	simplified->nodeType = DOUBLE;
 	simplified->child1 = simplChild1;
@@ -4456,12 +4479,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case SINGLE:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
       simplified->value = value;
-      mpfr_round_to_single(*value, *(simplChild1->value)); 
+      mpfr_round_to_single(*value, *(accessThruMemRef(simplChild1)->value)); 
       if (!mpfr_number_p(*value)) {
 	simplified->nodeType = SINGLE;
 	simplified->child1 = simplChild1;
@@ -4515,12 +4538,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case QUAD:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,((tools_precision > 128)? tools_precision : 128));
       simplified->value = value;
-      mpfr_round_to_quad(*value, *(simplChild1->value)); 
+      mpfr_round_to_quad(*value, *(accessThruMemRef(simplChild1)->value)); 
       if (!mpfr_number_p(*value)) {
 	simplified->nodeType = QUAD;
 	simplified->child1 = simplChild1;
@@ -4574,12 +4597,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case HALFPRECISION:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
       simplified->value = value;
-      mpfr_round_to_halfprecision(*value, *(simplChild1->value)); 
+      mpfr_round_to_halfprecision(*value, *(accessThruMemRef(simplChild1)->value)); 
       if (!mpfr_number_p(*value)) {
 	simplified->nodeType = HALFPRECISION;
 	simplified->child1 = simplChild1;
@@ -4633,12 +4656,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case DOUBLEDOUBLE:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,((tools_precision > 129)? tools_precision : 129));
       simplified->value = value;
-      mpfr_round_to_doubledouble(*value, *(simplChild1->value)); 
+      mpfr_round_to_doubledouble(*value, *(accessThruMemRef(simplChild1)->value)); 
       if (!mpfr_number_p(*value)) {
 	simplified->nodeType = DOUBLEDOUBLE;
 	simplified->child1 = simplChild1;
@@ -4692,12 +4715,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case TRIPLEDOUBLE:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,((tools_precision > 200)? tools_precision : 200));
       simplified->value = value;
-      mpfr_round_to_tripledouble(*value, *(simplChild1->value)); 
+      mpfr_round_to_tripledouble(*value, *(accessThruMemRef(simplChild1)->value)); 
       if (!mpfr_number_p(*value)) {
 	simplified->nodeType = TRIPLEDOUBLE;
 	simplified->child1 = simplChild1;
@@ -4751,12 +4774,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case ERF: 
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      if ((mpfr_erf(*value, *(simplChild1->value), GMP_RNDN) != 0) || 
+      if ((mpfr_erf(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) || 
 	  (!mpfr_number_p(*value))) {
 	simplified->nodeType = ERF;
 	simplified->child1 = simplChild1;
@@ -4773,12 +4796,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case ERFC:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      if ((mpfr_erfc(*value, *(simplChild1->value), GMP_RNDN) != 0) || 
+      if ((mpfr_erfc(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) || 
 	  (!mpfr_number_p(*value))) {
 	simplified->nodeType = ERFC;
 	simplified->child1 = simplChild1;
@@ -4795,12 +4818,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case LOG_1P:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      if ((mpfr_log1p(*value, *(simplChild1->value), GMP_RNDN) != 0) || 
+      if ((mpfr_log1p(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) || 
 	  (!mpfr_number_p(*value))) {
 	simplified->nodeType = LOG_1P;
 	simplified->child1 = simplChild1;
@@ -4817,12 +4840,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case EXP_M1:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      if ((mpfr_expm1(*value, *(simplChild1->value), GMP_RNDN) != 0) || 
+      if ((mpfr_expm1(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) || 
 	  (!mpfr_number_p(*value))) {
 	simplified->nodeType = EXP_M1;
 	simplified->child1 = simplChild1;
@@ -4839,12 +4862,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case DOUBLEEXTENDED:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,((tools_precision > 128)? tools_precision : 128));
       simplified->value = value;
-      mpfr_round_to_doubleextended(*value, *(simplChild1->value)); 
+      mpfr_round_to_doubleextended(*value, *(accessThruMemRef(simplChild1)->value)); 
       if (!mpfr_number_p(*value)) {
 	simplified->nodeType = DOUBLEEXTENDED;
 	simplified->child1 = simplChild1;
@@ -4912,12 +4935,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case CEIL:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_ceil(*value, *(simplChild1->value));
+      mpfr_ceil(*value, *(accessThruMemRef(simplChild1)->value));
       if ((!mpfr_number_p(*value))) {
 	simplified->nodeType = CEIL;
 	simplified->child1 = simplChild1;
@@ -4971,12 +4994,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case FLOOR:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_floor(*value, *(simplChild1->value));
+      mpfr_floor(*value, *(accessThruMemRef(simplChild1)->value));
       if ((!mpfr_number_p(*value))) {
 	simplified->nodeType = FLOOR;
 	simplified->child1 = simplChild1;
@@ -5030,12 +5053,12 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   case NEARESTINT:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_nearestint(*value, *(simplChild1->value));
+      mpfr_nearestint(*value, *(accessThruMemRef(simplChild1)->value));
       if ((!mpfr_number_p(*value))) {
 	simplified->nodeType = NEARESTINT;
 	simplified->child1 = simplChild1;
@@ -5185,7 +5208,7 @@ node* differentiateUnsimplified(node *tree) {
 	derivative = temp_node;
 	break;
       case MUL:
-	if (tree->child1->nodeType == CONSTANT) {
+	if (accessThruMemRef(tree->child1)->nodeType == CONSTANT) {
 	  f_diff = differentiateUnsimplified(tree->child2);
 	  g_copy = copyTree(tree->child1);
 	  temp_node = (node*) safeMalloc(sizeof(node));
@@ -5194,7 +5217,7 @@ node* differentiateUnsimplified(node *tree) {
 	  temp_node->child2 = f_diff;
 	  derivative = temp_node;
 	} else {
-	  if (tree->child2->nodeType == CONSTANT) {
+	  if (accessThruMemRef(tree->child2)->nodeType == CONSTANT) {
 	    f_diff = differentiateUnsimplified(tree->child1);
 	    g_copy = copyTree(tree->child2);
 	    temp_node = (node*) safeMalloc(sizeof(node));
@@ -5707,7 +5730,7 @@ node* differentiateUnsimplified(node *tree) {
 	derivative = temp_node;
 	break;
       case POW:
-	if (tree->child2->nodeType == CONSTANT) {
+	if (accessThruMemRef(tree->child2)->nodeType == CONSTANT) {
 	  g_copy = copyTree(tree->child2);
 	  g_copy2 = copyTree(tree->child2);
 	  f_diff = differentiateUnsimplified(tree->child1);      
@@ -6368,8 +6391,24 @@ int evaluateConstantExpression(mpfr_t result, node *tree, mp_prec_t prec) {
   return isConstant;
 } 
 
+node* simplifyTreeInnerst(node *tree);
 
 node* simplifyTreeInner(node *tree) {
+  node *res;
+
+  res = simplifyTreeInnerst(tree);
+
+  if ((tree != NULL) && (res != NULL) &&
+      (tree->nodeType == MEMREF) && 
+      isSyntacticallyEqual(tree,res)) {  
+    free_memory(res);
+    res = copyTree(tree);
+  }
+
+  return addMemRef(res);
+}
+
+node* simplifyTreeInnerst(node *tree) {
   node *simplChild1, *simplChild2, *simplified;
   mpfr_t *value;
   mpfr_t temp;
@@ -6387,14 +6426,14 @@ node* simplifyTreeInner(node *tree) {
     case 0:
       break;
     case 1:
-      if ((tree->child1->nodeType == CONSTANT) && (mpfr_nan_p(*(tree->child1->value)))) return copyTree(tree);
+      if ((accessThruMemRef(tree->child1)->nodeType == CONSTANT) && (mpfr_nan_p(*(accessThruMemRef(tree->child1)->value)))) return copyTree(tree);
       break;
     case 2:
-      if ((tree->child1->nodeType == CONSTANT) && (mpfr_nan_p(*(tree->child1->value)))) {
+      if ((accessThruMemRef(tree->child1)->nodeType == CONSTANT) && (mpfr_nan_p(*(accessThruMemRef(tree->child1)->value)))) {
 	if (isConstant(tree)) return copyTree(tree->child1);
 	return copyTree(tree);
       }
-      if ((tree->child2->nodeType == CONSTANT) && (mpfr_nan_p(*(tree->child2->value)))) {
+      if ((accessThruMemRef(tree->child2)->nodeType == CONSTANT) && (mpfr_nan_p(*(accessThruMemRef(tree->child2)->value)))) {
 	if (isConstant(tree)) return copyTree(tree->child2);
 	return copyTree(tree);
       }
@@ -6425,21 +6464,21 @@ node* simplifyTreeInner(node *tree) {
     simplChild1 = simplifyTreeInner(tree->child1);
     simplChild2 = simplifyTreeInner(tree->child2);
     simplified = (node*) safeMalloc(sizeof(node));
-    if ((simplChild1->nodeType == CONSTANT) && (simplChild2->nodeType == CONSTANT)) {
+    if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (accessThruMemRef(simplChild2)->nodeType == CONSTANT)) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_add(*value, *(simplChild1->value), *(simplChild2->value), GMP_RNDN);
+      mpfr_add(*value, *(accessThruMemRef(simplChild1)->value), *(accessThruMemRef(simplChild2)->value), GMP_RNDN);
       free_memory(simplChild1);
       free_memory(simplChild2);
     } else {
-      if ((simplChild1->nodeType == CONSTANT) && (mpfr_zero_p(*(simplChild1->value)))) {
+      if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (mpfr_zero_p(*(accessThruMemRef(simplChild1)->value)))) {
 	free_memory(simplChild1);
 	safeFree(simplified);
 	simplified = simplChild2;
-      } else {
-	if ((simplChild2->nodeType == CONSTANT) && (mpfr_zero_p(*(simplChild2->value)))) {
+      } else { 
+	if ((accessThruMemRef(simplChild2)->nodeType == CONSTANT) && (mpfr_zero_p(*(accessThruMemRef(simplChild2)->value)))) {
 	  free_memory(simplChild2);
 	  safeFree(simplified);
 	  simplified = simplChild1;
@@ -6455,21 +6494,21 @@ node* simplifyTreeInner(node *tree) {
     simplChild1 = simplifyTreeInner(tree->child1);
     simplChild2 = simplifyTreeInner(tree->child2);
     simplified = (node*) safeMalloc(sizeof(node));
-    if ((simplChild1->nodeType == CONSTANT) && (simplChild2->nodeType == CONSTANT)) {
+    if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (accessThruMemRef(simplChild2)->nodeType == CONSTANT)) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_sub(*value, *(simplChild1->value), *(simplChild2->value), GMP_RNDN);
+      mpfr_sub(*value, *(accessThruMemRef(simplChild1)->value), *(accessThruMemRef(simplChild2)->value), GMP_RNDN);
       free_memory(simplChild1);
       free_memory(simplChild2);
     } else {
-      if ((simplChild1->nodeType == CONSTANT) && (mpfr_zero_p(*(simplChild1->value)))) {
+      if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (mpfr_zero_p(*(accessThruMemRef(simplChild1)->value)))) {
 	free_memory(simplChild1);
 	simplified->nodeType = NEG;
 	simplified->child1 = simplChild2;
       } else {
-	if ((simplChild2->nodeType == CONSTANT) && (mpfr_zero_p(*(simplChild2->value)))) {
+	if ((accessThruMemRef(simplChild2)->nodeType == CONSTANT) && (mpfr_zero_p(*(accessThruMemRef(simplChild2)->value)))) {
 	  free_memory(simplChild2);
 	  safeFree(simplified);
 	  simplified = simplChild1;
@@ -6485,17 +6524,17 @@ node* simplifyTreeInner(node *tree) {
     simplChild1 = simplifyTreeInner(tree->child1);
     simplChild2 = simplifyTreeInner(tree->child2);
     simplified = (node*) safeMalloc(sizeof(node));
-    if ((simplChild1->nodeType == CONSTANT) && (simplChild2->nodeType == CONSTANT)) {
+    if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (accessThruMemRef(simplChild2)->nodeType == CONSTANT)) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_mul(*value, *(simplChild1->value), *(simplChild2->value), GMP_RNDN);
+      mpfr_mul(*value, *(accessThruMemRef(simplChild1)->value), *(accessThruMemRef(simplChild2)->value), GMP_RNDN);
       free_memory(simplChild1);
       free_memory(simplChild2);
     } else {
-      if (((simplChild1->nodeType == CONSTANT) && (mpfr_zero_p(*(simplChild1->value)))) ||
-	  ((simplChild2->nodeType == CONSTANT) && (mpfr_zero_p(*(simplChild2->value))))) {
+      if (((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (mpfr_zero_p(*(accessThruMemRef(simplChild1)->value)))) ||
+	  ((accessThruMemRef(simplChild2)->nodeType == CONSTANT) && (mpfr_zero_p(*(accessThruMemRef(simplChild2)->value))))) {
 	free_memory(simplChild1);
 	free_memory(simplChild2);
 	simplified->nodeType = CONSTANT;
@@ -6504,12 +6543,12 @@ node* simplifyTreeInner(node *tree) {
 	simplified->value = value;
 	mpfr_set_d(*value,0.0,GMP_RNDN);
       } else {
-	if ((simplChild1->nodeType == CONSTANT) && (mpfr_cmp_d(*(simplChild1->value),1.0) == 0) && (!mpfr_nan_p(*(simplChild1->value)))) {
+	if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (mpfr_cmp_d(*(accessThruMemRef(simplChild1)->value),1.0) == 0) && (!mpfr_nan_p(*(accessThruMemRef(simplChild1)->value)))) {
 	  free_memory(simplChild1);
 	  safeFree(simplified);
 	  simplified = simplChild2;
 	} else {
-	  if ((simplChild2->nodeType == CONSTANT) && (mpfr_cmp_d(*(simplChild2->value),1.0) == 0) && (!mpfr_nan_p(*(simplChild2->value)))) {
+	  if ((accessThruMemRef(simplChild2)->nodeType == CONSTANT) && (mpfr_cmp_d(*(accessThruMemRef(simplChild2)->value),1.0) == 0) && (!mpfr_nan_p(*(accessThruMemRef(simplChild2)->value)))) {
 	    free_memory(simplChild2);
 	    safeFree(simplified);
 	    simplified = simplChild1;
@@ -6526,16 +6565,16 @@ node* simplifyTreeInner(node *tree) {
     simplChild1 = simplifyTreeInner(tree->child1);
     simplChild2 = simplifyTreeInner(tree->child2);
     simplified = (node*) safeMalloc(sizeof(node));
-    if ((simplChild1->nodeType == CONSTANT) && (simplChild2->nodeType == CONSTANT)) {
+    if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (accessThruMemRef(simplChild2)->nodeType == CONSTANT)) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_div(*value, *(simplChild1->value), *(simplChild2->value), GMP_RNDN);
+      mpfr_div(*value, *(accessThruMemRef(simplChild1)->value), *(accessThruMemRef(simplChild2)->value), GMP_RNDN);
       free_memory(simplChild1);
       free_memory(simplChild2);
     } else {
-      if ((simplChild1->nodeType == CONSTANT) && (mpfr_zero_p(*(simplChild1->value)))) {
+      if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (mpfr_zero_p(*(accessThruMemRef(simplChild1)->value)))) {
 	free_memory(simplChild1);
 	free_memory(simplChild2);
 	simplified->nodeType = CONSTANT;
@@ -6544,8 +6583,8 @@ node* simplifyTreeInner(node *tree) {
 	simplified->value = value;
 	mpfr_set_d(*value,0.0,GMP_RNDN);
       } else {
-	if ((simplChild2->nodeType == CONSTANT) && (mpfr_cmp_d(*(simplChild2->value),1.0) == 0)) {
-	  if (mpfr_nan_p(*(simplChild2->value))) {
+	if ((accessThruMemRef(simplChild2)->nodeType == CONSTANT) && (mpfr_cmp_d(*(accessThruMemRef(simplChild2)->value),1.0) == 0)) {
+	  if (mpfr_nan_p(*(accessThruMemRef(simplChild2)->value))) {
 	    simplified->nodeType = MUL;
 	    simplified->child1 = simplChild1;
 	    simplified->child2 = simplChild2;
@@ -6565,12 +6604,12 @@ node* simplifyTreeInner(node *tree) {
   case SQRT:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_sqrt(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_sqrt(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = SQRT;
@@ -6580,12 +6619,12 @@ node* simplifyTreeInner(node *tree) {
   case EXP:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_exp(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_exp(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = EXP;
@@ -6595,12 +6634,12 @@ node* simplifyTreeInner(node *tree) {
   case LOG:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_log(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_log(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = LOG;
@@ -6610,12 +6649,12 @@ node* simplifyTreeInner(node *tree) {
   case LOG_2:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_log2(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_log2(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = LOG_2;
@@ -6625,12 +6664,12 @@ node* simplifyTreeInner(node *tree) {
   case LOG_10:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_log10(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_log10(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = LOG_10;
@@ -6640,12 +6679,12 @@ node* simplifyTreeInner(node *tree) {
   case SIN:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_sin(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_sin(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = SIN;
@@ -6655,12 +6694,12 @@ node* simplifyTreeInner(node *tree) {
   case COS:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_cos(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_cos(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = COS;
@@ -6670,12 +6709,12 @@ node* simplifyTreeInner(node *tree) {
   case TAN:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_tan(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_tan(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = TAN;
@@ -6685,12 +6724,12 @@ node* simplifyTreeInner(node *tree) {
   case ASIN:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_asin(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_asin(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = ASIN;
@@ -6700,12 +6739,12 @@ node* simplifyTreeInner(node *tree) {
   case ACOS:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_acos(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_acos(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = ACOS;
@@ -6715,12 +6754,12 @@ node* simplifyTreeInner(node *tree) {
   case ATAN:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_atan(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_atan(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = ATAN;
@@ -6730,12 +6769,12 @@ node* simplifyTreeInner(node *tree) {
   case SINH:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_sinh(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_sinh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = SINH;
@@ -6745,12 +6784,12 @@ node* simplifyTreeInner(node *tree) {
   case COSH:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_cosh(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_cosh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = COSH;
@@ -6760,12 +6799,12 @@ node* simplifyTreeInner(node *tree) {
   case TANH:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_tanh(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_tanh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = TANH;
@@ -6775,12 +6814,12 @@ node* simplifyTreeInner(node *tree) {
   case ASINH:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_asinh(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_asinh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = ASINH;
@@ -6790,12 +6829,12 @@ node* simplifyTreeInner(node *tree) {
   case ACOSH:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_acosh(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_acosh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = ACOSH;
@@ -6805,12 +6844,12 @@ node* simplifyTreeInner(node *tree) {
   case ATANH:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_atanh(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_atanh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = ATANH;
@@ -6821,16 +6860,16 @@ node* simplifyTreeInner(node *tree) {
     simplChild1 = simplifyTreeInner(tree->child1);
     simplChild2 = simplifyTreeInner(tree->child2);
     simplified = (node*) safeMalloc(sizeof(node));
-    if ((simplChild1->nodeType == CONSTANT) && (simplChild2->nodeType == CONSTANT)) {
+    if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (accessThruMemRef(simplChild2)->nodeType == CONSTANT)) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_pow(*value, *(simplChild1->value), *(simplChild2->value), GMP_RNDN);
+      mpfr_pow(*value, *(accessThruMemRef(simplChild1)->value), *(accessThruMemRef(simplChild2)->value), GMP_RNDN);
       free_memory(simplChild1);
       free_memory(simplChild2);
     } else {
-      if ((simplChild2->nodeType == CONSTANT) && (mpfr_cmp_d(*(simplChild2->value),1.0) == 0) && (!mpfr_nan_p(*(simplChild2->value)))) {
+      if ((accessThruMemRef(simplChild2)->nodeType == CONSTANT) && (mpfr_cmp_d(*(accessThruMemRef(simplChild2)->value),1.0) == 0) && (!mpfr_nan_p(*(accessThruMemRef(simplChild2)->value)))) {
 	safeFree(simplified);
 	free_memory(simplChild2);
 	simplified = simplChild1;
@@ -6844,12 +6883,12 @@ node* simplifyTreeInner(node *tree) {
   case NEG:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_neg(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_neg(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = NEG;
@@ -6859,12 +6898,12 @@ node* simplifyTreeInner(node *tree) {
   case ABS:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_abs(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_abs(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = ABS;
@@ -6874,12 +6913,12 @@ node* simplifyTreeInner(node *tree) {
   case DOUBLE:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
       simplified->value = value;
-      mpfr_round_to_double(*value, *(simplChild1->value));
+      mpfr_round_to_double(*value, *(accessThruMemRef(simplChild1)->value));
       free_memory(simplChild1);
     } else {
       simplified->nodeType = DOUBLE;
@@ -6889,12 +6928,12 @@ node* simplifyTreeInner(node *tree) {
   case SINGLE:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
       simplified->value = value;
-      mpfr_round_to_single(*value, *(simplChild1->value));
+      mpfr_round_to_single(*value, *(accessThruMemRef(simplChild1)->value));
       free_memory(simplChild1);
     } else {
       simplified->nodeType = SINGLE;
@@ -6904,12 +6943,12 @@ node* simplifyTreeInner(node *tree) {
   case QUAD:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,((tools_precision > 128)? tools_precision : 128));
       simplified->value = value;
-      mpfr_round_to_quad(*value, *(simplChild1->value));
+      mpfr_round_to_quad(*value, *(accessThruMemRef(simplChild1)->value));
       free_memory(simplChild1);
     } else {
       simplified->nodeType = QUAD;
@@ -6919,12 +6958,12 @@ node* simplifyTreeInner(node *tree) {
   case HALFPRECISION:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
       simplified->value = value;
-      mpfr_round_to_halfprecision(*value, *(simplChild1->value));
+      mpfr_round_to_halfprecision(*value, *(accessThruMemRef(simplChild1)->value));
       free_memory(simplChild1);
     } else {
       simplified->nodeType = HALFPRECISION;
@@ -6934,12 +6973,12 @@ node* simplifyTreeInner(node *tree) {
   case DOUBLEDOUBLE:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,((tools_precision > 129)? tools_precision : 129));
       simplified->value = value;
-      mpfr_round_to_doubledouble(*value, *(simplChild1->value));
+      mpfr_round_to_doubledouble(*value, *(accessThruMemRef(simplChild1)->value));
       free_memory(simplChild1);
     } else {
       simplified->nodeType = DOUBLEDOUBLE;
@@ -6949,12 +6988,12 @@ node* simplifyTreeInner(node *tree) {
   case TRIPLEDOUBLE:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,((tools_precision > 200)? tools_precision : 200));
       simplified->value = value;
-      mpfr_round_to_tripledouble(*value, *(simplChild1->value));
+      mpfr_round_to_tripledouble(*value, *(accessThruMemRef(simplChild1)->value));
       free_memory(simplChild1);
     } else {
       simplified->nodeType = TRIPLEDOUBLE;
@@ -6964,12 +7003,12 @@ node* simplifyTreeInner(node *tree) {
   case ERF:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_erf(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_erf(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = ERF;
@@ -6979,12 +7018,12 @@ node* simplifyTreeInner(node *tree) {
   case ERFC:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_erfc(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_erfc(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = ERFC;
@@ -6994,12 +7033,12 @@ node* simplifyTreeInner(node *tree) {
   case LOG_1P:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_log1p(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_log1p(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = LOG_1P;
@@ -7009,12 +7048,12 @@ node* simplifyTreeInner(node *tree) {
   case EXP_M1:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_expm1(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_expm1(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = EXP_M1;
@@ -7024,12 +7063,12 @@ node* simplifyTreeInner(node *tree) {
   case DOUBLEEXTENDED:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,((tools_precision > 128)? tools_precision : 128));
       simplified->value = value;
-      mpfr_round_to_doubleextended(*value, *(simplChild1->value));
+      mpfr_round_to_doubleextended(*value, *(accessThruMemRef(simplChild1)->value));
       free_memory(simplChild1);
     } else {
       simplified->nodeType = DOUBLEEXTENDED;
@@ -7039,12 +7078,12 @@ node* simplifyTreeInner(node *tree) {
   case LIBRARYFUNCTION:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_from_mpfi(*value, *(simplChild1->value), tree->libFunDeriv, tree->libFun->code);
+      mpfr_from_mpfi(*value, *(accessThruMemRef(simplChild1)->value), tree->libFunDeriv, tree->libFun->code);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = LIBRARYFUNCTION;
@@ -7056,12 +7095,12 @@ node* simplifyTreeInner(node *tree) {
   case PROCEDUREFUNCTION:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      computeFunctionWithProcedureMpfr(*value, tree->child2, *(simplChild1->value), (unsigned int) tree->libFunDeriv);
+      computeFunctionWithProcedureMpfr(*value, tree->child2, *(accessThruMemRef(simplChild1)->value), (unsigned int) tree->libFunDeriv);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = PROCEDUREFUNCTION;
@@ -7073,12 +7112,12 @@ node* simplifyTreeInner(node *tree) {
   case CEIL:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_ceil(*value, *(simplChild1->value));
+      mpfr_ceil(*value, *(accessThruMemRef(simplChild1)->value));
       free_memory(simplChild1);
     } else {
       simplified->nodeType = CEIL;
@@ -7088,12 +7127,12 @@ node* simplifyTreeInner(node *tree) {
   case FLOOR:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_floor(*value, *(simplChild1->value));
+      mpfr_floor(*value, *(accessThruMemRef(simplChild1)->value));
       free_memory(simplChild1);
     } else {
       simplified->nodeType = FLOOR;
@@ -7103,12 +7142,12 @@ node* simplifyTreeInner(node *tree) {
   case NEARESTINT:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_nearestint(*value, *(simplChild1->value));
+      mpfr_nearestint(*value, *(accessThruMemRef(simplChild1)->value));
       free_memory(simplChild1);
     } else {
       simplified->nodeType = NEARESTINT;
@@ -7135,14 +7174,31 @@ node* simplifyTreeInner(node *tree) {
     simplified->value = value;
     break;
   default:
-    sollyaFprintf(stderr,"Error: simplifyTreeInner: unknown identifier (%d) in the tree\n",tree->nodeType);
+    sollyaFprintf(stderr,"Error: simplifyTreeInnerst: unknown identifier (%d) in the tree\n",tree->nodeType);
     exit(1);
   }
 
   return simplified;
 }
 
+node* simplifyAllButDivisionInnerst(node *tree);
+
 node* simplifyAllButDivisionInner(node *tree) {
+  node *res;
+
+  res = simplifyAllButDivisionInnerst(tree);
+
+  if ((tree != NULL) && (res != NULL) &&
+      (tree->nodeType == MEMREF) && 
+      isSyntacticallyEqual(tree,res)) {  
+    free_memory(res);
+    res = copyTree(tree);
+  }
+
+  return addMemRef(res);
+}
+
+node* simplifyAllButDivisionInnerst(node *tree) {
   node *simplChild1, *simplChild2, *simplified;
   mpfr_t *value;
   mpfr_t temp;
@@ -7172,21 +7228,21 @@ node* simplifyAllButDivisionInner(node *tree) {
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplChild2 = simplifyAllButDivisionInner(tree->child2);
     simplified = (node*) safeMalloc(sizeof(node));
-    if ((simplChild1->nodeType == CONSTANT) && (simplChild2->nodeType == CONSTANT)) {
+    if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (accessThruMemRef(simplChild2)->nodeType == CONSTANT)) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_add(*value, *(simplChild1->value), *(simplChild2->value), GMP_RNDN);
+      mpfr_add(*value, *(accessThruMemRef(simplChild1)->value), *(accessThruMemRef(simplChild2)->value), GMP_RNDN);
       free_memory(simplChild1);
       free_memory(simplChild2);
     } else {
-      if ((simplChild1->nodeType == CONSTANT) && (mpfr_zero_p(*(simplChild1->value)))) {
+      if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (mpfr_zero_p(*(accessThruMemRef(simplChild1)->value)))) {
 	free_memory(simplChild1);
 	safeFree(simplified);
 	simplified = simplChild2;
       } else {
-	if ((simplChild2->nodeType == CONSTANT) && (mpfr_zero_p(*(simplChild2->value)))) {
+	if ((accessThruMemRef(simplChild2)->nodeType == CONSTANT) && (mpfr_zero_p(*(accessThruMemRef(simplChild2)->value)))) {
 	  free_memory(simplChild2);
 	  safeFree(simplified);
 	  simplified = simplChild1;
@@ -7202,21 +7258,21 @@ node* simplifyAllButDivisionInner(node *tree) {
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplChild2 = simplifyAllButDivisionInner(tree->child2);
     simplified = (node*) safeMalloc(sizeof(node));
-    if ((simplChild1->nodeType == CONSTANT) && (simplChild2->nodeType == CONSTANT)) {
+    if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (accessThruMemRef(simplChild2)->nodeType == CONSTANT)) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_sub(*value, *(simplChild1->value), *(simplChild2->value), GMP_RNDN);
+      mpfr_sub(*value, *(accessThruMemRef(simplChild1)->value), *(accessThruMemRef(simplChild2)->value), GMP_RNDN);
       free_memory(simplChild1);
       free_memory(simplChild2);
     } else {
-      if ((simplChild1->nodeType == CONSTANT) && (mpfr_zero_p(*(simplChild1->value)))) {
+      if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (mpfr_zero_p(*(accessThruMemRef(simplChild1)->value)))) {
 	free_memory(simplChild1);
 	simplified->nodeType = NEG;
 	simplified->child1 = simplChild2;
       } else {
-	if ((simplChild2->nodeType == CONSTANT) && (mpfr_zero_p(*(simplChild2->value)))) {
+	if ((accessThruMemRef(simplChild2)->nodeType == CONSTANT) && (mpfr_zero_p(*(accessThruMemRef(simplChild2)->value)))) {
 	  free_memory(simplChild2);
 	  safeFree(simplified);
 	  simplified = simplChild1;
@@ -7232,17 +7288,17 @@ node* simplifyAllButDivisionInner(node *tree) {
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplChild2 = simplifyAllButDivisionInner(tree->child2);
     simplified = (node*) safeMalloc(sizeof(node));
-    if ((simplChild1->nodeType == CONSTANT) && (simplChild2->nodeType == CONSTANT)) {
+    if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (accessThruMemRef(simplChild2)->nodeType == CONSTANT)) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_mul(*value, *(simplChild1->value), *(simplChild2->value), GMP_RNDN);
+      mpfr_mul(*value, *(accessThruMemRef(simplChild1)->value), *(accessThruMemRef(simplChild2)->value), GMP_RNDN);
       free_memory(simplChild1);
       free_memory(simplChild2);
     } else {
-      if (((simplChild1->nodeType == CONSTANT) && (mpfr_zero_p(*(simplChild1->value)))) ||
-	  ((simplChild2->nodeType == CONSTANT) && (mpfr_zero_p(*(simplChild2->value))))) {
+      if (((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (mpfr_zero_p(*(accessThruMemRef(simplChild1)->value)))) ||
+	  ((accessThruMemRef(simplChild2)->nodeType == CONSTANT) && (mpfr_zero_p(*(accessThruMemRef(simplChild2)->value))))) {
 	free_memory(simplChild1);
 	free_memory(simplChild2);
 	simplified->nodeType = CONSTANT;
@@ -7251,12 +7307,12 @@ node* simplifyAllButDivisionInner(node *tree) {
 	simplified->value = value;
 	mpfr_set_d(*value,0.0,GMP_RNDN);
       } else {
-	if ((simplChild1->nodeType == CONSTANT) && (mpfr_cmp_d(*(simplChild1->value),1.0) == 0) && (!mpfr_nan_p(*(simplChild1->value)))) {
+	if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (mpfr_cmp_d(*(accessThruMemRef(simplChild1)->value),1.0) == 0) && (!mpfr_nan_p(*(accessThruMemRef(simplChild1)->value)))) {
 	  free_memory(simplChild1);
 	  safeFree(simplified);
 	  simplified = simplChild2;
 	} else {
-	  if ((simplChild2->nodeType == CONSTANT) && (mpfr_cmp_d(*(simplChild2->value),1.0) == 0) && (!mpfr_nan_p(*(simplChild2->value)))) {
+	  if ((accessThruMemRef(simplChild2)->nodeType == CONSTANT) && (mpfr_cmp_d(*(accessThruMemRef(simplChild2)->value),1.0) == 0) && (!mpfr_nan_p(*(accessThruMemRef(simplChild2)->value)))) {
 	    free_memory(simplChild2);
 	    safeFree(simplified);
 	    simplified = simplChild1;
@@ -7280,27 +7336,27 @@ node* simplifyAllButDivisionInner(node *tree) {
   case SQRT:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_sqrt(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_sqrt(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = SQRT;
       simplified->child1 = simplChild1;
     }
     break;
-  case EXP:
+  case EXP: 
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_exp(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_exp(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = EXP;
@@ -7310,12 +7366,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case LOG:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_log(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_log(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = LOG;
@@ -7325,12 +7381,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case LOG_2:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_log2(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_log2(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = LOG_2;
@@ -7340,12 +7396,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case LOG_10:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_log10(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_log10(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = LOG_10;
@@ -7355,12 +7411,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case SIN:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_sin(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_sin(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = SIN;
@@ -7370,12 +7426,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case COS:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_cos(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_cos(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = COS;
@@ -7385,12 +7441,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case TAN:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_tan(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_tan(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = TAN;
@@ -7400,12 +7456,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case ASIN:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_asin(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_asin(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = ASIN;
@@ -7415,12 +7471,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case ACOS:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_acos(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_acos(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = ACOS;
@@ -7430,12 +7486,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case ATAN:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_atan(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_atan(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = ATAN;
@@ -7445,12 +7501,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case SINH:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_sinh(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_sinh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = SINH;
@@ -7460,12 +7516,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case COSH:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_cosh(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_cosh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = COSH;
@@ -7475,12 +7531,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case TANH:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_tanh(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_tanh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = TANH;
@@ -7490,12 +7546,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case ASINH:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_asinh(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_asinh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = ASINH;
@@ -7505,12 +7561,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case ACOSH:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_acosh(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_acosh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = ACOSH;
@@ -7520,12 +7576,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case ATANH:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_atanh(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_atanh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = ATANH;
@@ -7536,16 +7592,16 @@ node* simplifyAllButDivisionInner(node *tree) {
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplChild2 = simplifyAllButDivisionInner(tree->child2);
     simplified = (node*) safeMalloc(sizeof(node));
-    if ((simplChild1->nodeType == CONSTANT) && (simplChild2->nodeType == CONSTANT)) {
+    if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (accessThruMemRef(simplChild2)->nodeType == CONSTANT)) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_pow(*value, *(simplChild1->value), *(simplChild2->value), GMP_RNDN);
+      mpfr_pow(*value, *(accessThruMemRef(simplChild1)->value), *(accessThruMemRef(simplChild2)->value), GMP_RNDN);
       free_memory(simplChild1);
       free_memory(simplChild2);
     } else {
-      if ((simplChild2->nodeType == CONSTANT) && (mpfr_cmp_d(*(simplChild2->value),1.0) == 0) && (!mpfr_nan_p(*(simplChild2->value)))) {
+      if ((accessThruMemRef(simplChild2)->nodeType == CONSTANT) && (mpfr_cmp_d(*(accessThruMemRef(simplChild2)->value),1.0) == 0) && (!mpfr_nan_p(*(accessThruMemRef(simplChild2)->value)))) {
 	safeFree(simplified);
 	free_memory(simplChild2);
 	simplified = simplChild1;
@@ -7559,12 +7615,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case NEG:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_neg(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_neg(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = NEG;
@@ -7574,12 +7630,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case ABS:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_abs(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_abs(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = ABS;
@@ -7589,12 +7645,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case DOUBLE:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
       simplified->value = value;
-      mpfr_round_to_double(*value, *(simplChild1->value));
+      mpfr_round_to_double(*value, *(accessThruMemRef(simplChild1)->value));
       free_memory(simplChild1);
     } else {
       simplified->nodeType = DOUBLE;
@@ -7604,12 +7660,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case SINGLE:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
       simplified->value = value;
-      mpfr_round_to_single(*value, *(simplChild1->value));
+      mpfr_round_to_single(*value, *(accessThruMemRef(simplChild1)->value));
       free_memory(simplChild1);
     } else {
       simplified->nodeType = SINGLE;
@@ -7619,12 +7675,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case HALFPRECISION:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
       simplified->value = value;
-      mpfr_round_to_halfprecision(*value, *(simplChild1->value));
+      mpfr_round_to_halfprecision(*value, *(accessThruMemRef(simplChild1)->value));
       free_memory(simplChild1);
     } else {
       simplified->nodeType = HALFPRECISION;
@@ -7634,12 +7690,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case QUAD:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,((tools_precision > 128)? tools_precision : 128));
       simplified->value = value;
-      mpfr_round_to_quad(*value, *(simplChild1->value));
+      mpfr_round_to_quad(*value, *(accessThruMemRef(simplChild1)->value));
       free_memory(simplChild1);
     } else {
       simplified->nodeType = QUAD;
@@ -7649,12 +7705,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case DOUBLEDOUBLE:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,((tools_precision > 129)? tools_precision : 129));
       simplified->value = value;
-      mpfr_round_to_doubledouble(*value, *(simplChild1->value));
+      mpfr_round_to_doubledouble(*value, *(accessThruMemRef(simplChild1)->value));
       free_memory(simplChild1);
     } else {
       simplified->nodeType = DOUBLEDOUBLE;
@@ -7664,12 +7720,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case TRIPLEDOUBLE:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,((tools_precision > 200)? tools_precision : 200));
       simplified->value = value;
-      mpfr_round_to_tripledouble(*value, *(simplChild1->value));
+      mpfr_round_to_tripledouble(*value, *(accessThruMemRef(simplChild1)->value));
       free_memory(simplChild1);
     } else {
       simplified->nodeType = TRIPLEDOUBLE;
@@ -7679,12 +7735,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case ERF:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_erf(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_erf(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = ERF;
@@ -7694,12 +7750,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case ERFC:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_erfc(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_erfc(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = ERFC;
@@ -7709,12 +7765,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case LOG_1P:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_log1p(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_log1p(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = LOG_1P;
@@ -7724,12 +7780,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case EXP_M1:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_expm1(*value, *(simplChild1->value), GMP_RNDN);
+      mpfr_expm1(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = EXP_M1;
@@ -7739,12 +7795,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case DOUBLEEXTENDED:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,((tools_precision > 128)? tools_precision : 128));
       simplified->value = value;
-      mpfr_round_to_doubleextended(*value, *(simplChild1->value));
+      mpfr_round_to_doubleextended(*value, *(accessThruMemRef(simplChild1)->value));
       free_memory(simplChild1);
     } else {
       simplified->nodeType = DOUBLEEXTENDED;
@@ -7754,12 +7810,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case LIBRARYFUNCTION:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_from_mpfi(*value, *(simplChild1->value), tree->libFunDeriv, tree->libFun->code);
+      mpfr_from_mpfi(*value, *(accessThruMemRef(simplChild1)->value), tree->libFunDeriv, tree->libFun->code);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = LIBRARYFUNCTION;
@@ -7771,12 +7827,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case PROCEDUREFUNCTION:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      computeFunctionWithProcedureMpfr(*value, tree->child2, *(simplChild1->value), (unsigned int) tree->libFunDeriv);
+      computeFunctionWithProcedureMpfr(*value, tree->child2, *(accessThruMemRef(simplChild1)->value), (unsigned int) tree->libFunDeriv);
       free_memory(simplChild1);
     } else {
       simplified->nodeType = PROCEDUREFUNCTION;
@@ -7788,12 +7844,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case CEIL:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_ceil(*value, *(simplChild1->value));
+      mpfr_ceil(*value, *(accessThruMemRef(simplChild1)->value));
       free_memory(simplChild1);
     } else {
       simplified->nodeType = CEIL;
@@ -7803,12 +7859,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case FLOOR:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_floor(*value, *(simplChild1->value));
+      mpfr_floor(*value, *(accessThruMemRef(simplChild1)->value));
       free_memory(simplChild1);
     } else {
       simplified->nodeType = FLOOR;
@@ -7818,12 +7874,12 @@ node* simplifyAllButDivisionInner(node *tree) {
   case NEARESTINT:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
-    if (simplChild1->nodeType == CONSTANT) {
+    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
       simplified->nodeType = CONSTANT;
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_nearestint(*value, *(simplChild1->value));
+      mpfr_nearestint(*value, *(accessThruMemRef(simplChild1)->value));
       free_memory(simplChild1);
     } else {
       simplified->nodeType = NEARESTINT;
@@ -7850,13 +7906,12 @@ node* simplifyAllButDivisionInner(node *tree) {
     simplified->value = value;
     break;
   default:
-    sollyaFprintf(stderr,"Error: simplifyAllButDivisionInner: unknown identifier (%d) in the tree\n",tree->nodeType);
+    sollyaFprintf(stderr,"Error: simplifyAllButDivisionInnerst: unknown identifier (%d) in the tree\n",tree->nodeType);
     exit(1);
   }
 
   return simplified;
 }
-
 
 node *simplifyTree(node *tree) {
   node *temp, *temp2;
@@ -8170,6 +8225,11 @@ int arity(node *tree) {
 
 int isSyntacticallyEqual(node *tree1, node *tree2) {
 
+  if (tree1 == tree2) return 1;
+
+  if (tree1->nodeType == MEMREF) return isSyntacticallyEqual(tree1->child1, tree2);
+  if (tree2->nodeType == MEMREF) return isSyntacticallyEqual(tree1, tree2->child2);
+
   if (tree1->nodeType != tree2->nodeType) return 0;
   if (tree1->nodeType == PI_CONST) return 1;
   if ((tree1->nodeType == LIBRARYFUNCTION) && 
@@ -8275,18 +8335,18 @@ int isPolynomial(node *tree) {
 	res = 1;
       } else {
 	if (isPolynomial(tree->child1)) {
-	  if (tree->child2->nodeType == CONSTANT) 
+	  if (accessThruMemRef(tree->child2)->nodeType == CONSTANT) 
 	    temp = tree->child2; 
 	  else 
 	    temp = simplifyTreeErrorfree(tree->child2);
-	  if (temp->nodeType == CONSTANT) {
-	    if (mpfr_integer_p(*(temp->value))) {
-	      if (mpfr_sgn(*(temp->value)) >= 0) {
+	  if (accessThruMemRef(temp)->nodeType == CONSTANT) {
+	    if (mpfr_integer_p(*(accessThruMemRef(temp)->value))) {
+	      if (mpfr_sgn(*(accessThruMemRef(temp)->value)) >= 0) {
 		res = 1;
 	      }
 	    }
 	  }
-	  if (tree->child2->nodeType != CONSTANT) free_memory(temp);
+	  if (accessThruMemRef(tree->child2)->nodeType != CONSTANT) free_memory(temp);
 	}
       }
     }
@@ -8375,18 +8435,18 @@ int isAffine(node *tree) {
     {
       res = 0;
       if (isAffine(tree->child1)) {
-        if (tree->child2->nodeType == CONSTANT) 
+        if (accessThruMemRef(tree->child2)->nodeType == CONSTANT) 
           temp = tree->child2; 
         else 
           temp = simplifyTreeErrorfree(tree->child2);
-        if (temp->nodeType == CONSTANT) {
-          if (mpfr_number_p(*(temp->value)) && mpfr_integer_p(*(temp->value))) {
-            if (mpfr_sgn(*(temp->value)) > 0) {
+        if (accessThruMemRef(temp)->nodeType == CONSTANT) {
+          if (mpfr_number_p(*(accessThruMemRef(temp)->value)) && mpfr_integer_p(*(accessThruMemRef(temp)->value))) {
+            if (mpfr_sgn(*(accessThruMemRef(temp)->value)) > 0) {
               res = 1;
             }
           }
         }
-        if (tree->child2->nodeType != CONSTANT) free_memory(temp);
+        if (accessThruMemRef(tree->child2)->nodeType != CONSTANT) free_memory(temp);
       }
     }
     break;
@@ -8419,6 +8479,8 @@ int getDegreeUnsafe(node *tree) {
 
   if (isConstant(tree)) return 0;
 
+  if (tree->nodeType == MEMREF) return getDegreeUnsafe(tree->child1);
+
   switch (tree->nodeType) {
   case VARIABLE:
     return 1;
@@ -8448,15 +8510,15 @@ int getDegreeUnsafe(node *tree) {
   case POW:
     {
       l = getDegreeUnsafe(tree->child1);
-      if (tree->child2->nodeType != CONSTANT) {
+      if (accessThruMemRef(tree->child2)->nodeType != CONSTANT) {
         simplifiedExponent = simplifyRationalErrorfree(tree->child2);
-        if ((simplifiedExponent->nodeType == CONSTANT) && 
-            mpfr_integer_p(*(simplifiedExponent->value)) &&
-            (mpfr_sgn(*(simplifiedExponent->value)) >= 0)) {
-          r = mpfr_get_si(*(simplifiedExponent->value),GMP_RNDN);
-          mpfr_init2(temp,mpfr_get_prec(*(simplifiedExponent->value)) + 10);
+        if ((accessThruMemRef(simplifiedExponent)->nodeType == CONSTANT) && 
+            mpfr_integer_p(*(accessThruMemRef(simplifiedExponent)->value)) &&
+            (mpfr_sgn(*(accessThruMemRef(simplifiedExponent)->value)) >= 0)) {
+          r = mpfr_get_si(*(accessThruMemRef(simplifiedExponent)->value),GMP_RNDN);
+          mpfr_init2(temp,mpfr_get_prec(*(accessThruMemRef(simplifiedExponent)->value)) + 10);
           mpfr_set_si(temp,r,GMP_RNDN);
-          if (mpfr_cmp(*(simplifiedExponent->value),temp) != 0) {
+          if (mpfr_cmp(*(accessThruMemRef(simplifiedExponent)->value),temp) != 0) {
             printMessage(1, SOLLYA_MSG_DEGREE_OF_POLYNOMIAL_DOESNT_HOLD_ON_MACHINE_INT, "Warning: tried to compute polynomial degree of an expression using a power operator with an exponent which cannot be represented on an integer variable.\n");
             mpfr_clear(temp);
             free_memory(simplifiedExponent);
@@ -8471,19 +8533,19 @@ int getDegreeUnsafe(node *tree) {
         }
         free_memory(simplifiedExponent);
       } else {
-        if (!mpfr_integer_p(*(tree->child2->value))) {
+        if (!mpfr_integer_p(*(accessThruMemRef(tree->child2)->value))) {
           sollyaFprintf(stderr,"Error: getDegreeUnsafe: an error occurred. The exponent in a power operator is not integer.\n");
           exit(1);
         }
-        if (mpfr_sgn(*(tree->child2->value)) < 0) {
+        if (mpfr_sgn(*(accessThruMemRef(tree->child2)->value)) < 0) {
           sollyaFprintf(stderr,"Error: getDegreeUnsafe: an error occurred. The exponent in a power operator is negative.\n");
           exit(1);
         }
 
-        r = mpfr_get_si(*(tree->child2->value),GMP_RNDN);
-        mpfr_init2(temp,mpfr_get_prec(*(tree->child2->value)) + 10);
+        r = mpfr_get_si(*(accessThruMemRef(tree->child2)->value),GMP_RNDN);
+        mpfr_init2(temp,mpfr_get_prec(*(accessThruMemRef(tree->child2)->value)) + 10);
         mpfr_set_si(temp,r,GMP_RNDN);
-        if (mpfr_cmp(*(tree->child2->value),temp) != 0) {
+        if (mpfr_cmp(*(accessThruMemRef(tree->child2)->value),temp) != 0) {
           printMessage(1, SOLLYA_MSG_DEGREE_OF_POLYNOMIAL_DOESNT_HOLD_ON_MACHINE_INT, "Warning: tried to compute polynomial degree of an expression using a power operator with an exponent which cannot be represented on an integer variable.\n");
           mpfr_clear(temp);
           return -1;
@@ -8513,6 +8575,8 @@ int getMaxPowerDividerUnsafe(node *tree) {
   node *simplifiedNode;
 
   if (isConstant(tree)) return 0;
+
+  if (tree->nodeType == MEMREF) return getMaxPowerDividerUnsafe(tree->child1);
 
   switch (tree->nodeType) {
   case VARIABLE:
@@ -8545,29 +8609,29 @@ int getMaxPowerDividerUnsafe(node *tree) {
       l = getMaxPowerDividerUnsafe(tree->child1);
       if (l == 0) return 0;
       simplifiedNode = simplifyRationalErrorfree(tree->child2);
-      if (simplifiedNode->nodeType != CONSTANT) {
+      if (accessThruMemRef(simplifiedNode)->nodeType != CONSTANT) {
 	printMessage(1,SOLLYA_MSG_DEG_OF_MAX_POLY_DIV_IS_NOT_CONSTANT,
 		     "Warning: an attempt was made to compute the degree of the maximal polynomial divider of a polynomial in an expression using a power operator with an exponent which is not a constant but a constant expression.\n");
 	free_memory(simplifiedNode);
 	return -1;	
       }
-      if (!mpfr_integer_p(*(simplifiedNode->value))) {
+      if (!mpfr_integer_p(*(accessThruMemRef(simplifiedNode)->value))) {
 	printMessage(1,SOLLYA_MSG_DEG_OF_MAX_POLY_DIV_IS_NOT_INTEGER,
 		     "Warning: an attempt was made to compute the degree of the maximal polynomial divider of a polynomial in an expression using a power operator with an exponent which is not an integer.\n");
 	free_memory(simplifiedNode);
 	return -1;	
       }
-      if (mpfr_sgn(*(simplifiedNode->value)) < 0) {
+      if (mpfr_sgn(*(accessThruMemRef(simplifiedNode)->value)) < 0) {
 	printMessage(1,SOLLYA_MSG_DEG_OF_MAX_POLY_DIV_IS_NEGATIVE,
 		     "Warning: an attempt was made to compute the degree of the maximal polynomial divider of a polynomial in an expression using a power operator with an exponent which is negative.\n");
 	free_memory(simplifiedNode);
 	return -1;	
       }
 
-      r = mpfr_get_si(*(simplifiedNode->value),GMP_RNDN);
-      mpfr_init2(temp,mpfr_get_prec(*(simplifiedNode->value)) + 10);
+      r = mpfr_get_si(*(accessThruMemRef(simplifiedNode)->value),GMP_RNDN);
+      mpfr_init2(temp,mpfr_get_prec(*(accessThruMemRef(simplifiedNode)->value)) + 10);
       mpfr_set_si(temp,r,GMP_RNDN);
-      if (mpfr_cmp(*(simplifiedNode->value),temp) != 0) {
+      if (mpfr_cmp(*(accessThruMemRef(simplifiedNode)->value),temp) != 0) {
 	printMessage(1,SOLLYA_MSG_DEG_OF_MAX_POLY_DIV_DOESNT_HOLD_ON_MACHINE_INT,
 "Warning: tried to compute degree of maximal polynomial divider of a polynomial in an expression using a power operator with an exponent which cannot be represented on an integer variable.\n");
 	mpfr_clear(temp);
@@ -8592,10 +8656,6 @@ int getMaxPowerDivider(node *tree) {
   if (!isPolynomial(tree)) return -1;
   return getMaxPowerDividerUnsafe(tree);
 }
-
-
-
-
 
 node* makeBinomial(node *a, node *b, int n, int s) {
   node *tree, *coeff, *aPow, *bPow, *tempNode, *tempNode2;
@@ -8685,6 +8745,8 @@ node* expandPowerInPolynomialUnsafe(node *tree) {
 
   if (isConstant(tree)) return copyTree(tree);
 
+  if (tree->nodeType == MEMREF) return addMemRef(expandPowerInPolynomialUnsafe(tree->child1));
+
   switch (tree->nodeType) {
   case VARIABLE:
     return copyTree(tree);
@@ -8724,23 +8786,23 @@ node* expandPowerInPolynomialUnsafe(node *tree) {
   case POW:
     {
       left = expandPowerInPolynomialUnsafe(tree->child1);
-      if (tree->child2->nodeType != CONSTANT) {
+      if (accessThruMemRef(tree->child2)->nodeType != CONSTANT) {
 	sollyaFprintf(stderr,"Error: expandPowerInPolynomialUnsafe: an error occurred. The exponent in a power operator is not constant.\n");
 	exit(1);
       }
-      if (!mpfr_integer_p(*(tree->child2->value))) {
+      if (!mpfr_integer_p(*(accessThruMemRef(tree->child2)->value))) { 
 	sollyaFprintf(stderr,"Error: expandPowerInPolynomialUnsafe: an error occurred. The exponent in a power operator is not integer.\n");
 	exit(1);
       }
-      if (mpfr_sgn(*(tree->child2->value)) < 0) {
+      if (mpfr_sgn(*(accessThruMemRef(tree->child2)->value)) < 0) {
 	sollyaFprintf(stderr,"Error: expandPowerInPolynomialUnsafe: an error occurred. The exponent in a power operator is negative.\n");
 	exit(1);
       }
 
-      r = mpfr_get_si(*(tree->child2->value),GMP_RNDN);
-      mpfr_init2(temp,mpfr_get_prec(*(tree->child2->value)) + 10);
+      r = mpfr_get_si(*(accessThruMemRef(tree->child2)->value),GMP_RNDN);
+      mpfr_init2(temp,mpfr_get_prec(*(accessThruMemRef(tree->child2)->value)) + 10);
       mpfr_set_si(temp,r,GMP_RNDN);
-      if (mpfr_cmp(*(tree->child2->value),temp) != 0) {
+      if (mpfr_cmp(*(accessThruMemRef(tree->child2)->value),temp) != 0) {
 	sollyaFprintf(stderr,"Error: expandPowerInPolynomialUnsafe: an error occurred. Tried to expand an expression using a power operator with an exponent ");
 	sollyaFprintf(stderr,"which cannot be represented on an integer variable.\n");
 	mpfr_clear(temp);
@@ -8748,7 +8810,7 @@ node* expandPowerInPolynomialUnsafe(node *tree) {
       }
       mpfr_clear(temp);
       if (r > 1) {
-	switch (left->nodeType) {
+	switch (accessThruMemRef(left)->nodeType) {
 	case VARIABLE:
 	case CONSTANT:
 	case PI_CONST:
@@ -8762,17 +8824,17 @@ node* expandPowerInPolynomialUnsafe(node *tree) {
 	  }
 	  break;
 	case ADD:
-	  tempTree = makeBinomial(left->child1,left->child2,r,1);
+	  tempTree = makeBinomial(accessThruMemRef(left)->child1,accessThruMemRef(left)->child2,r,1);
 	  break;
 	case SUB:
-	  tempTree = makeBinomial(left->child1,left->child2,r,-1);
+	  tempTree = makeBinomial(accessThruMemRef(left)->child1,accessThruMemRef(left)->child2,r,-1);
 	  break;
 	case MUL:
 	  tempTree = (node *) safeMalloc(sizeof(node));
 	  tempTree->nodeType = MUL;
 	  tempTree2 = (node *) safeMalloc(sizeof(node));
 	  tempTree2->nodeType = POW;
-	  tempTree2->child1 = copyTree(left->child1);
+	  tempTree2->child1 = copyTree(accessThruMemRef(left)->child1);
 	  tempTree3 = (node*) safeMalloc(sizeof(node));
 	  tempTree3->nodeType = CONSTANT;
 	  value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
@@ -8783,7 +8845,7 @@ node* expandPowerInPolynomialUnsafe(node *tree) {
 	  tempTree->child1 = tempTree2;
 	  tempTree2 = (node *) safeMalloc(sizeof(node));
 	  tempTree2->nodeType = POW;
-	  tempTree2->child1 = copyTree(left->child2);
+	  tempTree2->child1 = copyTree(accessThruMemRef(left)->child2);
 	  tempTree3 = (node*) safeMalloc(sizeof(node));
 	  tempTree3->nodeType = CONSTANT;
 	  value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
@@ -8798,7 +8860,7 @@ node* expandPowerInPolynomialUnsafe(node *tree) {
 	  tempTree->nodeType = DIV;
 	  tempTree2 = (node *) safeMalloc(sizeof(node));
 	  tempTree2->nodeType = POW;
-	  tempTree2->child1 = copyTree(left->child1);
+	  tempTree2->child1 = copyTree(accessThruMemRef(left)->child1);
 	  tempTree3 = (node*) safeMalloc(sizeof(node));
 	  tempTree3->nodeType = CONSTANT;
 	  value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
@@ -8809,7 +8871,7 @@ node* expandPowerInPolynomialUnsafe(node *tree) {
 	  tempTree->child1 = tempTree2;
 	  tempTree2 = (node *) safeMalloc(sizeof(node));
 	  tempTree2->nodeType = POW;
-	  tempTree2->child1 = copyTree(left->child2);
+	  tempTree2->child1 = copyTree(accessThruMemRef(left)->child2);
 	  tempTree3 = (node*) safeMalloc(sizeof(node));
 	  tempTree3->nodeType = CONSTANT;
 	  value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
@@ -8826,7 +8888,7 @@ node* expandPowerInPolynomialUnsafe(node *tree) {
 	    tempTree->nodeType = NEG;
 	    tempTree2 = (node *) safeMalloc(sizeof(node));
 	    tempTree2->nodeType = POW;
-	    tempTree2->child1 = copyTree(left->child1);
+	    tempTree2->child1 = copyTree(accessThruMemRef(left)->child1);
 	    tempTree3 = (node*) safeMalloc(sizeof(node));
 	    tempTree3->nodeType = CONSTANT;
 	    value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
@@ -8838,7 +8900,7 @@ node* expandPowerInPolynomialUnsafe(node *tree) {
 	  } else {
 	    tempTree = (node *) safeMalloc(sizeof(node));
 	    tempTree->nodeType = POW;
-	    tempTree->child1 = copyTree(left->child1);
+	    tempTree->child1 = copyTree(accessThruMemRef(left)->child1);
 	    tempTree3 = (node*) safeMalloc(sizeof(node));
 	    tempTree3->nodeType = CONSTANT;
 	    value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
@@ -8902,7 +8964,7 @@ node* expandDivision(node *tree) {
   if (tree->nodeType == MEMREF) {
     return addMemRef(expandDivision(tree->child1));
   }
-
+  
   switch (tree->nodeType) {
   case VARIABLE:
     copy = (node*) safeMalloc(sizeof(node));
@@ -8940,14 +9002,16 @@ node* expandDivision(node *tree) {
   case DIV:
     left = expandDivision(tree->child1);
     right = expandDivision(tree->child2);
-    if (right->nodeType == DIV) {
-      tempNode = right->child1;
-      right->child1 = right->child2;
-      right->child2 = tempNode;
+    if (accessThruMemRef(right)->nodeType == DIV) {
+      tempNode = (node *) safeMalloc(sizeof(node));
+      tempNode->nodeType = DIV;
+      tempNode->child1 = copyTree(accessThruMemRef(right)->child2);
+      tempNode->child2 = copyTree(accessThruMemRef(right)->child1);
+      free_memory(right);
       copy = (node*) safeMalloc(sizeof(node));
       copy->nodeType = MUL;
       copy->child1 = left;
-      copy->child2 = right;
+      copy->child2 = tempNode;
     } else {
       copy = (node*) safeMalloc(sizeof(node));
       copy->nodeType = DIV;
@@ -9165,6 +9229,8 @@ node* expandPolynomialUnsafe(node *tree) {
 
   if (isConstant(tree)) return copyTree(tree);
 
+  if (tree->nodeType == MEMREF) return addMemRef(expandPolynomialUnsafe(tree->child1));
+
   switch (tree->nodeType) {
   case VARIABLE:
     return copyTree(tree);
@@ -9194,7 +9260,7 @@ node* expandPolynomialUnsafe(node *tree) {
   case MUL:
     left = expandPolynomialUnsafe(tree->child1);
     right = expandPolynomialUnsafe(tree->child2);
-    switch (left->nodeType) {
+    switch (accessThruMemRef(left)->nodeType) {
     case VARIABLE:
     case CONSTANT:
     case PI_CONST:
@@ -9204,7 +9270,7 @@ node* expandPolynomialUnsafe(node *tree) {
 	copy->child1 = left;
 	copy->child2 = right;
       } else {
-	switch (right->nodeType) {
+	switch (accessThruMemRef(right)->nodeType) {
 	case VARIABLE:
 	case CONSTANT:
 	case PI_CONST:
@@ -9224,7 +9290,7 @@ node* expandPolynomialUnsafe(node *tree) {
       }
       break;
     case MUL:
-      switch (right->nodeType) {
+      switch (accessThruMemRef(right)->nodeType) {
       case ADD:
       case SUB:
       case NEG:
@@ -9251,9 +9317,9 @@ node* expandPolynomialUnsafe(node *tree) {
       tempNode2->nodeType = MUL;
       tempNode3 = (node*) safeMalloc(sizeof(node));
       tempNode3->nodeType = MUL;
-      tempNode2->child1 = copyTree(left->child1);
+      tempNode2->child1 = copyTree(accessThruMemRef(left)->child1);
       tempNode2->child2 = copyTree(right);
-      tempNode3->child1 = copyTree(left->child2);
+      tempNode3->child1 = copyTree(accessThruMemRef(left)->child2);
       tempNode3->child2 = right;
       tempNode->child1 = tempNode2;
       tempNode->child2 = tempNode3;
@@ -9268,9 +9334,9 @@ node* expandPolynomialUnsafe(node *tree) {
       tempNode2->nodeType = MUL;
       tempNode3 = (node*) safeMalloc(sizeof(node));
       tempNode3->nodeType = MUL;
-      tempNode2->child1 = copyTree(left->child1);
+      tempNode2->child1 = copyTree(accessThruMemRef(left)->child1);
       tempNode2->child2 = copyTree(right);
-      tempNode3->child1 = copyTree(left->child2);
+      tempNode3->child1 = copyTree(accessThruMemRef(left)->child2);
       tempNode3->child2 = right;
       tempNode->child1 = tempNode2;
       tempNode->child2 = tempNode3;
@@ -9283,7 +9349,7 @@ node* expandPolynomialUnsafe(node *tree) {
       tempNode->nodeType = NEG;
       tempNode2 = (node*) safeMalloc(sizeof(node));
       tempNode2->nodeType = MUL;
-      tempNode2->child1 = copyTree(left->child1);
+      tempNode2->child1 = copyTree(accessThruMemRef(left)->child1);
       tempNode2->child2 = right;
       tempNode->child1 = tempNode2;
       free_memory(left);
@@ -9298,7 +9364,7 @@ node* expandPolynomialUnsafe(node *tree) {
 	  copy->child1 = left;
 	  copy->child2 = right;
 	} else {
-	  switch (right->nodeType) {
+	  switch (accessThruMemRef(right)->nodeType) {
 	  case ADD:
 	  case SUB:
 	  case NEG:
@@ -9332,8 +9398,8 @@ node* expandPolynomialUnsafe(node *tree) {
 	mpfr_set_d(*value,1.0,GMP_RNDN);
 	tempNode4->value = value;
 	tempNode3->child1 = tempNode4;
-	tempNode3->child2 = copyTree(left->child2);
-	tempNode2->child1 = copyTree(left->child1);
+	tempNode3->child2 = copyTree(accessThruMemRef(left)->child2);
+	tempNode2->child1 = copyTree(accessThruMemRef(left)->child1);
 	tempNode2->child2 = right;
 	tempNode->child1 = tempNode3;
 	tempNode->child2 = tempNode2;
@@ -9365,7 +9431,7 @@ node* expandPolynomialUnsafe(node *tree) {
   case DIV:
     left = expandPolynomialUnsafe(tree->child1);
     right = expandPolynomialUnsafe(tree->child2);
-    switch (left->nodeType) {
+    switch (accessThruMemRef(left)->nodeType) {
     case CONSTANT:
     case PI_CONST:
       copy = (node*) safeMalloc(sizeof(node));
@@ -9396,9 +9462,9 @@ node* expandPolynomialUnsafe(node *tree) {
       tempNode2->nodeType = DIV;
       tempNode3 = (node*) safeMalloc(sizeof(node));
       tempNode3->nodeType = DIV;
-      tempNode2->child1 = copyTree(left->child1);
+      tempNode2->child1 = copyTree(accessThruMemRef(left)->child1);
       tempNode2->child2 = copyTree(right);
-      tempNode3->child1 = copyTree(left->child2);
+      tempNode3->child1 = copyTree(accessThruMemRef(left)->child2);
       tempNode3->child2 = right;
       tempNode->child1 = tempNode2;
       tempNode->child2 = tempNode3;
@@ -9413,9 +9479,9 @@ node* expandPolynomialUnsafe(node *tree) {
       tempNode2->nodeType = DIV;
       tempNode3 = (node*) safeMalloc(sizeof(node));
       tempNode3->nodeType = DIV;
-      tempNode2->child1 = copyTree(left->child1);
+      tempNode2->child1 = copyTree(accessThruMemRef(left)->child1);
       tempNode2->child2 = copyTree(right);
-      tempNode3->child1 = copyTree(left->child2);
+      tempNode3->child1 = copyTree(accessThruMemRef(left)->child2);
       tempNode3->child2 = right;
       tempNode->child1 = tempNode2;
       tempNode->child2 = tempNode3;
@@ -9440,8 +9506,8 @@ node* expandPolynomialUnsafe(node *tree) {
       tempNode2->child2 = right;
       tempNode->child1 = tempNode2;
       tempNode->child2 = tempNode4;
-      tempNode4->child1 = copyTree(left->child1);
-      tempNode4->child2 = copyTree(left->child2);
+      tempNode4->child1 = copyTree(accessThruMemRef(left)->child1);
+      tempNode4->child2 = copyTree(accessThruMemRef(left)->child2);
       free_memory(left);
       copy = expandPolynomialUnsafe(tempNode);
       free_memory(tempNode);      
@@ -9449,10 +9515,10 @@ node* expandPolynomialUnsafe(node *tree) {
     case DIV:
       tempNode = (node*) safeMalloc(sizeof(node));
       tempNode->nodeType = DIV;
-      tempNode->child1 = copyTree(left->child1);
+      tempNode->child1 = copyTree(accessThruMemRef(left)->child1);
       tempNode2 = (node*) safeMalloc(sizeof(node));
       tempNode2->nodeType = MUL;
-      tempNode2->child1 = copyTree(left->child2);
+      tempNode2->child1 = copyTree(accessThruMemRef(left)->child2);
       tempNode2->child2 = right;
       tempNode->child2 = tempNode2;
       free_memory(left);
@@ -9464,7 +9530,7 @@ node* expandPolynomialUnsafe(node *tree) {
       tempNode->nodeType = NEG;
       tempNode2 = (node*) safeMalloc(sizeof(node));
       tempNode2->nodeType = DIV;
-      tempNode2->child1 = copyTree(left->child1);
+      tempNode2->child1 = copyTree(accessThruMemRef(left)->child1);
       tempNode2->child2 = right;
       tempNode->child1 = tempNode2;
       free_memory(left);
@@ -9841,6 +9907,9 @@ int isConstant(node *tree) {
 int isMonomial(node *tree) {
 
   switch (tree->nodeType) {
+  case MEMREF:
+    return isMonomial(tree->child1);
+    break;
   case MUL:
     return (isMonomial(tree->child1) && isMonomial(tree->child2));
     break;
@@ -9866,6 +9935,8 @@ node* getCoefficientsInMonomialUnsafe(node *polynom) {
 
   if (isConstant(polynom)) return copyTree(polynom);
 
+  if (polynom->nodeType == MEMREF) return getCoefficientsInMonomialUnsafe(polynom->child1);
+
   if (polynom->nodeType == VARIABLE) return NULL;
  
   if (polynom->nodeType == MUL) {
@@ -9881,7 +9952,7 @@ node* getCoefficientsInMonomialUnsafe(node *polynom) {
     return coeffs;
   }
 
-  if (polynom->nodeType == DIV) {
+  if (polynom->nodeType == DIV) { 
     leftSub = getCoefficientsInMonomialUnsafe(polynom->child1);
     if (leftSub == NULL) {
       coeffs = (node*) safeMalloc(sizeof(node));
@@ -9930,6 +10001,10 @@ void getCoefficientsUnsafe(node **monomials, node *polynom, int sign) {
   mpfr_t *value;
   node *simplified, *simplifiedTemp;
 
+  if (polynom->nodeType == MEMREF) {
+    getCoefficientsUnsafe(monomials, polynom->child1, sign);
+    return;
+  }
  
   if (isMonomial(polynom)) {
     degree = getDegree(polynom);
@@ -9998,27 +10073,32 @@ void getCoefficientsHornerUnsafe(node **coefficients, node *poly, int offset, in
   int deg, newSign;
   node *newCoeff, *temp;
 
+  if (poly->nodeType == MEMREF) {
+    getCoefficientsHornerUnsafe(coefficients, poly->child1, offset, sign);
+    return;
+  }
+
   if (isConstant(poly)) {
     newCoeff = copyTree(poly);
   } else {
     if (poly->nodeType == SUB) newSign = -1; else newSign = 1;
     newCoeff = copyTree(poly->child1);
-    if ((poly->child2->nodeType == MUL) &&
-	isConstant(poly->child2->child1) &&
-	isPowerOfVariable(poly->child2->child2)) {
-      deg = getDegree(poly->child2->child2);
-      getCoefficientsHornerUnsafe(coefficients,poly->child2->child1,offset+deg,sign*newSign);
+    if ((accessThruMemRef(poly->child2)->nodeType == MUL) &&
+	isConstant(accessThruMemRef(poly->child2)->child1) &&
+	isPowerOfVariable(accessThruMemRef(poly->child2)->child2)) {
+      deg = getDegree(accessThruMemRef(poly->child2)->child2);
+      getCoefficientsHornerUnsafe(coefficients,accessThruMemRef(poly->child2)->child1,offset+deg,sign*newSign);
     } else {
-      if ((poly->child2->nodeType == MUL) && 
-	  (poly->child2->child1->nodeType == MUL) &&
-	  isPowerOfVariable(poly->child2->child1->child1) &&
-	  isConstant(poly->child2->child1->child2) &&
-	  isConstant(poly->child2->child2)) {
-	deg = getDegree(poly->child2->child1->child1);
+      if ((accessThruMemRef(poly->child2)->nodeType == MUL) && 
+	  (accessThruMemRef(accessThruMemRef(poly->child2)->child1)->nodeType == MUL) &&
+	  isPowerOfVariable(accessThruMemRef(accessThruMemRef(poly->child2)->child1)->child1) &&
+	  isConstant(accessThruMemRef(accessThruMemRef(poly->child2)->child1)->child2) &&
+	  isConstant(accessThruMemRef(poly->child2)->child2)) {
+	deg = getDegree(accessThruMemRef(accessThruMemRef(poly->child2)->child1)->child1);
 	temp = (node *) safeMalloc(sizeof(node));
 	temp->nodeType = MUL;
-	temp->child1 = copyTree(poly->child2->child1->child2);
-	temp->child2 = copyTree(poly->child2->child2);
+	temp->child1 = copyTree(accessThruMemRef(accessThruMemRef(poly->child2)->child1)->child2);
+	temp->child2 = copyTree(accessThruMemRef(poly->child2)->child2);
 	getCoefficientsHornerUnsafe(coefficients,temp,offset+deg,sign*newSign);
 	free_memory(temp);
       } else {
@@ -10032,8 +10112,8 @@ void getCoefficientsHornerUnsafe(node **coefficients, node *poly, int offset, in
 	  getCoefficientsHornerUnsafe(coefficients,temp,offset+deg,sign*newSign);
 	  free_memory(temp);
 	} else {
-	  deg = getDegree(poly->child2->child1);
-	  getCoefficientsHornerUnsafe(coefficients,poly->child2->child2,offset+deg,sign*newSign);
+	  deg = getDegree(accessThruMemRef(poly->child2)->child1);
+	  getCoefficientsHornerUnsafe(coefficients,accessThruMemRef(poly->child2)->child2,offset+deg,sign*newSign);
 	}
       }
     }
@@ -10061,6 +10141,11 @@ void getCoefficientsHornerUnsafe(node **coefficients, node *poly, int offset, in
 void getCoefficientsHorner(node **coefficients, node *poly) {
   int offset;
 
+  if (poly->nodeType == MEMREF) {
+    getCoefficientsHorner(coefficients, poly->child1);
+    return;
+  }
+
   printMessage(7,SOLLYA_MSG_POLY_COEFF_EXTRACTION_SPECIAL_ALGO_FOR_HORNER,"Information: extraction of coefficient terms from a polynomial uses a special algorithm for Horner forms.\n");
 
   if (poly->nodeType == MUL) {
@@ -10077,6 +10162,11 @@ int isCanonicalMonomial(node *);
 void getCoefficientsCanonicalUnsafe(node **coefficients, node *poly) {
   int deg, sign;
   node *newCoeff, *temp;
+
+  if (poly->nodeType == MEMREF) {
+    getCoefficientsCanonicalUnsafe(coefficients, poly->child1);
+    return;
+  }
 
   if (isConstant(poly)) {
     sign = 1;
@@ -10110,7 +10200,7 @@ void getCoefficientsCanonicalUnsafe(node **coefficients, node *poly) {
 	  mpfr_init2(*(newCoeff->value),17);
 	  mpfr_set_d(*(newCoeff->value),1.0,GMP_RNDN);
 	} else {
-	  newCoeff = copyTree(poly->child2->child1);
+	  newCoeff = copyTree(accessThruMemRef(poly->child2)->child1);
 	}
       }
     }
@@ -10202,8 +10292,8 @@ void computePowerOfPolynomialCoefficients(int *degreeRes, node ***coeffRes,
 
   for (t=0;t<=k;t++) {
     if ((coeffs[0] != NULL) && 
-        (!((coeffs[0]->nodeType == CONSTANT) &&
-           (mpfr_zero_p(*(coeffs[0]->value)))))) {
+        (!((accessThruMemRef(coeffs[0])->nodeType == CONSTANT) &&
+           (mpfr_zero_p(*(accessThruMemRef(coeffs[0])->value)))))) {
       computePowerOfPolynomialCoefficients(&degreeQ, &coeffsQ, 
                                            &(coeffs[1]), degree - 1, t);
       binom = makeBinomialCoefficient(k, t);
@@ -10251,6 +10341,11 @@ void getCoefficients(int *degree, node ***coefficients, node *poly) {
   node **coefficients1, **coefficients2;
   int degree1, degree2;
   mpfr_t y;
+
+  if (poly->nodeType == MEMREF) {
+    getCoefficients(degree, coefficients, poly->child1);
+    return;
+  }
 
   *degree = getDegree(poly);
   if (*degree < 0) {
@@ -10336,12 +10431,12 @@ void getCoefficients(int *degree, node ***coefficients, node *poly) {
   }
 
   if ((poly->nodeType == POW) &&
-      (poly->child2->nodeType == CONSTANT) &&
-      (mpfr_integer_p(*(poly->child2->value)))) {
-    k = mpfr_get_si(*(poly->child2->value),GMP_RNDN);
+      (accessThruMemRef(poly->child2)->nodeType == CONSTANT) &&
+      (mpfr_integer_p(*(accessThruMemRef(poly->child2)->value)))) {
+    k = mpfr_get_si(*(accessThruMemRef(poly->child2)->value),GMP_RNDN);
     mpfr_init2(y,8 * sizeof(int) + 10);
     mpfr_set_si(y,k,GMP_RNDN);
-    if ((mpfr_cmp(y,*(poly->child2->value)) == 0) && (!mpfr_nan_p(*(poly->child2->value))) &&
+    if ((mpfr_cmp(y,*(accessThruMemRef(poly->child2)->value)) == 0) && (!mpfr_nan_p(*(accessThruMemRef(poly->child2)->value))) &&
 	(k > 0)) {
       if ((mpd = getMaxPowerDivider(poly->child1)) > 0) {
         temp = dividePolynomialByPowerOfVariableUnsafe(poly->child1, mpd);
@@ -10408,8 +10503,8 @@ void getCoefficients(int *degree, node ***coefficients, node *poly) {
 
       for (i=0;i<=degree2;i++) {
         if ((coefficients2[i] != NULL) && 
-            (!((coefficients2[i]->nodeType == CONSTANT) &&
-               (mpfr_zero_p(*(coefficients2[i]->value)))))) {
+            (!((accessThruMemRef(coefficients2[i])->nodeType == CONSTANT) &&
+               (mpfr_zero_p(*(accessThruMemRef(coefficients2[i])->value)))))) {
           (*coefficients)[i] = copyTree(coefficients2[i]);
         }
       }
@@ -10915,40 +11010,43 @@ node* hornerUnsimplified(node *tree) {
 
 
 int isPowerOfVariable(node *tree) {
+  if (tree->nodeType == MEMREF) return isPowerOfVariable(tree->child1);
   if (tree->nodeType == VARIABLE) return 1;
   if ((tree->nodeType == POW) &&
-      (tree->child1->nodeType == VARIABLE) &&
-      (tree->child2->nodeType == CONSTANT) && 
-      mpfr_integer_p(*(tree->child2->value))) return 1;
+      (accessThruMemRef(tree->child1)->nodeType == VARIABLE) &&
+      (accessThruMemRef(tree->child2)->nodeType == CONSTANT) && 
+      mpfr_integer_p(*(accessThruMemRef(tree->child2)->value))) return 1;
   return 0;
 }
 
 int isHornerUnsafe(node *tree) {
   if (isConstant(tree)) return 1;
+  if (tree->nodeType == MEMREF) return isHornerUnsafe(tree->child1);
   if (((tree->nodeType == ADD) || (tree->nodeType == SUB)) &&
       isConstant(tree->child1) &&
-      (tree->child2->nodeType == MUL) &&
-      isPowerOfVariable(tree->child2->child1) &&
-      isHornerUnsafe(tree->child2->child2)) return 1;
+      (accessThruMemRef(tree->child2)->nodeType == MUL) &&
+      isPowerOfVariable(accessThruMemRef(tree->child2)->child1) &&
+      isHornerUnsafe(accessThruMemRef(tree->child2)->child2)) return 1;
   if (((tree->nodeType == ADD) || (tree->nodeType == SUB)) &&
       isConstant(tree->child1) &&
       isPowerOfVariable(tree->child2)) return 1;
   if (((tree->nodeType == ADD) || (tree->nodeType == SUB)) &&
       isConstant(tree->child1) &&
-      (tree->child2->nodeType == MUL) &&
-      (tree->child2->child1->nodeType == MUL) &&
-      isPowerOfVariable(tree->child2->child1->child1) &&
-      isConstant(tree->child2->child1->child2) &&
-      isConstant(tree->child2->child2)) return 1;
+      (accessThruMemRef(tree->child2)->nodeType == MUL) &&
+      (accessThruMemRef(accessThruMemRef(tree->child2)->child1)->nodeType == MUL) &&
+      isPowerOfVariable(accessThruMemRef(accessThruMemRef(tree->child2)->child1)->child1) &&
+      isConstant(accessThruMemRef(accessThruMemRef(tree->child2)->child1)->child2) &&
+      isConstant(accessThruMemRef(tree->child2)->child2)) return 1;
   if (((tree->nodeType == ADD) || (tree->nodeType == SUB)) &&
       isConstant(tree->child1) &&
-      (tree->child2->nodeType == MUL) &&
-      isConstant(tree->child2->child1) &&
-      isPowerOfVariable(tree->child2->child2)) return 1;
+      (accessThruMemRef(tree->child2)->nodeType == MUL) &&
+      isConstant(accessThruMemRef(tree->child2)->child1) &&
+      isPowerOfVariable(accessThruMemRef(tree->child2)->child2)) return 1;
   return 0;
 }
 
 int isHorner(node *tree) {
+  if (tree->nodeType == MEMREF) return isHorner(tree->child1);
   if ((tree->nodeType == ADD) || (tree->nodeType == SUB)) 
     return isHornerUnsafe(tree);
   if (tree->nodeType == MUL) {
@@ -10996,13 +11094,14 @@ node *differentiatePolynomialHornerUnsafe(node *tree) {
 
   for (i=1;i<=degree;i++) {
     if (monomials[i] != NULL) {
-      if (monomials[i]->nodeType == CONSTANT) {
+      if (accessThruMemRef(monomials[i])->nodeType == CONSTANT) {
 	value = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*value,mpfr_get_prec(*(monomials[i]->value))+(sizeof(int)*8));
-	if (mpfr_mul_si(*value,*(monomials[i]->value),i,GMP_RNDN) != 0)
+	mpfr_init2(*value,mpfr_get_prec(*(accessThruMemRef(monomials[i])->value))+(sizeof(int)*8));
+	if (mpfr_mul_si(*value,*(accessThruMemRef(monomials[i])->value),i,GMP_RNDN) != 0)
 	  printMessage(1,SOLLYA_MSG_ROUNDING_UPON_DIFFERENTIATION_OF_HORNER_POLY,"Warning: rounding occurred while differentiating a polynomial in Horner form.\n");
-	mpfr_clear(*(monomials[i]->value));
-	safeFree(monomials[i]->value);
+	free_memory(monomials[i]);
+	monomials[i] = (node *) safeMalloc(sizeof(node));
+	monomials[i]->nodeType = CONSTANT;
 	monomials[i]->value = value;
 	temp = monomials[i];
       } else {
@@ -11269,6 +11368,7 @@ node *differentiatePolynomialUnsafe(node *tree) {
 
 
 int getNumeratorDenominator(node **numerator, node **denominator, node *tree) {
+  if (tree->nodeType == MEMREF) return getNumeratorDenominator(numerator, denominator, tree->child1);
   if (tree->nodeType == DIV) {
     *numerator = copyTree(tree->child1);
     *denominator = copyTree(tree->child2);
@@ -12110,8 +12210,8 @@ node *makePolynomialConstantExpressions(node **coeffs, int deg) {
   degree = deg;
   while ((degree > 0) && 
          ((coeffs[degree] == NULL) || 
-          ((coeffs[degree]->nodeType == CONSTANT) && 
-           (mpfr_zero_p(*(coeffs[degree]->value)))))) degree--;
+          ((accessThruMemRef(coeffs[degree])->nodeType == CONSTANT) && 
+           (mpfr_zero_p(*(accessThruMemRef(coeffs[degree])->value)))))) degree--;
 
   if (degree == 0) {
     if (coeffs[0] == NULL) return makeConstantDouble(0.0);
@@ -12121,8 +12221,8 @@ node *makePolynomialConstantExpressions(node **coeffs, int deg) {
   copy = copyTree(coeffs[degree]);
   for (i=degree-1;i>=0;i--) {
     if ((coeffs[i] == NULL) || 
-        ((coeffs[i]->nodeType == CONSTANT) && 
-         (mpfr_zero_p(*(coeffs[i]->value))))) {
+        ((accessThruMemRef(coeffs[i])->nodeType == CONSTANT) && 
+         (mpfr_zero_p(*(accessThruMemRef(coeffs[i])->value))))) {
       if ((i == 0)) {
 	temp = (node *) safeMalloc(sizeof(node));
 	temp->nodeType = MUL;
@@ -12133,8 +12233,8 @@ node *makePolynomialConstantExpressions(node **coeffs, int deg) {
 	copy = temp;
       } else {
 	for (k=i-1;(((coeffs[k] == NULL) || 
-                     ((coeffs[k]->nodeType == CONSTANT) && 
-                      (mpfr_zero_p(*(coeffs[k]->value))))) && (k > 0));k--);
+                     ((accessThruMemRef(coeffs[k])->nodeType == CONSTANT) && 
+                      (mpfr_zero_p(*(accessThruMemRef(coeffs[k])->value))))) && (k > 0));k--);
 	e = (i - k) + 1;
 	temp = (node *) safeMalloc(sizeof(node));
 	temp->nodeType = MUL;
@@ -12160,8 +12260,8 @@ node *makePolynomialConstantExpressions(node **coeffs, int deg) {
 	temp->child2 = copy;
 	copy = temp;
 	if (!((coeffs[k] == NULL) || 
-              ((coeffs[k]->nodeType == CONSTANT) && 
-               (mpfr_zero_p(*(coeffs[k]->value)))))) {
+              ((accessThruMemRef(coeffs[k])->nodeType == CONSTANT) && 
+               (mpfr_zero_p(*(accessThruMemRef(coeffs[k])->value)))))) {
 	  temp = (node *) safeMalloc(sizeof(node));
 	  temp->nodeType = ADD;
 	  temp->child1 = copyTree(coeffs[k]);
@@ -12190,7 +12290,7 @@ node *makePolynomialConstantExpressions(node **coeffs, int deg) {
 
 /* Builds a polynomial expression, written in Horner form of the polynomial
                   sum_{i=0}^degree  coefficients[i]*x^i
-   Moreover, while writting it in Horner form, it accounts for sparsity of
+   Moreover, while writting it in Horner form, it accounts for the sparsity of
    the polynomial.
 */
 node *makePolynomial(mpfr_t *coefficients, int degree) {
@@ -12298,6 +12398,8 @@ int treeSize(node *tree) {
 
 int highestDegreeOfPolynomialSubexpression(node *tree) {
   int l, r;
+
+  if (tree->nodeType == MEMREF) return highestDegreeOfPolynomialSubexpression(tree->child1);
 
   if (isPolynomial(tree)) return getDegree(tree);
 
@@ -12527,6 +12629,8 @@ node *makeCanonicalPolyUnsafe(node *poly, mp_prec_t prec) {
 
 int isCanonicalMonomial(node *tree) {
 
+  if (tree->nodeType == MEMREF) return isCanonicalMonomial(tree->child1);
+  
   if (isConstant(tree)) return 1;
 
   if (isPowerOfVariable(tree)) return 1;
@@ -12541,6 +12645,8 @@ int isCanonicalMonomial(node *tree) {
 
 int isCanonicalUnsafe(node *tree) {
   int deg1, deg2;
+
+  if (tree->nodeType == MEMREF) return isCanonicalUnsafe(tree->child1);
   
   if (isConstant(tree) || isCanonicalMonomial(tree)) return 1;
 
