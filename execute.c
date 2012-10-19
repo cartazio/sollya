@@ -362,136 +362,136 @@ node *copyThingInner(node *tree) {
     mpfr_set(*(copy->value),*(tree->value),GMP_RNDN);
     break;
   case ADD:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break;
   case SUB:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break;
   case MUL:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break;
   case DIV:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break;
   case SQRT:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case EXP:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case LOG:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case LOG_2:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case LOG_10:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case SIN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case COS:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case TAN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case ASIN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case ACOS:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case ATAN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case SINH:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case COSH:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case TANH:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case ASINH:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case ACOSH:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case ATANH:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case POW:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break;
   case NEG:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case ABS:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case DOUBLE:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case SINGLE:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case HALFPRECISION:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case QUAD:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case DOUBLEDOUBLE:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case TRIPLEDOUBLE:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case ERF: 
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case ERFC:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case LOG_1P:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case EXP_M1:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case DOUBLEEXTENDED:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case LIBRARYFUNCTION:
     copy->libFun = tree->libFun;
     copy->libFunDeriv = tree->libFunDeriv;
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case LIBRARYCONSTANT:
     copy->libFun = tree->libFun;
     break;
   case PROCEDUREFUNCTION:
     copy->libFunDeriv = tree->libFunDeriv;
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break;
   case CEIL:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case FLOOR:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case NEARESTINT:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case PI_CONST:
     break;
@@ -499,15 +499,15 @@ node *copyThingInner(node *tree) {
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break;			
   case WHILE:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break;				
   case IFELSE:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 				
   case IF:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 				
   case FOR:
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
@@ -515,8 +515,8 @@ node *copyThingInner(node *tree) {
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 				
   case FORIN:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     break;  				
@@ -543,33 +543,33 @@ node *copyThingInner(node *tree) {
   case NOP:
     break;
   case NOPARG:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case NEWFILEPRINT:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			
   case APPENDFILEPRINT:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 			
   case PLOT:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break;			
   case PRINTHEXA:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 
   case PRINTFLOAT:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 
   case PRINTBINARY:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			
   case PRINTEXPANSION:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case BASHEXECUTE:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			
   case EXTERNALPLOT:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
@@ -578,27 +578,27 @@ node *copyThingInner(node *tree) {
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 			
   case NEWFILEWRITE:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break;
   case APPENDFILEWRITE:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 
   case ASCIIPLOT:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break;			
   case PRINTXML:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;			
   case PRINTXMLNEWFILE:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break;			
   case PRINTXMLAPPENDFILE:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break;			
   case WORSTCASE:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
@@ -612,185 +612,185 @@ node *copyThingInner(node *tree) {
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 
   case EXTERNALPROC:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyIntPtrOnVoid);
     break;
   case ASSIGNMENT:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     break; 			
   case FLOATASSIGNMENT:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     break; 			
   case LIBRARYBINDING:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     break;  			
   case LIBRARYCONSTANTBINDING:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     break;  			
   case PRECASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			
   case POINTSASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			
   case DIAMASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;			
   case DISPLAYASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			
   case VERBOSITYASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;  		
   case CANONICALASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 		
   case AUTOSIMPLIFYASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;  		
   case SHOWMESSAGENUMBERSASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;  		
   case TAYLORRECURSASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 		
   case TIMINGASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			
   case FULLPARENASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;  		
   case MIDPOINTASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case DIEONERRORMODEASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case RATIONALMODEASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			 			
   case SUPPRESSWARNINGSASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			
   case HOPITALRECURSASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 		
   case PRECSTILLASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 		
   case POINTSSTILLASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 		
   case DIAMSTILLASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 		
   case DISPLAYSTILLASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;  		
   case VERBOSITYSTILLASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 		
   case CANONICALSTILLASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 		
   case AUTOSIMPLIFYSTILLASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;  	
   case SHOWMESSAGENUMBERSSTILLASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;  	
   case TAYLORRECURSSTILLASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 	
   case TIMINGSTILLASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 		
   case FULLPARENSTILLASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;  		
   case MIDPOINTSTILLASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case DIEONERRORMODESTILLASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;
   case RATIONALMODESTILLASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 		 		
   case SUPPRESSWARNINGSSTILLASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 		
   case HOPITALRECURSSTILLASSIGN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;  	
   case AND:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 				
   case OR:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break;				
   case NEGATION:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			
   case INDEX:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 
   case COMPAREEQUAL:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 			
   case COMPAREIN:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 			
   case COMPARELESS:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 			
   case COMPAREGREATER:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 			
   case COMPARELESSEQUAL:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 		
   case COMPAREGREATEREQUAL:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break;		
   case COMPARENOTEQUAL:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break;		
   case CONCAT:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 			
   case ADDTOLIST:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 			
   case PREPEND:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 			
   case APPEND:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 			
   case ON:
     break; 				
@@ -874,13 +874,13 @@ node *copyThingInner(node *tree) {
     strcpy(copy->string,tree->string);
     break;  	
   case STRUCTACCESS:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     break;  	
   case APPLY:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;  	
   case DECIMALCONSTANT:
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
@@ -920,23 +920,23 @@ node *copyThingInner(node *tree) {
   case ELLIPTIC:
     break; 			
   case RANGE:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 			 	
   case DEBOUNDMAX:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;  			
   case DEBOUNDMIN:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			
   case DEBOUNDMID:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			
   case EVALCONST:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			
   case DIFF:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 
   case BASHEVALUATE:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
@@ -944,24 +944,24 @@ node *copyThingInner(node *tree) {
   case GETSUPPRESSEDMESSAGES:
     break; 			 	
   case SIMPLIFY:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;  			
   case SIMPLIFYSAFE:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;  			
   case TIME:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break;  			
   case REMEZ:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 			 	
   case MATCH:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 			 	
   case MATCHELEMENT:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 			 	
   case MIN:
@@ -974,13 +974,13 @@ node *copyThingInner(node *tree) {
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 			 	
   case HORNER:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			 	
   case CANONICAL:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			
   case EXPAND:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			 	
   case TAYLOR:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
@@ -995,37 +995,37 @@ node *copyThingInner(node *tree) {
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 			 	
   case DEGREE:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			 	
   case NUMERATOR:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			
   case DENOMINATOR:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			
   case SUBSTITUTE:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break;	
   case COMPOSEPOLYNOMIALS:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break;			
   case COEFF:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 			 	
   case SUBPOLY:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 			
   case ROUNDCOEFFICIENTS:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 		
   case RATIONALAPPROX:    
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 			
   case ACCURATEINFNORM:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
@@ -1034,17 +1034,17 @@ node *copyThingInner(node *tree) {
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break;			
   case EVALUATE:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 			
   case PARSE:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			 	
   case READXML:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			 	
   case EXECUTE:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			 	
   case INFNORM:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
@@ -1053,28 +1053,28 @@ node *copyThingInner(node *tree) {
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 			
   case FINDZEROS:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 			
   case FPFINDZEROS:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 			
   case DIRTYINFNORM:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 			
   case NUMBERROOTS:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 			
   case INTEGRAL:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 			
   case DIRTYINTEGRAL:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break;  			
   case IMPLEMENTPOLY:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
@@ -1086,12 +1086,12 @@ node *copyThingInner(node *tree) {
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 			
   case ZERODENOMINATORS:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break;  		
   case ISEVALUABLE:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 			
   case SEARCHGAL:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
@@ -1106,72 +1106,72 @@ node *copyThingInner(node *tree) {
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break; 	
   case ASSIGNMENTINSTRUCTURE:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
     break; 			
   case FLOATASSIGNMENTINSTRUCTURE:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
     break; 				
   case PROTOASSIGNMENTINSTRUCTURE:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 			
   case PROTOFLOATASSIGNMENTINSTRUCTURE:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 				
   case DIRTYFINDZEROS:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     break; 			
   case HEAD:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			 	
   case ROUNDCORRECTLY:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			 	
   case READFILE:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			 	
   case REVERT:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 	
   case SORT:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			 			 	
   case MANTISSA:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			 	
   case EXPONENT:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			 	
   case PRECISION:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			 	
   case TAIL:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 			 	
   case LENGTH:
-    copy->child1 = copyThing(tree->child1);
+    copy->child1 = copyThingInner(tree->child1);
     break; 	
   case EXTERNALPROCEDUREUSAGE:
     copy->libProc = tree->libProc;
     break;
   case PROC:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
     break;
   case BIND:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     break;
   case PROCILLIM:
-    copy->child1 = copyThing(tree->child1);
-    copy->child2 = copyThing(tree->child2);
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
     break;
   case PRECDEREF:
@@ -1207,7 +1207,7 @@ node *copyThingInner(node *tree) {
   case HOPITALRECURSDEREF:
     break;  	       
   default:
-    sollyaFprintf(stderr,"Error: copyThing: unknown identifier (%d) in the tree\n",tree->nodeType);
+    sollyaFprintf(stderr,"Error: copyThingInner: unknown identifier (%d) in the tree\n",tree->nodeType);
     exit(1);
   }
 

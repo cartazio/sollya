@@ -2707,211 +2707,211 @@ node* copyTreeInner(node *tree) {
   case ADD:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = ADD;
-    copy->child1 = copyTree(tree->child1);
-    copy->child2 = copyTree(tree->child2);
+    copy->child1 = copyTreeInner(tree->child1);
+    copy->child2 = copyTreeInner(tree->child2);
     break;
   case SUB:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = SUB;
-    copy->child1 = copyTree(tree->child1);
-    copy->child2 = copyTree(tree->child2);
+    copy->child1 = copyTreeInner(tree->child1);
+    copy->child2 = copyTreeInner(tree->child2);
     break;
   case MUL:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = MUL;
-    copy->child1 = copyTree(tree->child1);
-    copy->child2 = copyTree(tree->child2);
+    copy->child1 = copyTreeInner(tree->child1);
+    copy->child2 = copyTreeInner(tree->child2);
     break;
   case DIV:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = DIV;
-    copy->child1 = copyTree(tree->child1);
-    copy->child2 = copyTree(tree->child2);
+    copy->child1 = copyTreeInner(tree->child1);
+    copy->child2 = copyTreeInner(tree->child2);
     break;
   case SQRT:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = SQRT;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case EXP:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = EXP;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case LOG:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = LOG;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case LOG_2:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = LOG_2;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case LOG_10:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = LOG_10;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case SIN:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = SIN;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case COS:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = COS;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case TAN:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = TAN;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case ASIN:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = ASIN;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case ACOS:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = ACOS;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case ATAN:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = ATAN;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case SINH:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = SINH;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case COSH:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = COSH;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case TANH:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = TANH;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case ASINH:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = ASINH;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case ACOSH:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = ACOSH;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case ATANH:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = ATANH;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case POW:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = POW;
-    copy->child1 = copyTree(tree->child1);
-    copy->child2 = copyTree(tree->child2);
+    copy->child1 = copyTreeInner(tree->child1);
+    copy->child2 = copyTreeInner(tree->child2);
     break;
   case NEG:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = NEG;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case ABS:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = ABS;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case DOUBLE:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = DOUBLE;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case SINGLE:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = SINGLE;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case QUAD:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = QUAD;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case HALFPRECISION:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = HALFPRECISION;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case DOUBLEDOUBLE:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = DOUBLEDOUBLE;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case TRIPLEDOUBLE:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = TRIPLEDOUBLE;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case ERF: 
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = ERF;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case ERFC:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = ERFC;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case LOG_1P:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = LOG_1P;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case EXP_M1:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = EXP_M1;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case DOUBLEEXTENDED:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = DOUBLEEXTENDED;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case LIBRARYFUNCTION:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = LIBRARYFUNCTION;
     copy->libFun = tree->libFun;
     copy->libFunDeriv = tree->libFunDeriv;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case PROCEDUREFUNCTION:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = PROCEDUREFUNCTION;
     copy->libFunDeriv = tree->libFunDeriv;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     copy->child2 = copyThing(tree->child2);
     break;
   case CEIL:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = CEIL;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case FLOOR:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = FLOOR;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case NEARESTINT:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = NEARESTINT;
-    copy->child1 = copyTree(tree->child1);
+    copy->child1 = copyTreeInner(tree->child1);
     break;
   case PI_CONST:
     copy = (node*) safeMalloc(sizeof(node));
@@ -2923,7 +2923,7 @@ node* copyTreeInner(node *tree) {
     copy->libFun = tree->libFun;
     break;
   default:
-    sollyaFprintf(stderr,"Error: copyTree: unknown identifier (%d) in the tree\n", tree->nodeType);
+    sollyaFprintf(stderr,"Error: copyTreeInner: unknown identifier (%d) in the tree\n", tree->nodeType);
     exit(1);
   }
   return copy;
