@@ -73,10 +73,17 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #define MAXDIFFSIMPLDEGREE 25
 
 node* addMemRef(node *tree) {
+  node *res;
+
   if (tree == NULL) return NULL;
   if (tree->nodeType == MEMREF) return tree;
-  // TODO
-  return tree;
+  
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = MEMREF;
+  res->child1 = tree;
+  res->libFunDeriv = 1;
+
+  return res;
 }
 
 node* accessThruMemRef(node *tree) {
@@ -3499,9 +3506,9 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
     if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (accessThruMemRef(simplChild2)->nodeType == CONSTANT)) {
       simplified->nodeType = CONSTANT;
       prec = 2 * tools_precision;
-      p = 2 * mpfr_get_prec(*(simplChild1->value));
+      p = 2 * mpfr_get_prec(*(accessThruMemRef(simplChild1)->value));
       if (p > prec) prec = p;
-      p = 2 * mpfr_get_prec(*(simplChild2->value));
+      p = 2 * mpfr_get_prec(*(accessThruMemRef(simplChild2)->value));
       if (p > prec) prec = p;
       prec += 10;
       if (prec > 256 * tools_precision) prec = 256 * tools_precision;
@@ -3686,9 +3693,9 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
     if ((accessThruMemRef(simplChild1)->nodeType == CONSTANT) && (accessThruMemRef(simplChild2)->nodeType == CONSTANT)) {
       simplified->nodeType = CONSTANT;
       prec = 2 * tools_precision;
-      p = 2 * mpfr_get_prec(*(simplChild1->value));
+      p = 2 * mpfr_get_prec(*(accessThruMemRef(simplChild1)->value));
       if (p > prec) prec = p;
-      p = 2 * mpfr_get_prec(*(simplChild2->value));
+      p = 2 * mpfr_get_prec(*(accessThruMemRef(simplChild2)->value));
       if (p > prec) prec = p;
       prec += 10;
       if (prec > 256 * tools_precision) prec = 256 * tools_precision;
@@ -8228,7 +8235,7 @@ int isSyntacticallyEqual(node *tree1, node *tree2) {
   if (tree1 == tree2) return 1;
 
   if (tree1->nodeType == MEMREF) return isSyntacticallyEqual(tree1->child1, tree2);
-  if (tree2->nodeType == MEMREF) return isSyntacticallyEqual(tree1, tree2->child2);
+  if (tree2->nodeType == MEMREF) return isSyntacticallyEqual(tree1, tree2->child1);
 
   if (tree1->nodeType != tree2->nodeType) return 0;
   if (tree1->nodeType == PI_CONST) return 1;

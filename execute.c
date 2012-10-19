@@ -1215,6 +1215,7 @@ node *copyThingInner(node *tree) {
 }
 
 void *deepCopyThingOnVoid(void *);
+void *deepCopyEntryOnVoid(void *);
 
 node *deepCopyThing(node *tree) {
   node *copy;
@@ -1787,7 +1788,7 @@ node *deepCopyThing(node *tree) {
     copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
     break; 	
   case STRUCTURE:
-    copy->arguments = copyChainWithoutReversal(tree->arguments, copyEntryOnVoid);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyEntryOnVoid);
     break; 			 	
   case FINALELLIPTICLIST:
     copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
@@ -2103,6 +2104,15 @@ void *copyEntryOnVoid(void *ptr) {
   copy->name = (char *) safeCalloc(strlen(((entry *) ptr)->name)+1,sizeof(char));
   strcpy(copy->name,((entry *) ptr)->name);
   copy->value = copyThing((node *) (((entry *) ptr)->value));
+  return copy;
+}
+
+void *deepCopyEntryOnVoid(void *ptr) {
+  entry *copy;
+  copy = (entry *) safeMalloc(sizeof(entry));
+  copy->name = (char *) safeCalloc(strlen(((entry *) ptr)->name)+1,sizeof(char));
+  strcpy(copy->name,((entry *) ptr)->name);
+  copy->value = deepCopyThing((node *) (((entry *) ptr)->value));
   return copy;
 }
 
@@ -6578,7 +6588,7 @@ char *sPrintThing(node *thing) {
 	} else {
 	  if (isString(thing)) {
 	    temp = (char *) safeCalloc(strlen(accessThruMemRef(thing)->string) + 1, sizeof(char));
-	    sprintf(temp,"%s",thing->string);
+	    sprintf(temp,"%s",accessThruMemRef(thing)->string);
 	    return temp;
 	  } else {
 	    return sRawPrintThing(thing);
@@ -12612,7 +12622,7 @@ void freeThing(node *tree) {
   if (tree->nodeType == MEMREF) {
     tree->libFunDeriv--;
     if (tree->libFunDeriv < 1) {
-      free_memory(tree->child1);
+      freeThing(tree->child1);
       safeFree(tree);
     } 
     return;
@@ -15222,7 +15232,7 @@ int executeProcedureInner(node **resultThing, node *proc, chain *args, int ellip
     return 0;
   }
    
-  curr = accessThruMemRef(proc)->child1->arguments;
+  curr = accessThruMemRef(accessThruMemRef(proc)->child1)->arguments;
   result = 0;
   while (curr != NULL) {
     if (isQuit((node *) (curr->value)) ||
@@ -15248,7 +15258,7 @@ int executeProcedureInner(node **resultThing, node *proc, chain *args, int ellip
     return 0;
   }
 
-  *resultThing = evaluateThing(proc->child2);
+  *resultThing = evaluateThing(accessThruMemRef(proc)->child2);
 
   declaredSymbolTable = popFrame(declaredSymbolTable,freeThingOnVoid);
   
@@ -20389,7 +20399,7 @@ node *evaluateThingInnerst(node *tree) {
     copy->child2 = evaluateThingInner(tree->child2);
     if (isList(copy->child1)) {
       if (timingString != NULL) pushTimeCounter();
-      tempChain = addElement(copyChain(copy->child1->arguments,copyThingOnVoid),copyThing(copy->child2));
+      tempChain = addElement(copyChain(accessThruMemRef(copy->child1)->arguments,copyThingOnVoid),copyThing(copy->child2));
       tempNode = makeList(copyChain(tempChain,copyThingOnVoid));
       freeChain(tempChain,freeThingOnVoid);
       freeThing(copy);
@@ -22456,7 +22466,7 @@ node *evaluateThingInnerst(node *tree) {
     tempChain = NULL;
     if (curr != NULL) {
       if (isPureList((node *) (curr->value))) {
-	tempChain = ((node *) (curr->value))->arguments;
+	tempChain = accessThruMemRef(((node *) (curr->value)))->arguments;
 	curr = tempChain;
 	while (curr != NULL) {
 	  if (!isRange((node *) (curr->value))) {
