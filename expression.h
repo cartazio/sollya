@@ -146,6 +146,41 @@ struct rangetypeStruct
   mpfr_t *b;
 };
 
+/* Two static functions needed to access indirectly memory-referenced
+   node * structs.  The functions should be inlined for maximum
+   performance. They can be static for performance as they are used
+   only internally.
+*/
+
+#define MEMREF 278
+
+void *safeMalloc (size_t);
+
+static inline node* addMemRef(node *tree) {
+  node *res;
+
+  if (tree == NULL) return NULL;
+  if (tree->nodeType == MEMREF) return tree;
+  
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = MEMREF;
+  res->child1 = tree;
+  res->libFunDeriv = 1;
+
+  return res;
+}
+
+static inline node* accessThruMemRef(node *tree) {
+  node *res;
+  if (tree == NULL) return NULL;
+  res = tree;
+  while (res->nodeType == MEMREF) {
+    res = res->child1;
+  }
+  return res;
+}
+
+/* End of the static inline functions */
 
 void printTree(node *tree);
 node* differentiate(node *tree);

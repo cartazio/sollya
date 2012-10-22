@@ -72,30 +72,6 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #define MAXDIFFSIMPLSIZE 100
 #define MAXDIFFSIMPLDEGREE 25
 
-node* addMemRef(node *tree) {
-  node *res;
-
-  if (tree == NULL) return NULL;
-  if (tree->nodeType == MEMREF) return tree;
-  
-  res = (node *) safeMalloc(sizeof(node));
-  res->nodeType = MEMREF;
-  res->child1 = tree;
-  res->libFunDeriv = 1;
-
-  return res;
-}
-
-node* accessThruMemRef(node *tree) {
-  node *res;
-  if (tree == NULL) return NULL;
-  res = tree;
-  while (res->nodeType == MEMREF) {
-    res = res->child1;
-  }
-  return res;
-}
-
 void simplifyMpfrPrec(mpfr_t rop, mpfr_t op) {
   mpz_t mant;
   mp_exp_t expo;

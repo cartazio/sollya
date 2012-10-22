@@ -294,7 +294,8 @@ extern void endBuffer(void);
 #define UNSUPPRESSMESSAGE 275
 #define GETSUPPRESSEDMESSAGES 276
 #define CHEBYSHEVFORM 277
-#define MEMREF 278
+/* Attention: #define MEMREF 278 is used elsewhere */
+
 
 int executeCommand(node *);
 
