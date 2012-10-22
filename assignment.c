@@ -251,3 +251,13 @@ chain *assignDeclaredEntry(chain *declSymTbl, char *name, void *value, void * (*
 
   return newDeclSymTbl; 
 }
+
+int performListPrependOnDeclaredEntry(chain *symTbl, char *ident, node *tree) {
+
+  return 0;
+}
+
+int performListPrependOnEntry(chain *symTbl, char *ident, node *tree) {
+
+  return 0;
+}

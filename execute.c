@@ -6768,12 +6768,35 @@ int assignThingToTable(char *identifier, node *thing) {
   return 1;
 }
 
-node *getThingFromTable(char *identifier) {
+void *returnThingOnVoid(void *ptr) {
+  return ptr;
+}
+
+/* ATTENTION: This function "eats up" its 2nd argument on success */
+int performListPrependInTable(char *ident, node *tree) {
+
+  if (containsDeclaredEntry(declaredSymbolTable, ident)) {
+    return performListPrependOnDeclaredEntry(declaredSymbolTable, ident, tree);
+  }
+
+  if (containsEntry(symbolTable, ident)) {
+    return performListPrependOnEntry(symbolTable, ident, tree);
+  }
+
+  return 0;
+}
+
+node *getThingFromTable(char *identifier, int doCopy, int *didCopy) {
   libraryFunction *tempLibraryFunction;
   libraryProcedure *tempLibraryProcedure;
   node *temp_node;
+  int myDoCopy;
+
+  myDoCopy = doCopy;
+  if (didCopy == NULL) myDoCopy = 1;
 
   if ((variablename != NULL) && (strcmp(variablename,identifier) == 0)) {
+    if (didCopy != NULL) *didCopy = 1;
     return makeVariable();
   }
 
@@ -6784,6 +6807,7 @@ node *getThingFromTable(char *identifier) {
     temp_node->libFunDeriv = 0;
     temp_node->child1 = (node *) safeMalloc(sizeof(node));
     temp_node->child1->nodeType = VARIABLE;
+    if (didCopy != NULL) *didCopy = 1;
     return temp_node;
   }
 
@@ -6791,19 +6815,32 @@ node *getThingFromTable(char *identifier) {
     temp_node = (node *) safeMalloc(sizeof(node));
     temp_node->nodeType = LIBRARYCONSTANT;
     temp_node->libFun = tempLibraryFunction;
+    if (didCopy != NULL) *didCopy = 1;
     return temp_node;
   }
 
   if ((tempLibraryProcedure = getProcedure(identifier)) != NULL) {
+    if (didCopy != NULL) *didCopy = 1;
     return makeExternalProcedureUsage(tempLibraryProcedure);
   }
 
-  if (containsDeclaredEntry(declaredSymbolTable, identifier)) 
-    return getDeclaredEntry(declaredSymbolTable, identifier, copyThingOnVoid);
+  if (containsDeclaredEntry(declaredSymbolTable, identifier)) {
+    if (myDoCopy) {
+      if (didCopy != NULL) *didCopy = 1;
+      return getDeclaredEntry(declaredSymbolTable, identifier, copyThingOnVoid);
+    }
+    if (didCopy != NULL) *didCopy = 0;
+    return getDeclaredEntry(declaredSymbolTable, identifier, returnThingOnVoid);
+  }
 
   if (!containsEntry(symbolTable, identifier)) return NULL;
 
-  return (node *) getEntry(symbolTable, identifier, copyThingOnVoid);
+  if (myDoCopy) {
+    if (didCopy != NULL) *didCopy = 1;
+    return (node *) getEntry(symbolTable, identifier, copyThingOnVoid);
+  }
+  if (didCopy != NULL) *didCopy = 0;
+  return (node *) getEntry(symbolTable, identifier, returnThingOnVoid);
 }
 
 void printExternalProcedureUsage(node *tree) {
@@ -7357,11 +7394,65 @@ int evaluateThingToEmptyList(node *tree) {
   return res;
 }
 
+
+int tryPrependOptimization(int *res, node *tree) {
+  node *tempNode, *tempNode2;
+  int didCopy;
+
+  if ((accessThruMemRef(tree)->nodeType == ASSIGNMENT) &&
+      (accessThruMemRef(accessThruMemRef(tree)->child1)->nodeType == PREPEND) &&
+      (accessThruMemRef(accessThruMemRef(accessThruMemRef(tree)->child1)->child2)->nodeType == TABLEACCESS) &&
+      (!strcmp(accessThruMemRef(tree)->string, accessThruMemRef(accessThruMemRef(accessThruMemRef(tree)->child1)->child2)->string))) {
+    didCopy = 0;
+    tempNode = getThingFromTable(accessThruMemRef(tree)->string, 0, &didCopy);
+    if (didCopy) {
+      if (tempNode != NULL) freeThing(tempNode);
+      return 0;
+    }
+    
+    if (tempNode == NULL) return 0;
+
+    if (isList(tempNode) ||
+	isFinalEllipticList(tempNode)) {
+      tempNode2 = evaluateThing(accessThruMemRef(accessThruMemRef(tree)->child1)->child1);
+      if (tempNode2 != NULL) {
+	if (performListPrependInTable(accessThruMemRef(tree)->string, tempNode2)) {
+	  *res = 0;
+	  return 1;
+	} 
+	freeThing(tempNode2);
+      }
+    }
+  }
+
+  return 0;
+}
+
+int tryOptimizedCommandExecution(int *res, node *tree) {
+  int (*optimizers[])(int *, node *) = { tryPrependOptimization, NULL };
+  int (*optimizer)(int *, node*);
+  int i, myRes;
+
+  for (i=0; optimizers[i] != NULL; i++) {
+    optimizer = optimizers[i];
+    myRes = *res;
+    if (optimizer(&myRes, tree)) {
+      *res = myRes;
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
 int executeCommandInner(node *tree);
 
 int executeCommand(node *tree) {
   int res;
   
+  if (tryOptimizedCommandExecution(&res, tree)) 
+    return res;
+
   res = executeCommandInner(tree);
 
   return res;
@@ -7742,7 +7833,7 @@ int executeCommandInner(node *tree) {
 	    result = 1;
 	    break;
 	  }
-	  tempNode2 = getThingFromTable(tree->string);
+	  tempNode2 = getThingFromTable(tree->string, 1, NULL);
 	  if (tempNode2 != NULL) {
 	    tempNode3 = makeAdd(tempNode2,makeConstant(c));
 	    resA = evaluateThingToConstant(a, tempNode3, NULL, 0, 0);
@@ -8846,7 +8937,7 @@ int executeCommandInner(node *tree) {
   case ASSIGNMENTININDEXING:
     curr = tree->arguments;
     if ((accessThruMemRef((node *) (curr->value)))->nodeType == TABLEACCESS) {
-      if ((tempNode = getThingFromTable((accessThruMemRef((node *) (curr->value)))->string)) != NULL) {
+      if ((tempNode = getThingFromTable((accessThruMemRef((node *) (curr->value)))->string, 1, NULL)) != NULL) {
 	if (isPureList(tempNode) || isPureFinalEllipticList(tempNode)) {
 	  curr = tree->arguments;
 	  curr = curr->next;
@@ -9043,7 +9134,7 @@ int executeCommandInner(node *tree) {
   case FLOATASSIGNMENTININDEXING:
     curr = tree->arguments;
     if ((accessThruMemRef((node *) (curr->value)))->nodeType == TABLEACCESS) {
-      if ((tempNode = getThingFromTable((accessThruMemRef((node *) (curr->value)))->string)) != NULL) {
+      if ((tempNode = getThingFromTable((accessThruMemRef((node *) (curr->value)))->string, 1, NULL)) != NULL) {
 	if (isPureList(tempNode) || isPureFinalEllipticList(tempNode)) {
 	  curr = tree->arguments;
 	  curr = curr->next;
@@ -9345,7 +9436,7 @@ int executeCommandInner(node *tree) {
     break; 
   case ASSIGNMENTINSTRUCTURE:
     tempNode = evaluateThing(tree->child1);
-    tempNode2 = getThingFromTable((char *) (tree->arguments->value));
+    tempNode2 = getThingFromTable((char *) (tree->arguments->value), 1, NULL);
     tempNode3 = recomputeLeftHandSideForAssignmentInStructure(tempNode2, tempNode, tree->arguments->next);
     if (tempNode3 != NULL) {
       if (!assignThingToTable((char *) (tree->arguments->value), tempNode3)) {
@@ -9409,7 +9500,7 @@ int executeCommandInner(node *tree) {
       }
       mpfr_clear(a);
     }
-    tempNode2 = getThingFromTable((char *) (tree->arguments->value));
+    tempNode2 = getThingFromTable((char *) (tree->arguments->value), 1, NULL);
     tempNode3 = recomputeLeftHandSideForAssignmentInStructure(tempNode2, tempNode, tree->arguments->next);
     if (tempNode3 != NULL) {
       if (!assignThingToTable((char *) (tree->arguments->value), tempNode3)) {
@@ -20485,7 +20576,7 @@ node *evaluateThingInnerst(node *tree) {
     break; 			 	
   case TABLEACCESS:
     if (timingString != NULL) pushTimeCounter();
-    if ((tempNode = getThingFromTable(tree->string)) == NULL) {
+    if ((tempNode = getThingFromTable(tree->string, 1, NULL)) == NULL) {
       if (variablename == NULL) {
 	variablename = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
 	strcpy(variablename, tree->string);
@@ -20502,7 +20593,7 @@ node *evaluateThingInnerst(node *tree) {
     break;  		
   case ISBOUND:
     if (timingString != NULL) pushTimeCounter();
-    if ((tempNode = getThingFromTable(tree->string)) != NULL) {
+    if ((tempNode = getThingFromTable(tree->string, 1, NULL)) != NULL) {
       freeThing(tempNode);
       tempNode = makeTrue();
     } else {
@@ -20527,7 +20618,7 @@ node *evaluateThingInnerst(node *tree) {
       variablename[2] = '_';
       undoVariableTrick = 1;
     }
-    if ((tempNode = getThingFromTable(tree->string)) == NULL) {
+    if ((tempNode = getThingFromTable(tree->string, 1, NULL)) == NULL) {
       if (undoVariableTrick) {
 	safeFree(variablename);
 	variablename = NULL;
