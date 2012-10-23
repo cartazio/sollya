@@ -166,6 +166,7 @@ static inline node* addMemRef(node *tree) {
   res->nodeType = MEMREF;
   res->child1 = tree;
   res->libFunDeriv = 1;
+  res->child2 = NULL;
 
   return res;
 }

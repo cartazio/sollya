@@ -264,12 +264,13 @@ int performListPrependOnEntry(chain *symTbl, char *ident, node *tree) {
     if (strcmp(((entry *) (curr->value))->name,ident) == 0) {
       oldNode = (node *) (((entry *) curr->value)->value);
       while (1) {
-	if (oldNode->nodeType != MEMREF) break;
+	if (oldNode->nodeType != MEMREF) break; else { oldNode->child2 = NULL; }
 	if (oldNode->libFunDeriv > 1) break;
 	oldNode = oldNode->child1;
       }
       switch (oldNode->nodeType) {
       case MEMREF:
+	oldNode->child2 = NULL;
 	if (oldNode->libFunDeriv > 1) {
 	  if ((oldNode->child1->nodeType == LIST) ||
 	      (oldNode->child1->nodeType == FINALELLIPTICLIST)) {
@@ -278,6 +279,7 @@ int performListPrependOnEntry(chain *symTbl, char *ident, node *tree) {
 	    newNode->nodeType = oldNode->child1->nodeType;
 	    newNode->arguments = newArgs;
 	    ((entry *) curr->value)->value = newNode;
+	    freeThing(oldNode);
 	    okay = 1;
 	  } else {
 	    newNode = deepCopyThing(oldNode);

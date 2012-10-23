@@ -14770,7 +14770,8 @@ int associationContainsDoubleEntries(chain *assoc) {
 int isCorrectlyTyped(node *tree) {
   chain *curr;
   
-
+  if ((tree->nodeType == MEMREF) && (tree->child2 == tree->child1)) return 1;
+ 
   if (isPureTree(tree)) return 1;
   if (isCorrectlyTypedBaseSymbol(tree)) return 1;
   if (isRange(tree)) return 1;
@@ -14805,18 +14806,26 @@ int isCorrectlyTyped(node *tree) {
 
 node *evaluateThing(node *tree) {
   node *evaluated, *tempNode;
+  int okay;
 
-  
+  okay = 1;
+
   if ((tree != NULL) && 
       (tree->nodeType == MEMREF) &&
-      isCorrectlyTyped(tree) &&
-      (!(autosimplify && (isPureTree(tree) && (treeSize(tree) < MAXAUTOSIMPLSIZE))))) {
-    return addMemRef(copyThing(tree));
+      ((tree->child2 == tree->child1) ||
+       (isCorrectlyTyped(tree) &&
+	(!(autosimplify && (isPureTree(tree) && (treeSize(tree) < MAXAUTOSIMPLSIZE))))))) {
+    evaluated = addMemRef(copyThing(tree));
+    if (evaluated->nodeType == MEMREF) {
+      evaluated->child2 = evaluated->child1;
+    }
+    return evaluated;
   }
   
   evaluated = evaluateThingInner(tree);
 
   if (!isCorrectlyTyped(evaluated)) {
+    okay = 0;
     if (accessThruMemRef(evaluated)->nodeType == ERRORSPECIAL) {
       freeThing(evaluated);
       if ((accessThruMemRef(tree)->nodeType != ERRORSPECIAL) && 
@@ -14845,6 +14854,10 @@ node *evaluateThing(node *tree) {
       printMessage(1,SOLLYA_MSG_EXPR_TOO_BIG_FOR_AUTOMATIC_SIMPLIFICATION,"Warning: the given expression is too big to be treated by the automatic simplification.\n");
     }
   } 
+
+  if (okay && (evaluated->nodeType == MEMREF)) {
+    evaluated->child2 = evaluated->child1;
+  }
 
   return evaluated;
 }
@@ -17780,7 +17793,7 @@ node *evaluateThingInner(node *tree) {
 
   if ((tree != NULL) && 
       (tree->nodeType == MEMREF) &&
-      isCorrectlyTyped(tree)) {
+      ((tree->child1 == tree->child2) || isCorrectlyTyped(tree))) {
     return addMemRef(copyThing(tree));
   }
 
