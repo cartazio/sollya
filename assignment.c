@@ -54,6 +54,7 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include "chain.h"
 #include "assignment.h"
 #include "expression.h"
+#include "execute.h"
 #include "general.h"
 
 
@@ -252,12 +253,72 @@ chain *assignDeclaredEntry(chain *declSymTbl, char *name, void *value, void * (*
   return newDeclSymTbl; 
 }
 
-int performListPrependOnDeclaredEntry(chain *symTbl, char *ident, node *tree) {
-
-  return 0;
-}
-
 int performListPrependOnEntry(chain *symTbl, char *ident, node *tree) {
+  chain *curr, *newArgs;
+  node *oldNode, *newNode;
+  int okay;
+
+  okay = 0;
+  curr = symTbl;
+  while (curr != NULL) {
+    if (strcmp(((entry *) (curr->value))->name,ident) == 0) {
+      oldNode = (node *) (((entry *) curr->value)->value);
+      while (1) {
+	if (oldNode->nodeType != MEMREF) break;
+	if (oldNode->libFunDeriv > 1) break;
+	oldNode = oldNode->child1;
+      }
+      switch (oldNode->nodeType) {
+      case MEMREF:
+	if (oldNode->libFunDeriv > 1) {
+	  if ((oldNode->child1->nodeType == LIST) ||
+	      (oldNode->child1->nodeType == FINALELLIPTICLIST)) {
+	    newArgs = addElement(copyChain(oldNode->child1->arguments, copyThingOnVoid), tree);
+	    newNode = (node *) safeMalloc(sizeof(node));
+	    newNode->nodeType = oldNode->child1->nodeType;
+	    newNode->arguments = newArgs;
+	    ((entry *) curr->value)->value = newNode;
+	    okay = 1;
+	  } else {
+	    newNode = deepCopyThing(oldNode);
+	    if ((newNode->nodeType == LIST) ||
+		(newNode->nodeType == FINALELLIPTICLIST)) {
+	      freeThing(oldNode);
+	      newNode->arguments = addElement(newNode->arguments, tree);
+	      ((entry *) curr->value)->value = newNode;
+	      okay = 1;
+	    } else {
+	      freeThing(newNode);
+	    }
+	  }
+	}
+	break;
+      case LIST:
+      case FINALELLIPTICLIST:
+	oldNode->arguments = addElement(oldNode->arguments, tree);
+	okay = 1;
+	break;
+      default:
+	okay = 0;
+	break;
+      }
+      break;
+    }
+    curr = curr->next;
+  }
+
+  return okay;
+}
+
+int performListPrependOnDeclaredEntry(chain *declSymTbl, char *name, node *tree) {
+  chain *curr;
+
+  curr = declSymTbl;
+  while (curr != NULL) {
+    if (containsEntry((chain *) (curr->value), name)) return performListPrependOnEntry((chain *) (curr->value), name, tree);
+    curr = curr->next;
+  }
 
   return 0;
 }
+

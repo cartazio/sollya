@@ -13853,7 +13853,7 @@ int isEqualThing(node *tree, node *tree2) {
   if (tree2 == NULL) return 0;
 
   if (tree == tree2) return 1;
-
+  
   if (tree->nodeType == MEMREF) {
     return isEqualThing(tree->child1, tree2);
   }
@@ -14806,6 +14806,14 @@ int isCorrectlyTyped(node *tree) {
 node *evaluateThing(node *tree) {
   node *evaluated, *tempNode;
 
+  
+  if ((tree != NULL) && 
+      (tree->nodeType == MEMREF) &&
+      isCorrectlyTyped(tree) &&
+      (!(autosimplify && (isPureTree(tree) && (treeSize(tree) < MAXAUTOSIMPLSIZE))))) {
+    return addMemRef(copyThing(tree));
+  }
+  
   evaluated = evaluateThingInner(tree);
 
   if (!isCorrectlyTyped(evaluated)) {
@@ -17770,12 +17778,19 @@ node *evaluateThingInnerst(node *);
 node *evaluateThingInner(node *tree) {
   node *res;
 
+  if ((tree != NULL) && 
+      (tree->nodeType == MEMREF) &&
+      isCorrectlyTyped(tree)) {
+    return addMemRef(copyThing(tree));
+  }
+
   res = evaluateThingInnerst(tree);
 
   if ((tree != NULL) && (res != NULL) &&
       (tree->nodeType == MEMREF) && 
+      (tree != res) && 
       isEqualThing(tree,res)) { 
-    freeThing(res);
+    freeThing(res);    
     res = copyThing(tree);
   }
 

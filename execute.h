@@ -300,6 +300,7 @@ extern void endBuffer(void);
 int executeCommand(node *);
 
 node *copyThing(node *);
+node *deepCopyThing(node *);
 void *copyThingOnVoid(void *);
 void freeThing(node *);
 void rawPrintThing(node *);
