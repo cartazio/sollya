@@ -335,13 +335,12 @@ int performListTailOnEntry(chain *symTbl, char *ident) {
     if (strcmp(((entry *) (curr->value))->name,ident) == 0) {
       oldNode = (node *) (((entry *) curr->value)->value);
       while (1) {
-	if (oldNode->nodeType != MEMREF) break; else { oldNode->child2 = NULL; }
+	if (oldNode->nodeType != MEMREF) break; 
 	if (oldNode->libFunDeriv > 1) break;
 	oldNode = oldNode->child1;
       }
       switch (oldNode->nodeType) {
       case MEMREF:
-	oldNode->child2 = NULL;
 	if (oldNode->libFunDeriv > 1) {
 	  if (((oldNode->child1->nodeType == LIST) ||
 	       (oldNode->child1->nodeType == FINALELLIPTICLIST)) && 
