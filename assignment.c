@@ -324,3 +324,91 @@ int performListPrependOnDeclaredEntry(chain *declSymTbl, char *name, node *tree)
   return 0;
 }
 
+int performListTailOnEntry(chain *symTbl, char *ident) {
+  chain *curr, *newArgs;
+  node *oldNode, *newNode;
+  int okay;
+
+  okay = 0;
+  curr = symTbl;
+  while (curr != NULL) {
+    if (strcmp(((entry *) (curr->value))->name,ident) == 0) {
+      oldNode = (node *) (((entry *) curr->value)->value);
+      while (1) {
+	if (oldNode->nodeType != MEMREF) break; else { oldNode->child2 = NULL; }
+	if (oldNode->libFunDeriv > 1) break;
+	oldNode = oldNode->child1;
+      }
+      switch (oldNode->nodeType) {
+      case MEMREF:
+	oldNode->child2 = NULL;
+	if (oldNode->libFunDeriv > 1) {
+	  if (((oldNode->child1->nodeType == LIST) ||
+	       (oldNode->child1->nodeType == FINALELLIPTICLIST)) && 
+	      ((oldNode->child1->arguments != NULL) && 
+	       (oldNode->child1->arguments->next != NULL) &&
+	       (oldNode->child1->arguments->next != NULL))) {
+	    newArgs = copyChain(oldNode->child1->arguments->next, copyThingOnVoid);
+	    newNode = (node *) safeMalloc(sizeof(node));
+	    newNode->nodeType = oldNode->child1->nodeType;
+	    newNode->arguments = newArgs;
+	    ((entry *) curr->value)->value = newNode;
+	    freeThing(oldNode);
+	    okay = 1;
+	  } else {
+	    newNode = deepCopyThing(oldNode);
+	    if (((newNode->nodeType == LIST) ||
+		 (newNode->nodeType == FINALELLIPTICLIST)) && 
+		((oldNode->child1->arguments != NULL) && 
+		 (oldNode->child1->arguments->next != NULL) &&
+		 (oldNode->child1->arguments->next->next != NULL))) {
+	      freeThing(oldNode);
+	      freeThing((node *) (newNode->arguments->value));
+	      newArgs = newNode->arguments->next;
+	      safeFree(newNode->arguments);
+	      newNode->arguments = newArgs;
+	      ((entry *) curr->value)->value = newNode;
+	      okay = 1;
+	    } else {
+	      freeThing(newNode);
+	    }
+	  }
+	}
+	break;
+      case LIST:
+      case FINALELLIPTICLIST:
+	if ((oldNode->arguments != NULL) &&
+	    (oldNode->arguments->next != NULL) &&
+	    (oldNode->arguments->next->next != NULL)) {
+	  freeThing((node *) (oldNode->arguments->value));
+	  newArgs = oldNode->arguments->next;
+	  safeFree(oldNode->arguments);
+	  oldNode->arguments = newArgs;
+	  okay = 1;
+	} else {
+	  okay = 0;
+	}
+	break;
+      default:
+	okay = 0;
+	break;
+      }
+      break;
+    }
+    curr = curr->next;
+  }
+
+  return okay;
+}
+
+int performListTailOnDeclaredEntry(chain *declSymTbl, char *name) {
+  chain *curr;
+
+  curr = declSymTbl;
+  while (curr != NULL) {
+    if (containsEntry((chain *) (curr->value), name)) return performListTailOnEntry((chain *) (curr->value), name);
+    curr = curr->next;
+  }
+
+  return 0;
+}

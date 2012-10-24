@@ -6786,6 +6786,19 @@ int performListPrependInTable(char *ident, node *tree) {
   return 0;
 }
 
+int performListTailInTable(char *ident) {
+
+  if (containsDeclaredEntry(declaredSymbolTable, ident)) {
+    return performListTailOnDeclaredEntry(declaredSymbolTable, ident);
+  }
+
+  if (containsEntry(symbolTable, ident)) {
+    return performListTailOnEntry(symbolTable, ident);
+  }
+
+  return 0;
+}
+
 node *getThingFromTable(char *identifier, int doCopy, int *didCopy) {
   libraryFunction *tempLibraryFunction;
   libraryProcedure *tempLibraryProcedure;
@@ -7428,8 +7441,41 @@ int tryPrependOptimization(int *res, node *tree) {
   return 0;
 }
 
+int tryTailOptimization(int *res, node *tree) {
+  node *tempNode, *tempNode2;
+  int didCopy;
+
+  if ((accessThruMemRef(tree)->nodeType == ASSIGNMENT) &&
+      (accessThruMemRef(accessThruMemRef(tree)->child1)->nodeType == TAIL) &&
+      (accessThruMemRef(accessThruMemRef(accessThruMemRef(tree)->child1)->child1)->nodeType == TABLEACCESS) &&
+      (!strcmp(accessThruMemRef(tree)->string, accessThruMemRef(accessThruMemRef(accessThruMemRef(tree)->child1)->child1)->string))) {
+    didCopy = 0;
+    tempNode = getThingFromTable(accessThruMemRef(tree)->string, 0, &didCopy);
+    if (didCopy) {
+      if (tempNode != NULL) freeThing(tempNode);
+      return 0;
+    }
+    
+    if (tempNode == NULL) return 0;
+
+    if ((isList(tempNode) ||
+	 isFinalEllipticList(tempNode)) && 
+	((accessThruMemRef(tempNode)->arguments != NULL) &&
+	 (accessThruMemRef(tempNode)->arguments->next != NULL) &&
+	 (accessThruMemRef(tempNode)->arguments->next->next != NULL))) {
+      if (performListTailInTable(accessThruMemRef(tree)->string)) {
+	*res = 0;
+	return 1;
+      } 
+    }
+  }
+ 
+  return 0;
+}
+
+
 int tryOptimizedCommandExecution(int *res, node *tree) {
-  int (*optimizers[])(int *, node *) = { tryPrependOptimization, NULL };
+  int (*optimizers[])(int *, node *) = { tryPrependOptimization, tryTailOptimization, NULL };
   int (*optimizer)(int *, node*);
   int i, myRes;
 
