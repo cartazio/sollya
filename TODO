@@ -1,21 +1,189 @@
-- Ecrire la doc de la lib (et concevoir un mécanisme pour maintenir cette doc facilement)
-- Tester la lib à fond et automatiquement
-- Contacter Mioara : chebModels
-- Réfléchir à lister les choses à surtout ne pas oublier quand on mergera le tronc et la branche bibliothèque avec la branche de Mioara.
-- Faire un calendrier
-- Traiter les bugs traitables
+LIBSOLLYA
+=========
+* Still many function to test in the lib (cf. below).
+   int sollya_lib_init();
+   int sollya_lib_init_with_custom_memory_functions(void *(*custom_malloc)(size_t), void *(*custom_calloc)(size_t, size_t), void *(*custom_realloc)(void *, size_t), void (*custom_free)(void *), void *(*custom_realloc_with_size)(void *, size_t, size_t), void (*custom_free_with_size)(void *, size_t));
+   int sollya_lib_close();
+   int sollya_lib_install_msg_callback(int (*) (int));
+   int sollya_lib_uninstall_msg_callback();
+   int (*sollya_lib_get_msg_callback())(int);
+   char *sollya_lib_msg_number_to_text(int);
+   sollya_obj_t sollya_lib_copy_obj(sollya_obj_t);
+   void sollya_lib_plot(sollya_obj_t, sollya_obj_t, ...);
+   void sollya_lib_v_plot(sollya_obj_t, sollya_obj_t, va_list);
+   void sollya_lib_implementconst(sollya_obj_t, ...);
+   void sollya_lib_v_implementconst(sollya_obj_t, va_list);
+   void sollya_lib_externalplot(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
+   void sollya_lib_v_externalplot(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
+   void sollya_lib_printxml(sollya_obj_t);
+   void sollya_lib_printxml_newfile(sollya_obj_t, sollya_obj_t);
+   void sollya_lib_printxml_appendfile(sollya_obj_t, sollya_obj_t);
+   void sollya_lib_worstcase(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
+   void sollya_lib_v_worstcase(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
+   void sollya_lib_autoprint(sollya_obj_t, ...);
+   void sollya_lib_v_autoprint(sollya_obj_t, va_list);
+   void sollya_lib_suppressmessage(sollya_obj_t, ...);
+   void sollya_lib_v_suppressmessage(sollya_obj_t, va_list);
+   void sollya_lib_unsuppressmessage(sollya_obj_t, ...);
+   void sollya_lib_v_unsuppressmessage(sollya_obj_t, va_list);
+   sollya_obj_t sollya_lib_apply(sollya_obj_t, sollya_obj_t, ...);
+   sollya_obj_t sollya_lib_v_apply(sollya_obj_t, sollya_obj_t, va_list);
+   sollya_obj_t sollya_lib_approx(sollya_obj_t);
+   sollya_obj_t sollya_lib_bashevaluate(sollya_obj_t, ...);
+   sollya_obj_t sollya_lib_v_bashevaluate(sollya_obj_t, va_list);
+   sollya_obj_t sollya_lib_getsuppressedmessages();
+   sollya_obj_t sollya_lib_taylor(sollya_obj_t, sollya_obj_t, sollya_obj_t);
+   sollya_obj_t sollya_lib_taylorform(sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
+   sollya_obj_t sollya_lib_v_taylorform(sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
+   sollya_obj_t sollya_lib_autodiff(sollya_obj_t, sollya_obj_t, sollya_obj_t);
+   sollya_obj_t sollya_lib_composepolynomials(sollya_obj_t, sollya_obj_t);
+   sollya_obj_t sollya_lib_evaluate(sollya_obj_t, sollya_obj_t);
+   sollya_obj_t sollya_lib_parse(sollya_obj_t);
+   sollya_obj_t sollya_lib_readxml(sollya_obj_t);
+   sollya_obj_t sollya_lib_infnorm(sollya_obj_t, sollya_obj_t, ...);
+   sollya_obj_t sollya_lib_v_infnorm(sollya_obj_t, sollya_obj_t, va_list);
+   sollya_obj_t sollya_lib_supnorm(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t);
+   sollya_obj_t sollya_lib_findzeros(sollya_obj_t, sollya_obj_t);
+   sollya_obj_t sollya_lib_zerodenominators(sollya_obj_t, sollya_obj_t);
+   sollya_obj_t sollya_lib_guessdegree(sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
+   sollya_obj_t sollya_lib_v_guessdegree(sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
+   sollya_obj_t sollya_lib_dirtyfindzeros(sollya_obj_t, sollya_obj_t);
+   sollya_obj_t sollya_lib_roundcorrectly(sollya_obj_t);
+   sollya_obj_t sollya_lib_range(sollya_obj_t, sollya_obj_t);
+   sollya_obj_t sollya_lib_parse_string(const char *);
+   int sollya_lib_get_function_arity(int *, sollya_obj_t);
+   int sollya_lib_get_head_function(sollya_base_function_t *, sollya_obj_t);
+   int sollya_lib_get_subfunctions(sollya_obj_t, int *, ...);
+   int sollya_lib_v_get_subfunctions(sollya_obj_t, int *, va_list);
+   int sollya_lib_decompose_function(sollya_obj_t, sollya_base_function_t *, int *, ...);
+   ia_eval_result_t sollya_lib_evaluate_function_over_interval(mpfi_t, sollya_obj_t, mpfi_t);
+   sollya_obj_t sollya_lib_list(sollya_obj_t[], int);
+   sollya_obj_t sollya_lib_end_elliptic_list(sollya_obj_t[], int);
+   int sollya_lib_get_list_elements(sollya_obj_t **, int *, int *, sollya_obj_t);
+   sollya_obj_t sollya_lib_build_list(sollya_obj_t, ...);
+   sollya_obj_t sollya_lib_build_end_elliptic_list(sollya_obj_t, ...);
+   sollya_obj_t sollya_lib_v_build_list(va_list);
+   sollya_obj_t sollya_lib_v_build_end_elliptic_list(va_list);
+   int sollya_lib_printf(const char *, ...);
+   int sollya_lib_v_printf(const char *, va_list);
+   int sollya_lib_fprintf(FILE *, const char *, ...);
+   int sollya_lib_v_fprintf(FILE *, const char *, va_list);
+   int sollya_lib_get_constant_as_int(int *, sollya_obj_t);
+   int sollya_lib_get_constant_as_int64(int64_t *, sollya_obj_t);
+   int sollya_lib_get_constant_as_uint64(uint64_t *, sollya_obj_t);
+   int sollya_lib_get_constant(mpfr_t, sollya_obj_t);
+   int sollya_lib_get_prec_of_constant(mp_prec_t *, sollya_obj_t);
+   sollya_obj_t sollya_lib_checkinfnorm(sollya_obj_t, sollya_obj_t, sollya_obj_t);
+   sollya_obj_t sollya_lib_concat(sollya_obj_t, sollya_obj_t);
+   sollya_obj_t sollya_lib_append(sollya_obj_t, sollya_obj_t);
+   sollya_obj_t sollya_lib_prepend(sollya_obj_t, sollya_obj_t);
+   sollya_obj_t sollya_lib_diff(sollya_obj_t);
+   sollya_obj_t sollya_lib_simplify(sollya_obj_t);
+   sollya_obj_t sollya_lib_round(sollya_obj_t, sollya_obj_t, sollya_obj_t);
+   sollya_obj_t sollya_lib_rationalapprox(sollya_obj_t, sollya_obj_t);
 
-- Continuer la réflexion sur safeMalloc qui push le pointeur pour gérer les interruptions.
-- Idem sur les mécanismes d'installation des malloc Maple/Sollya/... 
+~> notice that some of them are used through examples in the doc. It would be useful to test that examples of code in the doc compile and work anyway.
 
-- vérifier qu'on a un texte d'aide pour chaque mot clef, en compilant avec CFLAGS=-DWARN_IF_NO_HELP_TEXT=1
-- mettre à jour la documentation de externalproc en se servant de la documentation que j'ai mise dans le fichier externalproc.c (le fichier exemple)
-- tester les externalproc avec le nouveau sollya.h
-- vérifier que la liste des commandes affichée par help help; est complète. 
-- retester les cas de plot et remez où des recoverFromError ont été transformé en autre chose
+* Check that we did not forget to document and test a function of the lib.
 
-- ITERER SUR L'IMPLEMENTATION DE LA BIBLIOTHEQUE UNE FOIS LES TESTS FAITS
 
-- documenter et tester la désactivation des numéros de message, la réactivation et le calcul de la liste des messages
-- documenter et tester le mode showmessagenumbers
+CHEBMODELS
+==========
+* Is the chebmodels branch still useful? If not, remove it. Otherwise, merge whatever needed into the trunk and close it.
+* Are chebmodels finished (support for extraterrestrial things such as externalfunctions and procedure functions for instance, documentation, tests in tool and lib form, memory leaks)? If not, finish them.
 
+
+DOCUMENTATION
+=============
+* Check that the doc is up-to-date with respect to all new features. (compile with CFLAGS=-DWARN_IF_NO_HELP_TEXT=1)
+* Check that help help actually displays all commands
+* Update the doc of externalproc with the doc contained in externalproc.c
+* Document and test the activation/deactivation mechanism for message numbers and the computation of the list of messages.
+* Document and test showmessagenumbers.
+* Read the documentation of the library, looking for typos or errors, especially the part about message callbacks and about custom memory allocation, that have been less read.
+* Marc suggests that we replace the term 'overload' by 'wrap' or something like that at several places in the doc of the library. I am not sure to be convinced by the term 'wrap', but the remark should be examined anyway.
+
+BUGS
+====
+* Remove all possible bugs from the tracker.
+* At rev 1145, Mioara corrected a bug in her branch. The bug was previously invisible because it concerned a parameter not used by taylorform. However, Mioara detected it because she uses this parameter in chebforms. No non-regression test was added, because we expect that the test for chebforms would actually detect a possible regression. This must confirmed though.
+* If not already done, we should open and immediately close bug reports in the tracker corresponding to the following bugs, just to keep a trace of them:
+
+  > time({r=4; a=dirtyinfnorm( 4^(1/2)*x, [0,1]);});
+  8.1869520000000000001239008895481674699112772941589
+  > time({r=4; a=dirtyinfnorm( 3^(1/2)*x, [0,1]);});
+  8.7619999999999999994908586598008071177901001647114e-2
+~> bug appearing when using a version of MPFR older than rev 6964 of MPFR
+
+  check021 fails when Sollya is compiled against a version of MPFI between revisions 560 and 610 of MPFI. This comes from a bug in mpfi_sub_fr ~> there is probably a possibility to write a very small example exhbiting the bug.
+
+* On September 24, Christoph sent me a message exhibiting an unusual behavior of supnorm on some polynomial. Unfortunately, he did not give me the full polynomial. It would be great to investigate this possible issue.
+
+* tget_constant_as_double, tevaluate_function_at_point and  tevaluate_function_at_constant_expression fail on some architectures because a double containing nan is sometimes displayed -nan and sometimes displayed nan. It is just a matter of changing the tests.
+
+OTHER
+=====
+* Check that externalproc is compatible with the new sollya.h
+* Check the cases where there used to be instances of recoverFromError in plot and remez.
+* Since there are '#undef malloc' and  '#undef realloc' in the beginning of fpminimax.cpp, we must check that all allocations (even those performed by new in C++) use our allocation mechanisme (S.C. : I am very confident about it)
+* Remove remaining printf and sollyaPrintf where there remains some (especially in chebyshevformaux.c)
+* Type sollya_fp_result_t: we agreed on implementing bit masks also for this type. That should be made and documented.
+* Take a decision regarding a possible change of the interface in order to anticipate a future thread-safe version of the library. ~> My opinion is that it is OK as it is now.
+
+
+REMARKS BY MARC
+===============
+* tests-lib/tdirtyinfnorm fails with the following symptom:
+   ~/co/sollya/tests-lib:master$ ./tdirtyinfnorm >> tdirtyinfnorm.out
+   ~/co/sollya/tests-lib:master$ diff tdirtyinfnorm.out
+   tdirtyinfnorm.reference
+   --- tdirtyinfnorm.out   2012-04-24 11:56:51.778891038 +0200
+   +++ tdirtyinfnorm.reference     2012-04-24 11:43:04.813072219 +0200
+   @@ -12,4 +12,4 @@
+    The supremum norm of (x *
+   (0.99999999999999999999999999999999908323530393468421 + x *
+   (-1.14302316528809189404457361995303320487336809673976e-44 + x *
+   (-0.166666666666666666666666666664292972879597202374378 + x *
+   (9.5601140982270758492207769336658477077007554855463e-42 + x *
+   (8.3333333333333333333333323214264721620111596114916e-3 + x *
+   (-2.2377939912030659173629711115719680887705991611857e-39 + x *
+   (-1.9841269841269841269824659173119877565681204532896e-4 + x *
+   (2.24865836934590132880269288275640133234396440501576e-37 + x *
+   (2.7557319223985890515953712163447242555321214934171e-6 + x *
+   (-1.1343913635639461254302859987281981461777400794316e-35 + x *
+   (-2.5052108385441087663023971063646650343167091577598e-8 + x *
+   (3.0073943688622944968877363969210867752815130187257e-34 + x *
+   (1.6059043835108719379815182472118993314230836845702e-10 + x *
+   (-3.994809698914921234468404690189078249939809331055e-33 + x *
+   (-7.647161022137143286562253998116875258600087702817e-13 + x *
+   (2.09273754689121846678056735214536188043407303114207e-32 + x *
+   2.80914544325776998536771168719244002653494297813085e-15)))))))))))))))))
+   / sin(x) - 1 over [-0.25;0.25] gets approximated with dirtyinfnorm by
+   9.1676469614104300015620761385985609232623740102336e-34
+    Caught message: the domain is reduced to a point.
+    The supremum norm of exp(x) over [2;2] gets approximated with
+   dirtyinfnorm by 7.3890560989306502272304274605750078131803155705518
+   -The supremum norm of (-5 * x^2 + 5) * cos(x * 10000) over [-1;1] gets
+   approximated with dirtyinfnorm by
+   4.9967622763410190676720401076054287090788013130522
+   +The supremum norm of (-5 * x^2 + 5) * cos(x * 10000) over [-1;1] gets
+   approximated with dirtyinfnorm by
+   4.999494676264771721054812570807514588615934099212
+
+* I think that we agreed on Marc's remark about adding a (void *) argument to callback. If I remember well, this is for allowing developers to pass information to the callback, and I think we agreed on this change. This should be implemented and tested.
+
+* I do not remember what we decided about these remarks:
+   - It is weird to have sollya_lib_get_element_in_structure() but no sollya_lib_get_element_in_list().
+      ~> I believe that this is a question of efficiency, but what did we finally decide?
+
+  - It could be useful to have analogues of both (previous) functions, without copy: this would allow an easy access to subexpressions.
+      ~> I believe that we agreed on ignoring that remark, but I am not 100% sure.
+
+
+
+LONG-TERM TODOS (not for Sollya 4.0 (?))
+========================================
+* Provide a true interruption mechanism, with automatic freeing of the memory allocated by safeMalloc, etc.
+* Optimize memory management, especially for list operations (and do not forget to add non-regression tests in timecheck).
+* Multivariate coeff command.
+* Write down somewhere the list of all global variables of the tool together with their default value.

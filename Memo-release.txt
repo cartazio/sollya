@@ -14,7 +14,7 @@ When the release seems ready:
   * Generate the Changelog file, and the human-readable NEWS file.
   * Build the release. Try to install it and test it on several architectures (especially cygwin).
   * Put it online and make announcements.
-
+  * Create an entry in history.php for the new release.
 
 
 
