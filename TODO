@@ -101,7 +101,7 @@ DOCUMENTATION
 * Document and test the activation/deactivation mechanism for message numbers and the computation of the list of messages.
 * Document and test showmessagenumbers.
 * Read the documentation of the library, looking for typos or errors, especially the part about message callbacks and about custom memory allocation, that have been less read.
-* Marc suggests that we replace the term 'overload' by 'wrap' or something like that at several places in the doc of the library. I am not sure to be convinced by the term 'wrap', but the remark should be examined anyway.
+
 
 BUGS
 ====
@@ -170,15 +170,18 @@ REMARKS BY MARC
    approximated with dirtyinfnorm by
    4.999494676264771721054812570807514588615934099212
 
-* I think that we agreed on Marc's remark about adding a (void *) argument to callback. If I remember well, this is for allowing developers to pass information to the callback, and I think we agreed on this change. This should be implemented and tested.
+* I think that we agreed on Marc's remark about adding a (void *) argument to callback. If I remember well, this is for allowing developers to pass information to the callback, and I think we agreed on this change. This should be tested.
 
 * I do not remember what we decided about these remarks:
    - It is weird to have sollya_lib_get_element_in_structure() but no sollya_lib_get_element_in_list().
       ~> I believe that this is a question of efficiency, but what did we finally decide?
 
+      This has been implemented and should be documented and tested.
+
   - It could be useful to have analogues of both (previous) functions, without copy: this would allow an easy access to subexpressions.
       ~> I believe that we agreed on ignoring that remark, but I am not 100% sure.
 
+      Yes, we will ignore that.
 
 
 LONG-TERM TODOS (not for Sollya 4.0 (?))
@@ -187,3 +190,4 @@ LONG-TERM TODOS (not for Sollya 4.0 (?))
 * Optimize memory management, especially for list operations (and do not forget to add non-regression tests in timecheck).
 * Multivariate coeff command.
 * Write down somewhere the list of all global variables of the tool together with their default value.
+
