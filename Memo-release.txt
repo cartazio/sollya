@@ -1,5 +1,6 @@
 Before even thinking of performing the release:
   * Close bugs that can be closed.
+  * Compile with flags -Wall and -Wextra (and also -ansi -pedantic) and check that there is no warning. Otherwise, do the appropriate corrections.
   * Check that all modifications have been reported in the documenation.
   * Check that all new feature has a library version if needed and has a shlp if needed (with a #LIBRARYNAME if needed) and an entry in the 'help help' list.
   * Compile with verbose options and check that no warning remains.
@@ -15,6 +16,3 @@ When the release seems ready:
   * Build the release. Try to install it and test it on several architectures (especially cygwin).
   * Put it online and make announcements.
   * Create an entry in history.php for the new release.
-
-
-
