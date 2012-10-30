@@ -184,6 +184,10 @@ REMARKS BY MARC
       Yes, we will ignore that.
 
 
+* Sollya is compiled with debug symbols or not?
+
+
+
 LONG-TERM TODOS (not for Sollya 4.0 (?))
 ========================================
 * Provide a true interruption mechanism, with automatic freeing of the memory allocated by safeMalloc, etc.
