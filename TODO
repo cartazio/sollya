@@ -64,12 +64,12 @@ LIBSOLLYA
    sollya_obj_t sollya_lib_build_end_elliptic_list(sollya_obj_t, ...);
    sollya_obj_t sollya_lib_v_build_list(va_list);
    sollya_obj_t sollya_lib_v_build_end_elliptic_list(va_list);
-   int sollya_lib_printf(const char *, ...);
-   int sollya_lib_v_printf(const char *, va_list);
-   int sollya_lib_fprintf(FILE *, const char *, ...);
-   int sollya_lib_v_fprintf(FILE *, const char *, va_list);
-   int sollya_lib_sprintf(char *, const char *, ...);  
-   int sollya_lib_v_sprintf(char *, const char *, va_list);  
+   int sollya_lib_printf(const char *, ...);                                     WHEN TESTING THE PRINTF FAMILY, TEST THE RETURN VALUE THOROUGLY
+   int sollya_lib_v_printf(const char *, va_list);                               IN PARTICULAR FOR THE SPRINTF AND SNPRINTF FUNCTIONS.
+   int sollya_lib_fprintf(FILE *, const char *, ...);                            TESTING MUST ALSO BE DONE FOR COMBINATIONS OF FORMAT INDICATORS
+   int sollya_lib_v_fprintf(FILE *, const char *, va_list);                      (E.G. "%b%d%.45e") AS THE RETURN VALUE MUST BE THE SUM OF
+   int sollya_lib_sprintf(char *, const char *, ...);                            RETURN VALUES OF SEVERAL RECURSIVE CALLS.
+   int sollya_lib_v_sprintf(char *, const char *, va_list);                      PLEASE PAY ATTENTION TO %n CONVERSIONS, TOO.
    int sollya_lib_snprintf(char *, size_t, const char *, ...);  
    int sollya_lib_v_snprintf(char *, size_t, const char *, va_list);  
    int sollya_lib_get_constant_as_int(int *, sollya_obj_t);
