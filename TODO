@@ -70,8 +70,8 @@ LIBSOLLYA
    int sollya_lib_v_fprintf(FILE *, const char *, va_list);                      (E.G. "%b%d%.45e%.*v") AS THE RETURN VALUE MUST BE THE SUM OF
    int sollya_lib_sprintf(char *, const char *, ...);                            RETURN VALUES OF SEVERAL RECURSIVE CALLS.
    int sollya_lib_v_sprintf(char *, const char *, va_list);                      PLEASE PAY ATTENTION TO %n CONVERSIONS, TOO.
-   int sollya_lib_snprintf(char *, size_t, const char *, ...);  
-   int sollya_lib_v_snprintf(char *, size_t, const char *, va_list);  
+   int sollya_lib_snprintf(char *, size_t, const char *, ...);
+   int sollya_lib_v_snprintf(char *, size_t, const char *, va_list);
    int sollya_lib_get_constant_as_int(int *, sollya_obj_t);
    int sollya_lib_get_constant_as_int64(int64_t *, sollya_obj_t);
    int sollya_lib_get_constant_as_uint64(uint64_t *, sollya_obj_t);
@@ -105,7 +105,7 @@ DOCUMENTATION
 * Document and test the activation/deactivation mechanism for message numbers and the computation of the list of messages.
 * Document and test showmessagenumbers.
 * Read the documentation of the library, looking for typos or errors, especially the part about message callbacks and about custom memory allocation, that have been less read.
-
+* Document sprintf and snprintf.
 
 BUGS
 ====
