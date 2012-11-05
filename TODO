@@ -96,6 +96,7 @@ LIBSOLLYA
 ~> notice that some of them are used through examples in the doc. It would be useful to test that examples of code in the doc compile and work anyway.
 
 * Check that we did not forget to document and test a function of the lib.
+  ~> S.C. : sollya_lib_apply for instance is nowhere explained.
 
 
 CHEBMODELS
