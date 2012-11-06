@@ -78,10 +78,10 @@ LIBSOLLYA
    int sollya_lib_get_constant(mpfr_t, sollya_obj_t);
    int sollya_lib_get_prec_of_constant(mp_prec_t *, sollya_obj_t);
    sollya_obj_t sollya_lib_checkinfnorm(sollya_obj_t, sollya_obj_t, sollya_obj_t);
-   sollya_obj_t sollya_lib_concat(sollya_obj_t, sollya_obj_t);
-   sollya_obj_t sollya_lib_append(sollya_obj_t, sollya_obj_t);
-   sollya_obj_t sollya_lib_prepend(sollya_obj_t, sollya_obj_t);
-   sollya_obj_t sollya_lib_diff(sollya_obj_t);
+   CQL sollya_obj_t sollya_lib_concat(sollya_obj_t, sollya_obj_t);
+   CQL sollya_obj_t sollya_lib_append(sollya_obj_t, sollya_obj_t);
+   CQL sollya_obj_t sollya_lib_prepend(sollya_obj_t, sollya_obj_t);
+   CQL sollya_obj_t sollya_lib_diff(sollya_obj_t);
    sollya_obj_t sollya_lib_simplify(sollya_obj_t);
    sollya_obj_t sollya_lib_round(sollya_obj_t, sollya_obj_t, sollya_obj_t);
    sollya_obj_t sollya_lib_rationalapprox(sollya_obj_t, sollya_obj_t);
