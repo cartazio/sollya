@@ -72,9 +72,6 @@ LIBSOLLYA
    int sollya_lib_v_sprintf(char *, const char *, va_list);                      PLEASE PAY ATTENTION TO %n CONVERSIONS, TOO.
    int sollya_lib_snprintf(char *, size_t, const char *, ...);
    int sollya_lib_v_snprintf(char *, size_t, const char *, va_list);
-   int sollya_lib_get_constant_as_int(int *, sollya_obj_t);
-   int sollya_lib_get_constant_as_int64(int64_t *, sollya_obj_t);
-   int sollya_lib_get_constant_as_uint64(uint64_t *, sollya_obj_t);
    int sollya_lib_get_constant(mpfr_t, sollya_obj_t);
    int sollya_lib_get_prec_of_constant(mp_prec_t *, sollya_obj_t);
    sollya_obj_t sollya_lib_round(sollya_obj_t, sollya_obj_t, sollya_obj_t);
@@ -84,6 +81,10 @@ LIBSOLLYA
    sollya_obj_t sollya_lib_build_function_libraryconstant(char *, void (*)(mpfr_t, mp_prec_t));
    sollya_obj_t sollya_lib_build_function_libraryfunction(sollya_obj_t, char *, int (*)(mpfi_t, mpfi_t, int));
    sollya_obj_t sollya_lib_build_function_procedurefunction(sollya_obj_t, sollya_obj_t);
+
+   SEEMS TO BE DONE int sollya_lib_get_constant_as_int(int *, sollya_obj_t);                     
+   SEEMS TO BE DONE int sollya_lib_get_constant_as_int64(int64_t *, sollya_obj_t);
+   SEEMS TO BE DONE int sollya_lib_get_constant_as_uint64(uint64_t *, sollya_obj_t);
 
 
 ~> notice that some of them are used through examples in the doc. It would be useful to test that examples of code in the doc compile and work anyway.
