@@ -110,8 +110,8 @@ DOCUMENTATION
 * Check that the doc is up-to-date with respect to all new features. (compile with CFLAGS=-DWARN_IF_NO_HELP_TEXT=1)
 * Check that help help actually displays all commands
 * Update the doc of externalproc with the doc contained in externalproc.c
-* Document and test the activation/deactivation mechanism for message numbers and the computation of the list of messages.
-* Document and test showmessagenumbers.
+* Document and test the activation/deactivation mechanism for message numbers and the computation of the list of messages. DOCUMENTED by CQL
+* Document and test showmessagenumbers. DOCUMENTED by CQL
 * Read the documentation of the library, looking for typos or errors, especially the part about message callbacks and about custom memory allocation, that have been less read.
 * Document sprintf and snprintf.
 
@@ -131,7 +131,7 @@ BUGS
 
 * On September 24, Christoph sent me a message exhibiting an unusual behavior of supnorm on some polynomial. Unfortunately, he did not give me the full polynomial. It would be great to investigate this possible issue.
 
-* tget_constant_as_double, tevaluate_function_at_point and  tevaluate_function_at_constant_expression fail on some architectures because a double containing nan is sometimes displayed -nan and sometimes displayed nan. It is just a matter of changing the tests.
+* DONE (by CQL): tget_constant_as_double, tevaluate_function_at_point and  tevaluate_function_at_constant_expression fail on some architectures because a double containing nan is sometimes displayed -nan and sometimes displayed nan. It is just a matter of changing the tests. 
 
 OTHER
 =====
@@ -182,7 +182,7 @@ REMARKS BY MARC
    approximated with dirtyinfnorm by
    4.999494676264771721054812570807514588615934099212
 
-* I think that we agreed on Marc's remark about adding a (void *) argument to callback. If I remember well, this is for allowing developers to pass information to the callback, and I think we agreed on this change. This should be tested.
+* I think that we agreed on Marc's remark about adding a (void *) argument to callback. If I remember well, this is for allowing developers to pass information to the callback, and I think we agreed on this change. This should be tested. IMPLEMENTATION DONE by CQL.
 
 * I do not remember what we decided about these remarks:
    - It is weird to have sollya_lib_get_element_in_structure() but no sollya_lib_get_element_in_list().
