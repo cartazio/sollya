@@ -77,14 +77,7 @@ LIBSOLLYA
    int sollya_lib_get_constant_as_uint64(uint64_t *, sollya_obj_t);
    int sollya_lib_get_constant(mpfr_t, sollya_obj_t);
    int sollya_lib_get_prec_of_constant(mp_prec_t *, sollya_obj_t);
-   sollya_obj_t sollya_lib_checkinfnorm(sollya_obj_t, sollya_obj_t, sollya_obj_t);
-   CQL sollya_obj_t sollya_lib_concat(sollya_obj_t, sollya_obj_t);
-   CQL sollya_obj_t sollya_lib_append(sollya_obj_t, sollya_obj_t);
-   CQL sollya_obj_t sollya_lib_prepend(sollya_obj_t, sollya_obj_t);
-   CQL sollya_obj_t sollya_lib_diff(sollya_obj_t);
-   sollya_obj_t sollya_lib_simplify(sollya_obj_t);
    sollya_obj_t sollya_lib_round(sollya_obj_t, sollya_obj_t, sollya_obj_t);
-   sollya_obj_t sollya_lib_rationalapprox(sollya_obj_t, sollya_obj_t);
    sollya_obj_t sollya_lib_libraryconstant(char *, void (*)(mpfr_t, mp_prec_t));
    sollya_obj_t sollya_lib_libraryfunction(sollya_obj_t, char *, int (*)(mpfi_t, mpfi_t, int));
    sollya_obj_t sollya_lib_procedurefunction(sollya_obj_t, sollya_obj_t);
