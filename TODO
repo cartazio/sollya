@@ -128,9 +128,9 @@ OTHER
 =====
 * Check that externalproc is compatible with the new sollya.h
 * Check the cases where there used to be instances of recoverFromError in plot and remez.
-* Since there are '#undef malloc' and  '#undef realloc' in the beginning of fpminimax.cpp, we must check that all allocations (even those performed by new in C++) use our allocation mechanisme (S.C. : I am very confident about it)
+* Since there are '#undef malloc' and  '#undef realloc' in the beginning of fpminimax.cpp, we must check that all allocations (even those performed by new in C++) use our allocation mechanisme (S.C. : I am very confident about it) (CQL: I want an answer for my proposal to overload new)
 * Remove remaining printf and sollyaPrintf where there remains some (especially in chebyshevformaux.c)
-* Type sollya_fp_result_t: we agreed on implementing bit masks also for this type. That should be made and documented.
+* Type sollya_fp_result_t: we agreed on implementing bit masks also for this type. That should be made and documented. (CQL: Argl! Mes derniers nerfs vont y passer.)
 * Take a decision regarding a possible change of the interface in order to anticipate a future thread-safe version of the library. ~> My opinion is that it is OK as it is now.
 
 
