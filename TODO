@@ -105,6 +105,7 @@ DOCUMENTATION
 * Document and test showmessagenumbers. DOCUMENTED by CQL
 * Read the documentation of the library, looking for typos or errors, especially the part about message callbacks and about custom memory allocation, that have been less read.
 * Document sprintf and snprintf.
+* Doc changed a lot at rev 1829 and at rev 1836. It should be checked that every change is on purpose. If not, it might be a bug (or it might be due to the fact that a bug has been fixed) in which case the example should be copied to the test suite.
 
 BUGS
 ====
