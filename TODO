@@ -121,7 +121,7 @@ BUGS
 
   check021 fails when Sollya is compiled against a version of MPFI between revisions 560 and 610 of MPFI. This comes from a bug in mpfi_sub_fr ~> there is probably a possibility to write a very small example exhbiting the bug.
 
-* On September 24, Christoph sent me a message exhibiting an unusual behavior of supnorm on some polynomial. Unfortunately, he did not give me the full polynomial. It would be great to investigate this possible issue.
+* On September 24, Christoph sent me a message exhibiting an unusual behavior of supnorm on some polynomial. Unfortunately, he did not give me the full polynomial. It would be great to investigate this possible issue. --> S.C.: it is not a bug.
 
 * DONE (by CQL): tget_constant_as_double, tevaluate_function_at_point and  tevaluate_function_at_constant_expression fail on some architectures because a double containing nan is sometimes displayed -nan and sometimes displayed nan. It is just a matter of changing the tests. 
 
