@@ -79,9 +79,9 @@ LIBSOLLYA
    sollya_obj_t sollya_lib_libraryfunction(sollya_obj_t, char *, int (*)(mpfi_t, mpfi_t, int));     		AND OTHERS WHERE IT IS NOT. TEST WHEN THE 	       
    sollya_obj_t sollya_lib_procedurefunction(sollya_obj_t, sollya_obj_t);                           		NAME GIVEN AS A char* (OR IMPLICITLY RECOVERED WHEN
    sollya_obj_t sollya_lib_build_function_libraryconstant(char *, void (*)(mpfr_t, mp_prec_t));     		char* IS NULL) IS ALREADY BOUND AND WHEN IT IS NOT.
-   sollya_obj_t sollya_lib_build_function_libraryfunction(sollya_obj_t, char *, int (*)(mpfi_t, mpfi_t, int));  
-   sollya_obj_t sollya_lib_build_function_procedurefunction(sollya_obj_t, sollya_obj_t);
-
+   sollya_obj_t sollya_lib_build_function_libraryfunction(sollya_obj_t, char *, int (*)(mpfi_t, mpfi_t, int));  CHECK THE CASE WHEN char* IS NULL, THE POINTER
+   sollya_obj_t sollya_lib_build_function_procedurefunction(sollya_obj_t, sollya_obj_t);                        TO THE FUNCTION DOES NOT ACTUALLY POINT TO A C FUNCTION
+                                                                                                                AND THE CREATED OBJECT GETS PRINTED (SHOULD NOT SEGFAULT)
 
 
 ~> notice that some of them are used through examples in the doc. It would be useful to test that examples of code in the doc compile and work anyway.
