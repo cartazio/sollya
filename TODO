@@ -1,88 +1,88 @@
 LIBSOLLYA
 =========
-* Still many function to test in the lib (cf. below).
-   int sollya_lib_init();
-   int sollya_lib_init_with_custom_memory_functions(void *(*custom_malloc)(size_t), void *(*custom_calloc)(size_t, size_t), void *(*custom_realloc)(void *, size_t), void (*custom_free)(void *), void *(*custom_realloc_with_size)(void *, size_t, size_t), void (*custom_free_with_size)(void *, size_t));
-   int sollya_lib_close();
-   int sollya_lib_install_msg_callback(int (*) (int));
-   int sollya_lib_uninstall_msg_callback();
-   int (*sollya_lib_get_msg_callback())(int);
-   char *sollya_lib_msg_number_to_text(int);
-   sollya_obj_t sollya_lib_copy_obj(sollya_obj_t);
-   void sollya_lib_plot(sollya_obj_t, sollya_obj_t, ...);
-   void sollya_lib_v_plot(sollya_obj_t, sollya_obj_t, va_list);
-   void sollya_lib_implementconst(sollya_obj_t, ...);
-   void sollya_lib_v_implementconst(sollya_obj_t, va_list);
-   void sollya_lib_externalplot(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
-   void sollya_lib_v_externalplot(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
-   void sollya_lib_printxml(sollya_obj_t);
-   void sollya_lib_printxml_newfile(sollya_obj_t, sollya_obj_t);
-   void sollya_lib_printxml_appendfile(sollya_obj_t, sollya_obj_t);
-   void sollya_lib_worstcase(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
-   void sollya_lib_v_worstcase(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
-   void sollya_lib_autoprint(sollya_obj_t, ...);
-   void sollya_lib_v_autoprint(sollya_obj_t, va_list);
-   void sollya_lib_suppressmessage(sollya_obj_t, ...);
-   void sollya_lib_v_suppressmessage(sollya_obj_t, va_list);
-   void sollya_lib_unsuppressmessage(sollya_obj_t, ...);
-   void sollya_lib_v_unsuppressmessage(sollya_obj_t, va_list);
-   sollya_obj_t sollya_lib_apply(sollya_obj_t, sollya_obj_t, ...);
-   sollya_obj_t sollya_lib_v_apply(sollya_obj_t, sollya_obj_t, va_list);
-   sollya_obj_t sollya_lib_approx(sollya_obj_t);
-   sollya_obj_t sollya_lib_bashevaluate(sollya_obj_t, ...);
-   sollya_obj_t sollya_lib_v_bashevaluate(sollya_obj_t, va_list);
-   sollya_obj_t sollya_lib_getsuppressedmessages();
-   sollya_obj_t sollya_lib_taylor(sollya_obj_t, sollya_obj_t, sollya_obj_t);
-   sollya_obj_t sollya_lib_taylorform(sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
-   sollya_obj_t sollya_lib_v_taylorform(sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
-   sollya_obj_t sollya_lib_autodiff(sollya_obj_t, sollya_obj_t, sollya_obj_t);
-   sollya_obj_t sollya_lib_composepolynomials(sollya_obj_t, sollya_obj_t);
-   sollya_obj_t sollya_lib_evaluate(sollya_obj_t, sollya_obj_t);
-   sollya_obj_t sollya_lib_parse(sollya_obj_t);
-   sollya_obj_t sollya_lib_readxml(sollya_obj_t);
-   sollya_obj_t sollya_lib_infnorm(sollya_obj_t, sollya_obj_t, ...);
-   sollya_obj_t sollya_lib_v_infnorm(sollya_obj_t, sollya_obj_t, va_list);
-   sollya_obj_t sollya_lib_supnorm(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t);
-   sollya_obj_t sollya_lib_findzeros(sollya_obj_t, sollya_obj_t);
-   sollya_obj_t sollya_lib_zerodenominators(sollya_obj_t, sollya_obj_t);
-   sollya_obj_t sollya_lib_guessdegree(sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
-   sollya_obj_t sollya_lib_v_guessdegree(sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
-   sollya_obj_t sollya_lib_dirtyfindzeros(sollya_obj_t, sollya_obj_t);
-   sollya_obj_t sollya_lib_roundcorrectly(sollya_obj_t);                     CQL: we should deprecate this function. I don't see its use anymore.
-   sollya_obj_t sollya_lib_range(sollya_obj_t, sollya_obj_t);
-   sollya_obj_t sollya_lib_parse_string(const char *);
-   int sollya_lib_get_function_arity(int *, sollya_obj_t);
-   int sollya_lib_get_head_function(sollya_base_function_t *, sollya_obj_t);
-   int sollya_lib_get_subfunctions(sollya_obj_t, int *, ...);
-   int sollya_lib_v_get_subfunctions(sollya_obj_t, int *, va_list);                             CAUTION: SPECIAL CASES EXIST WHEN THE OBJECT 		
-   int sollya_lib_decompose_function(sollya_obj_t, sollya_base_function_t *, int *, ...);       IS A LIBRARY CONSTANT, FUNCTION OR PROCEDURE FUNCTION.  
-   ia_eval_result_t sollya_lib_evaluate_function_over_interval(mpfi_t, sollya_obj_t, mpfi_t);     
-   sollya_obj_t sollya_lib_list(sollya_obj_t[], int);
-   sollya_obj_t sollya_lib_end_elliptic_list(sollya_obj_t[], int);
-   int sollya_lib_get_list_elements(sollya_obj_t **, int *, int *, sollya_obj_t);
-   sollya_obj_t sollya_lib_build_list(sollya_obj_t, ...);
-   sollya_obj_t sollya_lib_build_end_elliptic_list(sollya_obj_t, ...);
-   sollya_obj_t sollya_lib_v_build_list(va_list);
-   sollya_obj_t sollya_lib_v_build_end_elliptic_list(va_list);
-   int sollya_lib_printf(const char *, ...);                                     WHEN TESTING THE PRINTF FAMILY, TEST THE RETURN VALUE THOROUGLY
-   int sollya_lib_v_printf(const char *, va_list);                               IN PARTICULAR FOR THE SPRINTF AND SNPRINTF FUNCTIONS.
-   int sollya_lib_fprintf(FILE *, const char *, ...);                            TESTING MUST ALSO BE DONE FOR COMBINATIONS OF FORMAT INDICATORS
-   int sollya_lib_v_fprintf(FILE *, const char *, va_list);                      (E.G. "%b%d%.45e%.*v") AS THE RETURN VALUE MUST BE THE SUM OF
-   int sollya_lib_sprintf(char *, const char *, ...);                            RETURN VALUES OF SEVERAL RECURSIVE CALLS.
-   int sollya_lib_v_sprintf(char *, const char *, va_list);                      PLEASE PAY ATTENTION TO %n CONVERSIONS, TOO.
-   int sollya_lib_snprintf(char *, size_t, const char *, ...);
-   int sollya_lib_v_snprintf(char *, size_t, const char *, va_list);
-   int sollya_lib_get_constant(mpfr_t, sollya_obj_t);
-   int sollya_lib_get_prec_of_constant(mp_prec_t *, sollya_obj_t);
-   sollya_obj_t sollya_lib_round(sollya_obj_t, sollya_obj_t, sollya_obj_t);
-   sollya_obj_t sollya_lib_libraryconstant(char *, void (*)(mpfr_t, mp_prec_t));                                WRITE TESTS WHERE THE char* ARGUMENT IS NULL       
-   sollya_obj_t sollya_lib_libraryfunction(sollya_obj_t, char *, int (*)(mpfi_t, mpfi_t, int));     		AND OTHERS WHERE IT IS NOT. TEST WHEN THE 	       
-   sollya_obj_t sollya_lib_procedurefunction(sollya_obj_t, sollya_obj_t);                           		NAME GIVEN AS A char* (OR IMPLICITLY RECOVERED WHEN
-   sollya_obj_t sollya_lib_build_function_libraryconstant(char *, void (*)(mpfr_t, mp_prec_t));     		char* IS NULL) IS ALREADY BOUND AND WHEN IT IS NOT.
-   sollya_obj_t sollya_lib_build_function_libraryfunction(sollya_obj_t, char *, int (*)(mpfi_t, mpfi_t, int));  CHECK THE CASE WHEN char* IS NULL, THE POINTER
-   sollya_obj_t sollya_lib_build_function_procedurefunction(sollya_obj_t, sollya_obj_t);                        TO THE FUNCTION DOES NOT ACTUALLY POINT TO A C FUNCTION
-                                                                                                                AND THE CREATED OBJECT GETS PRINTED (SHOULD NOT SEGFAULT)
-
+* Still many function to test in the lib (cf. below). CQL: I added some priority indications: priority 1-5 by difficulty of the code/ priority 1-5 by expected
+                                                           number of users to be affected by a possible bug
+   */*****     int sollya_lib_init();
+   */****      int sollya_lib_init_with_custom_memory_functions(void *(*custom_malloc)(size_t), void *(*custom_calloc)(size_t, size_t), void *(*custom_realloc)(void *, size_t), void (*custom_free)(void *), void *(*custom_realloc_with_size)(void *, size_t, size_t), void (*custom_free_with_size)(void *, size_t));
+   ***/*****   int sollya_lib_close();
+   **/****     int sollya_lib_install_msg_callback(int (*) (int));
+   **/***      int sollya_lib_uninstall_msg_callback();
+   **/****     int (*sollya_lib_get_msg_callback())(int);
+   */***       char *sollya_lib_msg_number_to_text(int);
+   ***/*****   sollya_obj_t sollya_lib_copy_obj(sollya_obj_t);
+   */****      void sollya_lib_plot(sollya_obj_t, sollya_obj_t, ...);
+   */****      void sollya_lib_v_plot(sollya_obj_t, sollya_obj_t, va_list);
+   */**        void sollya_lib_implementconst(sollya_obj_t, ...);
+   */**        void sollya_lib_v_implementconst(sollya_obj_t, va_list);
+   ***/*       void sollya_lib_externalplot(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
+   ***/*       void sollya_lib_v_externalplot(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
+   */*         void sollya_lib_printxml(sollya_obj_t);
+   */*         void sollya_lib_printxml_newfile(sollya_obj_t, sollya_obj_t);
+   */*         void sollya_lib_printxml_appendfile(sollya_obj_t, sollya_obj_t);
+   */*         void sollya_lib_worstcase(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
+   */*         void sollya_lib_v_worstcase(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
+   **/****     void sollya_lib_autoprint(sollya_obj_t, ...);
+   **/****     void sollya_lib_v_autoprint(sollya_obj_t, va_list);
+   **/***      void sollya_lib_suppressmessage(sollya_obj_t, ...);
+   **/***      void sollya_lib_v_suppressmessage(sollya_obj_t, va_list);
+   **/***      void sollya_lib_unsuppressmessage(sollya_obj_t, ...);
+   **/***      void sollya_lib_v_unsuppressmessage(sollya_obj_t, va_list);
+   **/****     sollya_obj_t sollya_lib_apply(sollya_obj_t, sollya_obj_t, ...);
+   **/****     sollya_obj_t sollya_lib_v_apply(sollya_obj_t, sollya_obj_t, va_list);
+   */*         sollya_obj_t sollya_lib_approx(sollya_obj_t);
+   **/*        sollya_obj_t sollya_lib_bashevaluate(sollya_obj_t, ...);
+   **/*        sollya_obj_t sollya_lib_v_bashevaluate(sollya_obj_t, va_list);
+   **/***      sollya_obj_t sollya_lib_getsuppressedmessages();
+   */**        sollya_obj_t sollya_lib_taylor(sollya_obj_t, sollya_obj_t, sollya_obj_t);
+   **/***      sollya_obj_t sollya_lib_taylorform(sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
+   **/***      sollya_obj_t sollya_lib_v_taylorform(sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
+   **/**       sollya_obj_t sollya_lib_autodiff(sollya_obj_t, sollya_obj_t, sollya_obj_t);
+   **/*        sollya_obj_t sollya_lib_composepolynomials(sollya_obj_t, sollya_obj_t);
+   ***/**      sollya_obj_t sollya_lib_evaluate(sollya_obj_t, sollya_obj_t);
+   */***       sollya_obj_t sollya_lib_parse(sollya_obj_t);
+   */*         sollya_obj_t sollya_lib_readxml(sollya_obj_t);
+   */**        sollya_obj_t sollya_lib_infnorm(sollya_obj_t, sollya_obj_t, ...);
+   */**        sollya_obj_t sollya_lib_v_infnorm(sollya_obj_t, sollya_obj_t, va_list);
+   */***       sollya_obj_t sollya_lib_supnorm(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t);
+   */**        sollya_obj_t sollya_lib_findzeros(sollya_obj_t, sollya_obj_t);
+   */*         sollya_obj_t sollya_lib_zerodenominators(sollya_obj_t, sollya_obj_t);
+   */***       sollya_obj_t sollya_lib_guessdegree(sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
+   */***       sollya_obj_t sollya_lib_v_guessdegree(sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
+   */***       sollya_obj_t sollya_lib_dirtyfindzeros(sollya_obj_t, sollya_obj_t);
+   */*         sollya_obj_t sollya_lib_roundcorrectly(sollya_obj_t);                     CQL: we should deprecate this function. I don't see its use anymore.
+   **/****     sollya_obj_t sollya_lib_range(sollya_obj_t, sollya_obj_t);
+   **/****     sollya_obj_t sollya_lib_parse_string(const char *);
+   ***/***     int sollya_lib_get_function_arity(int *, sollya_obj_t);
+   ***/***     int sollya_lib_get_head_function(sollya_base_function_t *, sollya_obj_t);
+   *****/****  int sollya_lib_get_subfunctions(sollya_obj_t, int *, ...);
+   *****/****  int sollya_lib_v_get_subfunctions(sollya_obj_t, int *, va_list);                             CAUTION: SPECIAL CASES EXIST WHEN THE OBJECT 		
+   *****/***** int sollya_lib_decompose_function(sollya_obj_t, sollya_base_function_t *, int *, ...);       IS A LIBRARY CONSTANT, FUNCTION OR PROCEDURE FUNCTION.  
+   ***/****    ia_eval_result_t sollya_lib_evaluate_function_over_interval(mpfi_t, sollya_obj_t, mpfi_t);     
+   ***/***     sollya_obj_t sollya_lib_list(sollya_obj_t[], int);
+   ***/***     sollya_obj_t sollya_lib_end_elliptic_list(sollya_obj_t[], int);
+   ***/***     int sollya_lib_get_list_elements(sollya_obj_t **, int *, int *, sollya_obj_t);
+   ***/***     sollya_obj_t sollya_lib_build_list(sollya_obj_t, ...);
+   ***/***     sollya_obj_t sollya_lib_build_end_elliptic_list(sollya_obj_t, ...);
+   ***/***     sollya_obj_t sollya_lib_v_build_list(va_list);
+   ***/***     sollya_obj_t sollya_lib_v_build_end_elliptic_list(va_list);
+   *****/***** int sollya_lib_printf(const char *, ...);                                     WHEN TESTING THE PRINTF FAMILY, TEST THE RETURN VALUE THOROUGLY
+   *****/***** int sollya_lib_v_printf(const char *, va_list);                               IN PARTICULAR FOR THE SPRINTF AND SNPRINTF FUNCTIONS.
+   *****/***** int sollya_lib_fprintf(FILE *, const char *, ...);                            TESTING MUST ALSO BE DONE FOR COMBINATIONS OF FORMAT INDICATORS
+   *****/***** int sollya_lib_v_fprintf(FILE *, const char *, va_list);                      (E.G. "%b%d%.45e%.*v") AS THE RETURN VALUE MUST BE THE SUM OF
+   *****/***** int sollya_lib_sprintf(char *, const char *, ...);                            RETURN VALUES OF SEVERAL RECURSIVE CALLS.
+   *****/***** int sollya_lib_v_sprintf(char *, const char *, va_list);                      PLEASE PAY ATTENTION TO %n CONVERSIONS, TOO.
+   *****/***** int sollya_lib_snprintf(char *, size_t, const char *, ...);
+   *****/***** int sollya_lib_v_snprintf(char *, size_t, const char *, va_list);
+   ****/*****  int sollya_lib_get_constant(mpfr_t, sollya_obj_t);
+   ****/*****  int sollya_lib_get_prec_of_constant(mp_prec_t *, sollya_obj_t);
+   ****/***    sollya_obj_t sollya_lib_round(sollya_obj_t, sollya_obj_t, sollya_obj_t);
+   *****/***   sollya_obj_t sollya_lib_libraryconstant(char *, void (*)(mpfr_t, mp_prec_t));                                WRITE TESTS WHERE THE char* ARGUMENT IS NULL       
+   *****/***   sollya_obj_t sollya_lib_libraryfunction(sollya_obj_t, char *, int (*)(mpfi_t, mpfi_t, int));                 AND OTHERS WHERE IT IS NOT. TEST WHEN THE 	       
+   *****/*     sollya_obj_t sollya_lib_procedurefunction(sollya_obj_t, sollya_obj_t);                                       NAME GIVEN AS A char* (OR IMPLICITLY RECOVERED WHEN
+   *****/****  sollya_obj_t sollya_lib_build_function_libraryconstant(char *, void (*)(mpfr_t, mp_prec_t));                 char* IS NULL) IS ALREADY BOUND AND WHEN IT IS NOT.
+   *****/****  sollya_obj_t sollya_lib_build_function_libraryfunction(sollya_obj_t, char *, int (*)(mpfi_t, mpfi_t, int));  CHECK THE CASE WHEN char* IS NULL, THE POINTER
+   *****/*     sollya_obj_t sollya_lib_build_function_procedurefunction(sollya_obj_t, sollya_obj_t);                        TO THE FUNCTION DOES NOT ACTUALLY POINT TO A C FUNCTION
+                                                                                                                            AND THE CREATED OBJECT GETS PRINTED (SHOULD NOT SEGFAULT)
 
 ~> notice that some of them are used through examples in the doc. It would be useful to test that examples of code in the doc compile and work anyway.
 
