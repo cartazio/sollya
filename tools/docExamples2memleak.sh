@@ -21,8 +21,9 @@ do
 done
 grep -v "SEEALSO" ___toto | tr -d '\n' | sed -n 's/#EXAMPLE/\n/g;p' > ___titi
 mv ___titi ___toto
+
 i=1
-while [ $i -le `wc -l toto |sed -n 's/[^0-9]//g;p'` ]
+while [ $i -le `wc -l ___toto |sed -n 's/[^0-9]//g;p'` ]
 do
   head -n $i ___toto |tail -n 1 > $dir_bak/$i.memleak
   i=`expr $i + 1`
