@@ -107,6 +107,8 @@ DOCUMENTATION
 * Document sprintf and snprintf.
 * Doc changed a lot at rev 1829 and at rev 1836. It should be checked that every change is on purpose. If not, it might be a bug (or it might be due to the fact that a bug has been fixed) in which case the example should be copied to the test suite.
 
+* CAUTION: IMPORTANT: review the example given in sollya.tex for sollya_lib_decompose_function. The code does not work for library function, library constants and procedure functions.
+
 BUGS
 ====
 * Remove all possible bugs from the tracker.
