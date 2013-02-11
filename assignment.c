@@ -285,6 +285,8 @@ int performListPrependOnEntry(chain *symTbl, char *ident, node *tree) {
 	    newArgs = addElement(copyChainWithoutReversal(oldNode->child1->arguments, copyThingOnVoid), tree);
 	    newNode = (node *) safeMalloc(sizeof(node));
 	    newNode->nodeType = oldNode->child1->nodeType;
+	    newNode->argArray = NULL;
+	    newNode->argArraySize = 0;
 	    newNode->arguments = newArgs;
 	    newNode = addMemRef(newNode);
 	    if (newChecked && (newNode->nodeType == MEMREF)) {
@@ -299,6 +301,8 @@ int performListPrependOnEntry(chain *symTbl, char *ident, node *tree) {
 		(newNode->nodeType == FINALELLIPTICLIST)) {
 	      freeThing(oldNode);
 	      newNode->arguments = addElement(newNode->arguments, tree);
+	      newNode->argArray = NULL;
+	      newNode->argArraySize = 0;
 	      ((entry *) curr->value)->value = newNode;
 	      newNode = addMemRef(newNode);
 	      if (newChecked && (newNode->nodeType == MEMREF)) {
@@ -314,6 +318,11 @@ int performListPrependOnEntry(chain *symTbl, char *ident, node *tree) {
       case LIST:
       case FINALELLIPTICLIST:
 	oldNode->arguments = addElement(oldNode->arguments, tree);
+	if (oldNode->argArray != NULL) {
+	  safeFree(oldNode->argArray);
+	  oldNode->argArray = NULL;
+	  oldNode->argArraySize = 0;
+	}
 	okay = 1;
 	break;
       default:
@@ -371,6 +380,8 @@ int performListTailOnEntry(chain *symTbl, char *ident) {
 	    newNode = (node *) safeMalloc(sizeof(node));
 	    newNode->nodeType = oldNode->child1->nodeType;
 	    newNode->arguments = newArgs;
+	    newNode->argArray = NULL;
+	    newNode->argArraySize = 0;
 	    newNode = addMemRef(newNode);
 	    if (oldChecked && (newNode->nodeType == MEMREF)) {
 	      newNode->child2 = newNode->child1;
@@ -390,6 +401,8 @@ int performListTailOnEntry(chain *symTbl, char *ident) {
 	      newArgs = newNode->arguments->next;
 	      safeFree(newNode->arguments);
 	      newNode->arguments = newArgs;
+	      newNode->argArray = NULL;
+	      newNode->argArraySize = 0;
 	      newNode = addMemRef(newNode);
 	      if (oldChecked && (newNode->nodeType == MEMREF)) {
 		newNode->child2 = newNode->child1;
@@ -411,6 +424,11 @@ int performListTailOnEntry(chain *symTbl, char *ident) {
 	  newArgs = oldNode->arguments->next;
 	  safeFree(oldNode->arguments);
 	  oldNode->arguments = newArgs;
+	  if (oldNode->argArray != NULL) {
+	    safeFree(oldNode->argArray);
+	    oldNode->argArray = NULL;
+	    oldNode->argArraySize = 0;
+	  }
 	  okay = 1;
 	} else {
 	  okay = 0;

@@ -128,6 +128,8 @@ struct nodeStruct
   char *string;
   chain *arguments;
   libraryProcedure *libProc;
+  node **argArray;
+  int argArraySize;
 };
 
 /* HELPER TYPE FOR THE PARSER */

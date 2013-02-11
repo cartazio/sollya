@@ -946,12 +946,16 @@ node *copyThingInner(node *tree) {
     break; 			
   case LIST:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
+    copy->argArray = NULL;
+    copy->argArraySize = 0;
     break; 	
   case STRUCTURE:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyEntryOnVoid);
     break; 			 	
   case FINALELLIPTICLIST:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
+    copy->argArray = NULL;
+    copy->argArraySize = 0;
     break; 		
   case ELLIPTIC:
     break; 			
@@ -1822,12 +1826,16 @@ node *deepCopyThing(node *tree) {
     break; 			
   case LIST:
     copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    copy->argArray = NULL;
+    copy->argArraySize = 0;
     break; 	
   case STRUCTURE:
     copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyEntryOnVoid);
     break; 			 	
   case FINALELLIPTICLIST:
     copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    copy->argArray = NULL;
+    copy->argArraySize = 0;
     break; 		
   case ELLIPTIC:
     break; 			
@@ -2560,7 +2568,7 @@ char *getTimingStringForThing(node *tree) {
     constString = "compare not equal";
     break;		
   case CONCAT:
-    constString = "concatination of strings or lists";
+    constString = "concatenation of strings or lists";
     break; 			
   case ADDTOLIST:
     constString = "adding an element to a list";
@@ -11717,6 +11725,9 @@ node *makeList(chain *thinglist) {
   res = (node *) safeMalloc(sizeof(node));
   res->nodeType = LIST;
   res->arguments = thinglist;
+  res->argArray = NULL;
+  res->argArraySize = 0;
+    
 
   return res;
 
@@ -11753,6 +11764,9 @@ node *makeRevertedList(chain *thinglist) {
   tempList = copyChain(thinglist,copyThingOnVoid);
   freeChain(thinglist,freeThingOnVoid);
   res->arguments = tempList;
+  res->argArray = NULL;
+  res->argArraySize = 0;
+
 
   return res;
 
@@ -11764,6 +11778,9 @@ node *makeFinalEllipticList(chain *thinglist) {
   res = (node *) safeMalloc(sizeof(node));
   res->nodeType = FINALELLIPTICLIST;
   res->arguments = thinglist;
+  res->argArray = NULL;
+  res->argArraySize = 0;
+
 
   return res;
 
@@ -11778,6 +11795,9 @@ node *makeRevertedFinalEllipticList(chain *thinglist) {
   tempList = copyChain(thinglist,copyThingOnVoid);
   freeChain(thinglist,freeThingOnVoid);
   res->arguments = tempList;
+  res->argArray = NULL;
+  res->argArraySize = 0;
+
 
   return res;
 
@@ -13525,6 +13545,11 @@ void freeThing(node *tree) {
     break; 			
   case LIST:
     freeChain(tree->arguments, freeThingOnVoid);
+    if (tree->argArray != NULL) {
+      safeFree(tree->argArray);
+      tree->argArray = NULL;
+      tree->argArraySize = 0;
+    }
     safeFree(tree);
     break; 			 	
   case STRUCTURE:
@@ -13533,6 +13558,11 @@ void freeThing(node *tree) {
     break; 			 	
   case FINALELLIPTICLIST:
     freeChain(tree->arguments, freeThingOnVoid);
+    if (tree->argArray != NULL) {
+      safeFree(tree->argArray);
+      tree->argArray = NULL;
+      tree->argArraySize = 0;
+    }
     safeFree(tree);
     break; 		
   case ELLIPTIC:
@@ -16523,6 +16553,8 @@ node *preevaluateMatcher(node *tree) {
     }
     freeChain(tempChain, freeThingOnVoid);
     copy->arguments = newChain;
+    copy->argArray = NULL;
+    copy->argArraySize = 0;
     if (resC && (!isPureList(copy))) {
       tempNode = preevaluateMatcher(copy);
       freeThing(copy);
@@ -16558,6 +16590,8 @@ node *preevaluateMatcher(node *tree) {
     }
     freeChain(tempChain, freeThingOnVoid);
     copy->arguments = newChain;
+    copy->argArray = NULL;
+    copy->argArraySize = 0;
     if (resC && (!isPureFinalEllipticList(copy))) {
       tempNode = preevaluateMatcher(copy);
       freeThing(copy);
@@ -20461,6 +20495,8 @@ node *evaluateThingInnerst(node *tree) {
 		if (isEmptyList(copy->child1) && (isList(copy->child2) || isFinalEllipticList(copy->child2))) {
 		  copy->nodeType = accessThruMemRef(copy->child2)->nodeType;
 		  copy->arguments = copyChainWithoutReversal(accessThruMemRef(copy->child2)->arguments,copyThingOnVoid);
+		  copy->argArray = NULL;
+		  copy->argArraySize = 0;
 		  freeThing(copy->child1);
 		  freeThing(copy->child2);
 		} else {
@@ -20468,6 +20504,8 @@ node *evaluateThingInnerst(node *tree) {
 		    if (timingString != NULL) pushTimeCounter();
 		    copy->nodeType = LIST;
 		    copy->arguments = copyChainWithoutReversal(accessThruMemRef(copy->child1)->arguments,copyThingOnVoid);
+		    copy->argArray = NULL;
+		    copy->argArraySize = 0;
 		    freeThing(copy->child2);
 		    freeThing(copy->child1);
 		    if (timingString != NULL) popTimeCounter(timingString);
@@ -20477,6 +20515,8 @@ node *evaluateThingInnerst(node *tree) {
 		      copy->nodeType = LIST;
 		      copy->arguments = concatChains(copyChainWithoutReversal(accessThruMemRef(copy->child1)->arguments,copyThingOnVoid), 
 						     copyChainWithoutReversal(accessThruMemRef(copy->child2)->arguments,copyThingOnVoid));
+		      copy->argArray = NULL;
+		      copy->argArraySize = 0;
 		      freeThing(copy->child1);
 		      freeThing(copy->child2);
 		      if (timingString != NULL) popTimeCounter(timingString);
@@ -20486,6 +20526,8 @@ node *evaluateThingInnerst(node *tree) {
 			copy->nodeType = FINALELLIPTICLIST;
 			copy->arguments = concatChains(copyChainWithoutReversal(accessThruMemRef(copy->child1)->arguments,copyThingOnVoid), 
 						       copyChainWithoutReversal(accessThruMemRef(copy->child2)->arguments,copyThingOnVoid));
+			copy->argArray = NULL;
+			copy->argArraySize = 0;
 			freeThing(copy->child1);
 			freeThing(copy->child2);
 			if (timingString != NULL) popTimeCounter(timingString);
@@ -20545,6 +20587,8 @@ node *evaluateThingInnerst(node *tree) {
       if (timingString != NULL) pushTimeCounter();
       copy->nodeType = LIST;
       copy->arguments = addElement(copyChainWithoutReversal(accessThruMemRef(copy->child2)->arguments, copyThingOnVoid),copy->child1);
+      copy->argArray = NULL;
+      copy->argArraySize = 0;
       freeThing(copy->child2);
       if (timingString != NULL) popTimeCounter(timingString);
     } else {
@@ -20552,6 +20596,8 @@ node *evaluateThingInnerst(node *tree) {
 	if (timingString != NULL) pushTimeCounter();
 	copy->nodeType = LIST;
 	copy->arguments = addElement(NULL, copy->child1);
+	copy->argArray = NULL;
+	copy->argArraySize = 0;
 	freeThing(copy->child2);
 	if (timingString != NULL) popTimeCounter(timingString);
       } else {
@@ -20559,6 +20605,8 @@ node *evaluateThingInnerst(node *tree) {
 	  if (timingString != NULL) pushTimeCounter();
 	  copy->nodeType = FINALELLIPTICLIST;
 	  copy->arguments = addElement(copyChainWithoutReversal(accessThruMemRef(copy->child2)->arguments, copyThingOnVoid),copy->child1);
+	  copy->argArray = NULL;
+	  copy->argArraySize = 0;
 	  freeThing(copy->child2);
 	  if (timingString != NULL) popTimeCounter(timingString);
 	} else {
@@ -20575,6 +20623,8 @@ node *evaluateThingInnerst(node *tree) {
 	      if (timingString != NULL) pushTimeCounter();
 	      copy->nodeType = LIST;
 	      copy->arguments = addElement(NULL, copy->child2);
+	      copy->argArray = NULL;
+	      copy->argArraySize = 0;
 	      freeThing(copy->child1);
 	      if (timingString != NULL) popTimeCounter(timingString);
 	    }
@@ -20590,6 +20640,8 @@ node *evaluateThingInnerst(node *tree) {
       if (timingString != NULL) pushTimeCounter();
       copy->nodeType = LIST;
       copy->arguments = addElement(copyChainWithoutReversal(accessThruMemRef(copy->child2)->arguments, copyThingOnVoid),copy->child1);
+      copy->argArray = NULL;
+      copy->argArraySize = 0;
       freeThing(copy->child2);
       if (timingString != NULL) popTimeCounter(timingString);
     } else {
@@ -20597,6 +20649,8 @@ node *evaluateThingInnerst(node *tree) {
 	if (timingString != NULL) pushTimeCounter();
 	copy->nodeType = LIST;
 	copy->arguments = addElement(NULL, copy->child1);
+	copy->argArray = NULL;
+	copy->argArraySize = 0;
 	freeThing(copy->child2);
 	if (timingString != NULL) popTimeCounter(timingString);
       } else {
@@ -20604,6 +20658,8 @@ node *evaluateThingInnerst(node *tree) {
 	  if (timingString != NULL) pushTimeCounter();
 	  copy->nodeType = FINALELLIPTICLIST;
 	  copy->arguments = addElement(copyChainWithoutReversal(accessThruMemRef(copy->child2)->arguments, copyThingOnVoid),copy->child1);
+	  copy->argArray = NULL;
+	  copy->argArraySize = 0;
 	  freeThing(copy->child2);
 	  if (timingString != NULL) popTimeCounter(timingString);
 	} 
@@ -20626,6 +20682,8 @@ node *evaluateThingInnerst(node *tree) {
 	if (timingString != NULL) pushTimeCounter();
 	copy->nodeType = LIST;
 	copy->arguments = addElement(NULL, copy->child2);
+	copy->argArray = NULL;
+	copy->argArraySize = 0;
 	freeThing(copy->child1);
 	if (timingString != NULL) popTimeCounter(timingString);
       }
@@ -21279,6 +21337,8 @@ node *evaluateThingInnerst(node *tree) {
     }
     freeChain(tempChain, freeThingOnVoid);
     copy->arguments = newChain;
+    copy->argArray = NULL;
+    copy->argArraySize = 0;
     if (resC && (!isPureList(copy))) {
       tempNode = evaluateThing(copy);
       freeThing(copy);
@@ -21326,6 +21386,8 @@ node *evaluateThingInnerst(node *tree) {
     }
     freeChain(tempChain, freeThingOnVoid);
     copy->arguments = newChain;
+    copy->argArray = NULL;
+    copy->argArraySize = 0;
     if (resC && (!isPureFinalEllipticList(copy))) {
       tempNode = evaluateThing(copy);
       freeThing(copy);
@@ -23638,6 +23700,8 @@ node *evaluateThingInnerst(node *tree) {
 	  copy->arguments = copyChainWithoutReversal(accessThruMemRef(copy->child1)->arguments->next,copyThingOnVoid);
 	  freeThing(copy->child1);
 	  copy->nodeType = LIST;
+	  copy->argArray = NULL;
+	  copy->argArraySize = 0;
 	  if (timingString != NULL) popTimeCounter(timingString);
 	}
       }
@@ -23649,6 +23713,8 @@ node *evaluateThingInnerst(node *tree) {
 	    copy->arguments = copyChainWithoutReversal(accessThruMemRef(copy->child1)->arguments->next,copyThingOnVoid);
 	    freeThing(copy->child1);
 	    copy->nodeType = FINALELLIPTICLIST;
+	    copy->argArray = NULL;
+	    copy->argArraySize = 0;
 	    if (timingString != NULL) popTimeCounter(timingString);
 	  } 
 	} else {
