@@ -114,6 +114,7 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #define HALFPRECISION 43
 #define QUAD 44
 
+#define SOLLYA_MAX_ARG_ARRAY_ALLOC_SIZE 33554432ull
 
 typedef struct nodeStruct node;
 
@@ -130,6 +131,7 @@ struct nodeStruct
   libraryProcedure *libProc;
   node **argArray;
   int argArraySize;
+  size_t argArrayAllocSize;
 };
 
 /* HELPER TYPE FOR THE PARSER */

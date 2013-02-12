@@ -219,15 +219,20 @@ void setupRandomAccessOnLists(node *obj) {
   case FINALELLIPTICLIST:
     if (obj->argArray != NULL) return;
     obj->argArraySize = lengthChain(obj->arguments);
-    if (obj->argArraySize < 1) return;
-    obj->argArray = (node **) safeCalloc(obj->argArraySize, sizeof(node *));
+    if (obj->argArraySize < 1) {
+      obj->argArraySize = 0;
+      return;
+    }
+    obj->argArrayAllocSize = ((size_t) (obj->argArraySize)) * sizeof(node *);
+    obj->argArray = (node **) safeMalloc(obj->argArrayAllocSize);
     for (curr=obj->arguments, i=0; curr != NULL; curr=curr->next, i++) {
       if (!isElliptic((node *) (curr->value))) {
-	(obj->argArray)[i] = (node *) (curr->value);
+	(obj->argArray)[(obj->argArraySize - 1) - i] = (node *) (curr->value);
       } else {
 	safeFree(obj->argArray);
 	obj->argArray = NULL;
 	obj->argArraySize = 0;
+	obj->argArrayAllocSize = 0;
 	return;
       }
     }
@@ -993,6 +998,7 @@ node *copyThingInner(node *tree) {
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     copy->argArray = NULL;
     copy->argArraySize = 0;
+    copy->argArrayAllocSize = 0;
     break; 	
   case STRUCTURE:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyEntryOnVoid);
@@ -1001,6 +1007,7 @@ node *copyThingInner(node *tree) {
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     copy->argArray = NULL;
     copy->argArraySize = 0;
+    copy->argArrayAllocSize = 0;
     break; 		
   case ELLIPTIC:
     break; 			
@@ -1873,6 +1880,7 @@ node *deepCopyThing(node *tree) {
     copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
     copy->argArray = NULL;
     copy->argArraySize = 0;
+    copy->argArrayAllocSize = 0;
     break; 	
   case STRUCTURE:
     copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyEntryOnVoid);
@@ -1881,6 +1889,7 @@ node *deepCopyThing(node *tree) {
     copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
     copy->argArray = NULL;
     copy->argArraySize = 0;
+    copy->argArrayAllocSize = 0;
     break; 		
   case ELLIPTIC:
     break; 			
@@ -11810,6 +11819,7 @@ node *makeList(chain *thinglist) {
   res->arguments = thinglist;
   res->argArray = NULL;
   res->argArraySize = 0;
+  res->argArrayAllocSize = 0;
     
 
   return res;
@@ -11849,6 +11859,7 @@ node *makeRevertedList(chain *thinglist) {
   res->arguments = tempList;
   res->argArray = NULL;
   res->argArraySize = 0;
+  res->argArrayAllocSize = 0;
 
 
   return res;
@@ -11863,6 +11874,7 @@ node *makeFinalEllipticList(chain *thinglist) {
   res->arguments = thinglist;
   res->argArray = NULL;
   res->argArraySize = 0;
+  res->argArrayAllocSize = 0;
 
 
   return res;
@@ -11880,6 +11892,7 @@ node *makeRevertedFinalEllipticList(chain *thinglist) {
   res->arguments = tempList;
   res->argArray = NULL;
   res->argArraySize = 0;
+  res->argArrayAllocSize = 0;
 
 
   return res;
@@ -13632,6 +13645,7 @@ void freeThing(node *tree) {
       safeFree(tree->argArray);
       tree->argArray = NULL;
       tree->argArraySize = 0;
+      tree->argArrayAllocSize = 0;
     }
     safeFree(tree);
     break; 			 	
@@ -13645,6 +13659,7 @@ void freeThing(node *tree) {
       safeFree(tree->argArray);
       tree->argArray = NULL;
       tree->argArraySize = 0;
+      tree->argArrayAllocSize = 0;
     }
     safeFree(tree);
     break; 		
@@ -16642,6 +16657,7 @@ node *preevaluateMatcher(node *tree) {
     copy->arguments = newChain;
     copy->argArray = NULL;
     copy->argArraySize = 0;
+    copy->argArrayAllocSize = 0;
     if (resC && (!isPureList(copy))) {
       tempNode = preevaluateMatcher(copy);
       freeThing(copy);
@@ -16679,6 +16695,7 @@ node *preevaluateMatcher(node *tree) {
     copy->arguments = newChain;
     copy->argArray = NULL;
     copy->argArraySize = 0;
+    copy->argArrayAllocSize = 0;
     if (resC && (!isPureFinalEllipticList(copy))) {
       tempNode = preevaluateMatcher(copy);
       freeThing(copy);
@@ -19350,7 +19367,7 @@ node *evaluateThingInnerst(node *tree) {
 	    if ((accessThruMemRef(copy->child1)->argArray != NULL) && 
 		((resA >= 0) && (resA < accessThruMemRef(copy->child1)->argArraySize))) {
 		if (timingString != NULL) pushTimeCounter();
-		tempNode = copyThing((accessThruMemRef(copy->child1)->argArray)[resA]);
+		tempNode = copyThing((accessThruMemRef(copy->child1)->argArray)[(accessThruMemRef(copy->child1)->argArraySize - 1) - resA]);
 		freeThing(copy);
 		copy = tempNode;
 		if (timingString != NULL) popTimeCounter(timingString);
@@ -19371,7 +19388,7 @@ node *evaluateThingInnerst(node *tree) {
 	      if ((accessThruMemRef(copy->child1)->argArray != NULL) && 
 		  ((resA >= 0) && (resA < accessThruMemRef(copy->child1)->argArraySize))) {
 		if (timingString != NULL) pushTimeCounter();
-		tempNode = copyThing((accessThruMemRef(copy->child1)->argArray)[resA]);
+		tempNode = copyThing((accessThruMemRef(copy->child1)->argArray)[(accessThruMemRef(copy->child1)->argArraySize - 1) - resA]);
 		freeThing(copy);
 		copy = tempNode;
 		if (timingString != NULL) popTimeCounter(timingString);
@@ -20606,6 +20623,7 @@ node *evaluateThingInnerst(node *tree) {
 		  copy->arguments = copyChainWithoutReversal(accessThruMemRef(copy->child2)->arguments,copyThingOnVoid);
 		  copy->argArray = NULL;
 		  copy->argArraySize = 0;
+		  copy->argArrayAllocSize = 0;
 		  freeThing(copy->child1);
 		  freeThing(copy->child2);
 		} else {
@@ -20615,6 +20633,7 @@ node *evaluateThingInnerst(node *tree) {
 		    copy->arguments = copyChainWithoutReversal(accessThruMemRef(copy->child1)->arguments,copyThingOnVoid);
 		    copy->argArray = NULL;
 		    copy->argArraySize = 0;
+		    copy->argArrayAllocSize = 0;
 		    freeThing(copy->child2);
 		    freeThing(copy->child1);
 		    if (timingString != NULL) popTimeCounter(timingString);
@@ -20626,6 +20645,7 @@ node *evaluateThingInnerst(node *tree) {
 						     copyChainWithoutReversal(accessThruMemRef(copy->child2)->arguments,copyThingOnVoid));
 		      copy->argArray = NULL;
 		      copy->argArraySize = 0;
+		      copy->argArrayAllocSize = 0;
 		      freeThing(copy->child1);
 		      freeThing(copy->child2);
 		      if (timingString != NULL) popTimeCounter(timingString);
@@ -20637,6 +20657,7 @@ node *evaluateThingInnerst(node *tree) {
 						       copyChainWithoutReversal(accessThruMemRef(copy->child2)->arguments,copyThingOnVoid));
 			copy->argArray = NULL;
 			copy->argArraySize = 0;
+			copy->argArrayAllocSize = 0;
 			freeThing(copy->child1);
 			freeThing(copy->child2);
 			if (timingString != NULL) popTimeCounter(timingString);
@@ -20698,6 +20719,7 @@ node *evaluateThingInnerst(node *tree) {
       copy->arguments = addElement(copyChainWithoutReversal(accessThruMemRef(copy->child2)->arguments, copyThingOnVoid),copy->child1);
       copy->argArray = NULL;
       copy->argArraySize = 0;
+      copy->argArrayAllocSize = 0;
       freeThing(copy->child2);
       if (timingString != NULL) popTimeCounter(timingString);
     } else {
@@ -20707,6 +20729,7 @@ node *evaluateThingInnerst(node *tree) {
 	copy->arguments = addElement(NULL, copy->child1);
 	copy->argArray = NULL;
 	copy->argArraySize = 0;
+	copy->argArrayAllocSize = 0;
 	freeThing(copy->child2);
 	if (timingString != NULL) popTimeCounter(timingString);
       } else {
@@ -20716,6 +20739,7 @@ node *evaluateThingInnerst(node *tree) {
 	  copy->arguments = addElement(copyChainWithoutReversal(accessThruMemRef(copy->child2)->arguments, copyThingOnVoid),copy->child1);
 	  copy->argArray = NULL;
 	  copy->argArraySize = 0;
+	  copy->argArrayAllocSize = 0;
 	  freeThing(copy->child2);
 	  if (timingString != NULL) popTimeCounter(timingString);
 	} else {
@@ -20734,6 +20758,7 @@ node *evaluateThingInnerst(node *tree) {
 	      copy->arguments = addElement(NULL, copy->child2);
 	      copy->argArray = NULL;
 	      copy->argArraySize = 0;
+	      copy->argArrayAllocSize = 0;
 	      freeThing(copy->child1);
 	      if (timingString != NULL) popTimeCounter(timingString);
 	    }
@@ -20751,6 +20776,8 @@ node *evaluateThingInnerst(node *tree) {
       copy->arguments = addElement(copyChainWithoutReversal(accessThruMemRef(copy->child2)->arguments, copyThingOnVoid),copy->child1);
       copy->argArray = NULL;
       copy->argArraySize = 0;
+      copy->argArrayAllocSize = 0;
+      setupRandomAccessOnLists(copy);	
       freeThing(copy->child2);
       if (timingString != NULL) popTimeCounter(timingString);
     } else {
@@ -20760,6 +20787,8 @@ node *evaluateThingInnerst(node *tree) {
 	copy->arguments = addElement(NULL, copy->child1);
 	copy->argArray = NULL;
 	copy->argArraySize = 0;
+	copy->argArrayAllocSize = 0;
+	setupRandomAccessOnLists(copy);	
 	freeThing(copy->child2);
 	if (timingString != NULL) popTimeCounter(timingString);
       } else {
@@ -20769,6 +20798,8 @@ node *evaluateThingInnerst(node *tree) {
 	  copy->arguments = addElement(copyChainWithoutReversal(accessThruMemRef(copy->child2)->arguments, copyThingOnVoid),copy->child1);
 	  copy->argArray = NULL;
 	  copy->argArraySize = 0;
+	  copy->argArrayAllocSize = 0;
+	  setupRandomAccessOnLists(copy);	
 	  freeThing(copy->child2);
 	  if (timingString != NULL) popTimeCounter(timingString);
 	} 
@@ -20793,6 +20824,7 @@ node *evaluateThingInnerst(node *tree) {
 	copy->arguments = addElement(NULL, copy->child2);
 	copy->argArray = NULL;
 	copy->argArraySize = 0;
+	copy->argArrayAllocSize = 0;
 	freeThing(copy->child1);
 	if (timingString != NULL) popTimeCounter(timingString);
       }
@@ -21448,11 +21480,13 @@ node *evaluateThingInnerst(node *tree) {
     copy->arguments = newChain;
     copy->argArray = NULL;
     copy->argArraySize = 0;
+    copy->argArrayAllocSize = 0;
     if (resC && (!isPureList(copy))) {
       tempNode = evaluateThing(copy);
       freeThing(copy);
       copy = tempNode;
     }
+    setupRandomAccessOnLists(copy);
     if (timingString != NULL) popTimeCounter(timingString);
     break; 	
   case STRUCTURE:
@@ -21497,11 +21531,13 @@ node *evaluateThingInnerst(node *tree) {
     copy->arguments = newChain;
     copy->argArray = NULL;
     copy->argArraySize = 0;
+    copy->argArrayAllocSize = 0;
     if (resC && (!isPureFinalEllipticList(copy))) {
       tempNode = evaluateThing(copy);
       freeThing(copy);
       copy = tempNode;
     }
+    setupRandomAccessOnLists(copy);
     if (timingString != NULL) popTimeCounter(timingString);
     break; 		
   case ELLIPTIC:
@@ -23813,6 +23849,8 @@ node *evaluateThingInnerst(node *tree) {
 	  copy->nodeType = LIST;
 	  copy->argArray = NULL;
 	  copy->argArraySize = 0;
+	  copy->argArrayAllocSize = 0;
+	  setupRandomAccessOnLists(copy);	
 	  if (timingString != NULL) popTimeCounter(timingString);
 	}
       }
@@ -23826,6 +23864,8 @@ node *evaluateThingInnerst(node *tree) {
 	    copy->nodeType = FINALELLIPTICLIST;
 	    copy->argArray = NULL;
 	    copy->argArraySize = 0;
+	    copy->argArrayAllocSize = 0;
+	    setupRandomAccessOnLists(copy);	
 	    if (timingString != NULL) popTimeCounter(timingString);
 	  } 
 	} else {
