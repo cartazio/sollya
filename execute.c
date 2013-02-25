@@ -9193,7 +9193,7 @@ int executeCommandInner(node *tree) {
 		      tempList2 = copyChain(tempList,copyThingOnVoid);
 		      freeChain(tempList,freeThingOnVoid);
 		      tempNode3 = makeList(tempList2);
-		      tempNode3->nodeType = tempNode->nodeType;
+		      tempNode3->nodeType = accessThruMemRef(tempNode)->nodeType;
 		      setupRandomAccessOnLists(tempNode3);
 		      resC = 1;
 		    }
