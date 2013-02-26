@@ -9163,6 +9163,9 @@ int executeCommandInner(node *tree) {
 			      tempList = addElement(tempList,makeConstant(b));
 			    }
 			    tempList = addElement(tempList, copyThing(tempNode2));
+			    resD += 2;
+			    mpfr_set_si(b, resD, GMP_RNDN);
+			    tempList = addElement(tempList,makeConstant(b));			    
 			    tempList2 = copyChain(tempList,copyThingOnVoid);
 			    freeChain(tempList,freeThingOnVoid);
 			    tempNode3 = makeList(tempList2);
@@ -9190,6 +9193,7 @@ int executeCommandInner(node *tree) {
 			tempList = addElement(tempList,copyThing(tempNode4));
 		      }
 		      tempList = addElement(tempList, copyThing(tempNode2));
+		      tempList = addElement(tempList,copyThing(tempNode4));
 		      tempList2 = copyChain(tempList,copyThingOnVoid);
 		      freeChain(tempList,freeThingOnVoid);
 		      tempNode3 = makeList(tempList2);
@@ -9405,6 +9409,9 @@ int executeCommandInner(node *tree) {
 			      tempList = addElement(tempList,makeConstant(b));
 			    }
 			    tempList = addElement(tempList, copyThing(tempNode2));
+			    resD += 2;
+			    mpfr_set_si(b, resD, GMP_RNDN);
+			    tempList = addElement(tempList,makeConstant(b));			    
 			    tempList2 = copyChain(tempList,copyThingOnVoid);
 			    freeChain(tempList,freeThingOnVoid);
 			    tempNode3 = makeList(tempList2);
@@ -9432,6 +9439,7 @@ int executeCommandInner(node *tree) {
 			tempList = addElement(tempList,copyThing(tempNode4));
 		      }
 		      tempList = addElement(tempList, copyThing(tempNode2));
+		      tempList = addElement(tempList,copyThing(tempNode4));
 		      tempList2 = copyChain(tempList,copyThingOnVoid);
 		      freeChain(tempList,freeThingOnVoid);
 		      tempNode3 = makeList(tempList2);
