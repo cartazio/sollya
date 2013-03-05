@@ -3,7 +3,6 @@ LIBSOLLYA
 * Still many function to test in the lib (cf. below). CQL: I added some priority indications: priority 1-5 by difficulty of the code/ priority 1-5 by expected
                                                            number of users to be affected by a possible bug
    */*****     int sollya_lib_init();
-   */****      int sollya_lib_init_with_custom_memory_functions(void *(*custom_malloc)(size_t), void *(*custom_calloc)(size_t, size_t), void *(*custom_realloc)(void *, size_t), void (*custom_free)(void *), void *(*custom_realloc_with_size)(void *, size_t, size_t), void (*custom_free_with_size)(void *, size_t));
    ***/*****   int sollya_lib_close();
    **/****     int sollya_lib_install_msg_callback(int (*) (int));
    **/***      int sollya_lib_uninstall_msg_callback();
@@ -52,11 +51,6 @@ LIBSOLLYA
    */*         sollya_obj_t sollya_lib_roundcorrectly(sollya_obj_t);                     CQL: we should deprecate this function. I don't see its use anymore.
    **/****     sollya_obj_t sollya_lib_range(sollya_obj_t, sollya_obj_t);
    **/****     sollya_obj_t sollya_lib_parse_string(const char *);
-   ***/***     int sollya_lib_get_function_arity(int *, sollya_obj_t);
-   ***/***     int sollya_lib_get_head_function(sollya_base_function_t *, sollya_obj_t);
-   *****/****  int sollya_lib_get_subfunctions(sollya_obj_t, int *, ...);
-   *****/****  int sollya_lib_v_get_subfunctions(sollya_obj_t, int *, va_list);                             CAUTION: SPECIAL CASES EXIST WHEN THE OBJECT 		
-   *****/***** int sollya_lib_decompose_function(sollya_obj_t, sollya_base_function_t *, int *, ...);       IS A LIBRARY CONSTANT, FUNCTION OR PROCEDURE FUNCTION.  
    ***/****    ia_eval_result_t sollya_lib_evaluate_function_over_interval(mpfi_t, sollya_obj_t, mpfi_t);     
    ***/***     sollya_obj_t sollya_lib_list(sollya_obj_t[], int);
    ***/***     sollya_obj_t sollya_lib_end_elliptic_list(sollya_obj_t[], int);
@@ -76,24 +70,18 @@ LIBSOLLYA
    ****/*****  int sollya_lib_get_constant(mpfr_t, sollya_obj_t);
    ****/*****  int sollya_lib_get_prec_of_constant(mp_prec_t *, sollya_obj_t);
    ****/***    sollya_obj_t sollya_lib_round(sollya_obj_t, sollya_obj_t, sollya_obj_t);
-   *****/***   sollya_obj_t sollya_lib_libraryconstant(char *, void (*)(mpfr_t, mp_prec_t));                                WRITE TESTS WHERE THE char* ARGUMENT IS NULL       
-   *****/***   sollya_obj_t sollya_lib_libraryfunction(sollya_obj_t, char *, int (*)(mpfi_t, mpfi_t, int));                 AND OTHERS WHERE IT IS NOT. TEST WHEN THE 	       
-   *****/*     sollya_obj_t sollya_lib_procedurefunction(sollya_obj_t, sollya_obj_t);                                       NAME GIVEN AS A char* (OR IMPLICITLY RECOVERED WHEN
-   *****/****  sollya_obj_t sollya_lib_build_function_libraryconstant(char *, void (*)(mpfr_t, mp_prec_t));                 char* IS NULL) IS ALREADY BOUND AND WHEN IT IS NOT.
-   *****/****  sollya_obj_t sollya_lib_build_function_libraryfunction(sollya_obj_t, char *, int (*)(mpfi_t, mpfi_t, int));  CHECK THE CASE WHEN char* IS NULL, THE POINTER
-   *****/*     sollya_obj_t sollya_lib_build_function_procedurefunction(sollya_obj_t, sollya_obj_t);                        TO THE FUNCTION DOES NOT ACTUALLY POINT TO A C FUNCTION
-                                                                                                                            AND THE CREATED OBJECT GETS PRINTED (SHOULD NOT SEGFAULT)
 
 ~> notice that some of them are used through examples in the doc. It would be useful to test that examples of code in the doc compile and work anyway.
 
 * Check that we did not forget to document and test a function of the lib.
-  ~> S.C. : sollya_lib_apply for instance is nowhere explained.
+
 
 
 CHEBMODELS
 ==========
-* Is the chebmodels branch still useful? If not, remove it. Otherwise, merge whatever needed into the trunk and close it.
-* Are chebmodels finished (support for extraterrestrial things such as externalfunctions and procedure functions for instance, documentation, tests in tool and lib form, memory leaks)? If not, finish them.
+* Are chebmodels really finished (support for extraterrestrial things such as externalfunctions and procedure functions for instance).
+Documentation should be reviewed.
+More complete tests?
 
 
 DOCUMENTATION
@@ -104,10 +92,8 @@ DOCUMENTATION
 * Document and test the activation/deactivation mechanism for message numbers and the computation of the list of messages. DOCUMENTED by CQL
 * Document and test showmessagenumbers. DOCUMENTED by CQL
 * Read the documentation of the library, looking for typos or errors, especially the part about message callbacks and about custom memory allocation, that have been less read.
-* Document sprintf and snprintf.
 * Doc changed a lot at rev 1829 and at rev 1836. It should be checked that every change is on purpose. If not, it might be a bug (or it might be due to the fact that a bug has been fixed) in which case the example should be copied to the test suite.
 
-* CAUTION: IMPORTANT: review the example given in sollya.tex for sollya_lib_decompose_function. The code does not work for library function, library constants and procedure functions.
 
 BUGS
 ====
@@ -123,9 +109,6 @@ BUGS
 
   check021 fails when Sollya is compiled against a version of MPFI between revisions 560 and 610 of MPFI. This comes from a bug in mpfi_sub_fr ~> there is probably a possibility to write a very small example exhbiting the bug.
 
-* On September 24, Christoph sent me a message exhibiting an unusual behavior of supnorm on some polynomial. Unfortunately, he did not give me the full polynomial. It would be great to investigate this possible issue. --> S.C.: it is not a bug.
-
-* DONE (by CQL): tget_constant_as_double, tevaluate_function_at_point and  tevaluate_function_at_constant_expression fail on some architectures because a double containing nan is sometimes displayed -nan and sometimes displayed nan. It is just a matter of changing the tests. 
 
 OTHER
 =====
