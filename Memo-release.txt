@@ -1,14 +1,13 @@
 Before even thinking of performing the release:
   * Close bugs that can be closed.
-  * Compile with flags -Wall and -Wextra (and also -ansi -pedantic) and check that there is no warning. Otherwise, do the appropriate corrections.
+  * Compile with flags -Wall and -Wextra (and also  -std=c99 -ansi -pedantic) and check that there is no warning. Otherwise, do the appropriate corrections.
   * Check that all modifications have been reported in the documenation.
   * Check that all new feature has a library version if needed and has a shlp if needed (with a #LIBRARYNAME if needed) and an entry in the 'help help' list.
-  * Compile with verbose options and check that no warning remains.
 
 When the release seems ready:
   * Check that 'make check' passes on several architectures (especially cygwin).
   * Check that all modifications to sollya.tex have been reported into sollya.php.
-  * valgrind everything.
+  * valgrind everything.^{1}
   * Recompile the doc.
   * Check that the version number of Sollya is correctly set.
   * Check that copyrights and email addresses are up to date.
@@ -16,3 +15,32 @@ When the release seems ready:
   * Build the release. Try to install it and test it on several architectures (especially cygwin).
   * Put it online and make announcements.
   * Create an entry in history.php for the new release.
+
+
+
+
+
+
+
+
+
+
+---------------------------
+^{1} : begin by compiling sollya with option --enable-legacy-memory-management. To valgrind all test-lib files for instance, do:
+        cd tests-lib
+        export LD_LIBRARY_PATH=../.libs/
+        for i in *.c
+        do
+          file=`basename $i ".c"`
+          valgrind --leak-check=full --num-callers=50 --child-silent-after-fork=yes .libs/$file & > $file.valgrind.log;done
+        done
+        
+        for i in *.valgrind.log
+        do
+          if ! grep "no leaks are possible" $i > /dev/null
+            then echo $i
+          fi
+        done
+
+Once all problems corrected, recompile sollya without option --enable-legacy-memory-management and re-run valgrind. Normally, no new leak should appear.
+

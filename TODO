@@ -2,7 +2,6 @@ LIBSOLLYA
 =========
 * Still many function to test in the lib (cf. below). CQL: I added some priority indications: priority 1-5 by difficulty of the code/ priority 1-5 by expected
                                                            number of users to be affected by a possible bug
-   */*****     int sollya_lib_init();
    ***/*****   int sollya_lib_close();
    **/****     int sollya_lib_install_msg_callback(int (*) (int));
    **/***      int sollya_lib_uninstall_msg_callback();
@@ -67,16 +66,14 @@ LIBSOLLYA
 ~> notice that some of them are used through examples in the doc. It would be useful to test that examples of code in the doc compile and work anyway.
 
 * Check that we did not forget to document and test a function of the lib.
-* Document tget_element_in_list
 * Unify between "library_function" and "libraryfunction" in the names of functions (idem for libraryconstant and procedurefunction).
 
 
 
 CHEBMODELS
 ==========
-* Are chebmodels really finished (support for extraterrestrial things such as externalfunctions and procedure functions for instance).
-Documentation should be reviewed.
-More complete tests?
+* Documentation should be reviewed.
+* More complete tests? (including support for extraterrestrial things such as externalfunctions and procedure functions for instance).
 
 
 DOCUMENTATION
