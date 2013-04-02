@@ -7,7 +7,6 @@ LIBSOLLYA
    **/***      int sollya_lib_uninstall_msg_callback();
    **/****     int (*sollya_lib_get_msg_callback())(int);
    */***       char *sollya_lib_msg_number_to_text(int);
-   ***/*****   sollya_obj_t sollya_lib_copy_obj(sollya_obj_t);
    */****      void sollya_lib_plot(sollya_obj_t, sollya_obj_t, ...);
    */****      void sollya_lib_v_plot(sollya_obj_t, sollya_obj_t, va_list);
    */**        void sollya_lib_implementconst(sollya_obj_t, ...);
@@ -66,8 +65,6 @@ LIBSOLLYA
 ~> notice that some of them are used through examples in the doc. It would be useful to test that examples of code in the doc compile and work anyway.
 
 * Check that we did not forget to document and test a function of the lib.
-* Unify between "library_function" and "libraryfunction" in the names of functions (idem for libraryconstant and procedurefunction).
-
 
 
 CHEBMODELS
@@ -107,7 +104,6 @@ OTHER
 * Check that externalproc is compatible with the new sollya.h
 * Check the cases where there used to be instances of recoverFromError in plot and remez.
 * Since there are '#undef malloc' and  '#undef realloc' in the beginning of fpminimax.cpp, we must check that all allocations (even those performed by new in C++) use our allocation mechanisme (S.C. : I am very confident about it) (CQL: I want an answer for my proposal to overload new)
-* Remove remaining printf and sollyaPrintf where there remains some (especially in chebyshevformaux.c) - CQL: done
 * Type sollya_fp_result_t: we agreed on implementing bit masks also for this type. That should be made and documented. (CQL: I committed a proposal.)
 * Take a decision regarding a possible change of the interface in order to anticipate a future thread-safe version of the library. ~> My opinion is that it is OK as it is now.
 
@@ -151,20 +147,6 @@ REMARKS BY MARC
    approximated with dirtyinfnorm by
    4.999494676264771721054812570807514588615934099212
 
-* I think that we agreed on Marc's remark about adding a (void *) argument to callback. If I remember well, this is for allowing developers to pass information to the callback, and I think we agreed on this change. This should be tested. IMPLEMENTATION DONE by CQL.
-
-* I do not remember what we decided about these remarks:
-   - It is weird to have sollya_lib_get_element_in_structure() but no sollya_lib_get_element_in_list().
-      ~> I believe that this is a question of efficiency, but what did we finally decide?
-
-      This has been implemented and should be documented and tested.
-
-  - It could be useful to have analogues of both (previous) functions, without copy: this would allow an easy access to subexpressions.
-      ~> I believe that we agreed on ignoring that remark, but I am not 100% sure.
-
-      Yes, we will ignore that.
-
-
 * Write a real libsollyaexample.c
 * Sollya is compiled with debug symbols or not?
 
@@ -173,7 +155,6 @@ REMARKS BY MARC
 LONG-TERM TODOS (not for Sollya 4.0 (?))
 ========================================
 * Provide a true interruption mechanism, with automatic freeing of the memory allocated by safeMalloc, etc.
-* Optimize memory management, especially for list operations (and do not forget to add non-regression tests in timecheck).
 * Multivariate coeff command.
 * Write down somewhere the list of all global variables of the tool together with their default value.
 
