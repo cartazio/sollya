@@ -3,10 +3,6 @@ LIBSOLLYA
 * Still many function to test in the lib (cf. below). CQL: I added some priority indications: priority 1-5 by difficulty of the code/ priority 1-5 by expected
                                                            number of users to be affected by a possible bug
    ***/*****   int sollya_lib_close();
-   **/****     int sollya_lib_install_msg_callback(int (*) (int));
-   **/***      int sollya_lib_uninstall_msg_callback();
-   **/****     int (*sollya_lib_get_msg_callback())(int);
-   */***       char *sollya_lib_msg_number_to_text(int);
    */****      void sollya_lib_plot(sollya_obj_t, sollya_obj_t, ...);
    */****      void sollya_lib_v_plot(sollya_obj_t, sollya_obj_t, va_list);
    */**        void sollya_lib_implementconst(sollya_obj_t, ...);
@@ -50,14 +46,6 @@ LIBSOLLYA
    **/****     sollya_obj_t sollya_lib_range(sollya_obj_t, sollya_obj_t);
    **/****     sollya_obj_t sollya_lib_parse_string(const char *);
    ***/****    ia_eval_result_t sollya_lib_evaluate_function_over_interval(mpfi_t, sollya_obj_t, mpfi_t);     
-   *****/***** int sollya_lib_printf(const char *, ...);                                     WHEN TESTING THE PRINTF FAMILY, TEST THE RETURN VALUE THOROUGLY
-   *****/***** int sollya_lib_v_printf(const char *, va_list);                               IN PARTICULAR FOR THE SPRINTF AND SNPRINTF FUNCTIONS.
-   *****/***** int sollya_lib_fprintf(FILE *, const char *, ...);                            TESTING MUST ALSO BE DONE FOR COMBINATIONS OF FORMAT INDICATORS
-   *****/***** int sollya_lib_v_fprintf(FILE *, const char *, va_list);                      (E.G. "%b%d%.45e%.*v") AS THE RETURN VALUE MUST BE THE SUM OF
-   *****/***** int sollya_lib_sprintf(char *, const char *, ...);                            RETURN VALUES OF SEVERAL RECURSIVE CALLS.
-   *****/***** int sollya_lib_v_sprintf(char *, const char *, va_list);                      PLEASE PAY ATTENTION TO %n CONVERSIONS, TOO.
-   *****/***** int sollya_lib_snprintf(char *, size_t, const char *, ...);
-   *****/***** int sollya_lib_v_snprintf(char *, size_t, const char *, va_list);
    ****/*****  int sollya_lib_get_constant(mpfr_t, sollya_obj_t);
    ****/*****  int sollya_lib_get_prec_of_constant(mp_prec_t *, sollya_obj_t);
    ****/***    sollya_obj_t sollya_lib_round(sollya_obj_t, sollya_obj_t, sollya_obj_t);

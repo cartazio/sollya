@@ -9,7 +9,7 @@ When the release seems ready:
   * Check that all modifications to sollya.tex have been reported into sollya.php.
   * valgrind everything.^{1}
   * Recompile the doc.
-  * Check that the version number of Sollya is correctly set.
+  * Check that the version number of Sollya is correctly set in configure.ac, sollya.tex and sollya.php.
   * Check that copyrights and email addresses are up to date.
   * Generate the Changelog file, and the human-readable NEWS file.
   * Build the release. Try to install it and test it on several architectures (especially cygwin).
@@ -34,13 +34,8 @@ When the release seems ready:
           file=`basename $i ".c"`
           valgrind --leak-check=full --num-callers=50 --child-silent-after-fork=yes .libs/$file & > $file.valgrind.log;done
         done
-        
-        for i in *.valgrind.log
-        do
-          if ! grep "no leaks are possible" $i > /dev/null
-            then echo $i
-          fi
-        done
+
+        grep -L "no leaks are possible" *.valgrind.log
 
 Once all problems corrected, recompile sollya without option --enable-legacy-memory-management and re-run valgrind. Normally, no new leak should appear.
 
