@@ -5,7 +5,15 @@ Before even thinking of performing the release:
   * Check that all new feature has a library version if needed and has a shlp if needed (with a #LIBRARYNAME if needed) and an entry in the 'help help' list.
 
 When the release seems ready:
-  * Check that 'make check' passes on several architectures (especially cygwin).
+  * Check that 'make check' passes on several architectures (especially cygwin):
+    - powerpc (e.g. gcc110.fsffrance.org)
+    - arm hard float (e.g. maus)
+    - arm soft float hase (e.g. hase)
+    - Intel32 (e.g. cosmos)
+    - Intel64 with gcc
+    - Intel64 with icc
+    - Cygwin
+    
   * Check that all modifications to sollya.tex have been reported into sollya.php.
   * valgrind everything.^{1}
   * Recompile the doc.
