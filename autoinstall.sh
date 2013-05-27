@@ -207,6 +207,9 @@ case "$SOLLYA_PKG_NAME" in
   sollya-svn )
     svn co svn://scm.gforge.inria.fr/svn/sollya/trunk $SOLLYA_PKG_NAME > /dev/null ; failure_check
     ;;
+  sollya-4.0 )
+    SOLLYA_URL=http://www-sop.inria.fr/members/Sylvain.Chevillard/sollya-4.0.tar.bz2
+    ;;
   sollya-3.0 )
     SOLLYA_URL=https://gforge.inria.fr/frs/download.php/28570/sollya-3.0.tar.bz2
     ;;
