@@ -1,6 +1,7 @@
 Before even thinking of performing the release:
   * Close bugs that can be closed.
   * Compile with flags -Wall and -Wextra (and also  -std=c99 -ansi -pedantic) and check that there is no warning. Otherwise, do the appropriate corrections.
+  * Check that all new feature has a library version if needed and has a shlp if needed (with a #LIBRARYNAME if needed) and an entry in the 'help help' list.
   * Check that all modifications have been reported in the documentation.
     - check that help help is up-to-date
     - check that for each new command and function, one gets something relevant when doing 'help the_command'
@@ -8,10 +9,9 @@ Before even thinking of performing the release:
     - check that all shlp contain a #LIBRARYNAME entry if needed.
     - (just to be sure) compile Sollya with option -DWARN_IF_NO_HELP_TEXT=1 and check that nothing has been forgotten.
 
-  * Check that all new feature has a library version if needed and has a shlp if needed (with a #LIBRARYNAME if needed) and an entry in the 'help help' list.
 
 When the release seems ready:
-  * Check that 'make check' passes on several architectures (especially cygwin):
+  * Check that 'make check' passes on several architectures:
     - powerpc (e.g. gcc110.fsffrance.org)
     - arm hard float (e.g. maus)
     - arm soft float hase (e.g. hase)
@@ -22,11 +22,12 @@ When the release seems ready:
 
   * Check that all modifications to sollya.tex have been reported into sollya.php.
   * valgrind everything.^{1}
-  * Recompile the doc.
-  * Check that the version number of Sollya is correctly set in configure.ac, sollya.tex and sollya.php.
   * Check that copyrights and email addresses are up to date.
+  * Recompile the doc.
   * Generate the Changelog file, and the human-readable NEWS file.
-  * Build the release. Try to install it and test it on several architectures (especially cygwin).
+  * Tag the new release.
+  * Put correct version number of Sollya in configure.ac, sollya.tex and sollya.php in the tag repository.
+  * Build the release (make dist). Try to install it and test it on several architectures (the same as before).
   * Put it online and make announcements.
   * Create an entry in history.php for the new release.
 
