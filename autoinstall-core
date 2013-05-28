@@ -27,10 +27,34 @@ fi
 if test -n "$PREFIX_PATH"
 then
   PREFIX="--prefix=$PREFIX_PATH"
-  WITHGMP="--with-gmp=$PREFIX_PATH"
-  WITHMPFR="--with-mpfr=$PREFIX_PATH"
-  WITHMPFI="--with-mpfi=$PREFIX_PATH"
-  WITHFPLLL="--with-fplll=$PREFIX_PATH"
+
+  if test -n "$GMP_PKG_NAME"
+  then
+    WITHGMP="--with-gmp=$PREFIX_PATH"
+  else
+    WITHGMP=""
+  fi
+
+  if test -n "$MPFR_PKG_NAME"
+  then
+    WITHMPFR="--with-mpfr=$PREFIX_PATH"
+  else
+    WITHMPFR=""
+  fi
+
+  if test -n "$MPFI_PKG_NAME"
+  then
+    WITHMPFI="--with-mpfi=$PREFIX_PATH"
+  else
+    WITHMPFI=""
+  fi
+
+  if test -n "$FPLLL_PKG_NAME"
+  then
+    WITHFPLLL="--with-fplll=$PREFIX_PATH"
+  else
+    WITHFPLLL=""
+  fi
 else
   PREFIX=""
   WITHGMP=""
