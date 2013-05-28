@@ -28,6 +28,10 @@ else
 fi
 
 printf "\nDownloading up-to-date autoinstall script... "
+if test -e autoinstall-core
+then
+  rm -rf autoinstall-core
+fi
 $GET_PRG http://www-sop.inria.fr/members/Sylvain.Chevillard/autoinstall-core 1> /dev/null 2>&1
 if test "$?" -ne 0
 then

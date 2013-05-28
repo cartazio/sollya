@@ -68,6 +68,10 @@ fi
 if test -n "$GMP_PKG_NAME"
 then
   printf "\nDownloading GMP... "
+  if test -e "$GMP_PKG_NAME.tar.bz2"
+  then
+    rm -rf "$GMP_PKG_NAME.tar.bz2"
+  fi
   $GET_PRG ftp://ftp.gmplib.org/pub/$GMP_PKG_NAME/$GMP_PKG_NAME.tar.bz2 1> /dev/null 2>&1 ; failure_check
   printf "done.\n"
 
@@ -100,7 +104,11 @@ fi
 if test -n "$MPFR_PKG_NAME"
 then
   printf "Downloading MPFR... "
-  $GET_PRG http://www.mpfr.org/mpfr-current/$MPFR_PKG_NAME.tar.bz2 1> /dev/null 2>&1 ; failure_check
+  if test -e "$MPFR_PKG_NAME.tar.bz2"
+  then
+    rm -rf "$MPFR_PKG_NAME.tar.bz2"
+  fi
+  $GET_PRG http://www.mpfr.org/$MPFR_PKG_NAME/$MPFR_PKG_NAME.tar.bz2 1> /dev/null 2>&1 ; failure_check
   printf "done.\n"
 
   tar -jxvf $MPFR_PKG_NAME.tar.bz2 > /dev/null
@@ -132,7 +140,31 @@ fi
 if test -n "$MPFI_PKG_NAME"
 then
   printf "Downloading MPFI... "
-  $GET_PRG https://gforge.inria.fr/frs/download.php/30129/$MPFI_PKG_NAME.tar.bz2 1> /dev/null 2>&1 ; failure_check
+  case "$MPFI_PKG_NAME" in
+    mpfi-1.5.1 )
+      MPFI_URL=https://gforge.inria.fr/frs/download.php/30129/mpfi-1.5.1.tar.bz2
+      ;;
+    mpfi-1.5.1-rc1 )
+      MPFI_URL=https://gforge.inria.fr/frs/download.php/30117/mpfi-1.5.1-rc1.tar.bz2
+      ;;
+    mpfi-1.5 )
+      MPFI_URL=https://gforge.inria.fr/frs/download.php/27345/mpfi-1.5.tar.bz2
+      ;;
+    mpfi-1.5.0 )
+      MPFI_URL=https://gforge.inria.fr/frs/download.php/27345/mpfi-1.5.tar.bz2
+      MPFI_PKG_NAME=mpfi-1.5
+      ;;
+    * )
+      printf "Failed. (Unknown package)\n"; exit 1
+      ;;
+  esac
+
+  if test -e "$MPFI_PKG_NAME.tar.bz2"
+  then
+    rm -rf "$MPFI_PKG_NAME.tar.bz2"
+  fi
+
+  $GET_PRG $MPFI_URL 1> /dev/null 2>&1 ; failure_check
   printf "done.\n"
 
   tar -jxvf $MPFI_PKG_NAME.tar.bz2 > /dev/null
@@ -164,6 +196,10 @@ fi
 if test -n "$FPLLL_PKG_NAME"
 then
   printf "Downloading FPLLL... "
+  if test -e "$FPLLL_PKG_NAME.tar.gz"
+  then
+    rm -rf "$FPLLL_PKG_NAME.tar.gz"
+  fi
   $GET_PRG http://perso.ens-lyon.fr/damien.stehle/fplll/$FPLLL_PKG_NAME.tar.gz 1> /dev/null 2>&1 ; failure_check
   printf "done.\n"
 
@@ -171,6 +207,10 @@ then
   cd $FPLLL_PKG_NAME
 
   printf "Downloading FPLLL configure patch... "
+  if test -e fplll.patch
+  then
+    rm -rf fplll.patch
+  fi
   $GET_PRG http://www-sop.inria.fr/members/Sylvain.Chevillard/fplll.patch 1> /dev/null 2>&1 ; failure_check
   printf "done.\n"
 
@@ -179,7 +219,14 @@ then
     printf "Patching bug in FPLLL configure file... "
     patch -p0 < fplll.patch 1> /dev/null 2>&1 ; failure_check
     autoreconf -i 1> /dev/null 2>&1 ; failure_check
-    libtoolize 1> /dev/null 2>&1 ; failure_check
+    if which libtoolize 1> /dev/null 2>&1
+    then
+      libtoolize 1> /dev/null 2>&1 ; failure_check
+    fi
+    if which glibtoolize 1> /dev/null 2>&1
+    then
+      glibtoolize 1> /dev/null 2>&1 ; failure_check
+    fi
     printf "done.\n"
   fi
   printf "Running configure... "
