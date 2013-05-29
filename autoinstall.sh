@@ -36,7 +36,7 @@ $GET_PRG http://www-sop.inria.fr/members/Sylvain.Chevillard/autoinstall-core 1> 
 if test "$?" -ne 0
 then
   printf "Failed.\n"
-  exit 1
+  exit 2
 fi
 printf "done.\n"
 

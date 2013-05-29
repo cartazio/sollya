@@ -1,9 +1,21 @@
+TMPBUFFER=tmpbuffer
+exitnumber=2
+
 failure_check() {
+ exitnumber=`expr $exitnumber + 1`;
  if test "$?" -ne 0
  then
-   printf "Failed.\n"
-   exit 1
+   if test -e $TMPBUFFER
+   then
+     printf "\n"
+     cat $TMPBUFFER
+     printf "\n"
+     rm -rf $TMPBUFFER
+   fi
+   printf "Failed (exit code $exitnumber).\n"
+   exit $exitnumber
  fi
+ rm -rf $TMPBUFFER 1> /dev/null 2>&1
 }
 
 if test -z "$LOG_DIR"
@@ -72,10 +84,10 @@ then
   then
     rm -rf "$GMP_PKG_NAME.tar.bz2"
   fi
-  $GET_PRG ftp://ftp.gmplib.org/pub/$GMP_PKG_NAME/$GMP_PKG_NAME.tar.bz2 1> /dev/null 2>&1 ; failure_check
+  $GET_PRG ftp://ftp.gmplib.org/pub/$GMP_PKG_NAME/$GMP_PKG_NAME.tar.bz2 1> $TMPBUFFER 2>&1 ; failure_check
   printf "done.\n"
 
-  tar -jxvf $GMP_PKG_NAME.tar.bz2 > /dev/null
+  tar -jxvf $GMP_PKG_NAME.tar.bz2 1> $TMPBUFFER 2>&1 ; failure_check
   cd $GMP_PKG_NAME
 
   printf "Running configure... "
@@ -108,10 +120,10 @@ then
   then
     rm -rf "$MPFR_PKG_NAME.tar.bz2"
   fi
-  $GET_PRG http://www.mpfr.org/$MPFR_PKG_NAME/$MPFR_PKG_NAME.tar.bz2 1> /dev/null 2>&1 ; failure_check
+  $GET_PRG http://www.mpfr.org/$MPFR_PKG_NAME/$MPFR_PKG_NAME.tar.bz2 1> $TMPBUFFER 2>&1 ; failure_check
   printf "done.\n"
 
-  tar -jxvf $MPFR_PKG_NAME.tar.bz2 > /dev/null
+  tar -jxvf $MPFR_PKG_NAME.tar.bz2 1> $TMPBUFFER 2>&1 ; failure_check
   cd $MPFR_PKG_NAME
 
   printf "Running configure... "
@@ -142,32 +154,63 @@ then
   printf "Downloading MPFI... "
   case "$MPFI_PKG_NAME" in
     mpfi-1.5.1 )
-      MPFI_URL=https://gforge.inria.fr/frs/download.php/30129/mpfi-1.5.1.tar.bz2
+      MPFI_URL=https://gforge.inria.fr/frs/download.php/30129/mpfi-1.5.1.tar.gz
       ;;
     mpfi-1.5.1-rc1 )
-      MPFI_URL=https://gforge.inria.fr/frs/download.php/30117/mpfi-1.5.1-rc1.tar.bz2
+      MPFI_URL=https://gforge.inria.fr/frs/download.php/30117/mpfi-1.5.1-rc1.tar.gz
+      ;;
+    mpfi-1.5.1-RC1 )
+      MPFI_URL=https://gforge.inria.fr/frs/download.php/30117/mpfi-1.5.1-rc1.tar.gz
+      MPFI_PKG_NAME=mpfi-1.5-rc1
       ;;
     mpfi-1.5 )
-      MPFI_URL=https://gforge.inria.fr/frs/download.php/27345/mpfi-1.5.tar.bz2
+      MPFI_URL=https://gforge.inria.fr/frs/download.php/27345/mpfi-1.5.tar.gz
       ;;
     mpfi-1.5.0 )
-      MPFI_URL=https://gforge.inria.fr/frs/download.php/27345/mpfi-1.5.tar.bz2
+      MPFI_URL=https://gforge.inria.fr/frs/download.php/27345/mpfi-1.5.tar.gz
       MPFI_PKG_NAME=mpfi-1.5
       ;;
+    mpfi-1.4 )
+      MPFI_URL=https://gforge.inria.fr/frs/download.php/22256/mpfi-1.4.tar.gz
+      ;;
+    mpfi-1.3.4-rc3 )
+      MPFI_URL=https://gforge.inria.fr/frs/download.php/468/mpfi-1.3.4-RC3.tar.gz
+      MPFI_PKG_NAME=mpfi-1.3.4-RC3
+      ;;
+    mpfi-1.3.4-RC3 )
+      MPFI_URL=https://gforge.inria.fr/frs/download.php/468/mpfi-1.3.4-RC3.tar.gz
+      ;;
+    mpfi-1.3.4-rc2 )
+      MPFI_URL=https://gforge.inria.fr/frs/download.php/351/mpfi-1.3.4-RC2.tar.gz
+      MPFI_PKG_NAME=mpfi-1.3.4-RC2
+      ;;
+    mpfi-1.3.4-RC2 )
+      MPFI_URL=https://gforge.inria.fr/frs/download.php/351/mpfi-1.3.4-RC2.tar.gz
+      ;;
+    mpfi-1.3.4-rc1 )
+      MPFI_URL=https://gforge.inria.fr/frs/download.php/237/mpfi-1.3.4-RC1.tar.gz
+      MPFI_PKG_NAME=mpfi-1.3.4-RC1
+      ;;
+    mpfi-1.3.4-RC1 )
+      MPFI_URL=https://gforge.inria.fr/frs/download.php/237/mpfi-1.3.4-RC1.tar.gz
+      ;;
+    mpfi-1.3.3 )
+      MPFI_URL=https://gforge.inria.fr/frs/download.php/222/mpfi-1.3.3.tar.gz
+      ;;
     * )
-      printf "Failed. (Unknown package)\n"; exit 1
+      echo "Unknown package $MPFI_PKG_NAME" > $TMPBUFFER; false; failure_check
       ;;
   esac
 
-  if test -e "$MPFI_PKG_NAME.tar.bz2"
+  if test -e "$MPFI_PKG_NAME.tar.gz"
   then
-    rm -rf "$MPFI_PKG_NAME.tar.bz2"
+    rm -rf "$MPFI_PKG_NAME.tar.gz"
   fi
 
-  $GET_PRG $MPFI_URL 1> /dev/null 2>&1 ; failure_check
+  $GET_PRG $MPFI_URL 1> $TMPBUFFER 2>&1 ; failure_check
   printf "done.\n"
 
-  tar -jxvf $MPFI_PKG_NAME.tar.bz2 > /dev/null
+  tar -zxvf $MPFI_PKG_NAME.tar.gz 1> $TMPBUFFER 2>&1 ; failure_check
   cd $MPFI_PKG_NAME
 
   printf "Running configure... "
@@ -187,7 +230,7 @@ then
   printf "done.\n"
 
   cd ..
-  rm -rf $MPFI_PKG_NAME.tar.bz2
+  rm -rf $MPFI_PKG_NAME.tar.gz
   rm -rf $MPFI_PKG_NAME
   printf "\n"
 fi
@@ -200,10 +243,10 @@ then
   then
     rm -rf "$FPLLL_PKG_NAME.tar.gz"
   fi
-  $GET_PRG http://perso.ens-lyon.fr/damien.stehle/fplll/$FPLLL_PKG_NAME.tar.gz 1> /dev/null 2>&1 ; failure_check
+  $GET_PRG http://perso.ens-lyon.fr/damien.stehle/fplll/$FPLLL_PKG_NAME.tar.gz 1> $TMPBUFFER 2>&1 ; failure_check
   printf "done.\n"
 
-  tar -zxvf $FPLLL_PKG_NAME.tar.gz > /dev/null
+  tar -zxvf $FPLLL_PKG_NAME.tar.gz 1> $TMPBUFFER 2>&1 ; failure_check
   cd $FPLLL_PKG_NAME
 
   printf "Downloading FPLLL configure patch... "
@@ -211,21 +254,22 @@ then
   then
     rm -rf fplll.patch
   fi
-  $GET_PRG http://www-sop.inria.fr/members/Sylvain.Chevillard/fplll.patch 1> /dev/null 2>&1 ; failure_check
+  $GET_PRG http://www-sop.inria.fr/members/Sylvain.Chevillard/fplll.patch 1> $TMPBUFFER 2>&1 ; failure_check
   printf "done.\n"
 
   if test -e fplll.patch
   then
     printf "Patching bug in FPLLL configure file... "
-    patch -p0 < fplll.patch 1> /dev/null 2>&1 ; failure_check
-    autoreconf -i 1> /dev/null 2>&1 ; failure_check
+    which patch 1> $TMPBUFFER 2>&1; failure_check
+    patch -p0 < fplll.patch 1> $TMPBUFFER 2>&1 ; failure_check
+    autoreconf -i 1> $TMPBUFFER 2>&1 ; failure_check
     if which libtoolize 1> /dev/null 2>&1
     then
-      libtoolize 1> /dev/null 2>&1 ; failure_check
+      libtoolize 1> $TMPBUFFER 2>&1 ; failure_check
     fi
     if which glibtoolize 1> /dev/null 2>&1
     then
-      glibtoolize 1> /dev/null 2>&1 ; failure_check
+      glibtoolize 1> $TMPBUFFER 2>&1 ; failure_check
     fi
     printf "done.\n"
   fi
@@ -256,7 +300,7 @@ then
   printf "Downloading Sollya... "
   case "$SOLLYA_PKG_NAME" in
     sollya-svn )
-      svn co svn://scm.gforge.inria.fr/svn/sollya/trunk $SOLLYA_PKG_NAME > /dev/null ; failure_check
+      svn co svn://scm.gforge.inria.fr/svn/sollya/trunk $SOLLYA_PKG_NAME 1> $TMPBUFFER 2>&1 ; failure_check
       ;;
     sollya-4.0 )
       SOLLYA_URL=http://www-sop.inria.fr/members/Sylvain.Chevillard/sollya-4.0.tar.bz2
@@ -274,23 +318,23 @@ then
       SOLLYA_URL=http://sollya.gforge.inria.fr/$SOLLYA_PKG_NAME.tar.bz2
       ;;
     * )
-      printf "Failed. (Unknown package)\n"; exit 1
+      echo "Unknown package $SOLLYA_PKG_NAME" > $TMPBUFFER; false; failure_check
       ;;
     esac
   if test "$SOLLYA_PKG_NAME" != "sollya-svn"
   then
-    $GET_PRG $SOLLYA_URL 1> /dev/null 2>&1 ; failure_check
+    $GET_PRG $SOLLYA_URL 1> $TMPBUFFER 2>&1 ; failure_check
   fi
   printf "done.\n"
 
   if test "$SOLLYA_PKG_NAME" != "sollya-svn"
   then
-    tar -jxvf $SOLLYA_PKG_NAME.tar.bz2 > /dev/null
+    tar -jxvf $SOLLYA_PKG_NAME.tar.bz2 1> $TMPBUFFER 2>&1 ; failure_check
     cd "$SOLLYA_PKG_NAME"
   else
     cd "$SOLLYA_PKG_NAME"
     printf "Generating configure file... "
-    ./autogen.sh 1> /dev/null 2>&1 ; failure_check
+    ./autogen.sh 1> $TMPBUFFER 2>&1 ; failure_check
     printf "done.\n"
   fi
 
