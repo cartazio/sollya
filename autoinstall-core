@@ -154,20 +154,20 @@ then
   printf "Downloading MPFI... "
   case "$MPFI_PKG_NAME" in
     mpfi-1.5.1 )
-      MPFI_URL=https://gforge.inria.fr/frs/download.php/30129/mpfi-1.5.1.tar.gz
+      MPFI_URL=https://gforge.inria.fr/frs/download.php/30130/mpfi-1.5.1.tar.gz
       ;;
     mpfi-1.5.1-rc1 )
-      MPFI_URL=https://gforge.inria.fr/frs/download.php/30117/mpfi-1.5.1-rc1.tar.gz
+      MPFI_URL=https://gforge.inria.fr/frs/download.php/30116/mpfi-1.5.1-rc1.tar.gz
       ;;
     mpfi-1.5.1-RC1 )
-      MPFI_URL=https://gforge.inria.fr/frs/download.php/30117/mpfi-1.5.1-rc1.tar.gz
+      MPFI_URL=https://gforge.inria.fr/frs/download.php/30116/mpfi-1.5.1-rc1.tar.gz
       MPFI_PKG_NAME=mpfi-1.5-rc1
       ;;
     mpfi-1.5 )
-      MPFI_URL=https://gforge.inria.fr/frs/download.php/27345/mpfi-1.5.tar.gz
+      MPFI_URL=https://gforge.inria.fr/frs/download.php/27346/mpfi-1.5.tar.gz
       ;;
     mpfi-1.5.0 )
-      MPFI_URL=https://gforge.inria.fr/frs/download.php/27345/mpfi-1.5.tar.gz
+      MPFI_URL=https://gforge.inria.fr/frs/download.php/27346/mpfi-1.5.tar.gz
       MPFI_PKG_NAME=mpfi-1.5
       ;;
     mpfi-1.4 )
