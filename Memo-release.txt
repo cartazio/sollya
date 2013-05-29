@@ -67,11 +67,13 @@ Current status for 4.0:
 *  gcc110 : IBM POWER7 / Fedora 18 ppc64 -- gmp-5.1.2, mpfr-3.1.2, mpfri-1.5.1, fplll-4.0.3
 *  yber : Debian i686 -- gmp-5.1.2, mpfr-3.1.2, mpfri-1.5.1, fplll-4.0.3
 *  yber : Debian i686 -- packaged versions of all dependencies (gmp-5.0.5, mpfr-3.1.1-p2, mpfri-1.5.1, fplll-4.0.3)
+*  yber : Debian i686 -- packaged versions of all dependencies but fplll (gmp-5.0.5, mpfr-3.1.1-p2, mpfri-1.5.1), fplll-3.0.12
 *  pipol12 : Intel Xeon Dual Core / Snow Leopard -- gmp-5.1.2, mpfr-3.1.2, mpfi-1.5.1, fplll-4.0.3
 *  pipol12 : Intel Xeon Dual Core / Snow Leopard -- compiled and installed as root, gmp-5.1.2, mpfr-3.1.2, mpfi-1.5.1, fplll-4.0.3
           --> tried to compile a .c file against libsollya: ok.
 *  pipol19 : Intel Xeon Quad Core / Fedora 17 -- packaged versions of all dependencies (gmp-5.0.2, mpfr-3.1.0, mpfri-1.5.1, fplll-3.0.12)
-  caolila : Intel Core 2 / Debian --  gmp-5.1.2, mpfr-3.1.2, mpfri-1.5.1, fplll-4.0.3
+          --> also tried to compile and install it as root, and then compile a .c file against libsollya: ok but does not find the library at run time
+*  caolila : Intel Core 2 / Debian --  gmp-5.1.2, mpfr-3.1.2, mpfri-1.5.1, fplll-4.0.3
 
 4.0 does not compile:
   gcc61 : HP PA-8600 / Debian hppa -- mpfr does not compile
