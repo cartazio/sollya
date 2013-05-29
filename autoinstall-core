@@ -2,8 +2,9 @@ TMPBUFFER=tmpbuffer
 exitnumber=2
 
 failure_check() {
+ boolvalue="$?"
  exitnumber=`expr $exitnumber + 1`;
- if test "$?" -ne 0
+ if test "$boolvalue" -ne 0
  then
    if test -e $TMPBUFFER
    then
