@@ -61,14 +61,19 @@ Once all problems corrected, recompile sollya without option --enable-legacy-mem
 ------------------------------------------------
 Current status for 4.0:
 
-gcc15 : Intel Xeon 2.8 / Debian x86-64 -- gmp-4.3.2, mpfr-3.0.0.p3, mpfi-1.5.1, fplll-4.0.3
-gcc60 : Intel Itanium 2 (Madison) / Debian ia64 -- gmp-4.3.2, mpfr-3.0.0.p3, mpfi-1.5.1, fplll-4.0.3
-gcc61 : HP PA-8600 / Debian hppa -- mpfr does not compile
-gcc62 : TI UltraSparc II (BlackBird) / Debian sparc -- mpfr check segfault
-gcc64 : Sun UltraSPARC-IIIi / OpenBSD 5.1 sparc64 -- too long
-gcc110 : IBM POWER7 / Fedora 18 ppc64 -- gmp-5.1.2, mpfr-svn, mpfri-1.5.1, fplll-4.0.3
-yber : Debian i686 -- gmp-5.1.2, mpfr-3.1.2, mpfri-1.5.1, fplll-4.0.3
-yber : Debian i686 -- packaged versions of all dependencies (gmp-5.0.5, mpfr-3.1.1-1, mpfri-1.5.1-1, fplll-4.0.3-1)
-pipol12 : Intel Xeon Dual Core / Snow Leopard -- gmp-5.1.2, mpfr-3.1.2, mpfi-1.5.1, fplll-4.0.3
-pipol19 : Intel Xeon Quad Core / Fedora 17 -- packaged versions of all dependencies (gmp-5.0.2, mpfr-3.1.0, mpfri-1.5.1, fplll-3.0.12)
-caolila : Intel Core 2 / Debian --  gmp-5.1.2, mpfr-3.1.2, mpfri-1.5.1, fplll-4.0.3
+4.0 does compile
+*  gcc15 : Intel Xeon 2.8 / Debian x86-64 -- gmp-4.3.2, mpfr-3.0.0.p3, mpfi-1.5.1, fplll-4.0.3
+*  gcc60 : Intel Itanium 2 (Madison) / Debian ia64 -- gmp-4.3.2, mpfr-3.0.0.p3, mpfi-1.5.1, fplll-4.0.3
+*  gcc110 : IBM POWER7 / Fedora 18 ppc64 -- gmp-5.1.2, mpfr-3.1.2, mpfri-1.5.1, fplll-4.0.3
+*  yber : Debian i686 -- gmp-5.1.2, mpfr-3.1.2, mpfri-1.5.1, fplll-4.0.3
+*  yber : Debian i686 -- packaged versions of all dependencies (gmp-5.0.5, mpfr-3.1.1-p2, mpfri-1.5.1, fplll-4.0.3)
+*  pipol12 : Intel Xeon Dual Core / Snow Leopard -- gmp-5.1.2, mpfr-3.1.2, mpfi-1.5.1, fplll-4.0.3
+*  pipol12 : Intel Xeon Dual Core / Snow Leopard -- compiled and installed as root, gmp-5.1.2, mpfr-3.1.2, mpfi-1.5.1, fplll-4.0.3
+          --> tried to compile a .c file against libsollya: ok.
+*  pipol19 : Intel Xeon Quad Core / Fedora 17 -- packaged versions of all dependencies (gmp-5.0.2, mpfr-3.1.0, mpfri-1.5.1, fplll-3.0.12)
+  caolila : Intel Core 2 / Debian --  gmp-5.1.2, mpfr-3.1.2, mpfri-1.5.1, fplll-4.0.3
+
+4.0 does not compile:
+  gcc61 : HP PA-8600 / Debian hppa -- mpfr does not compile
+  gcc62 : TI UltraSparc II (BlackBird) / Debian sparc -- mpfr check segfault
+  gcc64 : Sun UltraSPARC-IIIi / OpenBSD 5.1 sparc64 -- too long

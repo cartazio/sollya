@@ -41,4 +41,4 @@ fi
 printf "done.\n"
 
 . ./autoinstall-core
-rm autoinstall-core
+rm -rf autoinstall-core

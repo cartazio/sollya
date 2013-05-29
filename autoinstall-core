@@ -250,16 +250,31 @@ then
   tar -zxvf $FPLLL_PKG_NAME.tar.gz 1> $TMPBUFFER 2>&1 ; failure_check
   cd $FPLLL_PKG_NAME
 
-  printf "Downloading FPLLL configure patch... "
-  if test -e fplll.patch
-  then
-    rm -rf fplll.patch
-  fi
-  $GET_PRG http://www-sop.inria.fr/members/Sylvain.Chevillard/fplll.patch 1> $TMPBUFFER 2>&1 ; failure_check
-  printf "done.\n"
+  apply_fplll_patch="false"
+  case "$FPLLL_PKG_NAME" in
+    libfplll-4.0.3 )
+      apply_fplll_patch="true"
+      ;;
+    libfplll-4.0.2 )
+      apply_fplll_patch="true"
+      ;;
+    libfplll-4.0.1 )
+      apply_fplll_patch="true"
+      ;;
+    libfplll-3.1.3 )
+      apply_fplll_patch="true"
+      ;;
+  esac
 
-  if test -e fplll.patch
+  if test "$apply_fplll_patch" = "true"
   then
+    printf "Downloading FPLLL configure patch... "
+    if test -e fplll.patch
+    then
+      rm -rf fplll.patch
+    fi
+    $GET_PRG http://www-sop.inria.fr/members/Sylvain.Chevillard/fplll.patch 1> $TMPBUFFER 2>&1 ; failure_check
+    printf "done.\n"
     printf "Patching bug in FPLLL configure file... "
     which patch 1> $TMPBUFFER 2>&1; failure_check
     patch -p0 < fplll.patch 1> $TMPBUFFER 2>&1 ; failure_check
@@ -272,8 +287,10 @@ then
     then
       glibtoolize 1> $TMPBUFFER 2>&1 ; failure_check
     fi
+    rm -rf fplll.patch
     printf "done.\n"
   fi
+
   printf "Running configure... "
   ./configure $PREFIX $WITHGMP $WITHMPFR > "$LOG_DIR/fplll_configure.log" ; failure_check
   printf "done.\n"
