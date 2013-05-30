@@ -21,7 +21,7 @@ failure_check() {
 
 if test -z "$LOG_DIR"
 then
-  LOG_DIR=$HOME/log
+  LOG_DIR=`pwd`
 fi
 if test ! -d "$LOG_DIR"
 then
@@ -81,10 +81,9 @@ fi
 if test -n "$GMP_PKG_NAME"
 then
   printf "\nDownloading GMP... "
-  if test -e "$GMP_PKG_NAME.tar.bz2"
-  then
-    rm -rf "$GMP_PKG_NAME.tar.bz2"
-  fi
+  rm -rf "$GMP_PKG_NAME.tar.bz2"
+  rm -rf "$GMP_PKG_NAME"
+
   $GET_PRG ftp://ftp.gmplib.org/pub/$GMP_PKG_NAME/$GMP_PKG_NAME.tar.bz2 1> $TMPBUFFER 2>&1 ; failure_check
   printf "done.\n"
 
@@ -108,8 +107,8 @@ then
   printf "done.\n"
 
   cd ..
-  rm -rf $GMP_PKG_NAME.tar.bz2
-  rm -rf $GMP_PKG_NAME
+  rm -rf "$GMP_PKG_NAME.tar.bz2"
+  rm -rf "$GMP_PKG_NAME"
   printf "\n"
 fi
 
@@ -117,10 +116,9 @@ fi
 if test -n "$MPFR_PKG_NAME"
 then
   printf "Downloading MPFR... "
-  if test -e "$MPFR_PKG_NAME.tar.bz2"
-  then
-    rm -rf "$MPFR_PKG_NAME.tar.bz2"
-  fi
+  rm -rf "$MPFR_PKG_NAME.tar.bz2"
+  rm -rf "$MPFR_PKG_NAME"
+
   $GET_PRG http://www.mpfr.org/$MPFR_PKG_NAME/$MPFR_PKG_NAME.tar.bz2 1> $TMPBUFFER 2>&1 ; failure_check
   printf "done.\n"
 
@@ -144,8 +142,8 @@ then
   printf "done.\n"
 
   cd ..
-  rm -rf $MPFR_PKG_NAME.tar.bz2
-  rm -rf $MPFR_PKG_NAME
+  rm -rf "$MPFR_PKG_NAME.tar.bz2"
+  rm -rf "$MPFR_PKG_NAME"
   printf "\n"
 fi
 
@@ -203,10 +201,8 @@ then
       ;;
   esac
 
-  if test -e "$MPFI_PKG_NAME.tar.gz"
-  then
-    rm -rf "$MPFI_PKG_NAME.tar.gz"
-  fi
+  rm -rf "$MPFI_PKG_NAME.tar.gz"
+  rm -rf "$MPFI_PKG_NAME"
 
   $GET_PRG $MPFI_URL 1> $TMPBUFFER 2>&1 ; failure_check
   printf "done.\n"
@@ -231,8 +227,9 @@ then
   printf "done.\n"
 
   cd ..
-  rm -rf $MPFI_PKG_NAME.tar.gz
-  rm -rf $MPFI_PKG_NAME
+  rm -rf "$MPFI_PKG_NAME.tar.gz"
+  rm -rf "$MPFI_PKG_NAME"
+
   printf "\n"
 fi
 
@@ -240,10 +237,9 @@ fi
 if test -n "$FPLLL_PKG_NAME"
 then
   printf "Downloading FPLLL... "
-  if test -e "$FPLLL_PKG_NAME.tar.gz"
-  then
-    rm -rf "$FPLLL_PKG_NAME.tar.gz"
-  fi
+  rm -rf "$FPLLL_PKG_NAME.tar.gz"
+  rm -rf "$FPLLL_PKG_NAME"
+
   $GET_PRG http://perso.ens-lyon.fr/damien.stehle/fplll/$FPLLL_PKG_NAME.tar.gz 1> $TMPBUFFER 2>&1 ; failure_check
   printf "done.\n"
 
@@ -269,10 +265,7 @@ then
   if test "$apply_fplll_patch" = "true"
   then
     printf "Downloading FPLLL configure patch... "
-    if test -e fplll.patch
-    then
-      rm -rf fplll.patch
-    fi
+    rm -rf fplll.patch
     $GET_PRG http://www-sop.inria.fr/members/Sylvain.Chevillard/fplll.patch 1> $TMPBUFFER 2>&1 ; failure_check
     printf "done.\n"
     printf "Patching bug in FPLLL configure file... "
@@ -308,8 +301,8 @@ then
   printf "done.\n"
 
   cd ..
-  rm -rf $FPLLL_PKG_NAME.tar.gz
-  rm -rf $FPLLL_PKG_NAME
+  rm -rf "$FPLLL_PKG_NAME.tar.gz"
+  rm -rf "$FPLLL_PKG_NAME"
 fi
 
 ######################## INSTALLATION OF SOLLYA ########################
@@ -318,6 +311,7 @@ then
   printf "Downloading Sollya... "
   case "$SOLLYA_PKG_NAME" in
     sollya-svn )
+      rm -rf "$SOLLYA_PKG_NAME"
       svn co svn://scm.gforge.inria.fr/svn/sollya/trunk $SOLLYA_PKG_NAME 1> $TMPBUFFER 2>&1 ; failure_check
       ;;
     sollya-4.0 )
@@ -341,12 +335,14 @@ then
     esac
   if test "$SOLLYA_PKG_NAME" != "sollya-svn"
   then
+    rm -rf "$SOLLYA_PKG_NAME.tar.bz2"
     $GET_PRG $SOLLYA_URL 1> $TMPBUFFER 2>&1 ; failure_check
   fi
   printf "done.\n"
 
   if test "$SOLLYA_PKG_NAME" != "sollya-svn"
   then
+    rm -rf "$SOLLYA_PKG_NAME"
     tar -jxvf $SOLLYA_PKG_NAME.tar.bz2 1> $TMPBUFFER 2>&1 ; failure_check
     cd "$SOLLYA_PKG_NAME"
   else
