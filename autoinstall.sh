@@ -3,7 +3,7 @@
 GMP_PKG_NAME=gmp-5.1.2
 MPFR_PKG_NAME=mpfr-3.1.2
 MPFI_PKG_NAME=mpfi-1.5.1
-FPLLL_PKG_NAME=libfplll-4.0.3
+FPLLL_PKG_NAME=libfplll-4.0.4
 SOLLYA_PKG_NAME=sollya-4.0
 
 LOG_DIR=$HOME/log

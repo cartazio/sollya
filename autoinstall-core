@@ -246,41 +246,47 @@ then
   tar -zxvf $FPLLL_PKG_NAME.tar.gz 1> $TMPBUFFER 2>&1 ; failure_check
   cd $FPLLL_PKG_NAME
 
-  apply_fplll_patch="false"
+  fplll_patch="false"
   case "$FPLLL_PKG_NAME" in
     libfplll-4.0.3 )
-      apply_fplll_patch="true"
+      fplll_patch="fplll.patch"
       ;;
     libfplll-4.0.2 )
-      apply_fplll_patch="true"
+      fplll_patch="fplll.patch"
       ;;
     libfplll-4.0.1 )
-      apply_fplll_patch="true"
+      fplll_patch="fplll.patch"
       ;;
     libfplll-3.1.3 )
-      apply_fplll_patch="true"
+      fplll_patch="fplll.patch"
+      ;;
+    libfplll-3.0.12 )
+      fplll_patch="fplll-3.0.12.patch"
       ;;
   esac
 
-  if test "$apply_fplll_patch" = "true"
+  if test "$fplll_patch" != "false"
   then
     printf "Downloading FPLLL configure patch... "
-    rm -rf fplll.patch
-    $GET_PRG http://www-sop.inria.fr/members/Sylvain.Chevillard/fplll.patch 1> $TMPBUFFER 2>&1 ; failure_check
+    rm -rf "$fplll_patch"
+    $GET_PRG "http://www-sop.inria.fr/members/Sylvain.Chevillard/$fplll_patch" 1> $TMPBUFFER 2>&1 ; failure_check
     printf "done.\n"
     printf "Patching bug in FPLLL configure file... "
     which patch 1> $TMPBUFFER 2>&1; failure_check
-    patch -p0 < fplll.patch 1> $TMPBUFFER 2>&1 ; failure_check
-    autoreconf -i 1> $TMPBUFFER 2>&1 ; failure_check
-    if which libtoolize 1> /dev/null 2>&1
+    patch -p0 < "$fplll_patch" 1> $TMPBUFFER 2>&1 ; failure_check
+    if test "$fplll_patch" = "fplll.patch"
     then
-      libtoolize 1> $TMPBUFFER 2>&1 ; failure_check
+      autoreconf -i 1> $TMPBUFFER 2>&1 ; failure_check
+      if which libtoolize 1> /dev/null 2>&1
+      then
+        libtoolize 1> $TMPBUFFER 2>&1 ; failure_check
+      fi
+      if which glibtoolize 1> /dev/null 2>&1
+      then
+        glibtoolize 1> $TMPBUFFER 2>&1 ; failure_check
+      fi
     fi
-    if which glibtoolize 1> /dev/null 2>&1
-    then
-      glibtoolize 1> $TMPBUFFER 2>&1 ; failure_check
-    fi
-    rm -rf fplll.patch
+    rm -rf "$fplll_patch"
     printf "done.\n"
   fi
 
@@ -315,7 +321,7 @@ then
       svn co svn://scm.gforge.inria.fr/svn/sollya/trunk $SOLLYA_PKG_NAME 1> $TMPBUFFER 2>&1 ; failure_check
       ;;
     sollya-4.0 )
-      SOLLYA_URL=http://www-sop.inria.fr/members/Sylvain.Chevillard/sollya-4.0.tar.bz2
+      SOLLYA_URL=https://gforge.inria.fr/frs/download.php/32548/sollya-4.0.tar.bz2
       ;;
     sollya-3.0 )
       SOLLYA_URL=https://gforge.inria.fr/frs/download.php/28570/sollya-3.0.tar.bz2
