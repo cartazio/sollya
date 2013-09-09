@@ -23,18 +23,10 @@ if test -z "$LOG_DIR"
 then
   LOG_DIR=`pwd`
 fi
-if test ! -d "$LOG_DIR"
+mkdir -p "$LOG_DIR"; failure_check
+if test -n "$PREFIX_PATH"
 then
-  printf "Creating $LOG_DIR... "
-  mkdir "$LOG_DIR"; failure_check
-  printf "done.\n"
-fi
-
-if test -n "$PREFIX_PATH" -a ! -d "$PREFIX_PATH"
-then
-  printf "Creating $PREFIX_PATH... "
-  mkdir "$PREFIX_PATH"; failure_check
-  printf "done.\n"
+  mkdir -p "$PREFIX_PATH"; failure_check
 fi
 
 if test -n "$PREFIX_PATH"
@@ -247,9 +239,14 @@ then
   cd $FPLLL_PKG_NAME
 
   fplll_patch="false"
+  fplll_patch2="false"
   case "$FPLLL_PKG_NAME" in
+    libfplll-4.0.4 )
+      fplll_patch="fplll.Makefile.patch"
+      ;;
     libfplll-4.0.3 )
       fplll_patch="fplll.patch"
+      fplll_patch2="fplll.Makefile.patch"
       ;;
     libfplll-4.0.2 )
       fplll_patch="fplll.patch"
@@ -274,8 +271,20 @@ then
     printf "Patching bug in FPLLL configure file... "
     which patch 1> $TMPBUFFER 2>&1; failure_check
     patch -p0 < "$fplll_patch" 1> $TMPBUFFER 2>&1 ; failure_check
-    if test "$fplll_patch" = "fplll.patch"
+    printf "done.\n"
+    if test "$fplll_patch2" != "false"
     then
+      printf "Downloading another FPLLL patch... "
+      rm -rf "$fplll_patch2"
+      $GET_PRG "http://www-sop.inria.fr/members/Sylvain.Chevillard/$fplll_patch2" 1> $TMPBUFFER 2>&1 ; failure_check
+      printf "done.\n"
+      printf "Patching FPLLL file... "
+      patch -p0 < "$fplll_patch2" 1> $TMPBUFFER 2>&1 ; failure_check
+      printf "done.\n"
+    fi
+    if test "$fplll_patch" != "fplll-3.0.12.patch"
+    then
+      printf "Running autotools... "
       autoreconf -i 1> $TMPBUFFER 2>&1 ; failure_check
       if which libtoolize 1> /dev/null 2>&1
       then
@@ -287,6 +296,7 @@ then
       fi
     fi
     rm -rf "$fplll_patch"
+    rm -rf "$fplll_patch2"
     printf "done.\n"
   fi
 
@@ -319,6 +329,9 @@ then
     sollya-svn )
       rm -rf "$SOLLYA_PKG_NAME"
       svn co svn://scm.gforge.inria.fr/svn/sollya/trunk $SOLLYA_PKG_NAME 1> $TMPBUFFER 2>&1 ; failure_check
+      ;;
+    sollya-4.1 )
+      SOLLYA_URL=http://www-sop.inria.fr/members/Sylvain.Chevillard/sollya-4.1.tar.bz2
       ;;
     sollya-4.0 )
       SOLLYA_URL=https://gforge.inria.fr/frs/download.php/32548/sollya-4.0.tar.bz2
