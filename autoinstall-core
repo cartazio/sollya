@@ -238,67 +238,72 @@ then
   tar -zxvf $FPLLL_PKG_NAME.tar.gz 1> $TMPBUFFER 2>&1 ; failure_check
   cd $FPLLL_PKG_NAME
 
-  fplll_patch="false"
-  fplll_patch2="false"
+  fplll_patch_configure="false"
+  fplll_patch_makefile="false"
   case "$FPLLL_PKG_NAME" in
     libfplll-4.0.4 )
-      fplll_patch="fplll.Makefile.patch"
+      fplll_patch_makefile="fplll.Makefile.patch"
       ;;
     libfplll-4.0.3 )
-      fplll_patch="fplll.patch"
-      fplll_patch2="fplll.Makefile.patch"
+      fplll_patch_configure="fplll.patch"
+      fplll_patch_makefile="fplll.Makefile.patch"
       ;;
     libfplll-4.0.2 )
-      fplll_patch="fplll.patch"
+      fplll_patch_configure="fplll.patch"
       ;;
     libfplll-4.0.1 )
-      fplll_patch="fplll.patch"
+      fplll_patch_configure="fplll.patch"
       ;;
     libfplll-3.1.3 )
-      fplll_patch="fplll.patch"
+      fplll_patch_configure="fplll.patch"
       ;;
     libfplll-3.0.12 )
-      fplll_patch="fplll-3.0.12.patch"
+      fplll_patch_configure="fplll-3.0.12.patch"
       ;;
   esac
 
-  if test "$fplll_patch" != "false"
+  if test ( "$fplll_patch_configure" != "false" ) -o ( "$fplll_patch_makefile" != "false" )
+  then
+    which patch 1> $TMPBUFFER 2>&1; failure_check
+  fi
+  if test "$fplll_patch_configure" != "false"
   then
     printf "Downloading FPLLL configure patch... "
-    rm -rf "$fplll_patch"
-    $GET_PRG "http://www-sop.inria.fr/members/Sylvain.Chevillard/$fplll_patch" 1> $TMPBUFFER 2>&1 ; failure_check
+    rm -rf "$fplll_patch_configure"
+    $GET_PRG "http://www-sop.inria.fr/members/Sylvain.Chevillard/$fplll_patch_configure" 1> $TMPBUFFER 2>&1 ; failure_check
     printf "done.\n"
     printf "Patching bug in FPLLL configure file... "
-    which patch 1> $TMPBUFFER 2>&1; failure_check
-    patch -p0 < "$fplll_patch" 1> $TMPBUFFER 2>&1 ; failure_check
-    printf "done.\n"
-    if test "$fplll_patch2" != "false"
-    then
-      printf "Downloading another FPLLL patch... "
-      rm -rf "$fplll_patch2"
-      $GET_PRG "http://www-sop.inria.fr/members/Sylvain.Chevillard/$fplll_patch2" 1> $TMPBUFFER 2>&1 ; failure_check
-      printf "done.\n"
-      printf "Patching FPLLL file... "
-      patch -p0 < "$fplll_patch2" 1> $TMPBUFFER 2>&1 ; failure_check
-      printf "done.\n"
-    fi
-    if test "$fplll_patch" != "fplll-3.0.12.patch"
-    then
-      printf "Running autotools... "
-      autoreconf -i 1> $TMPBUFFER 2>&1 ; failure_check
-      if which libtoolize 1> /dev/null 2>&1
-      then
-        libtoolize 1> $TMPBUFFER 2>&1 ; failure_check
-      fi
-      if which glibtoolize 1> /dev/null 2>&1
-      then
-        glibtoolize 1> $TMPBUFFER 2>&1 ; failure_check
-      fi
-    fi
-    rm -rf "$fplll_patch"
-    rm -rf "$fplll_patch2"
+    patch -p0 < "$fplll_patch_configure" 1> $TMPBUFFER 2>&1 ; failure_check
     printf "done.\n"
   fi
+  if test "$fplll_patch_makefile" != "false"
+  then
+    cd src 1> $TMPBUFFER 2>&1 ; failure_check
+    printf "Downloading FPLLL Makefile patch... "
+    rm -rf "$fplll_patch_makefile"
+    $GET_PRG "http://www-sop.inria.fr/members/Sylvain.Chevillard/$fplll_patch_makefile" 1> $TMPBUFFER 2>&1 ; failure_check
+    printf "done.\n"
+    printf "Patching bug in FPLLL Makefile... "
+    patch -p0 < "$fplll_patch_makefile" 1> $TMPBUFFER 2>&1 ; failure_check
+    cd .. 1> $TMPBUFFER 2>&1 ; failure_check
+    printf "done.\n"
+  fi
+  if ( ( "$fplll_patch_configure" != "false" ) -o ( "$fplll_patch_makefile" != "false" ) ) -a ( "$FPLLL_PKG_NAME" != "libfplll-3.0.12" )
+  then
+    printf "Running autotools... "
+    autoreconf -i 1> $TMPBUFFER 2>&1 ; failure_check
+    if which libtoolize 1> /dev/null 2>&1
+    then
+      libtoolize 1> $TMPBUFFER 2>&1 ; failure_check
+    fi
+    if which glibtoolize 1> /dev/null 2>&1
+    then
+      glibtoolize 1> $TMPBUFFER 2>&1 ; failure_check
+    fi
+    printf "done.\n"
+  fi
+  rm -rf "$fplll_patch_configure"
+  rm -rf "$fplll_patch_makefile"
 
   printf "Running configure... "
   ./configure $PREFIX $WITHGMP $WITHMPFR > "$LOG_DIR/fplll_configure.log" ; failure_check
