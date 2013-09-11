@@ -262,7 +262,7 @@ then
       ;;
   esac
 
-  if test ( "$fplll_patch_configure" != "false" ) -o ( "$fplll_patch_makefile" != "false" )
+  if test \( "$fplll_patch_configure" != "false" \) -o \( "$fplll_patch_makefile" != "false" \)
   then
     which patch 1> $TMPBUFFER 2>&1; failure_check
   fi
@@ -288,7 +288,7 @@ then
     cd .. 1> $TMPBUFFER 2>&1 ; failure_check
     printf "done.\n"
   fi
-  if ( ( "$fplll_patch_configure" != "false" ) -o ( "$fplll_patch_makefile" != "false" ) ) -a ( "$FPLLL_PKG_NAME" != "libfplll-3.0.12" )
+  if test \( \( "$fplll_patch_configure" != "false" \) -o \( "$fplll_patch_makefile" != "false" \) \) -a \( "$FPLLL_PKG_NAME" != "libfplll-3.0.12" \)
   then
     printf "Running autotools... "
     autoreconf -i 1> $TMPBUFFER 2>&1 ; failure_check
