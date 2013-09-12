@@ -385,6 +385,7 @@ then
   printf "done.\n"
 
   printf "Running make check... "
+  sleep 3
   make check > "$LOG_DIR/sollya_check.log" ; failure_check
   printf "done.\n"
 
