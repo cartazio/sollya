@@ -83,7 +83,7 @@ then
   cd $GMP_PKG_NAME
 
   printf "Running configure... "
-  ./configure "$PREFIX" > "$LOG_DIR/gmp_configure.log" ; failure_check
+  ./configure "$PREFIX" "$GMP_CONFIGURE_OPTIONS" > "$LOG_DIR/gmp_configure.log" ; failure_check
   printf "done.\n"
 
   printf "Compiling... "
@@ -118,7 +118,7 @@ then
   cd $MPFR_PKG_NAME
 
   printf "Running configure... "
-  ./configure $PREFIX $WITHGMP > "$LOG_DIR/mpfr_configure.log" ; failure_check
+  ./configure $PREFIX $WITHGMP "$MPFR_CONFIGURE_OPTIONS" > "$LOG_DIR/mpfr_configure.log" ; failure_check
   printf "done.\n"
 
   printf "Compiling... "
@@ -203,7 +203,7 @@ then
   cd $MPFI_PKG_NAME
 
   printf "Running configure... "
-  ./configure $PREFIX $WITHGMP $WITHMPFR > "$LOG_DIR/mpfi_configure.log" ; failure_check
+  ./configure $PREFIX $WITHGMP $WITHMPFR "$MPFI_CONFIGURE_OPTIONS" > "$LOG_DIR/mpfi_configure.log" ; failure_check
   printf "done.\n"
 
   printf "Compiling... "
@@ -306,7 +306,7 @@ then
   rm -rf "$fplll_patch_makefile"
 
   printf "Running configure... "
-  ./configure $PREFIX $WITHGMP $WITHMPFR > "$LOG_DIR/fplll_configure.log" ; failure_check
+  ./configure $PREFIX $WITHGMP $WITHMPFR "$FPLLL_CONFIGURE_OPTIONS" > "$LOG_DIR/fplll_configure.log" ; failure_check
   printf "done.\n"
 
   printf "Compiling... "
@@ -324,6 +324,8 @@ then
   cd ..
   rm -rf "$FPLLL_PKG_NAME.tar.gz"
   rm -rf "$FPLLL_PKG_NAME"
+
+  printf "\n"
 fi
 
 ######################## INSTALLATION OF SOLLYA ########################
