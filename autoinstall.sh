@@ -1,6 +1,6 @@
 #!/bin/sh
 
-GMP_PKG_NAME=gmp-5.1.2
+GMP_PKG_NAME=gmp-5.1.3
 MPFR_PKG_NAME=mpfr-3.1.2
 MPFI_PKG_NAME=mpfi-1.5.1
 FPLLL_PKG_NAME=libfplll-4.0.4

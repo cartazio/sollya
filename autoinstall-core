@@ -76,7 +76,7 @@ then
   rm -rf "$GMP_PKG_NAME.tar.bz2"
   rm -rf "$GMP_PKG_NAME"
 
-  $GET_PRG ftp://ftp.gmplib.org/pub/$GMP_PKG_NAME/$GMP_PKG_NAME.tar.bz2 1> $TMPBUFFER 2>&1 ; failure_check
+  $GET_PRG http://ftp.gmplib.org/gmp/$GMP_PKG_NAME.tar.bz2 1> $TMPBUFFER 2>&1 ; failure_check
   printf "done.\n"
 
   tar -jxvf $GMP_PKG_NAME.tar.bz2 1> $TMPBUFFER 2>&1 ; failure_check
