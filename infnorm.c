@@ -4526,7 +4526,7 @@ int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *fu
   startprec = startprecOrig;
   pRes = mpfr_get_prec(result);
   if ((mpfr_sgn(cutoff) == 0) && (!mpfr_number_p(cutoff))) {
-    if (startprec < pRes) startprec = pRes + 10;
+    if (startprec < pRes + 10) startprec = pRes + 10;
   }
 
   /* Check if we have a constant expression to evaluate at and if so,
@@ -4798,7 +4798,7 @@ int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *fu
        round 
     */
     precisionIncreased = 0;
-    if (p < pRes) {
+    if (p < pRes + 10) {
       /* The working precision is less than the precision of the
 	 result. This makes sense only if there is still hope that the
 	 final result may fall below the cutoff.
