@@ -4481,8 +4481,8 @@ int accurateInfnorm(mpfr_t result, node *func, rangetype range, chain *excludes,
    is inexact
 
 */
-int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *func, node *deriv, mpfr_t x, mpfr_t cutoff, mp_prec_t startprec, node *altX) {
-  mp_prec_t p, prec, pTemp;
+int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *func, node *deriv, mpfr_t x, mpfr_t cutoff, mp_prec_t startprecOrig, node *altX) {
+  mp_prec_t p, prec, pTemp, pRes;
   sollya_mpfi_t yI, xI, cutoffI, dummyI;
   int okay;
   mpfr_t resUp, resDown, resUpFaith, resDownFaith, resDownTemp;
@@ -4490,6 +4490,15 @@ int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *fu
   mpfr_t yILeft, yIRight, yILeftCheck, yIRightCheck;
   int testCutOff;
   int correctlyRounded;
+  mp_prec_t startprec;
+  int precisionIncreased;
+
+  /* Determine some sensible starting precision */
+  startprec = startprecOrig;
+  pRes = mpfr_get_prec(result);
+  if (mpfr_sgn(cutoff) == 0) {
+    if (startprec < pRes) startprec = pRes + 10;
+  }
 
   /* Check if we have a constant expression to evaluate at and if so,
      check if it is constant
@@ -4532,13 +4541,6 @@ int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *fu
 
   /* Determine a starting precision */
   if (startprec > prec) prec = startprec;
-
-  /* Testing (comparing the final prec with the startprec on the examples in the check files)
-     shows we should take anyway a little more in the beginning.
-
-     Let's take it times 1.25, because that's easy to compute on integer.
-  */
-  startprec = startprec + (startprec >> 2);
 
   /* Use up a little more memory with the first malloc
      The starting subsequent mpf*_set_prec will not malloc
@@ -4636,7 +4638,7 @@ int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *fu
 	     can't get correct rounding "for just one dollar more."
 
           */
-	  pTemp = p + (p >> 2); /* That is 25% more of precision */
+	  pTemp = p + 10;
 
 	  /* Recompute at that slightly higher precision */
 	  sollya_mpfi_set_prec(yI,pTemp);
@@ -4705,7 +4707,7 @@ int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *fu
 	       can't get correct rounding "for just one dollar more."
 
 	    */
-	    pTemp = p + (p >> 2); /* That is 25% more of precision */
+	    pTemp = p + 10;
 
 	    /* Recompute at that slightly higher precision */
 	    sollya_mpfi_set_prec(yI,pTemp);
@@ -4762,7 +4764,30 @@ int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *fu
       }
     }
     if (okay > 0) break;
-    p <<= 1;
+
+    /* Now sensibly increase the working precision for the next
+       round 
+    */
+    precisionIncreased = 0;
+    if (p < pRes) {
+      /* The working precision is less than the precision of the
+	 result. This makes sense only if there is still hope that the
+	 final result may fall below the cutoff.
+      */
+      
+      // TODO
+
+    }
+
+    if (!precisionIncreased) {
+      /* Here, perform some default precision incrementation.
+
+	 The right way to do so might be a matter of religion.
+
+	 The formula below seem to be fine in practice.
+      */
+      p <<= 1;
+    }
   }
   sollya_mpfi_clear(xI);
   mpfr_clear(yILeft);
