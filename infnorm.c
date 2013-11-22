@@ -4811,6 +4811,11 @@ int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *fu
 	if (!sollya_mpfi_have_common_real_point(yI, cutoffI)) {
 	  p = pRes + 10;
 	  precisionIncreased = 1;
+	} else {
+	  if ((p << 1) > (pRes + 10)) {
+	    p = pRes + 10;
+	    precisionIncreased = 1;
+	  } 
 	}
       } else {
 	p = pRes + 10;
