@@ -3105,7 +3105,7 @@ void uncertifiedInfnorm(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned lon
                                                      /* use Newton's algorithm since we already have */
                                                      /* the zero. Moreover, note that y1 and y3 have */
                                                      /* already been taken into account in max.      */
-	findZero(xstar, f_diff, f_diff2, x1, x3, mpfr_sgn(y1diff), NULL, 0, prec_bound);
+	findZero(xstar, f_diff, f_diff2, x1, x3, mpfr_sgn(y1diff), NULL, 0, (prec_bound >> 1) + 10);
 
 	/* If xstar = NaN, a warning has already been produced by Newton's algorithm. */
 	/* There is no need to print a warning again here.                            */
