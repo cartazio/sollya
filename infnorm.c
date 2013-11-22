@@ -3368,12 +3368,7 @@ void evaluateInterval(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x)
   prec = sollya_mpfi_get_prec(y);
 
   /* We need more precision in the first steps to get the precision in the end. */
-  prec <<= 1;
-
-  /* Let's use at least the precision of the tool, that gives us
-     additional 10% on the check examples
-  */
-  if (prec < tools_precision) prec = tools_precision;
+  prec += 10;
 
   evaluateITaylor(y, func, deriv, x, prec, taylorrecursions, NULL, 1);
 }
@@ -4454,6 +4449,40 @@ int accurateInfnorm(mpfr_t result, node *func, rangetype range, chain *excludes,
   return okay;
 }
 
+int sollya_mpfi_have_common_real_point(sollya_mpfi_t a, sollya_mpfi_t b) {
+  mp_prec_t ap, bp;
+  mpfr_t al, ar, bl, br;
+  int res;
+
+  ap = sollya_mpfi_get_prec(a);
+  bp = sollya_mpfi_get_prec(b);
+  mpfr_init2(al, ap);
+  mpfr_init2(ar, ap);
+  mpfr_init2(bl, bp);
+  mpfr_init2(br, bp);
+
+  sollya_mpfi_get_left(al, a);
+  sollya_mpfi_get_right(ar, a);
+  sollya_mpfi_get_left(bl, b);
+  sollya_mpfi_get_right(br, b);
+
+  if (mpfr_number_p(al) && 
+      mpfr_number_p(al) && 
+      mpfr_number_p(al) && 
+      mpfr_number_p(al)) {
+    res = (mpfr_cmp(al, br) <= 0) && (mpfr_cmp(bl, ar) <= 0);
+  } else {
+    res = 0;
+  }
+
+  mpfr_clear(al);
+  mpfr_clear(ar);
+  mpfr_clear(bl);
+  mpfr_clear(br);
+  
+  return res;
+}
+
 /* Return values:
 
    0 -> evaluation did not allow for a faithful evaluation nor to get
@@ -4496,7 +4525,7 @@ int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *fu
   /* Determine some sensible starting precision */
   startprec = startprecOrig;
   pRes = mpfr_get_prec(result);
-  if (mpfr_sgn(cutoff) == 0) {
+  if ((mpfr_sgn(cutoff) == 0) && (!mpfr_number_p(cutoff))) {
     if (startprec < pRes) startprec = pRes + 10;
   }
 
@@ -4773,10 +4802,20 @@ int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *fu
       /* The working precision is less than the precision of the
 	 result. This makes sense only if there is still hope that the
 	 final result may fall below the cutoff.
-      */
-      
-      // TODO
 
+	 There is still hope if the cutoff interval and the 
+	 current evaluation interval have a point in common.
+
+      */
+      if (testCutOff) {
+	if (!sollya_mpfi_have_common_real_point(yI, cutoffI)) {
+	  p = pRes + 10;
+	  precisionIncreased = 1;
+	}
+      } else {
+	p = pRes + 10;
+	precisionIncreased = 1;
+      }
     }
 
     if (!precisionIncreased) {
