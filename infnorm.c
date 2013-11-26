@@ -892,9 +892,34 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
       if (!(sollya_mpfi_has_nan(result) || sollya_mpfi_has_infinity(result))) return NULL;
     }
 
+    if ((tree->evalCacheX != NULL) &&
+	(tree->evalCacheY != NULL) &&
+	(tree->evalCachePrec >= prec) &&
+	(sollya_mpfi_get_prec(*(tree->evalCacheY)) >= sollya_mpfi_get_prec(result)) && 
+	(sollya_mpfi_equal_p(*(tree->evalCacheX), x))) {
+      sollya_mpfi_set(result, *(tree->evalCacheY));
+      if (!(sollya_mpfi_has_nan(result) || sollya_mpfi_has_infinity(result))) return NULL;
+    }
+
     excludes = evaluateI(result, tree->child1, x, prec, simplifiesA, simplifiesB, hopitalPoint, theo, noExcludes);
 
     if ((excludes == NULL) && (!(sollya_mpfi_has_nan(result) || sollya_mpfi_has_infinity(result)))) {
+      if (tree->evalCacheX == NULL) {
+	tree->evalCacheX = (sollya_mpfi_t *) safeMalloc(sizeof(sollya_mpfi_t));
+	tree->evalCacheY = (sollya_mpfi_t *) safeMalloc(sizeof(sollya_mpfi_t));
+	sollya_mpfi_init2(*(tree->evalCacheX),sollya_mpfi_get_prec(x));
+	sollya_mpfi_init2(*(tree->evalCacheY),sollya_mpfi_get_prec(result));
+	sollya_mpfi_set(*(tree->evalCacheX), x);
+	sollya_mpfi_set(*(tree->evalCacheY), result);
+	tree->evalCachePrec = prec;
+      } else {
+	sollya_mpfi_set_prec(*(tree->evalCacheX),sollya_mpfi_get_prec(x));
+	sollya_mpfi_set_prec(*(tree->evalCacheY),sollya_mpfi_get_prec(result));
+	sollya_mpfi_set(*(tree->evalCacheX), x);
+	sollya_mpfi_set(*(tree->evalCacheY), result);
+	tree->evalCachePrec = prec;
+      }
+
       if (tree->arguments != NULL) {
 	if (prec > *((mp_prec_t *) tree->arguments->value)) {
 	  *((mp_prec_t *) tree->arguments->value) = prec;

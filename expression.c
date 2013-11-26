@@ -152,6 +152,14 @@ void free_memory(node *tree) {
 	safeFree(tree->arguments->value);
 	safeFree(tree->arguments);
       }
+      if (tree->evalCacheX != NULL) {
+	sollya_mpfi_clear(*(tree->evalCacheX));
+	safeFree(tree->evalCacheX);
+      }
+      if (tree->evalCacheY != NULL) {
+	sollya_mpfi_clear(*(tree->evalCacheY));
+	safeFree(tree->evalCacheY);
+      }
       safeFree(tree);
     }
     return;

@@ -924,3 +924,11 @@ int sollya_mpfi_is_point_and_real(sollya_mpfi_t op) {
 	  (!(mpfr_inf_p(&(op->left)) || mpfr_inf_p(&(op->right)))) &&
 	  (mpfr_equal_p(&(op->left),&(op->right))));
 }
+
+int sollya_mpfi_equal_p(sollya_mpfi_t op1, sollya_mpfi_t op2) {
+  /* HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
+  */
+  return (mpfr_equal_p(&(op1->left),&(op2->left)) && 
+	  mpfr_equal_p(&(op1->right),&(op2->right)));
+}

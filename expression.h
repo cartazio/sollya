@@ -132,6 +132,8 @@ struct nodeStruct
   node **argArray;
   int argArraySize;
   size_t argArrayAllocSize;
+  sollya_mpfi_t *evalCacheX, *evalCacheY;
+  mp_prec_t evalCachePrec;
 };
 
 /* HELPER TYPE FOR THE PARSER */
@@ -182,6 +184,9 @@ static inline node* addMemRef(node *tree) {
   res->child2 = NULL;
   res->arguments = NULL;
   res->value = NULL;
+  res->evalCacheX = NULL;
+  res->evalCacheY = NULL;
+  res->evalCachePrec = 0;
 
   return res;
 }
