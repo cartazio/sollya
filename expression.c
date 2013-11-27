@@ -12263,7 +12263,13 @@ node *substitutePolynomialUnsafe(node *p, node *q) {
   return res;
 }
 
+node *substituteInner(node* tree, node *t, int doNotEvaluate);
+
 node *substitute(node* tree, node *t) {
+  return substituteInner(tree, t, 0);
+}
+
+node *substituteInner(node* tree, node *t, int doNotEvaluate) {
   node *copy;
   mpfr_t *value;
   mpfr_t temp;
@@ -12273,10 +12279,14 @@ node *substitute(node* tree, node *t) {
   sollya_mpfi_t tEval, treeEval;
   mp_prec_t treeEvalPrec;
   mpfr_t tEl, tEr;
+  sollya_mpfi_t aPrioriBoundForConstantExpr;
+  int haveAPrioriBoundForConstantExpr;
+  mp_prec_t *precPtr;
+  sollya_mpfi_t *intervalPtr;
 
-  if (tree->nodeType == MEMREF) {
-    return addMemRef(substitute(tree->child1, t));
-  }
+  // sollyaPrintf("tree = %b;\ntree->nodeType = %d;\nt = %b;\nt->nodeType = %d;\n", tree, tree->nodeType, t, t->nodeType);
+
+  haveAPrioriBoundForConstantExpr = 0;
 
   if (isPolynomial(tree) &&
       isPolynomial(t)) {
@@ -12311,10 +12321,10 @@ node *substitute(node* tree, node *t) {
     }
   }
 
-  if (isConstant(t) && (!isConstant(tree))) {
+  if (isConstant(t) && (!isConstant(tree)) && (!doNotEvaluate)) {
     copy = NULL;
-    sollya_mpfi_init2(tEval, tools_precision * 2);
-    sollya_mpfi_init2(treeEval, tools_precision * 2);
+    sollya_mpfi_init2(tEval, tools_precision + 10);
+    sollya_mpfi_init2(treeEval, tools_precision + 10);
 
     evaluateConstantExpressionToInterval(tEval, t);
     evaluateInterval(treeEval, tree, NULL, tEval);
@@ -12326,16 +12336,45 @@ node *substitute(node* tree, node *t) {
     sollya_mpfi_get_right(tEr, treeEval);
 
     if (mpfr_number_p(tEr) &&
-	mpfr_number_p(tEl) &&
-	mpfr_equal_p(tEr, tEl)) {
-      copy = makeConstant(tEr);
+	mpfr_number_p(tEl)) {
+      sollya_mpfi_init2(aPrioriBoundForConstantExpr,sollya_mpfi_get_prec(treeEval));
+      sollya_mpfi_set(aPrioriBoundForConstantExpr,treeEval);
+      haveAPrioriBoundForConstantExpr = 1;
+      if (mpfr_equal_p(tEr, tEl)) {
+	copy = addMemRef(makeConstant(tEr));
+      }
     }
 
     mpfr_clear(tEl);
     mpfr_clear(tEr);
     sollya_mpfi_clear(tEval);
     sollya_mpfi_clear(treeEval);
-    if (copy != NULL) return copy;
+    if (copy != NULL) {
+      if (haveAPrioriBoundForConstantExpr) {
+	sollya_mpfi_clear(aPrioriBoundForConstantExpr);
+      }
+      return copy;
+    }
+  }
+
+  if (tree->nodeType == MEMREF) {
+    copy = addMemRef(substituteInner(tree->child1, t, 1));
+
+    if (haveAPrioriBoundForConstantExpr) {
+      if (copy->nodeType == MEMREF) {
+	if (copy->arguments == NULL) {
+	  precPtr = (mp_prec_t *) safeMalloc(sizeof(mp_prec_t));
+	  *precPtr = sollya_mpfi_get_prec(aPrioriBoundForConstantExpr);
+	  intervalPtr = (sollya_mpfi_t *) safeMalloc(sizeof(sollya_mpfi_t));
+	  sollya_mpfi_init2(*intervalPtr, sollya_mpfi_get_prec(aPrioriBoundForConstantExpr));
+	  sollya_mpfi_set(*intervalPtr, aPrioriBoundForConstantExpr);
+	  copy->arguments = addElement(addElement(NULL, intervalPtr), precPtr);
+	} 
+      }
+      sollya_mpfi_clear(aPrioriBoundForConstantExpr);
+    }
+    
+    return copy;
   }
 
   switch (tree->nodeType) {
@@ -12576,6 +12615,22 @@ node *substitute(node* tree, node *t) {
     sollyaFprintf(stderr,"Error: substitute: unknown identifier in the tree\n");
     exit(1);
   }
+  copy = addMemRef(copy);
+
+  if (haveAPrioriBoundForConstantExpr) {
+    if (copy->nodeType == MEMREF) {
+      if (copy->arguments == NULL) {
+	precPtr = (mp_prec_t *) safeMalloc(sizeof(mp_prec_t));
+	*precPtr = sollya_mpfi_get_prec(aPrioriBoundForConstantExpr);
+	intervalPtr = (sollya_mpfi_t *) safeMalloc(sizeof(sollya_mpfi_t));
+	sollya_mpfi_init2(*intervalPtr, sollya_mpfi_get_prec(aPrioriBoundForConstantExpr));
+	sollya_mpfi_set(*intervalPtr, aPrioriBoundForConstantExpr);
+	copy->arguments = addElement(addElement(NULL, intervalPtr), precPtr);
+      } 
+    }
+    sollya_mpfi_clear(aPrioriBoundForConstantExpr);
+  }
+
   return copy;
 }
 
@@ -12985,7 +13040,7 @@ node *makePolynomialConstantExpressions(node **coeffs, int deg) {
       copy = temp;
     }
   }
-  return copy;
+  return addMemRef(copy);
 }
 
 /* Builds a polynomial expression, written in Horner form of the polynomial

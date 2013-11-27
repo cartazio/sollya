@@ -2196,6 +2196,10 @@ void *copyThingOnVoid(void *tree) {
   return (void *) copyThing((node *) tree);
 }
 
+void *copyThingAndAddMemRefOnVoid(void *tree) {
+  return (void *) addMemRef(copyThing((node *) tree));
+}
+
 void *copyEntryOnVoid(void *ptr) {
   entry *copy;
   copy = (entry *) safeMalloc(sizeof(entry));
@@ -6876,7 +6880,7 @@ int assignThingToTable(char *identifier, node *thing) {
   }
 
   if (containsDeclaredEntry(declaredSymbolTable, identifier)) {
-    declaredSymbolTable = assignDeclaredEntry(declaredSymbolTable, identifier, thing, copyThingOnVoid, freeThingOnVoid);
+    declaredSymbolTable = assignDeclaredEntry(declaredSymbolTable, identifier, thing, copyThingAndAddMemRefOnVoid, freeThingOnVoid);
     return 1;
   }
 
@@ -6885,7 +6889,7 @@ int assignThingToTable(char *identifier, node *thing) {
     symbolTable = removeEntry(symbolTable, identifier, freeThingOnVoid);
   }
 
-  symbolTable = addEntry(symbolTable, identifier, thing, copyThingOnVoid);
+  symbolTable = addEntry(symbolTable, identifier, thing, copyThingAndAddMemRefOnVoid);
 
   return 1;
 }
@@ -6932,7 +6936,7 @@ node *getThingFromTable(char *identifier, int doCopy, int *didCopy) {
 
   if ((variablename != NULL) && (strcmp(variablename,identifier) == 0)) {
     if (didCopy != NULL) *didCopy = 1;
-    return makeVariable();
+    return addMemRef(makeVariable());
   }
 
   if ((tempLibraryFunction = getFunction(identifier)) != NULL) {
@@ -6943,7 +6947,7 @@ node *getThingFromTable(char *identifier, int doCopy, int *didCopy) {
     temp_node->child1 = (node *) safeMalloc(sizeof(node));
     temp_node->child1->nodeType = VARIABLE;
     if (didCopy != NULL) *didCopy = 1;
-    return temp_node;
+    return addMemRef(temp_node);
   }
 
   if ((tempLibraryFunction = getConstantFunction(identifier)) != NULL) {
@@ -6951,18 +6955,18 @@ node *getThingFromTable(char *identifier, int doCopy, int *didCopy) {
     temp_node->nodeType = LIBRARYCONSTANT;
     temp_node->libFun = tempLibraryFunction;
     if (didCopy != NULL) *didCopy = 1;
-    return temp_node;
+    return addMemRef(temp_node);
   }
 
   if ((tempLibraryProcedure = getProcedure(identifier)) != NULL) {
     if (didCopy != NULL) *didCopy = 1;
-    return makeExternalProcedureUsage(tempLibraryProcedure);
+    return addMemRef(makeExternalProcedureUsage(tempLibraryProcedure));
   }
 
   if (containsDeclaredEntry(declaredSymbolTable, identifier)) {
     if (myDoCopy) {
       if (didCopy != NULL) *didCopy = 1;
-      return getDeclaredEntry(declaredSymbolTable, identifier, copyThingOnVoid);
+      return addMemRef(getDeclaredEntry(declaredSymbolTable, identifier, copyThingOnVoid));
     }
     if (didCopy != NULL) *didCopy = 0;
     return getDeclaredEntry(declaredSymbolTable, identifier, returnThingOnVoid);
@@ -6972,7 +6976,7 @@ node *getThingFromTable(char *identifier, int doCopy, int *didCopy) {
 
   if (myDoCopy) {
     if (didCopy != NULL) *didCopy = 1;
-    return (node *) getEntry(symbolTable, identifier, copyThingOnVoid);
+    return (node *) addMemRef(getEntry(symbolTable, identifier, copyThingOnVoid));
   }
   if (didCopy != NULL) *didCopy = 0;
   return (node *) getEntry(symbolTable, identifier, returnThingOnVoid);
@@ -9081,7 +9085,7 @@ int executeCommandInner(node *tree) {
     }
     break;
   case ASSIGNMENT:
-    tempNode = evaluateThing(tree->child1);
+    tempNode = addMemRef(evaluateThing(tree->child1));
     if (!assignThingToTable(tree->string, tempNode)) {
       freeThing(tempNode);
       printMessage(1,SOLLYA_MSG_ASSIGNMENT_WILL_HAVE_NO_EFFECT,"Warning: the last assignment will have no effect.\n");
@@ -9091,7 +9095,7 @@ int executeCommandInner(node *tree) {
     }
     break;
   case FLOATASSIGNMENT:
-    tempNode = evaluateThing(tree->child1);
+    tempNode = addMemRef(evaluateThing(tree->child1));
     if (isPureTree(tempNode) && isConstant(tempNode)) {
       mpfr_init2(a, tools_precision);
       floatingPointEvaluationAlreadyDone = 0;
@@ -18081,6 +18085,7 @@ node *evaluateThingInner(node *tree) {
     return addMemRef(copyThing(tree));
   }
 
+  // sollyaPrintf("evaluateThingInner(tree = %b, tree->nodeType = %d)\n", tree, tree->nodeType);
   res = evaluateThingInnerst(tree);
 
   if ((tree != NULL) && (res != NULL) &&
