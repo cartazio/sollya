@@ -12955,6 +12955,14 @@ void freeThing(node *tree) {
   if (tree->nodeType == MEMREF) {
     tree->libFunDeriv--;
     if (tree->libFunDeriv < 1) {
+      if (tree->derivCache != NULL) {
+	freeThing(tree->derivCache);
+	tree->derivCache = NULL;
+      }
+      if (tree->derivUnsimplCache != NULL) {
+	freeThing(tree->derivUnsimplCache);
+	tree->derivUnsimplCache = NULL;
+      }
       freeThing(tree->child1);
       if (tree->arguments != NULL) {
 	sollya_mpfi_clear(*((sollya_mpfi_t *) tree->arguments->next->value));

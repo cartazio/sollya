@@ -144,6 +144,14 @@ void free_memory(node *tree) {
   if (tree->nodeType == MEMREF) {
     tree->libFunDeriv--;
     if (tree->libFunDeriv < 1) {
+      if (tree->derivCache != NULL) {
+	free_memory(tree->derivCache);
+	tree->derivCache = NULL;
+      }
+      if (tree->derivUnsimplCache != NULL) {
+	free_memory(tree->derivUnsimplCache);
+	tree->derivUnsimplCache = NULL;
+      }
       free_memory(tree->child1);
       if (tree->arguments != NULL) {
 	sollya_mpfi_clear(*((sollya_mpfi_t *) tree->arguments->next->value));
@@ -3218,13 +3226,26 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational);
 node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
   node *res;
 
-  res = simplifyTreeErrorfreeInnerst(tree, rec, doRational);
+  res = addMemRef(simplifyTreeErrorfreeInnerst(tree, rec, doRational));
 
   if ((tree != NULL) && (res != NULL) &&
-      (tree->nodeType == MEMREF) &&
-      isSyntacticallyEqual(tree,res)) {
-    free_memory(res);
-    res = copyTree(tree);
+      (tree->nodeType == MEMREF)) {
+    if (isSyntacticallyEqual(tree,res)) {
+      free_memory(res);
+      res = copyTree(tree);
+    } else {
+      if (res->nodeType == MEMREF) {
+	if ((tree->derivCache != NULL) &&
+	    (res->derivCache == NULL)) {
+	  res->derivCache = copyTree(tree->derivCache);
+	} 
+	if ((tree->derivUnsimplCache != NULL) &&
+	    (res->derivUnsimplCache == NULL)) {
+	  res->derivUnsimplCache = copyTree(tree->derivUnsimplCache);
+	} 
+	/* TODO : copy the other annotations */
+      }
+    }
   }
 
   return addMemRef(res);
@@ -5563,7 +5584,33 @@ node *simplifyTreeErrorfree(node *tree) {
 int isPolynomial(node *tree);
 node *differentiatePolynomialUnsafe(node *tree);
 
+node* differentiateUnsimplifiedInner(node *tree);
+
 node* differentiateUnsimplified(node *tree) {
+  node *res;
+
+  if ((tree->nodeType == MEMREF) &&
+      (tree->derivCache != NULL)) {
+    return copyTree(tree->derivCache);
+  }
+
+  if ((tree->nodeType == MEMREF) &&
+      (tree->derivUnsimplCache != NULL)) {
+    return copyTree(tree->derivUnsimplCache);
+  }
+
+  res = addMemRef(differentiateUnsimplifiedInner(tree));
+
+  if ((tree->nodeType == MEMREF) &&
+      (tree->derivUnsimplCache == NULL) &&
+      (res->nodeType == MEMREF)) {
+    tree->derivUnsimplCache = copyTree(res);
+  }
+
+  return res;
+}
+
+node* differentiateUnsimplifiedInner(node *tree) {
   node *derivative;
   mpfr_t *mpfr_temp;
   node *temp_node, *temp_node2, *temp_node3, *f_diff, *g_diff, *f_copy, *g_copy, *g_copy2, *h_copy;
@@ -5571,7 +5618,7 @@ node* differentiateUnsimplified(node *tree) {
   int deg;
 
   if (tree->nodeType == MEMREF) {
-    return addMemRef(differentiateUnsimplified(tree->child1));
+    return addMemRef(differentiateUnsimplifiedInner(tree->child1));
   }
 
   if (isConstant(tree)) {
@@ -5694,7 +5741,7 @@ node* differentiateUnsimplified(node *tree) {
 	derivative = temp_node3;
 	break;
       case SQRT:
-	h_copy = copyTree(tree);
+	h_copy = makeSqrt(copyTree(tree->child1));
 	g_diff = differentiateUnsimplified(tree->child1);
 	temp_node3 = (node*) safeMalloc(sizeof(node));
 	temp_node3->nodeType = CONSTANT;
@@ -5849,7 +5896,7 @@ node* differentiateUnsimplified(node *tree) {
 	mpfr_set_d(*mpfr_temp,1.0,GMP_RNDN);
 	temp_node3->value = mpfr_temp;
 	temp_node2->child1 = temp_node3;
-	h_copy = copyTree(tree);
+	h_copy = makeTan(copyTree(tree->child1));
 	temp_node4 = (node*) safeMalloc(sizeof(node));
 	temp_node4->nodeType = CONSTANT;
 	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
@@ -6020,7 +6067,7 @@ node* differentiateUnsimplified(node *tree) {
 	mpfr_set_d(*mpfr_temp,1.0,GMP_RNDN);
 	temp_node3->value = mpfr_temp;
 	temp_node2->child1 = temp_node3;
-	h_copy = copyTree(tree);
+	h_copy = makeTanh(copyTree(tree->child1));
 	temp_node4 = (node*) safeMalloc(sizeof(node));
 	temp_node4->nodeType = CONSTANT;
 	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
@@ -6172,7 +6219,7 @@ node* differentiateUnsimplified(node *tree) {
 	  temp_node->child2 = temp_node2;
 	  derivative = temp_node;
 	} else {
-	  h_copy = copyTree(tree);
+	  h_copy = makePow(copyTree(tree->child1),copyTree(tree->child2));
 	  f_diff = differentiateUnsimplified(tree->child1);
 	  f_copy = copyTree(tree->child1);
 	  f_copy2 = copyTree(tree->child1);
@@ -6213,7 +6260,7 @@ node* differentiateUnsimplified(node *tree) {
 	break;
       case ABS:
 	g_copy = copyTree(tree->child1);
-	h_copy = copyTree(tree);
+	h_copy = makeAbs(copyTree(tree->child1));
 	g_diff = differentiateUnsimplified(tree->child1);
 	temp_node = (node*) safeMalloc(sizeof(node));
 	temp_node->nodeType = MUL;
@@ -6505,29 +6552,54 @@ node* differentiateUnsimplified(node *tree) {
       }
     }
   }
-  return derivative;
+  return addMemRef(derivative);
 }
 
 int isHorner(node *);
 int isCanonical(node *);
 
+node* differentiateInner(node *tree);
+
 node* differentiate(node *tree) {
-  node *temp, *temp3;
+  node *res;
+
+  if ((tree->nodeType == MEMREF) &&
+      (tree->derivCache != NULL)) {
+    return copyTree(tree->derivCache);
+  }
+
+  res = addMemRef(differentiateInner(tree));
+
+  if ((tree->nodeType == MEMREF) &&
+      (tree->derivCache == NULL) && 
+      (res->nodeType == MEMREF)) {
+    tree->derivCache = copyTree(res);
+  }
+
+  return res;
+}
+
+node* differentiateInner(node *tree) {
+  node *temp, *temp2, *temp3;
 
   printMessage(10,SOLLYA_MSG_FORMALLY_DIFFERENTIATING_AN_EXPRESSION,"Information: formally differentiating a function.\n");
 
   printMessage(11,SOLLYA_MSG_FORMALLY_DIFFERENTIATING_A_PARTICULAR_EXPR,"Information: differentiating the expression '%b'\n",tree);
 
   if (isPolynomial(tree) && (isHorner(tree) || isCanonical(tree))) {
-    temp = differentiateUnsimplified(tree);
+    temp3 = differentiateUnsimplified(tree);
+    temp = simplifyTreeErrorfree(temp3);
+    free_memory(temp3);
   } else {
     if ((treeSize(tree) > MAXDIFFSIMPLSIZE) || (getDegree(tree) > MAXDIFFSIMPLDEGREE)) {
       printMessage(7,SOLLYA_MSG_EXPR_TOO_BIG_FOR_SIMPLIFICATION_BEFORE_DIFF,"Information: will not simplify the given expression before differentiating because it is too big.\n");
       temp = differentiateUnsimplified(tree);
     } else {
       temp3 = simplifyTreeErrorfree(tree);
-      temp = differentiateUnsimplified(temp3);
+      temp2 = differentiateUnsimplified(temp3);
+      temp = simplifyTreeErrorfree(temp2);
       free_memory(temp3);
+      free_memory(temp2);
     }
   }
   return temp;
