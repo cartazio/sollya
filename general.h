@@ -153,6 +153,8 @@ extern FILE *inputFile;
 extern int inputFileOpened;
 extern int flushOutput;
 
+extern node *memRefChainStart;
+
 extern void *rpl_malloc(size_t n);
 extern void *rpl_realloc(void *, size_t n);
 

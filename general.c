@@ -162,6 +162,8 @@ FILE *inputFile = NULL;
 int inputFileOpened = 0;
 int flushOutput = 0;
 
+node *memRefChainStart = NULL;
+
 /* END OF STATE OF THE TOOL */
 
 /* HELPER VARIABLES FOR THE LEXER/ PARSER */
@@ -1042,6 +1044,7 @@ void initToolDefaults() {
   tools_precision = DEFAULTPRECISION;
   defaultpoints = DEFAULTPOINTS;
   taylorrecursions = DEFAULTTAYLORRECURSIONS;
+  memRefChainStart = NULL;
   dyadic = 0;
   verbosity = 1;
   activateMessageNumbers = 0;
