@@ -5110,7 +5110,7 @@ int compareConstant(int *cmp, node *func1, node *func2, node *difference, int do
 
   okay = 0;
   if (difference == NULL) {
-    rawDiff = makeSub(copyTree(func1),copyTree(func2));
+    rawDiff = addMemRef(makeSub(copyTree(func1),copyTree(func2)));
     rawDiff2 = simplifyRationalErrorfree(rawDiff);
     diff = simplifyTreeErrorfree(rawDiff2);
     freeDiff = 1;
