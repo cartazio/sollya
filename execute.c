@@ -12955,6 +12955,10 @@ void freeThing(node *tree) {
   if (tree->nodeType == MEMREF) {
     tree->libFunDeriv--;
     if (tree->libFunDeriv < 1) {
+      if (tree->simplifyCache != NULL) {
+	freeThing(tree->simplifyCache);
+	tree->simplifyCache = NULL;
+      }
       if (tree->derivCache != NULL) {
 	freeThing(tree->derivCache);
 	tree->derivCache = NULL;

@@ -144,6 +144,10 @@ void free_memory(node *tree) {
   if (tree->nodeType == MEMREF) {
     tree->libFunDeriv--;
     if (tree->libFunDeriv < 1) {
+      if (tree->simplifyCache != NULL) {
+	free_memory(tree->simplifyCache);
+	tree->simplifyCache = NULL;
+      }
       if (tree->derivCache != NULL) {
 	free_memory(tree->derivCache);
 	tree->derivCache = NULL;
@@ -3226,6 +3230,18 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational);
 node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
   node *res;
 
+  if ((tree != NULL) &&
+      ((tree->nodeType == MEMREF) &&
+       (tree->simplifyCacheRationalMode >= doRational))) {
+    if (tree->simplifyCacheDoesNotSimplify == 1) {
+      return copyTree(tree);
+    } else {
+      if (tree->simplifyCache != NULL) {
+	return copyTree(tree->simplifyCache);
+      }
+    }
+  }
+
   res = addMemRef(simplifyTreeErrorfreeInnerst(tree, rec, doRational));
 
   if ((tree != NULL) && (res != NULL) &&
@@ -3233,7 +3249,23 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
     if (isSyntacticallyEqual(tree,res)) {
       free_memory(res);
       res = copyTree(tree);
+      tree->simplifyCacheDoesNotSimplify = 1;
     } else {
+      if (tree->simplifyCache == NULL) {
+	if (res->nodeType == MEMREF) {
+	  tree->simplifyCache = copyTree(res);
+	  tree->simplifyCacheRationalMode = doRational;
+	  tree->simplifyCacheDoesNotSimplify = 0;
+	}
+      } else {
+	if ((tree->simplifyCacheRationalMode >= 0) &&
+	    (tree->simplifyCacheRationalMode < doRational)) {
+	  free_memory(tree->simplifyCache);
+	  tree->simplifyCache = copyTree(res);
+	  tree->simplifyCacheRationalMode = doRational;
+	  tree->simplifyCacheDoesNotSimplify = 0;
+	}
+      }
       if (res->nodeType == MEMREF) {
 	if ((tree->derivCache != NULL) &&
 	    (res->derivCache == NULL)) {
@@ -3243,7 +3275,6 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
 	    (res->derivUnsimplCache == NULL)) {
 	  res->derivUnsimplCache = copyTree(tree->derivUnsimplCache);
 	} 
-	/* TODO : copy the other annotations */
       }
     }
   }

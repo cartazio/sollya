@@ -136,6 +136,9 @@ struct nodeStruct
   mp_prec_t evalCachePrec;
   node *derivCache;
   node *derivUnsimplCache;
+  int simplifyCacheDoesNotSimplify;
+  int simplifyCacheRationalMode;
+  node *simplifyCache;
 };
 
 /* HELPER TYPE FOR THE PARSER */
@@ -191,6 +194,9 @@ static inline node* addMemRef(node *tree) {
   res->evalCachePrec = 0;
   res->derivCache = NULL;
   res->derivUnsimplCache = NULL;
+  res->simplifyCacheDoesNotSimplify = -1;
+  res->simplifyCacheRationalMode = -1;
+  res->simplifyCache = NULL;
 
   return res;
 }
