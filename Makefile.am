@@ -17,6 +17,8 @@ sollya_SOURCES = \
 sollya.h \
 mpfi-compat.c \
 mpfi-compat.h \
+hooks.c \
+hooks.h \
 sollya-messaging.h \
 sollya-messages.h \
 sollya-messaging.c \
@@ -99,6 +101,8 @@ libsollya_la_SOURCES = \
 sollya.h \
 mpfi-compat.h \
 mpfi-compat.c \
+hooks.c \
+hooks.h \
 sollya-library-wrappers.c \
 sollya-library-wrappers.h \
 sollya-messaging.h \
