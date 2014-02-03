@@ -94,6 +94,7 @@
 #include "match.h"
 #include "sollya-messaging.h"
 #include <setjmp.h>
+#include "hooks.h"
 
 #define READBUFFERSIZE 16000
 
@@ -12967,6 +12968,7 @@ void freeThing(node *tree) {
 	freeThing(tree->derivUnsimplCache);
 	tree->derivUnsimplCache = NULL;
       }
+      freeEvaluationHook(&(tree->evaluationHook));
       freeThing(getMemRefChild(tree));
       if (tree->arguments != NULL) {
 	sollya_mpfi_clear(*((sollya_mpfi_t *) tree->arguments->next->value));

@@ -66,6 +66,7 @@
 #include <stdio.h>
 #include "chain.h"
 #include "library.h"
+#include "hooks.h"
 
 
 #define VARIABLE 0
@@ -140,6 +141,7 @@ struct nodeStruct
   int simplifyCacheRationalMode;
   node *simplifyCache;
   int isCorrectlyTyped;
+  eval_hook_t *evaluationHook;
 };
 
 /* HELPER TYPE FOR THE PARSER */
@@ -201,6 +203,7 @@ static inline node* addMemRef(node *tree) {
   res->simplifyCacheRationalMode = -1;
   res->simplifyCache = NULL;
   res->isCorrectlyTyped = 0;
+  res->evaluationHook = NULL;
 
   return res;
 }

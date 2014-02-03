@@ -47,5 +47,165 @@
 
 */
 
+#include "general.h"
+#include "execute.h"
+#include "infnorm.h"
 #include "hooks.h"
+
+int addEvaluationHook(eval_hook_t **hookPtr, 
+		      void *data, 
+		      int (*evaluateFunc)(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, void *), 
+		      void (*freeFunc)(void *),
+		      int (*compareFunc)(void *, void *)) {
+  eval_hook_t *newHook, *curr;
+
+  /* Check if this hook has already been installed. If yes, deallocate
+     the hook we have been given.
+  */
+  for (curr=*hookPtr;curr!=NULL;curr=curr->nextHook) {
+    if (((curr->evaluateHook == evaluateFunc) &&
+	 (curr->freeHook == freeFunc) &&
+	 (curr->compareHook == compareFunc)) &&
+	curr->compareHook(curr->data, data)) {
+      freeFunc(data);
+      return 0;
+    }
+  }
+
+  /* Here, we know that the new hook does not yet exist 
+     
+     Create a new hook.
+  */
+  newHook = (eval_hook_t *) safeMalloc(sizeof(eval_hook_t));
+  newHook->data = data;
+  newHook->evaluateHook = evaluateFunc;
+  newHook->freeHook = freeFunc;
+  newHook->compareHook = compareFunc;
+  newHook->nextHook = *hookPtr;
+
+  /* Assign the new hook */
+  *hookPtr = newHook;
+  
+  /* Signal success */
+  return 1;
+}
+
+void freeEvaluationHook(eval_hook_t **hookPtr) {
+  eval_hook_t *curr, *next;
+  
+  curr = *hookPtr;
+  while (curr != NULL) {
+    next = curr->nextHook;
+    curr->freeHook(curr->data);
+    safeFree(curr);
+    curr = next;
+  }
+  *hookPtr = NULL;
+}
+
+int evaluateWithEvaluationHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, eval_hook_t *hook) {
+  eval_hook_t *curr;
+
+  for (curr=hook;curr!=NULL;curr=curr->nextHook) {
+    if (curr->evaluateHook(y,x,prec,curr->data)) return 1;
+  }
+
+  return 0;
+}
+
+node_eval_hook_t *createNodeEvalHook(node *func, sollya_mpfi_t dom, sollya_mpfi_t delta) {
+  node_eval_hook_t *newNodeEvalHook;
+
+  newNodeEvalHook = (node_eval_hook_t *) safeMalloc(sizeof(node_eval_hook_t));
+  sollya_mpfi_init2(newNodeEvalHook->domain, sollya_mpfi_get_prec(dom));
+  sollya_mpfi_set(newNodeEvalHook->domain, dom);
+  sollya_mpfi_init2(newNodeEvalHook->delta, sollya_mpfi_get_prec(delta));
+  sollya_mpfi_set(newNodeEvalHook->delta, delta);
+  newNodeEvalHook->func = copyThing(func);
+
+  return newNodeEvalHook;
+}
+
+
+int evaluateNodeEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void *data) {
+  node_eval_hook_t *hook;
+  mp_prec_t p, pY;
+  sollya_mpfi_t myY, myYRnd, myYRndWithDelta;
+  int okay;
+
+  hook = (node_eval_hook_t *) data;
+
+  if (!sollya_mpfi_is_inside(x, hook->domain)) return 0;
+  
+  pY = sollya_mpfi_get_prec(y); 
+  p = pY + 10;
+  if (prec > p) p = prec;
+
+  sollya_mpfi_init2(myY, p);
+  evaluateInterval(myY, hook->func, NULL, x);
+
+  okay = 0;
+  sollya_mpfi_init2(myYRnd, pY);
+  sollya_mpfi_init2(myYRndWithDelta, pY);
+
+  sollya_mpfi_set(myYRnd, myY);
+  sollya_mpfi_add(myYRndWithDelta, myY, hook->delta);
+  
+  if (sollya_mpfi_is_inside(myYRnd, myYRndWithDelta)) okay = 1;
+  
+  sollya_mpfi_clear(myYRnd);
+  sollya_mpfi_clear(myYRndWithDelta);
+  sollya_mpfi_clear(myY);
+
+  return okay;
+}
+
+void freeNodeEvalHook(void *data) {
+  node_eval_hook_t *hook;
+
+  hook = (node_eval_hook_t *) data;
+  freeThing(hook->func);
+  sollya_mpfi_clear(hook->domain);
+  sollya_mpfi_clear(hook->delta);
+  safeFree(hook);
+}
+
+int compareNodeEvalHook(void *data1, void *data2) {
+  node_eval_hook_t *hook1, *hook2;
+
+  hook1 = (node_eval_hook_t *) data1;
+  hook2 = (node_eval_hook_t *) data2;
+
+  if (!sollya_mpfi_equal_p(hook1->domain, hook2->domain)) return 0;
+  if (!sollya_mpfi_equal_p(hook1->delta, hook2->delta)) return 0;
+  if (!isEqualThing(hook1->func, hook2->func)) return 0;
+
+  return 1;
+}
+
+
+poly_eval_hook_t *createPolyEvalHook(int degree, mpfr_t *coeffs, sollya_mpfi_t dom, sollya_mpfi_t delta) {
+
+
+  return NULL;
+}
+
+int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void *data) {
+
+  return 0;
+}
+
+void freePolyEvalHook(void *data) {
+
+
+}
+
+int comparePolyEvalHook(void *data1, void *data2) {
+
+  return 0;
+}
+
+
+
+
 

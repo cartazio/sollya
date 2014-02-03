@@ -156,6 +156,7 @@ void free_memory(node *tree) {
 	free_memory(tree->derivUnsimplCache);
 	tree->derivUnsimplCache = NULL;
       }
+      freeEvaluationHook(&(tree->evaluationHook));
       free_memory(getMemRefChild(tree));
       if (tree->arguments != NULL) {
 	sollya_mpfi_clear(*((sollya_mpfi_t *) tree->arguments->next->value));

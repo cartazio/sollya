@@ -68,6 +68,7 @@
 #include "proof.h"
 #include "remez.h"
 #include "execute.h"
+#include "hooks.h"
 #include <string.h>
 
 
@@ -901,7 +902,11 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
       if (!(sollya_mpfi_has_nan(result) || sollya_mpfi_has_infinity(result))) return NULL;
     }
 
-    excludes = evaluateI(result, tree->child1, x, prec, simplifiesA, simplifiesB, hopitalPoint, theo, noExcludes);
+    if (evaluateWithEvaluationHook(result, x, prec, tree->evaluationHook)) {
+      excludes = NULL;
+    } else {
+      excludes = evaluateI(result, getMemRefChild(tree), x, prec, simplifiesA, simplifiesB, hopitalPoint, theo, noExcludes);
+    }
 
     if ((excludes == NULL) && (!(sollya_mpfi_has_nan(result) || sollya_mpfi_has_infinity(result)))) {
       if (tree->evalCacheX == NULL) {
