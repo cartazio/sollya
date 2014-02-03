@@ -156,7 +156,7 @@ void free_memory(node *tree) {
 	free_memory(tree->derivUnsimplCache);
 	tree->derivUnsimplCache = NULL;
       }
-      free_memory(tree->child1);
+      free_memory(getMemRefChild(tree));
       if (tree->arguments != NULL) {
 	sollya_mpfi_clear(*((sollya_mpfi_t *) tree->arguments->next->value));
 	safeFree(tree->arguments->next->value);
@@ -374,7 +374,7 @@ void fprintHeadFunction(FILE *fd,node *tree, char *x, char *y) {
   if (tree == NULL) return;
   switch (tree->nodeType) {
   case MEMREF:
-    fprintHeadFunction(fd,tree->child1, x, y);
+    fprintHeadFunction(fd,getMemRefChild(tree), x, y);
     break;
   case VARIABLE:
     if (x != NULL) sollyaFprintf(fd,"%s",x); else sollyaFprintf(fd,"x");
@@ -540,7 +540,7 @@ void fprintHeadFunction(FILE *fd,node *tree, char *x, char *y) {
 int precedence(node *tree) {
   switch (tree->nodeType) {
   case MEMREF:
-    return precedence(tree->child1);
+    return precedence(getMemRefChild(tree));
     break;
   case CONSTANT:
   case VARIABLE:
@@ -575,7 +575,7 @@ int isInfix(node *tree) {
   int res;
   switch(tree->nodeType) {
   case MEMREF:
-    return isInfix(tree->child1);
+    return isInfix(getMemRefChild(tree));
     break;
   case CONSTANT:
     if (mpfr_sgn(*(tree->value)) < 0) return 1;
@@ -1157,7 +1157,7 @@ void fprintTreeWithPrintMode(FILE *fd, node *tree) {
   int pred, i;
 
   if (tree->nodeType == MEMREF) {
-    fprintTreeWithPrintMode(fd, tree->child1);
+    fprintTreeWithPrintMode(fd, getMemRefChild(tree));
     return;
   }
 
@@ -1628,7 +1628,7 @@ void printTree(node *tree) {
   int pred, i;
 
   if (tree->nodeType == MEMREF) {
-    printTree(tree->child1);
+    printTree(getMemRefChild(tree));
     return;
   }
 
@@ -1970,7 +1970,7 @@ char *sprintTree(node *tree) {
   char *buffer, *buffer1, *buffer2, *finalBuffer, *tempBuf;
 
   if (tree->nodeType == MEMREF) {
-    return sprintTree(tree->child1);
+    return sprintTree(getMemRefChild(tree));
   }
 
   buffer1 = NULL;
@@ -2354,7 +2354,7 @@ void fprintTree(FILE *fd, node *tree) {
   if (tree == NULL) return;
   switch (tree->nodeType) {
   case MEMREF:
-    fprintTree(fd, tree->child1);
+    fprintTree(fd, getMemRefChild(tree));
     break;
   case VARIABLE:
     if (variablename == NULL) {
@@ -3028,7 +3028,7 @@ int tryEvaluateConstantTermToMpq(mpq_t res, node *tree) {
   if (tree == NULL) return 0;
 
   if (tree->nodeType == MEMREF) {
-    return tryEvaluateConstantTermToMpq(res, tree->child1);
+    return tryEvaluateConstantTermToMpq(res, getMemRefChild(tree));
   }
 
   mpq_init(resA);
@@ -3153,7 +3153,7 @@ int containsNotANumbers(node * tree) {
   int numberChilds;
 
   if (tree->nodeType == MEMREF) {
-    return containsNotANumbers(tree->child1);
+    return containsNotANumbers(getMemRefChild(tree));
   }
 
   if (tree->nodeType == CONSTANT) {
@@ -3191,7 +3191,7 @@ int containsOnlyRealNumbers(node * tree) {
   int numberChilds;
 
   if (tree->nodeType == MEMREF) {
-    return containsOnlyRealNumbers(tree->child1);
+    return containsOnlyRealNumbers(getMemRefChild(tree));
   }
 
   if (tree->nodeType == CONSTANT) {
@@ -3627,7 +3627,7 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
       mpfr_clear(temp);
       return addMemRef(res);
     }
-    return addMemRef(simplifyTreeErrorfreeInner(tree->child1, rec, doRational));
+    return addMemRef(simplifyTreeErrorfreeInner(getMemRefChild(tree), rec, doRational));
   }
 
   if ((tree->nodeType == CONSTANT) && (mpfr_nan_p(*(tree->value)))) return copyTree(tree);
@@ -5649,7 +5649,7 @@ node* differentiateUnsimplifiedInner(node *tree) {
   int deg;
 
   if (tree->nodeType == MEMREF) {
-    return addMemRef(differentiateUnsimplifiedInner(tree->child1));
+    return addMemRef(differentiateUnsimplifiedInner(getMemRefChild(tree)));
   }
 
   if (isConstant(tree)) {
@@ -6643,7 +6643,7 @@ int evaluateConstantExpression(mpfr_t result, node *tree, mp_prec_t prec) {
   int isConstant;
 
   if (tree->nodeType == MEMREF) {
-    return evaluateConstantExpression(result, tree->child1, prec);
+    return evaluateConstantExpression(result, getMemRefChild(tree), prec);
   }
 
   mpfr_init2(stack1, prec);
@@ -6932,7 +6932,7 @@ node* simplifyTreeInnerst(node *tree) {
   int numberChilds;
 
   if (tree->nodeType == MEMREF) {
-    return addMemRef(simplifyTreeInner(tree->child1));
+    return addMemRef(simplifyTreeInner(getMemRefChild(tree)));
   }
 
   if ((tree->nodeType == CONSTANT) && (mpfr_nan_p(*(tree->value)))) return copyTree(tree);
@@ -7735,7 +7735,7 @@ node* simplifyAllButDivisionInnerst(node *tree) {
   sollya_mpfi_t tempI;
 
   if (tree->nodeType == MEMREF) {
-    return addMemRef(simplifyAllButDivisionInner(tree->child1));
+    return addMemRef(simplifyAllButDivisionInner(getMemRefChild(tree)));
   }
 
   switch (tree->nodeType) {
@@ -8468,7 +8468,7 @@ void evaluate(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
   sollya_mpfi_t stackI;
 
   if (tree->nodeType == MEMREF) {
-    evaluate(result, tree->child1, x, prec);
+    evaluate(result, getMemRefChild(tree), x, prec);
     return;
   }
 
@@ -8689,7 +8689,7 @@ void evaluate(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
 int arity(node *tree) {
   switch (tree->nodeType) {
   case MEMREF:
-    return arity(tree->child1);
+    return arity(getMemRefChild(tree));
     break;
   case CONSTANT:
   case PI_CONST:
@@ -8757,8 +8757,8 @@ int isSyntacticallyEqual(node *tree1, node *tree2) {
 
   if (tree1 == tree2) return 1;
 
-  if (tree1->nodeType == MEMREF) return isSyntacticallyEqual(tree1->child1, tree2);
-  if (tree2->nodeType == MEMREF) return isSyntacticallyEqual(tree1, tree2->child1);
+  if (tree1->nodeType == MEMREF) return isSyntacticallyEqual(getMemRefChild(tree1), tree2);
+  if (tree2->nodeType == MEMREF) return isSyntacticallyEqual(tree1, getMemRefChild(tree2));
 
   if (tree1->nodeType != tree2->nodeType) return 0;
   if (tree1->nodeType == PI_CONST) return 1;
@@ -8797,7 +8797,7 @@ int isPolynomial(node *tree) {
   node *temp;
 
   if (tree->nodeType == MEMREF) {
-    return isPolynomial(tree->child1);
+    return isPolynomial(getMemRefChild(tree));
   }
 
   if (isConstant(tree)) return 1;
@@ -8901,7 +8901,7 @@ int isRationalFunction(node *tree) {
 
   /* Handle memory reference counting */
   if (tree->nodeType == MEMREF) {
-    return isRationalFunction(tree->child1);
+    return isRationalFunction(getMemRefChild(tree));
   }
 
   /* Handle all polynomials and constant expressions (constants, pi,
@@ -8958,7 +8958,7 @@ int isAffine(node *tree) {
   node *temp;
 
   if (tree->nodeType == MEMREF) {
-    return isAffine(tree->child1);
+    return isAffine(getMemRefChild(tree));
   }
 
   switch (tree->nodeType) {
@@ -9064,7 +9064,7 @@ int getDegreeUnsafe(node *tree, int silent) {
 
   if (isConstant(tree)) return 0;
 
-  if (tree->nodeType == MEMREF) return getDegreeUnsafe(tree->child1, silent);
+  if (tree->nodeType == MEMREF) return getDegreeUnsafe(getMemRefChild(tree), silent);
 
   switch (tree->nodeType) {
   case VARIABLE:
@@ -9161,7 +9161,7 @@ int getDegreeUnsafeMpz(mpz_t res, node *tree) {
     return 1;
   }
 
-  if (tree->nodeType == MEMREF) return getDegreeUnsafeMpz(res, tree->child1);
+  if (tree->nodeType == MEMREF) return getDegreeUnsafeMpz(res, getMemRefChild(tree));
 
   switch (tree->nodeType) {
   case VARIABLE:
@@ -9340,7 +9340,7 @@ int getMaxPowerDividerUnsafe(node *tree) {
 
   if (isConstant(tree)) return 0;
 
-  if (tree->nodeType == MEMREF) return getMaxPowerDividerUnsafe(tree->child1);
+  if (tree->nodeType == MEMREF) return getMaxPowerDividerUnsafe(getMemRefChild(tree));
 
   switch (tree->nodeType) {
   case VARIABLE:
@@ -9509,7 +9509,7 @@ node* expandPowerInPolynomialUnsafe(node *tree) {
 
   if (isConstant(tree)) return copyTree(tree);
 
-  if (tree->nodeType == MEMREF) return addMemRef(expandPowerInPolynomialUnsafe(tree->child1));
+  if (tree->nodeType == MEMREF) return addMemRef(expandPowerInPolynomialUnsafe(getMemRefChild(tree)));
 
   switch (tree->nodeType) {
   case VARIABLE:
@@ -9726,7 +9726,7 @@ node* expandDivision(node *tree) {
   mpfr_t temp;
 
   if (tree->nodeType == MEMREF) {
-    return addMemRef(expandDivision(tree->child1));
+    return addMemRef(expandDivision(getMemRefChild(tree)));
   }
 
   switch (tree->nodeType) {
@@ -9993,7 +9993,7 @@ node* expandPolynomialUnsafe(node *tree) {
 
   if (isConstant(tree)) return copyTree(tree);
 
-  if (tree->nodeType == MEMREF) return addMemRef(expandPolynomialUnsafe(tree->child1));
+  if (tree->nodeType == MEMREF) return addMemRef(expandPolynomialUnsafe(getMemRefChild(tree)));
 
   switch (tree->nodeType) {
   case VARIABLE:
@@ -10345,7 +10345,7 @@ node* expandUnsimplified(node *tree) {
   mpfr_t temp;
 
   if (tree->nodeType == MEMREF) {
-    return addMemRef(expandUnsimplified(tree->child1));
+    return addMemRef(expandUnsimplified(getMemRefChild(tree)));
   }
 
   if (!isConstant(tree) && isPolynomial(tree)) return expandPolynomial(tree);
@@ -10609,7 +10609,7 @@ int isConstant(node *tree) {
   case MEMREF:
     if (tree->arguments != NULL) return 1;
     if (tree->value != NULL) return 0;
-    res = isConstant(tree->child1);
+    res = isConstant(getMemRefChild(tree));
     if (!res) {
       tree->value = (mpfr_t *) (-1);
     }
@@ -10680,7 +10680,7 @@ int isMonomial(node *tree) {
 
   switch (tree->nodeType) {
   case MEMREF:
-    return isMonomial(tree->child1);
+    return isMonomial(getMemRefChild(tree));
     break;
   case MUL:
     return (isMonomial(tree->child1) && isMonomial(tree->child2));
@@ -10707,7 +10707,7 @@ node* getCoefficientsInMonomialUnsafe(node *polynom) {
 
   if (isConstant(polynom)) return copyTree(polynom);
 
-  if (polynom->nodeType == MEMREF) return getCoefficientsInMonomialUnsafe(polynom->child1);
+  if (polynom->nodeType == MEMREF) return getCoefficientsInMonomialUnsafe(getMemRefChild(polynom));
 
   if (polynom->nodeType == VARIABLE) return NULL;
 
@@ -10774,7 +10774,7 @@ void getCoefficientsUnsafe(node **monomials, node *polynom, int sign) {
   node *simplified, *simplifiedTemp;
 
   if (polynom->nodeType == MEMREF) {
-    getCoefficientsUnsafe(monomials, polynom->child1, sign);
+    getCoefficientsUnsafe(monomials, getMemRefChild(polynom), sign);
     return;
   }
 
@@ -10846,7 +10846,7 @@ void getCoefficientsHornerUnsafe(node **coefficients, node *poly, int offset, in
   node *newCoeff, *temp;
 
   if (poly->nodeType == MEMREF) {
-    getCoefficientsHornerUnsafe(coefficients, poly->child1, offset, sign);
+    getCoefficientsHornerUnsafe(coefficients, getMemRefChild(poly), offset, sign);
     return;
   }
 
@@ -10914,7 +10914,7 @@ void getCoefficientsHorner(node **coefficients, node *poly) {
   int offset;
 
   if (poly->nodeType == MEMREF) {
-    getCoefficientsHorner(coefficients, poly->child1);
+    getCoefficientsHorner(coefficients, getMemRefChild(poly));
     return;
   }
 
@@ -10936,7 +10936,7 @@ void getCoefficientsCanonicalUnsafe(node **coefficients, node *poly) {
   node *newCoeff, *temp;
 
   if (poly->nodeType == MEMREF) {
-    getCoefficientsCanonicalUnsafe(coefficients, poly->child1);
+    getCoefficientsCanonicalUnsafe(coefficients, getMemRefChild(poly));
     return;
   }
 
@@ -11116,7 +11116,7 @@ void getCoefficientsInner(int *degree, node ***coefficients, node *poly) {
   mpfr_t y;
 
   if (poly->nodeType == MEMREF) {
-    getCoefficients(degree, coefficients, poly->child1);
+    getCoefficients(degree, coefficients, getMemRefChild(poly));
     return;
   }
 
@@ -11549,7 +11549,7 @@ node* hornerUnsimplified(node *tree) {
   mpfr_t temp;
 
   if (tree->nodeType == MEMREF) {
-    return addMemRef(hornerUnsimplified(tree->child1));
+    return addMemRef(hornerUnsimplified(getMemRefChild(tree)));
   }
 
   if (isPolynomial(tree)) return hornerPolynomial(tree);
@@ -11797,7 +11797,7 @@ node* hornerUnsimplified(node *tree) {
 
 
 int isPowerOfVariable(node *tree) {
-  if (tree->nodeType == MEMREF) return isPowerOfVariable(tree->child1);
+  if (tree->nodeType == MEMREF) return isPowerOfVariable(getMemRefChild(tree));
   if (tree->nodeType == VARIABLE) return 1;
   if ((tree->nodeType == POW) &&
       (accessThruMemRef(tree->child1)->nodeType == VARIABLE) &&
@@ -11808,7 +11808,7 @@ int isPowerOfVariable(node *tree) {
 
 int isHornerUnsafe(node *tree) {
   if (isConstant(tree)) return 1;
-  if (tree->nodeType == MEMREF) return isHornerUnsafe(tree->child1);
+  if (tree->nodeType == MEMREF) return isHornerUnsafe(getMemRefChild(tree));
   if (((tree->nodeType == ADD) || (tree->nodeType == SUB)) &&
       isConstant(tree->child1) &&
       (accessThruMemRef(tree->child2)->nodeType == MUL) &&
@@ -11833,7 +11833,7 @@ int isHornerUnsafe(node *tree) {
 }
 
 int isHorner(node *tree) {
-  if (tree->nodeType == MEMREF) return isHorner(tree->child1);
+  if (tree->nodeType == MEMREF) return isHorner(getMemRefChild(tree));
   if ((tree->nodeType == ADD) || (tree->nodeType == SUB))
     return isHornerUnsafe(tree);
   if (tree->nodeType == MUL) {
@@ -12171,7 +12171,7 @@ node *differentiatePolynomialUnsafe(node *tree) {
 
 
 int getNumeratorDenominator(node **numerator, node **denominator, node *tree) {
-  if (tree->nodeType == MEMREF) return getNumeratorDenominator(numerator, denominator, tree->child1);
+  if (tree->nodeType == MEMREF) return getNumeratorDenominator(numerator, denominator, getMemRefChild(tree));
   if (tree->nodeType == DIV) {
     *numerator = copyTree(tree->child1);
     *denominator = copyTree(tree->child2);
@@ -12461,7 +12461,7 @@ node *substituteInner(node* tree, node *t, int doNotEvaluate) {
   }
 
   if (tree->nodeType == MEMREF) {
-    copy = addMemRef(substituteInner(tree->child1, t, 1));
+    copy = addMemRef(substituteInner(getMemRefChild(tree), t, 1));
 
     if (haveAPrioriBoundForConstantExpr) {
       if (copy->nodeType == MEMREF) {
@@ -13190,7 +13190,7 @@ int treeSize(node *tree) {
   if (tree == NULL) return 0;
   switch (tree->nodeType) {
   case MEMREF:
-    return treeSize(tree->child1);
+    return treeSize(getMemRefChild(tree));
     break;
 
   case VARIABLE:
@@ -13257,7 +13257,7 @@ int treeSize(node *tree) {
 int highestDegreeOfPolynomialSubexpression(node *tree) {
   int l, r;
 
-  if (tree->nodeType == MEMREF) return highestDegreeOfPolynomialSubexpression(tree->child1);
+  if (tree->nodeType == MEMREF) return highestDegreeOfPolynomialSubexpression(getMemRefChild(tree));
 
   if (isPolynomial(tree)) return getDegree(tree);
 
@@ -13368,7 +13368,7 @@ int tryGetIthCoefficientSparseUnsafe(node **res, node *poly, int i) {
 
   switch (poly->nodeType) {
   case MEMREF:
-    return tryGetIthCoefficientSparseUnsafe(res, poly->child1, i);
+    return tryGetIthCoefficientSparseUnsafe(res, getMemRefChild(poly), i);
     break;
   case CONSTANT:
   case PI_CONST:
@@ -13798,7 +13798,7 @@ node *makeCanonicalPolyUnsafe(node *poly, mp_prec_t prec) {
 
 int isCanonicalMonomial(node *tree) {
 
-  if (tree->nodeType == MEMREF) return isCanonicalMonomial(tree->child1);
+  if (tree->nodeType == MEMREF) return isCanonicalMonomial(getMemRefChild(tree));
 
   if (isConstant(tree)) return 1;
 
@@ -13815,7 +13815,7 @@ int isCanonicalMonomial(node *tree) {
 int isCanonicalUnsafe(node *tree) {
   int deg1, deg2;
 
-  if (tree->nodeType == MEMREF) return isCanonicalUnsafe(tree->child1);
+  if (tree->nodeType == MEMREF) return isCanonicalUnsafe(getMemRefChild(tree));
 
   if (isConstant(tree) || isCanonicalMonomial(tree)) return 1;
 
@@ -13844,7 +13844,7 @@ node *makeCanonical(node *tree, mp_prec_t prec) {
   mpfr_t temp;
 
   if (tree->nodeType == MEMREF) {
-    return addMemRef(makeCanonical(tree->child1, prec));
+    return addMemRef(makeCanonical(getMemRefChild(tree), prec));
   }
 
   if (isCanonical(tree)) {

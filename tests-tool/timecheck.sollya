@@ -164,9 +164,9 @@ i := i+1;
 /* Test #15 */
 /* Non-regression tests for optimizations of lists introduced in the branch optimLists */
 i;
-n = 20000; L = [||]; for k from 0 to n do L = 1.:L;
+n = 30000; L = [||]; for k from 0 to n do L = 1.:L;
 t1 = time(for k from 0 to n do a = L[n]);
-n = 40000; L = [||]; for k from 0 to n do L = 1.:L;
+n = 60000; L = [||]; for k from 0 to n do L = 1.:L;
 t2 = time(for k from 0 to n do a = L[n]);
 if (1.75 <= t2/t1) && (t2/t1 <= 2.25)
   then "Okay"

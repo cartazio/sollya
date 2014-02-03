@@ -142,7 +142,7 @@ node *headFunction(node *tree) {
 
   switch (tree->nodeType) {
   case MEMREF:
-    return headFunction(tree->child1);
+    return headFunction(getMemRefChild(tree));
     break;
   case VARIABLE:
   case CONSTANT:

@@ -884,7 +884,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
   sollya_mpfi_t *intervalPtr;
 
   if (tree->nodeType == MEMREF) {
-    if ((theo != NULL) || (!noExcludes)) return evaluateI(result, tree->child1, x, prec, simplifiesA, simplifiesB, hopitalPoint, theo, noExcludes);
+    if ((theo != NULL) || (!noExcludes)) return evaluateI(result, getMemRefChild(tree), x, prec, simplifiesA, simplifiesB, hopitalPoint, theo, noExcludes);
 
     if ((tree->arguments != NULL) &&
 	(*((mp_prec_t *) tree->arguments->value) >= prec)) {
@@ -3999,7 +3999,7 @@ chain *uncertifiedZeroDenominators(node *tree, mpfr_t a, mpfr_t b, mp_prec_t pre
   rangetype range;
 
   if (tree == NULL) return NULL;
-  if (tree->nodeType == MEMREF) return uncertifiedZeroDenominators(tree->child1, a, b, prec);
+  if (tree->nodeType == MEMREF) return uncertifiedZeroDenominators(getMemRefChild(tree), a, b, prec);
   switch (tree->nodeType) {
   case VARIABLE:
     return NULL;
@@ -5026,7 +5026,7 @@ node *convertConstantToFunctionInPiInner(node *tree) {
   node *res;
   int a;
 
-  if (tree->nodeType == MEMREF) return convertConstantToFunctionInPiInner(tree->child1);
+  if (tree->nodeType == MEMREF) return convertConstantToFunctionInPiInner(getMemRefChild(tree));
 
   if (tree->nodeType == PI_CONST) {
     res = (node *) safeMalloc(sizeof(node));
@@ -5075,7 +5075,7 @@ node *convertConstantToFunctionInPi(node *tree) {
 int containsPi(node *tree) {
   int a;
 
-  if (tree->nodeType == MEMREF) return containsPi(tree->child1);
+  if (tree->nodeType == MEMREF) return containsPi(getMemRefChild(tree));
 
   if (tree->nodeType == PI_CONST) return 1;
 

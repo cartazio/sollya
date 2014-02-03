@@ -81,7 +81,7 @@ void fPrintXmlInner(FILE *fd, node *tree) {
   if (tree == NULL) return;
   switch (tree->nodeType) {
   case MEMREF:
-    fPrintXmlInner(fd, tree->child1);
+    fPrintXmlInner(fd, getMemRefChild(tree));
     return;
     break;
   case VARIABLE:

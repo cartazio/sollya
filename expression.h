@@ -139,6 +139,7 @@ struct nodeStruct
   int simplifyCacheDoesNotSimplify;
   int simplifyCacheRationalMode;
   node *simplifyCache;
+  int isCorrectlyTyped;
 };
 
 /* HELPER TYPE FOR THE PARSER */
@@ -174,6 +175,8 @@ void *safeMalloc (size_t);
 
 static inline node* addMemRef(node *tree) { return tree; }
 
+static inline node* getMemRefChild(node *tree) { return tree->child1; }
+
 #else
 
 static inline node* addMemRef(node *tree) {
@@ -197,8 +200,13 @@ static inline node* addMemRef(node *tree) {
   res->simplifyCacheDoesNotSimplify = -1;
   res->simplifyCacheRationalMode = -1;
   res->simplifyCache = NULL;
+  res->isCorrectlyTyped = 0;
 
   return res;
+}
+
+static inline node* getMemRefChild(node *tree) { 
+  return tree->child1; 
 }
 
 #endif
@@ -209,7 +217,7 @@ static inline node* accessThruMemRef(node *tree) {
   if (tree == NULL) return NULL;
   res = tree;
   while (res->nodeType == MEMREF) {
-    res = res->child1;
+    res = getMemRefChild(res);
   }
   return res;
 }

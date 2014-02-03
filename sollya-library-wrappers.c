@@ -3094,7 +3094,7 @@ int sollya_lib_v_decompose_function(sollya_obj_t obj1, sollya_base_function_t *b
   sollya_obj_t *elem;
   int i, funcArity, gottaBreak;
 
-  if (obj1->nodeType == MEMREF) return sollya_lib_v_decompose_function(obj1->child1, base_func, ari, varlist);
+  if (obj1->nodeType == MEMREF) return sollya_lib_v_decompose_function(getMemRefChild(obj1), base_func, ari, varlist);
   if (!isPureTree(obj1)) return 0;
   if (base_func != NULL) {
     switch (obj1->nodeType) {
@@ -3333,7 +3333,7 @@ int sollya_lib_get_head_function(sollya_base_function_t *base_func, sollya_obj_t
 
 int sollya_lib_decompose_libraryfunction(int (**func)(mpfi_t, mpfi_t, int), int *deriv, sollya_obj_t *sub_func, sollya_obj_t obj) {
 
-  if (obj->nodeType == MEMREF) return sollya_lib_decompose_libraryfunction(func, deriv, sub_func, obj->child1);
+  if (obj->nodeType == MEMREF) return sollya_lib_decompose_libraryfunction(func, deriv, sub_func, getMemRefChild(obj));
 
   if (obj->nodeType != LIBRARYFUNCTION) return 0;
 
@@ -3346,7 +3346,7 @@ int sollya_lib_decompose_libraryfunction(int (**func)(mpfi_t, mpfi_t, int), int 
 
 int sollya_lib_decompose_libraryconstant(void (**func)(mpfr_t, mp_prec_t), sollya_obj_t obj) {
 
-  if (obj->nodeType == MEMREF) return sollya_lib_decompose_libraryconstant(func, obj->child1);
+  if (obj->nodeType == MEMREF) return sollya_lib_decompose_libraryconstant(func, getMemRefChild(obj));
 
   if (obj->nodeType != LIBRARYCONSTANT) return 0;
 
@@ -3357,7 +3357,7 @@ int sollya_lib_decompose_libraryconstant(void (**func)(mpfr_t, mp_prec_t), solly
 
 int sollya_lib_decompose_procedurefunction(sollya_obj_t *proc, int *deriv, sollya_obj_t *sub_func, sollya_obj_t obj) {
 
-  if (obj->nodeType == MEMREF) return sollya_lib_decompose_procedurefunction(proc, deriv, sub_func, obj->child1);
+  if (obj->nodeType == MEMREF) return sollya_lib_decompose_procedurefunction(proc, deriv, sub_func, getMemRefChild(obj));
 
   if (obj->nodeType != PROCEDUREFUNCTION) return 0;
 
@@ -3504,7 +3504,7 @@ int sollya_lib_get_structure_elements(char ***identifiers, sollya_obj_t **object
   chain *curr;
   int i;
 
-  if (obj1->nodeType == MEMREF) return sollya_lib_get_structure_elements(identifiers, objects, num, obj1->child1);
+  if (obj1->nodeType == MEMREF) return sollya_lib_get_structure_elements(identifiers, objects, num, getMemRefChild(obj1));
 
   if (!isStructure(obj1)) return 0;
 
@@ -3522,7 +3522,7 @@ int sollya_lib_get_structure_elements(char ***identifiers, sollya_obj_t **object
 int sollya_lib_get_element_in_structure(sollya_obj_t *object, char *identifier, sollya_obj_t obj1) {
   chain *curr;
 
-  if (obj1->nodeType == MEMREF) return sollya_lib_get_element_in_structure(object, identifier, obj1->child1);
+  if (obj1->nodeType == MEMREF) return sollya_lib_get_element_in_structure(object, identifier, getMemRefChild(obj1));
 
   if (!isStructure(obj1)) return 0;
 
@@ -3551,7 +3551,7 @@ int sollya_lib_create_structure(sollya_obj_t *object, sollya_obj_t obj1, char *i
     return 1;
   }
 
-  if (obj1->nodeType == MEMREF) return sollya_lib_create_structure(object, obj1->child1, identifier, obj2);
+  if (obj1->nodeType == MEMREF) return sollya_lib_create_structure(object, getMemRefChild(obj1), identifier, obj2);
 
   if (!isStructure(obj1)) return 0;
 

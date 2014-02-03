@@ -215,7 +215,7 @@ void setupRandomAccessOnLists(node *obj) {
 
   switch (obj->nodeType) {
   case MEMREF:
-    setupRandomAccessOnLists(obj->child1);
+    setupRandomAccessOnLists(getMemRefChild(obj));
     break;
   case LIST:
   case FINALELLIPTICLIST:
@@ -1315,7 +1315,7 @@ node *deepCopyThing(node *tree) {
   if (tree == NULL) return NULL;
 
   if (tree->nodeType == MEMREF) {
-    return deepCopyThing(tree->child1);
+    return deepCopyThing(getMemRefChild(tree));
   }
 
   copy = (node *) safeMalloc(sizeof(node));
@@ -2240,7 +2240,7 @@ char *getTimingStringForThing(node *tree) {
   if (tree == NULL) return NULL;
 
   if (tree->nodeType == MEMREF) {
-    return getTimingStringForThing(tree->child1);
+    return getTimingStringForThing(getMemRefChild(tree));
   }
 
   switch (tree->nodeType) {
@@ -3074,7 +3074,7 @@ char *getTimingStringForThing(node *tree) {
 int isPureTree(node *tree) {
   switch (tree->nodeType) {
   case MEMREF:
-    return isPureTree(tree->child1);
+    return isPureTree(getMemRefChild(tree));
     break;
   case VARIABLE:
     return 1;
@@ -3216,7 +3216,7 @@ int isPureTree(node *tree) {
 int isExtendedPureTree(node *tree) {
   switch (tree->nodeType) {
   case MEMREF:
-    return isExtendedPureTree(tree->child1);
+    return isExtendedPureTree(getMemRefChild(tree));
     break;
   case DEFAULT:
     return 1;
@@ -3380,7 +3380,7 @@ int isMatchable(node *);
 
 int isMatchableList(node *tree) {
   chain *curr;
-  if (tree->nodeType == MEMREF) return isMatchableList(tree->child1);
+  if (tree->nodeType == MEMREF) return isMatchableList(getMemRefChild(tree));
   if (isEmptyList(tree)) return 1;
   if (!(isPureList(tree) || isPureFinalEllipticList(tree))) return 0;
   for (curr=tree->arguments;curr!=NULL;curr=curr->next) {
@@ -3392,7 +3392,7 @@ int isMatchableList(node *tree) {
 int isString(node *);
 
 int isMatchableConcat(node *tree) {
-  if (tree->nodeType == MEMREF) return isMatchableConcat(tree->child1);
+  if (tree->nodeType == MEMREF) return isMatchableConcat(getMemRefChild(tree));
   if (tree->nodeType != CONCAT) return 0;
   if (((tree->child1->nodeType == TABLEACCESS) || (tree->child1->nodeType == DEFAULT)) &&
       ((tree->child2->nodeType == TABLEACCESS) || (tree->child2->nodeType == DEFAULT))) return 0;
@@ -3415,7 +3415,7 @@ int isMatchableConcat(node *tree) {
 }
 
 int isMatchablePrepend(node *tree) {
-  if (tree->nodeType == MEMREF) return isMatchablePrepend(tree->child1);
+  if (tree->nodeType == MEMREF) return isMatchablePrepend(getMemRefChild(tree));
   if (tree->nodeType != PREPEND) return 0;
   if (isMatchable(tree->child1) &&
       (isMatchableList(tree->child2) ||
@@ -3427,7 +3427,7 @@ int isMatchablePrepend(node *tree) {
 }
 
 int isMatchableAppend(node *tree) {
-  if (tree->nodeType == MEMREF) return isMatchableAppend(tree->child1);
+  if (tree->nodeType == MEMREF) return isMatchableAppend(getMemRefChild(tree));
   if (tree->nodeType != APPEND) return 0;
   if (isMatchable(tree->child2) &&
       ((isMatchableList(tree->child1) && (!isPureFinalEllipticList(tree->child1))) ||
@@ -3440,7 +3440,7 @@ int isMatchableAppend(node *tree) {
 
 int isMatchableStructure(node *tree) {
   chain *curr;
-  if (tree->nodeType == MEMREF) return isMatchableStructure(tree->child1);
+  if (tree->nodeType == MEMREF) return isMatchableStructure(getMemRefChild(tree));
   if (tree->nodeType != STRUCTURE) return 0;
   if (associationContainsDoubleEntries(tree->arguments)) return 0;
   for (curr=tree->arguments; curr != NULL; curr = curr->next) {
@@ -3450,7 +3450,7 @@ int isMatchableStructure(node *tree) {
 }
 
 int isMatchable(node *tree) {
-  if (tree->nodeType == MEMREF) return isMatchable(tree->child1);
+  if (tree->nodeType == MEMREF) return isMatchable(getMemRefChild(tree));
   if (isExtendedPureTree(tree)) return 1;
   if (isCorrectlyTypedBaseSymbol(tree)) return 1;
   if ((tree->nodeType == RANGE) &&
@@ -3469,37 +3469,37 @@ int isMatchable(node *tree) {
 }
 
 int isDefault(node *tree) {
-  if (tree->nodeType == MEMREF) return isDefault(tree->child1);
+  if (tree->nodeType == MEMREF) return isDefault(getMemRefChild(tree));
   return (tree->nodeType == DEFAULT);
 }
 
 int isString(node *tree) {
-  if (tree->nodeType == MEMREF) return isString(tree->child1);
+  if (tree->nodeType == MEMREF) return isString(getMemRefChild(tree));
   return (tree->nodeType == STRING);
 }
 
 int isList(node *tree) {
-  if (tree->nodeType == MEMREF) return isList(tree->child1);
+  if (tree->nodeType == MEMREF) return isList(getMemRefChild(tree));
   return (tree->nodeType == LIST);
 }
 
 int isMatchElement(node *tree) {
-  if (tree->nodeType == MEMREF) return isMatchElement(tree->child1);
+  if (tree->nodeType == MEMREF) return isMatchElement(getMemRefChild(tree));
   return (tree->nodeType == MATCHELEMENT);
 }
 
 int isStructure(node *tree) {
-  if (tree->nodeType == MEMREF) return isStructure(tree->child1);
+  if (tree->nodeType == MEMREF) return isStructure(getMemRefChild(tree));
   return (tree->nodeType == STRUCTURE);
 }
 
 int isEmptyList(node *tree) {
-  if (tree->nodeType == MEMREF) return isEmptyList(tree->child1);
+  if (tree->nodeType == MEMREF) return isEmptyList(getMemRefChild(tree));
   return (tree->nodeType == EMPTYLIST);
 }
 
 int isElliptic(node *tree) {
-  if (tree->nodeType == MEMREF) return isElliptic(tree->child1);
+  if (tree->nodeType == MEMREF) return isElliptic(getMemRefChild(tree));
   return (tree->nodeType == ELLIPTIC);
 }
 
@@ -3507,7 +3507,7 @@ int isElliptic(node *tree) {
 int isPureList(node *tree) {
   chain *curr;
 
-  if (tree->nodeType == MEMREF) return isPureList(tree->child1);
+  if (tree->nodeType == MEMREF) return isPureList(getMemRefChild(tree));
 
   if (!isList(tree)) return 0;
 
@@ -3523,14 +3523,14 @@ int isPureList(node *tree) {
 }
 
 int isFinalEllipticList(node *tree) {
-  if (tree->nodeType == MEMREF) return isFinalEllipticList(tree->child1);
+  if (tree->nodeType == MEMREF) return isFinalEllipticList(getMemRefChild(tree));
   return (tree->nodeType == FINALELLIPTICLIST);
 }
 
 int isPureFinalEllipticList(node *tree) {
   chain *curr;
 
-  if (tree->nodeType == MEMREF) return isPureFinalEllipticList(tree->child1);
+  if (tree->nodeType == MEMREF) return isPureFinalEllipticList(getMemRefChild(tree));
 
   if (!isFinalEllipticList(tree)) return 0;
 
@@ -3549,7 +3549,7 @@ int isPureFinalEllipticList(node *tree) {
 
 
 int isRange(node *tree) {
-  if (tree->nodeType == MEMREF) return isRange(tree->child1);
+  if (tree->nodeType == MEMREF) return isRange(getMemRefChild(tree));
   if (tree->nodeType != RANGE) return 0;
   if (tree->child1->nodeType != CONSTANT) return 0;
   if (tree->child2->nodeType != CONSTANT) return 0;
@@ -3557,7 +3557,7 @@ int isRange(node *tree) {
 }
 
 int isRangeNonEmpty(node *tree) {
-  if (tree->nodeType == MEMREF) return isRangeNonEmpty(tree->child1);
+  if (tree->nodeType == MEMREF) return isRangeNonEmpty(getMemRefChild(tree));
   if (!isRange(tree)) return 0;
   if (mpfr_nan_p(*(tree->child1->value)) ||
       mpfr_nan_p(*(tree->child2->value))) return 1;
@@ -3567,85 +3567,85 @@ int isRangeNonEmpty(node *tree) {
 
 
 int isError(node *tree) {
-  if (tree->nodeType == MEMREF) return isError(tree->child1);
+  if (tree->nodeType == MEMREF) return isError(getMemRefChild(tree));
   if (tree->nodeType == ERRORSPECIAL) return 1;
   return 0;
 }
 
 
 int isBoolean(node *tree) {
-  if (tree->nodeType == MEMREF) return isBoolean(tree->child1);
+  if (tree->nodeType == MEMREF) return isBoolean(getMemRefChild(tree));
   if (tree->nodeType == TRUE) return 1;
   if (tree->nodeType == FALSE) return 1;
   return 0;
 }
 
 int isUnit(node *tree) {
-  if (tree->nodeType == MEMREF) return isUnit(tree->child1);
+  if (tree->nodeType == MEMREF) return isUnit(getMemRefChild(tree));
   if (tree->nodeType == UNIT) return 1;
   return 0;
 }
 
 int isQuit(node *tree) {
-  if (tree->nodeType == MEMREF) return isQuit(tree->child1);
+  if (tree->nodeType == MEMREF) return isQuit(getMemRefChild(tree));
   if (tree->nodeType == QUIT) return 1;
   return 0;
 }
 
 int isRestart(node *tree) {
-  if (tree->nodeType == MEMREF) return isRestart(tree->child1);
+  if (tree->nodeType == MEMREF) return isRestart(getMemRefChild(tree));
   if (tree->nodeType == RESTART) return 1;
   return 0;
 }
 
 int isFalseQuit(node *tree) {
-  if (tree->nodeType == MEMREF) return isFalseQuit(tree->child1);
+  if (tree->nodeType == MEMREF) return isFalseQuit(getMemRefChild(tree));
   if (tree->nodeType == FALSEQUIT) return 1;
   return 0;
 }
 
 int isFalseRestart(node *tree) {
-  if (tree->nodeType == MEMREF) return isFalseRestart(tree->child1);
+  if (tree->nodeType == MEMREF) return isFalseRestart(getMemRefChild(tree));
   if (tree->nodeType == FALSERESTART) return 1;
   return 0;
 }
 
 
 int isExternalProcedureUsage(node *tree) {
-  if (tree->nodeType == MEMREF) return isExternalProcedureUsage(tree->child1);
+  if (tree->nodeType == MEMREF) return isExternalProcedureUsage(getMemRefChild(tree));
   if (tree->nodeType == EXTERNALPROCEDUREUSAGE) return 1;
   return 0;
 }
 
 int isProcedure(node *tree) {
-  if (tree->nodeType == MEMREF) return isProcedure(tree->child1);
+  if (tree->nodeType == MEMREF) return isProcedure(getMemRefChild(tree));
   if (tree->nodeType == PROC) return 1;
   if (tree->nodeType == PROCILLIM) return 1;
   return 0;
 }
 
 int isProcedureNotIllim(node *tree) {
-  if (tree->nodeType == MEMREF) return isProcedureNotIllim(tree->child1);
+  if (tree->nodeType == MEMREF) return isProcedureNotIllim(getMemRefChild(tree));
   if (tree->nodeType == PROC) return 1;
   return 0;
 }
 
 int isHonorcoeffprec(node *tree) {
-  if (tree->nodeType == MEMREF) return isHonorcoeffprec(tree->child1);
+  if (tree->nodeType == MEMREF) return isHonorcoeffprec(getMemRefChild(tree));
   if (tree->nodeType == HONORCOEFF) return 1;
   return 0;
 }
 
 
 int isOnOff(node *tree) {
-  if (tree->nodeType == MEMREF) return isOnOff(tree->child1);
+  if (tree->nodeType == MEMREF) return isOnOff(getMemRefChild(tree));
   if (tree->nodeType == ON) return 1;
   if (tree->nodeType == OFF) return 1;
   return 0;
 }
 
 int isDisplayMode(node *tree) {
-  if (tree->nodeType == MEMREF) return isDisplayMode(tree->child1);
+  if (tree->nodeType == MEMREF) return isDisplayMode(getMemRefChild(tree));
   if (tree->nodeType == DECIMAL) return 1;
   if (tree->nodeType == DYADIC) return 1;
   if (tree->nodeType == POWERS) return 1;
@@ -3655,7 +3655,7 @@ int isDisplayMode(node *tree) {
 }
 
 int isRoundingSymbol(node *tree) {
-  if (tree->nodeType == MEMREF) return isRoundingSymbol(tree->child1);
+  if (tree->nodeType == MEMREF) return isRoundingSymbol(getMemRefChild(tree));
   if (tree->nodeType == ROUNDTONEAREST) return 1;
   if (tree->nodeType == ROUNDDOWN) return 1;
   if (tree->nodeType == ROUNDUP) return 1;
@@ -3664,7 +3664,7 @@ int isRoundingSymbol(node *tree) {
 }
 
 int isExpansionFormat(node *tree) {
-  if (tree->nodeType == MEMREF) return isExpansionFormat(tree->child1);
+  if (tree->nodeType == MEMREF) return isExpansionFormat(getMemRefChild(tree));
   if (tree->nodeType == SINGLESYMBOL) return 1;
   if (tree->nodeType == HALFPRECISIONSYMBOL) return 1;
   if (tree->nodeType == QUADSYMBOL) return 1;
@@ -3676,7 +3676,7 @@ int isExpansionFormat(node *tree) {
 }
 
 int isExtendedExpansionFormat(node *tree) {
-  if (tree->nodeType == MEMREF) return isExtendedExpansionFormat(tree->child1);
+  if (tree->nodeType == MEMREF) return isExtendedExpansionFormat(getMemRefChild(tree));
   if (tree->nodeType == SINGLESYMBOL) return 1;
   if (tree->nodeType == HALFPRECISIONSYMBOL) return 1;
   if (tree->nodeType == QUADSYMBOL) return 1;
@@ -3690,7 +3690,7 @@ int isExtendedExpansionFormat(node *tree) {
 
 
 int isRestrictedExpansionFormat(node *tree) {
-  if (tree->nodeType == MEMREF) return isRestrictedExpansionFormat(tree->child1);
+  if (tree->nodeType == MEMREF) return isRestrictedExpansionFormat(getMemRefChild(tree));
   if (tree->nodeType == DOUBLESYMBOL) return 1;
   if (tree->nodeType == DOUBLEDOUBLESYMBOL) return 1;
   if (tree->nodeType == TRIPLEDOUBLESYMBOL) return 1;
@@ -3699,7 +3699,7 @@ int isRestrictedExpansionFormat(node *tree) {
 
 
 int isFilePostscriptFile(node *tree) {
-  if (tree->nodeType == MEMREF) return isFilePostscriptFile(tree->child1);
+  if (tree->nodeType == MEMREF) return isFilePostscriptFile(getMemRefChild(tree));
   if (tree->nodeType == FILESYM) return 1;
   if (tree->nodeType == POSTSCRIPT) return 1;
   if (tree->nodeType == POSTSCRIPTFILE) return 1;
@@ -3707,7 +3707,7 @@ int isFilePostscriptFile(node *tree) {
 }
 
 int isExternalPlotMode(node *tree) {
-  if (tree->nodeType == MEMREF) return isExternalPlotMode(tree->child1);
+  if (tree->nodeType == MEMREF) return isExternalPlotMode(getMemRefChild(tree));
   if (tree->nodeType == ABSOLUTESYM) return 1;
   if (tree->nodeType == RELATIVESYM) return 1;
   return 0;
@@ -4789,7 +4789,7 @@ char *sRawPrintThing(node *tree) {
   }
 
   if (tree->nodeType == MEMREF) {
-    return sRawPrintThing(tree->child1);
+    return sRawPrintThing(getMemRefChild(tree));
   }
 
   switch (tree->nodeType) {
@@ -7730,7 +7730,7 @@ int tryToRewriteLeftHandStructAccessInner(chain **idents, node *thing) {
   chain *tempChain;
 
   if (thing->nodeType == MEMREF) {
-    return tryToRewriteLeftHandStructAccessInner(idents, thing->child1);
+    return tryToRewriteLeftHandStructAccessInner(idents, getMemRefChild(thing));
   }
 
   okay = 0;
@@ -7942,7 +7942,7 @@ int executeCommandInner(node *tree) {
   /* End of compiler happiness */
 
   if (tree->nodeType == MEMREF) {
-    return executeCommandInner(tree->child1);
+    return executeCommandInner(getMemRefChild(tree));
   }
 
   result = 0;
@@ -12967,7 +12967,7 @@ void freeThing(node *tree) {
 	freeThing(tree->derivUnsimplCache);
 	tree->derivUnsimplCache = NULL;
       }
-      freeThing(tree->child1);
+      freeThing(getMemRefChild(tree));
       if (tree->arguments != NULL) {
 	sollya_mpfi_clear(*((sollya_mpfi_t *) tree->arguments->next->value));
 	safeFree(tree->arguments->next->value);
@@ -14136,11 +14136,11 @@ int isEqualThing(node *tree, node *tree2) {
   if (tree == tree2) return 1;
 
   if (tree->nodeType == MEMREF) {
-    return isEqualThing(tree->child1, tree2);
+    return isEqualThing(getMemRefChild(tree), tree2);
   }
 
   if (tree2->nodeType == MEMREF) {
-    return isEqualThing(tree, tree2->child1);
+    return isEqualThing(tree, getMemRefChild(tree2));
   }
 
   if (tree->nodeType != tree2->nodeType) return 0;
@@ -14990,7 +14990,7 @@ int isCorrectlyTypedBaseSymbol(node *tree) {
   if (tree == NULL) return 0;
 
   if (tree->nodeType == MEMREF) {
-    return isCorrectlyTypedBaseSymbol(tree->child1);
+    return isCorrectlyTypedBaseSymbol(getMemRefChild(tree));
   }
 
   switch (tree->nodeType) {
@@ -15055,7 +15055,7 @@ int associationContainsDoubleEntries(chain *assoc) {
 int isCorrectlyTyped(node *tree) {
   chain *curr;
 
-  if ((tree->nodeType == MEMREF) && (tree->child2 == tree->child1)) return 1;
+  if ((tree->nodeType == MEMREF) && (tree->isCorrectlyTyped)) return 1;
 
   if (isPureTree(tree)) return 1;
   if (isCorrectlyTypedBaseSymbol(tree)) return 1;
@@ -15097,12 +15097,12 @@ node *evaluateThing(node *tree) {
 
   if ((tree != NULL) &&
       (tree->nodeType == MEMREF) &&
-      ((tree->child2 == tree->child1) ||
+      ((tree->isCorrectlyTyped) ||
        (isCorrectlyTyped(tree) &&
 	(!(autosimplify && (isPureTree(tree) && (treeSize(tree) < MAXAUTOSIMPLSIZE))))))) {
     evaluated = addMemRef(copyThing(tree));
     if (evaluated->nodeType == MEMREF) {
-      evaluated->child2 = evaluated->child1;
+      evaluated->isCorrectlyTyped = 1;
     }
     return evaluated;
   }
@@ -15141,7 +15141,7 @@ node *evaluateThing(node *tree) {
   }
 
   if (okay && (evaluated->nodeType == MEMREF)) {
-    evaluated->child2 = evaluated->child1;
+    evaluated->isCorrectlyTyped = 1;
   }
 
   return evaluated;
@@ -16254,7 +16254,7 @@ int variableUsePreventsPreevaluation(node *tree) {
   chain *curr;
 
   if (tree->nodeType == MEMREF) {
-    return variableUsePreventsPreevaluation(tree->child1);
+    return variableUsePreventsPreevaluation(getMemRefChild(tree));
   }
 
   switch (tree->nodeType) {
@@ -16593,7 +16593,7 @@ node *preevaluateMatcher(node *tree) {
   if (tree == NULL) return NULL;
 
   if (tree->nodeType == MEMREF) {
-    return preevaluateMatcher(tree->child1);
+    return preevaluateMatcher(getMemRefChild(tree));
   }
 
   copy = (node *) safeMalloc(sizeof(node));
@@ -18093,7 +18093,7 @@ node *evaluateThingInner(node *tree) {
 
   if ((tree != NULL) &&
       (tree->nodeType == MEMREF) &&
-      ((tree->child1 == tree->child2) || isCorrectlyTyped(tree))) {
+      ((tree->isCorrectlyTyped) || isCorrectlyTyped(tree))) {
     return addMemRef(copyThing(tree));
   }
 
@@ -18149,7 +18149,7 @@ node *evaluateThingInnerst(node *tree) {
   if (tree == NULL) return NULL;
 
   if (tree->nodeType == MEMREF) {
-    return evaluateThingInner(tree->child1);
+    return evaluateThingInner(getMemRefChild(tree));
   }
 
   timingString = NULL;
