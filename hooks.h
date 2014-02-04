@@ -84,10 +84,11 @@ typedef struct __node_eval_hook_t_struct node_eval_hook_t;
 struct __node_eval_hook_t_struct {
   sollya_mpfi_t domain;
   sollya_mpfi_t delta;
+  sollya_mpfi_t t;
   struct nodeStruct *func;
 };
 
-node_eval_hook_t *createNodeEvalHook(struct nodeStruct *, sollya_mpfi_t, sollya_mpfi_t);
+node_eval_hook_t *createNodeEvalHook(struct nodeStruct *, sollya_mpfi_t, sollya_mpfi_t, sollya_mpfi_t);
 int evaluateNodeEvalHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, void *);
 void freeNodeEvalHook(void *);
 int compareNodeEvalHook(void *, void *);
@@ -100,11 +101,12 @@ typedef struct __poly_eval_hook_t_struct poly_eval_hook_t;
 struct __poly_eval_hook_t_struct {
   sollya_mpfi_t domain;
   sollya_mpfi_t delta;
+  sollya_mpfi_t t;
   int degree;
   mpfr_t *coefficients;
 };
 
-poly_eval_hook_t *createPolyEvalHook(int, mpfr_t *, sollya_mpfi_t, sollya_mpfi_t);
+poly_eval_hook_t *createPolyEvalHook(int, mpfr_t *, sollya_mpfi_t, sollya_mpfi_t, sollya_mpfi_t);
 int evaluatePolyEvalHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, void *);
 void freePolyEvalHook(void *);
 int comparePolyEvalHook(void *, void *);

@@ -113,7 +113,7 @@ int evaluateWithEvaluationHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec,
   return 0;
 }
 
-node_eval_hook_t *createNodeEvalHook(node *func, sollya_mpfi_t dom, sollya_mpfi_t delta) {
+node_eval_hook_t *createNodeEvalHook(node *func, sollya_mpfi_t dom, sollya_mpfi_t delta, sollya_mpfi_t t) {
   node_eval_hook_t *newNodeEvalHook;
 
   newNodeEvalHook = (node_eval_hook_t *) safeMalloc(sizeof(node_eval_hook_t));
@@ -121,6 +121,8 @@ node_eval_hook_t *createNodeEvalHook(node *func, sollya_mpfi_t dom, sollya_mpfi_
   sollya_mpfi_set(newNodeEvalHook->domain, dom);
   sollya_mpfi_init2(newNodeEvalHook->delta, sollya_mpfi_get_prec(delta));
   sollya_mpfi_set(newNodeEvalHook->delta, delta);
+  sollya_mpfi_init2(newNodeEvalHook->t, sollya_mpfi_get_prec(t));
+  sollya_mpfi_set(newNodeEvalHook->t, t);
   newNodeEvalHook->func = copyThing(func);
 
   return newNodeEvalHook;
@@ -129,8 +131,8 @@ node_eval_hook_t *createNodeEvalHook(node *func, sollya_mpfi_t dom, sollya_mpfi_
 
 int evaluateNodeEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void *data) {
   node_eval_hook_t *hook;
-  mp_prec_t p, pY;
-  sollya_mpfi_t myY, myYRnd, myYRndWithDelta;
+  mp_prec_t p, pY, pX;
+  sollya_mpfi_t myY, myYRnd, myYRndWithDelta, redX;
   int okay;
 
   hook = (node_eval_hook_t *) data;
@@ -138,11 +140,14 @@ int evaluateNodeEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void 
   if (!sollya_mpfi_is_inside(x, hook->domain)) return 0;
   
   pY = sollya_mpfi_get_prec(y); 
+  pX = sollya_mpfi_get_prec(x); 
   p = pY + 10;
   if (prec > p) p = prec;
 
   sollya_mpfi_init2(myY, p);
-  evaluateInterval(myY, hook->func, NULL, x);
+  sollya_mpfi_init2(redX, (p > pX ? p : pX));
+  sollya_mpfi_sub(redX, x, hook->t);
+  evaluateInterval(myY, hook->func, NULL, redX);
 
   okay = 0;
   sollya_mpfi_init2(myYRnd, pY);
@@ -153,9 +158,12 @@ int evaluateNodeEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void 
   
   if (sollya_mpfi_is_inside(myYRnd, myYRndWithDelta)) okay = 1;
   
+  if (okay) sollya_mpfi_set(y, myYRndWithDelta);
+
   sollya_mpfi_clear(myYRnd);
   sollya_mpfi_clear(myYRndWithDelta);
   sollya_mpfi_clear(myY);
+  sollya_mpfi_clear(redX);
 
   return okay;
 }
@@ -167,6 +175,7 @@ void freeNodeEvalHook(void *data) {
   freeThing(hook->func);
   sollya_mpfi_clear(hook->domain);
   sollya_mpfi_clear(hook->delta);
+  sollya_mpfi_clear(hook->t);
   safeFree(hook);
 }
 
@@ -178,13 +187,14 @@ int compareNodeEvalHook(void *data1, void *data2) {
 
   if (!sollya_mpfi_equal_p(hook1->domain, hook2->domain)) return 0;
   if (!sollya_mpfi_equal_p(hook1->delta, hook2->delta)) return 0;
+  if (!sollya_mpfi_equal_p(hook1->t, hook2->t)) return 0;
   if (!isEqualThing(hook1->func, hook2->func)) return 0;
 
   return 1;
 }
 
 
-poly_eval_hook_t *createPolyEvalHook(int degree, mpfr_t *coeffs, sollya_mpfi_t dom, sollya_mpfi_t delta) {
+poly_eval_hook_t *createPolyEvalHook(int degree, mpfr_t *coeffs, sollya_mpfi_t dom, sollya_mpfi_t delta, sollya_mpfi_t t) {
 
 
   return NULL;
