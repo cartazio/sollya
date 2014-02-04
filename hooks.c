@@ -195,9 +195,24 @@ int compareNodeEvalHook(void *data1, void *data2) {
 
 
 poly_eval_hook_t *createPolyEvalHook(int degree, mpfr_t *coeffs, sollya_mpfi_t dom, sollya_mpfi_t delta, sollya_mpfi_t t) {
+  poly_eval_hook_t *newPolyEvalHook;
+  int i;
 
+  newPolyEvalHook = (poly_eval_hook_t *) safeMalloc(sizeof(poly_eval_hook_t));
+  sollya_mpfi_init2(newPolyEvalHook->domain, sollya_mpfi_get_prec(dom));
+  sollya_mpfi_set(newPolyEvalHook->domain, dom);
+  sollya_mpfi_init2(newPolyEvalHook->delta, sollya_mpfi_get_prec(delta));
+  sollya_mpfi_set(newPolyEvalHook->delta, delta);
+  sollya_mpfi_init2(newPolyEvalHook->t, sollya_mpfi_get_prec(t));
+  sollya_mpfi_set(newPolyEvalHook->t, t);
+  newPolyEvalHook->degree = degree;
+  newPolyEvalHook->coefficients = (mpfr_t *) safeCalloc(degree + 1, sizeof(mpfr_t));
+  for (i=0;i<=degree;i++) {
+    mpfr_init2(newPolyEvalHook->coefficients[i], mpfr_get_prec(coeffs[i]));
+    mpfr_set(newPolyEvalHook->coefficients[i], coeffs[i], GMP_RNDN); /* exact as precision the same */
+  }
 
-  return NULL;
+  return newPolyEvalHook;
 }
 
 int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void *data) {
@@ -206,13 +221,36 @@ int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void 
 }
 
 void freePolyEvalHook(void *data) {
+  poly_eval_hook_t *hook;
+  int i;
 
-
+  hook = (poly_eval_hook_t *) data;
+  sollya_mpfi_clear(hook->domain);
+  sollya_mpfi_clear(hook->delta);
+  sollya_mpfi_clear(hook->t);
+  for (i=0;i<=hook->degree;i++) {
+    mpfr_clear(hook->coefficients[i]);
+  }
+  safeFree(hook->coefficients);
+  safeFree(hook);
 }
 
 int comparePolyEvalHook(void *data1, void *data2) {
+  poly_eval_hook_t *hook1, *hook2;
+  int i;
 
-  return 0;
+  hook1 = (poly_eval_hook_t *) data1;
+  hook2 = (poly_eval_hook_t *) data2;
+
+  if (!sollya_mpfi_equal_p(hook1->domain, hook2->domain)) return 0;
+  if (!sollya_mpfi_equal_p(hook1->delta, hook2->delta)) return 0;
+  if (!sollya_mpfi_equal_p(hook1->t, hook2->t)) return 0;
+  if (hook1->degree != hook2->degree) return 0;
+  for (i=0;i<=hook1->degree;i++) {
+    if (!mpfr_equal_p(hook1->coefficients[i], hook2->coefficients[i])) return 0;
+  }
+
+  return 1;
 }
 
 
