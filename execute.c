@@ -1048,6 +1048,9 @@ node *copyThingInner(node *tree) {
   case REMEZ:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break;
+  case ANNOTATEFUNCTION:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
+    break;
   case MATCH:
     copy->child1 = copyThingInner(tree->child1);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
@@ -1928,6 +1931,9 @@ node *deepCopyThing(node *tree) {
     copy->child1 = deepCopyThing(tree->child1);
     break;
   case REMEZ:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break;
+  case ANNOTATEFUNCTION:
     copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
     break;
   case MATCH:
@@ -2820,6 +2826,9 @@ char *getTimingStringForThing(node *tree) {
     break;
   case REMEZ:
     constString = "computing a minimax approximation";
+    break;
+  case ANNOTATEFUNCTION:
+    constString = "annotating a function";
     break;
   case MATCH:
     constString = "matching an expression";
@@ -5981,6 +5990,16 @@ char *sRawPrintThing(node *tree) {
     break;
   case REMEZ:
     res = newString("remez(");
+    curr = tree->arguments;
+    while (curr != NULL) {
+      res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
+      if (curr->next != NULL) res = concatAndFree(res, newString(", "));
+      curr = curr->next;
+    }
+    res = concatAndFree(res, newString(")"));
+    break;
+  case ANNOTATEFUNCTION:
+    res = newString("annotatefunction(");
     curr = tree->arguments;
     while (curr != NULL) {
       res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
@@ -12038,6 +12057,17 @@ node *makeRemez(chain *thinglist) {
 
 }
 
+node *makeAnnotateFunction(chain *thinglist) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = ANNOTATEFUNCTION;
+  res->arguments = thinglist;
+
+  return res;
+
+}
+
 node *makeBind(node *thing1, char *string1, node *thing2) {
   node *res;
 
@@ -13772,6 +13802,10 @@ void freeThing(node *tree) {
     freeChain(tree->arguments, freeThingOnVoid);
     safeFree(tree);
     break;
+  case ANNOTATEFUNCTION:
+    freeChain(tree->arguments, freeThingOnVoid);
+    safeFree(tree);
+    break;
   case MATCH:
     freeThing(tree->child1);
     freeChain(tree->arguments, freeThingOnVoid);
@@ -14726,6 +14760,9 @@ int isEqualThing(node *tree, node *tree2) {
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break;
   case REMEZ:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
+    break;
+  case ANNOTATEFUNCTION:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
     break;
   case MATCH:
@@ -16531,6 +16568,7 @@ int variableUsePreventsPreevaluation(node *tree) {
   case LIST:
   case FINALELLIPTICLIST:
   case REMEZ:
+  case ANNOTATEFUNCTION:
   case BASHEVALUATE:
   case MIN:
   case MAX:
@@ -17327,6 +17365,9 @@ node *preevaluateMatcher(node *tree) {
     copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case REMEZ:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break;
+  case ANNOTATEFUNCTION:
     copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break;
   case BASHEVALUATE:
@@ -22330,6 +22371,71 @@ node *evaluateThingInnerst(node *tree) {
     safeFree(copy);
     copy = evaluateThingInnerRemez(tree, timingString);
     break;
+  case ANNOTATEFUNCTION:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateThingOnVoid);
+    curr = copy->arguments;
+    if (isPureTree((node *) (curr->value))) {
+      tempNode = (node *) (curr->value);      
+      curr = curr->next;
+      if (isPureTree((node *) (curr->value))) { 
+	tempNode2 = (node *) (curr->value);
+	curr = curr->next;
+	mpfr_init2(bb,tools_precision);
+	mpfr_init2(cc,tools_precision);
+	if (isRange((node *) (curr->value)) && 
+	    evaluateThingToRange(bb,cc,(node *) (curr->value))) { 
+	  curr = curr->next;
+	  mpfr_init2(b,tools_precision);
+	  mpfr_init2(c,tools_precision);
+	  if (isRange((node *) (curr->value)) && 
+	      evaluateThingToRange(b,c,(node *) (curr->value))) { 
+	    curr = curr->next;	  
+	    resA = 0;
+	    if (curr != NULL) {
+	      if (isDefault((node *) (curr->value))) {
+		resA = 1;
+		tempNode3 = makeConstantInt(0);
+	      } else {
+		if (isPureTree((node *) (curr->value)) &&
+		    isConstant((node *) (curr->value))) {
+		  resA = 1;
+		  tempNode3 = copyThing((node *) (curr->value));
+		}
+	      }
+	    } else {
+	      resA = 1;
+	      tempNode3 = makeConstantInt(0);
+	    }
+	    if (resA) {
+	      sollya_mpfi_init2(tempIA, (mpfr_get_prec(bb) > mpfr_get_prec(cc) ? mpfr_get_prec(bb) : mpfr_get_prec(cc)));
+	      sollya_mpfi_interv_fr(tempIA, bb, cc);
+	      sollya_mpfi_init2(tempIB, (mpfr_get_prec(b) > mpfr_get_prec(c) ? mpfr_get_prec(b) : mpfr_get_prec(c)));
+	      sollya_mpfi_interv_fr(tempIB, b, c);
+	      sollya_mpfi_init2(tempIC, tools_precision);
+	      evaluateConstantExpressionToSharpInterval(tempIC, tempNode3);
+	      if (!(sollya_mpfi_has_nan(tempIC) || sollya_mpfi_has_infinity(tempIC))) {
+		resB = copyFunctionAndChooseAndAddEvaluationHook(&tempNode4, tempNode, tempNode2, tempIA, tempIB, tempIC, tools_precision);
+		if (!resB) {
+		  printMessage(1,SOLLYA_MSG_ANNOTATION_COULD_NOT_BE_SET_UP,"Warning: the annotation could not be set up. The function is returned as-is.\n");
+		  tempNode4 = copyThing(tempNode);
+		}
+		freeThing(copy);
+		copy = tempNode4;
+	      }
+	      sollya_mpfi_clear(tempIC);
+	      sollya_mpfi_clear(tempIB);
+	      sollya_mpfi_clear(tempIA);
+	      freeThing(tempNode3);
+	    }
+	  }
+	  mpfr_clear(c);
+	  mpfr_clear(b);
+	}
+	mpfr_clear(cc);
+	mpfr_clear(bb);
+      } 
+    } 
+    break;
   case BIND:
     copy->child1 = evaluateThingInner(tree->child1);
     copy->child2 = evaluateThingInner(tree->child2);
@@ -23497,7 +23603,7 @@ node *evaluateThingInnerst(node *tree) {
         sollya_mpfi_init2(tempIA,tools_precision);
         sollya_mpfi_interv_fr_safe(tempIA,a,b);
 	if (timingString != NULL) pushTimeCounter();
-	resA = getNrRoots(c, copy->child1, tempIA, tools_precision);
+	resA = getNrRoots(c, copy->child1, tempIA, tools_precision, 0);
 	if (timingString != NULL) popTimeCounter(timingString);
         sollya_mpfi_clear(tempIA);
         if (resA) {

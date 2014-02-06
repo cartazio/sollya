@@ -794,6 +794,14 @@ int sollya_mpfi_blow(sollya_mpfi_t rop, sollya_mpfi_t op1, double op2) {
   return res;
 }
 
+void sollya_mpfi_blow_1ulp(sollya_mpfi_t rop) {
+  /* HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
+  */
+  mpfr_nextbelow(&(rop->left));  
+  mpfr_nextabove(&(rop->right));
+}
+
 int sollya_mpfi_bounded_p(sollya_mpfi_t op) {
   if (sollya_mpfi_has_nan(op)) return 0;
   if (sollya_mpfi_is_empty(op)) return 1;

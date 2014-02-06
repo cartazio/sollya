@@ -295,6 +295,7 @@ extern void endBuffer(void);
 #define GETSUPPRESSEDMESSAGES 276
 #define CHEBYSHEVFORM 277
 /* Attention: #define MEMREF 278 is used elsewhere */
+#define ANNOTATEFUNCTION 279
 
 
 int executeCommand(node *);
@@ -452,6 +453,7 @@ node *makeGetSuppressedMessages();
 node *makeDirtysimplify(node *thing);
 node *makeSimplifySafe(node *thing);
 node *makeRemez(chain *thinglist);
+node *makeAnnotateFunction(chain *thinglist);
 node *makeMin(chain *thinglist);
 node *makeMax(chain *thinglist);
 node *makeFPminimax(chain *thinglist);

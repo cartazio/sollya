@@ -968,6 +968,26 @@ sollya_obj_t sollya_lib_v_remez(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj
   return evaluatedThing;
 }
 
+sollya_obj_t sollya_lib_annotatefunction(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, sollya_obj_t obj4, ...) {
+  node *thingToEvaluate, *evaluatedThing;
+  MAKE_THINGLIST_DECLS(thinglist);
+  MAKE_THINGLIST_FROM_VARIADIC(obj4);
+  thingToEvaluate = makeAnnotateFunction(addElement(addElement(addElement(thinglist, copyThing(obj3)), copyThing(obj2)),copyThing(obj1)));
+  evaluatedThing = evaluateThing(thingToEvaluate);
+  freeThing(thingToEvaluate);
+  return evaluatedThing;
+}
+
+sollya_obj_t sollya_lib_v_annotatefunction(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, sollya_obj_t obj4, va_list varlist) {
+  node *thingToEvaluate, *evaluatedThing;
+  MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
+  MAKE_THINGLIST_FROM_VA_LIST(obj4,varlist);
+  thingToEvaluate = makeAnnotateFunction(addElement(addElement(addElement(thinglist, copyThing(obj3)), copyThing(obj2)),copyThing(obj1)));
+  evaluatedThing = evaluateThing(thingToEvaluate);
+  freeThing(thingToEvaluate);
+  return evaluatedThing;
+}
+
 sollya_obj_t sollya_lib_min(sollya_obj_t obj1, ...) {
   node *thingToEvaluate, *evaluatedThing;
   MAKE_THINGLIST_DECLS(thinglist);

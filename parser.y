@@ -289,6 +289,7 @@ int parserCheckEof() {
 %token  DIFFTOKEN "diff"
 %token  DIRTYSIMPLIFYTOKEN "dirtysimplify"
 %token  REMEZTOKEN "remez"
+%token  ANNOTATEFUNCTIONTOKEN "annotatefunction"
 %token  BASHEVALUATETOKEN "bashevaluate"
 %token  GETSUPPRESSEDMESSAGESTOKEN "getsuppressedmessages"
 %token  FPMINIMAXTOKEN "fpminimax"
@@ -1706,6 +1707,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | REMEZTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thinglist RPARTOKEN
                           {
 			    $$ = makeRemez(addElement(addElement($7, $5), $3));
+			  }
+                      | ANNOTATEFUNCTIONTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thing COMMATOKEN thinglist RPARTOKEN
+                          {
+			    $$ = makeAnnotateFunction(addElement(addElement(addElement($9, $7), $5), $3));
 			  }
                       | BINDTOKEN LPARTOKEN thing COMMATOKEN IDENTIFIERTOKEN COMMATOKEN thing RPARTOKEN
                           {
@@ -3593,6 +3598,17 @@ help:                   CONSTANTTOKEN
 #endif
 #endif
                           }
+                      | ANNOTATEFUNCTIONTOKEN
+                          {
+#ifdef HELP_ANNOTATEFUNCTION_TEXT
+			    outputMode(); sollyaPrintf(HELP_ANNOTATEFUNCTION_TEXT);
+#else
+			    outputMode(); sollyaPrintf("Remez: annotatefunction(f,p,dom,delta[,t]).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for ANNOTATEFUNCTION"
+#endif
+#endif
+                          }
                       | MINTOKEN
                           {
 #ifdef HELP_MIN_TEXT
@@ -4578,6 +4594,7 @@ help:                   CONSTANTTOKEN
 			    sollyaPrintf("- accurateinfnorm\n");
 			    sollyaPrintf("- acos\n");
 			    sollyaPrintf("- acosh\n");
+			    sollyaPrintf("- annotatefunction\n");
 			    sollyaPrintf("- asciiplot\n");
 			    sollyaPrintf("- asin\n");
 			    sollyaPrintf("- asinh\n");

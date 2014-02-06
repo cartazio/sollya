@@ -397,6 +397,8 @@ extern "C" {
   sollya_obj_t sollya_lib_getsuppressedmessages();
   sollya_obj_t sollya_lib_remez(sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
   sollya_obj_t sollya_lib_v_remez(sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
+  sollya_obj_t sollya_lib_annotatefunction(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
+  sollya_obj_t sollya_lib_v_annotatefunction(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
   sollya_obj_t sollya_lib_min(sollya_obj_t, ...);
   sollya_obj_t sollya_lib_v_min(sollya_obj_t, va_list);
   sollya_obj_t sollya_lib_max(sollya_obj_t, ...);

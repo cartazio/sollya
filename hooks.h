@@ -113,10 +113,10 @@ void freePolyEvalHook(void *);
 int comparePolyEvalHook(void *, void *);
 
 
-/* A helper function that installs either a general or a polynomial replacement hook */
+/* Helper functions that install either a general or a polynomial replacement hook */
 
 int chooseAndAddEvaluationHook(eval_hook_t **, struct nodeStruct *, sollya_mpfi_t, sollya_mpfi_t, sollya_mpfi_t, mp_prec_t);
-
+int copyFunctionAndChooseAndAddEvaluationHook(struct nodeStruct **, struct nodeStruct *, struct nodeStruct *, sollya_mpfi_t, sollya_mpfi_t, sollya_mpfi_t, mp_prec_t);
 
 
 

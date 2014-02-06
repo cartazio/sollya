@@ -322,7 +322,7 @@ int showPositivity(node * poly, sollya_mpfi_t dom, mp_prec_t prec) {
   if (!sollya_mpfi_bounded_p(dom)) return 0;
 
   mpfr_init2(nbRootsMpfr,8 * sizeof(int));
-  res = getNrRoots(nbRootsMpfr, poly, dom, prec);
+  res = getNrRoots(nbRootsMpfr, poly, dom, prec, 0);
   if (!mpfr_number_p(nbRootsMpfr)) {
     nbRoots = 1;
   } else {

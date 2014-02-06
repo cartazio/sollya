@@ -141,6 +141,7 @@ int sollya_mpfi_mul_ui(sollya_mpfi_t rop, sollya_mpfi_t op1, unsigned long op2);
 int sollya_mpfi_ui_div(sollya_mpfi_t rop, unsigned long op1, sollya_mpfi_t op2);
 int sollya_mpfi_inv(sollya_mpfi_t rop, sollya_mpfi_t op);
 int sollya_mpfi_blow(sollya_mpfi_t rop, sollya_mpfi_t op1, double op2);
+void sollya_mpfi_blow_1ulp(sollya_mpfi_t rop);
 int sollya_mpfi_bounded_p(sollya_mpfi_t op);
 void sollya_mpfi_clear(sollya_mpfi_t op);
 int sollya_mpfi_const_pi(sollya_mpfi_t rop);
