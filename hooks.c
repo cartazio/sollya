@@ -109,16 +109,9 @@ int evaluateWithEvaluationHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec,
 
   for (curr=hook;curr!=NULL;curr=curr->nextHook) {
     if (curr->evaluateHook(y,x,prec,curr->data)) {
-      // sollyaPrintf("Used hook: x = %w, y = %w, prec = %d\n", x, y, (int) prec);
       return 1;
     }
   }
-
-  
-  if (hook != NULL) {
-    sollyaPrintf("We had a hook but we could not use it, x = %w, y = %w, prec = %d\n",x,y,(int)prec);    
-  }
-  
 
   return 0;
 }
