@@ -50,6 +50,7 @@
 #include "general.h"
 #include "execute.h"
 #include "infnorm.h"
+#include "sturm.h"
 #include "hooks.h"
 
 int addEvaluationHook(eval_hook_t **hookPtr, 
@@ -137,6 +138,8 @@ int evaluateNodeEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void 
 
   hook = (node_eval_hook_t *) data;
 
+  if (sollya_mpfi_has_nan(x)) return 0;
+  if (sollya_mpfi_has_infinity(x)) return 0;
   if (!sollya_mpfi_is_inside(x, hook->domain)) return 0;
   
   pY = sollya_mpfi_get_prec(y); 
@@ -155,8 +158,11 @@ int evaluateNodeEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void 
 
   sollya_mpfi_set(myYRnd, myY);
   sollya_mpfi_add(myYRndWithDelta, myY, hook->delta);
-  
-  if (sollya_mpfi_is_inside(myYRnd, myYRndWithDelta)) okay = 1;
+
+  if (sollya_mpfi_is_inside(myYRnd, myYRndWithDelta) && 
+      (!(sollya_mpfi_has_nan(myYRndWithDelta) || 
+	 (sollya_mpfi_has_infinity(myYRndWithDelta) && 
+	  (!sollya_mpfi_is_infinity(myYRndWithDelta)))))) okay = 1;
   
   if (okay) sollya_mpfi_set(y, myYRndWithDelta);
 
@@ -196,7 +202,11 @@ int compareNodeEvalHook(void *data1, void *data2) {
 
 poly_eval_hook_t *createPolyEvalHook(int degree, mpfr_t *coeffs, sollya_mpfi_t dom, sollya_mpfi_t delta, sollya_mpfi_t t) {
   poly_eval_hook_t *newPolyEvalHook;
-  int i;
+  mpfr_t *derivCoeffs;
+  int i, derivPolyCoeffsOkay;
+  node *derivPoly;
+  sollya_mpfi_t X, Y;
+  mpfr_t nbRoots;
 
   newPolyEvalHook = (poly_eval_hook_t *) safeMalloc(sizeof(poly_eval_hook_t));
   sollya_mpfi_init2(newPolyEvalHook->domain, sollya_mpfi_get_prec(dom));
@@ -211,18 +221,64 @@ poly_eval_hook_t *createPolyEvalHook(int degree, mpfr_t *coeffs, sollya_mpfi_t d
     mpfr_init2(newPolyEvalHook->coefficients[i], mpfr_get_prec(coeffs[i]));
     mpfr_set(newPolyEvalHook->coefficients[i], coeffs[i], GMP_RNDN); /* exact as precision the same */
   }
-
+  newPolyEvalHook->polynomialIsMonotone = 0; 
+  if (degree >= 1) {
+    derivCoeffs = (mpfr_t *) safeCalloc(degree, sizeof(mpfr_t));
+    derivPolyCoeffsOkay = 1;
+    for (i=1;i<=degree;i++) {
+      mpfr_init2(derivCoeffs[i-1],mpfr_get_prec(coeffs[i]) + 8 * sizeof(int) + 5);
+      mpfr_mul_si(derivCoeffs[i-1],coeffs[i],i,GMP_RNDN); /* exact because precision enough */
+      derivPolyCoeffsOkay = derivPolyCoeffsOkay && mpfr_number_p(derivCoeffs[i-1]);
+    }
+    derivPoly = makePolynomial(derivCoeffs, degree-1);
+    for (i=0;i<degree;i++) {
+      mpfr_clear(derivCoeffs[i]);
+    }
+    safeFree(derivCoeffs);
+    if (derivPolyCoeffsOkay) {
+      sollya_mpfi_init2(X, 
+			(sollya_mpfi_get_prec(dom) > sollya_mpfi_get_prec(t) ? 
+			 sollya_mpfi_get_prec(dom) : sollya_mpfi_get_prec(t)));
+      sollya_mpfi_init2(Y, sollya_mpfi_get_prec(Y));
+      sollya_mpfi_sub(X, dom, t);
+      evaluateInterval(Y, derivPoly, NULL, X);
+      if (!(sollya_mpfi_has_zero_inside(Y) || sollya_mpfi_has_nan(Y))) {
+	/* The derivative of the polynomial does not change sign, so the 
+	   polynomial is monotonous over the whole (shifted) domain.
+	*/
+	newPolyEvalHook->polynomialIsMonotone = 1; 
+      } else {
+	/* We still do not know */
+	mpfr_init2(nbRoots, 8 * sizeof(int) + 5);
+	if (getNrRoots(nbRoots, derivPoly, X, sollya_mpfi_get_prec(X))) {
+	  if (mpfr_zero_p(nbRoots)) {
+	    /* We surely know that there is no root of the derivative polynomial in the domain */
+	    newPolyEvalHook->polynomialIsMonotone = 1; 
+	  }
+	}
+	mpfr_clear(nbRoots);
+      }
+      sollya_mpfi_clear(X);
+      sollya_mpfi_clear(Y);
+    }
+    freeThing(derivPoly);
+  } else {
+    if (degree == 0) newPolyEvalHook->polynomialIsMonotone = 1;
+  }
   return newPolyEvalHook;
 }
 
 int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void *data) {
   poly_eval_hook_t *hook;
   mp_prec_t p, pY, pX;
-  sollya_mpfi_t myY, myYRnd, myYRndWithDelta, X;
-  int okay, i;
+  sollya_mpfi_t myY, myYRnd, myYRndWithDelta, X, temp, XA, XB, myYB;
+  int okay, i, polynomialIsMonotone;
+  mpfr_t a, b;
 
   hook = (poly_eval_hook_t *) data;
 
+  if (sollya_mpfi_has_nan(x)) return 0;
+  if (sollya_mpfi_has_infinity(x)) return 0;
   if (!sollya_mpfi_is_inside(x, hook->domain)) return 0;
   
   pY = sollya_mpfi_get_prec(y); 
@@ -234,6 +290,81 @@ int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void 
   sollya_mpfi_init2(X, (p > pX ? p : pX));
   sollya_mpfi_sub(X, x, hook->t);
 
+  if (!sollya_mpfi_is_point_and_real(x)) {
+    polynomialIsMonotone = hook->polynomialIsMonotone;
+    if (!polynomialIsMonotone) {
+      /* Try to determine if the polynomial is monotone over x - t 
+
+	 Compute a bounding of its derivative and check if that
+	 interval contains zero.
+
+      */
+      sollya_mpfi_init2(temp, p);
+      sollya_mpfi_set_si(myY, 0);
+      for (i=hook->degree;i>=1;i--) {
+	sollya_mpfi_mul(myY, myY, X);
+	sollya_mpfi_set_fr(temp, hook->coefficients[i]);
+	sollya_mpfi_mul_ui(temp, temp, (unsigned int) i);
+	sollya_mpfi_add(myY, myY, temp);
+      }
+      sollya_mpfi_clear(temp);
+      if (!sollya_mpfi_has_zero_inside(myY)) polynomialIsMonotone = 1;
+    }
+    if (polynomialIsMonotone) {
+      /* Do a Horner evaluation in interval arithmetic over both
+	 endpoint point-intervals and take the hull 
+      */
+      sollya_mpfi_init2(myYB, p);
+      sollya_mpfi_init2(XA, sollya_mpfi_get_prec(X));
+      sollya_mpfi_init2(XB, sollya_mpfi_get_prec(X));
+      mpfr_init2(a, sollya_mpfi_get_prec(X));
+      mpfr_init2(b, sollya_mpfi_get_prec(X));
+      sollya_mpfi_get_left(a, X);
+      sollya_mpfi_get_right(b, X);
+      sollya_mpfi_set_fr(XA, a);
+      sollya_mpfi_set_fr(XB, b);
+      mpfr_clear(b);
+      mpfr_clear(a);
+      
+      sollya_mpfi_set_si(myY, 0);
+      sollya_mpfi_set_si(myYB, 0);
+      for (i=hook->degree;i>=0;i--) {
+	sollya_mpfi_mul(myY, myY, XA);
+	sollya_mpfi_mul(myYB, myYB, XB);
+	sollya_mpfi_add_fr(myY, myY, hook->coefficients[i]);
+	sollya_mpfi_add_fr(myYB, myYB, hook->coefficients[i]);
+      }
+      
+      sollya_mpfi_union(myY, myY, myYB);
+      sollya_mpfi_clear(myYB);
+      sollya_mpfi_clear(XA);
+      sollya_mpfi_clear(XB);
+
+      okay = 0;
+      sollya_mpfi_init2(myYRnd, pY);
+      sollya_mpfi_init2(myYRndWithDelta, pY);
+      
+      sollya_mpfi_set(myYRnd, myY);
+      sollya_mpfi_add(myYRndWithDelta, myY, hook->delta);
+  
+      if (sollya_mpfi_is_inside(myYRnd, myYRndWithDelta) && 
+	  (!(sollya_mpfi_has_nan(myYRndWithDelta) || 
+	     (sollya_mpfi_has_infinity(myYRndWithDelta) && 
+	      (!sollya_mpfi_is_infinity(myYRndWithDelta)))))) okay = 1;
+  
+      if (okay) sollya_mpfi_set(y, myYRndWithDelta);
+
+      sollya_mpfi_clear(myYRnd);
+      sollya_mpfi_clear(myYRndWithDelta);
+      sollya_mpfi_clear(myY);
+      sollya_mpfi_clear(X);
+
+      return okay;
+    }
+    /* Fall through if we could not determine monotononicity */
+  }
+
+  /* Regular Horner evaluation with interval arithmetic */
   sollya_mpfi_set_fr(myY, hook->coefficients[hook->degree]);
   for (i=hook->degree-1;i>=0;i--) {
     sollya_mpfi_mul(myY, myY, X);
@@ -247,7 +378,10 @@ int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void 
   sollya_mpfi_set(myYRnd, myY);
   sollya_mpfi_add(myYRndWithDelta, myY, hook->delta);
   
-  if (sollya_mpfi_is_inside(myYRnd, myYRndWithDelta)) okay = 1;
+  if (sollya_mpfi_is_inside(myYRnd, myYRndWithDelta) && 
+      (!(sollya_mpfi_has_nan(myYRndWithDelta) || 
+	 (sollya_mpfi_has_infinity(myYRndWithDelta) && 
+	  (!sollya_mpfi_is_infinity(myYRndWithDelta)))))) okay = 1;
   
   if (okay) sollya_mpfi_set(y, myYRndWithDelta);
 
@@ -294,7 +428,7 @@ int comparePolyEvalHook(void *data1, void *data2) {
 
 
 int addPolyEvaluationHook(eval_hook_t **hookPtr, node *func, sollya_mpfi_t dom, sollya_mpfi_t delta, sollya_mpfi_t t, mp_prec_t prec) {
-  int degree, okay, i;
+  int degree, okay, i, coeffsOkay;
   node **coeffs;
   mpfr_t *evaluatedCoeffs;
   sollya_mpfi_t globalDelta, c, shiftedDom;
@@ -312,6 +446,7 @@ int addPolyEvaluationHook(eval_hook_t **hookPtr, node *func, sollya_mpfi_t dom, 
   sollya_mpfi_sub(shiftedDom, dom, t);
   sollya_mpfi_set_si(globalDelta, 0);
   sollya_mpfi_init2(c, prec + 5);
+  coeffsOkay = 1;
   for (i=degree;i>=0;i--) {
     mpfr_init2(evaluatedCoeffs[i],prec);
     if (coeffs[i] == NULL) {
@@ -321,6 +456,7 @@ int addPolyEvaluationHook(eval_hook_t **hookPtr, node *func, sollya_mpfi_t dom, 
       freeThing(coeffs[i]);
     }
     sollya_mpfi_mid(evaluatedCoeffs[i], c);
+    coeffsOkay = coeffsOkay && mpfr_number_p(evaluatedCoeffs[i]);
     sollya_mpfi_sub_fr(c, c, evaluatedCoeffs[i]);
     sollya_mpfi_mul(globalDelta, globalDelta, shiftedDom);
     sollya_mpfi_add(globalDelta, globalDelta, c);
@@ -330,8 +466,12 @@ int addPolyEvaluationHook(eval_hook_t **hookPtr, node *func, sollya_mpfi_t dom, 
   sollya_mpfi_clear(c);
   sollya_mpfi_clear(shiftedDom);
   
-  okay = addEvaluationHook(hookPtr, (void *) createPolyEvalHook(degree, evaluatedCoeffs, dom, globalDelta, t),
-			   evaluatePolyEvalHook, freePolyEvalHook, comparePolyEvalHook);
+  if (coeffsOkay) {
+    okay = addEvaluationHook(hookPtr, (void *) createPolyEvalHook(degree, evaluatedCoeffs, dom, globalDelta, t),
+			     evaluatePolyEvalHook, freePolyEvalHook, comparePolyEvalHook);
+  } else {
+    okay = 0;
+  }
 
   sollya_mpfi_clear(globalDelta);
   for (i=0;i<=degree;i++) {

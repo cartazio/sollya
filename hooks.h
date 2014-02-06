@@ -103,6 +103,7 @@ struct __poly_eval_hook_t_struct {
   sollya_mpfi_t delta;
   sollya_mpfi_t t;
   int degree;
+  int polynomialIsMonotone;
   mpfr_t *coefficients;
 };
 
