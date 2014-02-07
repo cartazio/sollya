@@ -112,7 +112,7 @@ int evaluateWithEvaluationHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec,
       return 1;
     }
   }
-
+  
   return 0;
 }
 
