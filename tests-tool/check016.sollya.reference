@@ -72,7 +72,7 @@ error
 something else
 Failure
 [a, a] with a =  3
-a + something with a =  1
+a + something with a =  1 / 17
 [|1, 2, 3|]
 [|1, 2, 3, 4|]
 [|1, 2|]
@@ -109,15 +109,17 @@ a =  sin(x)
 Loser
 3
 The tool has been restarted.
-Five plus one
-Six
-One plus five
+Five plus one third
+Sixteen thirds
+One third plus five
 Interval from one to one plus five
 Interval from one to one plus five
 The tool has been restarted.
 Something else
 Arctangent of the square of something
 Arctangent of the square of something
+Warning: at least one of the given expressions or a subexpression is not correctly typed
+or its evaluation has failed because of some error on a side-effect.
 Warning: at least one of the given expressions or a subexpression is not correctly typed
 or its evaluation has failed because of some error on a side-effect.
 error
