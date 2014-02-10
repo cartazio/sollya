@@ -120,8 +120,6 @@ Arctangent of the square of something
 Arctangent of the square of something
 Warning: at least one of the given expressions or a subexpression is not correctly typed
 or its evaluation has failed because of some error on a side-effect.
-Warning: at least one of the given expressions or a subexpression is not correctly typed
-or its evaluation has failed because of some error on a side-effect.
 error
 The tool has been restarted.
 Exponential of 5 times x

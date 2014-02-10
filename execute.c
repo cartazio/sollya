@@ -2242,18 +2242,25 @@ void freeEntryOnVoid(void *ptr) {
   safeFree(ptr);
 }
 
-node *copyThingWithMemRefReuse(node *tree, node *reuse);
+struct __copyThingWithMemRefReuseInnerStruct {
+  node *reuse;
+  int *didReuse;
+};
 
-void *copyThingWithMemRefReuseOnVoid(void *ptr1, void *ptr2) {
-  return (void *) copyThingWithMemRefReuse((node *) ptr1, (node *) ptr2);
+node *copyThingWithMemRefReuseInner(node *tree, node *reuse, int *didReuse);
+
+void *copyThingWithMemRefReuseInnerOnVoid(void *ptr1, void *ptr2) {
+  return (void *) copyThingWithMemRefReuseInner((node *) ptr1, 
+						((struct __copyThingWithMemRefReuseInnerStruct *) ptr2)->reuse, 
+						((struct __copyThingWithMemRefReuseInnerStruct *) ptr2)->didReuse);
 }
 
-void *copyEntryWithMemRefReuseOnVoid(void *ptr, void *ptr2) {
+void *copyEntryWithMemRefReuseInnerOnVoid(void *ptr, void *ptr2) {
   entry *copy;
   copy = (entry *) safeMalloc(sizeof(entry));
   copy->name = (char *) safeCalloc(strlen(((entry *) ptr)->name)+1,sizeof(char));
   strcpy(copy->name,((entry *) ptr)->name);
-  copy->value = copyThingWithMemRefReuse((node *) (((entry *) ptr)->value), (node *) ptr2);
+  copy->value = (node *) copyThingWithMemRefReuseInnerOnVoid(((entry *) ptr)->value, ptr2);
   return copy;
 }
 
@@ -2575,18 +2582,13 @@ node *tryFindMemRefOccurrence(node *subtree, node *tree) {
   return NULL;
 }
 
-/* Eats up its first argument, does not change (nor eat up) its second
-   argument 
-*/
-node *rewriteThingWithMemRefReuse(node *tree, node *reuse) {
-  node *copy;
-  copy = copyThingWithMemRefReuse(tree, reuse);
-  freeThing(tree);
-  return copy;
-}
-
-node *copyThingWithMemRefReuse(node *tree, node *reuse) {
+node *copyThingWithMemRefReuseInner(node *tree, node *reuse, int *didReuse) {
   node *copy, *reuseRef;
+  struct __copyThingWithMemRefReuseInnerStruct argStruct;
+  int myDidReuse;
+
+  argStruct.reuse = reuse;
+  argStruct.didReuse = didReuse;
 
   if (tree == NULL) return NULL;
 
@@ -2596,22 +2598,31 @@ node *copyThingWithMemRefReuse(node *tree, node *reuse) {
 	(tree->simplifyCache != NULL)) {
       return copyThing(tree);
     }
-    copy = addMemRef(copyThingWithMemRefReuse(getMemRefChild(tree), reuse));
-    if (copy->nodeType != MEMREF) return copy;
+    myDidReuse = 0;
+    copy = addMemRef(copyThingWithMemRefReuseInner(getMemRefChild(tree), reuse, &myDidReuse));
+    if (copy == NULL) return copy;
+    if ((copy->nodeType != MEMREF) ||
+	(!myDidReuse)) {
+      freeThing(copy);
+      return copyThing(tree);
+    }
     if ((tree->evaluationHook != NULL) || 
 	(tree->derivCache != NULL) ||
 	(tree->simplifyCache != NULL)) {
+      *didReuse = *didReuse || myDidReuse;
       return copy;
     }    
     if (tree->libFunDeriv > copy->libFunDeriv) {
       freeThing(copy);
       return copyThing(tree);
     }
+    *didReuse = *didReuse || myDidReuse;
     return copy;
   }
 
   reuseRef = tryFindMemRefOccurrence(tree, reuse);
   if (reuseRef != NULL) {
+    *didReuse = 1;
     return addMemRef(copyThing(reuseRef));
   }
  
@@ -2627,161 +2638,161 @@ node *copyThingWithMemRefReuse(node *tree, node *reuse) {
     mpfr_set(*(copy->value),*(tree->value),GMP_RNDN);
     break;
   case ADD:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case SUB:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case MUL:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case DIV:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case SQRT:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case EXP:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case LOG:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case LOG_2:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case LOG_10:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case SIN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case COS:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case TAN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case ASIN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case ACOS:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case ATAN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case SINH:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case COSH:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case TANH:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case ASINH:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case ACOSH:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case ATANH:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case POW:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case NEG:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case ABS:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case DOUBLE:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case SINGLE:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case HALFPRECISION:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case QUAD:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case DOUBLEDOUBLE:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case TRIPLEDOUBLE:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case ERF:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case ERFC:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case LOG_1P:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case EXP_M1:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case DOUBLEEXTENDED:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case LIBRARYFUNCTION:
     copy->libFun = tree->libFun;
     copy->libFunDeriv = tree->libFunDeriv;
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case LIBRARYCONSTANT:
     copy->libFun = tree->libFun;
     break;
   case PROCEDUREFUNCTION:
     copy->libFunDeriv = tree->libFunDeriv;
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case CEIL:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case FLOOR:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case NEARESTINT:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case PI_CONST:
     break;
   case COMMANDLIST:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case WHILE:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case IFELSE:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case IF:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case FOR:
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case FORIN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     break;
@@ -2794,13 +2805,13 @@ node *copyThingWithMemRefReuse(node *tree, node *reuse) {
   case RESTART:
     break;
   case PRINT:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case SUPPRESSMESSAGE:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case UNSUPPRESSMESSAGE:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case VARIABLEDECLARATION:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
@@ -2808,65 +2819,65 @@ node *copyThingWithMemRefReuse(node *tree, node *reuse) {
   case NOP:
     break;
   case NOPARG:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case NEWFILEPRINT:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case APPENDFILEPRINT:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case PLOT:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case PRINTHEXA:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case PRINTFLOAT:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case PRINTBINARY:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case PRINTEXPANSION:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case BASHEXECUTE:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case EXTERNALPLOT:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case WRITE:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case NEWFILEWRITE:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case APPENDFILEWRITE:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case ASCIIPLOT:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case PRINTXML:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case PRINTXMLNEWFILE:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case PRINTXMLAPPENDFILE:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case WORSTCASE:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case RENAME:
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
@@ -2874,188 +2885,188 @@ node *copyThingWithMemRefReuse(node *tree, node *reuse) {
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
     break;
   case AUTOPRINT:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case EXTERNALPROC:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyIntPtrOnVoid);
     break;
   case ASSIGNMENT:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     break;
   case FLOATASSIGNMENT:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     break;
   case LIBRARYBINDING:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     break;
   case LIBRARYCONSTANTBINDING:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     break;
   case PRECASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case POINTSASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case DIAMASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case DISPLAYASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case VERBOSITYASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case CANONICALASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case AUTOSIMPLIFYASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case SHOWMESSAGENUMBERSASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case TAYLORRECURSASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case TIMINGASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case FULLPARENASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case MIDPOINTASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case DIEONERRORMODEASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case RATIONALMODEASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case SUPPRESSWARNINGSASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case HOPITALRECURSASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case PRECSTILLASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case POINTSSTILLASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case DIAMSTILLASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case DISPLAYSTILLASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case VERBOSITYSTILLASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case CANONICALSTILLASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case AUTOSIMPLIFYSTILLASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case SHOWMESSAGENUMBERSSTILLASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case TAYLORRECURSSTILLASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case TIMINGSTILLASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case FULLPARENSTILLASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case MIDPOINTSTILLASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case DIEONERRORMODESTILLASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case RATIONALMODESTILLASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case SUPPRESSWARNINGSSTILLASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case HOPITALRECURSSTILLASSIGN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case AND:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case OR:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case NEGATION:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case INDEX:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case COMPAREEQUAL:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case COMPAREIN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case COMPARELESS:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case COMPAREGREATER:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case COMPARELESSEQUAL:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case COMPAREGREATEREQUAL:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case COMPARENOTEQUAL:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case CONCAT:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case ADDTOLIST:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case PREPEND:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case APPEND:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case ON:
     break;
@@ -3134,18 +3145,18 @@ node *copyThingWithMemRefReuse(node *tree, node *reuse) {
     strcpy(copy->string,tree->string);
     break;
   case TABLEACCESSWITHSUBSTITUTE:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     break;
   case STRUCTACCESS:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     break;
   case APPLY:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case DECIMALCONSTANT:
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
@@ -3174,16 +3185,16 @@ node *copyThingWithMemRefReuse(node *tree, node *reuse) {
   case EMPTYLIST:
     break;
   case LIST:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     copy->argArray = NULL;
     copy->argArraySize = 0;
     copy->argArrayAllocSize = 0;
     break;
   case STRUCTURE:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyEntryWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyEntryWithMemRefReuseInnerOnVoid);
     break;
   case FINALELLIPTICLIST:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     copy->argArray = NULL;
     copy->argArraySize = 0;
     copy->argArrayAllocSize = 0;
@@ -3191,261 +3202,261 @@ node *copyThingWithMemRefReuse(node *tree, node *reuse) {
   case ELLIPTIC:
     break;
   case RANGE:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case DEBOUNDMAX:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case DEBOUNDMIN:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case DEBOUNDMID:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case EVALCONST:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case DIFF:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case BASHEVALUATE:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case GETSUPPRESSEDMESSAGES:
     break;
   case DIRTYSIMPLIFY:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case SIMPLIFYSAFE:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case TIME:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case REMEZ:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case ANNOTATEFUNCTION:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case MATCH:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case MATCHELEMENT:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case MIN:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case MAX:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case FPMINIMAX:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case HORNER:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case CANONICAL:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case EXPAND:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case TAYLOR:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case TAYLORFORM:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case CHEBYSHEVFORM:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case AUTODIFF:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case DEGREE:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case NUMERATOR:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case DENOMINATOR:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case SUBSTITUTE:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case COMPOSEPOLYNOMIALS:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case COEFF:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case SUBPOLY:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case ROUNDCOEFFICIENTS:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case RATIONALAPPROX:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case ACCURATEINFNORM:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case ROUNDTOFORMAT:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case EVALUATE:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case PARSE:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case READXML:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case EXECUTE:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case INFNORM:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case SUPNORM:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case FINDZEROS:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case FPFINDZEROS:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case DIRTYINFNORM:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case NUMBERROOTS:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case INTEGRAL:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case DIRTYINTEGRAL:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case IMPLEMENTPOLY:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case IMPLEMENTCONST:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case CHECKINFNORM:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case ZERODENOMINATORS:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case ISEVALUABLE:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case SEARCHGAL:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case GUESSDEGREE:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case ASSIGNMENTININDEXING:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case FLOATASSIGNMENTININDEXING:
-    copy->arguments = copyChainAndMap(tree->arguments, reuse, copyThingWithMemRefReuseOnVoid);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
     break;
   case ASSIGNMENTINSTRUCTURE:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
     break;
   case FLOATASSIGNMENTINSTRUCTURE:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
     break;
   case PROTOASSIGNMENTINSTRUCTURE:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case PROTOFLOATASSIGNMENTINSTRUCTURE:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case DIRTYFINDZEROS:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
   case HEAD:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case ROUNDCORRECTLY:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case READFILE:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case REVERT:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case SORT:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case MANTISSA:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case EXPONENT:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case PRECISION:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case TAIL:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case LENGTH:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
   case EXTERNALPROCEDUREUSAGE:
     copy->libProc = tree->libProc;
     break;
   case PROC:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
     break;
   case BIND:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
     strcpy(copy->string,tree->string);
     break;
   case PROCILLIM:
-    copy->child1 = copyThingWithMemRefReuse(tree->child1,reuse);
-    copy->child2 = copyThingWithMemRefReuse(tree->child2,reuse);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
     break;
   case PRECDEREF:
@@ -3481,11 +3492,29 @@ node *copyThingWithMemRefReuse(node *tree, node *reuse) {
   case HOPITALRECURSDEREF:
     break;
   default:
-    sollyaFprintf(stderr,"Error: copyThingWithMemRefReuse: unknown identifier (%d) in the tree\n",tree->nodeType);
+    sollyaFprintf(stderr,"Error: copyThingWithMemRefReuseInner: unknown identifier (%d) in the tree\n",tree->nodeType);
     exit(1);
   }
 
   return addMemRef(copy);
+}
+
+node *copyThingWithMemRefReuse(node *tree, node *reuse) {
+  int didReuse;
+  didReuse = 0;
+  return copyThingWithMemRefReuseInner(tree, reuse, &didReuse);
+}
+
+/* Eats up its first argument, does not change (nor eat up) its second
+   argument 
+*/
+node *rewriteThingWithMemRefReuse(node *tree, node *reuse) {
+  node *copy;
+  if (tree == NULL) return NULL;
+  if (reuse == NULL) return tree;
+  copy = copyThingWithMemRefReuse(tree, reuse);
+  freeThing(tree);
+  return copy;
 }
 
 char *getTimingStringForThing(node *tree) {
@@ -9077,7 +9106,7 @@ node *createNestedStructure(node *value, chain *idents) {
 }
 
 
-node *recomputeLeftHandSideForAssignmentInStructure(node *oldValue, node *newValue, chain *idents) {
+node *recomputeLeftHandSideForAssignmentInStructureInner(node *oldValue, node *newValue, chain *idents) {
   chain *currentIdent;
   node *currentStruct;
   int okay, found;
@@ -9164,7 +9193,13 @@ node *recomputeLeftHandSideForAssignmentInStructure(node *oldValue, node *newVal
   return res;
 }
 
-/* wawa */
+node *recomputeLeftHandSideForAssignmentInStructure(node *oldValue, node *newValue, chain *idents) {
+  node *res;
+
+  res = recomputeLeftHandSideForAssignmentInStructureInner(oldValue, newValue, idents);
+  if (res == NULL) return res;
+  return rewriteThingWithMemRefReuse(res, oldValue);
+}
 
 int setMessageSuppressionState(int msgNum, int state) {
   if ((msgNum < 0) || (msgNum == SOLLYA_MSG_NO_MSG) || (msgNum == SOLLYA_MSG_CONTINUATION) || (!messageNumberExists(msgNum))) {
@@ -23704,7 +23739,7 @@ node *evaluateThingInnerst(node *tree) {
     }
     break;
   case MATCH:
-    copy->child1 = evaluateThing(tree->child1);
+    copy->child1 = evaluateThingInner(tree->child1);
     copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateThingInnerOnVoid);
     if (isCorrectlyTyped(copy->child1)) {
       resA = 1;
