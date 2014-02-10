@@ -2591,7 +2591,9 @@ node *copyThingWithMemRefReuseInner(node *tree, node *reuse, int *didReuse) {
   argStruct.didReuse = didReuse;
 
   if (tree == NULL) return NULL;
-
+  if (tree == reuse) {
+    return copyThing(tree);
+  }
   if (tree->nodeType == MEMREF) {
     if ((tree->evaluationHook != NULL) || 
 	(tree->derivCache != NULL) ||
@@ -2600,18 +2602,24 @@ node *copyThingWithMemRefReuseInner(node *tree, node *reuse, int *didReuse) {
     }
     myDidReuse = 0;
     copy = addMemRef(copyThingWithMemRefReuseInner(getMemRefChild(tree), reuse, &myDidReuse));
-    if (copy == NULL) return copy;
-    if ((copy->nodeType != MEMREF) ||
-	(!myDidReuse)) {
+    if (copy == NULL) {
+      *didReuse = *didReuse || myDidReuse;
+      return copy;
+    }
+    if (copy->nodeType != MEMREF) {
       freeThing(copy);
       return copyThing(tree);
     }
-    if ((tree->evaluationHook != NULL) || 
-	(tree->derivCache != NULL) ||
-	(tree->simplifyCache != NULL)) {
+    if ((copy->evaluationHook != NULL) || 
+	(copy->derivCache != NULL) ||
+	(copy->simplifyCache != NULL)) {
       *didReuse = *didReuse || myDidReuse;
       return copy;
     }    
+    if (!myDidReuse) {
+      freeThing(copy);
+      return copyThing(tree);
+    }
     if (tree->libFunDeriv > copy->libFunDeriv) {
       freeThing(copy);
       return copyThing(tree);
@@ -3500,9 +3508,11 @@ node *copyThingWithMemRefReuseInner(node *tree, node *reuse, int *didReuse) {
 }
 
 node *copyThingWithMemRefReuse(node *tree, node *reuse) {
+  node *res;
   int didReuse;
   didReuse = 0;
-  return copyThingWithMemRefReuseInner(tree, reuse, &didReuse);
+  res = copyThingWithMemRefReuseInner(tree, reuse, &didReuse);
+  return res;
 }
 
 /* Eats up its first argument, does not change (nor eat up) its second
@@ -3510,11 +3520,17 @@ node *copyThingWithMemRefReuse(node *tree, node *reuse) {
 */
 node *rewriteThingWithMemRefReuse(node *tree, node *reuse) {
   node *copy;
+  int didReuse;
   if (tree == NULL) return NULL;
   if (reuse == NULL) return tree;
-  copy = copyThingWithMemRefReuse(tree, reuse);
-  freeThing(tree);
-  return copy;
+  didReuse = 0;
+  copy = copyThingWithMemRefReuseInner(tree, reuse, &didReuse);
+  if (didReuse) {
+    freeThing(tree);
+    return copy;
+  }
+  freeThing(copy);
+  return tree;
 }
 
 char *getTimingStringForThing(node *tree) {
