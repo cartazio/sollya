@@ -1103,6 +1103,163 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
     rightTheo = NULL;
   }
 
+  if ((theo == NULL) && 
+      noExcludes &&
+      (sollya_mpfi_get_prec(result) >= prec)) {
+    switch (tree->nodeType) {
+    case VARIABLE:
+      sollya_mpfi_set(result, x);
+      return NULL;
+      break;
+    case CONSTANT:
+      sollya_mpfi_set_fr(result,*(tree->value));
+      return NULL;
+      break;
+    case PI_CONST:
+      sollya_mpfi_const_pi(result);
+      return NULL;
+      break;
+    case SQRT:
+    case EXP:
+    case LOG:
+    case LOG_2:
+    case LOG_10:
+    case SIN:
+    case COS:
+    case TAN:
+    case ASIN:
+    case ACOS:
+    case ATAN:
+    case SINH:
+    case COSH:
+    case TANH:
+    case ASINH:
+    case ACOSH:
+    case ATANH:
+    case NEG:
+    case ABS:
+    case DOUBLE:
+    case SINGLE:
+    case HALFPRECISION:
+    case QUAD:
+    case DOUBLEDOUBLE:
+    case TRIPLEDOUBLE:
+    case ERF:
+    case ERFC:
+    case LOG_1P:
+    case EXP_M1:
+    case DOUBLEEXTENDED:      
+    case CEIL:
+    case FLOOR:
+    case NEARESTINT:
+      evaluateI(result, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, NULL, 1);      
+      switch (tree->nodeType) {
+      case SQRT:
+	sollya_mpfi_sqrt(result, result);
+	break;
+      case EXP:
+	sollya_mpfi_exp(result, result);
+	break;
+      case LOG:
+	sollya_mpfi_log(result, result);
+	break;
+      case LOG_2:
+	sollya_mpfi_log2(result, result);
+	break;
+      case LOG_10:
+	sollya_mpfi_log10(result, result);
+	break;
+      case SIN:
+	sollya_mpfi_sin(result, result);
+	break;
+      case COS:
+	sollya_mpfi_cos(result, result);
+	break;
+      case TAN:
+	sollya_mpfi_tan(result, result);
+	break;
+      case ASIN:
+	sollya_mpfi_asin(result, result);
+	break;
+      case ACOS:
+	sollya_mpfi_acos(result, result);
+	break;
+      case ATAN:
+	sollya_mpfi_atan(result, result);
+	break;
+      case SINH:
+	sollya_mpfi_sinh(result, result);
+	break;
+      case COSH:
+	sollya_mpfi_cosh(result, result);
+	break;
+      case TANH:
+	sollya_mpfi_tanh(result, result);
+	break;
+      case ASINH:
+	sollya_mpfi_asinh(result, result);
+	break;
+      case ACOSH:
+	sollya_mpfi_acosh(result, result);
+	break;
+      case ATANH:
+	sollya_mpfi_atanh(result, result);
+	break;
+      case NEG:
+	sollya_mpfi_neg(result, result);
+	break;
+      case ABS:
+	sollya_mpfi_abs(result, result);
+	break;
+      case DOUBLE:
+	sollya_mpfi_round_to_double(result, result);
+	break;
+      case SINGLE:
+	sollya_mpfi_round_to_single(result, result);
+	break;
+      case HALFPRECISION:
+	sollya_mpfi_round_to_halfprecision(result, result);
+	break;
+      case QUAD:
+	sollya_mpfi_round_to_quad(result, result);
+	break;
+      case DOUBLEDOUBLE:
+	sollya_mpfi_round_to_doubledouble(result, result);
+	break;
+      case TRIPLEDOUBLE:
+	sollya_mpfi_round_to_tripledouble(result, result);
+	break;
+      case ERF:
+	sollya_mpfi_erf(result, result);
+	break;
+      case ERFC:
+	sollya_mpfi_erfc(result, result);
+	break;
+      case LOG_1P:
+	sollya_mpfi_log1p(result, result);
+	break;
+      case EXP_M1:
+	sollya_mpfi_expm1(result, result);
+	break;
+      case DOUBLEEXTENDED:
+	sollya_mpfi_round_to_doubleextended(result, result);
+	break;
+      case CEIL:
+	sollya_mpfi_ceil(result, result);
+	break;
+      case FLOOR:
+	sollya_mpfi_floor(result, result);
+	break;
+      case NEARESTINT:
+	sollya_mpfi_nearestint(result, result);
+	break;
+      }
+      return NULL;
+      break;
+    default:
+      break;
+    }
+  }
 
   sollya_mpfi_init2(stack1, prec);
   sollya_mpfi_init2(stack2, prec);
