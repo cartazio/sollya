@@ -2310,13 +2310,10 @@ chain* evaluateITaylorInner(sollya_mpfi_t result, node *func, node *deriv, solly
   node *nextderiv;
   int size;
 
-  mpfr_init2(leftX,sollya_mpfi_get_prec(x));
-  mpfr_init2(rightX,sollya_mpfi_get_prec(x));
-
-  sollya_mpfi_get_left(leftX,x);
-  sollya_mpfi_get_right(rightX,x);
-
-  if ((mpfr_cmp(leftX,rightX) == 0) || (deriv == NULL)) {
+  /* HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
+  */
+  if ((deriv == NULL) || (mpfr_cmp(&(x->left),&(x->right)) == 0)) {
     if (deriv != NULL)
       printMessage(25,SOLLYA_MSG_AVOIDING_TAYLOR_EVALUATION_ON_POINT_INTERVAL,"Information: avoiding using Taylor's formula on a point interval.\n");
     else
@@ -2325,12 +2322,14 @@ chain* evaluateITaylorInner(sollya_mpfi_t result, node *func, node *deriv, solly
     excludes = evaluateI(result, func, x, prec, 1, hopitalrecursions+1, NULL, theo,noExcludes);
     sollya_mpfi_nan_normalize(result);
 
-    mpfr_clear(leftX);
-    mpfr_clear(rightX);
-
     return excludes;
   }
 
+  mpfr_init2(leftX,sollya_mpfi_get_prec(x));
+  mpfr_init2(rightX,sollya_mpfi_get_prec(x));
+
+  sollya_mpfi_get_left(leftX,x);
+  sollya_mpfi_get_right(rightX,x);
 
   printMessage(13,SOLLYA_MSG_USING_TAYLOR_EVALUATION,"Information: evaluating a function in interval arithmetic using Taylor's formula.\n");
 
@@ -4775,6 +4774,140 @@ int sollya_mpfi_have_common_real_point(sollya_mpfi_t a, sollya_mpfi_t b) {
   return res;
 }
 
+/* A performance optimized short-circuit variant to the function
+   evaluateFaithfulWithCutOffFastInternalImplementation defined below.
+
+   This function is not required to work in all cases. If it works, it
+   has to return a non-zero value and assign the evaluation result to
+   y and to set retVal to the "return values" defined (in comment)
+   below.
+
+   This function is supposed not to allocate memory when allocation
+   can be avoided or amortized.
+
+ */
+int firstTryEvaluateFaithfulWithCutOffFastInternalImplementation(int *retVal, mpfr_t y, node *func, mpfr_t x, mp_prec_t startprec) {
+  mp_prec_t pX, pY;
+  int tern1, tern2;
+
+  /* Refuse work if x and y are the same MPFR variable */
+  if (((void *) x) == ((void *) y)) return 0;
+
+  /* Get the precisions of the x and y arguments */
+  pX = mpfr_get_prec(x);
+  pY = mpfr_get_prec(y);
+
+  /* Check if we have any chance to get a faithful rounding in y with
+     evaluations at startprec bits 
+  */
+  if (pY > startprec) return 0;
+
+  /* Initialize interval variables for x and for the evaluation of f
+     over this interval x 
+
+     If we are in a recursive call, simply fail and let the usual
+     evaluation function do the work. Recursive calls are only
+     possible in funny cases when a procedure function or a library
+     function uses pointwise faithfully rounded evaluations to
+     evaluate itself. If we are not in a recursive call, get the token
+     to prevent other recursive calls.
+  */
+  if (__firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_vars_used) return 0;
+  __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_vars_used = 1;
+  if (__firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_x_initialized) {
+    sollya_mpfi_set_prec(__firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_x, pX);
+  } else {
+    sollya_mpfi_init2(__firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_x, pX);
+    __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_x_initialized = 1;
+  }
+  if (__firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_y_initialized) {
+    sollya_mpfi_set_prec(__firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_y, startprec);
+  } else {
+    sollya_mpfi_init2(__firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_y, startprec);
+    __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_y_initialized = 1;
+  }
+
+  /* Set the interval x to the point x */
+  sollya_mpfi_set_fr(__firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_x, x); /* exact, same precision */
+
+  /* Perform an interval evaluation of f over the interval x, yielding an interval y */
+  evaluateInterval(__firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_y, func, NULL, __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_x);
+
+  /* If the interval we got is not bounded, we simply indicate failure
+     and let the usual evaluation function do the work.
+  */
+  if (!sollya_mpfi_bounded_p(__firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_y)) {
+    __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_vars_used = 0;
+    return 0;
+  }
+
+  /* Here, the interval y bounding f(x) contains nothing but real
+     numbers.
+
+     We now check if correct rounding is already possible.
+
+     We DO NOT check if faithful rounding is already possible as this
+     might require reevaluation (see the strategy in the function
+     evaluateFaithfulWithCutOffFastInternalImplementation below).
+
+     The test whether or not correct rounding is possible 
+     requires a temporary MPFR variable with *exactly* the 
+     same precision as the MPFR y variable.
+
+  */
+  if (__firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp_initialized) {
+    mpfr_set_prec(__firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp, pY);
+  } else {
+    mpfr_init2(__firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp, pY);
+    __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp_initialized = 1;
+  }
+  
+  /* Round both endpoints of the interval y to the nearest. If both roundings 
+     yield the same value and are real numbers, correct rounding is possible.
+  */
+  /* HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
+  */
+  tern1 = mpfr_set(y, &(__firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_y->left), GMP_RNDN); /* rounds to final precision */
+  tern2 = mpfr_set(__firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp, &(__firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_y->right), GMP_RNDN); /* rounds to final precision */
+
+  /* Check if both roundings are real and equal */
+  if (mpfr_number_p(y) &&
+      mpfr_number_p(__firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp) &&
+      mpfr_equal_p(y, __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp)) {
+    /* Here, we could determine a correct rounding. 
+       The numerical result variable y has already been set.
+       Set the "return value" to "correctly rounded proven inexact" (7),
+       "correctly rounded might be exact" (6) or "exact" (4).
+       Return "success".
+
+       * The result is (proven) exact if none of the roundings was
+         inexact.
+       * The result is proven inexact if none of the roundings was
+         exact and both roundings went in the same direction.
+       * Otherwise, we don't know.
+    */
+    if ((tern1 == 0) && (tern2 == 0)) {
+      /* the result was "exact" */
+      *retVal = 4; 
+    } else {
+      if (tern1 * tern2 > 0) { 
+	/* the result was proven "inexact" */
+	*retVal = 7; 
+      } else {
+	/* We do not know if the result is exact or not. */
+	*retVal = 6;
+      }
+    }
+    __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_vars_used = 0;
+    return 1;
+  }
+
+  /* We could not easily determine a faithful (correct) rounding */
+  __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_vars_used = 0;
+  return 0;
+}
+
 /* Return values:
 
    0 -> evaluation did not allow for a faithful evaluation nor to get
@@ -4813,12 +4946,20 @@ int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *fu
   int correctlyRounded;
   mp_prec_t startprec;
   int precisionIncreased;
+  int res;
 
   /* Determine some sensible starting precision */
   startprec = startprecOrig;
   pRes = mpfr_get_prec(result);
   if ((mpfr_sgn(cutoff) == 0) && (!mpfr_number_p(cutoff))) {
     if (startprec < pRes + 10) startprec = pRes + 10;
+  }
+
+  /* Try a short-circuit for common case evaluations */
+  if ((altX == NULL) && (((void *) x) != ((void *) result))) {
+    if (firstTryEvaluateFaithfulWithCutOffFastInternalImplementation(&res, result, func, x, startprec)) {
+      return res;
+    }
   }
 
   /* Check if we have a constant expression to evaluate at and if so,

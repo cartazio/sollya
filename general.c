@@ -213,6 +213,23 @@ void (*oldGMPFree)(void *, size_t) = NULL;
 
 /* END OF GLOBAL VARIABLES FOR THE MEMORY ALLOCATION FUNCTIONS */
 
+
+/* HELPER VARIABLES THAT WE NEED TO MAINTAIN GLOBALLY USED FOR CERTAIN
+   FUNCTIONS 
+*/
+
+int __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_vars_used = 0;
+int __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_x_initialized = 0;
+int __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_y_initialized = 0;
+int __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp_initialized = 0;
+sollya_mpfi_t __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_x;
+sollya_mpfi_t __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_y;
+mpfr_t __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp;
+
+/* END OF HELPER VARIABLES THAT WE NEED TO MAINTAIN GLOBALLY USED FOR CERTAIN
+   FUNCTIONS 
+*/
+
 extern int yyparse(void *); 
 extern void yylex_destroy(void *);
 extern int yylex_init(void **);
@@ -998,6 +1015,22 @@ void printPrompt(void) {
   sollyaPrintf("> ");
 }
 
+void freeFunctionSpecialVariables() {
+ __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_vars_used = 0;
+ if (__firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_x_initialized) {
+   sollya_mpfi_clear(__firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_x);
+   __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_x_initialized = 0;
+ }
+ if (__firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_y_initialized) {
+   sollya_mpfi_clear(__firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_y);
+   __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_y_initialized = 0;
+ }
+ if (__firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp_initialized) {
+   mpfr_clear(__firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp);
+   __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp_initialized = 0;
+ }
+}
+
 void freeTool() {
   if(variablename != NULL) safeFree(variablename);
   if(newReadFilename != NULL) safeFree(newReadFilename);
@@ -1027,6 +1060,7 @@ void freeTool() {
   freeSymbolTable(symbolTable, freeThingOnVoid);
   symbolTable = NULL;
   freeDeclaredSymbolTable(declaredSymbolTable, freeThingOnVoid);
+  freeFunctionSpecialVariables();
   declaredSymbolTable = NULL;
   mpfr_clear(statediam);
   safeFree(temporyDirectory); temporyDirectory = NULL;
@@ -1063,6 +1097,10 @@ void initToolDefaults() {
   declaredSymbolTable = NULL;
   mpfr_init2(statediam,10);
   mpfr_set_d(statediam,DEFAULTDIAM,GMP_RNDN);
+  __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_vars_used = 0;
+  __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_x_initialized = 0;
+  __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_y_initialized = 0;
+  __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp_initialized = 0;
   parseMode();
 }
 
@@ -1071,6 +1109,7 @@ void restartTool() {
   freeSymbolTable(symbolTable, freeThingOnVoid);
   symbolTable = NULL;
   freeDeclaredSymbolTable(declaredSymbolTable, freeThingOnVoid);
+  freeFunctionSpecialVariables();
   declaredSymbolTable = NULL;
   freeFunctionLibraries();
   freeConstantLibraries();
@@ -1403,6 +1442,7 @@ int finalizeLibraryMode() {
   freeSymbolTable(symbolTable, freeThingOnVoid);
   symbolTable = NULL;
   freeDeclaredSymbolTable(declaredSymbolTable, freeThingOnVoid);
+  freeFunctionSpecialVariables();
   declaredSymbolTable = NULL;
   mpfr_clear(statediam);
   safeFree(temporyDirectory); temporyDirectory = NULL;

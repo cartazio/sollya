@@ -158,6 +158,14 @@ extern node *memRefChainStart;
 extern void *rpl_malloc(size_t n);
 extern void *rpl_realloc(void *, size_t n);
 
+extern int __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_vars_used;
+extern int __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_x_initialized;
+extern int __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_y_initialized;
+extern int __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp_initialized;
+extern sollya_mpfi_t __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_x;
+extern sollya_mpfi_t __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_y;
+extern mpfr_t __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp;
+
 
 int general(int argc, char *argv[]);
 void printPrompt(void);
