@@ -4997,7 +4997,7 @@ int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *fu
   /* Determine some sensible starting precision */
   startprec = startprecOrig;
   pRes = mpfr_get_prec(result);
-  if ((mpfr_sgn(cutoff) == 0) && (!mpfr_number_p(cutoff))) {
+  if ((mpfr_sgn(cutoff) == 0) || (!mpfr_number_p(cutoff))) {
     if (startprec < pRes + 10) startprec = pRes + 10;
   }
 
