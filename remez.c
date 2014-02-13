@@ -262,7 +262,7 @@ node *constructPolynomial(mpfr_t *coeff, chain *monomials, mp_prec_t prec) {
     curr = curr->next;
   }
 
-  return poly;
+  return addMemRef(poly);
 }
 
 
@@ -1869,7 +1869,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 	/* temporary check until I patch the algorithm in order to handle
 	   correctly cases when the error oscillates too much
 	*/
-	temp_tree = makeSub(makeMul(copyTree(poly), copyTree(w)), copyTree(f));
+	temp_tree = addMemRef(makeSub(makeMul(copyTree(poly), copyTree(w)), copyTree(f)));
 	uncertifiedInfnorm(infinityNorm, temp_tree, u, v, getToolPoints(), prec);
 
 	printMessage(1,SOLLYA_MSG_REMEZ_THE_BEST_POLY_GIVES_A_CERTAIN_ERROR,"The best polynomial obtained gives an error of %v\n",infinityNorm);
@@ -1953,7 +1953,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
       /* temporary check until I patch the algorithm in order to handle
          correctly cases when the error oscillates too much
       */
-      temp_tree = makeSub(makeMul(copyTree(poly), copyTree(w)), copyTree(f));
+      temp_tree = addMemRef(makeSub(makeMul(copyTree(poly), copyTree(w)), copyTree(f)));
       uncertifiedInfnorm(infinityNorm, temp_tree, u, v, getToolPoints(), prec);
       free_memory(temp_tree);
       /* end of the temporary check */
@@ -2059,7 +2059,7 @@ node *constructPolynomialFromArray(mpfr_t *coeff, node **monomials_tree, int n) 
   poly = makeConstantDouble(0.0);
   for(i=0;i<n;i++) poly = makeAdd(makeMul(makeConstant(coeff[i]), copyTree(monomials_tree[i])),poly);
 
-  return poly;
+  return addMemRef(poly);
 }
 
 
@@ -2252,8 +2252,8 @@ void radiusBasicMinimaxChebychevsPoints(mpfr_t *h, node *func, node *weight, mpf
   node *poly;
 
   monomials_tree = (node **)safeMalloc(n*sizeof(node *));
-  monomials_tree[0] = makeConstantDouble(1.);
-  for(i=1;i<n;i++) monomials_tree[i] = makePow(makeVariable(), makeConstantInt(i));
+  monomials_tree[0] = addMemRef(makeConstantDouble(1.));
+  for(i=1;i<n;i++) monomials_tree[i] = addMemRef(makePow(makeVariable(), makeConstantInt(i)));
 
 
   x = chebychevsPoints(a,b,n+1,currentPrec);
@@ -2279,14 +2279,14 @@ void firstStepContinuousMinimaxChebychevsPoints(mpfr_t *h, node *func, node *wei
   node *poly;
   node *error;
   monomials_tree = (node **)(safeMalloc(n*sizeof(node *)));
-  monomials_tree[0] = makeConstantDouble(1.);
-  for(i=1;i<n;i++) monomials_tree[i] = makePow(makeVariable(), makeConstantInt(i));
+  monomials_tree[0] = addMemRef(makeConstantDouble(1.));
+  for(i=1;i<n;i++) monomials_tree[i] = addMemRef(makePow(makeVariable(), makeConstantInt(i)));
 
   x = chebychevsPoints(a,b,n+1,currentPrec);
   perturbPoints(x, n+1, currentPrec);
-  poly = elementaryStepRemezAlgorithm(NULL, func, weight, x, monomials_tree, n, currentPrec);
+  poly = addMemRef(elementaryStepRemezAlgorithm(NULL, func, weight, x, monomials_tree, n, currentPrec));
 
-  error = makeSub(makeMul(copyTree(poly), copyTree(weight)), copyTree(func));
+  error = addMemRef(makeSub(makeMul(copyTree(poly), copyTree(weight)), copyTree(func)));
   uncertifiedInfnorm(*h, error, a, b, 3*n, getToolPrecision());
 
   free_memory(error);
