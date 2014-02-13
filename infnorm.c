@@ -1267,6 +1267,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
     case SUB:
       if (!fastAddSub) break;
       /* The fall-through is intended */
+    case MUL:
     case POW:
       sollya_mpfi_init2(stack1, prec);
       sollya_mpfi_init2(stack2, prec);
@@ -1278,6 +1279,9 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
 	break;
       case SUB:
 	sollya_mpfi_sub(result, stack1, stack2);
+	break;
+      case MUL:
+	sollya_mpfi_mul(result, stack1, stack2);
 	break;
       case POW:
 	sollya_mpfi_pow(result, stack1, stack2);
