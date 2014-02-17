@@ -1556,6 +1556,9 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
   mpfr_t *previous_lambdai_vect;
   mpfr_t perturb;
   gmp_randstate_t random_state;
+  int quality_prec;
+
+  quality_prec = (mpfr_regular_p(quality)?(10 - mpfr_get_exp(quality)):prec);
 
   gmp_randinit_default(random_state);
   gmp_randseed_ui(random_state, 65845285);
@@ -1870,7 +1873,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 	   correctly cases when the error oscillates too much
 	*/
 	temp_tree = addMemRef(makeSub(makeMul(copyTree(poly), copyTree(w)), copyTree(f)));
-	uncertifiedInfnorm(infinityNorm, temp_tree, u, v, getToolPoints(), prec);
+	uncertifiedInfnorm(infinityNorm, temp_tree, u, v, getToolPoints(), quality_prec);
 
 	printMessage(1,SOLLYA_MSG_REMEZ_THE_BEST_POLY_GIVES_A_CERTAIN_ERROR,"The best polynomial obtained gives an error of %v\n",infinityNorm);
 
@@ -1954,7 +1957,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
          correctly cases when the error oscillates too much
       */
       temp_tree = addMemRef(makeSub(makeMul(copyTree(poly), copyTree(w)), copyTree(f)));
-      uncertifiedInfnorm(infinityNorm, temp_tree, u, v, getToolPoints(), prec);
+      uncertifiedInfnorm(infinityNorm, temp_tree, u, v, getToolPoints(), quality_prec);
       free_memory(temp_tree);
       /* end of the temporary check */
 
@@ -2287,7 +2290,7 @@ void firstStepContinuousMinimaxChebychevsPoints(mpfr_t *h, node *func, node *wei
   poly = addMemRef(elementaryStepRemezAlgorithm(NULL, func, weight, x, monomials_tree, n, currentPrec));
 
   error = addMemRef(makeSub(makeMul(copyTree(poly), copyTree(weight)), copyTree(func)));
-  uncertifiedInfnorm(*h, error, a, b, 3*n, getToolPrecision());
+  uncertifiedInfnorm(*h, error, a, b, 3*n, 20);
 
   free_memory(error);
   free_memory(poly);
