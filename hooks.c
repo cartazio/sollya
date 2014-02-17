@@ -272,6 +272,16 @@ poly_eval_hook_t *createPolyEvalHook(int degree, mpfr_t *coeffs, sollya_mpfi_t d
   } else {
     if (degree == 0) newPolyEvalHook->polynomialIsMonotone = 1;
   }
+  newPolyEvalHook->reusedVarMyYInit = 0;
+  newPolyEvalHook->reusedVarXInit = 0;
+  newPolyEvalHook->reusedVarTempInit = 0;
+  newPolyEvalHook->reusedVarMyYBInit = 0;
+  newPolyEvalHook->reusedVarXAInit = 0;
+  newPolyEvalHook->reusedVarXBInit = 0;
+  newPolyEvalHook->reusedVarMyYRndInit = 0;
+  newPolyEvalHook->reusedVarMyYRndWithDeltaInit = 0;
+  newPolyEvalHook->reusedVarAInit = 0;
+  newPolyEvalHook->reusedVarBInit = 0;
 
   return newPolyEvalHook;
 }
@@ -279,9 +289,7 @@ poly_eval_hook_t *createPolyEvalHook(int degree, mpfr_t *coeffs, sollya_mpfi_t d
 int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void *data) {
   poly_eval_hook_t *hook;
   mp_prec_t p, pY, pX;
-  sollya_mpfi_t myY, myYRnd, myYRndWithDelta, X, temp, XA, XB, myYB;
   int okay, i, polynomialIsMonotone;
-  mpfr_t a, b;
 
   hook = (poly_eval_hook_t *) data;
 
@@ -294,9 +302,19 @@ int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void 
   p = pY + 10;
   if (prec > p) p = prec;
 
-  sollya_mpfi_init2(myY, p);
-  sollya_mpfi_init2(X, (p > pX ? p : pX));
-  sollya_mpfi_sub(X, x, hook->t);
+  if (hook->reusedVarMyYInit) { 
+    sollya_mpfi_set_prec(hook->reusedVarMyY, p); 
+  } else {
+    sollya_mpfi_init2(hook->reusedVarMyY, p); 
+    hook->reusedVarMyYInit = 1;
+  }
+  if (hook->reusedVarXInit) { 
+    sollya_mpfi_set_prec(hook->reusedVarX, (p > pX ? p : pX)); 
+  } else {
+    sollya_mpfi_init2(hook->reusedVarX, (p > pX ? p : pX)); 
+    hook->reusedVarXInit = 1;
+  }
+  sollya_mpfi_sub(hook->reusedVarX, x, hook->t);
 
   if (!sollya_mpfi_is_point_and_real(x)) {
     polynomialIsMonotone = hook->polynomialIsMonotone;
@@ -307,67 +325,95 @@ int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void 
 	 interval contains zero.
 
       */
-      sollya_mpfi_init2(temp, p);
-      sollya_mpfi_set_si(myY, 0);
-      for (i=hook->degree;i>=1;i--) {
-	sollya_mpfi_mul(myY, myY, X);
-	sollya_mpfi_set_fr(temp, hook->coefficients[i]);
-	sollya_mpfi_mul_ui(temp, temp, (unsigned int) i);
-	sollya_mpfi_add(myY, myY, temp);
+      if (hook->reusedVarTempInit) { 
+	sollya_mpfi_set_prec(hook->reusedVarTemp, p); 
+      } else {
+	sollya_mpfi_init2(hook->reusedVarTemp, p); 
+	hook->reusedVarTempInit = 1;
       }
-      sollya_mpfi_clear(temp);
-      if (!(sollya_mpfi_has_zero_inside(myY) || sollya_mpfi_has_nan(myY))) polynomialIsMonotone = 1;
+      sollya_mpfi_set_si(hook->reusedVarMyY, 0);
+      for (i=hook->degree;i>=1;i--) {
+	sollya_mpfi_mul(hook->reusedVarMyY, hook->reusedVarMyY, hook->reusedVarX);
+	sollya_mpfi_set_fr(hook->reusedVarTemp, hook->coefficients[i]);
+	sollya_mpfi_mul_ui(hook->reusedVarTemp, hook->reusedVarTemp, (unsigned int) i);
+	sollya_mpfi_add(hook->reusedVarMyY, hook->reusedVarMyY, hook->reusedVarTemp);
+      }
+      if (!(sollya_mpfi_has_zero_inside(hook->reusedVarMyY) || 
+	    sollya_mpfi_has_nan(hook->reusedVarMyY))) polynomialIsMonotone = 1;
     }
 
     if (polynomialIsMonotone) {
       /* Do a Horner evaluation in interval arithmetic over both
 	 endpoint point-intervals and take the hull 
       */
-      sollya_mpfi_init2(myYB, p);
-      sollya_mpfi_init2(XA, sollya_mpfi_get_prec(X));
-      sollya_mpfi_init2(XB, sollya_mpfi_get_prec(X));
-      mpfr_init2(a, sollya_mpfi_get_prec(X));
-      mpfr_init2(b, sollya_mpfi_get_prec(X));
-      sollya_mpfi_get_left(a, X);
-      sollya_mpfi_get_right(b, X);
-      sollya_mpfi_set_fr(XA, a);
-      sollya_mpfi_set_fr(XB, b);
-      mpfr_clear(b);
-      mpfr_clear(a);
-      
-      sollya_mpfi_set_si(myY, 0);
-      sollya_mpfi_set_si(myYB, 0);
-      for (i=hook->degree;i>=0;i--) {
-	sollya_mpfi_mul(myY, myY, XA);
-	sollya_mpfi_mul(myYB, myYB, XB);
-	sollya_mpfi_add_fr(myY, myY, hook->coefficients[i]);
-	sollya_mpfi_add_fr(myYB, myYB, hook->coefficients[i]);
+      if (hook->reusedVarMyYBInit) { 
+	sollya_mpfi_set_prec(hook->reusedVarMyYB, p); 
+      } else {
+	sollya_mpfi_init2(hook->reusedVarMyYB, p); 
+	hook->reusedVarMyYBInit = 1;
       }
+      if (hook->reusedVarXAInit) { 
+	sollya_mpfi_set_prec(hook->reusedVarXA, sollya_mpfi_get_prec(hook->reusedVarX)); 
+      } else {
+	sollya_mpfi_init2(hook->reusedVarXA, sollya_mpfi_get_prec(hook->reusedVarX)); 
+	hook->reusedVarXAInit = 1;
+      }
+      if (hook->reusedVarXBInit) { 
+	sollya_mpfi_set_prec(hook->reusedVarXB, sollya_mpfi_get_prec(hook->reusedVarX)); 
+      } else {
+	sollya_mpfi_init2(hook->reusedVarXB, sollya_mpfi_get_prec(hook->reusedVarX)); 
+	hook->reusedVarXBInit = 1;
+      }
+      if (hook->reusedVarAInit) { 
+	mpfr_set_prec(hook->reusedVarA, sollya_mpfi_get_prec(hook->reusedVarX)); 
+      } else {
+	mpfr_init2(hook->reusedVarA, sollya_mpfi_get_prec(hook->reusedVarX)); 
+	hook->reusedVarAInit = 1;
+      }
+      if (hook->reusedVarBInit) { 
+	mpfr_set_prec(hook->reusedVarB, sollya_mpfi_get_prec(hook->reusedVarX)); 
+      } else {
+	mpfr_init2(hook->reusedVarB, sollya_mpfi_get_prec(hook->reusedVarX)); 
+	hook->reusedVarBInit = 1;
+      }
+      sollya_mpfi_get_left(hook->reusedVarA, hook->reusedVarX);
+      sollya_mpfi_get_right(hook->reusedVarB, hook->reusedVarX);
+      sollya_mpfi_set_fr(hook->reusedVarXA, hook->reusedVarA);
+      sollya_mpfi_set_fr(hook->reusedVarXB, hook->reusedVarB);
       
-      sollya_mpfi_union(myY, myY, myYB);
-      sollya_mpfi_clear(myYB);
-      sollya_mpfi_clear(XA);
-      sollya_mpfi_clear(XB);
+      sollya_mpfi_set_si(hook->reusedVarMyY, 0);
+      sollya_mpfi_set_si(hook->reusedVarMyYB, 0);
+      for (i=hook->degree;i>=0;i--) {
+	sollya_mpfi_mul(hook->reusedVarMyY, hook->reusedVarMyY, hook->reusedVarXA);
+	sollya_mpfi_mul(hook->reusedVarMyYB, hook->reusedVarMyYB, hook->reusedVarXB);
+	sollya_mpfi_add_fr(hook->reusedVarMyY, hook->reusedVarMyY, hook->coefficients[i]);
+	sollya_mpfi_add_fr(hook->reusedVarMyYB, hook->reusedVarMyYB, hook->coefficients[i]);
+      }      
+      sollya_mpfi_union(hook->reusedVarMyY, hook->reusedVarMyY, hook->reusedVarMyYB);
 
       okay = 0;
-      sollya_mpfi_init2(myYRnd, pY + 5);
-      sollya_mpfi_init2(myYRndWithDelta, pY + 5);
-      
-      sollya_mpfi_set(myYRnd, myY);
-      sollya_mpfi_blow_1ulp(myYRnd);
-      sollya_mpfi_add(myYRndWithDelta, myY, hook->delta);
+      if (hook->reusedVarMyYRndInit) { 
+	sollya_mpfi_set_prec(hook->reusedVarMyYRnd, pY + 5); 
+      } else {
+	sollya_mpfi_init2(hook->reusedVarMyYRnd, pY + 5); 
+	hook->reusedVarMyYRndInit = 1;
+      }
+      if (hook->reusedVarMyYRndWithDeltaInit) { 
+	sollya_mpfi_set_prec(hook->reusedVarMyYRndWithDelta, pY + 5); 
+      } else {
+	sollya_mpfi_init2(hook->reusedVarMyYRndWithDelta, pY + 5); 
+	hook->reusedVarMyYRndWithDeltaInit = 1;
+      }
+      sollya_mpfi_set(hook->reusedVarMyYRnd, hook->reusedVarMyY);
+      sollya_mpfi_blow_1ulp(hook->reusedVarMyYRnd);
+      sollya_mpfi_add(hook->reusedVarMyYRndWithDelta, hook->reusedVarMyY, hook->delta);
   
-      if (sollya_mpfi_is_inside(myYRndWithDelta, myYRnd) && 
-	  (!(sollya_mpfi_has_nan(myYRndWithDelta) || 
-	     (sollya_mpfi_has_infinity(myYRndWithDelta) && 
-	      (!sollya_mpfi_is_infinity(myYRndWithDelta)))))) okay = 1;
+      if (sollya_mpfi_is_inside(hook->reusedVarMyYRndWithDelta, hook->reusedVarMyYRnd) && 
+	  (!(sollya_mpfi_has_nan(hook->reusedVarMyYRndWithDelta) || 
+	     (sollya_mpfi_has_infinity(hook->reusedVarMyYRndWithDelta) && 
+	      (!sollya_mpfi_is_infinity(hook->reusedVarMyYRndWithDelta)))))) okay = 1;
   
-      if (okay) sollya_mpfi_set(y, myYRndWithDelta);
-
-      sollya_mpfi_clear(myYRnd);
-      sollya_mpfi_clear(myYRndWithDelta);
-      sollya_mpfi_clear(myY);
-      sollya_mpfi_clear(X);
+      if (okay) sollya_mpfi_set(y, hook->reusedVarMyYRndWithDelta);
 
       return okay;
     }
@@ -375,31 +421,36 @@ int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void 
   }
 
   /* Regular Horner evaluation with interval arithmetic */
-  sollya_mpfi_set_fr(myY, hook->coefficients[hook->degree]);
+  sollya_mpfi_set_fr(hook->reusedVarMyY, hook->coefficients[hook->degree]);
   for (i=hook->degree-1;i>=0;i--) {
-    sollya_mpfi_mul(myY, myY, X);
-    sollya_mpfi_add_fr(myY, myY, hook->coefficients[i]);
+    sollya_mpfi_mul(hook->reusedVarMyY, hook->reusedVarMyY, hook->reusedVarX);
+    sollya_mpfi_add_fr(hook->reusedVarMyY, hook->reusedVarMyY, hook->coefficients[i]);
   }
   
   okay = 0;
-  sollya_mpfi_init2(myYRnd, pY + 5);
-  sollya_mpfi_init2(myYRndWithDelta, pY + 5);
+  if (hook->reusedVarMyYRndInit) { 
+    sollya_mpfi_set_prec(hook->reusedVarMyYRnd, pY + 5); 
+  } else {
+    sollya_mpfi_init2(hook->reusedVarMyYRnd, pY + 5); 
+    hook->reusedVarMyYRndInit = 1;
+  }
+  if (hook->reusedVarMyYRndWithDeltaInit) { 
+    sollya_mpfi_set_prec(hook->reusedVarMyYRndWithDelta, pY + 5); 
+  } else {
+    sollya_mpfi_init2(hook->reusedVarMyYRndWithDelta, pY + 5); 
+    hook->reusedVarMyYRndWithDeltaInit = 1;
+  }
 
-  sollya_mpfi_set(myYRnd, myY);
-  sollya_mpfi_blow_1ulp(myYRnd);
-  sollya_mpfi_add(myYRndWithDelta, myY, hook->delta);
+  sollya_mpfi_set(hook->reusedVarMyYRnd, hook->reusedVarMyY);
+  sollya_mpfi_blow_1ulp(hook->reusedVarMyYRnd);
+  sollya_mpfi_add(hook->reusedVarMyYRndWithDelta, hook->reusedVarMyY, hook->delta);
 
-  if (sollya_mpfi_is_inside(myYRndWithDelta, myYRnd) && 
-      (!(sollya_mpfi_has_nan(myYRndWithDelta) || 
-	 (sollya_mpfi_has_infinity(myYRndWithDelta) && 
-	  (!sollya_mpfi_is_infinity(myYRndWithDelta)))))) okay = 1;
+  if (sollya_mpfi_is_inside(hook->reusedVarMyYRndWithDelta, hook->reusedVarMyYRnd) && 
+      (!(sollya_mpfi_has_nan(hook->reusedVarMyYRndWithDelta) || 
+	 (sollya_mpfi_has_infinity(hook->reusedVarMyYRndWithDelta) && 
+	  (!sollya_mpfi_is_infinity(hook->reusedVarMyYRndWithDelta)))))) okay = 1;
   
-  if (okay) sollya_mpfi_set(y, myYRndWithDelta);
-
-  sollya_mpfi_clear(myYRnd);
-  sollya_mpfi_clear(myYRndWithDelta);
-  sollya_mpfi_clear(myY);
-  sollya_mpfi_clear(X);
+  if (okay) sollya_mpfi_set(y, hook->reusedVarMyYRndWithDelta);
 
   return okay;
 }
@@ -416,6 +467,16 @@ void freePolyEvalHook(void *data) {
     mpfr_clear(hook->coefficients[i]);
   }
   safeFree(hook->coefficients);
+  if (hook->reusedVarMyYInit) sollya_mpfi_clear(hook->reusedVarMyY);
+  if (hook->reusedVarXInit) sollya_mpfi_clear(hook->reusedVarX);
+  if (hook->reusedVarTempInit) sollya_mpfi_clear(hook->reusedVarTemp);
+  if (hook->reusedVarMyYBInit) sollya_mpfi_clear(hook->reusedVarMyYB);
+  if (hook->reusedVarXAInit) sollya_mpfi_clear(hook->reusedVarXA);
+  if (hook->reusedVarXBInit) sollya_mpfi_clear(hook->reusedVarXB);
+  if (hook->reusedVarMyYRndInit) sollya_mpfi_clear(hook->reusedVarMyYRnd);
+  if (hook->reusedVarMyYRndWithDeltaInit) sollya_mpfi_clear(hook->reusedVarMyYRndWithDelta);
+  if (hook->reusedVarAInit) mpfr_clear(hook->reusedVarA);
+  if (hook->reusedVarBInit) mpfr_clear(hook->reusedVarB);
   safeFree(hook);
 }
 

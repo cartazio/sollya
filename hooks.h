@@ -105,6 +105,26 @@ struct __poly_eval_hook_t_struct {
   int degree;
   int polynomialIsMonotone;
   mpfr_t *coefficients;
+  int reusedVarMyYInit;
+  sollya_mpfi_t reusedVarMyY;
+  int reusedVarXInit;
+  sollya_mpfi_t reusedVarX;
+  int reusedVarTempInit;
+  sollya_mpfi_t reusedVarTemp;
+  int reusedVarMyYBInit;
+  sollya_mpfi_t reusedVarMyYB;
+  int reusedVarXAInit;
+  sollya_mpfi_t reusedVarXA;
+  int reusedVarXBInit;
+  sollya_mpfi_t reusedVarXB;
+  int reusedVarMyYRndInit;
+  sollya_mpfi_t reusedVarMyYRnd;
+  int reusedVarMyYRndWithDeltaInit;
+  sollya_mpfi_t reusedVarMyYRndWithDelta;
+  int reusedVarAInit;
+  mpfr_t reusedVarA;
+  int reusedVarBInit;
+  mpfr_t reusedVarB;
 };
 
 poly_eval_hook_t *createPolyEvalHook(int, mpfr_t *, sollya_mpfi_t, sollya_mpfi_t, sollya_mpfi_t);

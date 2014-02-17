@@ -982,6 +982,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
   sollya_mpfi_t tempInterval;
   mp_prec_t *precPtr;
   sollya_mpfi_t *intervalPtr;
+  sollya_mpfi_t *reusedVars;
 
   if (tree->nodeType == MEMREF) {
     if ((theo != NULL) || (!noExcludes)) return evaluateI(result, getMemRefChild(tree), x, prec, simplifiesA, simplifiesB, hopitalPoint, theo, noExcludes, fastAddSub);
@@ -1269,27 +1270,49 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
       /* The fall-through is intended */
     case MUL:
     case POW:
-      sollya_mpfi_init2(stack1, prec);
-      sollya_mpfi_init2(stack2, prec);
-      evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub);
-      evaluateI(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub);
-      switch (tree->nodeType) {
-      case ADD:
-	sollya_mpfi_add(result, stack1, stack2);
-	break;
-      case SUB:
-	sollya_mpfi_sub(result, stack1, stack2);
-	break;
-      case MUL:
-	sollya_mpfi_mul(result, stack1, stack2);
-	break;
-      case POW:
-	sollya_mpfi_pow(result, stack1, stack2);
-	break;
+      reusedVars = getReusedGlobalMPFIVars(2, prec);
+      if (reusedVars != NULL) {
+	evaluateI(reusedVars[0], tree->child1, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub);
+	evaluateI(reusedVars[1], tree->child2, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub);
+	switch (tree->nodeType) {
+	case ADD:
+	  sollya_mpfi_add(result, reusedVars[0], reusedVars[1]);
+	  break;
+	case SUB:
+	  sollya_mpfi_sub(result, reusedVars[0], reusedVars[1]);
+	  break;
+	case MUL:
+	  sollya_mpfi_mul(result, reusedVars[0], reusedVars[1]);
+	  break;
+	case POW:
+	  sollya_mpfi_pow(result, reusedVars[0], reusedVars[1]);
+	  break;
+	}
+	returnReusedGlobalMPIVars(2);
+	return NULL;
+      } else {
+	sollya_mpfi_init2(stack1, prec);
+	sollya_mpfi_init2(stack2, prec);
+	evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub);
+	evaluateI(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub);
+	switch (tree->nodeType) {
+	case ADD:
+	  sollya_mpfi_add(result, stack1, stack2);
+	  break;
+	case SUB:
+	  sollya_mpfi_sub(result, stack1, stack2);
+	  break;
+	case MUL:
+	  sollya_mpfi_mul(result, stack1, stack2);
+	  break;
+	case POW:
+	  sollya_mpfi_pow(result, stack1, stack2);
+	  break;
+	}
+	sollya_mpfi_clear(stack2);
+	sollya_mpfi_clear(stack1);
+	return NULL;
       }
-      sollya_mpfi_clear(stack2);
-      sollya_mpfi_clear(stack1);
-      return NULL;
       break;
     default:
       break;
@@ -4998,6 +5021,10 @@ int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *fu
   startprec = startprecOrig;
   pRes = mpfr_get_prec(result);
   if ((mpfr_sgn(cutoff) == 0) || (!mpfr_number_p(cutoff))) {
+    /* If the cutoff is zero or NaN, we actually need at least as much
+       working precision as the precision of the result we are to
+       produce. 
+    */
     if (startprec < pRes + 10) startprec = pRes + 10;
   }
 
@@ -5285,19 +5312,26 @@ int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *fu
 	 There is still hope if the cutoff interval and the 
 	 current evaluation interval have a point in common.
 
+	 When we loose faith that we still could do the cutoff with
+	 low precision, we can directly jump to the current working
+	 precision + precision of the result. The fact that we are
+	 here means that we could not acheive enough precision for the
+	 cutoff, hence that the expression cancelled on all bits (the
+	 current precision).
+
       */
       if (testCutOff) {
 	if (!sollya_mpfi_have_common_real_point(yI, cutoffI)) {
-	  p = (p > pRes ? p + 10 : pRes + 10);
+	  p = (p + 10 > pRes + p + 10? p + 10 : pRes + p + 10);
 	  precisionIncreased = 1;
 	} else {
-	  if ((p << 1) > (pRes + 10)) {
-	    p = pRes + 10;
+	  if ((p << 1) > (pRes + p + 10)) {
+	    p = (p + 10 > pRes + p + 10? p + 10 : pRes + p + 10);
 	    precisionIncreased = 1;
 	  } 
 	}
       } else {
-	p = pRes + 10;
+	p = (p + 10 > pRes + p + 10? p + 10 : pRes + p + 10);
 	precisionIncreased = 1;
       }
     }
@@ -5307,7 +5341,7 @@ int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *fu
 
 	 The right way to do so might be a matter of religion.
 
-	 The formula below seem to be fine in practice.
+	 The formula below seems to be fine in practice.
       */
       p <<= 1;
     }

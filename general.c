@@ -94,6 +94,9 @@
 #include <execinfo.h>
 #endif
 
+/* A constant for the global reused MPFI variables */
+#define GLOBAL_REUSED_VARS_MAX_ALLOC 2048
+
 /* STATE OF THE TOOL */
 
 int oldAutoPrint = 0;
@@ -230,6 +233,15 @@ mpfr_t __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp;
    FUNCTIONS 
 */
 
+/* Globally reused MPFI variables */
+sollya_mpfi_t *globalReusedMPFIVars = NULL;
+unsigned int globalReusedMPFIVarsAllocated = 0;
+unsigned int globalReusedMPFIVarsUsed = 0;
+unsigned int globalReusedMPFIVarsMaxAllocated = GLOBAL_REUSED_VARS_MAX_ALLOC;
+
+/* End of globally reused MPFI variables */
+
+
 extern int yyparse(void *); 
 extern void yylex_destroy(void *);
 extern int yylex_init(void **);
@@ -239,6 +251,7 @@ extern int parserCheckEof();
 
 #define BACKTRACELENGTH 100
 
+void freeGlobalReusedMPFIVars();
 void freeTool();
 
 void makeToolDie() {
@@ -1061,6 +1074,7 @@ void freeTool() {
   symbolTable = NULL;
   freeDeclaredSymbolTable(declaredSymbolTable, freeThingOnVoid);
   freeFunctionSpecialVariables();
+  freeGlobalReusedMPFIVars();
   declaredSymbolTable = NULL;
   mpfr_clear(statediam);
   safeFree(temporyDirectory); temporyDirectory = NULL;
@@ -1101,6 +1115,10 @@ void initToolDefaults() {
   __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_x_initialized = 0;
   __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_y_initialized = 0;
   __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp_initialized = 0;
+  globalReusedMPFIVars = NULL;
+  globalReusedMPFIVarsAllocated = 0;
+  globalReusedMPFIVarsUsed = 0;
+  globalReusedMPFIVarsMaxAllocated = GLOBAL_REUSED_VARS_MAX_ALLOC;
   parseMode();
 }
 
@@ -1110,6 +1128,7 @@ void restartTool() {
   symbolTable = NULL;
   freeDeclaredSymbolTable(declaredSymbolTable, freeThingOnVoid);
   freeFunctionSpecialVariables();
+  freeGlobalReusedMPFIVars();
   declaredSymbolTable = NULL;
   freeFunctionLibraries();
   freeConstantLibraries();
@@ -1443,6 +1462,7 @@ int finalizeLibraryMode() {
   symbolTable = NULL;
   freeDeclaredSymbolTable(declaredSymbolTable, freeThingOnVoid);
   freeFunctionSpecialVariables();
+  freeGlobalReusedMPFIVars();
   declaredSymbolTable = NULL;
   mpfr_clear(statediam);
   safeFree(temporyDirectory); temporyDirectory = NULL;
@@ -1473,6 +1493,59 @@ double sollya_mpfr_get_d(mpfr_t op, mpfr_rnd_t rnd) {
   }
 
   return mpfr_get_d(op, rnd);
+}
+
+void allocateReusedGlobalMPFIVars() {
+  unsigned int i;
+  if (globalReusedMPFIVars != NULL) return;
+  if (globalReusedMPFIVarsAllocated != 0) return;
+  globalReusedMPFIVars = (sollya_mpfi_t *) safeCalloc(globalReusedMPFIVarsMaxAllocated, sizeof(sollya_mpfi_t));
+  globalReusedMPFIVarsAllocated = globalReusedMPFIVarsMaxAllocated;
+  globalReusedMPFIVarsUsed = 0;
+  for (i=0;i<globalReusedMPFIVarsAllocated;i++) {
+    sollya_mpfi_init2(globalReusedMPFIVars[i],12); /* Minimal dummy pre-allocation */
+  }
+}
+
+sollya_mpfi_t *getReusedGlobalMPFIVars(unsigned int n, mp_prec_t prec) {
+  sollya_mpfi_t *ptr;
+  unsigned int i;
+
+  if (n == 0) return NULL;
+  if ((globalReusedMPFIVars == NULL) || 
+      (globalReusedMPFIVarsAllocated == 0)) allocateReusedGlobalMPFIVars();
+  if ((globalReusedMPFIVarsAllocated - globalReusedMPFIVarsUsed) < n) return NULL;
+  ptr = &(globalReusedMPFIVars[globalReusedMPFIVarsUsed]);
+  globalReusedMPFIVarsUsed += n;
+  for (i=0;i<n;i++) {
+    sollya_mpfi_set_prec(ptr[i],prec);
+  }
+
+  return ptr;
+}
+
+void returnReusedGlobalMPIVars(unsigned int n) {
+  if (n == 0) return;
+  if (n > globalReusedMPFIVarsUsed) {
+    globalReusedMPFIVarsUsed = 0;
+  } else {
+    globalReusedMPFIVarsUsed -= n;
+  }
+}
+
+void freeGlobalReusedMPFIVars() {
+  unsigned int i;
+
+  if (globalReusedMPFIVars == NULL) return;
+  if (globalReusedMPFIVarsAllocated == 0) return;
+
+  for (i=0;i<globalReusedMPFIVarsAllocated;i++) {
+    sollya_mpfi_clear(globalReusedMPFIVars[i]);
+  }
+  safeFree(globalReusedMPFIVars);
+  globalReusedMPFIVars = NULL;
+  globalReusedMPFIVarsAllocated = 0;
+  globalReusedMPFIVarsUsed = 0;
 }
 
 int general(int argc, char *argv[]) {
