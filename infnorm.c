@@ -983,6 +983,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
   mp_prec_t *precPtr;
   sollya_mpfi_t *intervalPtr;
   sollya_mpfi_t *reusedVars;
+  node *tC1, *tC2, *temp;
 
   if (tree->nodeType == MEMREF) {
     if ((theo != NULL) || (!noExcludes)) return evaluateI(result, getMemRefChild(tree), x, prec, simplifiesA, simplifiesB, hopitalPoint, theo, noExcludes, fastAddSub);
@@ -1637,12 +1638,43 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
   case MUL:
     leftExcludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub);
     rightExcludes = evaluateI(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, rightTheo,noExcludes, fastAddSub);
-    sollya_mpfi_mul(stack3, stack1, stack2);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-      sollya_mpfi_set(*(internalTheo->boundRight),stack2);
+    if (xIsPoint &&
+	(theo == NULL) && 
+	((sollya_mpfi_has_infinity(stack1) && sollya_mpfi_is_zero(stack2)) ||
+	 (sollya_mpfi_has_infinity(stack2) && sollya_mpfi_is_zero(stack1)))) {
+      /* We have [0] times something that contains infinity */
+      if (sollya_mpfi_has_infinity(stack1)) {
+	tC1 = tree->child1;
+	tC2 = tree->child2;
+      } else {
+	tC2 = tree->child1;
+	tC1 = tree->child2;
+      }
+      /* Here, the problem is always with tC1 */
+      if (accessThruMemRef(tC1)->nodeType == DIV) {
+	temp = addMemRef(makeDiv(makeMul(copyTree(tC2), copyTree(accessThruMemRef(tC1)->child1)),
+				 copyTree(accessThruMemRef(tC1)->child2)));
+	freeChain(leftExcludes,freeMpfiPtr);
+	freeChain(rightExcludes,freeMpfiPtr);
+	excludes = evaluateI(stack3, temp, x, prec, simplifiesA, simplifiesB, NULL, theo, noExcludes, fastAddSub);
+	free_memory(temp);
+      } else {
+	/* There's nothing we can do */
+	sollya_mpfi_mul(stack3, stack1, stack2);
+	if (internalTheo != NULL) {
+	  sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
+	  sollya_mpfi_set(*(internalTheo->boundRight),stack2);
+	}
+	excludes = concatChains(leftExcludes,rightExcludes);
+      }
+    } else {
+      sollya_mpfi_mul(stack3, stack1, stack2);
+      if (internalTheo != NULL) {
+	sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
+	sollya_mpfi_set(*(internalTheo->boundRight),stack2);
+      }
+      excludes = concatChains(leftExcludes,rightExcludes);
     }
-    excludes = concatChains(leftExcludes,rightExcludes);
     break;
   case DIV:
     leftExcludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub);
@@ -3271,7 +3303,23 @@ int isTrivialInfnormCase(rangetype result, node *func) {
   return isTrivial;
 }
 
+void  uncertifiedInfnormInner(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned long int points, mp_prec_t prec);
+
 void uncertifiedInfnorm(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned long int points, mp_prec_t prec) {
+  mpfr_t myres;
+
+  if (prec >= mpfr_get_prec(result)) {
+    uncertifiedInfnormInner(result, f, a, b, points, prec);
+    return;
+  }
+
+  mpfr_init2(myres, prec);
+  uncertifiedInfnormInner(myres, f, a, b, points, prec);
+  mpfr_set(result, myres, GMP_RNDN); /* exact */
+  mpfr_clear(myres);
+}
+
+void uncertifiedInfnormInner(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned long int points, mp_prec_t prec) {
   mpfr_t current_x, x1, x2, x3, step, y1, y2, y3, max, cutoff;
   mpfr_t ystar, y1diff, y3diff, xstar;
   mpfr_t zero_mpfr;
