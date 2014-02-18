@@ -1274,44 +1274,59 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
       if (reusedVars != NULL) {
 	evaluateI(reusedVars[0], tree->child1, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub);
 	evaluateI(reusedVars[1], tree->child2, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub);
-	switch (tree->nodeType) {
-	case ADD:
-	  sollya_mpfi_add(result, reusedVars[0], reusedVars[1]);
-	  break;
-	case SUB:
-	  sollya_mpfi_sub(result, reusedVars[0], reusedVars[1]);
-	  break;
-	case MUL:
-	  sollya_mpfi_mul(result, reusedVars[0], reusedVars[1]);
-	  break;
-	case POW:
-	  sollya_mpfi_pow(result, reusedVars[0], reusedVars[1]);
-	  break;
+	if (sollya_mpfi_has_nan(reusedVars[0]) ||
+	    sollya_mpfi_has_infinity(reusedVars[0]) ||
+	    sollya_mpfi_has_nan(reusedVars[1]) ||
+	    sollya_mpfi_has_infinity(reusedVars[1])) {
+	  returnReusedGlobalMPIVars(2);
+	} else {
+	  switch (tree->nodeType) {
+	  case ADD:
+	    sollya_mpfi_add(result, reusedVars[0], reusedVars[1]);
+	    break;
+	  case SUB:
+	    sollya_mpfi_sub(result, reusedVars[0], reusedVars[1]);
+	    break;
+	  case MUL:
+	    sollya_mpfi_mul(result, reusedVars[0], reusedVars[1]);
+	    break;
+	  case POW:
+	    sollya_mpfi_pow(result, reusedVars[0], reusedVars[1]);
+	    break;
+	  }
+	  returnReusedGlobalMPIVars(2);
+	  return NULL;
 	}
-	returnReusedGlobalMPIVars(2);
-	return NULL;
       } else {
 	sollya_mpfi_init2(stack1, prec);
 	sollya_mpfi_init2(stack2, prec);
 	evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub);
 	evaluateI(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub);
-	switch (tree->nodeType) {
-	case ADD:
-	  sollya_mpfi_add(result, stack1, stack2);
-	  break;
-	case SUB:
-	  sollya_mpfi_sub(result, stack1, stack2);
-	  break;
-	case MUL:
-	  sollya_mpfi_mul(result, stack1, stack2);
-	  break;
-	case POW:
-	  sollya_mpfi_pow(result, stack1, stack2);
-	  break;
+	if (sollya_mpfi_has_nan(stack1) ||
+	    sollya_mpfi_has_infinity(stack1) ||
+	    sollya_mpfi_has_nan(stack2) ||
+	    sollya_mpfi_has_infinity(stack2)) {
+	  sollya_mpfi_clear(stack2);
+	  sollya_mpfi_clear(stack1);
+	} else {
+	  switch (tree->nodeType) {
+	  case ADD:
+	    sollya_mpfi_add(result, stack1, stack2);
+	    break;
+	  case SUB:
+	    sollya_mpfi_sub(result, stack1, stack2);
+	    break;
+	  case MUL:
+	    sollya_mpfi_mul(result, stack1, stack2);
+	    break;
+	  case POW:
+	    sollya_mpfi_pow(result, stack1, stack2);
+	    break;
+	  }
+	  sollya_mpfi_clear(stack2);
+	  sollya_mpfi_clear(stack1);
+	  return NULL;
 	}
-	sollya_mpfi_clear(stack2);
-	sollya_mpfi_clear(stack1);
-	return NULL;
       }
       break;
     default:
@@ -3733,22 +3748,6 @@ void evaluateIntervalInternalFast(sollya_mpfi_t y, node *func, node *deriv, soll
   evaluateITaylor(y, func, deriv, x, prec, taylorrecursions, NULL, 1,1);
 }
 
-void evaluateIntervalInternalFast1(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x) {
-  evaluateIntervalInternalFast(y, func, deriv, x);
-}
-void evaluateIntervalInternalFast2(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x) {
-  evaluateIntervalInternalFast(y, func, deriv, x);
- }
-void evaluateIntervalInternalFast3(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x) {
-  evaluateIntervalInternalFast(y, func, deriv, x);
- }
-void evaluateIntervalInternalFast4(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x) {
-  evaluateIntervalInternalFast(y, func, deriv, x);
- }
-void evaluateIntervalInternalFast5(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x) {
-  evaluateIntervalInternalFast(y, func, deriv, x);
- }
-
 void evaluateConstantExpressionToInterval(sollya_mpfi_t y, node *func) {
   sollya_mpfi_t x;
 
@@ -5120,11 +5119,9 @@ int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *fu
 
   /* Start the rounding loop */
   p=startprec;
-  int compteur = 0;
   okay = 0;
   while (p < prec * 512) {
     correctlyRounded = 0;
-    compteur++;
 
     sollya_mpfi_set_prec(yI,p);
 
@@ -5139,20 +5136,7 @@ int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *fu
 
     mpfr_set_prec(yILeft,p);
     mpfr_set_prec(yIRight,p);
-    switch(compteur) {
-    case 1:
-      evaluateIntervalInternalFast1(yI, func, deriv, xI); break;
-    case 2:
-      evaluateIntervalInternalFast2(yI, func, deriv, xI); break;
-    case 3:
-      evaluateIntervalInternalFast3(yI, func, deriv, xI); break;
-    case 4:
-      evaluateIntervalInternalFast4(yI, func, deriv, xI); break;
-    case 5:
-      evaluateIntervalInternalFast5(yI, func, deriv, xI); break;
-    default:
-      evaluateIntervalInternalFast(yI, func, deriv, xI); break;
-    }
+    evaluateIntervalInternalFast(yI, func, deriv, xI);
     sollya_mpfi_get_left(yILeft,yI);
     sollya_mpfi_get_right(yIRight,yI);
     mpfr_set(resDown,yILeft,GMP_RNDN);

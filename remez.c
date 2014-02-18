@@ -1559,7 +1559,6 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
   int quality_prec;
 
   quality_prec = (mpfr_regular_p(quality)?(10 - mpfr_get_exp(quality)):prec);
-  if (mpfr_get_prec(quality) > quality_prec) quality_prec = mpfr_get_prec(quality);
 
   gmp_randinit_default(random_state);
   gmp_randseed_ui(random_state, 65845285);
