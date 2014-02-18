@@ -237,6 +237,7 @@ mpfr_t __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp;
 sollya_mpfi_t *globalReusedMPFIVars = NULL;
 unsigned int globalReusedMPFIVarsAllocated = 0;
 unsigned int globalReusedMPFIVarsUsed = 0;
+unsigned int globalReusedMPFIVarsInitialized = 0;
 unsigned int globalReusedMPFIVarsMaxAllocated = GLOBAL_REUSED_VARS_MAX_ALLOC;
 
 /* End of globally reused MPFI variables */
@@ -1118,6 +1119,7 @@ void initToolDefaults() {
   globalReusedMPFIVars = NULL;
   globalReusedMPFIVarsAllocated = 0;
   globalReusedMPFIVarsUsed = 0;
+  globalReusedMPFIVarsInitialized = 0;
   globalReusedMPFIVarsMaxAllocated = GLOBAL_REUSED_VARS_MAX_ALLOC;
   parseMode();
 }
@@ -1502,9 +1504,7 @@ void allocateReusedGlobalMPFIVars() {
   globalReusedMPFIVars = (sollya_mpfi_t *) safeCalloc(globalReusedMPFIVarsMaxAllocated, sizeof(sollya_mpfi_t));
   globalReusedMPFIVarsAllocated = globalReusedMPFIVarsMaxAllocated;
   globalReusedMPFIVarsUsed = 0;
-  for (i=0;i<globalReusedMPFIVarsAllocated;i++) {
-    sollya_mpfi_init2(globalReusedMPFIVars[i],12); /* Minimal dummy pre-allocation */
-  }
+  globalReusedMPFIVarsInitialized = 0;
 }
 
 sollya_mpfi_t *getReusedGlobalMPFIVars(unsigned int n, mp_prec_t prec) {
@@ -1517,6 +1517,12 @@ sollya_mpfi_t *getReusedGlobalMPFIVars(unsigned int n, mp_prec_t prec) {
   if ((globalReusedMPFIVarsAllocated - globalReusedMPFIVarsUsed) < n) return NULL;
   ptr = &(globalReusedMPFIVars[globalReusedMPFIVarsUsed]);
   globalReusedMPFIVarsUsed += n;
+  for (i=globalReusedMPFIVarsInitialized;i<globalReusedMPFIVarsUsed;i++) {
+    sollya_mpfi_init2(globalReusedMPFIVars[i],prec);
+  }
+  if (globalReusedMPFIVarsUsed > globalReusedMPFIVarsInitialized) {
+    globalReusedMPFIVarsInitialized = globalReusedMPFIVarsUsed;
+  }
   for (i=0;i<n;i++) {
     sollya_mpfi_set_prec(ptr[i],prec);
   }
@@ -1539,13 +1545,14 @@ void freeGlobalReusedMPFIVars() {
   if (globalReusedMPFIVars == NULL) return;
   if (globalReusedMPFIVarsAllocated == 0) return;
 
-  for (i=0;i<globalReusedMPFIVarsAllocated;i++) {
+  for (i=0;i<globalReusedMPFIVarsInitialized;i++) {
     sollya_mpfi_clear(globalReusedMPFIVars[i]);
   }
   safeFree(globalReusedMPFIVars);
   globalReusedMPFIVars = NULL;
   globalReusedMPFIVarsAllocated = 0;
   globalReusedMPFIVarsUsed = 0;
+  globalReusedMPFIVarsInitialized = 0;
 }
 
 int general(int argc, char *argv[]) {
