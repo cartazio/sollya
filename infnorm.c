@@ -3733,6 +3733,22 @@ void evaluateIntervalInternalFast(sollya_mpfi_t y, node *func, node *deriv, soll
   evaluateITaylor(y, func, deriv, x, prec, taylorrecursions, NULL, 1,1);
 }
 
+void evaluateIntervalInternalFast1(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x) {
+  evaluateIntervalInternalFast(y, func, deriv, x);
+}
+void evaluateIntervalInternalFast2(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x) {
+  evaluateIntervalInternalFast(y, func, deriv, x);
+ }
+void evaluateIntervalInternalFast3(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x) {
+  evaluateIntervalInternalFast(y, func, deriv, x);
+ }
+void evaluateIntervalInternalFast4(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x) {
+  evaluateIntervalInternalFast(y, func, deriv, x);
+ }
+void evaluateIntervalInternalFast5(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x) {
+  evaluateIntervalInternalFast(y, func, deriv, x);
+ }
+
 void evaluateConstantExpressionToInterval(sollya_mpfi_t y, node *func) {
   sollya_mpfi_t x;
 
@@ -5104,9 +5120,11 @@ int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *fu
 
   /* Start the rounding loop */
   p=startprec;
+  int compteur = 0;
   okay = 0;
   while (p < prec * 512) {
     correctlyRounded = 0;
+    compteur++;
 
     sollya_mpfi_set_prec(yI,p);
 
@@ -5121,7 +5139,20 @@ int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *fu
 
     mpfr_set_prec(yILeft,p);
     mpfr_set_prec(yIRight,p);
-    evaluateIntervalInternalFast(yI, func, deriv, xI);
+    switch(compteur) {
+    case 1:
+      evaluateIntervalInternalFast1(yI, func, deriv, xI); break;
+    case 2:
+      evaluateIntervalInternalFast2(yI, func, deriv, xI); break;
+    case 3:
+      evaluateIntervalInternalFast3(yI, func, deriv, xI); break;
+    case 4:
+      evaluateIntervalInternalFast4(yI, func, deriv, xI); break;
+    case 5:
+      evaluateIntervalInternalFast5(yI, func, deriv, xI); break;
+    default:
+      evaluateIntervalInternalFast(yI, func, deriv, xI); break;
+    }
     sollya_mpfi_get_left(yILeft,yI);
     sollya_mpfi_get_right(yIRight,yI);
     mpfr_set(resDown,yILeft,GMP_RNDN);
