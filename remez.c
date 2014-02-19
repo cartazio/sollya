@@ -1559,7 +1559,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
   int quality_prec;
 
   quality_prec = (mpfr_regular_p(quality)?(10 - mpfr_get_exp(quality)):prec);
-  
+
   gmp_randinit_default(random_state);
   gmp_randseed_ui(random_state, 65845285);
 
@@ -1579,7 +1579,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
   else mpfr_init2(computedQuality, prec);
 
   mpfr_set_inf(computedQuality, 1);
-  mpfr_init2(infinityNorm, prec);
+  mpfr_init2(infinityNorm, quality_prec);
 
   M = safeMalloc((freeDegrees+1)*(freeDegrees+1)*sizeof(mpfr_t));
   N = safeMalloc(freeDegrees*freeDegrees*sizeof(mpfr_t));
@@ -2281,6 +2281,9 @@ void firstStepContinuousMinimaxChebychevsPoints(mpfr_t *h, node *func, node *wei
   int i;
   node *poly;
   node *error;
+  mpfr_t tmp;
+
+  mpfr_init2(tmp, 20);
   monomials_tree = (node **)(safeMalloc(n*sizeof(node *)));
   monomials_tree[0] = addMemRef(makeConstantDouble(1.));
   for(i=1;i<n;i++) monomials_tree[i] = addMemRef(makePow(makeVariable(), makeConstantInt(i)));
@@ -2290,8 +2293,10 @@ void firstStepContinuousMinimaxChebychevsPoints(mpfr_t *h, node *func, node *wei
   poly = addMemRef(elementaryStepRemezAlgorithm(NULL, func, weight, x, monomials_tree, n, currentPrec));
 
   error = addMemRef(makeSub(makeMul(copyTree(poly), copyTree(weight)), copyTree(func)));
-  uncertifiedInfnorm(*h, error, a, b, 3*n, 20);
+  uncertifiedInfnorm(tmp, error, a, b, 3*n, 20);
+  mpfr_set(*h, tmp, GMP_RNDU);
 
+  mpfr_clear(tmp);
   free_memory(error);
   free_memory(poly);
 
