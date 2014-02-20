@@ -560,6 +560,7 @@ static const messageEntry messageTextsTable[] = {
   { SOLLYA_MSG_LIBRARY_CLOSER_ERROR                                   , "While closing a libary, the function \"sollya_external_lib_close\" was found and called but it signaled an error." },
   { SOLLYA_MSG_INF_CONVERTED_TO_NUMBER_ON_CONSTANT_RETRIEVAL          , "An infinity has been converted to a number upon retrieval of a constant." },
   { SOLLYA_MSG_ANNOTATION_COULD_NOT_BE_SET_UP                         , "The annotation could not be set up. The function is returned as-is." },
+  { SOLLYA_MSG_GENERIC_SOLLYA_LIBRARY_MSG                             , "An external program using the Sollya library has displayed a message." },
   /* Add your new warning message texts above here. */
 
   { -1, "Unknown message number -1" }   /* Do not ever change the text in this default entry, which must be the last entry in the list */

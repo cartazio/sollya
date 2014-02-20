@@ -250,5 +250,6 @@ void setRationalMode(int);
 double sollya_mpfr_get_d(mpfr_t, mpfr_rnd_t);
 sollya_mpfi_t *getReusedGlobalMPFIVars(unsigned int, mp_prec_t);
 void returnReusedGlobalMPIVars(unsigned int);
+int sollyaLibPrintmessage(int, int, const char *, va_list);
 
 #endif /* ifdef GENERAL_H*/

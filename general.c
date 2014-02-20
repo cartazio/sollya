@@ -242,6 +242,17 @@ unsigned int globalReusedMPFIVarsMaxAllocated = GLOBAL_REUSED_VARS_MAX_ALLOC;
 
 /* End of globally reused MPFI variables */
 
+/* A global variable to check if sollyaLibPrintmessage has ever been
+   called. 
+*/
+
+int sollyaLibPrintmessageCalled = 0;
+
+/* End of global variable to check if sollyaLibPrintmessage has ever been
+   called. 
+*/
+
+
 
 extern int yyparse(void *); 
 extern void yylex_destroy(void *);
@@ -768,8 +779,7 @@ int uninstallMessageCallback() {
   return 1;
 }
 
-int printMessage(int verb, int msgNum, const char *format, ...) {
-  va_list varlist;
+int printMessageInner(int verb, int msgNum, const char *format, va_list varlist) {
   int oldColor;
   int res, suppressed;
   const char *myFormat;
@@ -799,7 +809,7 @@ int printMessage(int verb, int msgNum, const char *format, ...) {
   /* If there is a message callback installed, call it.
      If it says no message is to be displayed, just bail out.
 
-     Do call the message callback handler for no messages and
+     Do not call the message callback handler for no messages and
      continuation messages. In the case of a continuation message,
      take the last "display/don't display" value instead of what the
      handler would return.
@@ -816,8 +826,6 @@ int printMessage(int verb, int msgNum, const char *format, ...) {
   oldColor = displayColor;
 
   if ((verb >= 1) || (verb < 0)) warningMode(); else outputMode();
-
-  va_start(varlist,format);
 
   if (activateMessageNumbers && (msgNum != SOLLYA_MSG_CONTINUATION) && (msgNum != SOLLYA_MSG_NO_MSG)) {
     myFormat = format;
@@ -867,11 +875,34 @@ int printMessage(int verb, int msgNum, const char *format, ...) {
     }
   }
 
-  va_end(varlist);
-
   setDisplayColor(oldColor);
 
   return res;
+}
+
+int printMessage(int verb, int msgNum, const char *format, ...) {
+  int res;
+  va_list varlist;
+
+  va_start(varlist,format);
+  res = printMessageInner(verb, msgNum, format, varlist);
+  va_end(varlist);
+
+  return res;
+}
+
+int sollyaLibPrintmessage(int verb, int cont, const char *format, va_list varlist) {
+  if (cont) {
+    if (sollyaLibPrintmessageCalled) {
+      sollyaLibPrintmessageCalled = 1;
+      return printMessageInner(verb, SOLLYA_MSG_CONTINUATION, format, varlist);
+    }
+    sollyaLibPrintmessageCalled = 1;
+    return printMessageInner(verb, SOLLYA_MSG_GENERIC_SOLLYA_LIBRARY_MSG, format, varlist);
+  } 
+  
+  sollyaLibPrintmessageCalled = 1;
+  return printMessageInner(verb, SOLLYA_MSG_GENERIC_SOLLYA_LIBRARY_MSG, format, varlist);
 }
 
 int sollyaPrintf(const char *format, ...) {
@@ -1121,6 +1152,7 @@ void initToolDefaults() {
   globalReusedMPFIVarsUsed = 0;
   globalReusedMPFIVarsInitialized = 0;
   globalReusedMPFIVarsMaxAllocated = GLOBAL_REUSED_VARS_MAX_ALLOC;
+  sollyaLibPrintmessageCalled = 0;
   parseMode();
 }
 

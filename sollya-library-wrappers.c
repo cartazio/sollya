@@ -73,6 +73,7 @@
 #include "infnorm.h"
 #include "double.h"
 
+
 /* Some helper macros */
 
 #define MAKE_THINGLIST_DECLS(__thinglist)       \
@@ -243,6 +244,17 @@ int sollya_lib_snprintf(char *str, size_t size, const char *format, ...) {
 
 int sollya_lib_v_snprintf(char *str, size_t size, const char *format, va_list varlist) {
   return sollyaInternalVsnprintf(str, size, format, varlist);
+}
+
+int sollya_lib_printmessage(int verb, int cont, const char *format, ...) {
+  int res;
+  va_list varlist;
+
+  va_start(varlist,format);
+  res = sollyaLibPrintmessage(verb, cont, format, varlist);
+  va_end(varlist);
+
+  return res;
 }
 
 void sollya_lib_clear_obj(sollya_obj_t obj1) {
