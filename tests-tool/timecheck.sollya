@@ -13,7 +13,7 @@ i := i + 1;
 /* Test #1 */
 i;
 t = time(p = remez(1,[|1,...,15|],[-1b-1;1b-1],1/sin(x)))/yardstick;
-if (t in 0.4906005859375 * variance) then "Okay" else round(t,12,RN);
+if (t in 3.24859619140625e-2 * variance) then "Okay" else round(t,12,RN);
 i := i + 1;
 
 /* Test #2 */

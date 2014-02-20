@@ -1003,12 +1003,6 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
       if (!(sollya_mpfi_has_nan(result) || sollya_mpfi_has_infinity(result))) return NULL;
     }
 
-    /*
-    if (tree->evaluationHook == NULL) {
-      sollyaPrintf("There is no hook on %b\n", tree);
-    }
-    */
-
     if (evaluateWithEvaluationHook(result, x, prec, tree->evaluationHook)) {
       excludes = NULL;
     } else {

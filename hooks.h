@@ -104,6 +104,9 @@ struct __poly_eval_hook_t_struct {
   sollya_mpfi_t t;
   int degree;
   int polynomialIsMonotone;
+  int maxPrecKnown;
+  mp_prec_t maxPrec;
+  int exactRepresentation;
   mpfr_t *coefficients;
   int reusedVarMyYInit;
   sollya_mpfi_t reusedVarMyY;

@@ -202,6 +202,7 @@ int compareNodeEvalHook(void *data1, void *data2) {
   return 1;
 }
 
+int evaluatePolyEvalHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, void *);
 
 poly_eval_hook_t *createPolyEvalHook(int degree, mpfr_t *coeffs, sollya_mpfi_t dom, sollya_mpfi_t delta, sollya_mpfi_t t) {
   poly_eval_hook_t *newPolyEvalHook;
@@ -209,10 +210,28 @@ poly_eval_hook_t *createPolyEvalHook(int degree, mpfr_t *coeffs, sollya_mpfi_t d
   int i, derivPolyCoeffsOkay;
   node *derivPoly;
   sollya_mpfi_t X, Y;
+  mpfr_t ymax, deltamax;
   mpfr_t nbRoots;
   mp_prec_t maxPrec;
+  unsigned long pp, ppp;
+  mp_prec_t p;
 
+  /* Allocate memory for the hook */
   newPolyEvalHook = (poly_eval_hook_t *) safeMalloc(sizeof(poly_eval_hook_t));
+
+  /* Set some technical stuff */
+  newPolyEvalHook->reusedVarMyYInit = 0;
+  newPolyEvalHook->reusedVarXInit = 0;
+  newPolyEvalHook->reusedVarTempInit = 0;
+  newPolyEvalHook->reusedVarMyYBInit = 0;
+  newPolyEvalHook->reusedVarXAInit = 0;
+  newPolyEvalHook->reusedVarXBInit = 0;
+  newPolyEvalHook->reusedVarMyYRndInit = 0;
+  newPolyEvalHook->reusedVarMyYRndWithDeltaInit = 0;
+  newPolyEvalHook->reusedVarAInit = 0;
+  newPolyEvalHook->reusedVarBInit = 0;
+
+  /* Set the easy stuff */
   sollya_mpfi_init2(newPolyEvalHook->domain, sollya_mpfi_get_prec(dom));
   sollya_mpfi_set(newPolyEvalHook->domain, dom);
   sollya_mpfi_init2(newPolyEvalHook->delta, sollya_mpfi_get_prec(delta));
@@ -225,6 +244,8 @@ poly_eval_hook_t *createPolyEvalHook(int degree, mpfr_t *coeffs, sollya_mpfi_t d
     mpfr_init2(newPolyEvalHook->coefficients[i], mpfr_get_prec(coeffs[i]));
     mpfr_set(newPolyEvalHook->coefficients[i], coeffs[i], GMP_RNDN); /* exact as precision the same */
   }
+
+  /* Try to precompute information on whether the polynomial is monotone over the whole interval */
   newPolyEvalHook->polynomialIsMonotone = 0; 
   if (degree >= 1) {
     derivCoeffs = (mpfr_t *) safeCalloc(degree, sizeof(mpfr_t));
@@ -272,16 +293,69 @@ poly_eval_hook_t *createPolyEvalHook(int degree, mpfr_t *coeffs, sollya_mpfi_t d
   } else {
     if (degree == 0) newPolyEvalHook->polynomialIsMonotone = 1;
   }
-  newPolyEvalHook->reusedVarMyYInit = 0;
-  newPolyEvalHook->reusedVarXInit = 0;
-  newPolyEvalHook->reusedVarTempInit = 0;
-  newPolyEvalHook->reusedVarMyYBInit = 0;
-  newPolyEvalHook->reusedVarXAInit = 0;
-  newPolyEvalHook->reusedVarXBInit = 0;
-  newPolyEvalHook->reusedVarMyYRndInit = 0;
-  newPolyEvalHook->reusedVarMyYRndWithDeltaInit = 0;
-  newPolyEvalHook->reusedVarAInit = 0;
-  newPolyEvalHook->reusedVarBInit = 0;
+
+  /* Precompute information on whether we have an exact representation
+     and/or what the maximum accuracy we can expect is 
+  */
+  newPolyEvalHook->exactRepresentation = 0;
+  newPolyEvalHook->maxPrecKnown = 0;
+  newPolyEvalHook->maxPrec = 0;
+  if (sollya_mpfi_is_zero(newPolyEvalHook->delta)) {
+    /* If the error interval delta is not zero, the representation is
+       exact (i.e. the function we are hooking (up with ;-) is a
+       polynomial.)
+    */
+    newPolyEvalHook->exactRepresentation = 1;
+  } else {
+    /* Here, the error interval delta is not zero 
+
+       Use the hook we are just about to create to get bounds on the
+       represented function. We just need some low precision.
+       
+    */
+    if (!(sollya_mpfi_has_nan(newPolyEvalHook->delta) ||
+	  sollya_mpfi_has_infinity(newPolyEvalHook->delta))) {
+      sollya_mpfi_init2(Y, 12);
+      if (evaluatePolyEvalHook(Y, dom, 15, (void *) newPolyEvalHook)) {
+	if (!(sollya_mpfi_has_nan(Y) || 
+	      sollya_mpfi_has_infinity(Y))) {
+	  sollya_mpfi_abs(Y, Y);
+	  mpfr_init2(ymax, 12);
+	  mpfr_init2(deltamax, sollya_mpfi_get_prec(newPolyEvalHook->delta));
+	  sollya_mpfi_get_right(ymax, Y);
+	  sollya_mpfi_set_prec(Y, sollya_mpfi_get_prec(newPolyEvalHook->delta));
+	  sollya_mpfi_abs(Y, newPolyEvalHook->delta);
+	  sollya_mpfi_get_right(deltamax, Y);
+	  if (mpfr_number_p(ymax) && 
+	      mpfr_number_p(deltamax) && 
+	      (!mpfr_zero_p(deltamax))) {
+	    mpfr_div(ymax, deltamax, ymax, GMP_RNDU);
+	    if (mpfr_sgn(ymax) > 0) {
+	      mpfr_log2(ymax, ymax, GMP_RNDU);
+	      mpfr_neg(ymax, ymax, GMP_RNDN);
+	      if (mpfr_sgn(ymax) > 0) {
+		mpfr_ceil(ymax, ymax);
+		if (mpfr_fits_ulong_p(ymax, GMP_RNDD)) {
+		  pp = mpfr_get_ui(ymax, GMP_RNDD) + 5; /* some margin accounting for the errors made here */
+		  p = (mp_prec_t) pp;
+		  ppp = (unsigned long) p;
+		  if ((ppp == pp) && (p >= 7)) {
+		    newPolyEvalHook->maxPrecKnown = 1;
+		    newPolyEvalHook->maxPrec = p;
+		  }
+		}
+	      }
+	    }
+	  }
+	  mpfr_clear(ymax);
+	  mpfr_clear(deltamax);
+	  
+	}
+      }
+      sollya_mpfi_clear(Y);
+    }
+  }
+
 
   return newPolyEvalHook;
 }
@@ -302,6 +376,12 @@ int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void 
   p = pY + 10;
   if (prec > p) p = prec;
 
+  if ((!(hook->exactRepresentation)) &&
+      hook->maxPrecKnown &&
+      (hook->maxPrec < pY)) {
+    return 0;
+  }
+
   if (hook->reusedVarMyYInit) { 
     sollya_mpfi_set_prec(hook->reusedVarMyY, p); 
   } else {
@@ -317,6 +397,7 @@ int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void 
   sollya_mpfi_sub(hook->reusedVarX, x, hook->t);
 
   if (!sollya_mpfi_is_point_and_real(x)) {
+
     polynomialIsMonotone = hook->polynomialIsMonotone;
     if (!polynomialIsMonotone) {
       /* Try to determine if the polynomial is monotone over x - t 
@@ -407,7 +488,7 @@ int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void 
       sollya_mpfi_set(hook->reusedVarMyYRnd, hook->reusedVarMyY);
       sollya_mpfi_blow_1ulp(hook->reusedVarMyYRnd);
       sollya_mpfi_add(hook->reusedVarMyYRndWithDelta, hook->reusedVarMyY, hook->delta);
-  
+
       if (sollya_mpfi_is_inside(hook->reusedVarMyYRndWithDelta, hook->reusedVarMyYRnd) && 
 	  (!(sollya_mpfi_has_nan(hook->reusedVarMyYRndWithDelta) || 
 	     (sollya_mpfi_has_infinity(hook->reusedVarMyYRndWithDelta) && 
@@ -442,6 +523,7 @@ int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void 
   }
 
   sollya_mpfi_set(hook->reusedVarMyYRnd, hook->reusedVarMyY);
+
   sollya_mpfi_blow_1ulp(hook->reusedVarMyYRnd);
   sollya_mpfi_add(hook->reusedVarMyYRndWithDelta, hook->reusedVarMyY, hook->delta);
 
