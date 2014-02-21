@@ -1259,7 +1259,165 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
 
   if ((theo == NULL) && noExcludes) {
     switch (tree->nodeType) {
+    case VARIABLE:
+      sollya_mpfi_set(result, x);
+      return NULL;
+      break;
+    case CONSTANT:
+      sollya_mpfi_set_fr(result,*(tree->value));
+      return NULL;
+      break;
+    case PI_CONST:
+      sollya_mpfi_const_pi(result);
+      return NULL;
+      break;
+    case SQRT:
+    case EXP:
+    case LOG:
+    case LOG_2:
+    case LOG_10:
+    case SIN:
+    case COS:
+    case TAN:
+    case ASIN:
+    case ACOS:
+    case ATAN:
+    case SINH:
+    case COSH:
+    case TANH:
+    case ASINH:
+    case ACOSH:
+    case ATANH:
+    case NEG:
+    case ABS:
+    case DOUBLE:
+    case SINGLE:
+    case HALFPRECISION:
+    case QUAD:
+    case DOUBLEDOUBLE:
+    case TRIPLEDOUBLE:
+    case ERF:
+    case ERFC:
+    case LOG_1P:
+    case EXP_M1:
+    case DOUBLEEXTENDED:      
+    case CEIL:
+    case FLOOR:
+    case NEARESTINT:
+      reusedVars = getReusedGlobalMPFIVars(2, prec);
+      if (reusedVars == NULL) break;
+      evaluateI(reusedVars[0], tree->child1, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub);
+      if (sollya_mpfi_has_nan(reusedVars[0]) ||
+	  sollya_mpfi_has_infinity(reusedVars[0])) {
+	returnReusedGlobalMPIVars(1);
+	break;
+      }
+      switch (tree->nodeType) {
+      case SQRT:
+	sollya_mpfi_sqrt(result, reusedVars[0]);
+	break;
+      case EXP:
+	sollya_mpfi_exp(result, reusedVars[0]);
+	break;
+      case LOG:
+	sollya_mpfi_log(result, reusedVars[0]);
+	break;
+      case LOG_2:
+	sollya_mpfi_log2(result, reusedVars[0]);
+	break;
+      case LOG_10:
+	sollya_mpfi_log10(result, reusedVars[0]);
+	break;
+      case SIN:
+	sollya_mpfi_sin(result, reusedVars[0]);
+	break;
+      case COS:
+	sollya_mpfi_cos(result, reusedVars[0]);
+	break;
+      case TAN:
+	sollya_mpfi_tan(result, reusedVars[0]);
+	break;
+      case ASIN:
+	sollya_mpfi_asin(result, reusedVars[0]);
+	break;
+      case ACOS:
+	sollya_mpfi_acos(result, reusedVars[0]);
+	break;
+      case ATAN:
+	sollya_mpfi_atan(result, reusedVars[0]);
+	break;
+      case SINH:
+	sollya_mpfi_sinh(result, reusedVars[0]);
+	break;
+      case COSH:
+	sollya_mpfi_cosh(result, reusedVars[0]);
+	break;
+      case TANH:
+	sollya_mpfi_tanh(result, reusedVars[0]);
+	break;
+      case ASINH:
+	sollya_mpfi_asinh(result, reusedVars[0]);
+	break;
+      case ACOSH:
+	sollya_mpfi_acosh(result, reusedVars[0]);
+	break;
+      case ATANH:
+	sollya_mpfi_atanh(result, reusedVars[0]);
+	break;
+      case NEG:
+	sollya_mpfi_neg(result, reusedVars[0]);
+	break;
+      case ABS:
+	sollya_mpfi_abs(result, reusedVars[0]);
+	break;
+      case DOUBLE:
+	sollya_mpfi_round_to_double(result, reusedVars[0]);
+	break;
+      case SINGLE:
+	sollya_mpfi_round_to_single(result, reusedVars[0]);
+	break;
+      case HALFPRECISION:
+	sollya_mpfi_round_to_halfprecision(result, reusedVars[0]);
+	break;
+      case QUAD:
+	sollya_mpfi_round_to_quad(result, reusedVars[0]);
+	break;
+      case DOUBLEDOUBLE:
+	sollya_mpfi_round_to_doubledouble(result, reusedVars[0]);
+	break;
+      case TRIPLEDOUBLE:
+	sollya_mpfi_round_to_tripledouble(result, reusedVars[0]);
+	break;
+      case ERF:
+	sollya_mpfi_erf(result, reusedVars[0]);
+	break;
+      case ERFC:
+	sollya_mpfi_erfc(result, reusedVars[0]);
+	break;
+      case LOG_1P:
+	sollya_mpfi_log1p(result, reusedVars[0]);
+	break;
+      case EXP_M1:
+	sollya_mpfi_expm1(result, reusedVars[0]);
+	break;
+      case DOUBLEEXTENDED:
+	sollya_mpfi_round_to_doubleextended(result, reusedVars[0]);
+	break;
+      case CEIL:
+	sollya_mpfi_ceil(result, reusedVars[0]);
+	break;
+      case FLOOR:
+	sollya_mpfi_floor(result, reusedVars[0]);
+	break;
+      case NEARESTINT:
+	sollya_mpfi_nearestint(result, reusedVars[0]);
+	break;
+      }
+      returnReusedGlobalMPIVars(1);
+      return NULL;
+      break;
     case ADD:
+      /* Fall-through */
     case SUB:
       if (!fastAddSub) break;
       /* The fall-through is intended */
