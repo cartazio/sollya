@@ -19,6 +19,8 @@ mpfi-compat.c \
 mpfi-compat.h \
 hooks.c \
 hooks.h \
+polynomials.c \
+polynomials.h \
 sollya-messaging.h \
 sollya-messages.h \
 sollya-messaging.c \
@@ -103,6 +105,8 @@ mpfi-compat.h \
 mpfi-compat.c \
 hooks.c \
 hooks.h \
+polynomials.c \
+polynomials.h \
 sollya-library-wrappers.c \
 sollya-library-wrappers.h \
 sollya-messaging.h \
