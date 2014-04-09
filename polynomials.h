@@ -62,19 +62,23 @@ typedef struct __polynomial_struct_t * polynomial_t;
 /* Operations on polynomials */
 
 /* Constructors */
-polynomial_t polynomialFromExpression(struct nodeStruct *);
 polynomial_t polynomialFromMpfrConstant(mpfr_t);
 polynomial_t polynomialFromMpzConstant(mpz_t);
 polynomial_t polynomialFromMpqConstant(mpq_t);
+polynomial_t polynomialFromIntConstant(int);
 polynomial_t polynomialFromIdentity();
-polynomial_t polynomialFromMpfrCoefficients(mpfr_t *, int);
-polynomial_t polynomialFromConstantExpressionCoefficients(struct nodeStruct **, int);
+polynomial_t polynomialFromMpfrCoefficients(mpfr_t *, unsigned int);
+int polynomialFromConstantExpressionCoefficients(polynomial_t *, struct nodeStruct **, unsigned int);
+int polynomialFromExpression(polynomial_t *, struct nodeStruct *);
 
 /* Copy-Constructor */
-polynomial_t polynomialCopy(polynomial_t);
+polynomial_t polynomialFromCopy(polynomial_t);
 
 /* Destructor */
-void freePolynomial(polynomial_t);
+void polynomialFree(polynomial_t);
+
+/* Comparison */
+int polynomialEqual(polynomial_t, polynomial_t, int);
 
 /* Arithmetical operations */
 polynomial_t polynomialAdd(polynomial_t, polynomial_t);
@@ -83,15 +87,15 @@ polynomial_t polynomialMul(polynomial_t, polynomial_t);
 polynomial_t polynomialNeg(polynomial_t);
 polynomial_t polynomialCompose(polynomial_t, polynomial_t);
 void polynomialDiv(polynomial_t *, polynomial_t *, polynomial_t, polynomial_t);
-polynomial_t polynomialMpzPow(polynomial_t, mpz_t);
-polynomial_t polynomialPow(polynomial_t, polynomial_t);
+int polynomialPow(polynomial_t *, polynomial_t, polynomial_t);
+polynomial_t polynomialPowUnsignedInt(polynomial_t, unsigned int);
 
 /* Accessors */
 void polynomialGetDegree(mpz_t, polynomial_t);
 int polynomialGetDegreeAsInt(polynomial_t);
 struct nodeStruct *polynomialGetIthCoefficient(polynomial_t, mpz_t);
 struct nodeStruct *polynomialGetIthCoefficientIntIndex(polynomial_t, int);
-int polynomialGetCoefficients(struct nodeStruct ***, int *, polynomial_t); 
+int polynomialGetCoefficients(struct nodeStruct ***, unsigned int *, polynomial_t); 
 struct nodeStruct *polynomialGetExpression(polynomial_t, int);
 
 /* Displaying and conversion to strings */
@@ -99,8 +103,8 @@ void polynomialFPrintf(FILE *, polynomial_t, int);
 char *polynomialToString(polynomial_t, int);
 
 /* Evaluation */
-void polynomialEvalMpfr(mpfr_t, polynomial_t, mpfr_t, mp_prec_t);
-void polynomialEvalMpfi(sollya_mpfi_t, polynomial_t, sollya_mpfi_t, mp_prec_t);
+void polynomialEvalMpfr(mpfr_t, polynomial_t, mpfr_t);
+void polynomialEvalMpfi(sollya_mpfi_t, polynomial_t, sollya_mpfi_t);
 
 
 #endif /* ifdef POLYNOMIALS_H*/

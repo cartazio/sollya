@@ -165,6 +165,12 @@ extern int __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp_i
 extern sollya_mpfi_t __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_x;
 extern sollya_mpfi_t __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_y;
 extern mpfr_t __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp;
+extern int    __polynomialEvalMpfr_var_used;
+extern int    __polynomialEvalMpfr_scratch_initialized;
+extern mpfr_t __polynomialEvalMpfr_scratch;
+extern int    __polynomialEvalMpfi_var_used;
+extern int    __polynomialEvalMpfi_scratch_initialized;
+extern sollya_mpfi_t __polynomialEvalMpfi_scratch;
 
 
 int general(int argc, char *argv[]);

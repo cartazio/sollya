@@ -228,6 +228,12 @@ int __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp_initiali
 sollya_mpfi_t __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_x;
 sollya_mpfi_t __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_y;
 mpfr_t __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp;
+int    __polynomialEvalMpfr_var_used = 0;
+int    __polynomialEvalMpfr_scratch_initialized = 0;
+mpfr_t __polynomialEvalMpfr_scratch;
+int    __polynomialEvalMpfi_var_used = 0;
+int    __polynomialEvalMpfi_scratch_initialized = 0;
+sollya_mpfi_t __polynomialEvalMpfi_scratch;
 
 /* END OF HELPER VARIABLES THAT WE NEED TO MAINTAIN GLOBALLY USED FOR CERTAIN
    FUNCTIONS 
@@ -1074,6 +1080,16 @@ void freeFunctionSpecialVariables() {
    mpfr_clear(__firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp);
    __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp_initialized = 0;
  }
+ __polynomialEvalMpfr_var_used = 0;
+ if (__polynomialEvalMpfr_scratch_initialized) {
+   mpfr_clear(__polynomialEvalMpfr_scratch);
+   __polynomialEvalMpfr_scratch_initialized = 0;
+ }
+ __polynomialEvalMpfi_var_used = 0;
+ if (__polynomialEvalMpfi_scratch_initialized) {
+   sollya_mpfi_clear(__polynomialEvalMpfi_scratch);
+   __polynomialEvalMpfi_scratch_initialized = 0;
+ }
 }
 
 void freeTool() {
@@ -1147,6 +1163,10 @@ void initToolDefaults() {
   __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_x_initialized = 0;
   __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_y_initialized = 0;
   __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp_initialized = 0;
+  __polynomialEvalMpfr_var_used = 0;
+  __polynomialEvalMpfr_scratch_initialized = 0;
+  __polynomialEvalMpfi_var_used = 0;
+  __polynomialEvalMpfi_scratch_initialized = 0;
   globalReusedMPFIVars = NULL;
   globalReusedMPFIVarsAllocated = 0;
   globalReusedMPFIVarsUsed = 0;

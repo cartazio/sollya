@@ -334,6 +334,31 @@ int sollya_mpfi_set(sollya_mpfi_t rop, sollya_mpfi_srcptr op) {
   return res;
 }
 
+int sollya_mpfi_set_z_2exp(sollya_mpfi_t rop, mpz_t op1, mp_exp_t op2) {
+  int res, ra, rb;
+  /* HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
+  */
+  ra = mpfr_set_z_2exp(&(rop->left), op1, op2, GMP_RNDD);
+  rb = mpfr_set_z_2exp(&(rop->right), op1, op2, GMP_RNDU);
+  if ((ra == 0) && (rb == 0)) {
+    res = MPFI_FLAGS_BOTH_ENDPOINTS_EXACT;
+  } else {
+    if ((ra != 0) && (rb != 0)) {
+	res = MPFI_FLAGS_BOTH_ENDPOINTS_EXACT;
+    } else {
+      if (ra != 0) {
+	res = MPFI_FLAGS_LEFT_ENDPOINT_INEXACT;
+      } else {
+	res = MPFI_FLAGS_RIGHT_ENDPOINT_INEXACT;
+      }
+    }
+  }
+  sollya_mpfi_nan_normalize_opt(rop);
+  sollya_mpfi_empty_normalize_opt(rop);
+  return res;
+}
+
 int mpfi_to_sollya_mpfi(sollya_mpfi_t rop, mpfi_t op) {
   int res;
   res = mpfi_set(rop,op);
@@ -796,6 +821,47 @@ int sollya_mpfi_div_ui(sollya_mpfi_t rop, sollya_mpfi_t op1, unsigned long op2) 
   return res;
 }
 
+int sollya_mpfi_div_z(sollya_mpfi_t rop, sollya_mpfi_t op1, mpz_t op2) {
+  int res, ra, rb;
+
+  /* Empty input */
+  if (sollya_mpfi_is_empty_opt(op1)) return sollya_mpfi_set_empty_opt(rop);
+
+  /* Division by 0 */
+  if (mpz_sgn(op2) == 0) return sollya_mpfi_div_ui(rop, op1, 0);
+
+  /* HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
+  */
+  
+  /* General case */
+  if (mpz_sgn(op2) > 0) {
+    ra = mpfr_div_z(&(rop->left),&(op1->left),op2,GMP_RNDD);  
+    rb = mpfr_div_z(&(rop->right),&(op1->right),op2,GMP_RNDU);  
+  } else {
+    ra = mpfr_div_z(&(rop->left),&(op1->right),op2,GMP_RNDD);  
+    rb = mpfr_div_z(&(rop->right),&(op1->left),op2,GMP_RNDU);  
+  }
+  if ((ra == 0) && (rb == 0)) {
+    res = MPFI_FLAGS_BOTH_ENDPOINTS_EXACT;
+  } else {
+    if ((ra != 0) && (rb != 0)) {
+	res = MPFI_FLAGS_BOTH_ENDPOINTS_EXACT;
+    } else {
+      if (ra != 0) {
+	res = MPFI_FLAGS_LEFT_ENDPOINT_INEXACT;
+      } else {
+	res = MPFI_FLAGS_RIGHT_ENDPOINT_INEXACT;
+      }
+    }
+  }
+  sollya_mpfi_nan_normalize_opt(rop);
+  sollya_mpfi_empty_normalize_opt(rop);
+
+  return res;
+}
+
+
 int sollya_mpfi_mul_ui(sollya_mpfi_t rop, sollya_mpfi_t op1, unsigned long op2) {
   int res;
   mpfi_t temp;
@@ -952,6 +1018,39 @@ int sollya_mpfi_neg(sollya_mpfi_t rop, sollya_mpfi_t op) {
 void sollya_mpfi_set_prec(sollya_mpfi_t rop, mp_prec_t op) {
   mpfi_set_prec(rop,op);
 }
+
+int sollya_mpfi_prec_round(sollya_mpfi_t rop, mp_prec_t op) {
+  int res, ra, rb;
+
+  if (sollya_mpfi_is_empty_opt(rop)) {
+    sollya_mpfi_set_prec(rop, op);
+    return sollya_mpfi_set_empty_opt(rop);
+  }
+  
+  /* HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
+  */
+  ra = mpfr_prec_round(&(rop->left), op, GMP_RNDD);
+  rb = mpfr_prec_round(&(rop->right), op, GMP_RNDU);
+  if ((ra == 0) && (rb == 0)) {
+    res = MPFI_FLAGS_BOTH_ENDPOINTS_EXACT;
+  } else {
+    if ((ra != 0) && (rb != 0)) {
+	res = MPFI_FLAGS_BOTH_ENDPOINTS_EXACT;
+    } else {
+      if (ra != 0) {
+	res = MPFI_FLAGS_LEFT_ENDPOINT_INEXACT;
+      } else {
+	res = MPFI_FLAGS_RIGHT_ENDPOINT_INEXACT;
+      }
+    }
+  }
+  sollya_mpfi_nan_normalize_opt(rop);
+  sollya_mpfi_empty_normalize_opt(rop);
+
+  return res;
+}
+
 
 int sollya_mpfi_union(sollya_mpfi_t rop, sollya_mpfi_t op1, sollya_mpfi_t op2) {
   int res;

@@ -5999,7 +5999,39 @@ int evaluateSignTrigoUnsafe(int *s, node *child, int nodeType) {
   return okay;
 }
 
+int evaluateSignFast(int *s, node *constFunc) {
+  int okay;
+  sollya_mpfi_t y;
 
+  if (!isConstant(constFunc)) return 0;
+  if (accessThruMemRef(constFunc)->nodeType == CONSTANT) {
+      if (!mpfr_number_p(*(accessThruMemRef(constFunc)->value))) return 0;
+      *s = mpfr_sgn(*(accessThruMemRef(constFunc)->value));
+      return 1;
+  }
+
+  okay = 0;
+  sollya_mpfi_init2(y, 12);
+  evaluateConstantExpressionToSharpInterval(y, constFunc);
+  if (!sollya_mpfi_has_nan(y)) {
+    if (sollya_mpfi_is_zero(y)) {
+      okay = 1;
+      *s = 0;
+    } else {
+      if (!sollya_mpfi_has_zero(y)) {
+	okay = 1;
+	if (sollya_mpfi_is_nonneg(y)) {
+	  *s = 1;
+	} else {
+	  *s = -1;
+	}
+      }
+    }
+  }
+  sollya_mpfi_clear(y);
+
+  return okay;
+}
 
 int evaluateSign(int *s, node *rawFunc) {
   int sign, okay, okayA, okayB, okayC;
