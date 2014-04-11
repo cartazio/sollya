@@ -1766,7 +1766,7 @@ constant_t constantPow(constant_t, constant_t);
 constant_t constantNeg(constant_t);
 
 static inline constant_t __constantAllocate() {
-  return (constant_t) safeMalloc(sizeof(constant_t));
+  return (constant_t) safeMalloc(sizeof(struct __constant_struct_t));
 }
 
 static inline void __constantFreeMem(constant_t c) {
@@ -3626,7 +3626,7 @@ void constantEvalMpfi(sollya_mpfi_t rop, constant_t c) {
 /* Start of part for sparse polynomials */
 
 static inline sparse_polynomial_t __sparsePolynomialAllocate() {
-  return (sparse_polynomial_t) safeMalloc(sizeof(sparse_polynomial_t));
+  return (sparse_polynomial_t) safeMalloc(sizeof(struct __sparse_polynomial_struct_t));
 }
 
 static inline void __sparsePolynomialFreeMem(sparse_polynomial_t p) {
@@ -5712,7 +5712,7 @@ unsigned int sparsePolynomialGetMonomialCount(sparse_polynomial_t p) {
 /* Start of part for general (composed) polynomials */
 
 static inline polynomial_t __polynomialAllocate() {
-  return (polynomial_t) safeMalloc(sizeof(polynomial_t));
+  return (polynomial_t) safeMalloc(sizeof(struct __polynomial_struct_t));
 }
 
 static inline void __polynomialFreeMem(polynomial_t p) {
