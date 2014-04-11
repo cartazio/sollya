@@ -5707,6 +5707,26 @@ unsigned int sparsePolynomialGetMonomialCount(sparse_polynomial_t p) {
   return p->monomialCount;
 }
 
+void __sparsePolynomialPrintRaw(sparse_polynomial_t p) {
+  unsigned int i;
+
+  sollyaFprintf(stderr, "Sparse polynomial %p:\n", p);
+  if (p == NULL) return;
+  sollyaFprintf(stderr, "  reference count:      %u\n", p->refCount);
+  sollyaFprintf(stderr, "  monomial count:       %u\n", p->monomialCount);
+  sollyaFprintf(stderr, "  degree:               "); constantFPrintf(stderr, p->deg); sollyaFprintf(stderr, "\n");
+  sollyaFprintf(stderr, "  coefficients:\n");
+  for (i=0;i<p->monomialCount;i++) {
+    sollyaFprintf(stderr, "     %u: ", i); 
+    constantFPrintf(stderr, p->coeffs[i]); 
+    sollyaFprintf(stderr, " * x^("); 
+    constantFPrintf(stderr, p->monomialDegrees[i]); 
+    sollyaFprintf(stderr, ")\n");
+  }
+  sollyaFprintf(stderr, "\n");
+}
+
+
 /* End of part for sparse polynomials */
 
 /* Start of part for general (composed) polynomials */
@@ -7009,5 +7029,76 @@ int polynomialPow(polynomial_t *r, polynomial_t p, polynomial_t q) {
   /* Set the output and return success */
   *r = res;
   return 1;
+}
+
+void __polynomialPrintRaw(polynomial_t p) {
+  unsigned int i;
+
+  sollyaFprintf(stderr, "Polynomial %p:\n", p);
+  if (p == NULL) return;
+  sollyaFprintf(stderr, "  reference count:      %u\n", p->refCount);
+  sollyaFprintf(stderr, "  output type: ");
+  switch (p->outputType) {
+  case ANY_FORM:
+    sollyaFprintf(stderr, "Any form");
+    break;
+  case HORNER_FORM:
+    sollyaFprintf(stderr, "Horner form");
+    break;
+  case CANONICAL_FORM:
+    sollyaFprintf(stderr, "Canonical form");
+    break;
+  }
+  sollyaFprintf(stderr, "\n");
+  sollyaFprintf(stderr, "  representation type: ");
+  switch (p->type) {
+  case SPARSE:
+    sollyaFprintf(stderr, "Sparse polynomial");
+    break;
+  case ADDITION:
+    sollyaFprintf(stderr, "Addition");
+    break;
+  case SUBTRACTION:
+    sollyaFprintf(stderr, "Subtraction");
+    break;
+  case MULTIPLICATION:
+    sollyaFprintf(stderr, "Multiplication");
+    break;
+  case COMPOSITION:
+    sollyaFprintf(stderr, "Composition");
+    break;
+  case NEGATION:
+    sollyaFprintf(stderr, "Negation");
+    break;
+  case POWER:
+    sollyaFprintf(stderr, "Powering");
+    break;    
+  }
+  sollyaFprintf(stderr, "\n");
+  switch (p->type) {
+  case SPARSE:
+    __sparsePolynomialPrintRaw(p->value.sparse);
+    break;
+  case ADDITION:
+  case SUBTRACTION:
+  case MULTIPLICATION:
+  case COMPOSITION:
+    sollyaFprintf(stderr, "   g =\n");
+    __polynomialPrintRaw(p->value.pair.g);
+    sollyaFprintf(stderr, "   h =\n");
+    __polynomialPrintRaw(p->value.pair.h);
+    break;
+  case NEGATION:
+    sollyaFprintf(stderr, "   g =\n");
+    __polynomialPrintRaw(p->value.g);    
+    break;
+  case POWER:
+    sollyaFprintf(stderr, "   g =\n");
+    __polynomialPrintRaw(p->value.powering.g);
+    sollyaFprintf(stderr, "   c =\n");
+    constantFPrintf(stderr, p->value.powering.c);
+    break;    
+  }
+  sollyaFprintf(stderr, "\n");
 }
 
