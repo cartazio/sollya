@@ -89,6 +89,11 @@ polynomial_t polynomialCompose(polynomial_t, polynomial_t);
 void polynomialDiv(polynomial_t *, polynomial_t *, polynomial_t, polynomial_t);
 int polynomialPow(polynomial_t *, polynomial_t, polynomial_t);
 polynomial_t polynomialPowUnsignedInt(polynomial_t, unsigned int);
+polynomial_t polynomialDeriv(polynomial_t);
+
+/* Rewrite operations */
+polynomial_t polynomialHornerize(polynomial_t);
+polynomial_t polynomialCanonicalize(polynomial_t);
 
 /* Accessors */
 void polynomialGetDegree(mpz_t, polynomial_t);
@@ -96,11 +101,11 @@ int polynomialGetDegreeAsInt(polynomial_t);
 struct nodeStruct *polynomialGetIthCoefficient(polynomial_t, mpz_t);
 struct nodeStruct *polynomialGetIthCoefficientIntIndex(polynomial_t, int);
 int polynomialGetCoefficients(struct nodeStruct ***, unsigned int *, polynomial_t); 
-struct nodeStruct *polynomialGetExpression(polynomial_t, int);
+struct nodeStruct *polynomialGetExpression(polynomial_t);
 
 /* Displaying and conversion to strings */
-void polynomialFPrintf(FILE *, polynomial_t, int);
-char *polynomialToString(polynomial_t, int);
+void polynomialFPrintf(FILE *, polynomial_t);
+char *polynomialToString(polynomial_t);
 
 /* Evaluation */
 void polynomialEvalMpfr(mpfr_t, polynomial_t, mpfr_t);

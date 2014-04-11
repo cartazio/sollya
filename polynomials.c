@@ -65,7 +65,7 @@ struct __boolean_result_cache_struct_t {
 };
 typedef struct __boolean_result_cache_struct_t boolean_result_cache_t;
 
-/* Types for constants */
+/* Types for constants, sparse polynomials and polynomials */
 
 typedef enum __constant_type_enum_t constant_type_t;
 enum __constant_type_enum_t {
@@ -97,12 +97,49 @@ struct __constant_struct_t {
   } value;
 };
 
-struct __polynomial_struct_t {
+typedef struct __sparse_polynomial_struct_t * sparse_polynomial_t;
+struct __sparse_polynomial_struct_t {
   unsigned int refCount;
   constant_t deg;
   unsigned int monomialCount;
   constant_t *coeffs;
   constant_t *monomialDegrees;
+};
+
+typedef enum __polynomial_type_enum_t polynomial_type_t;
+enum __polynomial_type_enum_t {
+  SPARSE = 0,
+  ADDITION,
+  SUBTRACTION,
+  MULTIPLICATION,
+  COMPOSITION,
+  NEGATE,
+  POWER
+};
+
+typedef enum __polynomial_output_type_enum_t polynomial_output_type_t;
+enum __polynomial_output_type_enum_t {
+  ANY_FORM = 0,
+  HORNER_FORM,
+  CANONICAL_FORM
+};
+
+struct __polynomial_struct_t {
+  unsigned int refCount;
+  polynomial_type_t type;
+  polynomial_output_type_t outputType;
+  union { 
+    sparse_polynomial_t sparse;
+    polynomial_t g;
+    struct {
+      polynomial_t g;
+      polynomial_t h;
+    } pair;
+    struct {
+      polynomial_t g;
+      constant_t c;
+    } powering;
+  } value;
 };
 
 /* Helper functions */
@@ -1911,7 +1948,7 @@ constant_t constantFromExpression(node *c) {
 void constantFree(constant_t c) {
   if (c == NULL) return;
   c->refCount--;
-  if (c->refCount > 0) return;
+  if (c->refCount > 0u) return;
   switch (c->type) {
   case INTEGER:
     break;
@@ -3586,15 +3623,17 @@ void constantEvalMpfi(sollya_mpfi_t rop, constant_t c) {
 
 /* End of part for constants */
 
-static inline polynomial_t __polynomialAllocate() {
-  return (polynomial_t) safeMalloc(sizeof(polynomial_t));
+/* Start of part for sparse polynomials */
+
+static inline sparse_polynomial_t __sparsePolynomialAllocate() {
+  return (sparse_polynomial_t) safeMalloc(sizeof(sparse_polynomial_t));
 }
 
-static inline void __polynomialFreeMem(polynomial_t p) {
+static inline void __sparsePolynomialFreeMem(sparse_polynomial_t p) {
   safeFree(p);
 }
 
-static inline void __polynomialAdjustDegree(polynomial_t p) {
+static inline void __sparsePolynomialAdjustDegree(sparse_polynomial_t p) {
   unsigned int i, k;
 
   if (p == NULL) return;
@@ -3635,7 +3674,7 @@ static inline void __polynomialAdjustDegree(polynomial_t p) {
    complexity.
 
 */
-static inline unsigned int __polynomialFindDegreeNaive(constant_t d, 
+static inline unsigned int __sparsePolynomialFindDegreeNaive(constant_t d, 
 						       constant_t *a, 
 						       unsigned int n) {
   unsigned int i;
@@ -3669,7 +3708,7 @@ static inline unsigned int __polynomialFindDegreeNaive(constant_t d,
   or equal to d.
 
 */
-static inline unsigned int __polynomialFindDegree(constant_t d, 
+static inline unsigned int __sparsePolynomialFindDegree(constant_t d, 
 						  constant_t *a, 
 						  unsigned int n,
 						  unsigned int g) {
@@ -3682,14 +3721,14 @@ static inline unsigned int __polynomialFindDegree(constant_t d,
 
   /* Check if 0-th (first) element is greater than or equal to d. */
   tv = constantIsGreaterOrEqual(a[0],d,42);
-  if (tv == 42) return __polynomialFindDegreeNaive(d, a, n);
+  if (tv == 42) return __sparsePolynomialFindDegreeNaive(d, a, n);
   if (tv) return 0;
   
   /* Check if (n-1)-th (last) element is less than, i.e. not greater
      than nor equal to, d.
   */
   tv = constantIsGreaterOrEqual(a[n-1u],d,1);
-  if (tv == 42) return __polynomialFindDegreeNaive(d, a, n);
+  if (tv == 42) return __sparsePolynomialFindDegreeNaive(d, a, n);
   if (!tv) return n;
 
   /* If g is in the valid range of indices (0 <= g <= n - 1), try to
@@ -3698,7 +3737,7 @@ static inline unsigned int __polynomialFindDegree(constant_t d,
   if ((0u <= g) && (g <= n - 1u)) {
     for (p=n+1u, i=g, j=0; (j<64) && (0u <= i) && (i <= n - 1u); j++) {
       tv = constantIsGreaterOrEqual(a[i],d,42);
-      if (tv == 42) return __polynomialFindDegreeNaive(d, a, n);
+      if (tv == 42) return __sparsePolynomialFindDegreeNaive(d, a, n);
       if (tv) {
 	/* The i-th element of the array is greater than or equal to
 	   d. If we just made a step to the right, we know the
@@ -3751,7 +3790,7 @@ static inline unsigned int __polynomialFindDegree(constant_t d,
     
     /* Check value at the middle of the interval */
     tv = constantIsGreaterOrEqual(a[m],d,42);
-    if (tv == 42) return __polynomialFindDegreeNaive(d, a, n);
+    if (tv == 42) return __sparsePolynomialFindDegreeNaive(d, a, n);
     if (tv) {
       /* Here, d <= a[m], so the new interval becomes [l;m] */
       r = m;
@@ -3764,17 +3803,17 @@ static inline unsigned int __polynomialFindDegree(constant_t d,
   /* Here, we know that a[l] < d and d <= a[r] */
   for (i=l; l<=r; i++) {
     tv = constantIsGreaterOrEqual(a[i],d,42);
-    if (tv == 42) return __polynomialFindDegreeNaive(d, a, n);
+    if (tv == 42) return __sparsePolynomialFindDegreeNaive(d, a, n);
     if (tv) return i;
   }
   
   /* Can only be reached if comparison not possible */
-  return __polynomialFindDegreeNaive(d, a, n);
+  return __sparsePolynomialFindDegreeNaive(d, a, n);
 }
 
-polynomial_t polynomialFromMpfrConstant(mpfr_t c) {
-  polynomial_t res;
-  res = __polynomialAllocate();
+sparse_polynomial_t sparsePolynomialFromMpfrConstant(mpfr_t c) {
+  sparse_polynomial_t res;
+  res = __sparsePolynomialAllocate();
   res->refCount = 1;
   res->monomialCount = 1;
   res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
@@ -3785,9 +3824,9 @@ polynomial_t polynomialFromMpfrConstant(mpfr_t c) {
   return res;
 }
 
-polynomial_t polynomialFromMpzConstant(mpz_t c) {
-  polynomial_t res;
-  res = __polynomialAllocate();
+sparse_polynomial_t sparsePolynomialFromMpzConstant(mpz_t c) {
+  sparse_polynomial_t res;
+  res = __sparsePolynomialAllocate();
   res->refCount = 1;
   res->monomialCount = 1;
   res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
@@ -3798,9 +3837,9 @@ polynomial_t polynomialFromMpzConstant(mpz_t c) {
   return res;
 }
 
-polynomial_t polynomialFromMpqConstant(mpq_t c) {
-  polynomial_t res;
-  res = __polynomialAllocate();
+sparse_polynomial_t sparsePolynomialFromMpqConstant(mpq_t c) {
+  sparse_polynomial_t res;
+  res = __sparsePolynomialAllocate();
   res->refCount = 1;
   res->monomialCount = 1;
   res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
@@ -3811,9 +3850,9 @@ polynomial_t polynomialFromMpqConstant(mpq_t c) {
   return res;
 }
 
-polynomial_t polynomialFromConstant(constant_t c) {
-  polynomial_t res;
-  res = __polynomialAllocate();
+sparse_polynomial_t sparsePolynomialFromConstant(constant_t c) {
+  sparse_polynomial_t res;
+  res = __sparsePolynomialAllocate();
   res->refCount = 1;
   res->monomialCount = 1;
   res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
@@ -3824,9 +3863,9 @@ polynomial_t polynomialFromConstant(constant_t c) {
   return res;
 }
 
-polynomial_t polynomialFromIntConstant(int c) {
-  polynomial_t res;
-  res = __polynomialAllocate();
+sparse_polynomial_t sparsePolynomialFromIntConstant(int c) {
+  sparse_polynomial_t res;
+  res = __sparsePolynomialAllocate();
   res->refCount = 1;
   res->monomialCount = 1;
   res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
@@ -3837,11 +3876,11 @@ polynomial_t polynomialFromIntConstant(int c) {
   return res;
 }
 
-static inline int __polynomialFromConstantExpression(polynomial_t *r, node *c) {
-  polynomial_t res;
+static inline int __sparsePolynomialFromConstantExpression(sparse_polynomial_t *r, node *c) {
+  sparse_polynomial_t res;
   if (c == NULL) return 0;
   if (!isConstant(c)) return 0;
-  res = __polynomialAllocate();
+  res = __sparsePolynomialAllocate();
   res->refCount = 1;
   res->monomialCount = 1;
   res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
@@ -3853,9 +3892,9 @@ static inline int __polynomialFromConstantExpression(polynomial_t *r, node *c) {
   return 1;
 }
 
-polynomial_t polynomialFromIdentity() {
-  polynomial_t res;
-  res = __polynomialAllocate();
+sparse_polynomial_t sparsePolynomialFromIdentity() {
+  sparse_polynomial_t res;
+  res = __sparsePolynomialAllocate();
   res->refCount = 1;
   res->monomialCount = 1;
   res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
@@ -3866,12 +3905,12 @@ polynomial_t polynomialFromIdentity() {
   return res;
 }
 
-polynomial_t polynomialFromMpfrCoefficients(mpfr_t *coeffs, unsigned int deg) {
+sparse_polynomial_t sparsePolynomialFromMpfrCoefficients(mpfr_t *coeffs, unsigned int deg) {
   unsigned int i, s;
-  polynomial_t res;
+  sparse_polynomial_t res;
   constant_t c;
   
-  res = __polynomialAllocate();
+  res = __sparsePolynomialAllocate();
   res->refCount = 1;
   res->deg = constantFromUnsignedInt(deg);
   s = deg + 1u;
@@ -3889,19 +3928,20 @@ polynomial_t polynomialFromMpfrCoefficients(mpfr_t *coeffs, unsigned int deg) {
     }
   }
   res->deg = constantFromCopy(res->monomialDegrees[res->monomialCount-1u]);
-  __polynomialAdjustDegree(res);
+  __sparsePolynomialAdjustDegree(res);
   return res;  
 }
 
-int polynomialFromConstantExpressionCoefficients(polynomial_t *r, node **coeffs, unsigned int deg) {
+int sparsePolynomialFromConstantExpressionCoefficients(sparse_polynomial_t *r, node **coeffs, unsigned int deg) {
   unsigned int i, s;
-  polynomial_t res;
+  sparse_polynomial_t res;
   constant_t c;
   
+  if (coeffs == NULL) return 0;
   for (i=0;i<=deg;i++) {
     if (!isConstant(coeffs[i])) return 0;
   }
-  res = __polynomialAllocate();
+  res = __sparsePolynomialAllocate();
   res->refCount = 1;
   s = deg + 1u;
   if (s == 0u) s = UINT_MAX;
@@ -3918,23 +3958,23 @@ int polynomialFromConstantExpressionCoefficients(polynomial_t *r, node **coeffs,
     }
   }
   res->deg = constantFromCopy(res->monomialDegrees[res->monomialCount-1u]);
-  __polynomialAdjustDegree(res);
+  __sparsePolynomialAdjustDegree(res);
   *r = res;
   return 1;
 }
 
-polynomial_t polynomialFromCopy(polynomial_t p) {
+sparse_polynomial_t sparsePolynomialFromCopy(sparse_polynomial_t p) {
   if (p == NULL) return NULL;
   p->refCount++;
   return p;
 }
 
-void polynomialFree(polynomial_t p) {
+void sparsePolynomialFree(sparse_polynomial_t p) {
   unsigned int i;
 
   if (p == NULL) return;
   p->refCount--;
-  if (p->refCount > 0) return;
+  if (p->refCount > 0u) return;
   constantFree(p->deg);
   for (i=0;i<p->monomialCount;i++) {
     constantFree(p->coeffs[i]);
@@ -3942,10 +3982,10 @@ void polynomialFree(polynomial_t p) {
   }
   safeFree(p->coeffs);
   safeFree(p->monomialDegrees);
-  __polynomialFreeMem(p);
+  __sparsePolynomialFreeMem(p);
 }
 
-int polynomialEqual(polynomial_t p, polynomial_t q, int defVal) {
+int sparsePolynomialEqual(sparse_polynomial_t p, sparse_polynomial_t q, int defVal) {
   unsigned int i;
   int monDegEqual, coeffEqual, degreeEqual;
 
@@ -3968,7 +4008,7 @@ int polynomialEqual(polynomial_t p, polynomial_t q, int defVal) {
   return 1;
 }
 
-int polynomialIsConstant(polynomial_t p, int defVal) {
+int sparsePolynomialIsConstant(sparse_polynomial_t p, int defVal) {
   int degZero;
 
   if (p == NULL) return defVal;
@@ -3979,12 +4019,12 @@ int polynomialIsConstant(polynomial_t p, int defVal) {
   return 1;
 }
 
-int polynomialConstantGetConstant(constant_t *c, polynomial_t p) {
+int sparsePolynomialConstantGetConstant(constant_t *c, sparse_polynomial_t p) {
   unsigned int i;
   constant_t t;
 
   if (p == NULL) return 0;
-  if (!polynomialIsConstant(p, 0)) return 0;
+  if (!sparsePolynomialIsConstant(p, 0)) return 0;
   if (p->monomialCount == 0u) {
     *c = constantFromInt(0);
     return 1;
@@ -4002,15 +4042,15 @@ int polynomialConstantGetConstant(constant_t *c, polynomial_t p) {
   return 1;
 }
 
-int polynomialIsConstantZero(polynomial_t p, int defVal) {
+int sparsePolynomialIsConstantZero(sparse_polynomial_t p, int defVal) {
   int isConst, res;
   constant_t c;
 
   if (p == NULL) return defVal;
-  isConst = polynomialIsConstant(p, 42);
+  isConst = sparsePolynomialIsConstant(p, 42);
   if (isConst == 42) return defVal;
   if (!isConst) return 0;
-  if (polynomialConstantGetConstant(&c, p)) {
+  if (sparsePolynomialConstantGetConstant(&c, p)) {
     res = constantIsZero(c, defVal);
     constantFree(c);
     return res;
@@ -4018,15 +4058,15 @@ int polynomialIsConstantZero(polynomial_t p, int defVal) {
   return defVal;
 }
 
-int polynomialIsConstantOne(polynomial_t p, int defVal) {
+int sparsePolynomialIsConstantOne(sparse_polynomial_t p, int defVal) {
   int isConst, res;
   constant_t c;
 
   if (p == NULL) return defVal;
-  isConst = polynomialIsConstant(p, 42);
+  isConst = sparsePolynomialIsConstant(p, 42);
   if (isConst == 42) return defVal;
   if (!isConst) return 0;
-  if (polynomialConstantGetConstant(&c, p)) {
+  if (sparsePolynomialConstantGetConstant(&c, p)) {
     res = constantIsOne(c, defVal);
     constantFree(c);
     return res;
@@ -4034,8 +4074,8 @@ int polynomialIsConstantOne(polynomial_t p, int defVal) {
   return defVal;
 }
 
-polynomial_t polynomialAdd(polynomial_t p, polynomial_t q) {
-  polynomial_t res;
+sparse_polynomial_t sparsePolynomialAdd(sparse_polynomial_t p, sparse_polynomial_t q) {
+  sparse_polynomial_t res;
   unsigned int i,j,startSize;
   constant_t newCoeff, newMonomial;
 
@@ -4044,15 +4084,15 @@ polynomial_t polynomialAdd(polynomial_t p, polynomial_t q) {
   if (q == NULL) return NULL;
   
   /* Handle addition of zero polynomial */
-  if (polynomialIsConstantZero(p, 0)) {
-    return polynomialFromCopy(q);
+  if (sparsePolynomialIsConstantZero(p, 0)) {
+    return sparsePolynomialFromCopy(q);
   }
-  if (polynomialIsConstantZero(q, 0)) {
-    return polynomialFromCopy(p);
+  if (sparsePolynomialIsConstantZero(q, 0)) {
+    return sparsePolynomialFromCopy(p);
   }
 
   /* General case */
-  res = __polynomialAllocate();
+  res = __sparsePolynomialAllocate();
   res->refCount = 1;
   startSize = p->monomialCount + q->monomialCount;
   if (startSize < p->monomialCount) {
@@ -4063,7 +4103,7 @@ polynomial_t polynomialAdd(polynomial_t p, polynomial_t q) {
   res->monomialDegrees = (constant_t *) safeCalloc(startSize, 
 						   sizeof(constant_t));
   res->monomialCount = 0;
-  for (i=0, j=0; (i<p->monomialCount) && (j<q->monomialCount); /* nothing */) {
+  for (i=0u, j=0u; (i<p->monomialCount) && (j<q->monomialCount); /* nothing */) {
     /* We have 3 cases:
 
        (i)   The degree of the i-th monomial of p and the one of the
@@ -4147,13 +4187,15 @@ polynomial_t polynomialAdd(polynomial_t p, polynomial_t q) {
 						      ((size_t) (res->monomialCount)) * sizeof(constant_t));
   }
   /* Adjust the degree for zero leading coefficients */
-  __polynomialAdjustDegree(res);
+  __sparsePolynomialAdjustDegree(res);
 
   return res;
 }
 
-polynomial_t polynomialSub(polynomial_t p, polynomial_t q) {
-  polynomial_t res;
+sparse_polynomial_t sparsePolynomialNeg(sparse_polynomial_t);
+
+sparse_polynomial_t sparsePolynomialSub(sparse_polynomial_t p, sparse_polynomial_t q) {
+  sparse_polynomial_t res;
   unsigned int i,j,startSize;
   constant_t newCoeff, newMonomial;
 
@@ -4162,15 +4204,15 @@ polynomial_t polynomialSub(polynomial_t p, polynomial_t q) {
   if (q == NULL) return NULL;
   
   /* Handle subtraction of zero polynomial */
-  if (polynomialIsConstantZero(p, 0)) {
-    return polynomialNeg(q);
+  if (sparsePolynomialIsConstantZero(p, 0)) {
+    return sparsePolynomialNeg(q);
   }
-  if (polynomialIsConstantZero(q, 0)) {
-    return polynomialFromCopy(p);
+  if (sparsePolynomialIsConstantZero(q, 0)) {
+    return sparsePolynomialFromCopy(p);
   }
 
   /* General case */
-  res = __polynomialAllocate();
+  res = __sparsePolynomialAllocate();
   res->refCount = 1;
   startSize = p->monomialCount + q->monomialCount;
   if (startSize < p->monomialCount) {
@@ -4181,7 +4223,7 @@ polynomial_t polynomialSub(polynomial_t p, polynomial_t q) {
   res->monomialDegrees = (constant_t *) safeCalloc(startSize, 
 						   sizeof(constant_t));
   res->monomialCount = 0;
-  for (i=0, j=0; (i<p->monomialCount) && (j<q->monomialCount); /* nothing */) {
+  for (i=0u, j=0u; (i<p->monomialCount) && (j<q->monomialCount); /* nothing */) {
     /* We have 3 cases:
 
        (i)   The degree of the i-th monomial of p and the one of the
@@ -4266,12 +4308,12 @@ polynomial_t polynomialSub(polynomial_t p, polynomial_t q) {
 						      ((size_t) (res->monomialCount)) * sizeof(constant_t));
   }
   /* Adjust the degree for zero leading coefficients */
-  __polynomialAdjustDegree(res);
+  __sparsePolynomialAdjustDegree(res);
 
   return res;
 }
 
-static inline void __polynomialAddMonomialToArrays(constant_t *coeffs, 
+static inline void __sparsePolynomialAddMonomialToArrays(constant_t *coeffs, 
 						   constant_t *degrees,
 						   unsigned int *n,
 						   unsigned int *g,
@@ -4281,7 +4323,7 @@ static inline void __polynomialAddMonomialToArrays(constant_t *coeffs,
   constant_t t;
 
   /* Find the index where to add the coefficient */
-  j = __polynomialFindDegree(d, degrees, *n, *g);
+  j = __sparsePolynomialFindDegree(d, degrees, *n, *g);
 
   /* Keep the value of the index as a guess for the next time */
   *g = j;
@@ -4335,23 +4377,23 @@ static inline void __polynomialAddMonomialToArrays(constant_t *coeffs,
   degrees[j] = d;
 }
 
-polynomial_t polynomialAddConstant(polynomial_t p, constant_t c) {
-  polynomial_t t, res;
+sparse_polynomial_t sparsePolynomialAddConstant(sparse_polynomial_t p, constant_t c) {
+  sparse_polynomial_t t, res;
 
   /* Handle the stupid cases */
   if (p == NULL) return NULL;
   if (c == NULL) return NULL;
 
   /* Can be optimized */
-  t = polynomialFromConstant(c);
-  res = polynomialAdd(p, t);
-  polynomialFree(t);
+  t = sparsePolynomialFromConstant(c);
+  res = sparsePolynomialAdd(p, t);
+  sparsePolynomialFree(t);
 
   return res;
 }
 
-polynomial_t polynomialMul(polynomial_t p, polynomial_t q) {
-  polynomial_t res;
+sparse_polynomial_t sparsePolynomialMul(sparse_polynomial_t p, sparse_polynomial_t q) {
+  sparse_polynomial_t res;
   unsigned int i,j,startSize,g,d;
   constant_t pp, md, t;
 
@@ -4360,19 +4402,19 @@ polynomial_t polynomialMul(polynomial_t p, polynomial_t q) {
   if (q == NULL) return NULL;
   
   /* Handle multiplication of zero polynomial */
-  if (polynomialIsConstantZero(p, 0)) {
-    return polynomialFromCopy(p);
+  if (sparsePolynomialIsConstantZero(p, 0)) {
+    return sparsePolynomialFromCopy(p);
   }
-  if (polynomialIsConstantZero(q, 0)) {
-    return polynomialFromCopy(q);
+  if (sparsePolynomialIsConstantZero(q, 0)) {
+    return sparsePolynomialFromCopy(q);
   }
 
   /* Handle multiplication of polynomial one */
-  if (polynomialIsConstantOne(p, 0)) {
-    return polynomialFromCopy(q);
+  if (sparsePolynomialIsConstantOne(p, 0)) {
+    return sparsePolynomialFromCopy(q);
   }
-  if (polynomialIsConstantOne(q, 0)) {
-    return polynomialFromCopy(p);
+  if (sparsePolynomialIsConstantOne(q, 0)) {
+    return sparsePolynomialFromCopy(p);
   }
 
   /* General case 
@@ -4397,7 +4439,7 @@ polynomial_t polynomialMul(polynomial_t p, polynomial_t q) {
   constantFree(t);
 
   /* Allocate the result polynomial */
-  res = __polynomialAllocate();
+  res = __sparsePolynomialAllocate();
   res->refCount = 1;
   res->coeffs = (constant_t *) safeCalloc(startSize, 
 					  sizeof(constant_t));
@@ -4407,12 +4449,12 @@ polynomial_t polynomialMul(polynomial_t p, polynomial_t q) {
   
   /* Produce all partial products p_i * q_i * x^(m_i + n_i) */
   g = 0;
-  for (i=0;i<p->monomialCount;i++) {
-    for (j=0;j<q->monomialCount;j++) {
+  for (i=0u;i<p->monomialCount;i++) {
+    for (j=0u;j<q->monomialCount;j++) {
       pp = constantMul(p->coeffs[i], q->coeffs[j]);
       if (!constantIsZero(pp, 0)) {
 	md = constantAdd(p->monomialDegrees[i],q->monomialDegrees[j]);
-	__polynomialAddMonomialToArrays(res->coeffs, res->monomialDegrees, 
+	__sparsePolynomialAddMonomialToArrays(res->coeffs, res->monomialDegrees, 
 					&(res->monomialCount), &g, pp, md);
       } else {
 	constantFree(pp);
@@ -4439,32 +4481,32 @@ polynomial_t polynomialMul(polynomial_t p, polynomial_t q) {
 						      ((size_t) (res->monomialCount)) * sizeof(constant_t));
   }
   /* Adjust the degree for zero leading coefficients */
-  __polynomialAdjustDegree(res);
+  __sparsePolynomialAdjustDegree(res);
 
   return res;
 }
 
-polynomial_t polynomialNeg(polynomial_t p) {
+sparse_polynomial_t sparsePolynomialNeg(sparse_polynomial_t p) {
   unsigned int i;
-  polynomial_t res;
+  sparse_polynomial_t res;
 
   if (p == NULL) return NULL;
-  res = __polynomialAllocate();
+  res = __sparsePolynomialAllocate();
   res->refCount = 1;
   res->deg = constantFromCopy(p->deg);
   res->monomialCount = p->monomialCount;
   res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
   res->monomialDegrees = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
-  for (i=0;i<res->monomialCount;i++) {
+  for (i=0u;i<res->monomialCount;i++) {
     res->coeffs[i] = constantNeg(p->coeffs[i]);
     res->monomialDegrees[i] = constantFromCopy(p->monomialDegrees[i]);
   }
-  __polynomialAdjustDegree(res);
+  __sparsePolynomialAdjustDegree(res);
   return res;
 }
 
-polynomial_t polynomialCompose(polynomial_t p, polynomial_t q) {
-  polynomial_t res, t, m;
+sparse_polynomial_t sparsePolynomialCompose(sparse_polynomial_t p, sparse_polynomial_t q) {
+  sparse_polynomial_t res, t, m;
   constant_t d;
   unsigned int i;
 
@@ -4473,39 +4515,39 @@ polynomial_t polynomialCompose(polynomial_t p, polynomial_t q) {
   if (q == NULL) return NULL;
 
   /* Handle the strange case when p has no monomials */
-  if (p->monomialCount == 0u) return polynomialFromIntConstant(0);
+  if (p->monomialCount == 0u) return sparsePolynomialFromIntConstant(0);
 
   /* Perform Horner evaluation of p in q */
-  res = polynomialFromConstant(p->coeffs[p->monomialCount-1u]);
+  res = sparsePolynomialFromConstant(p->coeffs[p->monomialCount-1u]);
   for (i=p->monomialCount-1u;i>=1u;i--) {
     d = constantSub(p->monomialDegrees[i], p->monomialDegrees[i-1u]);
-    if (!polynomialPowConstant(&m, q, d)) {
-      sollyaFprintf(stderr,"Error: polynomialCompose: monomial degrees not appropriately ordered\n");
+    if (!sparsePolynomialPowConstant(&m, q, d)) {
+      sollyaFprintf(stderr,"Error: sparsePolynomialCompose: monomial degrees not appropriately ordered\n");
       exit(1);
     }
-    t = polynomialMul(res, m);
-    polynomialFree(res);
+    t = sparsePolynomialMul(res, m);
+    sparsePolynomialFree(res);
     res = t;
-    polynomialFree(m);
+    sparsePolynomialFree(m);
     constantFree(d);
-    t = polynomialAddConstant(res, p->coeffs[i-1u]);
-    polynomialFree(res);
+    t = sparsePolynomialAddConstant(res, p->coeffs[i-1u]);
+    sparsePolynomialFree(res);
     res = t;
   }
-  if (!polynomialPowConstant(&m, q, p->monomialDegrees[0u])) {
-    sollyaFprintf(stderr,"Error: polynomialCompose: monomial degrees not appropriately ordered\n");
+  if (!sparsePolynomialPowConstant(&m, q, p->monomialDegrees[0u])) {
+    sollyaFprintf(stderr,"Error: sparsePolynomialCompose: monomial degrees not appropriately ordered\n");
     exit(1);
   }
-  t = polynomialMul(res, m);
-  polynomialFree(res);
+  t = sparsePolynomialMul(res, m);
+  sparsePolynomialFree(res);
   res = t;
-  polynomialFree(m);
+  sparsePolynomialFree(m);
 
   return res;
 }
 
-static inline void __polynomialGetLeadingCoefficient(constant_t *c, constant_t *d, polynomial_t *r, polynomial_t p) {
-  polynomial_t res;
+static inline void __sparsePolynomialGetLeadingCoefficient(constant_t *c, constant_t *d, sparse_polynomial_t *r, sparse_polynomial_t p) {
+  sparse_polynomial_t res;
   unsigned int i;
 
   /* Handle stupid cases */
@@ -4520,7 +4562,7 @@ static inline void __polynomialGetLeadingCoefficient(constant_t *c, constant_t *
   if (p->monomialCount == 0u) {
     *c = constantFromInt(0);
     *d = constantFromInt(0);
-    *r = polynomialFromIntConstant(0);
+    *r = sparsePolynomialFromIntConstant(0);
     return;
   }
 
@@ -4528,14 +4570,14 @@ static inline void __polynomialGetLeadingCoefficient(constant_t *c, constant_t *
   if (p->monomialCount == 1u) {
     *c = constantFromCopy(p->coeffs[0]);
     *d = constantFromCopy(p->monomialDegrees[0]);
-    *r = polynomialFromIntConstant(0);
+    *r = sparsePolynomialFromIntConstant(0);
     return;
   }
   
   /* Here, the polynomial has at least two monomials */
   *c = constantFromCopy(p->coeffs[p->monomialCount - 1u]);
   *d = constantFromCopy(p->monomialDegrees[p->monomialCount - 1u]);
-  res = __polynomialAllocate();
+  res = __sparsePolynomialAllocate();
   res->refCount = 1;
   res->monomialCount = p->monomialCount - 1u;
   res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
@@ -4545,13 +4587,13 @@ static inline void __polynomialGetLeadingCoefficient(constant_t *c, constant_t *
     res->monomialDegrees[i] = constantFromCopy(p->monomialDegrees[i]);
   }
   res->deg = constantFromCopy(res->monomialDegrees[res->monomialCount-1u]);
-  __polynomialAdjustDegree(res);
+  __sparsePolynomialAdjustDegree(res);
   *r = res;
 }
 
-static inline polynomial_t __polynomialFromMonomial(constant_t c, constant_t d) {
-  polynomial_t res;
-  res = __polynomialAllocate();
+static inline sparse_polynomial_t __sparsePolynomialFromMonomial(constant_t c, constant_t d) {
+  sparse_polynomial_t res;
+  res = __sparsePolynomialAllocate();
   res->refCount = 1;
   res->monomialCount = 1;
   res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
@@ -4562,8 +4604,8 @@ static inline polynomial_t __polynomialFromMonomial(constant_t c, constant_t d) 
   return res;
 }
 
-void polynomialDiv(polynomial_t *quot, polynomial_t *rest, polynomial_t a, polynomial_t b) {
-  polynomial_t q, r, rt, bt, t1, t2, qp;
+void sparsePolynomialDiv(sparse_polynomial_t *quot, sparse_polynomial_t *rest, sparse_polynomial_t a, sparse_polynomial_t b) {
+  sparse_polynomial_t q, r, rt, bt, t1, t2, qp;
   constant_t rc, rd, bc, bd, qc, qd;
 
   /* Handle stupid cases */
@@ -4583,56 +4625,56 @@ void polynomialDiv(polynomial_t *quot, polynomial_t *rest, polynomial_t a, polyn
      a = q * b + r
 
   */
-  q = polynomialFromIntConstant(0);
-  r = polynomialFromCopy(a);
+  q = sparsePolynomialFromIntConstant(0);
+  r = sparsePolynomialFromCopy(a);
   
   /* Euclidean division */
-  __polynomialGetLeadingCoefficient(&bc,&bd,&bt,b);
+  __sparsePolynomialGetLeadingCoefficient(&bc,&bd,&bt,b);
   while ((!constantIsGreater(b->deg,r->deg,1)) && 
-	 (!polynomialIsConstantZero(r,1))) {
-    __polynomialGetLeadingCoefficient(&rc,&rd,&rt,r);
+	 (!sparsePolynomialIsConstantZero(r,1))) {
+    __sparsePolynomialGetLeadingCoefficient(&rc,&rd,&rt,r);
     qc = constantDiv(rc,bc);
     constantFree(rc);
     qd = constantSub(rd,bd);
     constantFree(rd);
-    qp = __polynomialFromMonomial(qc,qd);
+    qp = __sparsePolynomialFromMonomial(qc,qd);
     constantFree(qc);
     constantFree(qd);
-    t1 = polynomialAdd(q, qp);
-    polynomialFree(q);
+    t1 = sparsePolynomialAdd(q, qp);
+    sparsePolynomialFree(q);
     q = t1;
-    t1 = polynomialMul(qp,bt);
-    t2 = polynomialSub(rt,t1);
-    polynomialFree(t1);
-    polynomialFree(rt);
-    polynomialFree(r);
+    t1 = sparsePolynomialMul(qp,bt);
+    t2 = sparsePolynomialSub(rt,t1);
+    sparsePolynomialFree(t1);
+    sparsePolynomialFree(rt);
+    sparsePolynomialFree(r);
     r = t2;
   }
   constantFree(bc);
   constantFree(bd);
-  polynomialFree(bt);
+  sparsePolynomialFree(bt);
 
   /* Set the result polynomials */
   *quot = q;
   *rest = r;
 }
 
-polynomial_t polynomialPowUnsignedInt(polynomial_t p, unsigned int n) {
-  polynomial_t res, t, tmp;
+sparse_polynomial_t sparsePolynomialPowUnsignedInt(sparse_polynomial_t p, unsigned int n) {
+  sparse_polynomial_t res, t, tmp;
   constant_t nC;
   
   /* Handle stupid input */
   if (p == NULL) return NULL;
 
   /* Handle easy cases */
-  if (n == 0) return polynomialFromIntConstant(1);
-  if (n == 1) return polynomialFromCopy(p);
-  if (n == 2) return polynomialMul(p,p);
+  if (n == 0) return sparsePolynomialFromIntConstant(1);
+  if (n == 1) return sparsePolynomialFromCopy(p);
+  if (n == 2) return sparsePolynomialMul(p,p);
   
   /* Handle the case when the polynomial only has one monomial */
   if (p->monomialCount == 1) {
     nC = constantFromUnsignedInt(n);
-    res = __polynomialAllocate();
+    res = __sparsePolynomialAllocate();
     res->refCount = 1;
     res->monomialCount = 1;
     res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
@@ -4645,30 +4687,30 @@ polynomial_t polynomialPowUnsignedInt(polynomial_t p, unsigned int n) {
   }
 
   /* Square and multiply loop */
-  t = polynomialFromCopy(p);
-  res = polynomialFromIntConstant(1);
+  t = sparsePolynomialFromCopy(p);
+  res = sparsePolynomialFromIntConstant(1);
   while (n > 0u) {
     if (n & 1u) {
-      tmp = polynomialMul(res,t);
-      polynomialFree(res);
+      tmp = sparsePolynomialMul(res,t);
+      sparsePolynomialFree(res);
       res = tmp;
     }
     n >>= 1;
     if (n > 0u) {
-      tmp = polynomialMul(t,t);
-      polynomialFree(t);
+      tmp = sparsePolynomialMul(t,t);
+      sparsePolynomialFree(t);
       t = tmp;
     }
   }
-  polynomialFree(t);
+  sparsePolynomialFree(t);
 
   return res;
 }
 
-int polynomialPowConstant(polynomial_t *r, polynomial_t p, constant_t n) {
+int sparsePolynomialPowConstant(sparse_polynomial_t *r, sparse_polynomial_t p, constant_t n) {
   unsigned int nI;
   constant_t k, l, m;
-  polynomial_t res, a, b, t;
+  sparse_polynomial_t res, a, b, t;
 
   if (p == NULL) return 0;
   if (n == NULL) return 0;
@@ -4676,17 +4718,17 @@ int polynomialPowConstant(polynomial_t *r, polynomial_t p, constant_t n) {
  
   /* Handle the cases n = 0 and n = 1 */
   if (constantIsZero(n,0)) {
-    *r = polynomialFromIntConstant(1);
+    *r = sparsePolynomialFromIntConstant(1);
     return 1;
   }
   if (constantIsOne(n,0)) {
-    *r = polynomialFromCopy(p);
+    *r = sparsePolynomialFromCopy(p);
     return 1;
   }
 
   /* Handle the case when p only has one monomial */
   if (p->monomialCount == 1) {
-    res = __polynomialAllocate();
+    res = __sparsePolynomialAllocate();
     res->refCount = 1;
     res->monomialCount = 1;
     res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
@@ -4700,7 +4742,7 @@ int polynomialPowConstant(polynomial_t *r, polynomial_t p, constant_t n) {
  
   /* Try to use the powering function with an unsigned int argument */
   if (tryConstantToUnsignedInt(&nI, n)) {
-    *r = polynomialPowUnsignedInt(p, nI);
+    *r = sparsePolynomialPowUnsignedInt(p, nI);
     return 1;
   }
 
@@ -4723,7 +4765,7 @@ int polynomialPowConstant(polynomial_t *r, polynomial_t p, constant_t n) {
   constantCutTwo14(&k, &l, n);
   m = constantFromInt(1 << 14);
   
-  if (!polynomialPowConstant(&t,p,k)) {
+  if (!sparsePolynomialPowConstant(&t,p,k)) {
     constantFree(k);
     constantFree(l);
     constantFree(m);
@@ -4731,47 +4773,104 @@ int polynomialPowConstant(polynomial_t *r, polynomial_t p, constant_t n) {
   }
   constantFree(k);  
 
-  if (!polynomialPowConstant(&a,t,m)) {
-    polynomialFree(t);
+  if (!sparsePolynomialPowConstant(&a,t,m)) {
+    sparsePolynomialFree(t);
     constantFree(l);
     constantFree(m);
     return 0;
   }
-  polynomialFree(t);
+  sparsePolynomialFree(t);
   constantFree(m);
 
-  if (!polynomialPowConstant(&b,p,l)) {
-    polynomialFree(a);
+  if (!sparsePolynomialPowConstant(&b,p,l)) {
+    sparsePolynomialFree(a);
     constantFree(l);
     return 0;
   }
   constantFree(l);
 
-  *r = polynomialMul(a,b);
+  *r = sparsePolynomialMul(a,b);
 
-  polynomialFree(b);
-  polynomialFree(a);
+  sparsePolynomialFree(b);
+  sparsePolynomialFree(a);
   return 1;
 }
 
-int polynomialPow(polynomial_t *r, polynomial_t p, polynomial_t q) {
+int sparsePolynomialPow(sparse_polynomial_t *r, sparse_polynomial_t p, sparse_polynomial_t q) {
   constant_t n;
   int res;
 
   if (p == NULL) return 0;
   if (q == NULL) return 0;
-  if (!polynomialConstantGetConstant(&n, q)) return 0;
+  if (!sparsePolynomialConstantGetConstant(&n, q)) return 0;
   if (!constantIsNonNegativeInteger(n,0)) {
     constantFree(n);
     return 0;
   }
-  res = polynomialPowConstant(r, p, n);
+  res = sparsePolynomialPowConstant(r, p, n);
   constantFree(n);
   return res;
 }
 
-int polynomialFromExpression(polynomial_t *r, node *p) {
-  polynomial_t a, b, quot, rest;
+sparse_polynomial_t sparsePolynomialDeriv(sparse_polynomial_t p) {
+  unsigned int i;
+  sparse_polynomial_t res;
+  constant_t one;
+
+  /* Handle stupid input */
+  if (p == NULL) return NULL;
+
+  /* Handle the strange case when p has no monomials */
+  if (p->monomialCount == 0u) {
+    return sparsePolynomialFromIntConstant(0);
+  }
+
+  /* Handle the case when p is a constant polynomial */
+  if (sparsePolynomialIsConstant(p, 0)) {
+    return sparsePolynomialFromIntConstant(0);
+  }
+
+  /* Handle the general case */
+  res = __sparsePolynomialAllocate();
+  res->refCount = 1;
+  res->coeffs = (constant_t *) safeCalloc(p->monomialCount, sizeof(constant_t));
+  res->monomialDegrees = (constant_t *) safeCalloc(p->monomialCount, sizeof(constant_t));
+  one = constantFromInt(1);
+  res->monomialCount = 0u;
+  for (i=0u;i<p->monomialCount;i++) {
+    if (constantIsGreaterOrEqual(p->monomialDegrees[i], one, 1)) {
+      res->coeffs[res->monomialCount] = constantMul(p->coeffs[i],p->monomialDegrees[i]);
+      res->monomialDegrees[res->monomialCount] = constantSub(p->monomialDegrees[i],one);
+      (res->monomialCount)++;
+    }
+  }
+  constantFree(one);
+
+  /* If res->monomialCount still is zero, we never added anything. We
+     add a zero coefficient in this case.
+  */
+  if (res->monomialCount == 0) {
+    res->coeffs[res->monomialCount] = constantFromInt(0);
+    res->monomialDegrees[res->monomialCount] = constantFromInt(0);
+    (res->monomialCount)++;
+  }
+  /* Set the degree of the polynomial */
+  res->deg = constantFromCopy(res->monomialDegrees[res->monomialCount - 1]);
+  /* Adjust memory to the real amount of monomials */
+  if (res->monomialCount != p->monomialCount) {
+    res->coeffs = (constant_t *) safeRealloc(res->coeffs, 
+					     ((size_t) (res->monomialCount)) * sizeof(constant_t));
+    res->monomialDegrees = (constant_t *) safeRealloc(res->monomialDegrees, 
+						      ((size_t) (res->monomialCount)) * sizeof(constant_t));
+  }
+  /* Adjust the degree for zero leading coefficients */
+  __sparsePolynomialAdjustDegree(res);
+
+  return res;
+}
+
+int sparsePolynomialFromExpression(sparse_polynomial_t *r, node *p) {
+  sparse_polynomial_t a, b, quot, rest;
   int res;
 
   /* Handle stupid inputs */
@@ -4780,21 +4879,21 @@ int polynomialFromExpression(polynomial_t *r, node *p) {
   /* Try to decompose expressions built on c, x, +, -, *, /, -, ^ */
   switch (p->nodeType) {
   case MEMREF:
-    return polynomialFromExpression(r, getMemRefChild(p));
+    return sparsePolynomialFromExpression(r, getMemRefChild(p));
     break;
   case VARIABLE:
-    *r = polynomialFromIdentity();
+    *r = sparsePolynomialFromIdentity();
     return 1;
     break;
   case CONSTANT:
-    *r = polynomialFromMpfrConstant(*(p->value));
+    *r = sparsePolynomialFromMpfrConstant(*(p->value));
     return 1;
     break;
   case NEG:
-    if (!polynomialFromExpression(&a, p->child1)) 
+    if (!sparsePolynomialFromExpression(&a, p->child1)) 
       break;
-    *r = polynomialNeg(a);
-    polynomialFree(a);
+    *r = sparsePolynomialNeg(a);
+    sparsePolynomialFree(a);
     return 1;
     break;
   case ADD:
@@ -4802,43 +4901,43 @@ int polynomialFromExpression(polynomial_t *r, node *p) {
   case MUL:
   case DIV:
   case POW:
-    if (!polynomialFromExpression(&a, p->child1)) 
+    if (!sparsePolynomialFromExpression(&a, p->child1)) 
       break;
-    if (!polynomialFromExpression(&b, p->child2)) {
-      polynomialFree(a);
+    if (!sparsePolynomialFromExpression(&b, p->child2)) {
+      sparsePolynomialFree(a);
       break;
     }
     res = 0;
     switch (p->nodeType) {
     case ADD:
-      *r = polynomialAdd(a, b);
+      *r = sparsePolynomialAdd(a, b);
       res = 1;
       break;
     case SUB:
-      *r = polynomialSub(a, b);
+      *r = sparsePolynomialSub(a, b);
       res = 1;
       break;
     case MUL:
-      *r = polynomialMul(a, b);
+      *r = sparsePolynomialMul(a, b);
       res = 1;
       break;
     case DIV:
-      polynomialDiv(&quot, &rest, a, b);
-      if (polynomialIsConstantZero(rest, 0)) {
+      sparsePolynomialDiv(&quot, &rest, a, b);
+      if (sparsePolynomialIsConstantZero(rest, 0)) {
 	*r = quot;
 	res = 1;
       } else {
-	polynomialFree(quot);
+	sparsePolynomialFree(quot);
 	res = 0;
       }
-      polynomialFree(rest);
+      sparsePolynomialFree(rest);
       break;
     case POW:
-      res = polynomialPow(r, a, b);
+      res = sparsePolynomialPow(r, a, b);
       break;
     }
-    polynomialFree(a);
-    polynomialFree(b);
+    sparsePolynomialFree(a);
+    sparsePolynomialFree(b);
     if (res) return 1;
     break;
   }
@@ -4847,14 +4946,14 @@ int polynomialFromExpression(polynomial_t *r, node *p) {
      be a polynomial only if it is a constant expression.
   */
   if (isConstant(p)) {
-    if (!__polynomialFromConstantExpression(r, p)) return 0;
+    if (!__sparsePolynomialFromConstantExpression(r, p)) return 0;
     return 1;
   }
 
   return 0;
 }
 
-void polynomialGetDegree(mpz_t deg, polynomial_t p) {
+void sparsePolynomialGetDegree(mpz_t deg, sparse_polynomial_t p) {
   if (p == NULL) {
     mpz_set_si(deg, -1);
     return;
@@ -4864,7 +4963,7 @@ void polynomialGetDegree(mpz_t deg, polynomial_t p) {
   }
 }
 
-int polynomialGetDegreeAsInt(polynomial_t p) {
+int sparsePolynomialGetDegreeAsInt(sparse_polynomial_t p) {
   int deg;
 
   if (p == NULL) return -1;
@@ -4872,7 +4971,7 @@ int polynomialGetDegreeAsInt(polynomial_t p) {
   return deg;
 }
 
-node *polynomialGetIthCoefficient(polynomial_t p, mpz_t i) {
+node *sparsePolynomialGetIthCoefficient(sparse_polynomial_t p, mpz_t i) {
   constant_t ic, coeffsum, t;
   unsigned int j, k;
   node *res;
@@ -4902,7 +5001,7 @@ node *polynomialGetIthCoefficient(polynomial_t p, mpz_t i) {
   /* Get the index j where the coefficients for degree i might
      start 
   */
-  j = __polynomialFindDegree(ic, p->monomialDegrees, p->monomialCount, 0u); 
+  j = __sparsePolynomialFindDegree(ic, p->monomialDegrees, p->monomialCount, 0u); 
 
   /* If j is greater than the last index of the monomials of p, there
      exists no monomial of degree i.
@@ -4932,7 +5031,7 @@ node *polynomialGetIthCoefficient(polynomial_t p, mpz_t i) {
   return res;
 }
 
-node *polynomialGetIthCoefficientIntIndex(polynomial_t p, int i) {
+node *sparsePolynomialGetIthCoefficientIntIndex(sparse_polynomial_t p, int i) {
   constant_t ic, coeffsum, t;
   unsigned int j, k;
   node *res;
@@ -4962,7 +5061,7 @@ node *polynomialGetIthCoefficientIntIndex(polynomial_t p, int i) {
   /* Get the index j where the coefficients for degree i might
      start 
   */
-  j = __polynomialFindDegree(ic, p->monomialDegrees, p->monomialCount, 0u); 
+  j = __sparsePolynomialFindDegree(ic, p->monomialDegrees, p->monomialCount, 0u); 
 
   /* If j is greater than the last index of the monomials of p, there
      exists no monomial of degree i.
@@ -4992,7 +5091,7 @@ node *polynomialGetIthCoefficientIntIndex(polynomial_t p, int i) {
   return res;
 }
 
-int polynomialGetCoefficients(node ***coeffs, unsigned int *deg, polynomial_t p) {
+int sparsePolynomialGetCoefficients(node ***coeffs, unsigned int *deg, sparse_polynomial_t p) {
   unsigned int degree, size, i, j, d, k;
   node **coefficients;
   constant_t c, t;
@@ -5088,7 +5187,7 @@ int polynomialGetCoefficients(node ***coeffs, unsigned int *deg, polynomial_t p)
   return 1;
 }
 
-static inline void __polynomialEvalMpfr(mpfr_t y, polynomial_t p, mpfr_t x, mpfr_t scratch) {
+static inline void __sparsePolynomialEvalMpfr(mpfr_t y, sparse_polynomial_t p, mpfr_t x, mpfr_t scratch) {
   unsigned int i, a, b, d;
   mp_prec_t prec;
   constant_t dc;
@@ -5121,7 +5220,7 @@ static inline void __polynomialEvalMpfr(mpfr_t y, polynomial_t p, mpfr_t x, mpfr
     if (tryConstantToUnsignedInt(&a, p->monomialDegrees[i]) &&
 	tryConstantToUnsignedInt(&b, p->monomialDegrees[i-1u])) {
       if (a < b) {
-	sollyaFprintf(stderr,"Error: __polynomialEvalMpfr: monomial degrees not appropriately ordered\n");
+	sollyaFprintf(stderr,"Error: __sparsePolynomialEvalMpfr: monomial degrees not appropriately ordered\n");
 	exit(1);
       }
       d = a - b;
@@ -5164,8 +5263,8 @@ static inline void __polynomialEvalMpfr(mpfr_t y, polynomial_t p, mpfr_t x, mpfr
   mpfr_prec_round(y, prec, GMP_RNDN);
 }
 
-void polynomialEvalMpfr(mpfr_t y, polynomial_t p, mpfr_t x) {
-  mpfr_t scratch;
+void sparsePolynomialEvalMpfr(mpfr_t y, sparse_polynomial_t p, mpfr_t x) {
+  mpfr_t scratch, Y;
 
   /* Handle stupid inputs */
   if (p == NULL) {
@@ -5179,15 +5278,24 @@ void polynomialEvalMpfr(mpfr_t y, polynomial_t p, mpfr_t x) {
     return;
   }
 
+  /* Cover the case when x and y are the same MPFR variable */
+  if (x == y) {
+    mpfr_init2(Y, mpfr_get_prec(y));
+    sparsePolynomialEvalMpfr(Y, p, x);
+    mpfr_set(y, Y, GMP_RNDN); /* exact */
+    mpfr_clear(Y);
+    return;
+  }
+
   /* Try to use a global variable as scratch space */
-  if  (__polynomialEvalMpfr_var_used) {
+  if  (__sparsePolynomialEvalMpfr_var_used) {
     /* The global scratch space is taken; use new scratch space on the
        stack 
     */
     mpfr_init2(scratch, mpfr_get_prec(y) + 25);
 
     /* Use inner evaluation function */
-    __polynomialEvalMpfr(y, p, x, scratch);
+    __sparsePolynomialEvalMpfr(y, p, x, scratch);
     
     /* Clear the scratch variable */
     mpfr_clear(scratch);
@@ -5198,24 +5306,24 @@ void polynomialEvalMpfr(mpfr_t y, polynomial_t p, mpfr_t x) {
   /* Here the global scratch space variable still is free; so start
      using it. 
   */
-  __polynomialEvalMpfi_var_used = 1;
+  __sparsePolynomialEvalMpfi_var_used = 1;
 
   /* Initialize the global scratch variable */
-  if (__polynomialEvalMpfr_scratch_initialized) {
-    mpfr_set_prec(__polynomialEvalMpfr_scratch, mpfr_get_prec(y) + 25);
+  if (__sparsePolynomialEvalMpfr_scratch_initialized) {
+    mpfr_set_prec(__sparsePolynomialEvalMpfr_scratch, mpfr_get_prec(y) + 25);
   } else {
-    mpfr_init2(__polynomialEvalMpfr_scratch, mpfr_get_prec(y) + 25);
-    __polynomialEvalMpfr_scratch_initialized = 1;
+    mpfr_init2(__sparsePolynomialEvalMpfr_scratch, mpfr_get_prec(y) + 25);
+    __sparsePolynomialEvalMpfr_scratch_initialized = 1;
   }
   
   /* Use inner evaluation function */
-  __polynomialEvalMpfr(y, p, x, __polynomialEvalMpfr_scratch);
+  __sparsePolynomialEvalMpfr(y, p, x, __sparsePolynomialEvalMpfr_scratch);
 
   /* Free the access to the global scratch space variable again */
-  __polynomialEvalMpfi_var_used = 0;
+  __sparsePolynomialEvalMpfi_var_used = 0;
 }
 
-static inline void __polynomialEvalMpfi(sollya_mpfi_t y, polynomial_t p, sollya_mpfi_t x, sollya_mpfi_t scratch) {
+static inline void __sparsePolynomialEvalMpfi(sollya_mpfi_t y, sparse_polynomial_t p, sollya_mpfi_t x, sollya_mpfi_t scratch) {
   unsigned int i, a, b, d;
   mp_prec_t prec;
   constant_t dc;
@@ -5248,7 +5356,7 @@ static inline void __polynomialEvalMpfi(sollya_mpfi_t y, polynomial_t p, sollya_
     if (tryConstantToUnsignedInt(&a, p->monomialDegrees[i]) &&
 	tryConstantToUnsignedInt(&b, p->monomialDegrees[i-1u])) {
       if (a < b) {
-	sollyaFprintf(stderr,"Error: __polynomialEvalMpfi: monomial degrees not appropriately ordered\n");
+	sollyaFprintf(stderr,"Error: __sparsePolynomialEvalMpfi: monomial degrees not appropriately ordered\n");
 	exit(1);
       }
       d = a - b;
@@ -5291,8 +5399,8 @@ static inline void __polynomialEvalMpfi(sollya_mpfi_t y, polynomial_t p, sollya_
   sollya_mpfi_prec_round(y, prec);
 }
 
-void polynomialEvalMpfi(sollya_mpfi_t y, polynomial_t p, sollya_mpfi_t x) {
-  sollya_mpfi_t scratch;
+void sparsePolynomialEvalMpfi(sollya_mpfi_t y, sparse_polynomial_t p, sollya_mpfi_t x) {
+  sollya_mpfi_t scratch, Y;
 
   /* Handle stupid inputs */
   if (p == NULL) {
@@ -5306,15 +5414,24 @@ void polynomialEvalMpfi(sollya_mpfi_t y, polynomial_t p, sollya_mpfi_t x) {
     return;
   }
 
+  /* Cover the case when x and y are the same MPFI variable */
+  if (x == y) {
+    sollya_mpfi_init2(Y, sollya_mpfi_get_prec(y));
+    sparsePolynomialEvalMpfi(Y, p, x);
+    sollya_mpfi_set(y, Y);
+    sollya_mpfi_clear(Y);
+    return;
+  }
+
   /* Try to use a global variable as scratch space */
-  if  (__polynomialEvalMpfi_var_used) {
+  if  (__sparsePolynomialEvalMpfi_var_used) {
     /* The global scratch space is taken; use new scratch space on the
        stack 
     */
     sollya_mpfi_init2(scratch, sollya_mpfi_get_prec(y) + 25);
 
     /* Use inner evaluation function */
-    __polynomialEvalMpfi(y, p, x, scratch);
+    __sparsePolynomialEvalMpfi(y, p, x, scratch);
     
     /* Clear the scratch variable */
     sollya_mpfi_clear(scratch);
@@ -5325,24 +5442,24 @@ void polynomialEvalMpfi(sollya_mpfi_t y, polynomial_t p, sollya_mpfi_t x) {
   /* Here the global scratch space variable still is free; so start
      using it. 
   */
-  __polynomialEvalMpfi_var_used = 1;
+  __sparsePolynomialEvalMpfi_var_used = 1;
 
   /* Initialize the global scratch variable */
-  if (__polynomialEvalMpfi_scratch_initialized) {
-    sollya_mpfi_set_prec(__polynomialEvalMpfi_scratch, sollya_mpfi_get_prec(y) + 25);
+  if (__sparsePolynomialEvalMpfi_scratch_initialized) {
+    sollya_mpfi_set_prec(__sparsePolynomialEvalMpfi_scratch, sollya_mpfi_get_prec(y) + 25);
   } else {
-    sollya_mpfi_init2(__polynomialEvalMpfi_scratch, sollya_mpfi_get_prec(y) + 25);
-    __polynomialEvalMpfi_scratch_initialized = 1;
+    sollya_mpfi_init2(__sparsePolynomialEvalMpfi_scratch, sollya_mpfi_get_prec(y) + 25);
+    __sparsePolynomialEvalMpfi_scratch_initialized = 1;
   }
   
   /* Use inner evaluation function */
-  __polynomialEvalMpfi(y, p, x, __polynomialEvalMpfi_scratch);
+  __sparsePolynomialEvalMpfi(y, p, x, __sparsePolynomialEvalMpfi_scratch);
 
   /* Free the access to the global scratch space variable again */
-  __polynomialEvalMpfi_var_used = 0;
+  __sparsePolynomialEvalMpfi_var_used = 0;
 }
 
-static inline node *__polynomialGetExpressionCanonical(polynomial_t p) {
+static inline node *__sparsePolynomialGetExpressionCanonical(sparse_polynomial_t p) {
   node *res, *temp;
   unsigned int i;
 
@@ -5400,44 +5517,1249 @@ static inline node *__polynomialGetExpressionCanonical(polynomial_t p) {
   return addMemRef(res);
 }
 
-static inline node *__polynomialGetExpressionHorner(polynomial_t p) {
-  /* TODO */
-  return NULL;
+static inline node *__sparsePolynomialGetExpressionHorner(sparse_polynomial_t p) {
+  unsigned int i, a, b, d;
+  constant_t dc;
+  node *res;
+
+  /* Handle stupid inputs */
+  if (p == NULL) return NULL;
+
+  /* Handle the strange case when p has no monomials */
+  if (p->monomialCount == 0u) return addMemRef(makeConstantInt(0)); 
+  
+  /* Perform Horner "evaluation" of p */
+  res = constantToExpression(p->coeffs[p->monomialCount-1u]);
+  for (i=p->monomialCount-1u;i>=1u;i--) {
+    /* y <- x^(p->monomialDegrees[i] - p->monomialDegrees[i-1u]) * y */
+    if (tryConstantToUnsignedInt(&a, p->monomialDegrees[i]) &&
+	tryConstantToUnsignedInt(&b, p->monomialDegrees[i-1u])) {
+      if (a < b) {
+	sollyaFprintf(stderr,"Error: __sparsePolynomialGetExpressionHorner: monomial degrees not appropriately ordered\n");
+	exit(1);
+      }
+      d = a - b;
+      if (d != 0u) {
+	if (d == 1u) {
+	  res = makeMul(makeVariable(), res);
+	} else {
+	  res = makeMul(makePow(makeVariable(),makeConstantInt(d)),res);
+	}
+      }
+    } else {
+      dc = constantSub(p->monomialDegrees[i], p->monomialDegrees[i-1u]);
+      if (!constantIsZero(dc,0)) {
+	if (constantIsOne(dc,0)) {
+	  res = makeMul(makeVariable(), res);
+	} else {
+	  res = makeMul(makePow(makeVariable(),constantToExpression(dc)),res);
+	}
+      }
+      constantFree(dc);
+    }
+    /* y <- p->coeffs[i-1u] + y */
+    res = makeAdd(constantToExpression(p->coeffs[i-1u]), res);
+  }
+  /* y <- x^(p->monomialDegrees[0u]) * y */
+  if (tryConstantToUnsignedInt(&a, p->monomialDegrees[0u])) {
+    if (a != 0u) {
+      if (a == 1u) {
+	res = makeMul(makeVariable(), res);
+      } else {
+	res = makeMul(makePow(makeVariable(),
+			      makeConstantInt(a)),
+		      res);
+      }
+    }
+  } else {
+    if (!constantIsZero(p->monomialDegrees[0u],0)) {
+      if (constantIsOne(p->monomialDegrees[0u],0)) {
+	res = makeMul(makeVariable(), res);
+      } else {
+	res = makeMul(makePow(makeVariable(),
+			      constantToExpression(p->monomialDegrees[0u])),
+		      res);
+      }
+    }
+  }
+  
+  /* Return the result */
+  return addMemRef(res);
 }
 
-node *polynomialGetExpression(polynomial_t p, int canonical) {
-  if (canonical) return __polynomialGetExpressionCanonical(p);
-  return __polynomialGetExpressionHorner(p);
+node *sparsePolynomialGetExpression(sparse_polynomial_t p, int canonical) {
+  if (canonical) return __sparsePolynomialGetExpressionCanonical(p);
+  return __sparsePolynomialGetExpressionHorner(p);
 }
 
-static inline void __polynomialFPrintfCanonical(FILE *fd, polynomial_t p) {
-  /* TODO */
+void sparsePolynomialFPrintf(FILE *fd, sparse_polynomial_t p, int canonical) {
+  node *t;
+
+  /* Handle stupid cases */
+  if (p == NULL) {
+    sollyaFprintf(fd, "(null)");
+  }
+
+  /* Handle the general case.
+
+     Can be optimized.
+
+  */
+  t = sparsePolynomialGetExpression(p,canonical);
+  sollyaFprintf(fd, "%b",t);
+  freeThing(t);
 }
 
-static inline void __polynomialFPrintfHorner(FILE *fd, polynomial_t p) {
-  /* TODO */
+char *sparsePolynomialToString(sparse_polynomial_t p, int canonical) {
+  node *t;
+  char *str;
+  char staticStr[8];
+  int size, r;
+
+  /* Handle stupid cases */
+  if (p == NULL) return NULL;
+
+  /* Handle the general case.
+
+     Can be optimized.
+
+  */
+  t = sparsePolynomialGetExpression(p,canonical);
+  size = sollya_snprintf(staticStr,8,"%b",t);
+  if (size < 0) {
+    freeThing(t);
+    return NULL;
+  }
+  str = (char *) safeCalloc(size + 2, sizeof(char));
+  r = sollya_snprintf(str,size,"%b",t);
+  if (r < 0) {
+    freeThing(t);
+    safeFree(str);
+    return NULL;
+  }
+
+  /* Return the string */
+  return str;
 }
 
-void polynomialFPrintf(FILE *fd, polynomial_t p, int canonical) {
-  if (canonical) {
-    __polynomialFPrintfCanonical(fd, p);
+unsigned int sparsePolynomialGetMonomialCount(sparse_polynomial_t p) {
+  
+  /* Handle stupid input */
+  if (p == NULL) return 0u;
+
+  /* Return the number of monomials */
+  return p->monomialCount;
+}
+
+/* End of part for sparse polynomials */
+
+/* Start of part for general (composed) polynomials */
+
+static inline polynomial_t __polynomialAllocate() {
+  return (polynomial_t) safeMalloc(sizeof(polynomial_t));
+}
+
+static inline void __polynomialFreeMem(polynomial_t p) {
+  safeFree(p);
+}
+
+static inline polynomial_t __polynomialBuildFromSparse(sparse_polynomial_t p) {
+  polynomial_t res;
+
+  /* Handle stupid input */
+  if (p == NULL) return NULL;
+
+  /* Handle general case */
+  res = __polynomialAllocate();
+  res->refCount = 1u;
+  res->type = SPARSE;
+  res->outputType = ANY_FORM;
+  res->value.sparse = p;
+
+  /* Return the newly built polynomial */
+  return res;
+}
+
+static inline void __polynomialSparsify(polynomial_t p) {
+  sparse_polynomial_t sp;
+
+  /* Handle stupid input */
+  if (p == NULL) return;
+  
+  /* General case */
+  switch (p->type) {
+  case SPARSE:
+    /* Nothing to do */
+    return;
+    break;
+  case ADDITION:
+    __polynomialSparsify(p->value.pair.g);
+    __polynomialSparsify(p->value.pair.h);
+    sp = sparsePolynomialAdd(p->value.pair.g->value.sparse,
+			     p->value.pair.h->value.sparse);
+    polynomialFree(p->value.pair.g);
+    polynomialFree(p->value.pair.h);
+    p->value.sparse = sp;
+    break;
+  case SUBTRACTION:
+    __polynomialSparsify(p->value.pair.g);
+    __polynomialSparsify(p->value.pair.h);
+    sp = sparsePolynomialSub(p->value.pair.g->value.sparse,
+			     p->value.pair.h->value.sparse);
+    polynomialFree(p->value.pair.g);
+    polynomialFree(p->value.pair.h);
+    p->value.sparse = sp;
+    break;
+  case MULTIPLICATION:
+    __polynomialSparsify(p->value.pair.g);
+    __polynomialSparsify(p->value.pair.h);
+    sp = sparsePolynomialMul(p->value.pair.g->value.sparse,
+			     p->value.pair.h->value.sparse);
+    polynomialFree(p->value.pair.g);
+    polynomialFree(p->value.pair.h);
+    p->value.sparse = sp;
+    break;
+  case COMPOSITION:
+    __polynomialSparsify(p->value.pair.g);
+    __polynomialSparsify(p->value.pair.h);
+    sp = sparsePolynomialCompose(p->value.pair.g->value.sparse,
+				 p->value.pair.h->value.sparse);
+    polynomialFree(p->value.pair.g);
+    polynomialFree(p->value.pair.h);
+    p->value.sparse = sp;
+    break;
+  case NEGATE:
+    __polynomialSparsify(p->value.g);
+    sp = sparsePolynomialNeg(p->value.g->value.sparse);
+    polynomialFree(p->value.g);
+    p->value.sparse = sp;
+    break;
+  case POWER:
+    __polynomialSparsify(p->value.powering.g);
+    if (!sparsePolynomialPowConstant(&sp, 
+				     p->value.powering.g->value.sparse,
+				     p->value.powering.c)) {
+      sollyaFprintf(stderr,"Error: __polynomialSparsify: could not compute power of sparse polynomial\n");
+      exit(1);
+    }
+    polynomialFree(p->value.powering.g);
+    p->value.sparse = sp;
+    break;
+  }
+  p->type = SPARSE;
+}
+
+
+polynomial_t polynomialFromMpfrConstant(mpfr_t c) {
+  return __polynomialBuildFromSparse(sparsePolynomialFromMpfrConstant(c));
+}
+
+polynomial_t polynomialFromMpzConstant(mpz_t c) {
+  return __polynomialBuildFromSparse(sparsePolynomialFromMpzConstant(c));
+}
+
+polynomial_t polynomialFromMpqConstant(mpq_t c) {
+  return __polynomialBuildFromSparse(sparsePolynomialFromMpqConstant(c));
+}
+
+polynomial_t polynomialFromIntConstant(int c) {
+  return __polynomialBuildFromSparse(sparsePolynomialFromIntConstant(c));
+}
+
+polynomial_t polynomialFromIdentity() {
+  return __polynomialBuildFromSparse(sparsePolynomialFromIdentity());
+}
+
+polynomial_t polynomialFromMpfrCoefficients(mpfr_t *coeffs, unsigned int deg) {
+  return __polynomialBuildFromSparse(sparsePolynomialFromMpfrCoefficients(coeffs, deg));
+}
+
+int polynomialFromConstantExpressionCoefficients(polynomial_t *r, node **coeffs, unsigned int deg) {
+  sparse_polynomial_t sp;
+
+  if (!sparsePolynomialFromConstantExpressionCoefficients(&sp, coeffs, deg)) return 0;
+  *r = __polynomialBuildFromSparse(sp);
+  return 1;
+}
+
+polynomial_t polynomialFromCopy(polynomial_t p) {
+  if (p == NULL) return NULL;
+  p->refCount++;
+  return p;
+}
+
+void polynomialFree(polynomial_t p) {
+  if (p == NULL) return;
+  p->refCount--;
+  if (p->refCount > 0u) return;
+  switch (p->type) {
+  case SPARSE:
+    sparsePolynomialFree(p->value.sparse);
+    break;
+  case ADDITION:
+  case SUBTRACTION:
+  case MULTIPLICATION:
+  case COMPOSITION:
+    polynomialFree(p->value.pair.g);
+    polynomialFree(p->value.pair.h);
+    break;
+  case NEGATE:
+    polynomialFree(p->value.g);
+    break;
+  case POWER:
+    polynomialFree(p->value.powering.g);
+    constantFree(p->value.powering.c);
+    break;
+  }
+  __polynomialFreeMem(p);
+}
+
+int polynomialEqual(polynomial_t p, polynomial_t q, int defVal) {
+
+  /* Handle stupid inputs */
+  if (p == NULL) return defVal;
+  if (q == NULL) return defVal;
+
+  /* Pointer equality */
+  if (p == q) return 1;
+
+  /* General case
+     
+     Can be optimized.
+  
+  */
+  __polynomialSparsify(p);
+  __polynomialSparsify(q);
+  return sparsePolynomialEqual(p->value.sparse, q->value.sparse, defVal);
+}
+
+void polynomialDiv(polynomial_t *quot, polynomial_t *rest, polynomial_t a, polynomial_t b) {
+  sparse_polynomial_t sq, sr;
+
+  /* Handle stupid inputs */
+  if ((a == NULL) || (b == NULL)) {
+    *quot = NULL;
+    *rest = NULL;
     return;
   }
-  __polynomialFPrintfHorner(fd, p);
+
+  /* General case 
+
+     Some cases can be optimized.
+
+  */
+  __polynomialSparsify(a);
+  __polynomialSparsify(b);
+  sparsePolynomialDiv(&sq, &sr, a->value.sparse, b->value.sparse);
+
+  *quot = __polynomialBuildFromSparse(sq);
+  *rest = __polynomialBuildFromSparse(sr);
 }
 
-static inline char *__polynomialToStringCanonical(polynomial_t p) {
-  /* TODO */
+polynomial_t polynomialHornerize(polynomial_t p) {
+  polynomial_t res;
+
+  /* Handle stupid input */
+  if (p == NULL) return NULL;
+
+  /* If p is already hornerized, return a plain copy. */
+  if (p->outputType == HORNER_FORM) {
+    return polynomialFromCopy(p);
+  }
+
+  /* Here we have work to do. We perform a "deep" copy and set the
+     output form to "hornerized". 
+  */
+  res = __polynomialAllocate();
+  res->refCount = 1u;
+  res->type = p->type;
+  res->outputType = HORNER_FORM;
+  switch (p->type) {
+  case SPARSE:
+    res->value.sparse = sparsePolynomialFromCopy(p->value.sparse);
+    break;
+  case ADDITION:
+  case SUBTRACTION:
+  case MULTIPLICATION:
+  case COMPOSITION:
+    res->value.pair.g = polynomialFromCopy(p->value.pair.g);
+    res->value.pair.h = polynomialFromCopy(p->value.pair.h);
+    break;
+  case NEGATE:
+    res->value.g = polynomialFromCopy(p->value.g);
+    break;
+  case POWER:
+    res->value.powering.g = polynomialFromCopy(p->value.powering.g);
+    res->value.powering.c = constantFromCopy(p->value.powering.c);
+    break;
+  }
+  return res;
+}
+
+polynomial_t polynomialCanonicalize(polynomial_t p) {
+  polynomial_t res;
+
+  /* Handle stupid input */
+  if (p == NULL) return NULL;
+
+  /* If p is already canonical, return a plain copy. */
+  if (p->outputType == CANONICAL_FORM) {
+    return polynomialFromCopy(p);
+  }
+
+  /* Here we have work to do. We perform a "deep" copy and set the
+     output form to "canonical". 
+  */
+  res = __polynomialAllocate();
+  res->refCount = 1u;
+  res->type = p->type;
+  res->outputType = CANONICAL_FORM;
+  switch (p->type) {
+  case SPARSE:
+    res->value.sparse = sparsePolynomialFromCopy(p->value.sparse);
+    break;
+  case ADDITION:
+  case SUBTRACTION:
+  case MULTIPLICATION:
+  case COMPOSITION:
+    res->value.pair.g = polynomialFromCopy(p->value.pair.g);
+    res->value.pair.h = polynomialFromCopy(p->value.pair.h);
+    break;
+  case NEGATE:
+    res->value.g = polynomialFromCopy(p->value.g);
+    break;
+  case POWER:
+    res->value.powering.g = polynomialFromCopy(p->value.powering.g);
+    res->value.powering.c = constantFromCopy(p->value.powering.c);
+    break;
+  }
+  return res;
+}
+
+void polynomialGetDegree(mpz_t deg, polynomial_t p) {
+  mpz_t gd, hd;
+
+  /* Handle stupid input */
+  if (p == NULL) {
+    mpz_set_si(deg,-1);
+    return;
+  }
+
+  /* Try to handle the case without sparsifying the polynomial. */
+  switch (p->type) {
+  case SPARSE:
+    sparsePolynomialGetDegree(deg, p->value.sparse);
+    return;
+    break;
+  case ADDITION:
+  case SUBTRACTION:
+    mpz_init(gd);
+    mpz_init(hd);
+    polynomialGetDegree(gd, p->value.pair.g);
+    polynomialGetDegree(hd, p->value.pair.h);
+    if ((mpz_sgn(gd) < 0) || 
+	(mpz_sgn(hd) < 0)) {
+      mpz_clear(gd);
+      mpz_clear(hd);
+      mpz_set_si(deg,-1);
+      return;
+    }
+    if (mpz_cmp(gd, hd) != 0) {
+      if (mpz_cmp(gd, hd) > 0) {
+	mpz_set(deg, gd);
+      } else {
+	mpz_set(deg, hd);      
+      }
+      mpz_clear(gd);
+      mpz_clear(hd);
+      return;
+    }
+    mpz_clear(gd);
+    mpz_clear(hd);
+    break;
+  case MULTIPLICATION:
+    mpz_init(gd);
+    mpz_init(hd);
+    polynomialGetDegree(gd, p->value.pair.g);
+    polynomialGetDegree(hd, p->value.pair.h);
+    if ((mpz_sgn(gd) < 0) || 
+	(mpz_sgn(hd) < 0)) {
+      mpz_clear(gd);
+      mpz_clear(hd);
+      mpz_set_si(deg,-1);
+      return;
+    }
+    if ((mpz_sgn(gd) > 0) &&
+	(mpz_sgn(hd) > 0)) {
+      mpz_add(deg, gd, hd);
+      mpz_clear(gd);
+      mpz_clear(hd);
+      return;
+    }
+    mpz_clear(gd);
+    mpz_clear(hd);
+    break;
+  case COMPOSITION:
+    mpz_init(gd);
+    mpz_init(hd);
+    polynomialGetDegree(gd, p->value.pair.g);
+    polynomialGetDegree(hd, p->value.pair.h);
+    if ((mpz_sgn(gd) < 0) || 
+	(mpz_sgn(hd) < 0)) {
+      mpz_clear(gd);
+      mpz_clear(hd);
+      mpz_set_si(deg,-1);
+      return;
+    }
+    mpz_mul(deg, hd, gd);
+    mpz_clear(gd);
+    mpz_clear(hd);    
+    break;
+  case NEGATE:
+    polynomialGetDegree(deg,p->value.g);
+    return;
+    break;
+  case POWER:
+    mpz_init(gd);
+    polynomialGetDegree(gd, p->value.powering.g);
+    if (mpz_sgn(gd) < 0) {
+      mpz_clear(gd);
+      mpz_set_si(deg,-1);
+      return;
+    }
+    if (mpz_sgn(gd) == 0) {
+      mpz_clear(gd);
+      mpz_set_si(deg,0);
+      return;
+    }
+    mpz_init(hd);
+    if (!tryConstantToMpz(hd, p->value.powering.c)) {
+      mpz_clear(gd);
+      mpz_clear(hd);
+      mpz_set_si(deg,-1);
+      return;
+    }
+    if (mpz_sgn(hd) < 0) {
+      mpz_clear(hd);
+      mpz_clear(gd);
+      mpz_set_si(deg,-1);
+      return;
+    }    
+    mpz_mul(deg, gd, hd);
+    mpz_clear(gd);
+    mpz_clear(hd);    
+    return;
+    break;
+  }
+
+  /* Fall-back case */
+  __polynomialSparsify(p);
+  sparsePolynomialGetDegree(deg, p->value.sparse);
+}
+
+int polynomialGetDegreeAsInt(polynomial_t p) {
+  int gd, hd, res;
+  mpz_t degz;
+  signed long t, tt;
+  unsigned int u, gdu, tu, ttu;
+
+  /* Handle stupid input */
+  if (p == NULL) return -1;
+
+  /* Try to handle the case without sparsifying the polynomial. */
+  switch (p->type) {
+  case SPARSE:
+    return sparsePolynomialGetDegreeAsInt(p->value.sparse);
+    return;
+    break;
+  case ADDITION:
+  case SUBTRACTION:
+    gd = polynomialGetDegreeAsInt(p->value.pair.g);
+    hd = polynomialGetDegreeAsInt(p->value.pair.h);
+    if ((gd == 0) && (hd == 0)) return 0;
+    if ((gd >= 0) && (hd >= 0) && (gd != hd)) 
+      return (hd > gd ? hd : gd);
+    break;
+  case MULTIPLICATION:
+    gd = polynomialGetDegreeAsInt(p->value.pair.g);
+    hd = polynomialGetDegreeAsInt(p->value.pair.h);
+    if ((gd != 0) && (hd != 0)) {
+      if ((gd < 0) || (hd < 0)) return -1;
+      if (tryExactIntAddition(&res, gd, hd)) {
+	return res;
+      } else {
+	return -1;
+      }
+    }
+    break;
+  case COMPOSITION:
+    gd = polynomialGetDegreeAsInt(p->value.pair.g);
+    hd = polynomialGetDegreeAsInt(p->value.pair.h);
+    if ((gd == 0) || (hd == 0)) return 0;
+    if ((gd < 0) || (hd < 0)) return -1;
+    if (tryExactIntMultiplication(&res, gd, hd)) {
+      return res;
+    } else {
+      return -1;
+    }    
+    break;
+  case NEGATE:
+    return polynomialGetDegreeAsInt(p->value.g);
+    break;
+  case POWER:
+    gd = polynomialGetDegreeAsInt(p->value.powering.g);
+    if (gd == 0) return 0;
+    if (tryConstantToUnsignedInt(&u, p->value.powering.c)) {
+      if (u == 0u) {
+	return 0;
+      } else {
+	if (gd < 0) return -1;
+	gdu = gd;
+	if (tryExactUnsignedIntMultiplication(&tu,gdu,u)) {
+	  res = tu;
+	  if (res < 0) return -1;
+	  ttu = res;
+	  if (ttu != tu) return -1;
+	  return res;
+	} else {
+	  return -1;
+	}
+      }
+    } else {
+      return -1;
+    }
+    break;
+  }
+
+  /* Fall-back case */
+  mpz_init(degz);
+  polynomialGetDegree(degz, p);
+  if (!mpz_fits_slong_p(degz)) {
+    res = -1;
+  } else {
+    t = mpz_get_si(degz);    
+    res = t;
+    tt = res;
+    if (t != tt) {
+      res = -1;
+    }
+  }
+  mpz_clear(degz);
+  return res;
+}
+
+node *polynomialGetIthCoefficient(polynomial_t p, mpz_t i) {
+  mpz_t deg;
+
+  /* Handle stupid input */
+  if (p == NULL) return NULL;
+
+  /* Handle case when i < 0 */
+  if (mpz_sgn(i) < 0) {
+    return addMemRef(makeConstantInt(0));
+  }
+
+  /* Handle case when i > degree */
+  mpz_init(deg);
+  polynomialGetDegree(deg, p);
+  if ((mpz_sgn(deg) >= 0) && 
+      (mpz_cmp(i,deg) > 0)) {
+    mpz_clear(deg);
+    return addMemRef(makeConstantInt(0));
+  }
+  
+  /* General case */
+  __polynomialSparsify(p);
+  return sparsePolynomialGetIthCoefficient(p->value.sparse, i);
+}
+
+node *polynomialGetIthCoefficientIntIndex(polynomial_t p, int i) {
+  int deg;
+
+  /* Handle stupid input */
+  if (p == NULL) return NULL;
+
+  /* Handle case when i < 0 */
+  if (i < 0) {
+    return addMemRef(makeConstantInt(0));
+  }
+
+  /* Handle case when i > degree */
+  deg = polynomialGetDegreeAsInt(p);
+  if ((deg >= 0) && 
+      (i > deg)) {
+    return addMemRef(makeConstantInt(0));
+  }
+  
+  /* General case */
+  __polynomialSparsify(p);
+  return sparsePolynomialGetIthCoefficientIntIndex(p->value.sparse, i);
+}
+
+int polynomialGetCoefficients(node ***coeffs, unsigned int *deg, polynomial_t p) {
+  /* Handle stupid input */
+  if (p == NULL) return 0;
+
+  /* General case */
+  __polynomialSparsify(p);
+  return sparsePolynomialGetCoefficients(coeffs, deg, p->value.sparse);
+}
+
+static inline node *__polynomialGetExpressionAnyForm(polynomial_t p) {
+
+  /* Handle stupid input */
+  if (p == NULL) return NULL;
+
+  /* Handle composition */
+  if (p->type == COMPOSITION) {
+    __polynomialSparsify(p);
+    return sparsePolynomialGetExpression(p->value.sparse, 0);
+  }
+  
+  /* General case */
+  switch (p->type) {
+  case SPARSE:
+    return sparsePolynomialGetExpression(p->value.sparse, 0);
+    break;
+  case ADDITION:
+    return addMemRef(makeAdd(__polynomialGetExpressionAnyForm(p->value.pair.g),
+			     __polynomialGetExpressionAnyForm(p->value.pair.h)));
+    break;
+  case SUBTRACTION:
+    return addMemRef(makeSub(__polynomialGetExpressionAnyForm(p->value.pair.g),
+			     __polynomialGetExpressionAnyForm(p->value.pair.h)));    
+    break;
+  case MULTIPLICATION:
+    return addMemRef(makeMul(__polynomialGetExpressionAnyForm(p->value.pair.g),
+			     __polynomialGetExpressionAnyForm(p->value.pair.h)));        
+    break;
+  case NEGATE:
+    return addMemRef(makeNeg(__polynomialGetExpressionAnyForm(p->value.g)));
+    break;
+  case POWER:
+    return addMemRef(makePow(__polynomialGetExpressionAnyForm(p->value.powering.g),
+			     constantToExpression(p->value.powering.c)));            
+    break;
+  }
+
+  /* Cannot be reached */
   return NULL;
 }
 
-static inline char *__polynomialToStringHorner(polynomial_t p) {
+node *polynomialGetExpression(polynomial_t p) {
+
+  /* Handle stupid input */
+  if (p == NULL) return NULL;
+
+  /* If we can output the polynomial in any form, we do so. */
+  if (p->outputType == ANY_FORM) 
+    return __polynomialGetExpressionAnyForm(p);
+
+  /* Here, we have to output a "hornerized" or "canonicalized"
+     form. 
+  */
+  __polynomialSparsify(p);
+  return sparsePolynomialGetExpression(p->value.sparse, 
+				       (p->outputType == CANONICAL_FORM));
+}
+
+void polynomialFPrintf(FILE *fd, polynomial_t p) {
+  node *t;
+
+  /* Handle stupid cases */
+  if (p == NULL) {
+    sollyaFprintf(fd, "(null)");
+  }
+
+  /* Handle the general case.
+
+     Can be optimized.
+
+  */
+  t = polynomialGetExpression(p);
+  sollyaFprintf(fd, "%b", t);
+  freeThing(t);
+}
+
+char *polynomialToString(polynomial_t p) {
+  node *t;
+  char *str;
+  char staticStr[8];
+  int size, r;
+
+  /* Handle stupid cases */
+  if (p == NULL) return NULL;
+
+  /* Handle the general case.
+
+     Can be optimized.
+
+  */
+  t = polynomialGetExpression(p);
+  size = sollya_snprintf(staticStr,8,"%b",t);
+  if (size < 0) {
+    freeThing(t);
+    return NULL;
+  }
+  str = (char *) safeCalloc(size + 2, sizeof(char));
+  r = sollya_snprintf(str,size,"%b",t);
+  if (r < 0) {
+    freeThing(t);
+    safeFree(str);
+    return NULL;
+  }
+
+  /* Return the string */
+  return str;
+}
+
+void polynomialEvalMpfr(mpfr_t y, polynomial_t p, mpfr_t x) {
+  mpfr_t scratch, Y;
+
+  /* Handle stupid inputs */
+  if (p == NULL) {
+    mpfr_set_nan(y);
+    return;
+  }
+
+  /* If the polynomial is in sparse form, use the evaluation routine
+     for sparse forms. 
+  */
+  if (p->type == SPARSE) {
+    sparsePolynomialEvalMpfr(y, p->value.sparse, x);
+    return;
+  }
+
+  /* If the polynomial is in negation form, call ourselves recursively
+     and negate y. 
+  */
+  if (p->type == NEGATE) {
+    polynomialEvalMpfr(y, p->value.g, x);
+    mpfr_neg(y, y, GMP_RNDN);
+    return;
+  }
+
+  /* Check if we can use y as a scratch space for recursion */
+  if (x == y) {
+    /* We can't. Call ourselves recursively. */
+    mpfr_init2(Y, mpfr_get_prec(y));
+    polynomialEvalMpfr(Y, p, x);
+    mpfr_set(y, Y, GMP_RNDN);
+    mpfr_clear(Y);
+    return;
+  }
+
+  /* Here, we have an addition, subtraction, multiplication or power
+     form to handle and we may use y as a scratch space.
+
+     We need another scratch variable. 
+
+  */
+  mpfr_init2(scratch, mpfr_get_prec(y));
+  switch (p->type) {
+  case ADDITION:
+  case SUBTRACTION:
+  case MULTIPLICATION:
+    polynomialEvalMpfr(y, p->value.pair.g, x);
+    polynomialEvalMpfr(scratch, p->value.pair.h, x);
+    break;
+  case POWER:
+    polynomialEvalMpfr(y, p->value.powering.g, x);
+    constantEvalMpfr(scratch, p->value.powering.c);
+    break;
+  }
+  switch (p->type) {
+  case ADDITION:
+    mpfr_add(y, y, scratch, GMP_RNDN);
+    break;
+  case SUBTRACTION:
+    mpfr_sub(y, y, scratch, GMP_RNDN);
+    break;
+  case MULTIPLICATION:
+    mpfr_mul(y, y, scratch, GMP_RNDN);
+    break;
+  case POWER:
+    mpfr_pow(y, y, scratch, GMP_RNDN);
+    break;
+  }
+  mpfr_clear(scratch);
+}
+
+void polynomialEvalMpfi(sollya_mpfi_t y, polynomial_t p, sollya_mpfi_t x) {
+  mp_prec_t prec;
+  sollya_mpfi_t scr, Y;
+  sollya_mpfi_t *scratch;
+  sollya_mpfi_t *reusedVars;
+  int usingReused;
+
+  /* Handle stupid inputs */
+  if (p == NULL) {
+    sollya_mpfi_set_nan(y);
+    return;
+  }
+
+  /* If the polynomial is in sparse form, use the evaluation routine
+     for sparse forms. 
+  */
+  if (p->type == SPARSE) {
+    sparsePolynomialEvalMpfi(y, p->value.sparse, x);
+    return;
+  }
+
+  /* If the polynomial is in negation form, call ourselves recursively
+     and negate y. 
+  */
+  if (p->type == NEGATE) {
+    polynomialEvalMpfi(y, p->value.g, x);
+    sollya_mpfi_neg(y, y);
+    return;
+  }
+
+  /* Check if we can use y as a scratch space for recursion */
+  if (x == y) {
+    /* We can't. Call ourselves recursively. */
+    sollya_mpfi_init2(Y, sollya_mpfi_get_prec(y));
+    polynomialEvalMpfi(Y, p, x);
+    sollya_mpfi_set(y, Y);
+    sollya_mpfi_clear(Y);
+    return;
+  }
+
+  /* Here, we have an addition, subtraction, multiplication or power
+     form to handle and we may use y as a scratch space.
+
+     We need another scratch variable. We can try to get it by two
+     means.
+
+  */
+  prec = sollya_mpfi_get_prec(y);
+  reusedVars = getReusedGlobalMPFIVars(1, prec);
+  if (reusedVars == NULL) {
+    usingReused = 0;
+    mpfi_init2(scr, prec);
+    scratch = &scr;
+  } else {
+    usingReused = 1;
+    scratch = reusedVars;
+  }
+  switch (p->type) {
+  case ADDITION:
+  case SUBTRACTION:
+  case MULTIPLICATION:
+    polynomialEvalMpfi(y, p->value.pair.g, x);
+    polynomialEvalMpfi(*scratch, p->value.pair.h, x);
+    break;
+  case POWER:
+    polynomialEvalMpfi(y, p->value.powering.g, x);
+    constantEvalMpfi(*scratch, p->value.powering.c);
+    break;
+  }
+  switch (p->type) {
+  case ADDITION:
+    sollya_mpfi_add(y, y, *scratch);
+    break;
+  case SUBTRACTION:
+    sollya_mpfi_sub(y, y, *scratch);
+    break;
+  case MULTIPLICATION:
+    sollya_mpfi_mul(y, y, *scratch);
+    break;
+  case POWER:
+    sollya_mpfi_pow(y, y, *scratch);
+    break;
+  }
+  if (usingReused) {
+    returnReusedGlobalMPIVars(1);
+  } else {
+    sollya_mpfi_clear(scr);
+  }
+}
+
+static inline int __polynomialCheapCheckConstantZero(polynomial_t p) {
+  
+  /* Handle stupid inputs */
+  if (p == NULL) return 0;
+  
+  /* General case */
+  switch (p->type) {
+  case SPARSE:
+    return sparsePolynomialIsConstantZero(p->value.sparse, 0);
+    break;
+  case ADDITION:
+  case SUBTRACTION:
+    /* We don't know easily */
+    return 0;
+    break;
+  case MULTIPLICATION:
+    return (__polynomialCheapCheckConstantZero(p->value.pair.g) ||
+	    __polynomialCheapCheckConstantZero(p->value.pair.h));
+    break;
+  case NEGATE:
+    return __polynomialCheapCheckConstantZero(p->value.g);
+    break;
+  case POWER:
+    return __polynomialCheapCheckConstantZero(p->value.powering.g);
+    break;
+  }
+  return 0;
+}
+
+static inline int __polynomialCheapCheckConstantOne(polynomial_t p) {
+  
+  /* Handle stupid inputs */
+  if (p == NULL) return 0;
+  
+  /* General case */
+  switch (p->type) {
+  case SPARSE:
+    return sparsePolynomialIsConstantOne(p->value.sparse, 0);
+    break;
+  case ADDITION:
+  case SUBTRACTION:
+    /* We don't know easily */
+    return 0;
+    break;
+  case MULTIPLICATION:
+    return (__polynomialCheapCheckConstantOne(p->value.pair.g) &&
+	    __polynomialCheapCheckConstantOne(p->value.pair.h));
+    break;
+  case NEGATE:
+    /* We don't know easily */
+    return 0;    
+    break;
+  case POWER:
+    if (constantIsZero(p->value.powering.c,0)) return 1;
+    return __polynomialCheapCheckConstantOne(p->value.powering.g);
+    break;
+  }
+  return 0;
+}
+
+polynomial_t polynomialAdd(polynomial_t p, polynomial_t q) {
+  polynomial_t res;
+
+  /* Handle stupid inputs */
+  if (p == NULL) return NULL;
+  if (q == NULL) return NULL;
+  
+  /* If an easy check shows that p or q are constant zero, return a
+     copy of the other 
+  */
+  if (__polynomialCheapCheckConstantZero(p)) 
+    return polynomialFromCopy(q);
+  if (__polynomialCheapCheckConstantZero(q)) 
+    return polynomialFromCopy(p);
+
+  /* If both polynomials are sparse, perform the operation on sparse
+     polynomials. 
+  */
+  if ((p->type == SPARSE) && (q->type == SPARSE)) {
+    return __polynomialBuildFromSparse(sparsePolynomialAdd(p->value.sparse,
+							   q->value.sparse));
+  }
+
+  /* General case: construct the addition polynomial */
+  res = __polynomialAllocate();
+  res->refCount = 1u;
+  res->type = ADDITION;
+  res->outputType = ANY_FORM;
+  res->value.pair.g = polynomialFromCopy(p);
+  res->value.pair.h = polynomialFromCopy(q);
+  
+  /* Return the result polynomial */
+  return res;
+}
+
+polynomial_t polynomialSub(polynomial_t p, polynomial_t q) {
+  polynomial_t res;
+
+  /* Handle stupid inputs */
+  if (p == NULL) return NULL;
+  if (q == NULL) return NULL;
+  
+  /* If an easy check shows that p or q are constant zero, return a
+     copy of the other or its negation
+  */
+  if (__polynomialCheapCheckConstantZero(p)) 
+    return polynomialNeg(q);
+  if (__polynomialCheapCheckConstantZero(q)) 
+    return polynomialFromCopy(p);
+
+  /* If both polynomials are sparse, perform the operation on sparse
+     polynomials. 
+  */
+  if ((p->type == SPARSE) && (q->type == SPARSE)) {
+    return __polynomialBuildFromSparse(sparsePolynomialSub(p->value.sparse,
+							   q->value.sparse));
+  }
+
+  /* General case: construct the addition polynomial */
+  res = __polynomialAllocate();
+  res->refCount = 1u;
+  res->type = SUBTRACTION;
+  res->outputType = ANY_FORM;
+  res->value.pair.g = polynomialFromCopy(p);
+  res->value.pair.h = polynomialFromCopy(q);
+  
+  /* Return the result polynomial */
+  return res;
+}
+
+polynomial_t polynomialMul(polynomial_t p, polynomial_t q) {
+  polynomial_t res;
+
+  /* Handle stupid inputs */
+  if (p == NULL) return NULL;
+  if (q == NULL) return NULL;
+  
+  /* If an easy check shows that p or q are constant zero, return a
+     copy of them.
+  */
+  if (__polynomialCheapCheckConstantZero(p)) 
+    return polynomialFromCopy(p);
+  if (__polynomialCheapCheckConstantZero(q)) 
+    return polynomialFromCopy(q);
+
+  /* If an easy check shows that p or q are constant one, return a
+     copy of the other one.
+  */
+  if (__polynomialCheapCheckConstantZero(p)) 
+    return polynomialFromCopy(q);
+  if (__polynomialCheapCheckConstantZero(q)) 
+    return polynomialFromCopy(p);
+  
+  /* If both polynomials are sparse, and at least one of them has only
+     one monomial (or less), perform the operation on sparse
+     polynomials.
+  */
+  if ((p->type == SPARSE) && (q->type == SPARSE)) {
+    if ((sparsePolynomialGetMonomialCount(p->value.sparse) <= 1u) ||
+	(sparsePolynomialGetMonomialCount(q->value.sparse) <= 1u)) {
+      return __polynomialBuildFromSparse(sparsePolynomialMul(p->value.sparse,
+							     q->value.sparse));
+    }
+  }
+
+  /* General case: construct the multiplication polynomial */
+  res = __polynomialAllocate();
+  res->refCount = 1u;
+  res->type = MULTIPLICATION;
+  res->outputType = ANY_FORM;
+  res->value.pair.g = polynomialFromCopy(p);
+  res->value.pair.h = polynomialFromCopy(q);
+  
+  /* Return the result polynomial */
+  return res;
+}
+
+polynomial_t polynomialNeg(polynomial_t p) {
+  polynomial_t res;
+
+  /* Handle stupid inputs */
+  if (p == NULL) return NULL;
+
+  /* Handle certain cases in an ad-hoc way */
+  switch (p->type) {
+  case SPARSE:
+    return __polynomialBuildFromSparse(sparsePolynomialNeg(p->value.sparse));
+    break;
+  case SUBTRACTION:
+    res = __polynomialAllocate();
+    res->refCount = 1u;
+    res->type = SUBTRACTION;
+    res->outputType = ANY_FORM;
+    res->value.pair.g = polynomialFromCopy(p->value.pair.h);
+    res->value.pair.h = polynomialFromCopy(p->value.pair.g);
+    return res;
+    break;
+  case NEGATE:
+    return polynomialFromCopy(p->value.g);
+    break;
+  }
+
+  /* General case: construct the negation polynomial */
+  res = __polynomialAllocate();
+  res->refCount = 1u;
+  res->type = NEGATION;
+  res->outputType = ANY_FORM;
+  res->value.g = polynomialFromCopy(p);
+  
+  /* Return the result polynomial */
+  return res;
+}
+
+polynomial_t polynomialCompose(polynomial_t p, polynomial_t q) {
+  polynomial_t res;
+
+  /* Handle stupid inputs */
+  if (p == NULL) return NULL;
+  if (q == NULL) return NULL;
+    
+  /* If both polynomials are sparse, and polynomial q only has one
+     monomial, perform the operation on sparse polynomials.
+  */
+  if ((p->type == SPARSE) && (q->type == SPARSE)) {
+    if (sparsePolynomialGetMonomialCount(q->value.sparse) <= 1u) {
+      return __polynomialBuildFromSparse(sparsePolynomialCompose(p->value.sparse,
+								 q->value.sparse));
+    }
+  }
+
+  /* General case: construct the composed polynomial */
+  res = __polynomialAllocate();
+  res->refCount = 1u;
+  res->type = COMPOSITION;
+  res->outputType = ANY_FORM;
+  res->value.pair.g = polynomialFromCopy(p);
+  res->value.pair.h = polynomialFromCopy(q);
+  
+  /* Return the result polynomial */
+  return res;
+}
+
+polynomial_t polynomialDeriv(polynomial_t p) {
+  polynomial_t res;
+
+  /* Handle stupid inputs */
+  if (p == NULL) return NULL;
+
+  /* Handle certain cases in an ad-hoc way */
+  switch (p->type) {
+  case SPARSE:
+    return __polynomialBuildFromSparse(sparsePolynomialDeriv(p->value.sparse));
+    break;
+  case ADDITION:
+  case SUBTRACTION:
+    res = __polynomialAllocate();
+    res->refCount = 1u;
+    res->type = p->type;
+    res->outputType = ANY_FORM;
+    res->value.pair.g = polynomialDeriv(p->value.pair.h);
+    res->value.pair.h = polynomialDeriv(p->value.pair.g);
+    return res;
+    break;
+  case NEGATE:
+    res = __polynomialAllocate();
+    res->refCount = 1u;
+    res->type = NEGATE;
+    res->outputType = ANY_FORM;
+    res->value.g = polynomialDeriv(p->value.g);
+    return res;
+    break;
+  }
+  
+  /* General case: sparsify the polynomial and return the derivative
+     of the sparse polynomial.
+  */
+  __polynomialSparsify(p);  
+  return __polynomialBuildFromSparse(sparsePolynomialDeriv(p->value.sparse));
+}
+
+int polynomialPow(polynomial_t *, polynomial_t, polynomial_t);
+polynomial_t polynomialPowUnsignedInt(polynomial_t, unsigned int);
+
+
+int polynomialFromExpression(polynomial_t *r, node *p) {
   /* TODO */
-  return NULL;
+  return 0;
 }
-
-char *polynomialToString(polynomial_t p, int canonical) {
-  if (canonical) return __polynomialToStringCanonical(p);
-  return __polynomialToStringHorner(p);
-}
-
