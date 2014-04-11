@@ -6843,9 +6843,37 @@ int polynomialFromExpression(polynomial_t *r, node *p) {
   return 0;
 }
 
-int polynomialPow(polynomial_t *r, polynomial_t p, polynomial_t q) {
-  return 0;
+polynomial_t polynomialPowUnsignedInt(polynomial_t p, unsigned int n) {
+  polynomial_t res;
+
+  /* Handle stupid case */
+  if (p == NULL) return NULL;
+  
+  /* If n is zero, return the polynomial 1. */
+  if (n == 0u) return polynomialFromIntConstant(1);
+  
+  /* If n is one, return a copy of the polynomial p. */
+  if (n == 1u) return polynomialFromCopy(p);
+
+  /* If n is two, return p * p. */
+  if (n == 2u) return polynomialMul(p, p);
+
+  /* General case: construct the powering polynomial */  
+  res = __polynomialAllocate();
+  res->refCount = 1u;
+  res->type = POWER;
+  res->outputType = ANY_FORM;
+  res->value.powering.g = polynomialFromCopy(p);
+  res->value.powering.c = constantFromUnsignedInt(n);
+  
+  /* Return the result polynomial */
+  return res;
 }
 
-polynomial_t polynomialPowUnsignedInt(polynomial_t, unsigned int);
+int polynomialPow(polynomial_t *r, polynomial_t p, polynomial_t q) {
+
+  /* TODO */
+
+  return 0;
+}
 
