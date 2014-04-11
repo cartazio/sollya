@@ -6755,11 +6755,97 @@ polynomial_t polynomialDeriv(polynomial_t p) {
   return __polynomialBuildFromSparse(sparsePolynomialDeriv(p->value.sparse));
 }
 
-int polynomialPow(polynomial_t *, polynomial_t, polynomial_t);
-polynomial_t polynomialPowUnsignedInt(polynomial_t, unsigned int);
-
-
 int polynomialFromExpression(polynomial_t *r, node *p) {
-  /* TODO */
+  polynomial_t a, b, quot, rest, zero;
+  sparse_polynomial_t sr;
+  int res;
+
+  /* Handle stupid inputs */
+  if (p == NULL) return 0;  
+
+  /* Try to decompose expressions built on c, x, +, -, *, /, -, ^ */
+  switch (p->nodeType) {
+  case MEMREF:
+    return polynomialFromExpression(r, getMemRefChild(p));
+    break;
+  case VARIABLE:
+    *r = polynomialFromIdentity();
+    return 1;
+    break;
+  case CONSTANT:
+    *r = polynomialFromMpfrConstant(*(p->value));
+    return 1;
+    break;
+  case NEG:
+    if (!polynomialFromExpression(&a, p->child1)) 
+      break;
+    *r = polynomialNeg(a);
+    polynomialFree(a);
+    return 1;
+    break;
+  case ADD:
+  case SUB:
+  case MUL:
+  case DIV:
+  case POW:
+    if (!polynomialFromExpression(&a, p->child1)) 
+      break;
+    if (!polynomialFromExpression(&b, p->child2)) {
+      polynomialFree(a);
+      break;
+    }
+    res = 0;
+    switch (p->nodeType) {
+    case ADD:
+      *r = polynomialAdd(a, b);
+      res = 1;
+      break;
+    case SUB:
+      *r = polynomialSub(a, b);
+      res = 1;
+      break;
+    case MUL:
+      *r = polynomialMul(a, b);
+      res = 1;
+      break;
+    case DIV:
+      polynomialDiv(&quot, &rest, a, b);
+      zero = polynomialFromIntConstant(0);
+      if (polynomialEqual(rest, zero, 0)) {
+	*r = quot;
+	res = 1;
+      } else {
+	polynomialFree(quot);
+	res = 0;
+      }
+      polynomialFree(rest);
+      polynomialFree(zero);
+      break;
+    case POW:
+      res = polynomialPow(r, a, b);
+      break;
+    }
+    polynomialFree(a);
+    polynomialFree(b);
+    if (res) return 1;
+    break;
+  }
+
+  /* Here, the expression contains some other basic function. It can
+     be a polynomial only if it is a constant expression.
+  */
+  if (isConstant(p)) {
+    if (!__sparsePolynomialFromConstantExpression(&sr, p)) return 0;
+    *r = __polynomialBuildFromSparse(sr);
+    return 1;
+  }
+
   return 0;
 }
+
+int polynomialPow(polynomial_t *r, polynomial_t p, polynomial_t q) {
+  return 0;
+}
+
+polynomial_t polynomialPowUnsignedInt(polynomial_t, unsigned int);
+
