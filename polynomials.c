@@ -5068,7 +5068,7 @@ node *sparsePolynomialGetIthCoefficientIntIndex(sparse_polynomial_t p, int i) {
   */
   if (j >= p->monomialCount) {
     constantFree(ic);
-    return makeConstantInt(0);
+    return addMemRef(makeConstantInt(0));
   }
 
   /* Here, we know that 0 <= j <= n - 1.
@@ -5089,6 +5089,62 @@ node *sparsePolynomialGetIthCoefficientIntIndex(sparse_polynomial_t p, int i) {
   constantFree(coeffsum);
   
   return res;
+}
+
+constant_t sparsePolynomialGetIthCoefficientAsConstantIntIndex(sparse_polynomial_t p, int i) {
+  constant_t ic, coeffsum, t;
+  unsigned int j, k;
+
+  /* Handle stupid inputs */
+  if (p == NULL) return NULL;
+
+  /* The index must be non-negative */
+  if (i < 0) {
+    return constantFromInt(0);
+  }
+
+  /* Handle the strange case when p has no monomials */
+  if (p->monomialCount == 0u) {
+    return constantFromInt(0);
+  }
+
+  /* Construct a constant from i */
+  ic = constantFromInt(i);
+
+  /* The index must be no greater than the degree of p */
+  if (constantIsGreater(ic, p->deg, 0)) {
+    constantFree(ic);
+    return constantFromInt(0);
+  }
+
+  /* Get the index j where the coefficients for degree i might
+     start 
+  */
+  j = __sparsePolynomialFindDegree(ic, p->monomialDegrees, p->monomialCount, 0u); 
+
+  /* If j is greater than the last index of the monomials of p, there
+     exists no monomial of degree i.
+  */
+  if (j >= p->monomialCount) {
+    constantFree(ic);
+    return constantFromInt(0);
+  }
+
+  /* Here, we know that 0 <= j <= n - 1.
+
+     We add up all coefficients associated with a degree equal to i.
+
+  */
+  coeffsum = constantFromInt(0);
+  for (k=j;k<p->monomialCount;k++) {
+    if (!constantIsEqual(ic, p->monomialDegrees[k], 0)) 
+      break;
+    t = constantAdd(coeffsum, p->coeffs[k]);
+    constantFree(coeffsum);
+    coeffsum = t;
+  }
+  constantFree(ic);
+  return coeffsum;
 }
 
 int sparsePolynomialGetCoefficients(node ***coeffs, unsigned int *deg, sparse_polynomial_t p) {
@@ -6196,6 +6252,29 @@ node *polynomialGetIthCoefficientIntIndex(polynomial_t p, int i) {
   return sparsePolynomialGetIthCoefficientIntIndex(p->value.sparse, i);
 }
 
+static inline constant_t __polynomialGetIthCoefficientAsConstantIntIndex(polynomial_t p, int i) {
+  int deg;
+
+  /* Handle stupid input */
+  if (p == NULL) return NULL;
+
+  /* Handle case when i < 0 */
+  if (i < 0) {
+    return constantFromInt(0);
+  }
+
+  /* Handle case when i > degree */
+  deg = polynomialGetDegreeAsInt(p);
+  if ((deg >= 0) && 
+      (i > deg)) {
+    return constantFromInt(0);
+  }
+  
+  /* General case */
+  __polynomialSparsify(p);
+  return sparsePolynomialGetIthCoefficientAsConstantIntIndex(p->value.sparse, i);
+}
+
 int polynomialGetCoefficients(node ***coeffs, unsigned int *deg, polynomial_t p) {
   /* Handle stupid input */
   if (p == NULL) return 0;
@@ -6871,9 +6950,64 @@ polynomial_t polynomialPowUnsignedInt(polynomial_t p, unsigned int n) {
 }
 
 int polynomialPow(polynomial_t *r, polynomial_t p, polynomial_t q) {
+  constant_t n;
+  int deg;
+  polynomial_t res;
 
-  /* TODO */
+  /* Handle stupid inputs */
+  if (p == NULL) return 0;
+  if (q == NULL) return 0;
+  
+  /* Get the degree of q 
 
-  return 0;
+     If the integer-output degree accessor function 
+     indicates failure, this means that q has a degree
+     so huge that it does not hold on an integer. In this case,
+     p^q is not a polynomial.
+
+     If the integer-output degress accessor function indicates success
+     but a degree of at least one, p^q is not a polynomial.
+
+     So the only way that q is a constant is that the integer-output
+     degree accessor function returns 0.
+
+  */
+  if (polynomialGetDegreeAsInt(q) != 0) return 0;
+
+  /* Here we know that the degree of q is 0, i.e. that it is a
+     constant.
+
+     We get its coefficient of degree 0 to get its constant value.
+
+  */
+  n = __polynomialGetIthCoefficientAsConstantIntIndex(q, 0);
+  if (!constantIsNonNegativeInteger(n,0)) {
+    constantFree(n);
+    return 0;
+  }
+
+  /* Handle the cases n = 0, n = 1 */
+  if (constantIsZero(n, 0)) {
+    constantFree(n);
+    *r = polynomialFromIntConstant(1);
+    return 1;
+  }
+  if (constantIsOne(n, 0)) {
+    constantFree(n);
+    *r = polynomialFromCopy(p);
+    return 1;
+  }
+
+  /* General case: construct the powering polynomial */
+  res = __polynomialAllocate();
+  res->refCount = 1u;
+  res->type = POWER;
+  res->outputType = ANY_FORM;
+  res->value.powering.g = polynomialFromCopy(p);
+  res->value.powering.c = n;
+  
+  /* Set the output and return success */
+  *r = res;
+  return 1;
 }
 
