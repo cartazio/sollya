@@ -7095,7 +7095,7 @@ void __polynomialPrintRaw(polynomial_t p) {
   case POWER:
     sollyaFprintf(stderr, "   g =\n");
     __polynomialPrintRaw(p->value.powering.g);
-    sollyaFprintf(stderr, "   c =\n");
+    sollyaFprintf(stderr, "   c = ");
     constantFPrintf(stderr, p->value.powering.c);
     break;    
   }
