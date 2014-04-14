@@ -14299,7 +14299,7 @@ void freeThing(node *tree) {
 	tree->derivUnsimplCache = NULL;
       }
       freeEvaluationHook(&(tree->evaluationHook));
-      freeThing(getMemRefChild(tree));
+      if (tree->child1 != NULL) freeThing(tree->child1);
       if (tree->arguments != NULL) {
 	sollya_mpfi_clear(*((sollya_mpfi_t *) tree->arguments->next->value));
 	safeFree(tree->arguments->next->value);
