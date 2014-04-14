@@ -214,7 +214,7 @@ static inline void scaledMpqAddInt(mp_exp_t *EC, mpq_t c,
 
   /* Can be optimized */
   mpq_init(t);
-  mpq_set_si(t, b, 1ui);
+  mpq_set_si(t, b, 1u);
   mpq_canonicalize(t);
   scaledMpqAdd(EC, c, EA, a, 0, t);
   mpq_clear(t);
@@ -243,7 +243,7 @@ static inline void scaledMpqSubInt(mp_exp_t *EC, mpq_t c,
 
   /* Can be optimized */
   mpq_init(t);
-  mpq_set_si(t, b, 1ui);
+  mpq_set_si(t, b, 1u);
   mpq_canonicalize(t);
   scaledMpqSub(EC, c, EA, a, 0, t);
   mpq_clear(t);
@@ -256,7 +256,7 @@ static inline void scaledMpqIntSub(mp_exp_t *EC, mpq_t c,
 
   /* Can be optimized */
   mpq_init(t);
-  mpq_set_si(t, a, 1ui);
+  mpq_set_si(t, a, 1u);
   mpq_canonicalize(t);
   scaledMpqSub(EC, c, 0, t, EB, b);
   mpq_clear(t);
@@ -278,7 +278,7 @@ static inline void scaledMpqMulInt(mp_exp_t *EC, mpq_t c,
 
   /* Can be optimized */
   mpq_init(t);
-  mpq_set_si(t, b, 1ui);
+  mpq_set_si(t, b, 1u);
   mpq_canonicalize(t);
   scaledMpqMul(EC, c, EA, a, 0, t);
   mpq_clear(t);
@@ -986,10 +986,10 @@ static inline int tryExactIntAddition(int *c, int a, int b) {
   } else {
     if (aAbs >= bAbs) {
       cNeg = aNeg;
-      cAbs = a - b;
+      cAbs = aAbs - bAbs;
     } else {
       cNeg = bNeg;
-      cAbs = b - a;
+      cAbs = bAbs - aAbs;
     }
   }
   if (cNeg) {
@@ -1032,10 +1032,10 @@ static inline int tryExactIntSubtraction(int *c, int a, int b) {
   } else {
     if (aAbs >= bAbs) {
       cNeg = aNeg;
-      cAbs = a - b;
+      cAbs = aAbs - bAbs;
     } else {
       cNeg = bNeg;
-      cAbs = b - a;
+      cAbs = bAbs - aAbs;
     }
   }
   if (cNeg) {
@@ -2235,7 +2235,7 @@ int constantIsEqual(constant_t a, constant_t b, int defVal) {
     if (a->value.scaledMpq.expo - b->value.scaledMpq.expo != G) {
       res = 0;
     } else {
-      res = (mpq_cmp_si(t, 1, 1ul) == 0);
+      res = (mpq_cmp_si(t, 1, 1u) == 0);
     }
     mpq_clear(t);
     return res;
@@ -2443,7 +2443,7 @@ int tryConstantToScaledMpq(mp_exp_t *E, mpq_t rop, constant_t a) {
   if (a == NULL) return 0;
   switch (a->type) {
   case INTEGER:
-    mpq_set_si(rop, a->value.integer, 1ul);
+    mpq_set_si(rop, a->value.integer, 1u);
     mpq_canonicalize(rop);
     *E = mpq_remove_powers_of_two(rop);
     return 1;
@@ -2464,7 +2464,7 @@ int tryConstantToScaledMpq(mp_exp_t *E, mpq_t rop, constant_t a) {
     if (!mpfr_number_p(a->value.mpfr)) return 0;
     if (mpfr_zero_p(a->value.mpfr)) {
       *E = 0;
-      mpq_set_si(rop, 0, 1ul);
+      mpq_set_si(rop, 0, 1u);
       mpq_canonicalize(rop);
       return 1;
     }
@@ -2640,9 +2640,14 @@ void constantFPrintf(FILE *fd, constant_t c) {
     sollyaFprintf(fd,"%v",c->value.mpfr);
     break;
   case SCALEDMPQ:
-    sollyaFprintf(fd,"2^(%lld) * %r",
-		  (long long int) c->value.scaledMpq.expo, 
-		  c->value.scaledMpq.significand);
+    if (c->value.scaledMpq.expo == 0) {
+      sollyaFprintf(fd,"%r",
+		    c->value.scaledMpq.significand);
+    } else {
+      sollyaFprintf(fd,"2^(%lld) * %r",
+		    (long long int) c->value.scaledMpq.expo, 
+		    c->value.scaledMpq.significand);
+    }
     break;
   }
 }
@@ -2664,9 +2669,14 @@ char *constantToString(constant_t c) {
     size = sollya_snprintf(staticStr,8,"%v",c->value.mpfr);
     break;
   case SCALEDMPQ:
-    size = sollya_snprintf(staticStr,8,"2^(%lld) * %r",
-			   (long long int) c->value.scaledMpq.expo, 
-			   c->value.scaledMpq.significand);
+    if (c->value.scaledMpq.expo == 0) {
+      size = sollya_snprintf(staticStr,8,"%r",
+			     c->value.scaledMpq.significand);
+    } else {
+      size = sollya_snprintf(staticStr,8,"2^(%lld) * %r",
+			     (long long int) c->value.scaledMpq.expo, 
+			     c->value.scaledMpq.significand);
+    }
     break;
   default:
     return NULL;
@@ -2685,9 +2695,14 @@ char *constantToString(constant_t c) {
     r = sollya_snprintf(str,size,"%v",c->value.mpfr);
     break;
   case SCALEDMPQ:
-    r = sollya_snprintf(str,size,"2^(%lld) * %r",
-			(long long int) c->value.scaledMpq.expo, 
-			c->value.scaledMpq.significand);
+    if (c->value.scaledMpq.expo == 0) {
+      r = sollya_snprintf(str,size,"%r",
+			  c->value.scaledMpq.significand);
+    } else {
+      r = sollya_snprintf(str,size,"2^(%lld) * %r",
+			  (long long int) c->value.scaledMpq.expo, 
+			  c->value.scaledMpq.significand);
+    }
     break;
   default:
     safeFree(str);
@@ -3625,6 +3640,8 @@ void constantEvalMpfi(sollya_mpfi_t rop, constant_t c) {
 
 /* Start of part for sparse polynomials */
 
+void __sparsePolynomialPrintRaw(sparse_polynomial_t);
+
 static inline sparse_polynomial_t __sparsePolynomialAllocate() {
   return (sparse_polynomial_t) safeMalloc(sizeof(struct __sparse_polynomial_struct_t));
 }
@@ -3654,6 +3671,19 @@ static inline void __sparsePolynomialAdjustDegree(sparse_polynomial_t p) {
 						  ((size_t) (p->monomialCount)) * sizeof(constant_t));
 }
 
+static inline int __sparsePolynomialAscendingDegrees(sparse_polynomial_t p, int defVal) {
+  unsigned int i;
+  int ord;
+ 
+  if (p == NULL) return defVal;
+  if (p->monomialCount <= 1u) return 1;
+  for (i=1u;i<p->monomialCount;i++) {
+    ord = constantIsGreater(p->monomialDegrees[i], p->monomialDegrees[i-1u], 19);
+    if (ord == 19) return defVal;
+    if (!ord) return 0;
+  }
+  return 1;
+}
 
 /* Given a array a of n constants, sorted in ascending order, find
    the lowest index of an element greater than or equal to d. 
@@ -3985,29 +4015,6 @@ void sparsePolynomialFree(sparse_polynomial_t p) {
   __sparsePolynomialFreeMem(p);
 }
 
-int sparsePolynomialEqual(sparse_polynomial_t p, sparse_polynomial_t q, int defVal) {
-  unsigned int i;
-  int monDegEqual, coeffEqual, degreeEqual;
-
-  if (p == NULL) return defVal;
-  if (q == NULL) return defVal;
-  if (p == q) return 1;
-  if (p->monomialCount != q->monomialCount) return 0;
-  degreeEqual = constantIsEqual(p->deg, q->deg, 42);
-  if (degreeEqual == 42) return defVal;
-  if (!degreeEqual) return 0;  
-  for (i=0;i<p->monomialCount;i++) {
-    monDegEqual = constantIsEqual(p->monomialDegrees[i], q->monomialDegrees[i], 42);
-    if (monDegEqual == 42) return defVal;
-    if (!monDegEqual) return 0;
-    coeffEqual = constantIsEqual(p->coeffs[i], q->coeffs[i], 42);
-    if (coeffEqual == 42) return defVal;
-    if (!coeffEqual) return 0;
-  }
-
-  return 1;
-}
-
 int sparsePolynomialIsConstant(sparse_polynomial_t p, int defVal) {
   int degZero;
 
@@ -4135,14 +4142,14 @@ sparse_polynomial_t sparsePolynomialAdd(sparse_polynomial_t p, sparse_polynomial
     } else {
       if (constantIsGreater(p->monomialDegrees[i], q->monomialDegrees[j], 0)) {
 	/* Case (iii) */
-	newCoeff = constantFromCopy(p->coeffs[i]);
-	newMonomial = constantFromCopy(p->monomialDegrees[i]);
-	i++;
-      } else {
-	/* Case (ii) */
 	newCoeff = constantFromCopy(q->coeffs[j]);
 	newMonomial = constantFromCopy(q->monomialDegrees[j]);
 	j++;
+      } else {
+	/* Case (ii) */
+	newCoeff = constantFromCopy(p->coeffs[i]);
+	newMonomial = constantFromCopy(p->monomialDegrees[i]);
+	i++;
       }
     }
     /* Now check if we have to add the monomial */
@@ -4249,21 +4256,21 @@ sparse_polynomial_t sparsePolynomialSub(sparse_polynomial_t p, sparse_polynomial
     */
     if (constantIsEqual(p->monomialDegrees[i], q->monomialDegrees[j], 0)) {
       /* Case (i) */
-      newCoeff = constantAdd(p->coeffs[i], q->coeffs[j]);
+      newCoeff = constantSub(p->coeffs[i], q->coeffs[j]);
       newMonomial = constantFromCopy(p->monomialDegrees[i]);
       i++;
       j++;
     } else {
       if (constantIsGreater(p->monomialDegrees[i], q->monomialDegrees[j], 0)) {
-	/* Case (iii) */
-	newCoeff = constantFromCopy(p->coeffs[i]);
-	newMonomial = constantFromCopy(p->monomialDegrees[i]);
-	i++;
-      } else {
 	/* Case (ii) */
 	newCoeff = constantNeg(q->coeffs[j]);
 	newMonomial = constantFromCopy(q->monomialDegrees[j]);
 	j++;
+      } else {
+	/* Case (iii) */
+	newCoeff = constantFromCopy(p->coeffs[i]);
+	newMonomial = constantFromCopy(p->monomialDegrees[i]);
+	i++;
       }
     }
     /* Now check if we have to add the monomial */
@@ -4313,6 +4320,45 @@ sparse_polynomial_t sparsePolynomialSub(sparse_polynomial_t p, sparse_polynomial
   return res;
 }
 
+int sparsePolynomialEqual(sparse_polynomial_t p, sparse_polynomial_t q, int defVal) {
+  unsigned int i;
+  int monDegEqual, coeffEqual, degreeEqual;
+  int res;
+  sparse_polynomial_t d;
+
+  if (p == NULL) return defVal;
+  if (q == NULL) return defVal;
+  if (p == q) return 1;
+  if (p->monomialCount == 0u) {
+    return sparsePolynomialIsConstantZero(q, defVal);
+  }
+  if (q->monomialCount == 0u) {
+    return sparsePolynomialIsConstantZero(p, defVal);
+  }
+  if (p->monomialCount != q->monomialCount) {
+    if (__sparsePolynomialAscendingDegrees(p, 0) &&
+	__sparsePolynomialAscendingDegrees(q, 0))
+      return 0;
+    d = sparsePolynomialSub(p, q);
+    res = sparsePolynomialIsConstantZero(d, defVal);
+    sparsePolynomialFree(d);
+    return res;
+  }
+  degreeEqual = constantIsEqual(p->deg, q->deg, 42);
+  if (degreeEqual == 42) return defVal;
+  if (!degreeEqual) return 0;  
+  for (i=0;i<p->monomialCount;i++) {
+    monDegEqual = constantIsEqual(p->monomialDegrees[i], q->monomialDegrees[i], 42);
+    if (monDegEqual == 42) return defVal;
+    if (!monDegEqual) return 0;
+    coeffEqual = constantIsEqual(p->coeffs[i], q->coeffs[i], 42);
+    if (coeffEqual == 42) return defVal;
+    if (!coeffEqual) return 0;
+  }
+
+  return 1;
+}
+
 static inline void __sparsePolynomialAddMonomialToArrays(constant_t *coeffs, 
 						   constant_t *degrees,
 						   unsigned int *n,
@@ -4343,7 +4389,15 @@ static inline void __sparsePolynomialAddMonomialToArrays(constant_t *coeffs,
 
      There are two cases: 
 
-     a) degree[j] == d. In this case we add c to degree[j].
+     a) degree[j] == d. In this case we add c to degree[j]. 
+        
+        We have two subcases: 
+
+	(i)  After addition the new coefficient is non-zero. We leave
+	     it untouched.
+
+        (ii) After addition the new coefficient is zero. We remove it by
+	     moving all following coefficients one to the left.
 
      b) degree[j] > d. In this case we deplace all existing
         coefficients and degrees of indices j thru n-1 and put the new
@@ -4354,7 +4408,17 @@ static inline void __sparsePolynomialAddMonomialToArrays(constant_t *coeffs,
     /* Case a) */
     t = constantAdd(coeffs[j], c);
     constantFree(coeffs[j]);
-    coeffs[j] = t;
+    if (constantIsZero(t, 0)) {
+      constantFree(t);
+      constantFree(degrees[j]);
+      for (i=j;i<*n;i++) {
+	coeffs[i] = coeffs[i+1u];
+	degrees[i] = degrees[i+1u];
+      }
+      (*n)--;
+    } else {
+      coeffs[j] = t;
+    }
     constantFree(c);
     constantFree(d);
     return;
@@ -4365,8 +4429,8 @@ static inline void __sparsePolynomialAddMonomialToArrays(constant_t *coeffs,
      Deplace the existing coefficients and degrees.
   */
   for (i=*n;i>j;i--) {
-    coeffs[i] = coeffs[i-1];
-    degrees[i] = degrees[i-1];
+    coeffs[i] = coeffs[i-1u];
+    degrees[i] = degrees[i-1u];
   }
 
   /* Account for the new entry */
@@ -5533,9 +5597,16 @@ static inline node *__sparsePolynomialGetExpressionCanonical(sparse_polynomial_t
       return addMemRef(constantToExpression(p->coeffs[0]));
     } 
     if (constantIsOne(p->monomialDegrees[0],0)) {
+      if (constantIsOne(p->coeffs[0],0)) {
+	return addMemRef(makeVariable());
+      }
       return addMemRef(makeMul(constantToExpression(p->coeffs[0]),
 			       makeVariable()));
-    }     
+    }
+    if (constantIsOne(p->coeffs[0],0)) {
+      return addMemRef(makePow(makeVariable(),
+			       constantToExpression(p->monomialDegrees[0])));
+    }
     return addMemRef(makeMul(constantToExpression(p->coeffs[0]),
 			     makePow(makeVariable(),
 				     constantToExpression(p->monomialDegrees[0]))));
@@ -5546,12 +5617,21 @@ static inline node *__sparsePolynomialGetExpressionCanonical(sparse_polynomial_t
     res = constantToExpression(p->coeffs[0]);
   } else {
     if (constantIsOne(p->monomialDegrees[0],0)) {
-      res = makeMul(constantToExpression(p->coeffs[0]),
-		    makeVariable());
+      if (constantIsOne(p->coeffs[0], 0)) {
+	res = makeVariable();
+      } else {
+	res = makeMul(constantToExpression(p->coeffs[0]),
+		      makeVariable());
+      }
     } else {
-      res = makeMul(constantToExpression(p->coeffs[0]),
-		    makePow(makeVariable(),
-			    constantToExpression(p->monomialDegrees[0])));
+      if (constantIsOne(p->coeffs[0], 0)) {
+	res = makePow(makeVariable(),
+		      constantToExpression(p->monomialDegrees[0]));
+      } else {
+	res = makeMul(constantToExpression(p->coeffs[0]),
+		      makePow(makeVariable(),
+			      constantToExpression(p->monomialDegrees[0])));
+      }
     }
   }
   for (i=1u;i<p->monomialCount;i++) {
@@ -5559,12 +5639,21 @@ static inline node *__sparsePolynomialGetExpressionCanonical(sparse_polynomial_t
       temp = constantToExpression(p->coeffs[i]);
     } else {
       if (constantIsOne(p->monomialDegrees[i],0)) {
-	temp = makeMul(constantToExpression(p->coeffs[i]),
-		      makeVariable());
+	if (constantIsOne(p->coeffs[i], 0)) {
+	  temp = makeVariable();
+	} else {
+	  temp = makeMul(constantToExpression(p->coeffs[i]),
+			 makeVariable());
+	}
       } else {
-	temp = makeMul(constantToExpression(p->coeffs[i]),
-		       makePow(makeVariable(),
-			       constantToExpression(p->monomialDegrees[i])));
+	if (constantIsOne(p->coeffs[i], 0)) {
+	  temp = makePow(makeVariable(),
+			 constantToExpression(p->monomialDegrees[i]));	  
+	} else {
+	  temp = makeMul(constantToExpression(p->coeffs[i]),
+			 makePow(makeVariable(),
+				 constantToExpression(p->monomialDegrees[i])));
+	}
       }
     }
     res = makeAdd(res, temp);
@@ -5584,8 +5673,42 @@ static inline node *__sparsePolynomialGetExpressionHorner(sparse_polynomial_t p)
   /* Handle the strange case when p has no monomials */
   if (p->monomialCount == 0u) return addMemRef(makeConstantInt(0)); 
   
-  /* Perform Horner "evaluation" of p */
-  res = constantToExpression(p->coeffs[p->monomialCount-1u]);
+  /* Handle the case when the polynomial only has one monomial */
+  if (p->monomialCount == 1u) {
+    if (constantIsZero(p->monomialDegrees[0u], 0)) {
+      return addMemRef(constantToExpression(p->coeffs[0u]));
+    } else {
+      if (constantIsOne(p->monomialDegrees[0u], 0)) {
+	if (constantIsOne(p->coeffs[0u], 0)) {
+	  return addMemRef(makeVariable());
+	} else {
+	  return addMemRef(makeMul(constantToExpression(p->coeffs[0u]),
+				   makeVariable()));
+	}
+      } else {
+	if (constantIsOne(p->coeffs[0u], 0)) {
+	  return addMemRef(makePow(makeVariable(),
+				   constantToExpression(p->monomialDegrees[0u])));
+	} else {
+	  return addMemRef(makeMul(constantToExpression(p->coeffs[0u]),
+				   makePow(makeVariable(),
+					   constantToExpression(p->monomialDegrees[0u]))));
+	}
+      }
+    }
+  }
+
+  /* Perform Horner "evaluation" of p 
+
+     Here, the polynomial has at least 2 monomials. 
+     
+  */
+  if (constantIsOne(p->coeffs[p->monomialCount-1u], 0)) {
+    /* Use NULL as a marker for a coefficient equal to one */
+    res = NULL;
+  } else {
+    res = constantToExpression(p->coeffs[p->monomialCount-1u]);
+  }
   for (i=p->monomialCount-1u;i>=1u;i--) {
     /* y <- x^(p->monomialDegrees[i] - p->monomialDegrees[i-1u]) * y */
     if (tryConstantToUnsignedInt(&a, p->monomialDegrees[i]) &&
@@ -5597,48 +5720,90 @@ static inline node *__sparsePolynomialGetExpressionHorner(sparse_polynomial_t p)
       d = a - b;
       if (d != 0u) {
 	if (d == 1u) {
-	  res = makeMul(makeVariable(), res);
+	  if (res == NULL) {
+	    res = makeVariable();
+	  } else {
+	    res = makeMul(makeVariable(), res);
+	  }
 	} else {
-	  res = makeMul(makePow(makeVariable(),makeConstantInt(d)),res);
+	  if (res == NULL) {
+	    res = makePow(makeVariable(),makeConstantInt(d));
+	  } else {
+	    res = makeMul(makePow(makeVariable(),makeConstantInt(d)),res);
+	  }
 	}
       }
     } else {
       dc = constantSub(p->monomialDegrees[i], p->monomialDegrees[i-1u]);
       if (!constantIsZero(dc,0)) {
 	if (constantIsOne(dc,0)) {
-	  res = makeMul(makeVariable(), res);
+	  if (res == NULL) {
+	    res = makeVariable();
+	  } else {
+	    res = makeMul(makeVariable(), res);
+	  }
 	} else {
-	  res = makeMul(makePow(makeVariable(),constantToExpression(dc)),res);
+	  if (res == NULL) {
+	    res = makePow(makeVariable(),constantToExpression(dc));
+	  } else {
+	    res = makeMul(makePow(makeVariable(),constantToExpression(dc)),res);
+	  }
 	}
       }
       constantFree(dc);
     }
     /* y <- p->coeffs[i-1u] + y */
-    res = makeAdd(constantToExpression(p->coeffs[i-1u]), res);
+    if (res == NULL) {
+      res = makeAdd(constantToExpression(p->coeffs[i-1u]), makeConstantInt(1));
+    } else {
+      res = makeAdd(constantToExpression(p->coeffs[i-1u]), res);
+    }
   }
   /* y <- x^(p->monomialDegrees[0u]) * y */
   if (tryConstantToUnsignedInt(&a, p->monomialDegrees[0u])) {
     if (a != 0u) {
       if (a == 1u) {
-	res = makeMul(makeVariable(), res);
+	if (res == NULL) {
+	  res = makeVariable();
+	} else {
+	  res = makeMul(makeVariable(), res);
+	}
       } else {
-	res = makeMul(makePow(makeVariable(),
-			      makeConstantInt(a)),
-		      res);
+	if (res == NULL) {
+	  res = makePow(makeVariable(),
+			makeConstantInt(a));
+	} else {
+	  res = makeMul(makePow(makeVariable(),
+				makeConstantInt(a)),
+			res);
+	}
       }
     }
   } else {
     if (!constantIsZero(p->monomialDegrees[0u],0)) {
       if (constantIsOne(p->monomialDegrees[0u],0)) {
-	res = makeMul(makeVariable(), res);
+	if (res == NULL) {
+	  res = makeVariable();
+	} else {
+	  res = makeMul(makeVariable(), res);
+	}
       } else {
-	res = makeMul(makePow(makeVariable(),
-			      constantToExpression(p->monomialDegrees[0u])),
-		      res);
+	if (res == NULL) {
+	  res = makePow(makeVariable(),
+			constantToExpression(p->monomialDegrees[0u]));
+	} else {
+	  res = makeMul(makePow(makeVariable(),
+				constantToExpression(p->monomialDegrees[0u])),
+			res);
+	}
       }
     }
   }
   
+  if (res == NULL) {
+    res = makeConstantInt(1);
+  }
+
   /* Return the result */
   return addMemRef(res);
 }
@@ -6957,6 +7122,16 @@ polynomial_t polynomialPowUnsignedInt(polynomial_t p, unsigned int n) {
   /* If n is two, return p * p. */
   if (n == 2u) return polynomialMul(p, p);
 
+  /* If p is sparse and only has one monomial (or less), immediately
+     perform the operation 
+  */
+  if (p->type == SPARSE) {
+    if (sparsePolynomialGetMonomialCount(p->value.sparse) <= 1u) {
+      return __polynomialBuildFromSparse(sparsePolynomialPowUnsignedInt(p->value.sparse, 
+									n));
+    }
+  }
+
   /* General case: construct the powering polynomial */  
   res = __polynomialAllocate();
   res->refCount = 1u;
@@ -6973,6 +7148,7 @@ int polynomialPow(polynomial_t *r, polynomial_t p, polynomial_t q) {
   constant_t n;
   int deg;
   polynomial_t res;
+  sparse_polynomial_t sp;
 
   /* Handle stupid inputs */
   if (p == NULL) return 0;
@@ -7016,6 +7192,19 @@ int polynomialPow(polynomial_t *r, polynomial_t p, polynomial_t q) {
     constantFree(n);
     *r = polynomialFromCopy(p);
     return 1;
+  }
+
+  /* If p is sparse and only has one monomial (or less), immediately
+     perform the operation 
+  */
+  if (p->type == SPARSE) {
+    if (sparsePolynomialGetMonomialCount(p->value.sparse) <= 1u) {
+      if (sparsePolynomialPowConstant(&sp, p->value.sparse, n)) {
+	constantFree(n);
+	*r = __polynomialBuildFromSparse(sp);
+	return 1;
+      }
+    }
   }
 
   /* General case: construct the powering polynomial */
