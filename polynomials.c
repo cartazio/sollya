@@ -203,7 +203,6 @@ static inline void scaledMpqAdd(mp_exp_t *EC, mpq_t c,
     mpq_mul_2exp(c, b, EB - EA);
     mpq_add(c, c, a);
   }
-  mpq_canonicalize(c);
   *EC += mpq_remove_powers_of_two(c);
 }
 
@@ -230,9 +229,8 @@ static inline void scaledMpqSub(mp_exp_t *EC, mpq_t c,
   } else {
     *EC = EA;
     mpq_mul_2exp(c, b, EB - EA);
-    mpq_sub(c, c, a);
+    mpq_sub(c, a, c);
   }
-  mpq_canonicalize(c);
   *EC += mpq_remove_powers_of_two(c);
 }
 
@@ -290,7 +288,6 @@ static inline int tryScaledMpqDiv(mp_exp_t *EC, mpq_t c,
   if (mpq_sgn(b) == 0) return 0;
   *EC = EA - EB;
   mpq_div(c, a, b);
-  mpq_canonicalize(c);
   *EC += mpq_remove_powers_of_two(c);
   return 1;
 }
@@ -308,9 +305,6 @@ static inline int scaledMpqIsInteger(mp_exp_t E, mpq_t a) {
   */
   if ((E >= 0) && 
       (mpz_cmpabs_ui(mpq_denref(a),1u) == 0)) return 1;
-
-  /* Now canonicalize the fraction, i.e. reduce common factors */
-  mpq_canonicalize(a);
 
   /* If the denominator q is one in magnitude and the exponent E
      non-negative, 2^E * p/q is integer
@@ -557,7 +551,6 @@ static inline void scaledMpqFloor(mp_exp_t *EB, mpq_t b,
 
   /* Compute a first guess on the output */
   mpfr_init2(t, precOut);
-  mpq_canonicalize(a);
   mpfr_set_z_2exp(t, mpq_numref(a), EA, GMP_RNDD);   
   mpfr_div_z(t, t, mpq_denref(a), GMP_RNDD);
   mpfr_floor(t, t);
@@ -682,7 +675,6 @@ static inline int scaledMpqIsUnsignedInt(unsigned int *n, mp_exp_t E, mpq_t a) {
 
   */
   mpfr_init2(t, 2 * 8 * sizeof(unsigned int) + 7);
-  mpq_canonicalize(a);
   mpfr_set_z_2exp(t, mpq_numref(a), E, GMP_RNDD);   
   mpfr_div_z(t, t, mpq_denref(a), GMP_RNDD);
   mpfr_floor(t, t);
@@ -917,7 +909,6 @@ static inline int tryScaledMpqPowInt(mp_exp_t *EC, mpq_t c,
   if (n == 1) {
     *EC = EA;
     mpq_set(c, a);
-    mpq_canonicalize(c);
     *EC += mpq_remove_powers_of_two(c);
     return 1;
   }
@@ -1880,7 +1871,6 @@ constant_t constantFromScaledMpq(mp_exp_t e, mpq_t c) {
   mpq_init(res->value.scaledMpq.significand);
   mpq_set_num(res->value.scaledMpq.significand, num);
   mpq_set_den(res->value.scaledMpq.significand, den);
-  mpq_canonicalize(res->value.scaledMpq.significand);
   mpz_clear(den);
   mpz_clear(num);
   
@@ -2216,7 +2206,6 @@ int constantIsEqual(constant_t a, constant_t b, int defVal) {
     */
     mpq_init(t);
     mpq_div(t, b->value.scaledMpq.significand, a->value.scaledMpq.significand);
-    mpq_canonicalize(t);
     G = mpq_remove_powers_of_two(t);
 
     /* Here, we have to compare 2^(E - F) to 2^G * t, 
@@ -3502,7 +3491,6 @@ constant_t constantNeg(constant_t a) {
   case SCALEDMPQ:
     mpq_init(cQ);
     mpq_neg(cQ, a->value.scaledMpq.significand);
-    mpq_canonicalize(cQ);
     res = constantFromScaledMpq(a->value.scaledMpq.expo, cQ);
     mpq_clear(cQ);
     return res;
@@ -4691,7 +4679,7 @@ void sparsePolynomialDiv(sparse_polynomial_t *quot, sparse_polynomial_t *rest, s
   */
   q = sparsePolynomialFromIntConstant(0);
   r = sparsePolynomialFromCopy(a);
-  
+    
   /* Euclidean division */
   __sparsePolynomialGetLeadingCoefficient(&bc,&bd,&bt,b);
   while ((!constantIsGreater(b->deg,r->deg,1)) && 
@@ -6055,7 +6043,110 @@ void polynomialFree(polynomial_t p) {
   __polynomialFreeMem(p);
 }
 
+static inline int __polynomialGetDegreeAsIntCheap(polynomial_t p) {
+  int gd, hd, res;
+  unsigned int u, gdu, tu, ttu;
+
+  /* Handle stupid input */
+  if (p == NULL) return -1;
+
+  /* Try to handle the case without sparsifying the polynomial. */
+  switch (p->type) {
+  case SPARSE:
+    return sparsePolynomialGetDegreeAsInt(p->value.sparse);
+    break;
+  case ADDITION:
+  case SUBTRACTION:
+    gd = __polynomialGetDegreeAsIntCheap(p->value.pair.g);
+    hd = __polynomialGetDegreeAsIntCheap(p->value.pair.h);
+    if ((gd == 0) && (hd == 0)) return 0;
+    if ((gd >= 0) && (hd >= 0) && (gd != hd)) 
+      return (hd > gd ? hd : gd);
+    break;
+  case MULTIPLICATION:
+    gd = __polynomialGetDegreeAsIntCheap(p->value.pair.g);
+    hd = __polynomialGetDegreeAsIntCheap(p->value.pair.h);
+    if ((gd != 0) && (hd != 0)) {
+      if ((gd < 0) || (hd < 0)) return -1;
+      if (tryExactIntAddition(&res, gd, hd)) {
+	return res;
+      } else {
+	return -1;
+      }
+    }
+    break;
+  case COMPOSITION:
+    gd = __polynomialGetDegreeAsIntCheap(p->value.pair.g);
+    hd = __polynomialGetDegreeAsIntCheap(p->value.pair.h);
+    if ((gd == 0) || (hd == 0)) return 0;
+    if ((gd < 0) || (hd < 0)) return -1;
+    if (tryExactIntMultiplication(&res, gd, hd)) {
+      return res;
+    } else {
+      return -1;
+    }    
+    break;
+  case NEGATE:
+    return __polynomialGetDegreeAsIntCheap(p->value.g);
+    break;
+  case POWER:
+    gd = __polynomialGetDegreeAsIntCheap(p->value.powering.g);
+    if (gd == 0) return 0;
+    if (tryConstantToUnsignedInt(&u, p->value.powering.c)) {
+      if (u == 0u) {
+	return 0;
+      } else {
+	if (gd < 0) return -1;
+	gdu = gd;
+	if (tryExactUnsignedIntMultiplication(&tu,gdu,u)) {
+	  res = tu;
+	  if (res < 0) return -1;
+	  ttu = res;
+	  if (ttu != tu) return -1;
+	  return res;
+	} else {
+	  return -1;
+	}
+      }
+    } else {
+      return -1;
+    }
+    break;
+  }
+
+  /* The fallback would be too expensive */
+  return -1;
+}
+
+static inline int __polynomialEqualCheap(polynomial_t p, polynomial_t q) {
+  if (p == NULL) return 0;
+  if (q == NULL) return 0;
+  if (p == q) return 1;
+  if (p->type != q->type) return 0;
+  switch (p->type) {
+  case SPARSE:
+    return sparsePolynomialEqual(p->value.sparse, q->value.sparse, 0);
+    break;
+  case ADDITION:
+  case SUBTRACTION:
+  case MULTIPLICATION:
+  case COMPOSITION:
+    return (__polynomialEqualCheap(p->value.pair.g, q->value.pair.g) &&
+	    __polynomialEqualCheap(p->value.pair.h, q->value.pair.h));
+    break;
+  case NEGATE:
+    return __polynomialEqualCheap(p->value.g, q->value.g);
+    break;
+  case POWER:
+    return (__polynomialEqualCheap(p->value.powering.g, q->value.powering.g) &&
+	    constantIsEqual(p->value.powering.c, q->value.powering.c, 0));    
+    break;
+  }
+  return 0;
+}
+
 int polynomialEqual(polynomial_t p, polynomial_t q, int defVal) {
+  int dp, dq;
 
   /* Handle stupid inputs */
   if (p == NULL) return defVal;
@@ -6064,9 +6155,26 @@ int polynomialEqual(polynomial_t p, polynomial_t q, int defVal) {
   /* Pointer equality */
   if (p == q) return 1;
 
+  /* If both polynomials are in sparse form, just use this */
+  if ((p->type == SPARSE) && (q->type == SPARSE))
+    return sparsePolynomialEqual(p->value.sparse, q->value.sparse, defVal);
+
+  /* Try to cheaply compute the degrees. If both degrees can be
+     computed but are different, we know that the polynomials are
+     different.
+  */
+  dp = __polynomialGetDegreeAsIntCheap(p);
+  dq = __polynomialGetDegreeAsIntCheap(q);
+  if ((dp >= 0) && (dq >= 0) && (dp != dq)) return 0;
+
+  /* If p and q are written the same way and each sub-polynomial is
+     the same, they are the same. 
+  */
+  if (__polynomialEqualCheap(p, q)) return 1;
+
   /* General case
      
-     Can be optimized.
+     Can perhaps be optimized still a little bit.
   
   */
   __polynomialSparsify(p);
@@ -6076,6 +6184,7 @@ int polynomialEqual(polynomial_t p, polynomial_t q, int defVal) {
 
 void polynomialDiv(polynomial_t *quot, polynomial_t *rest, polynomial_t a, polynomial_t b) {
   sparse_polynomial_t sq, sr;
+  polynomial_t q, r, qg, qh, rg, rh;
 
   /* Handle stupid inputs */
   if ((a == NULL) || (b == NULL)) {
@@ -6084,9 +6193,63 @@ void polynomialDiv(polynomial_t *quot, polynomial_t *rest, polynomial_t a, polyn
     return;
   }
 
+  /* If a and b are both sparse, just use the sparse division */
+  if ((a->type == SPARSE) && (b->type == SPARSE)) {
+    sparsePolynomialDiv(&sq, &sr, a->value.sparse, b->value.sparse);
+
+    *quot = __polynomialBuildFromSparse(sq);
+    *rest = __polynomialBuildFromSparse(sr);
+    return;
+  }
+
+  /* If a and b are equal, the answer is easy */
+  if (__polynomialEqualCheap(a, b)) {
+    *quot = polynomialFromIntConstant(1);
+    *rest = polynomialFromIntConstant(0);
+    return;
+  }
+
+  /* If a is a negation, do the division recursively and negate the
+     quotient and rest. 
+  */
+  if (a->type == NEGATION) {
+    polynomialDiv(&q, &r, a->value.g, b);
+    *quot = polynomialNeg(q);
+    *rest = polynomialNeg(r);
+    polynomialFree(q);
+    polynomialFree(r);
+    return;
+  }
+
+  /* If a is an addition, just do the division
+     recursively.
+  */
+  if (a->type == ADDITION) {
+    polynomialDiv(&qg, &rg, a->value.pair.g, b);
+    polynomialDiv(&qh, &rh, a->value.pair.h, b);
+    *quot = polynomialAdd(qg, qh);
+    *rest = polynomialAdd(rg, rh);
+    polynomialFree(qg);
+    polynomialFree(rg);
+    return;
+  }
+
+  /* If a is a subtraction, just do the division
+     recursively.
+  */
+  if (a->type == SUBTRACTION) {
+    polynomialDiv(&qg, &rg, a->value.pair.g, b);
+    polynomialDiv(&qh, &rh, a->value.pair.h, b);
+    *quot = polynomialSub(qg, qh);
+    *rest = polynomialSub(rg, rh);
+    polynomialFree(qg);
+    polynomialFree(rg);
+    return;
+  }
+
   /* General case 
 
-     Some cases can be optimized.
+     Some cases can still be optimized.
 
   */
   __polynomialSparsify(a);
@@ -6311,7 +6474,6 @@ int polynomialGetDegreeAsInt(polynomial_t p) {
   switch (p->type) {
   case SPARSE:
     return sparsePolynomialGetDegreeAsInt(p->value.sparse);
-    return;
     break;
   case ADDITION:
   case SUBTRACTION:
@@ -6967,6 +7129,17 @@ polynomial_t polynomialCompose(polynomial_t p, polynomial_t q) {
       return __polynomialBuildFromSparse(sparsePolynomialCompose(p->value.sparse,
 								 q->value.sparse));
     }
+  }
+
+  /* If p is of the form p = r^c, we have p(q) = (r(q))^c */
+  if (p->type == POWER) {
+    res = __polynomialAllocate();
+    res->refCount = 1u;
+    res->type = POWER;
+    res->outputType = ANY_FORM;
+    res->value.powering.g = polynomialCompose(p->value.powering.g, q);
+    res->value.powering.c = constantFromCopy(p->value.powering.c);
+    return res;
   }
 
   /* General case: construct the composed polynomial */
