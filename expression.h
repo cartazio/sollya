@@ -67,7 +67,7 @@
 #include "chain.h"
 #include "library.h"
 #include "hooks.h"
-
+#include "polynomials.h"
 
 #define VARIABLE 0
 #define CONSTANT 1
@@ -142,6 +142,7 @@ struct nodeStruct
   node *simplifyCache;
   int isCorrectlyTyped;
   eval_hook_t *evaluationHook;
+  polynomial_t polynomialRepresentation;
 };
 
 /* HELPER TYPE FOR THE PARSER */
@@ -179,13 +180,12 @@ static inline node* addMemRef(node *tree) { return tree; }
 
 static inline node* getMemRefChild(node *tree) { return tree->child1; }
 
+static inline node *addMemRefEvenOnNull(node *tree) { return tree; }
+
 #else
 
-static inline node* addMemRef(node *tree) {
+static inline node* addMemRefEvenOnNull(node *tree) {
   node *res;
-
-  if (tree == NULL) return NULL;
-  if (tree->nodeType == MEMREF) return tree;
 
   res = (node *) safeMalloc(sizeof(node));
   res->nodeType = MEMREF;
@@ -204,12 +204,22 @@ static inline node* addMemRef(node *tree) {
   res->simplifyCache = NULL;
   res->isCorrectlyTyped = 0;
   res->evaluationHook = NULL;
+  res->polynomialRepresentation = NULL;
 
   return res;
 }
 
+static inline node* addMemRef(node *tree) {
+  if (tree == NULL) return NULL;
+  if (tree->nodeType == MEMREF) return tree;
+  return addMemRefEvenOnNull(tree);
+}
+
 static inline node* getMemRefChild(node *tree) { 
-  return tree->child1; 
+  if (tree->child1 != NULL) return tree->child1;
+  if (tree->polynomialRepresentation == NULL) return NULL;
+  tree->child1 = polynomialGetExpression(tree->polynomialRepresentation);
+  return tree->child1;
 }
 
 #endif
@@ -287,6 +297,7 @@ node *simplifyAllButDivision(node *tree);
 int mpfr_to_mpq( mpq_t y, mpfr_t x);
 int mpfr_to_mpz( mpz_t y, mpfr_t x);
 mp_prec_t getMpzPrecision(mpz_t x);
+int containsOnlyRealNumbers(node * tree);
 
 node *makeVariable();
 node *makeConstant(mpfr_t x);

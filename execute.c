@@ -95,6 +95,7 @@
 #include "sollya-messaging.h"
 #include <setjmp.h>
 #include "hooks.h"
+#include "polynomials.h"
 
 #define READBUFFERSIZE 16000
 
@@ -126,6 +127,7 @@ void freeDoNothing(void *ptr) {
   UNUSED_PARAM(ptr);
   return;
 }
+
 
 /* Performs a fast check if a < b or a > b
 //
@@ -4376,6 +4378,7 @@ char *getTimingStringForThing(node *tree) {
 int isPureTree(node *tree) {
   switch (tree->nodeType) {
   case MEMREF:
+    if (tree->polynomialRepresentation != NULL) return 1;
     return isPureTree(getMemRefChild(tree));
     break;
   case VARIABLE:
@@ -4518,6 +4521,7 @@ int isPureTree(node *tree) {
 int isExtendedPureTree(node *tree) {
   switch (tree->nodeType) {
   case MEMREF:
+    if (tree->polynomialRepresentation != NULL) return 1;
     return isExtendedPureTree(getMemRefChild(tree));
     break;
   case DEFAULT:
@@ -14300,6 +14304,7 @@ void freeThing(node *tree) {
       }
       freeEvaluationHook(&(tree->evaluationHook));
       if (tree->child1 != NULL) freeThing(tree->child1);
+      if (tree->polynomialRepresentation != NULL) polynomialFree(tree->polynomialRepresentation);
       if (tree->arguments != NULL) {
 	sollya_mpfi_clear(*((sollya_mpfi_t *) tree->arguments->next->value));
 	safeFree(tree->arguments->next->value);
@@ -15471,6 +15476,14 @@ int isEqualThing(node *tree, node *tree2) {
 
   if (tree == tree2) return 1;
 
+  if ((tree->nodeType == MEMREF) && 
+      (tree2->nodeType == MEMREF) &&
+      (tree->polynomialRepresentation != NULL) &&
+      (tree2->polynomialRepresentation != NULL)) {
+    return polynomialEqual(tree->polynomialRepresentation, 
+			   tree2->polynomialRepresentation, 0);
+  }
+
   if (tree->nodeType == MEMREF) {
     return isEqualThing(getMemRefChild(tree), tree2);
   }
@@ -16329,6 +16342,7 @@ int isCorrectlyTypedBaseSymbol(node *tree) {
   if (tree == NULL) return 0;
 
   if (tree->nodeType == MEMREF) {
+    if (tree->polynomialRepresentation != NULL) return 0;
     return isCorrectlyTypedBaseSymbol(getMemRefChild(tree));
   }
 
@@ -16395,6 +16409,7 @@ int isCorrectlyTyped(node *tree) {
   chain *curr;
 
   if ((tree->nodeType == MEMREF) && (tree->isCorrectlyTyped)) return 1;
+  if ((tree->nodeType == MEMREF) && (tree->polynomialRepresentation != NULL)) return 1;
 
   if (isPureTree(tree)) return 1;
   if (isCorrectlyTypedBaseSymbol(tree)) return 1;
@@ -16426,6 +16441,17 @@ int isCorrectlyTyped(node *tree) {
   }
 
   return 0;
+}
+
+int tryRepresentAsPolynomial(node *tree) {
+  polynomial_t p;
+
+  if (tree->nodeType != MEMREF) return 0;
+  if (tree->polynomialRepresentation != NULL) return 0;
+  if (!isPureTree(tree)) return 0;
+  if (!polynomialFromExpressionOnlyRealCoeffs(&p, tree)) return 0;
+  tree->polynomialRepresentation = p;
+  return 1;
 }
 
 node *evaluateThing(node *tree) {
@@ -16480,6 +16506,7 @@ node *evaluateThing(node *tree) {
   }
 
   if (okay && (evaluated->nodeType == MEMREF)) {
+    tryRepresentAsPolynomial(evaluated);
     evaluated->isCorrectlyTyped = 1;
   }
 
@@ -19495,6 +19522,7 @@ node *evaluateThingInnerst(node *tree) {
   if (tree == NULL) return NULL;
 
   if (tree->nodeType == MEMREF) {
+    if (tree->polynomialRepresentation != NULL) return copyThing(tree);
     return evaluateThingInner(getMemRefChild(tree));
   }
 

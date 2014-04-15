@@ -3910,6 +3910,23 @@ static inline int __sparsePolynomialFromConstantExpression(sparse_polynomial_t *
   return 1;
 }
 
+static inline int __sparsePolynomialFromConstantExpressionOnlyRealCoeffs(sparse_polynomial_t *r, node *c) {
+  sparse_polynomial_t res;
+  if (c == NULL) return 0;
+  if (!isConstant(c)) return 0;
+  if (!containsOnlyRealNumbers(c)) return 0;
+  res = __sparsePolynomialAllocate();
+  res->refCount = 1;
+  res->monomialCount = 1;
+  res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
+  res->coeffs[0] = constantFromExpression(c);
+  res->monomialDegrees = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
+  res->monomialDegrees[0] = constantFromInt(0);
+  res->deg = constantFromCopy(res->monomialDegrees[0]);
+  *r = res;
+  return 1;
+}
+
 sparse_polynomial_t sparsePolynomialFromIdentity() {
   sparse_polynomial_t res;
   res = __sparsePolynomialAllocate();
@@ -6003,6 +6020,10 @@ polynomial_t polynomialFromMpfrCoefficients(mpfr_t *coeffs, unsigned int deg) {
   return __polynomialBuildFromSparse(sparsePolynomialFromMpfrCoefficients(coeffs, deg));
 }
 
+static inline polynomial_t __polynomialFromConstant(constant_t c) {
+  return __polynomialBuildFromSparse(sparsePolynomialFromConstant(c));
+}
+
 int polynomialFromConstantExpressionCoefficients(polynomial_t *r, node **coeffs, unsigned int deg) {
   sparse_polynomial_t sp;
 
@@ -6184,7 +6205,8 @@ int polynomialEqual(polynomial_t p, polynomial_t q, int defVal) {
 
 void polynomialDiv(polynomial_t *quot, polynomial_t *rest, polynomial_t a, polynomial_t b) {
   sparse_polynomial_t sq, sr;
-  polynomial_t q, r, qg, qh, rg, rh;
+  polynomial_t q, r, qg, qh, rg, rh, t;
+  constant_t one, tc;
 
   /* Handle stupid inputs */
   if ((a == NULL) || (b == NULL)) {
@@ -6245,6 +6267,28 @@ void polynomialDiv(polynomial_t *quot, polynomial_t *rest, polynomial_t a, polyn
     polynomialFree(qg);
     polynomialFree(rg);
     return;
+  }
+
+  /* If a is of the form a = p^c with c >= 2 and b = p, 
+     the result is q = p^(c - 1) and r = 0.
+  */
+  if (a->type == POWER) {
+    if ((!constantIsZero(a->value.powering.c,1)) &&
+	(!constantIsOne(a->value.powering.c,1))) {
+      if (polynomialEqual(a->value.powering.g, b, 0)) {
+	one = constantFromInt(1);
+	tc = constantSub(a->value.powering.c, one);
+	constantFree(one);
+	t = __polynomialFromConstant(tc);
+	constantFree(tc);
+	if (polynomialPow(quot, b, t)) {
+	  *rest = polynomialFromIntConstant(0);
+	  polynomialFree(t);
+	  return;
+	}
+	polynomialFree(t);
+      }
+    }
   }
 
   /* General case 
@@ -7156,6 +7200,7 @@ polynomial_t polynomialCompose(polynomial_t p, polynomial_t q) {
 
 polynomial_t polynomialDeriv(polynomial_t p) {
   polynomial_t res;
+  constant_t one;
 
   /* Handle stupid inputs */
   if (p == NULL) return NULL;
@@ -7183,6 +7228,25 @@ polynomial_t polynomialDeriv(polynomial_t p) {
     res->value.g = polynomialDeriv(p->value.g);
     return res;
     break;
+  case POWER:
+    if ((!constantIsZero(p->value.powering.c, 1)) &&
+	(!constantIsOne(p->value.powering.c, 1))) {
+      one = constantFromInt(1);
+      res = __polynomialAllocate();
+      res->refCount = 1u;
+      res->type = MULTIPLICATION;
+      res->outputType = ANY_FORM;
+      res->value.pair.g = __polynomialFromConstant(p->value.powering.c);
+      res->value.pair.h = __polynomialAllocate();
+      res->value.pair.h->refCount = 1u;
+      res->value.pair.h->type = POWER;
+      res->value.pair.h->outputType = ANY_FORM;
+      res->value.pair.h->value.powering.g = polynomialFromCopy(p->value.powering.g);
+      res->value.pair.h->value.powering.c = constantSub(p->value.powering.c, one);
+      constantFree(one);
+      return res;
+    }
+    break;
   }
   
   /* General case: sparsify the polynomial and return the derivative
@@ -7203,6 +7267,10 @@ int polynomialFromExpression(polynomial_t *r, node *p) {
   /* Try to decompose expressions built on c, x, +, -, *, /, -, ^ */
   switch (p->nodeType) {
   case MEMREF:
+    if (p->polynomialRepresentation != NULL) {
+      *r = polynomialFromCopy(p->polynomialRepresentation);
+      return 1;
+    }
     return polynomialFromExpression(r, getMemRefChild(p));
     break;
   case VARIABLE:
@@ -7273,6 +7341,102 @@ int polynomialFromExpression(polynomial_t *r, node *p) {
   */
   if (isConstant(p)) {
     if (!__sparsePolynomialFromConstantExpression(&sr, p)) return 0;
+    *r = __polynomialBuildFromSparse(sr);
+    return 1;
+  }
+
+  return 0;
+}
+
+int polynomialFromExpressionOnlyRealCoeffs(polynomial_t *r, node *p) {
+  polynomial_t a, b, quot, rest, zero;
+  sparse_polynomial_t sr;
+  int res;
+
+  /* Handle stupid inputs */
+  if (p == NULL) return 0;  
+
+  /* Try to decompose expressions built on c, x, +, -, *, /, -, ^ */
+  switch (p->nodeType) {
+  case MEMREF:
+    if (p->polynomialRepresentation != NULL) {
+      *r = polynomialFromCopy(p->polynomialRepresentation);
+      return 1;
+    }
+    return polynomialFromExpressionOnlyRealCoeffs(r, getMemRefChild(p));
+    break;
+  case VARIABLE:
+    *r = polynomialFromIdentity();
+    return 1;
+    break;
+  case CONSTANT:
+    if (mpfr_number_p(*(p->value))) {
+      *r = polynomialFromMpfrConstant(*(p->value));
+      return 1;
+    } else {
+      return 0;
+    }
+    break;
+  case NEG:
+    if (!polynomialFromExpressionOnlyRealCoeffs(&a, p->child1)) 
+      break;
+    *r = polynomialNeg(a);
+    polynomialFree(a);
+    return 1;
+    break;
+  case ADD:
+  case SUB:
+  case MUL:
+  case DIV:
+  case POW:
+    if (!polynomialFromExpressionOnlyRealCoeffs(&a, p->child1)) 
+      break;
+    if (!polynomialFromExpressionOnlyRealCoeffs(&b, p->child2)) {
+      polynomialFree(a);
+      break;
+    }
+    res = 0;
+    switch (p->nodeType) {
+    case ADD:
+      *r = polynomialAdd(a, b);
+      res = 1;
+      break;
+    case SUB:
+      *r = polynomialSub(a, b);
+      res = 1;
+      break;
+    case MUL:
+      *r = polynomialMul(a, b);
+      res = 1;
+      break;
+    case DIV:
+      polynomialDiv(&quot, &rest, a, b);
+      zero = polynomialFromIntConstant(0);
+      if (polynomialEqual(rest, zero, 0)) {
+	*r = quot;
+	res = 1;
+      } else {
+	polynomialFree(quot);
+	res = 0;
+      }
+      polynomialFree(rest);
+      polynomialFree(zero);
+      break;
+    case POW:
+      res = polynomialPow(r, a, b);
+      break;
+    }
+    polynomialFree(a);
+    polynomialFree(b);
+    if (res) return 1;
+    break;
+  }
+
+  /* Here, the expression contains some other basic function. It can
+     be a polynomial only if it is a constant expression.
+  */
+  if (isConstant(p)) {
+    if (!__sparsePolynomialFromConstantExpressionOnlyRealCoeffs(&sr, p)) return 0;
     *r = __polynomialBuildFromSparse(sr);
     return 1;
   }

@@ -70,6 +70,7 @@ polynomial_t polynomialFromIdentity();
 polynomial_t polynomialFromMpfrCoefficients(mpfr_t *, unsigned int);
 int polynomialFromConstantExpressionCoefficients(polynomial_t *, struct nodeStruct **, unsigned int);
 int polynomialFromExpression(polynomial_t *, struct nodeStruct *);
+int polynomialFromExpressionOnlyRealCoeffs(polynomial_t *, struct nodeStruct *);
 
 /* Copy-Constructor */
 polynomial_t polynomialFromCopy(polynomial_t);
