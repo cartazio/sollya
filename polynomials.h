@@ -112,5 +112,11 @@ char *polynomialToString(polynomial_t);
 void polynomialEvalMpfr(mpfr_t, polynomial_t, mpfr_t);
 void polynomialEvalMpfi(sollya_mpfi_t, polynomial_t, sollya_mpfi_t);
 
+/* Rounding of coefficients */
+int polynomialCoefficientsAreDyadic(polynomial_t, int);
+int polynomialCoefficientsAreRational(polynomial_t, int);
+polynomial_t polynomialRoundDyadic(polynomial_t, mp_prec_t);
+polynomial_t polynomialRoundRational(polynomial_t, mp_prec_t);
+
 
 #endif /* ifdef POLYNOMIALS_H*/

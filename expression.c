@@ -6427,8 +6427,17 @@ node* differentiateInner(node *tree) {
 
 
 int evaluateConstantExpression(mpfr_t result, node *tree, mp_prec_t prec) {
+  mpfr_t cutoff;
+  int res;
+
   if (!isConstant(tree)) return 0;
-  evaluate(result, tree, result, prec);
+  mpfr_init2(cutoff, 12);
+  mpfr_set_si(cutoff, 0, GMP_RNDN);
+  res = evaluateFaithfulWithCutOffFast(result, tree, NULL, cutoff, cutoff, prec);
+  if ((res == 0) || (res == 3)) {
+    evaluate(result, tree, cutoff, prec);
+  }
+  mpfr_clear(cutoff);
   return 1;
 }
 
@@ -6455,9 +6464,19 @@ node* simplifyTreeInnerst(node *tree) {
   mpfr_t temp, x, y;
   sollya_mpfi_t tempI;
   int numberChilds;
+  node *res;
 
   if (tree->nodeType == MEMREF) {
-    if (tree->polynomialRepresentation != NULL) return copyTree(tree);
+    if (tree->polynomialRepresentation != NULL) {
+      if (polynomialCoefficientsAreDyadic(tree->polynomialRepresentation, 0))
+	return copyTree(tree);
+      res = addMemRefEvenOnNull(NULL);
+      if (res != NULL) {
+	res->polynomialRepresentation = polynomialRoundDyadic(tree->polynomialRepresentation,
+							      tools_precision);
+	return res;
+      }
+    }
     return addMemRef(simplifyTreeInner(getMemRefChild(tree)));
   }
 
@@ -7259,9 +7278,20 @@ node* simplifyAllButDivisionInnerst(node *tree) {
   mpfr_t *value;
   mpfr_t temp;
   sollya_mpfi_t tempI;
+  node *res;
 
   if (tree->nodeType == MEMREF) {
-    return addMemRef(simplifyAllButDivisionInner(getMemRefChild(tree)));
+    if (tree->polynomialRepresentation != NULL) {
+      if (polynomialCoefficientsAreRational(tree->polynomialRepresentation, 0))
+	return copyTree(tree);
+      res = addMemRefEvenOnNull(NULL);
+      if (res != NULL) {
+	res->polynomialRepresentation = polynomialRoundRational(tree->polynomialRepresentation,
+								tools_precision);
+	return res;
+      }
+    }
+    return addMemRef(simplifyTreeInner(getMemRefChild(tree)));
   }
 
   switch (tree->nodeType) {
@@ -10885,6 +10915,13 @@ void getCoefficients(int *degree, node ***coefficients, node *poly) {
       deg = myDegree;
       t = deg;
       if ((deg >= 0) && (t == myDegree)) {
+	for (k=0u;k<=myDegree;k++) {
+	  if ((accessThruMemRef(myCoeffs[k])->nodeType == CONSTANT) &&
+	      mpfr_zero_p(*(accessThruMemRef(myCoeffs[k])->value))) {
+	    free_memory(myCoeffs[k]);
+	    myCoeffs[k] = NULL;
+	  }
+	}
 	*coefficients = myCoeffs;
 	*degree = deg;
 	return;
