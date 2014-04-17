@@ -16449,6 +16449,10 @@ int tryRepresentAsPolynomial(node *tree) {
   if (tree->nodeType != MEMREF) return 0;
   if (tree->polynomialRepresentation != NULL) return 0;
   if (!isPureTree(tree)) return 0;
+  if (isConstant(tree)) return 0; /* We don't want every constant to
+				     be represented twice: once as
+				     itself, once as a constant
+				     polynomial */
   if (!polynomialFromExpressionOnlyRealCoeffs(&p, tree)) return 0;
   tree->polynomialRepresentation = p;
   return 1;
@@ -16496,7 +16500,8 @@ node *evaluateThing(node *tree) {
   }
 
   if (autosimplify && isPureTree(evaluated)) {
-    if (treeSize(evaluated) < MAXAUTOSIMPLSIZE) {
+    if (((evaluated->nodeType == MEMREF) && (evaluated->polynomialRepresentation != NULL)) || 
+	(treeSize(evaluated) < MAXAUTOSIMPLSIZE)) {
       tempNode = simplifyTreeErrorfree(evaluated);
       freeThing(evaluated);
       evaluated = tempNode;

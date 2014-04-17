@@ -1006,7 +1006,12 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
     if (evaluateWithEvaluationHook(result, x, prec, tree->evaluationHook)) {
       excludes = NULL;
     } else {
-      excludes = evaluateI(result, getMemRefChild(tree), x, prec, simplifiesA, simplifiesB, hopitalPoint, theo, noExcludes, fastAddSub);
+      if (tree->polynomialRepresentation != NULL) {
+	polynomialEvalMpfi(result, tree->polynomialRepresentation, x);
+	excludes = NULL;
+      } else {
+	excludes = evaluateI(result, getMemRefChild(tree), x, prec, simplifiesA, simplifiesB, hopitalPoint, theo, noExcludes, fastAddSub);
+      }
     }
 
     if ((excludes == NULL) && (!(sollya_mpfi_has_nan(result) || sollya_mpfi_has_infinity(result)))) {

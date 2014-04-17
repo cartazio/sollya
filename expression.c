@@ -3020,8 +3020,6 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
     }
   }
 
-  /* TODO */
-
   res = addMemRef(simplifyTreeErrorfreeInnerst(tree, rec, doRational));
 
   if ((tree != NULL) && (res != NULL) &&
@@ -3058,6 +3056,8 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
       }
     }
   }
+
+  /* TODO: Add polynomial representation when possible */ 
 
   return addMemRef(res);
 }
@@ -3396,7 +3396,8 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   int numberChilds;
   int signOkay, sign;
   node *res;
-
+  
+  if (tree == NULL) return NULL;
   if (tree->nodeType == MEMREF) {
     if ((tree->arguments != NULL) &&
 	(*((mp_prec_t *) tree->arguments->value) >= 12) &&
@@ -3406,6 +3407,15 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
       res = makeConstant(temp);
       mpfr_clear(temp);
       return addMemRef(res);
+    }
+    if (tree->polynomialRepresentation != NULL) {
+      if (tree->child1 != NULL) {
+	if (!tree->memRefChildFromPolynomial) {
+	  free_memory(tree->child1);
+	  tree->child1 = NULL;
+	}
+      }
+      return copyTree(tree);
     }
     return addMemRef(simplifyTreeErrorfreeInner(getMemRefChild(tree), rec, doRational));
   }
@@ -11825,7 +11835,16 @@ node *differentiatePolynomialUnsafe(node *tree) {
 
 
 int getNumeratorDenominator(node **numerator, node **denominator, node *tree) {
-  if (tree->nodeType == MEMREF) return getNumeratorDenominator(numerator, denominator, getMemRefChild(tree));
+  if (tree->nodeType == MEMREF) {
+    if (tree->polynomialRepresentation != NULL) {
+      if (polynomialGetDegreeAsInt(tree->polynomialRepresentation) != 0) {
+	*numerator = copyTree(tree);
+	*denominator = NULL;
+	return 0;
+      }
+    }
+    return getNumeratorDenominator(numerator, denominator, getMemRefChild(tree));
+  }
   if (tree->nodeType == DIV) {
     *numerator = copyTree(tree->child1);
     *denominator = copyTree(tree->child2);
@@ -12026,14 +12045,18 @@ node *substitute(node* tree, node *t) {
   node *res;
 
   if ((tree->nodeType == MEMREF) &&
-      (t->nodeType == MEMREF) &&
-      (tree->polynomialRepresentation != NULL) &&
-      (t->polynomialRepresentation != NULL)) {
-    res = addMemRefEvenOnNull(NULL);
-    if (res != NULL) {
-      res->polynomialRepresentation = polynomialCompose(tree->polynomialRepresentation,
-							t->polynomialRepresentation);
-      return res;
+      (t->nodeType == MEMREF)) {
+
+
+
+    if ((tree->polynomialRepresentation != NULL) &&
+	(t->polynomialRepresentation != NULL)) {
+      res = addMemRefEvenOnNull(NULL);
+      if (res != NULL) {
+	res->polynomialRepresentation = polynomialCompose(tree->polynomialRepresentation,
+							  t->polynomialRepresentation);
+	return res;
+      }
     }
   }
   return substituteInner(tree, t, 0);
@@ -12872,7 +12895,6 @@ int treeSize(node *tree) {
   if (tree == NULL) return 0;
   switch (tree->nodeType) {
   case MEMREF:
-    /* TODO */
     return treeSize(getMemRefChild(tree));
     break;
 
@@ -13827,6 +13849,18 @@ node *makeConstantInt(int a) {
   res->value = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
   mpfr_init2(*(res->value),sizeof(int)*8);
   mpfr_set_si(*(res->value), a, GMP_RNDN);
+
+  return res;
+}
+
+node *makeConstantUnsignedInt(unsigned int a) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = CONSTANT;
+  res->value = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+  mpfr_init2(*(res->value),sizeof(unsigned int)*8);
+  mpfr_set_ui(*(res->value), a, GMP_RNDN);
 
   return res;
 }

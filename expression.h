@@ -143,6 +143,7 @@ struct nodeStruct
   int isCorrectlyTyped;
   eval_hook_t *evaluationHook;
   polynomial_t polynomialRepresentation;
+  int memRefChildFromPolynomial;
 };
 
 /* HELPER TYPE FOR THE PARSER */
@@ -205,6 +206,7 @@ static inline node* addMemRefEvenOnNull(node *tree) {
   res->isCorrectlyTyped = 0;
   res->evaluationHook = NULL;
   res->polynomialRepresentation = NULL;
+  res->memRefChildFromPolynomial = 0;
 
   return res;
 }
@@ -215,10 +217,12 @@ static inline node* addMemRef(node *tree) {
   return addMemRefEvenOnNull(tree);
 }
 
-static inline node* getMemRefChild(node *tree) { 
+static inline node* getMemRefChild(node *tree) {
+  if (tree->nodeType != MEMREF) return tree->child1;
   if (tree->child1 != NULL) return tree->child1;
   if (tree->polynomialRepresentation == NULL) return NULL;
   tree->child1 = polynomialGetExpression(tree->polynomialRepresentation);
+  tree->memRefChildFromPolynomial = 1;
   return tree->child1;
 }
 
@@ -303,6 +307,7 @@ node *makeVariable();
 node *makeConstant(mpfr_t x);
 node *makeConstantDouble(double x);
 node *makeConstantInt(int x);
+node *makeConstantUnsignedInt(unsigned int x);
 node *makeConstantMpz(mpz_t x);
 node *makeAdd(node *op1, node *op2);
 node *makeSub(node *op1, node *op2);

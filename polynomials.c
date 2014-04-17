@@ -198,14 +198,14 @@ static inline void scaledMpqAdd(mp_exp_t *EC, mpq_t c,
 				mp_exp_t EB, mpq_t b) {
   if (EB <= EA) {
     *EC = EB;
-    mpq_mul_2exp(c, a, EA - EB);
+    mpq_mul_2exp(c, a, EA - EB); /* Exponent overflow possible */
     mpq_add(c, c, b);
   } else {
     *EC = EA;
-    mpq_mul_2exp(c, b, EB - EA);
+    mpq_mul_2exp(c, b, EB - EA); /* Exponent overflow possible */
     mpq_add(c, c, a);
   }
-  *EC += mpq_remove_powers_of_two(c);
+  *EC += mpq_remove_powers_of_two(c); /* Exponent overflow possible */
 }
 
 static inline void scaledMpqAddInt(mp_exp_t *EC, mpq_t c, 
@@ -226,14 +226,14 @@ static inline void scaledMpqSub(mp_exp_t *EC, mpq_t c,
 				mp_exp_t EB, mpq_t b) {
   if (EB <= EA) {
     *EC = EB;
-    mpq_mul_2exp(c, a, EA - EB);
+    mpq_mul_2exp(c, a, EA - EB); /* Exponent overflow possible */
     mpq_sub(c, c, b);
   } else {
     *EC = EA;
-    mpq_mul_2exp(c, b, EB - EA);
+    mpq_mul_2exp(c, b, EB - EA); /* Exponent overflow possible */
     mpq_sub(c, a, c);
   }
-  *EC += mpq_remove_powers_of_two(c);
+  *EC += mpq_remove_powers_of_two(c); /* Exponent overflow possible */
 }
 
 static inline void scaledMpqSubInt(mp_exp_t *EC, mpq_t c, 
@@ -265,10 +265,10 @@ static inline void scaledMpqIntSub(mp_exp_t *EC, mpq_t c,
 static inline void scaledMpqMul(mp_exp_t *EC, mpq_t c, 
 				mp_exp_t EA, mpq_t a, 
 				mp_exp_t EB, mpq_t b) {
-  *EC = EA + EB;
+  *EC = EA + EB; /* Exponent overflow possible */
   mpq_mul(c, a, b);
   mpq_canonicalize(c);
-  *EC += mpq_remove_powers_of_two(c);
+  *EC += mpq_remove_powers_of_two(c); /* Exponent overflow possible */
 }
 
 static inline void scaledMpqMulInt(mp_exp_t *EC, mpq_t c, 
@@ -288,9 +288,9 @@ static inline int tryScaledMpqDiv(mp_exp_t *EC, mpq_t c,
 				  mp_exp_t EA, mpq_t a, 
 				  mp_exp_t EB, mpq_t b) {
   if (mpq_sgn(b) == 0) return 0;
-  *EC = EA - EB;
+  *EC = EA - EB; /* Exponent overflow possible */
   mpq_div(c, a, b);
-  *EC += mpq_remove_powers_of_two(c);
+  *EC += mpq_remove_powers_of_two(c); /* Exponent overflow possible */
   return 1;
 }
 
@@ -334,7 +334,7 @@ static inline int scaledMpqIsInteger(mp_exp_t E, mpq_t a) {
   mpq_set(aa, a);
   EE = E;
 
-  EE += mpq_remove_powers_of_two(aa);
+  EE += mpq_remove_powers_of_two(aa); /* Exponent overflow possible */
 
   /* Now we have 2^EE * aa = 2^E * a, aa in least factors and all
      prime factors 2 taken out. 
@@ -428,9 +428,9 @@ static inline int scaledMpqIsGreaterThan(mp_exp_t EA, mpq_t a,
   E = (mp_exp_t) ((mpz_sizeinbase(mpq_numref(b),2) + 
 		   mpz_sizeinbase(mpq_denref(a),2)) - 
 		  (mpz_sizeinbase(mpq_denref(b),2) + 
-		   mpz_sizeinbase(mpq_numref(a),2)));
-  Emin = E - 2;
-  Emax = E + 2;
+		   mpz_sizeinbase(mpq_numref(a),2))); /* Exponent overflow possible */
+  Emin = E - 2; /* Exponent overflow possible */
+  Emax = E + 2; /* Exponent overflow possible */
 
   /* Perform an easy check based on the magnitudes, taking the sign of
      a into account. 
@@ -457,8 +457,8 @@ static inline int scaledMpqIsGreaterThan(mp_exp_t EA, mpq_t a,
        satisfied"
        
     */
-    if (EA - EB >= Emax) return 1;
-    if (EA - EB <= Emin) return 0;
+    if (EA - EB >= Emax) return 1; /* Exponent overflow possible */
+    if (EA - EB <= Emin) return 0; /* Exponent overflow possible */
   } else {
     /* a is positive, so we have to perform the comparison
 
@@ -481,8 +481,8 @@ static inline int scaledMpqIsGreaterThan(mp_exp_t EA, mpq_t a,
        satisfied"
        
     */
-    if (EA - EB >= Emax) return 0;
-    if (EA - EB <= Emin) return 1;
+    if (EA - EB >= Emax) return 0; /* Exponent overflow possible */
+    if (EA - EB <= Emin) return 1; /* Exponent overflow possible */
   }
 
   /* Here, b/a is too close to 2^E to allow the comparison to be
@@ -512,7 +512,7 @@ static inline int scaledMpqIsGreaterThan(mp_exp_t EA, mpq_t a,
   mpq_clear(r);
 
   /* Compute D = EA - EB - F */
-  D = EA - EB - F;
+  D = EA - EB - F; /* Exponent overflow possible */
 
   /* Now integrate 2^D into q or p, such that the comparison boils down
      to comparing p and q. 
@@ -579,7 +579,7 @@ static inline void scaledMpqFloor(mp_exp_t *EB, mpq_t b,
   sizeDen = (mp_exp_t) (mpz_sizeinbase(mpq_denref(a),2));
 
   /* Compute an upper bound on the size of the output */
-  sizeOut = EA + sizeNum + 5 - sizeDen;
+  sizeOut = EA + sizeNum + 5 - sizeDen; /* Integer overflow possible */
   if (sizeOut < 12) sizeOut = 12;
  
   /* This upper bound on the size of the output gives us 
@@ -608,7 +608,7 @@ static inline void scaledMpqFloor(mp_exp_t *EB, mpq_t b,
   mpfr_clear(t);
   mpz_clear(z);
   mpq_canonicalize(r);
-  ER += mpq_remove_powers_of_two(r);
+  ER += mpq_remove_powers_of_two(r); /* Exponent overflow possible */
 
   /* As we computed the first guess in round-down mode, we are sure
      that 2^ER * r < 2^EA * a.
@@ -661,7 +661,7 @@ static inline void scaledMpqFloor(mp_exp_t *EB, mpq_t b,
   if (Erest > 0) {
     mpz_mul_2exp(num, num, (mp_bitcnt_t) Erest);
   } else {
-    mpz_mul_2exp(den, den, (mp_bitcnt_t) (-Erest));    
+    mpz_mul_2exp(den, den, (mp_bitcnt_t) (-Erest)); /* Exponent overflow possible */
   }
   
   /* Now compute floor(num/den). That's a Euclidean division. */
@@ -746,7 +746,7 @@ static inline int scaledMpqIsUnsignedInt(unsigned int *n, mp_exp_t E, mpq_t a) {
     mpz_clear(tmp);
   } else {
     mpz_set(r, mpq_denref(a));
-    mpz_mul_2exp(r, r, (mp_bitcnt_t) (-E));
+    mpz_mul_2exp(r, r, (mp_bitcnt_t) (-E)); /* Exponent overflow possible */
     mpz_mul_ui(r, r, tI);
     mpz_sub(r, mpq_numref(a), r);
   }
@@ -874,14 +874,14 @@ static inline int tryScaledMpqPow(mp_exp_t *EC, mpq_t c,
     *EC = 0;
     mpq_set_ui(c,1,1u);
     mpq_canonicalize(c);
-    *EC += mpq_remove_powers_of_two(c);
+    *EC += mpq_remove_powers_of_two(c); /* Exponent overflow possible */
     return 1;
   }
   if (n == 1u) {
     *EC = EA;
     mpq_set(c, a);
     mpq_canonicalize(c);
-    *EC += mpq_remove_powers_of_two(c);
+    *EC += mpq_remove_powers_of_two(c); /* Exponent overflow possible */
     return 1;
   }
 
@@ -916,7 +916,7 @@ static inline int tryScaledMpqPow(mp_exp_t *EC, mpq_t c,
   mpq_set_num(c, num);
   mpq_set_den(c, den);
   mpq_canonicalize(c);
-  *EC += mpq_remove_powers_of_two(c);
+  *EC += mpq_remove_powers_of_two(c); /* Exponent overflow possible */
 
   mpz_clear(den);
   mpz_clear(num);
@@ -943,13 +943,13 @@ static inline int tryScaledMpqPowInt(mp_exp_t *EC, mpq_t c,
     *EC = 0;
     mpq_set_ui(c,1,1u);
     mpq_canonicalize(c);
-    *EC += mpq_remove_powers_of_two(c);
+    *EC += mpq_remove_powers_of_two(c); /* Exponent overflow possible */
     return 1;
   }
   if (n == 1u) {
     *EC = EA;
     mpq_set(c, a);
-    *EC += mpq_remove_powers_of_two(c);
+    *EC += mpq_remove_powers_of_two(c); /* Exponent overflow possible */
     return 1;
   }
 
@@ -984,7 +984,7 @@ static inline int tryScaledMpqPowInt(mp_exp_t *EC, mpq_t c,
   mpq_set_num(c, num);
   mpq_set_den(c, den);
   mpq_canonicalize(c);
-  *EC += mpq_remove_powers_of_two(c);
+  *EC += mpq_remove_powers_of_two(c); /* Exponent overflow possible */
 
   mpz_clear(den);
   mpz_clear(num);
@@ -1355,7 +1355,7 @@ static inline void mpfr_add_exact(mpfr_t c, mpfr_t a, mpfr_t b) {
      for c.
 
   */
-  pc = (Ea > Eb? Ea : Eb) - (Ea - pa < Eb - pb ? Ea - pa : Eb - pb) + 1;
+  pc = (Ea > Eb? Ea : Eb) - (Ea - pa < Eb - pb ? Ea - pa : Eb - pb) + 1; /* Exponent overflow possible */
   mpfr_set_prec(c, pc);
 
   /* Perform the addition */
@@ -1424,7 +1424,7 @@ static inline void mpfr_add_exact_int(mpfr_t c, mpfr_t a, int b) {
      for c.
 
   */
-  pc = (Ea > Eb? Ea : Eb) - (Ea - pa < Eb - pb ? Ea - pa : Eb - pb) + 1;
+  pc = (Ea > Eb? Ea : Eb) - (Ea - pa < Eb - pb ? Ea - pa : Eb - pb) + 1; /* Exponent overflow possible */
   mpfr_set_prec(c, pc);
 
   /* Perform the addition */
@@ -1495,7 +1495,7 @@ static inline void mpfr_sub_exact(mpfr_t c, mpfr_t a, mpfr_t b) {
      for c.
 
   */
-  pc = (Ea > Eb? Ea : Eb) - (Ea - pa < Eb - pb ? Ea - pa : Eb - pb) + 1;
+  pc = (Ea > Eb? Ea : Eb) - (Ea - pa < Eb - pb ? Ea - pa : Eb - pb) + 1; /* Exponent overflow possible */
   mpfr_set_prec(c, pc);
 
   /* Perform the subtraction */
@@ -1565,7 +1565,7 @@ static inline void mpfr_sub_exact_int(mpfr_t c, mpfr_t a, int b) {
      for c.
 
   */
-  pc = (Ea > Eb? Ea : Eb) - (Ea - pa < Eb - pb ? Ea - pa : Eb - pb) + 1;
+  pc = (Ea > Eb? Ea : Eb) - (Ea - pa < Eb - pb ? Ea - pa : Eb - pb) + 1; /* Exponent overflow possible */
   mpfr_set_prec(c, pc);
 
   /* Perform the subtraction */
@@ -1625,7 +1625,7 @@ static inline void mpfr_mul_exact(mpfr_t c, mpfr_t a, mpfr_t b) {
   pb = mpfr_get_prec(b);
 
   /* Need pc = pa + pb bits of precision for an exact product. */
-  pc = pa + pb;
+  pc = pa + pb; /* Precision overflow possible */
   mpfr_set_prec(c, pc);
 
   /* Perform the multiplication */
@@ -1679,7 +1679,7 @@ static inline void mpfr_mul_exact_int(mpfr_t c, mpfr_t a, int b) {
   pb = 8 * sizeof(int) + 5;
 
   /* Need pc = pa + pb bits of precision for an exact product. */
-  pc = pa + pb;
+  pc = pa + pb; /* Precision overflow possible */
   mpfr_set_prec(c, pc);
 
   /* Perform the multiplication */
@@ -1887,7 +1887,7 @@ constant_t constantFromScaledMpq(mp_exp_t e, mpq_t c) {
   dyadDen = mpz_scan1(den, 0);
   mpz_tdiv_q_2exp(num, num, dyadNum);
   mpz_tdiv_q_2exp(den, den, dyadDen);
-  expo = e + dyadNum - dyadDen;
+  expo = e + dyadNum - dyadDen; /* Exponent overflow possible */
 
   if (mpz_cmp_si(den, 1) == 0) {
     /* The denominator is one, so we can actually 
@@ -1897,12 +1897,15 @@ constant_t constantFromScaledMpq(mp_exp_t e, mpq_t c) {
     if (p < 12) p = 12;
     mpfr_init2(mpfrval, p);
     mpfr_set_z_2exp(mpfrval, num, expo, GMP_RNDN); /* exact as enough precision */
-    res = constantFromMpfr(mpfrval);
-    mpfr_clear(mpfrval);
-    mpz_clear(den);
-    mpz_clear(num);
-  
-    return res;
+    if (mpfr_number_p(mpfrval)) {
+      res = constantFromMpfr(mpfrval);
+      mpfr_clear(mpfrval);
+      mpz_clear(den);
+      mpz_clear(num);
+      return res;
+    } else {
+      mpfr_clear(mpfrval);
+    }
   }
 
   /* Here, we are sure we must use a scaled MPQ representation */
@@ -2110,7 +2113,7 @@ int constantIsOne(constant_t a, int defVal) {
     }
     /* Here E != 0 */
     mpq_canonicalize(a->value.scaledMpq.significand);
-    a->value.scaledMpq.expo += mpq_remove_powers_of_two(a->value.scaledMpq.significand);
+    a->value.scaledMpq.expo += mpq_remove_powers_of_two(a->value.scaledMpq.significand); /* Exponent overflow possible */
     if (a->value.scaledMpq.expo != ((mp_exp_t) 0)) {
       a->isOne.cached = 1;
       a->isOne.res = 0;
@@ -2349,7 +2352,7 @@ int constantIsEqual(constant_t a, constant_t b, int defVal) {
             - if t is equal to one, a and b are equal
 	    - otherwise, a and b are unequal.
     */
-    if (a->value.scaledMpq.expo - b->value.scaledMpq.expo != G) {
+    if (a->value.scaledMpq.expo - b->value.scaledMpq.expo != G) { /* Exponent overflow possible */
       res = 0;
     } else {
       res = (mpq_cmp_si(t, 1, 1u) == 0);
@@ -2499,7 +2502,7 @@ node *constantToExpression(constant_t a) {
   mpfr_t num, den;
   mp_prec_t p;
   node *res;
-  mp_exp_t ED, EN;
+  mp_exp_t ED, EN, EE;
 
   if (a == NULL) return NULL;
   switch (a->type) {
@@ -2524,7 +2527,14 @@ node *constantToExpression(constant_t a) {
 		      mpq_numref(a->value.scaledMpq.significand), 
 		      a->value.scaledMpq.expo, 
 		      GMP_RNDN); /* exact as enough precision */
-      res = addMemRef(makeConstant(num));
+      if (mpfr_number_p(num)) {
+	res = addMemRef(makeConstant(num));
+      } else {
+	mpfr_set_z(num, mpq_numref(a->value.scaledMpq.significand), GMP_RNDN); /* exact as enough precision */
+	res = addMemRef(makeMul(makePow(makeConstantInt(2),
+					makeConstantInt(a->value.scaledMpq.expo)), 
+				makeConstant(num)));
+      }
       mpfr_clear(num);
       return res;
     }
@@ -2537,7 +2547,7 @@ node *constantToExpression(constant_t a) {
       EN = a->value.scaledMpq.expo;
       ED = 0;
     } else {
-      ED = -a->value.scaledMpq.expo;
+      ED = -a->value.scaledMpq.expo; /* Exponent overflow possible */
       EN = 0;
     }
     mpfr_init2(num, p);
@@ -2545,6 +2555,13 @@ node *constantToExpression(constant_t a) {
 		    mpq_numref(a->value.scaledMpq.significand), 
 		    EN,
 		    GMP_RNDN); /* exact as enough precision */
+    if (mpfr_number_p(num)) {
+      EN = 0;
+    } else {
+      mpfr_set_z(num, 
+		 mpq_numref(a->value.scaledMpq.significand), 
+		 GMP_RNDN); /* exact as enough precision */      
+    }
     p = mpz_sizeinbase(mpq_denref(a->value.scaledMpq.significand), 2);
     if (p < 12) p = 12;
     mpfr_init2(den, p);
@@ -2552,7 +2569,19 @@ node *constantToExpression(constant_t a) {
 		    mpq_denref(a->value.scaledMpq.significand),
 		    ED, 
 		    GMP_RNDN); /* exact as enough precision */
-    res = addMemRef(makeDiv(makeConstant(num),makeConstant(den)));
+    if (mpfr_number_p(den)) {
+      ED = 0;
+    } else {
+      mpfr_set_z(den, 
+		 mpq_denref(a->value.scaledMpq.significand), 
+		 GMP_RNDN); /* exact as enough precision */      
+    }
+    EE = EN - ED; /* Exponent overflow possible */
+    if (EE == 0) {
+      res = addMemRef(makeDiv(makeConstant(num),makeConstant(den)));
+    } else {
+      res = addMemRef(makeMul(makePow(makeConstantInt(2),makeConstantInt(EE)),makeDiv(makeConstant(num),makeConstant(den))));
+    }
     mpfr_clear(num);
     mpfr_clear(den);
     return res;
@@ -2598,7 +2627,7 @@ int tryConstantToScaledMpq(mp_exp_t *E, mpq_t rop, constant_t a) {
     expo = mpfr_get_z_2exp(mant, a->value.mpfr);
     mpq_set_z(rop, mant);
     mpq_canonicalize(rop);
-    *E = expo + mpq_remove_powers_of_two(rop);      
+    *E = expo + mpq_remove_powers_of_two(rop);  /* Exponent overflow possible */
     mpz_clear(mant);
     break;
   case SCALEDMPQ:
@@ -2646,7 +2675,7 @@ int tryConstantToMpz(mpz_t r, constant_t a) {
     if (a->value.scaledMpq.expo >= 0) {
       mpz_mul_2exp(num, num, (mp_bitcnt_t) a->value.scaledMpq.expo);
     } else {
-      mpz_mul_2exp(den, den, (mp_bitcnt_t) (-a->value.scaledMpq.expo));
+      mpz_mul_2exp(den, den, (mp_bitcnt_t) (-a->value.scaledMpq.expo)); /* Exponent overflow possible */
     }
     mpz_fdiv_q(r, num, den);
     mpz_clear(den);
@@ -2671,7 +2700,7 @@ int tryConstantToMpz(mpz_t r, constant_t a) {
   if (a->value.scaledMpq.expo >= 0) {
     mpz_mul_2exp(num, num, (mp_bitcnt_t) a->value.scaledMpq.expo);
   } else {
-    mpz_mul_2exp(den, den, (mp_bitcnt_t) (-a->value.scaledMpq.expo));
+    mpz_mul_2exp(den, den, (mp_bitcnt_t) (-a->value.scaledMpq.expo)); /* Exponent overflow possible */
   }
   mpz_fdiv_q(r, num, den);
   mpz_clear(den);
@@ -2906,7 +2935,16 @@ constant_t constantAdd(constant_t a, constant_t b) {
       mpfr_init2(cM, 12);
       /* Next call may change the precision of cM */
       mpfr_add_exact(cM, a->value.mpfr, b->value.mpfr);
-      res = constantFromMpfr(cM);
+      if (mpfr_number_p(a->value.mpfr) &&
+	  mpfr_number_p(b->value.mpfr) && 
+	  (!mpfr_number_p(cM))) {
+	cExpr = addMemRef(makeAdd(makeConstant(a->value.mpfr),
+				  makeConstant(b->value.mpfr)));
+	res = constantFromExpression(cExpr);
+	freeThing(cExpr);
+      } else {
+	res = constantFromMpfr(cM);
+      }
       mpfr_clear(cM);
       return res;
       break;
@@ -2929,7 +2967,15 @@ constant_t constantAdd(constant_t a, constant_t b) {
       mpfr_init2(cM, 12);
       /* Next call may change the precision of cM */
       mpfr_add_exact_int(cM, b->value.mpfr, a->value.integer);
-      res = constantFromMpfr(cM);
+      if (mpfr_number_p(b->value.mpfr) &&
+	  (!mpfr_number_p(cM))) {
+	cExpr = addMemRef(makeAdd(makeConstantInt(a->value.integer),
+				  makeConstant(b->value.mpfr)));
+	res = constantFromExpression(cExpr);
+	freeThing(cExpr);
+      } else {
+	res = constantFromMpfr(cM);
+      }
       mpfr_clear(cM);
       return res;      
       break;
@@ -2950,7 +2996,15 @@ constant_t constantAdd(constant_t a, constant_t b) {
       mpfr_init2(cM, 12);
       /* Next call may change the precision of cM */
       mpfr_add_exact_int(cM, a->value.mpfr, b->value.integer);
-      res = constantFromMpfr(cM);
+      if (mpfr_number_p(a->value.mpfr) &&
+	  (!mpfr_number_p(cM))) {
+	cExpr = addMemRef(makeAdd(makeConstant(a->value.mpfr),
+				  makeConstantInt(b->value.integer)));
+	res = constantFromExpression(cExpr);
+	freeThing(cExpr);
+      } else {
+	res = constantFromMpfr(cM);
+      }
       mpfr_clear(cM);
       return res;      
       break;
@@ -3065,7 +3119,16 @@ constant_t constantSub(constant_t a, constant_t b) {
       mpfr_init2(cM, 12);
       /* Next call may change the precision of cM */
       mpfr_sub_exact(cM, a->value.mpfr, b->value.mpfr);
-      res = constantFromMpfr(cM);
+      if (mpfr_number_p(a->value.mpfr) &&
+	  mpfr_number_p(b->value.mpfr) && 
+	  (!mpfr_number_p(cM))) {
+	cExpr = addMemRef(makeSub(makeConstant(a->value.mpfr),
+				  makeConstant(b->value.mpfr)));
+	res = constantFromExpression(cExpr);
+	freeThing(cExpr);
+      } else {
+	res = constantFromMpfr(cM);
+      }
       mpfr_clear(cM);
       return res;
       break;
@@ -3088,7 +3151,15 @@ constant_t constantSub(constant_t a, constant_t b) {
       mpfr_init2(cM, 12);
       /* Next call may change the precision of cM */
       mpfr_int_sub_exact(cM, a->value.integer, b->value.mpfr);
-      res = constantFromMpfr(cM);
+      if (mpfr_number_p(b->value.mpfr) &&
+	  (!mpfr_number_p(cM))) {
+	cExpr = addMemRef(makeSub(makeConstantInt(a->value.integer),
+				  makeConstant(b->value.mpfr)));
+	res = constantFromExpression(cExpr);
+	freeThing(cExpr);
+      } else {
+	res = constantFromMpfr(cM);
+      }
       mpfr_clear(cM);
       return res;      
       break;
@@ -3109,7 +3180,15 @@ constant_t constantSub(constant_t a, constant_t b) {
       mpfr_init2(cM, 12);
       /* Next call may change the precision of cM */
       mpfr_sub_exact_int(cM, a->value.mpfr, b->value.integer);
-      res = constantFromMpfr(cM);
+      if (mpfr_number_p(a->value.mpfr) &&
+	  (!mpfr_number_p(cM))) {
+	cExpr = addMemRef(makeSub(makeConstant(a->value.mpfr),
+				  makeConstantInt(b->value.integer)));
+	res = constantFromExpression(cExpr);
+	freeThing(cExpr);
+      } else {
+	res = constantFromMpfr(cM);
+      }
       mpfr_clear(cM);
       return res;      
       break;
@@ -3217,7 +3296,16 @@ constant_t constantMul(constant_t a, constant_t b) {
       mpfr_init2(cM, 12);
       /* Next call may change the precision of cM */
       mpfr_mul_exact(cM, a->value.mpfr, b->value.mpfr);
-      res = constantFromMpfr(cM);
+      if (mpfr_number_p(a->value.mpfr) &&
+	  mpfr_number_p(b->value.mpfr) && 
+	  (!mpfr_number_p(cM))) {
+	cExpr = addMemRef(makeMul(makeConstant(a->value.mpfr),
+				  makeConstant(b->value.mpfr)));
+	res = constantFromExpression(cExpr);
+	freeThing(cExpr);
+      } else {
+	res = constantFromMpfr(cM);
+      }
       mpfr_clear(cM);
       return res;
       break;
@@ -3240,7 +3328,15 @@ constant_t constantMul(constant_t a, constant_t b) {
       mpfr_init2(cM, 12);
       /* Next call may change the precision of cM */
       mpfr_mul_exact_int(cM, b->value.mpfr, a->value.integer);
-      res = constantFromMpfr(cM);
+      if (mpfr_number_p(b->value.mpfr) && 
+	  (!mpfr_number_p(cM))) {
+	cExpr = addMemRef(makeMul(makeConstantInt(a->value.integer),
+				  makeConstant(b->value.mpfr)));
+	res = constantFromExpression(cExpr);
+	freeThing(cExpr);
+      } else {
+	res = constantFromMpfr(cM);
+      }
       mpfr_clear(cM);
       return res;      
       break;
@@ -3261,7 +3357,15 @@ constant_t constantMul(constant_t a, constant_t b) {
       mpfr_init2(cM, 12);
       /* Next call may change the precision of cM */
       mpfr_mul_exact_int(cM, a->value.mpfr, b->value.integer);
-      res = constantFromMpfr(cM);
+      if (mpfr_number_p(a->value.mpfr) &&
+	  (!mpfr_number_p(cM))) {
+	cExpr = addMemRef(makeMul(makeConstant(a->value.mpfr),
+				  makeConstantInt(b->value.integer)));
+	res = constantFromExpression(cExpr);
+	freeThing(cExpr);
+      } else {
+	res = constantFromMpfr(cM);
+      }
       mpfr_clear(cM);
       return res;      
       break;
@@ -3501,7 +3605,15 @@ constant_t constantPow(constant_t a, constant_t b) {
 	bAbs = mpfr_get_ui(b->value.mpfr, GMP_RNDN); /* exact */
 	mpfr_init2(cM, 12);
 	if (try_mpfr_pow_exact(cM, a->value.mpfr, bAbs)) {
-	  res = constantFromMpfr(cM);
+	  if (mpfr_number_p(a->value.mpfr) && 
+	      (!mpfr_number_p(cM))) {
+	    cExpr = addMemRef(makePow(makeConstant(a->value.mpfr),
+				      makeConstantUnsignedInt(bAbs)));
+	    res = constantFromExpression(cExpr);
+	    freeThing(cExpr);
+	  } else {
+	    res = constantFromMpfr(cM);
+	  }
 	  mpfr_clear(cM);
 	  return res;
 	}
@@ -3532,7 +3644,15 @@ constant_t constantPow(constant_t a, constant_t b) {
 	if ((bAbs >= 1) && (bb == b->value.integer)) {
 	  mpfr_init2(cM, 12);
 	  if (try_mpfr_pow_exact(cM, a->value.mpfr, bAbs)) {
-	    res = constantFromMpfr(cM);
+	    if (mpfr_number_p(a->value.mpfr) &&
+		(!mpfr_number_p(cM))) {
+	      cExpr = addMemRef(makePow(makeConstant(a->value.mpfr),
+					makeConstantInt(b->value.integer)));
+	      res = constantFromExpression(cExpr);
+	      freeThing(cExpr);
+	    } else {
+	      res = constantFromMpfr(cM);
+	    }
 	    mpfr_clear(cM);
 	    return res;
 	  }
@@ -3581,7 +3701,7 @@ constant_t constantPow(constant_t a, constant_t b) {
   mpq_clear(aS);
   mpq_clear(bS);
 
-  /* Could not convert to scaled rational form or the division did not work. 
+  /* Could not convert to scaled rational form or the powering did not work. 
      Convert to expressions. 
   */
   aExpr = constantToExpression(a);
@@ -3781,7 +3901,11 @@ constant_t constantRoundDyadic(constant_t c, mp_prec_t prec) {
   */
   mpfr_init2(v, prec);
   constantEvalMpfr(v, c);
-  res = constantFromMpfr(v);
+  if (mpfr_number_p(v)) {
+    res = constantFromMpfr(v);
+  } else {
+    res = constantFromCopy(c);
+  }
   mpfr_clear(v);
 
   return res;
@@ -3802,7 +3926,11 @@ constant_t constantRoundRational(constant_t c, mp_prec_t prec) {
   */
   mpfr_init2(v, prec);
   constantEvalMpfr(v, c);
-  res = constantFromMpfr(v);
+  if (mpfr_number_p(v)) {
+    res = constantFromMpfr(v);
+  } else {
+    res = constantFromCopy(c);
+  }
   mpfr_clear(v);
 
   return res;
@@ -6580,6 +6708,30 @@ static inline int __polynomialEqualCheap(polynomial_t p, polynomial_t q) {
   return 0;
 }
 
+static inline int __polynomialIsConstantCheap(polynomial_t p) {
+  if (p == NULL) return 0;
+  switch (p->type) {
+  case SPARSE:
+    return sparsePolynomialIsConstant(p->value.sparse, 0);
+    break;
+  case ADDITION:
+  case SUBTRACTION:
+  case MULTIPLICATION:
+  case COMPOSITION:
+    return (__polynomialIsConstantCheap(p->value.pair.g) &&
+	    __polynomialIsConstantCheap(p->value.pair.h));
+    break;
+  case NEGATE:
+    return __polynomialIsConstantCheap(p->value.g);
+    break;
+  case POWER:
+    return (__polynomialIsConstantCheap(p->value.powering.g) ||
+	    constantIsZero(p->value.powering.c, 0));
+    break;
+  }
+  return 0;
+}
+
 int polynomialEqual(polynomial_t p, polynomial_t q, int defVal) {
   int dp, dq;
 
@@ -7162,8 +7314,10 @@ node *polynomialGetExpression(polynomial_t p) {
   if (p == NULL) return NULL;
 
   /* If we can output the polynomial in any form, we do so. */
-  if (p->outputType == ANY_FORM) 
+  if ((p->outputType == ANY_FORM) ||
+      __polynomialIsConstantCheap(p)) {
     return __polynomialGetExpressionAnyForm(p);
+  }
 
   /* Here, we have to output a "hornerized" or "canonicalized"
      form. 
@@ -7671,6 +7825,11 @@ polynomial_t polynomialDeriv(polynomial_t p) {
   /* Handle stupid inputs */
   if (p == NULL) return NULL;
 
+  /* Easy check if the polynomial actually is constant */
+  if (__polynomialIsConstantCheap(p)) {
+    return polynomialFromIntConstant(0);
+  }
+
   /* Handle certain cases in an ad-hoc way */
   switch (p->type) {
   case SPARSE:
@@ -7974,7 +8133,7 @@ polynomial_t polynomialPowUnsignedInt(polynomial_t p, unsigned int n) {
 }
 
 int polynomialPow(polynomial_t *r, polynomial_t p, polynomial_t q) {
-  constant_t n;
+  constant_t n, two14;
   int deg;
   polynomial_t res;
   sparse_polynomial_t sp;
@@ -8023,16 +8182,21 @@ int polynomialPow(polynomial_t *r, polynomial_t p, polynomial_t q) {
     return 1;
   }
 
-  /* If p is sparse and only has one monomial (or less), immediately
-     perform the operation 
+  /* If p is sparse and only has one monomial (or less) and n is
+     reasonably small (say n <= 2^14), immediately perform the
+     operation.
   */
   if (p->type == SPARSE) {
     if (sparsePolynomialGetMonomialCount(p->value.sparse) <= 1u) {
-      if (sparsePolynomialPowConstant(&sp, p->value.sparse, n)) {
-	constantFree(n);
-	*r = __polynomialBuildFromSparse(sp);
-	return 1;
+      two14 = constantFromUnsignedInt(1u << 14);
+      if (!constantIsGreater(n, two14, 1)) {
+	if (sparsePolynomialPowConstant(&sp, p->value.sparse, n)) {
+	  constantFree(n);
+	  *r = __polynomialBuildFromSparse(sp);
+	  return 1;
+	}
       }
+      constantFree(two14);
     }
   }
 
@@ -8157,8 +8321,10 @@ polynomial_t polynomialRoundDyadic(polynomial_t p, mp_prec_t prec) {
   if (p == NULL) return NULL;
 
   /* If the output type is "any form", use a special algorithm */
-  if (p->outputType == ANY_FORM) 
+  if ((p->outputType == ANY_FORM) ||
+      __polynomialIsConstantCheap(p)) {
     return __polynomialRoundDyadicAnyForm(p, prec);
+  }
 
   /* If the polynomial only has dyadic coefficients, just return a
      copy of it. 
@@ -8219,8 +8385,10 @@ polynomial_t polynomialRoundRational(polynomial_t p, mp_prec_t prec) {
   if (p == NULL) return NULL;
 
   /* If the output type is "any form", use a special algorithm */
-  if (p->outputType == ANY_FORM) 
+  if ((p->outputType == ANY_FORM) ||
+      __polynomialIsConstantCheap(p)) {
     return __polynomialRoundRationalAnyForm(p, prec);
+  }
 
   /* If the polynomial only has rational coefficients, just return a
      copy of it. 
