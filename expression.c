@@ -3057,9 +3057,7 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
     }
   }
 
-  /* TODO: Add polynomial representation when possible */ 
-
-  return addMemRef(res);
+  return res;
 }
 
 /*
@@ -10920,27 +10918,31 @@ void getCoefficients(int *degree, node ***coefficients, node *poly) {
   unsigned int myDegree, t, k;
   node **myCoeffs;
 
-  if ((poly->nodeType == MEMREF) &&
-      (poly->polynomialRepresentation != NULL)) {
-    if (polynomialGetCoefficients(&myCoeffs, &myDegree, poly->polynomialRepresentation)) {
-      deg = myDegree;
-      t = deg;
-      if ((deg >= 0) && (t == myDegree)) {
-	for (k=0u;k<=myDegree;k++) {
-	  if ((accessThruMemRef(myCoeffs[k])->nodeType == CONSTANT) &&
-	      mpfr_zero_p(*(accessThruMemRef(myCoeffs[k])->value))) {
-	    free_memory(myCoeffs[k]);
-	    myCoeffs[k] = NULL;
+  if (poly->nodeType == MEMREF) {
+    if (poly->polynomialRepresentation == NULL) {
+      tryRepresentAsPolynomial(poly);
+    }
+    if (poly->polynomialRepresentation != NULL) {
+      if (polynomialGetCoefficients(&myCoeffs, &myDegree, poly->polynomialRepresentation)) {
+	deg = myDegree;
+	t = deg;
+	if ((deg >= 0) && (t == myDegree)) {
+	  for (k=0u;k<=myDegree;k++) {
+	    if ((accessThruMemRef(myCoeffs[k])->nodeType == CONSTANT) &&
+		mpfr_zero_p(*(accessThruMemRef(myCoeffs[k])->value))) {
+	      free_memory(myCoeffs[k]);
+	      myCoeffs[k] = NULL;
+	    }
 	  }
+	  *coefficients = myCoeffs;
+	  *degree = deg;
+	  return;
+	} else {
+	  for (k=0u;k<=myDegree;k++) {
+	    free_memory(myCoeffs[k]);
+	  }
+	  safeFree(myCoeffs);
 	}
-	*coefficients = myCoeffs;
-	*degree = deg;
-	return;
-      } else {
-	for (k=0u;k<=myDegree;k++) {
-	  free_memory(myCoeffs[k]);
-	}
-	safeFree(myCoeffs);
       }
     }
   }
@@ -13306,9 +13308,13 @@ node *getIthCoefficient(node *poly, int i) {
   node **coefficients;
   int degree, k;
 
-  if ((poly->nodeType == MEMREF) &&
-      (poly->polynomialRepresentation != NULL)) {
-    return polynomialGetIthCoefficientIntIndex(poly->polynomialRepresentation, i);
+  if (poly->nodeType == MEMREF) {
+    if (poly->polynomialRepresentation == NULL) {
+      tryRepresentAsPolynomial(poly);
+    }
+    if (poly->polynomialRepresentation != NULL) {
+      return polynomialGetIthCoefficientIntIndex(poly->polynomialRepresentation, i);
+    }
   }
 
   if ((!isPolynomial(poly)) || (i < 0)) {

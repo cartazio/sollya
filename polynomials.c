@@ -6588,6 +6588,11 @@ static inline sparse_polynomial_t sparsePolynomialRound(sparse_polynomial_t p, m
   return res;
 }
 
+static inline unsigned int sparsePolynomialGetReferenceCount(sparse_polynomial_t p) {
+  if (p == NULL) return 0u;
+  return p->refCount;
+}
+
 void __sparsePolynomialPrintRaw(sparse_polynomial_t p) {
   unsigned int i;
 
@@ -6906,8 +6911,72 @@ static inline int __polynomialIsConstantCheap(polynomial_t p) {
   return 0;
 }
 
+static inline void __polynomialUnifyEqual(polynomial_t p, polynomial_t q) {
+  if (p == NULL) return;
+  if (q == NULL) return;
+  if (p == q) return;
+  if ((p->type == SPARSE) && (q->type == SPARSE)) {
+    if (p->value.sparse == q->value.sparse) return;
+    if (sparsePolynomialGetReferenceCount(p->value.sparse) > 
+	sparsePolynomialGetReferenceCount(q->value.sparse)) {
+      sparsePolynomialFree(q->value.sparse);
+      q->value.sparse = sparsePolynomialFromCopy(p->value.sparse);
+    } else {
+      sparsePolynomialFree(p->value.sparse);
+      p->value.sparse = sparsePolynomialFromCopy(q->value.sparse);
+    }
+    return;
+  }
+  if ((p->type == SPARSE) && (q->type != SPARSE)) {
+    switch (q->type) {
+    case ADDITION:
+    case SUBTRACTION:
+    case MULTIPLICATION:
+    case COMPOSITION:
+      polynomialFree(q->value.pair.g);
+      polynomialFree(q->value.pair.h);
+      break;
+    case NEGATE:
+      polynomialFree(q->value.g);
+      break;
+    case POWER:
+      polynomialFree(q->value.powering.g);
+      constantFree(q->value.powering.c);
+      break;
+    default:
+      return;
+    }
+    q->type = SPARSE;
+    q->value.sparse = sparsePolynomialFromCopy(p->value.sparse);
+    return;
+  }
+  if ((q->type == SPARSE) && (p->type != SPARSE)) {
+    switch (p->type) {
+    case ADDITION:
+    case SUBTRACTION:
+    case MULTIPLICATION:
+    case COMPOSITION:
+      polynomialFree(p->value.pair.g);
+      polynomialFree(p->value.pair.h);
+      break;
+    case NEGATE:
+      polynomialFree(p->value.g);
+      break;
+    case POWER:
+      polynomialFree(p->value.powering.g);
+      constantFree(p->value.powering.c);
+      break;
+    default:
+      return;
+    }
+    p->type = SPARSE;
+    p->value.sparse = sparsePolynomialFromCopy(q->value.sparse);
+    return;
+  }
+}
+
 int polynomialEqual(polynomial_t p, polynomial_t q, int defVal) {
-  int dp, dq;
+  int dp, dq, res;
 
   /* Handle stupid inputs */
   if (p == NULL) return defVal;
@@ -6917,8 +6986,13 @@ int polynomialEqual(polynomial_t p, polynomial_t q, int defVal) {
   if (p == q) return 1;
 
   /* If both polynomials are in sparse form, just use this */
-  if ((p->type == SPARSE) && (q->type == SPARSE))
-    return sparsePolynomialEqual(p->value.sparse, q->value.sparse, defVal);
+  if ((p->type == SPARSE) && (q->type == SPARSE)) {
+    res = sparsePolynomialEqual(p->value.sparse, q->value.sparse, 51);
+    if (res == 51) return defVal;
+    if (!res) return 0;
+    __polynomialUnifyEqual(p,q);
+    return 1;
+  }
 
   /* Try to cheaply compute the degrees. If both degrees can be
      computed but are different, we know that the polynomials are
@@ -6931,7 +7005,10 @@ int polynomialEqual(polynomial_t p, polynomial_t q, int defVal) {
   /* If p and q are written the same way and each sub-polynomial is
      the same, they are the same. 
   */
-  if (__polynomialEqualCheap(p, q)) return 1;
+  if (__polynomialEqualCheap(p, q)) {
+    __polynomialUnifyEqual(p, q);
+    return 1;
+  }
 
   /* General case
      
@@ -6940,7 +7017,11 @@ int polynomialEqual(polynomial_t p, polynomial_t q, int defVal) {
   */
   __polynomialSparsify(p);
   __polynomialSparsify(q);
-  return sparsePolynomialEqual(p->value.sparse, q->value.sparse, defVal);
+  res = sparsePolynomialEqual(p->value.sparse, q->value.sparse, 51);
+  if (res == 51) return defVal;
+  if (!res) return 0;
+  __polynomialUnifyEqual(p, q);
+  return 1;
 }
 
 int polynomialIsIdentity(polynomial_t p, int defVal) {
