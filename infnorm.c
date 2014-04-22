@@ -117,8 +117,7 @@ void sollya_mpfi_pow_ulong(sollya_mpfi_t z, sollya_mpfi_t x, unsigned long t) {
   */  
   if (mpfr_nan_p(&(x->left)) ||
       mpfr_nan_p(&(x->right))) {
-    mpfr_set_nan(&(z->left));
-    mpfr_set_nan(&(z->right));
+    sollya_mpfi_set_nan(z);
     return;
   }
 
