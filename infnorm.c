@@ -247,7 +247,7 @@ void sollya_mpfi_pow(sollya_mpfi_t z, sollya_mpfi_t x, sollya_mpfi_t y) {
       ) {
     t = -mpfr_get_si(&(y->left), GMP_RNDN); /* exact */
     prec = sollya_mpfi_get_prec(z);
-    sollya_mpfi_set_prec(z, prec + 5);
+    sollya_mpfi_prec_round(z, prec + 5);
     sollya_mpfi_pow_ulong(z, x, t);
     sollya_mpfi_inv(z, z);
     sollya_mpfi_prec_round(z, prec);
