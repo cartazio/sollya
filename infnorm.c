@@ -109,7 +109,30 @@ int sollya_mpfr_min(mpfr_t z, mpfr_t x, mpfr_t y, mp_rnd_t rnd) {
 }
 
 void sollya_mpfi_pow_ulong(sollya_mpfi_t z, sollya_mpfi_t x, unsigned long t) {
-  
+
+  /* Check for NaN. The case Inf will be handled by MPFR.
+
+     HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
+  */  
+  if (mpfr_nan_p(&(x->left)) ||
+      mpfr_nan_p(&(x->right))) {
+    mpfr_set_nan(&(z->left));
+    mpfr_set_nan(&(z->right));
+    return;
+  }
+
+  /* Handle the case when t is zero */
+  if (t == 0ul) {
+    if (sollya_mpfi_is_infinity(x)) {
+      sollya_mpfi_set_nan(z);
+    } else {
+      mpfr_set_si(&(z->left),1,GMP_RNDD);
+      mpfr_set_si(&(z->right),1,GMP_RNDU);
+    }
+    return;
+  }
+
   /* If t is odd, x^t is a monotone increasing function 
 
      We return [RD(inf(x)^t);RU(sup(x)^t)]
@@ -129,14 +152,14 @@ void sollya_mpfi_pow_ulong(sollya_mpfi_t z, sollya_mpfi_t x, unsigned long t) {
 
      So we must distinguish two main cases:
 
-     * if 0 in x, we must return [0; RU(max(-inf(x),sup(x))^t)]
+     * if 0 in the interior of x, we must return [0; RU(max(-inf(x),sup(x))^t)]
      * otherwise, see below.
 
   */
   /* HACK ALERT: For performance reasons, we will access the internals
      of an mpfi_t !!!
   */
-  if (mpfr_sgn(&(x->left)) * mpfr_sgn(&(x->right)) <= 0) {
+  if (mpfr_sgn(&(x->left)) * mpfr_sgn(&(x->right)) < 0) {
     /* HACK ALERT: For performance reasons, we will access the internals
        of an mpfi_t !!!
     */
@@ -160,18 +183,18 @@ void sollya_mpfi_pow_ulong(sollya_mpfi_t z, sollya_mpfi_t x, unsigned long t) {
     return;
   }
   
-  /* Here, t is even and 0 not in x 
+  /* Here, t is even and 0 not in the interior of x 
 
      In this case, we have two subcases:
 
-     * If inf(x) > 0, we must return [RD(inf(x)^t);RU(sup(x)^t)]
-     * Otherwise,     we must return [RD(sup(x)^t);RU(inf(x)^t)]
+     * If inf(x) >= 0, we must return [RD(inf(x)^t);RU(sup(x)^t)]
+     * Otherwise,      we must return [RD(sup(x)^t);RU(inf(x)^t)]
 
   */
   /* HACK ALERT: For performance reasons, we will access the internals
      of an mpfi_t !!!
   */      
-  if (mpfr_sgn(&(x->left)) > 0) {
+  if (mpfr_sgn(&(x->left)) >= 0) {
     /* We return [RD(inf(x)^t);RU(sup(x)^t)] */
     /* HACK ALERT: For performance reasons, we will access the internals
        of an mpfi_t !!!
@@ -186,8 +209,9 @@ void sollya_mpfi_pow_ulong(sollya_mpfi_t z, sollya_mpfi_t x, unsigned long t) {
      We return [RD(sup(x)^t);RU(inf(x)^t)]
 
   */
-  mpfr_pow_ui(&(z->left),&(x->right),t,GMP_RNDD);
-  mpfr_pow_ui(&(z->right),&(x->left),t,GMP_RNDU);
+  mpfr_pow_ui(&(z->right),&(x->right),t,GMP_RNDD);
+  mpfr_pow_ui(&(z->left),&(x->left),t,GMP_RNDU);
+  mpfr_swap(&(z->left), &(z->right));
 }
 
 void sollya_mpfi_pow(sollya_mpfi_t z, sollya_mpfi_t x, sollya_mpfi_t y) {
