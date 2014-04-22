@@ -55,14 +55,6 @@ test2 = proc(f, n, x0, I, mode) {
      if (mode==absolute) then dd = dd + Delta;
      if (! (f(xk)-p(xk-a)) in dd) then {
        print("test2(",f,",",n,",",x0,",",I,",",mode,"): error at point x=",xk," and point xi0 = ",a);
-       print("f(xk) = ", f(xk));
-       print("p(xk-a) = ", p(xk-a));
-       print("p = ", p);
-       print("xk = ", xk);
-       print("a = ", a);
-       print("f(xk)-p(xk-a) = ", f(xk)-p(xk-a));
-       print("dd = ", dd);
-       print("Delta = ", Delta);
        res = 0;
      };
    };
