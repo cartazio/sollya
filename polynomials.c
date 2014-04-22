@@ -55,6 +55,7 @@
 #include "infnorm.h"
 #include "expression.h"
 #include "polynomials.h"
+#include "printf.h"
 
 /* Helper types */
 
@@ -1084,10 +1085,10 @@ static inline int tryExactIntSubtraction(int *c, int a, int b) {
   return 1;
 }
 
-static inline int exactUint64Mul(uint64_t *ch, 
-				 uint64_t *cl, 
-				 uint64_t a, 
-				 uint64_t b) {
+static inline void exactUint64Mul(uint64_t *ch, 
+				  uint64_t *cl, 
+				  uint64_t a, 
+				  uint64_t b) {
   uint64_t ah, al, bh, bl;
   uint64_t ahbh, ahbl, albh, albl;
   uint64_t ahblh, ahbll, albhh, albhl;
@@ -1791,13 +1792,13 @@ static inline int try_mpfr_pow_exact(mpfr_t c, mpfr_t a, unsigned long int b) {
 
 static inline constant_t __polynomialGetIthCoefficientAsConstantIntIndex(polynomial_t, int);
 
-void constantEvalMpfi(sollya_mpfi_t, constant_t); 
-constant_t constantAdd(constant_t, constant_t);
-constant_t constantSub(constant_t, constant_t);
-constant_t constantMul(constant_t, constant_t);
-constant_t constantDiv(constant_t, constant_t);
-constant_t constantPow(constant_t, constant_t);
-constant_t constantNeg(constant_t);
+static inline void constantEvalMpfi(sollya_mpfi_t, constant_t); 
+static inline constant_t constantAdd(constant_t, constant_t);
+static inline constant_t constantSub(constant_t, constant_t);
+static inline constant_t constantMul(constant_t, constant_t);
+static inline constant_t constantDiv(constant_t, constant_t);
+static inline constant_t constantPow(constant_t, constant_t);
+static inline constant_t constantNeg(constant_t);
 
 static inline constant_t __constantAllocate() {
   return (constant_t) safeMalloc(sizeof(struct __constant_struct_t));
@@ -1807,7 +1808,7 @@ static inline void __constantFreeMem(constant_t c) {
   safeFree(c);
 }
 
-constant_t constantFromMpfr(mpfr_t c) {
+static inline constant_t constantFromMpfr(mpfr_t c) {
   constant_t res;
   int intval;
 
@@ -1831,7 +1832,7 @@ constant_t constantFromMpfr(mpfr_t c) {
   return res;
 }
 
-constant_t constantFromInt(int c) {
+static inline constant_t constantFromInt(int c) {
   constant_t res;
 
   res = __constantAllocate();
@@ -1848,7 +1849,7 @@ constant_t constantFromInt(int c) {
   return res;
 }
 
-constant_t constantFromUnsignedInt(unsigned int c) {
+static inline constant_t constantFromUnsignedInt(unsigned int c) {
   constant_t res;
   int cI;
   unsigned int cc;
@@ -1868,7 +1869,7 @@ constant_t constantFromUnsignedInt(unsigned int c) {
 }
 
 
-constant_t constantFromScaledMpq(mp_exp_t e, mpq_t c) {
+static inline constant_t constantFromScaledMpq(mp_exp_t e, mpq_t c) {
   mpz_t num, den;
   constant_t res;
   mp_bitcnt_t dyadNum, dyadDen;
@@ -1929,11 +1930,11 @@ constant_t constantFromScaledMpq(mp_exp_t e, mpq_t c) {
   return res;
 }
 
-constant_t constantFromMpq(mpq_t c) {
+static inline constant_t constantFromMpq(mpq_t c) {
   return constantFromScaledMpq((mp_exp_t) 0, c);
 }
 
-constant_t constantFromMpz(mpz_t c) {
+static inline constant_t constantFromMpz(mpz_t c) {
   mpq_t q;
   constant_t res;
   
@@ -1945,13 +1946,13 @@ constant_t constantFromMpz(mpz_t c) {
   return res;
 }
 
-constant_t constantFromCopy(constant_t c) {
+static inline constant_t constantFromCopy(constant_t c) {
   if (c == NULL) return NULL;
   c->refCount++;
   return c;
 }
 
-constant_t constantFromExpression(node *c) {
+static inline constant_t constantFromExpression(node *c) {
   node *simplified;
   mpq_t rational;
   constant_t res;
@@ -1996,7 +1997,7 @@ constant_t constantFromExpression(node *c) {
 }
 
 
-void constantFree(constant_t c) {
+static inline void constantFree(constant_t c) {
   if (c == NULL) return;
   c->refCount--;
   if (c->refCount > 0u) return;
@@ -2016,7 +2017,7 @@ void constantFree(constant_t c) {
   __constantFreeMem(c);
 }
 
-int constantIsZero(constant_t a, int defVal) {
+static inline int constantIsZero(constant_t a, int defVal) {
   int s;
 
   if (a == NULL) return defVal;
@@ -2060,7 +2061,7 @@ int constantIsZero(constant_t a, int defVal) {
   return defVal;
 }
 
-int constantIsOne(constant_t a, int defVal) {
+static inline int constantIsOne(constant_t a, int defVal) {
   int s;
 
   if (a == NULL) return defVal;
@@ -2132,7 +2133,7 @@ int constantIsOne(constant_t a, int defVal) {
   return defVal;
 }
 
-int constantIsNonNegativeInteger(constant_t a, int defVal) {
+static inline int constantIsNonNegativeInteger(constant_t a, int defVal) {
   int s;
   node *t, *d;
 
@@ -2192,7 +2193,7 @@ int constantIsNonNegativeInteger(constant_t a, int defVal) {
   return defVal;
 }
 
-int constantIsDyadic(constant_t a, int defVal) {
+static inline int constantIsDyadic(constant_t a, int defVal) {
   if (a == NULL) return defVal;
   if (a->isDyadic.cached) return a->isDyadic.res;
   switch (a->type) {
@@ -2226,7 +2227,7 @@ int constantIsDyadic(constant_t a, int defVal) {
   return defVal;
 }
 
-int constantIsRational(constant_t a, int defVal) {
+static inline int constantIsRational(constant_t a, int defVal) {
   if (a == NULL) return defVal;
   if (a->isRational.cached) return a->isRational.res;
   switch (a->type) {
@@ -2259,7 +2260,7 @@ int constantIsRational(constant_t a, int defVal) {
   return defVal;
 }
 
-int constantHoldsOnPrecBits(constant_t a, mp_prec_t prec, int defVal) {
+static inline int constantHoldsOnPrecBits(constant_t a, mp_prec_t prec, int defVal) {
   sollya_mpfi_t t;
   int res;
 
@@ -2279,7 +2280,7 @@ int constantHoldsOnPrecBits(constant_t a, mp_prec_t prec, int defVal) {
   return res;
 }
 
-int constantIsEqual(constant_t a, constant_t b, int defVal) {
+static inline int constantIsEqual(constant_t a, constant_t b, int defVal) {
   constant_t d;
   int res, sa, sb;
   mpq_t t;
@@ -2382,7 +2383,7 @@ int constantIsEqual(constant_t a, constant_t b, int defVal) {
   return defVal;
 }
 
-int constantIsPositive(constant_t a, int defVal) {
+static inline int constantIsPositive(constant_t a, int defVal) {
   int s;
 
   if (a == NULL) return defVal;
@@ -2426,7 +2427,7 @@ int constantIsPositive(constant_t a, int defVal) {
   return defVal;
 }
 
-int constantIsGreater(constant_t a, constant_t b, int defVal) {
+static inline int constantIsGreater(constant_t a, constant_t b, int defVal) {
   constant_t d;
   int res;
   node *dn;
@@ -2501,7 +2502,7 @@ int constantIsGreater(constant_t a, constant_t b, int defVal) {
   return defVal;
 }
 
-int constantIsGreaterOrEqual(constant_t a, constant_t b, int defVal) {
+static inline int constantIsGreaterOrEqual(constant_t a, constant_t b, int defVal) {
   int resGreater, resEqual;
 
   resGreater = constantIsGreater(a, b, 42);
@@ -2515,7 +2516,7 @@ int constantIsGreaterOrEqual(constant_t a, constant_t b, int defVal) {
   return constantIsEqual(a, b, defVal);
 }
 
-node *constantToExpression(constant_t a) {
+static inline node *constantToExpression(constant_t a) {
   mpfr_t num, den;
   mp_prec_t p;
   node *res;
@@ -2607,7 +2608,7 @@ node *constantToExpression(constant_t a) {
   return NULL;
 }
 
-int tryConstantToScaledMpq(mp_exp_t *E, mpq_t rop, constant_t a) {
+static inline int tryConstantToScaledMpq(mp_exp_t *E, mpq_t rop, constant_t a) {
   mpq_t t;
   mpz_t mant;
   mp_exp_t expo;
@@ -2657,7 +2658,7 @@ int tryConstantToScaledMpq(mp_exp_t *E, mpq_t rop, constant_t a) {
   return 0;
 }
 
-int tryConstantToMpz(mpz_t r, constant_t a) {
+static inline int tryConstantToMpz(mpz_t r, constant_t a) {
   mpz_t num, den;
   mpq_t q;
   mp_exp_t EQ;
@@ -2725,7 +2726,7 @@ int tryConstantToMpz(mpz_t r, constant_t a) {
   return 1;
 }
 
-int tryConstantToInt(int *r, constant_t a) {
+static inline int tryConstantToInt(int *r, constant_t a) {
   mpq_t q;
   mp_exp_t EQ;
   int res;
@@ -2745,6 +2746,8 @@ int tryConstantToInt(int *r, constant_t a) {
   case MPFR:
     return mpfr_is_machine_integer(r, a->value.mpfr);
     break;
+  default:
+    break;
   }
   
   mpq_init(q);
@@ -2760,7 +2763,7 @@ int tryConstantToInt(int *r, constant_t a) {
   return 1;
 }
 
-int tryConstantToUnsignedInt(unsigned int *r, constant_t a) {
+static inline int tryConstantToUnsignedInt(unsigned int *r, constant_t a) {
   mpq_t q;
   mp_exp_t EQ;
   unsigned int res;
@@ -2780,6 +2783,8 @@ int tryConstantToUnsignedInt(unsigned int *r, constant_t a) {
     break;
   case MPFR:
     return mpfr_is_machine_unsigned_integer(r, a->value.mpfr);
+    break;
+  default:
     break;
   }
   
@@ -2824,7 +2829,7 @@ void constantFPrintf(FILE *fd, constant_t c) {
   }
 }
 
-char *constantToString(constant_t c) {
+static inline char *constantToString(constant_t c) {
   char staticStr[8];
   char *str;
   int size, r;
@@ -2888,7 +2893,7 @@ char *constantToString(constant_t c) {
   return str;
 }
 
-constant_t constantAdd(constant_t a, constant_t b) {
+static inline constant_t constantAdd(constant_t a, constant_t b) {
   node *aExpr, *bExpr, *cExpr;
   constant_t res;
   mpq_t aS, bS, cS;
@@ -2974,6 +2979,8 @@ constant_t constantAdd(constant_t a, constant_t b) {
       mpq_clear(cS);
       return res;
       break;
+    default:
+      break;
     }
   }
 
@@ -3005,6 +3012,8 @@ constant_t constantAdd(constant_t a, constant_t b) {
       mpq_clear(cS);
       return res;      
       break;
+    default:
+      break;
     }
   }
   if (b->type == INTEGER) {
@@ -3033,6 +3042,8 @@ constant_t constantAdd(constant_t a, constant_t b) {
       res = constantFromScaledMpq(EC, cS);
       mpq_clear(cS);
       return res;      
+      break;
+    default:
       break;
     }
   }
@@ -3072,7 +3083,7 @@ constant_t constantAdd(constant_t a, constant_t b) {
   return res;  
 }
 
-constant_t constantSub(constant_t a, constant_t b) {
+static inline constant_t constantSub(constant_t a, constant_t b) {
   node *aExpr, *bExpr, *cExpr;
   constant_t res;
   mpq_t aS, bS, cS;
@@ -3158,6 +3169,8 @@ constant_t constantSub(constant_t a, constant_t b) {
       mpq_clear(cS);
       return res;
       break;
+    default:
+      break;
     }
   }
 
@@ -3189,6 +3202,8 @@ constant_t constantSub(constant_t a, constant_t b) {
       mpq_clear(cS);
       return res;      
       break;
+    default:
+      break;
     }
   }
   if (b->type == INTEGER) {
@@ -3217,6 +3232,8 @@ constant_t constantSub(constant_t a, constant_t b) {
       res = constantFromScaledMpq(EC, cS);
       mpq_clear(cS);
       return res;      
+      break;
+    default:
       break;
     }
   }
@@ -3256,7 +3273,7 @@ constant_t constantSub(constant_t a, constant_t b) {
   return res;  
 }
 
-constant_t constantMul(constant_t a, constant_t b) {
+static inline constant_t constantMul(constant_t a, constant_t b) {
   node *aExpr, *bExpr, *cExpr;
   constant_t res;
   mpq_t aS, bS, cS;
@@ -3335,6 +3352,8 @@ constant_t constantMul(constant_t a, constant_t b) {
       mpq_clear(cS);
       return res;
       break;
+    default:
+      break;
     }
   }
 
@@ -3366,6 +3385,8 @@ constant_t constantMul(constant_t a, constant_t b) {
       mpq_clear(cS);
       return res;      
       break;
+    default:
+      break;
     }
   }
   if (b->type == INTEGER) {
@@ -3394,6 +3415,8 @@ constant_t constantMul(constant_t a, constant_t b) {
       res = constantFromScaledMpq(EC, cS);
       mpq_clear(cS);
       return res;      
+      break;
+    default:
       break;
     }
   }
@@ -3433,13 +3456,12 @@ constant_t constantMul(constant_t a, constant_t b) {
   return res;  
 }
 
-constant_t constantDiv(constant_t a, constant_t b) {
+static inline constant_t constantDiv(constant_t a, constant_t b) {
   node *aExpr, *bExpr, *cExpr;
   constant_t res;
   mpq_t aS, bS, cS, cQ;
   mp_exp_t EA, EB, EC;
   int cI;
-  mpfr_t cM;
   unsigned long int bAbs;
 
   /* Stupid inputs */
@@ -3513,6 +3535,8 @@ constant_t constantDiv(constant_t a, constant_t b) {
       } 
       mpq_clear(cS);
       break;
+    default:
+      break;
     }
   }
 
@@ -3554,7 +3578,7 @@ constant_t constantDiv(constant_t a, constant_t b) {
   return res;  
 }
 
-constant_t constantPow(constant_t a, constant_t b) {
+static inline constant_t constantPow(constant_t a, constant_t b) {
   node *aExpr, *bExpr, *cExpr;
   constant_t res;
   mpq_t aS, bS, cS;
@@ -3648,6 +3672,8 @@ constant_t constantPow(constant_t a, constant_t b) {
       } 
       mpq_clear(cS);
       break;
+    default:
+      break;
     }
   }
 
@@ -3687,6 +3713,8 @@ constant_t constantPow(constant_t a, constant_t b) {
 	return res;
       } 
       mpq_clear(cS);
+      break;
+    default:
       break;
     }
   }
@@ -3729,7 +3757,7 @@ constant_t constantPow(constant_t a, constant_t b) {
   return res;  
 }
 
-constant_t constantNeg(constant_t a) {
+static inline constant_t constantNeg(constant_t a) {
   constant_t res;
   int cI;
   mpz_t cZ;
@@ -3771,12 +3799,14 @@ constant_t constantNeg(constant_t a) {
     return res;
     break;
   }
+
+  return NULL;
 }
 
 /* Computes q and r such that 2^14 * q + r = a and q = floor(a *
    2^-14) 
 */
-void constantCutTwo14(constant_t *q, constant_t *r, constant_t a) {
+static inline void constantCutTwo14(constant_t *q, constant_t *r, constant_t a) {
   int qI, rI;
   node *qN, *rN;
   mpfr_t qM, rM;
@@ -3838,7 +3868,7 @@ void constantCutTwo14(constant_t *q, constant_t *r, constant_t a) {
   }
 }
 
-void constantEvalMpfr(mpfr_t rop, constant_t c) {
+static inline void constantEvalMpfr(mpfr_t rop, constant_t c) {
   mp_prec_t p;
   mpfr_t cutoff;
 
@@ -3873,7 +3903,7 @@ void constantEvalMpfr(mpfr_t rop, constant_t c) {
   }
 }
 
-void constantEvalMpfi(sollya_mpfi_t rop, constant_t c) {
+static inline void constantEvalMpfi(sollya_mpfi_t rop, constant_t c) {
   mp_prec_t p;
 
  /* Handle stupid input */
@@ -3903,7 +3933,7 @@ void constantEvalMpfi(sollya_mpfi_t rop, constant_t c) {
   }
 }
 
-constant_t constantRoundDyadic(constant_t c, mp_prec_t prec) {
+static inline constant_t constantRoundDyadic(constant_t c, mp_prec_t prec) {
   mpfr_t v;
   constant_t res;
 
@@ -3928,7 +3958,7 @@ constant_t constantRoundDyadic(constant_t c, mp_prec_t prec) {
   return res;
 }
 
-constant_t constantRoundRational(constant_t c, mp_prec_t prec) {
+static inline constant_t constantRoundRational(constant_t c, mp_prec_t prec) {
   mpfr_t v;
   constant_t res;
 
@@ -3953,7 +3983,7 @@ constant_t constantRoundRational(constant_t c, mp_prec_t prec) {
   return res;
 }
 
-constant_t constantRound(constant_t c, mp_prec_t prec) {
+static inline constant_t constantRound(constant_t c, mp_prec_t prec) {
   mpfr_t v;
   constant_t res;
 
@@ -3983,6 +4013,7 @@ constant_t constantRound(constant_t c, mp_prec_t prec) {
 /* Start of part for sparse polynomials */
 
 void __sparsePolynomialPrintRaw(sparse_polynomial_t);
+static inline int sparsePolynomialPowConstant(sparse_polynomial_t *, sparse_polynomial_t, constant_t);
 
 static inline sparse_polynomial_t __sparsePolynomialAllocate() {
   return (sparse_polynomial_t) safeMalloc(sizeof(struct __sparse_polynomial_struct_t));
@@ -4183,7 +4214,7 @@ static inline unsigned int __sparsePolynomialFindDegree(constant_t d,
   return __sparsePolynomialFindDegreeNaive(d, a, n);
 }
 
-sparse_polynomial_t sparsePolynomialFromMpfrConstant(mpfr_t c) {
+static inline sparse_polynomial_t sparsePolynomialFromMpfrConstant(mpfr_t c) {
   sparse_polynomial_t res;
   res = __sparsePolynomialAllocate();
   res->refCount = 1;
@@ -4196,7 +4227,7 @@ sparse_polynomial_t sparsePolynomialFromMpfrConstant(mpfr_t c) {
   return res;
 }
 
-sparse_polynomial_t sparsePolynomialFromMpzConstant(mpz_t c) {
+static inline sparse_polynomial_t sparsePolynomialFromMpzConstant(mpz_t c) {
   sparse_polynomial_t res;
   res = __sparsePolynomialAllocate();
   res->refCount = 1;
@@ -4209,7 +4240,7 @@ sparse_polynomial_t sparsePolynomialFromMpzConstant(mpz_t c) {
   return res;
 }
 
-sparse_polynomial_t sparsePolynomialFromMpqConstant(mpq_t c) {
+static inline sparse_polynomial_t sparsePolynomialFromMpqConstant(mpq_t c) {
   sparse_polynomial_t res;
   res = __sparsePolynomialAllocate();
   res->refCount = 1;
@@ -4222,7 +4253,7 @@ sparse_polynomial_t sparsePolynomialFromMpqConstant(mpq_t c) {
   return res;
 }
 
-sparse_polynomial_t sparsePolynomialFromConstant(constant_t c) {
+static inline sparse_polynomial_t sparsePolynomialFromConstant(constant_t c) {
   sparse_polynomial_t res;
   res = __sparsePolynomialAllocate();
   res->refCount = 1;
@@ -4235,7 +4266,7 @@ sparse_polynomial_t sparsePolynomialFromConstant(constant_t c) {
   return res;
 }
 
-sparse_polynomial_t sparsePolynomialFromIntConstant(int c) {
+static inline sparse_polynomial_t sparsePolynomialFromIntConstant(int c) {
   sparse_polynomial_t res;
   res = __sparsePolynomialAllocate();
   res->refCount = 1;
@@ -4281,7 +4312,7 @@ static inline int __sparsePolynomialFromConstantExpressionOnlyRealCoeffs(sparse_
   return 1;
 }
 
-sparse_polynomial_t sparsePolynomialFromIdentity() {
+static inline sparse_polynomial_t sparsePolynomialFromIdentity() {
   sparse_polynomial_t res;
   res = __sparsePolynomialAllocate();
   res->refCount = 1;
@@ -4294,7 +4325,7 @@ sparse_polynomial_t sparsePolynomialFromIdentity() {
   return res;
 }
 
-sparse_polynomial_t sparsePolynomialFromMpfrCoefficients(mpfr_t *coeffs, unsigned int deg) {
+static inline sparse_polynomial_t sparsePolynomialFromMpfrCoefficients(mpfr_t *coeffs, unsigned int deg) {
   unsigned int i, startSize;
   sparse_polynomial_t res;
   constant_t c;
@@ -4342,7 +4373,7 @@ sparse_polynomial_t sparsePolynomialFromMpfrCoefficients(mpfr_t *coeffs, unsigne
   return res;
 }
 
-int sparsePolynomialFromConstantExpressionCoefficients(sparse_polynomial_t *r, node **coeffs, unsigned int deg) {
+static inline int sparsePolynomialFromConstantExpressionCoefficients(sparse_polynomial_t *r, node **coeffs, unsigned int deg) {
   unsigned int i, startSize;
   sparse_polynomial_t res;
   constant_t c;
@@ -4398,13 +4429,13 @@ int sparsePolynomialFromConstantExpressionCoefficients(sparse_polynomial_t *r, n
   return 1;
 }
 
-sparse_polynomial_t sparsePolynomialFromCopy(sparse_polynomial_t p) {
+static inline sparse_polynomial_t sparsePolynomialFromCopy(sparse_polynomial_t p) {
   if (p == NULL) return NULL;
   p->refCount++;
   return p;
 }
 
-void sparsePolynomialFree(sparse_polynomial_t p) {
+static inline void sparsePolynomialFree(sparse_polynomial_t p) {
   unsigned int i;
 
   if (p == NULL) return;
@@ -4420,7 +4451,7 @@ void sparsePolynomialFree(sparse_polynomial_t p) {
   __sparsePolynomialFreeMem(p);
 }
 
-int sparsePolynomialIsConstant(sparse_polynomial_t p, int defVal) {
+static inline int sparsePolynomialIsConstant(sparse_polynomial_t p, int defVal) {
   int degZero;
 
   if (p == NULL) return defVal;
@@ -4431,7 +4462,7 @@ int sparsePolynomialIsConstant(sparse_polynomial_t p, int defVal) {
   return 1;
 }
 
-int sparsePolynomialConstantGetConstant(constant_t *c, sparse_polynomial_t p) {
+static inline int sparsePolynomialConstantGetConstant(constant_t *c, sparse_polynomial_t p) {
   unsigned int i;
   constant_t t;
 
@@ -4454,7 +4485,7 @@ int sparsePolynomialConstantGetConstant(constant_t *c, sparse_polynomial_t p) {
   return 1;
 }
 
-int sparsePolynomialIsConstantZero(sparse_polynomial_t p, int defVal) {
+static inline int sparsePolynomialIsConstantZero(sparse_polynomial_t p, int defVal) {
   int isConst, res;
   constant_t c;
 
@@ -4470,7 +4501,7 @@ int sparsePolynomialIsConstantZero(sparse_polynomial_t p, int defVal) {
   return defVal;
 }
 
-int sparsePolynomialIsConstantOne(sparse_polynomial_t p, int defVal) {
+static inline int sparsePolynomialIsConstantOne(sparse_polynomial_t p, int defVal) {
   int isConst, res;
   constant_t c;
 
@@ -4486,7 +4517,7 @@ int sparsePolynomialIsConstantOne(sparse_polynomial_t p, int defVal) {
   return defVal;
 }
 
-sparse_polynomial_t sparsePolynomialAdd(sparse_polynomial_t p, sparse_polynomial_t q) {
+static inline sparse_polynomial_t sparsePolynomialAdd(sparse_polynomial_t p, sparse_polynomial_t q) {
   sparse_polynomial_t res;
   unsigned int i,j,startSize;
   constant_t newCoeff, newMonomial;
@@ -4604,9 +4635,9 @@ sparse_polynomial_t sparsePolynomialAdd(sparse_polynomial_t p, sparse_polynomial
   return res;
 }
 
-sparse_polynomial_t sparsePolynomialNeg(sparse_polynomial_t);
+static inline sparse_polynomial_t sparsePolynomialNeg(sparse_polynomial_t);
 
-sparse_polynomial_t sparsePolynomialSub(sparse_polynomial_t p, sparse_polynomial_t q) {
+static inline sparse_polynomial_t sparsePolynomialSub(sparse_polynomial_t p, sparse_polynomial_t q) {
   sparse_polynomial_t res;
   unsigned int i,j,startSize;
   constant_t newCoeff, newMonomial;
@@ -4725,7 +4756,7 @@ sparse_polynomial_t sparsePolynomialSub(sparse_polynomial_t p, sparse_polynomial
   return res;
 }
 
-int sparsePolynomialEqual(sparse_polynomial_t p, sparse_polynomial_t q, int defVal) {
+static inline int sparsePolynomialEqual(sparse_polynomial_t p, sparse_polynomial_t q, int defVal) {
   unsigned int i;
   int monDegEqual, coeffEqual, degreeEqual;
   int res;
@@ -4764,7 +4795,7 @@ int sparsePolynomialEqual(sparse_polynomial_t p, sparse_polynomial_t q, int defV
   return 1;
 }
 
-int sparsePolynomialIsIdentity(sparse_polynomial_t p, int defVal) {
+static inline int sparsePolynomialIsIdentity(sparse_polynomial_t p, int defVal) {
   sparse_polynomial_t q;
   int res;
 
@@ -4860,7 +4891,7 @@ static inline void __sparsePolynomialAddMonomialToArrays(constant_t *coeffs,
   degrees[j] = d;
 }
 
-sparse_polynomial_t sparsePolynomialAddConstant(sparse_polynomial_t p, constant_t c) {
+static inline sparse_polynomial_t sparsePolynomialAddConstant(sparse_polynomial_t p, constant_t c) {
   sparse_polynomial_t t, res;
 
   /* Handle the stupid cases */
@@ -4875,7 +4906,7 @@ sparse_polynomial_t sparsePolynomialAddConstant(sparse_polynomial_t p, constant_
   return res;
 }
 
-sparse_polynomial_t sparsePolynomialMul(sparse_polynomial_t p, sparse_polynomial_t q) {
+static inline sparse_polynomial_t sparsePolynomialMul(sparse_polynomial_t p, sparse_polynomial_t q) {
   sparse_polynomial_t res;
   unsigned int i,j,startSize,g,d;
   constant_t pp, md, t;
@@ -4969,7 +5000,7 @@ sparse_polynomial_t sparsePolynomialMul(sparse_polynomial_t p, sparse_polynomial
   return res;
 }
 
-sparse_polynomial_t sparsePolynomialNeg(sparse_polynomial_t p) {
+static inline sparse_polynomial_t sparsePolynomialNeg(sparse_polynomial_t p) {
   unsigned int i;
   sparse_polynomial_t res;
 
@@ -4988,7 +5019,7 @@ sparse_polynomial_t sparsePolynomialNeg(sparse_polynomial_t p) {
   return res;
 }
 
-sparse_polynomial_t sparsePolynomialCompose(sparse_polynomial_t p, sparse_polynomial_t q) {
+static inline sparse_polynomial_t sparsePolynomialCompose(sparse_polynomial_t p, sparse_polynomial_t q) {
   sparse_polynomial_t res, t, m;
   constant_t d;
   unsigned int i;
@@ -5087,7 +5118,7 @@ static inline sparse_polynomial_t __sparsePolynomialFromMonomial(constant_t c, c
   return res;
 }
 
-void sparsePolynomialDiv(sparse_polynomial_t *quot, sparse_polynomial_t *rest, sparse_polynomial_t a, sparse_polynomial_t b) {
+static inline void sparsePolynomialDiv(sparse_polynomial_t *quot, sparse_polynomial_t *rest, sparse_polynomial_t a, sparse_polynomial_t b) {
   sparse_polynomial_t q, r, rt, bt, t1, t2, qp, recprPB;
   constant_t rc, rd, bc, bd, qc, qd, recprB, one;
   
@@ -5162,7 +5193,7 @@ void sparsePolynomialDiv(sparse_polynomial_t *quot, sparse_polynomial_t *rest, s
   *rest = r;
 }
 
-sparse_polynomial_t sparsePolynomialPowUnsignedInt(sparse_polynomial_t p, unsigned int n) {
+static inline sparse_polynomial_t sparsePolynomialPowUnsignedInt(sparse_polynomial_t p, unsigned int n) {
   sparse_polynomial_t res, t, tmp;
   constant_t nC;
   
@@ -5210,10 +5241,15 @@ sparse_polynomial_t sparsePolynomialPowUnsignedInt(sparse_polynomial_t p, unsign
   return res;
 }
 
-int sparsePolynomialPowConstant(sparse_polynomial_t *r, sparse_polynomial_t p, constant_t n) {
+static inline int sparsePolynomialPowConstant(sparse_polynomial_t *r, sparse_polynomial_t p, constant_t n) {
   unsigned int nI;
   constant_t k, l, m;
   sparse_polynomial_t res, a, b, t;
+
+  /* Make compiler happy */
+  k = NULL;
+  l = NULL;
+  /* End of compiler happiness */
 
   if (p == NULL) return 0;
   if (n == NULL) return 0;
@@ -5299,7 +5335,7 @@ int sparsePolynomialPowConstant(sparse_polynomial_t *r, sparse_polynomial_t p, c
   return 1;
 }
 
-int sparsePolynomialPow(sparse_polynomial_t *r, sparse_polynomial_t p, sparse_polynomial_t q) {
+static inline int sparsePolynomialPow(sparse_polynomial_t *r, sparse_polynomial_t p, sparse_polynomial_t q) {
   constant_t n;
   int res;
 
@@ -5315,7 +5351,7 @@ int sparsePolynomialPow(sparse_polynomial_t *r, sparse_polynomial_t p, sparse_po
   return res;
 }
 
-sparse_polynomial_t sparsePolynomialDeriv(sparse_polynomial_t p) {
+static inline sparse_polynomial_t sparsePolynomialDeriv(sparse_polynomial_t p) {
   unsigned int i;
   sparse_polynomial_t res;
   constant_t one;
@@ -5372,7 +5408,7 @@ sparse_polynomial_t sparsePolynomialDeriv(sparse_polynomial_t p) {
   return res;
 }
 
-int sparsePolynomialFromExpression(sparse_polynomial_t *r, node *p) {
+static inline int sparsePolynomialFromExpression(sparse_polynomial_t *r, node *p) {
   sparse_polynomial_t a, b, quot, rest;
   int res;
 
@@ -5460,7 +5496,7 @@ int sparsePolynomialFromExpression(sparse_polynomial_t *r, node *p) {
   return 0;
 }
 
-void sparsePolynomialGetDegree(mpz_t deg, sparse_polynomial_t p) {
+static inline void sparsePolynomialGetDegree(mpz_t deg, sparse_polynomial_t p) {
   if (p == NULL) {
     mpz_set_si(deg, -1);
     return;
@@ -5470,7 +5506,7 @@ void sparsePolynomialGetDegree(mpz_t deg, sparse_polynomial_t p) {
   }
 }
 
-int sparsePolynomialGetDegreeAsInt(sparse_polynomial_t p) {
+static inline int sparsePolynomialGetDegreeAsInt(sparse_polynomial_t p) {
   int deg;
 
   if (p == NULL) return -1;
@@ -5478,7 +5514,7 @@ int sparsePolynomialGetDegreeAsInt(sparse_polynomial_t p) {
   return deg;
 }
 
-node *sparsePolynomialGetIthCoefficient(sparse_polynomial_t p, mpz_t i) {
+static inline node *sparsePolynomialGetIthCoefficient(sparse_polynomial_t p, mpz_t i) {
   constant_t ic, coeffsum, t;
   unsigned int j, k;
   node *res;
@@ -5538,7 +5574,7 @@ node *sparsePolynomialGetIthCoefficient(sparse_polynomial_t p, mpz_t i) {
   return res;
 }
 
-node *sparsePolynomialGetIthCoefficientIntIndex(sparse_polynomial_t p, int i) {
+static inline node *sparsePolynomialGetIthCoefficientIntIndex(sparse_polynomial_t p, int i) {
   constant_t ic, coeffsum, t;
   unsigned int j, k;
   node *res;
@@ -5598,7 +5634,7 @@ node *sparsePolynomialGetIthCoefficientIntIndex(sparse_polynomial_t p, int i) {
   return res;
 }
 
-constant_t sparsePolynomialGetIthCoefficientAsConstantIntIndex(sparse_polynomial_t p, int i) {
+static inline constant_t sparsePolynomialGetIthCoefficientAsConstantIntIndex(sparse_polynomial_t p, int i) {
   constant_t ic, coeffsum, t;
   unsigned int j, k;
 
@@ -5654,7 +5690,7 @@ constant_t sparsePolynomialGetIthCoefficientAsConstantIntIndex(sparse_polynomial
   return coeffsum;
 }
 
-int sparsePolynomialGetCoefficients(node ***coeffs, unsigned int *deg, sparse_polynomial_t p) {
+static inline int sparsePolynomialGetCoefficients(node ***coeffs, unsigned int *deg, sparse_polynomial_t p) {
   unsigned int degree, size, i, j, d, k;
   node **coefficients;
   constant_t c, t;
@@ -5826,7 +5862,7 @@ static inline void __sparsePolynomialEvalMpfr(mpfr_t y, sparse_polynomial_t p, m
   mpfr_prec_round(y, prec, GMP_RNDN);
 }
 
-void sparsePolynomialEvalMpfr(mpfr_t y, sparse_polynomial_t p, mpfr_t x) {
+static inline void sparsePolynomialEvalMpfr(mpfr_t y, sparse_polynomial_t p, mpfr_t x) {
   mpfr_t scratch, Y;
 
   /* Handle stupid inputs */
@@ -5962,7 +5998,7 @@ static inline void __sparsePolynomialEvalMpfi(sollya_mpfi_t y, sparse_polynomial
   sollya_mpfi_prec_round(y, prec);
 }
 
-void sparsePolynomialEvalMpfi(sollya_mpfi_t y, sparse_polynomial_t p, sollya_mpfi_t x) {
+static inline void sparsePolynomialEvalMpfi(sollya_mpfi_t y, sparse_polynomial_t p, sollya_mpfi_t x) {
   sollya_mpfi_t scratch, Y;
 
   /* Handle stupid inputs */
@@ -6251,12 +6287,12 @@ static inline node *__sparsePolynomialGetExpressionHorner(sparse_polynomial_t p)
   return addMemRef(res);
 }
 
-node *sparsePolynomialGetExpression(sparse_polynomial_t p, int canonical) {
+static inline node *sparsePolynomialGetExpression(sparse_polynomial_t p, int canonical) {
   if (canonical) return __sparsePolynomialGetExpressionCanonical(p);
   return __sparsePolynomialGetExpressionHorner(p);
 }
 
-void sparsePolynomialFPrintf(FILE *fd, sparse_polynomial_t p, int canonical) {
+static inline void sparsePolynomialFPrintf(FILE *fd, sparse_polynomial_t p, int canonical) {
   node *t;
 
   /* Handle stupid cases */
@@ -6274,7 +6310,7 @@ void sparsePolynomialFPrintf(FILE *fd, sparse_polynomial_t p, int canonical) {
   freeThing(t);
 }
 
-char *sparsePolynomialToString(sparse_polynomial_t p, int canonical) {
+static inline char *sparsePolynomialToString(sparse_polynomial_t p, int canonical) {
   node *t;
   char *str;
   char staticStr[8];
@@ -6306,7 +6342,7 @@ char *sparsePolynomialToString(sparse_polynomial_t p, int canonical) {
   return str;
 }
 
-unsigned int sparsePolynomialGetMonomialCount(sparse_polynomial_t p) {
+static inline unsigned int sparsePolynomialGetMonomialCount(sparse_polynomial_t p) {
   
   /* Handle stupid input */
   if (p == NULL) return 0u;
@@ -6315,7 +6351,7 @@ unsigned int sparsePolynomialGetMonomialCount(sparse_polynomial_t p) {
   return p->monomialCount;
 }
 
-int sparsePolynomialCoefficientsAreDyadic(sparse_polynomial_t p, int defVal) {
+static inline int sparsePolynomialCoefficientsAreDyadic(sparse_polynomial_t p, int defVal) {
   unsigned int i;
   int t;
 
@@ -6334,7 +6370,7 @@ int sparsePolynomialCoefficientsAreDyadic(sparse_polynomial_t p, int defVal) {
   return 1;
 }
 
-int sparsePolynomialCoefficientsAreRational(sparse_polynomial_t p, int defVal) {
+static inline int sparsePolynomialCoefficientsAreRational(sparse_polynomial_t p, int defVal) {
   unsigned int i;
   int t;
 
@@ -6353,7 +6389,7 @@ int sparsePolynomialCoefficientsAreRational(sparse_polynomial_t p, int defVal) {
   return 1;
 }
 
-int sparsePolynomialCoefficientsHoldOnPrecBits(sparse_polynomial_t p, mp_prec_t prec, int defVal) {
+static inline int sparsePolynomialCoefficientsHoldOnPrecBits(sparse_polynomial_t p, mp_prec_t prec, int defVal) {
   unsigned int i;
   int t;
 
@@ -6372,7 +6408,7 @@ int sparsePolynomialCoefficientsHoldOnPrecBits(sparse_polynomial_t p, mp_prec_t 
   return 1;
 }
 
-sparse_polynomial_t sparsePolynomialRoundDyadic(sparse_polynomial_t p, mp_prec_t prec) { 
+static inline sparse_polynomial_t sparsePolynomialRoundDyadic(sparse_polynomial_t p, mp_prec_t prec) { 
   sparse_polynomial_t res;
   unsigned int startSize, i;
   constant_t c;
@@ -6432,7 +6468,7 @@ sparse_polynomial_t sparsePolynomialRoundDyadic(sparse_polynomial_t p, mp_prec_t
   return res;
 }
 
-sparse_polynomial_t sparsePolynomialRoundRational(sparse_polynomial_t p, mp_prec_t prec) {
+static inline sparse_polynomial_t sparsePolynomialRoundRational(sparse_polynomial_t p, mp_prec_t prec) {
   sparse_polynomial_t res;
   unsigned int startSize, i;
   constant_t c;
@@ -6492,7 +6528,7 @@ sparse_polynomial_t sparsePolynomialRoundRational(sparse_polynomial_t p, mp_prec
   return res;
 }
 
-sparse_polynomial_t sparsePolynomialRound(sparse_polynomial_t p, mp_prec_t prec) { 
+static inline sparse_polynomial_t sparsePolynomialRound(sparse_polynomial_t p, mp_prec_t prec) { 
   sparse_polynomial_t res;
   unsigned int startSize, i;
   constant_t c;
@@ -7470,6 +7506,8 @@ static inline node *__polynomialGetExpressionAnyForm(polynomial_t p) {
     return addMemRef(makePow(__polynomialGetExpressionAnyForm(p->value.powering.g),
 			     constantToExpression(p->value.powering.c)));            
     break;
+  default:
+    break;
   }
 
   /* Cannot be reached */
@@ -7606,6 +7644,8 @@ void polynomialEvalMpfr(mpfr_t y, polynomial_t p, mpfr_t x) {
       polynomialEvalMpfr(y, p->value.powering.g, x);
       constantEvalMpfr(scratch, p->value.powering.c);
       break;
+    default:
+      break;
     }
     switch (p->type) {
     case ADDITION:
@@ -7619,6 +7659,8 @@ void polynomialEvalMpfr(mpfr_t y, polynomial_t p, mpfr_t x) {
       break;
     case POWER:
       mpfr_pow(y, y, scratch, GMP_RNDN);
+      break;
+    default:
       break;
     }
   }
@@ -7701,6 +7743,8 @@ void polynomialEvalMpfi(sollya_mpfi_t y, polynomial_t p, sollya_mpfi_t x) {
       polynomialEvalMpfi(y, p->value.powering.g, x);
       constantEvalMpfi(*scratch, p->value.powering.c);
       break;
+    default:
+      break;
     }
     switch (p->type) {
     case ADDITION:
@@ -7714,6 +7758,8 @@ void polynomialEvalMpfi(sollya_mpfi_t y, polynomial_t p, sollya_mpfi_t x) {
       break;
     case POWER:
       sollya_mpfi_pow(y, y, *scratch);
+      break;
+    default:
       break;
     }
   }
@@ -7933,6 +7979,8 @@ polynomial_t polynomialNeg(polynomial_t p) {
   case NEGATE:
     return polynomialFromCopy(p->value.g);
     break;
+  default:
+    break;
   }
 
   /* General case: construct the negation polynomial */
@@ -8039,6 +8087,8 @@ polynomial_t polynomialDeriv(polynomial_t p) {
       constantFree(one);
       return res;
     }
+    break;
+  default:
     break;
   }
   
@@ -8310,7 +8360,6 @@ polynomial_t polynomialPowUnsignedInt(polynomial_t p, unsigned int n) {
 
 int polynomialPow(polynomial_t *r, polynomial_t p, polynomial_t q) {
   constant_t n, two14;
-  int deg;
   polynomial_t res;
   sparse_polynomial_t sp;
 
@@ -8485,7 +8534,6 @@ int polynomialCoefficientsHoldOnPrecBits(polynomial_t p, mp_prec_t prec, int def
 
 static inline polynomial_t __polynomialRoundDyadicAnyForm(polynomial_t p, mp_prec_t prec) {
   polynomial_t res;
-  mpfr_t zero, t;
 
   /* Handle stupid input */
   if (p == NULL) return NULL;
@@ -8526,6 +8574,8 @@ static inline polynomial_t __polynomialRoundDyadicAnyForm(polynomial_t p, mp_pre
     res->value.powering.g = __polynomialRoundDyadicAnyForm(p->value.powering.g, prec);
     res->value.powering.c = constantFromCopy(p->value.powering.c);
     break;
+  default:
+    break;
   }
   return res;
 }
@@ -8555,7 +8605,6 @@ polynomial_t polynomialRoundDyadic(polynomial_t p, mp_prec_t prec) {
 
 static inline polynomial_t __polynomialRoundRationalAnyForm(polynomial_t p, mp_prec_t prec) {
   polynomial_t res;
-  mpfr_t t, zero;
 
   /* Handle stupid input */
   if (p == NULL) return NULL;
@@ -8595,6 +8644,8 @@ static inline polynomial_t __polynomialRoundRationalAnyForm(polynomial_t p, mp_p
   case POWER:
     res->value.powering.g = __polynomialRoundRationalAnyForm(p->value.powering.g, prec);
     res->value.powering.c = constantFromCopy(p->value.powering.c);
+    break;
+  default:
     break;
   }
   return res;
@@ -8665,6 +8716,8 @@ static inline polynomial_t __polynomialRoundAnyForm(polynomial_t p, mp_prec_t pr
     res->value.powering.g = __polynomialRoundAnyForm(p->value.powering.g, prec);
     res->value.powering.c = constantFromCopy(p->value.powering.c);
     break;
+  default:
+    break;
   }
   return res;
 }
@@ -8693,8 +8746,6 @@ polynomial_t polynomialRound(polynomial_t p, mp_prec_t prec) {
 }
 
 void __polynomialPrintRaw(polynomial_t p) {
-  unsigned int i;
-
   sollyaFprintf(stderr, "Polynomial %p:\n", p);
   if (p == NULL) return;
   sollyaFprintf(stderr, "  reference count:      %u\n", p->refCount);
@@ -8728,7 +8779,7 @@ void __polynomialPrintRaw(polynomial_t p) {
   case COMPOSITION:
     sollyaFprintf(stderr, "Composition");
     break;
-  case NEGATION:
+  case NEGATE:
     sollyaFprintf(stderr, "Negation");
     break;
   case POWER:
@@ -8749,7 +8800,7 @@ void __polynomialPrintRaw(polynomial_t p) {
     sollyaFprintf(stderr, "   h =\n");
     __polynomialPrintRaw(p->value.pair.h);
     break;
-  case NEGATION:
+  case NEGATE:
     sollyaFprintf(stderr, "   g =\n");
     __polynomialPrintRaw(p->value.g);    
     break;

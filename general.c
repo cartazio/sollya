@@ -1550,7 +1550,6 @@ double sollya_mpfr_get_d(mpfr_t op, mpfr_rnd_t rnd) {
 }
 
 void allocateReusedGlobalMPFIVars() {
-  unsigned int i;
   if (globalReusedMPFIVars != NULL) return;
   if (globalReusedMPFIVarsAllocated != 0) return;
   globalReusedMPFIVars = (sollya_mpfi_t *) safeCalloc(globalReusedMPFIVarsMaxAllocated, sizeof(sollya_mpfi_t));

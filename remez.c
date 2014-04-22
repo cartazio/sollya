@@ -1558,6 +1558,10 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
   gmp_randstate_t random_state;
   int quality_prec;
 
+  /* Make compiler happy */
+  res = NULL;
+  /* End of compiler happiness */
+
   quality_prec = (mpfr_regular_p(quality)?(10 - mpfr_get_exp(quality)):prec);
 
   gmp_randinit_default(random_state);

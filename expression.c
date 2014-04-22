@@ -11181,7 +11181,7 @@ node* hornerPolynomial(node *tree) {
 
 
 node* hornerUnsimplified(node *tree) {
-  node *copy, *res;
+  node *copy;
   mpfr_t *value;
   mpfr_t temp;
   polynomial_t p;

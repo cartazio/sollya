@@ -23786,6 +23786,9 @@ node *evaluateThingInnerst(node *tree) {
 		    isConstant((node *) (curr->value))) {
 		  resA = 1;
 		  tempNode3 = copyThing((node *) (curr->value));
+		} else {
+		  tempNode3 = NULL;
+		  resA = 0;
 		}
 	      }
 	    } else {
