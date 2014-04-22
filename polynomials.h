@@ -78,8 +78,9 @@ polynomial_t polynomialFromCopy(polynomial_t);
 /* Destructor */
 void polynomialFree(polynomial_t);
 
-/* Comparison */
+/* Comparisons */
 int polynomialEqual(polynomial_t, polynomial_t, int);
+int polynomialIsIdentity(polynomial_t, int);
 
 /* Arithmetical operations */
 polynomial_t polynomialAdd(polynomial_t, polynomial_t);
@@ -117,6 +118,7 @@ int polynomialCoefficientsAreDyadic(polynomial_t, int);
 int polynomialCoefficientsAreRational(polynomial_t, int);
 polynomial_t polynomialRoundDyadic(polynomial_t, mp_prec_t);
 polynomial_t polynomialRoundRational(polynomial_t, mp_prec_t);
+polynomial_t polynomialRound(polynomial_t, mp_prec_t);
 
 
 #endif /* ifdef POLYNOMIALS_H*/

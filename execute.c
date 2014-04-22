@@ -8435,7 +8435,21 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
 
     if (isConstant(tempNode2)) {
       if (accessThruMemRef(tempNode2)->nodeType == CONSTANT) {
-	printValue(accessThruMemRef(tempNode2)->value);
+	if (mpfr_get_prec(*(accessThruMemRef(tempNode2)->value)) < tools_precision * 4) {
+	  printValue(accessThruMemRef(tempNode2)->value);
+	} else {
+	  mpfr_init2(a,tools_precision);
+	  mpfr_set(a, *(accessThruMemRef(tempNode2)->value), GMP_RNDN);
+	  if (mpfr_number_p(a) && (!mpfr_zero_p(a))) {
+	    if (!noRoundingWarnings) {
+	      printMessage(1,SOLLYA_MSG_DISPLAYED_VALUE_IS_FAITHFULLY_ROUNDED,"Warning: rounding has happened. The value displayed is a faithful rounding to %d bits of the true result.\n", mpfr_get_prec(a));
+	    }
+	    printValue(&a);
+	  } else {
+	    printValue(accessThruMemRef(tempNode2)->value);
+	  }
+	  mpfr_clear(a);
+	}
       } else {
 	if (rationalMode &&
 	    (accessThruMemRef(tempNode2)->nodeType == DIV) &&
@@ -16443,7 +16457,7 @@ int isCorrectlyTyped(node *tree) {
   return 0;
 }
 
-int tryRepresentAsPolynomial(node *tree) {
+int tryRepresentAsPolynomialNoConstants(node *tree) {
   polynomial_t p;
 
   if (tree->nodeType != MEMREF) return 0;
@@ -16453,6 +16467,17 @@ int tryRepresentAsPolynomial(node *tree) {
 				     be represented twice: once as
 				     itself, once as a constant
 				     polynomial */
+  if (!polynomialFromExpressionOnlyRealCoeffs(&p, tree)) return 0;
+  tree->polynomialRepresentation = p;
+  return 1;
+}
+
+int tryRepresentAsPolynomial(node *tree) {
+  polynomial_t p;
+
+  if (tree->nodeType != MEMREF) return 0;
+  if (tree->polynomialRepresentation != NULL) return 0;
+  if (!isPureTree(tree)) return 0;
   if (!polynomialFromExpressionOnlyRealCoeffs(&p, tree)) return 0;
   tree->polynomialRepresentation = p;
   return 1;
@@ -16511,7 +16536,7 @@ node *evaluateThing(node *tree) {
   }
 
   if (okay && (evaluated->nodeType == MEMREF)) {
-    tryRepresentAsPolynomial(evaluated);
+    tryRepresentAsPolynomialNoConstants(evaluated);
     evaluated->isCorrectlyTyped = 1;
   }
 
@@ -22652,12 +22677,24 @@ node *evaluateThingInnerst(node *tree) {
       if (lengthChain(tree->arguments) == 1) {
 	if (evaluateThingToPureTree(&tempNode2,(node *) (tree->arguments->value))) {
 	  safeFree(copy);
-	  if (accessThruMemRef(tempNode)->nodeType == VARIABLE) {
-	    if (variablename != NULL) {
-	      printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: the identifier \"%s\" is bound to the current free variable. In a functional context it will be considered as the identity function.\n",
-			   variablename);
-	    } else {
-	      printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: \"_x_\" is the free variable. In a functional context it will be considered as the identity function.\n");
+	  if ((tempNode->nodeType == MEMREF) &&
+	      (tempNode->polynomialRepresentation != NULL)) {
+	    if (polynomialIsIdentity(tempNode->polynomialRepresentation, 0)) {
+	      if (variablename != NULL) {
+		printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: the identifier \"%s\" is bound to the current free variable. In a functional context it will be considered as the identity function.\n",
+			     variablename);
+	      } else {
+		printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: \"_x_\" is the free variable. In a functional context it will be considered as the identity function.\n");
+	      }
+	    }
+	  } else {
+	    if (accessThruMemRef(tempNode)->nodeType == VARIABLE) {
+	      if (variablename != NULL) {
+		printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: the identifier \"%s\" is bound to the current free variable. In a functional context it will be considered as the identity function.\n",
+			     variablename);
+	      } else {
+		printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: \"_x_\" is the free variable. In a functional context it will be considered as the identity function.\n");
+	      }
 	    }
 	  }
 	  copy = substitute(tempNode, tempNode2);
@@ -22805,12 +22842,24 @@ node *evaluateThingInnerst(node *tree) {
       if (lengthChain(tree->arguments) == 1) {
 	if (evaluateThingToPureTree(&tempNode2,(node *) (tree->arguments->value))) {
 	  safeFree(copy);
-	  if (accessThruMemRef(tempNode)->nodeType == VARIABLE) {
-	    if (variablename != NULL) {
-	      printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: the identifier \"%s\" is bound to the current free variable. In a functional context it will be considered as the identity function.\n",
-			   variablename);
-	    } else {
-	      printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: \"_x_\" is the free variable. In a functional context it will be considered as the identity function.\n");
+	  if ((tempNode->nodeType == MEMREF) &&
+	      (tempNode->polynomialRepresentation != NULL)) {
+	    if (polynomialIsIdentity(tempNode->polynomialRepresentation, 0)) {
+	      if (variablename != NULL) {
+		printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: the identifier \"%s\" is bound to the current free variable. In a functional context it will be considered as the identity function.\n",
+			     variablename);
+	      } else {
+		printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: \"_x_\" is the free variable. In a functional context it will be considered as the identity function.\n");
+	      }
+	    }
+	  } else {
+	    if (accessThruMemRef(tempNode)->nodeType == VARIABLE) {
+	      if (variablename != NULL) {
+		printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: the identifier \"%s\" is bound to the current free variable. In a functional context it will be considered as the identity function.\n",
+			     variablename);
+	      } else {
+		printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: \"_x_\" is the free variable. In a functional context it will be considered as the identity function.\n");
+	      }
 	    }
 	  }
 	  copy = substitute(tempNode, tempNode2);

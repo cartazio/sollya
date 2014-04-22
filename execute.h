@@ -573,4 +573,7 @@ node *evaluateThing(node *tree);
 int isString(node *);
 int symbolNameAlreadyUsed(char *);
 
+int tryRepresentAsPolynomial(node *);
+
+
 #endif /* ifdef EXECUTE_H*/

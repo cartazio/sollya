@@ -3413,6 +3413,7 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
 	if (!tree->memRefChildFromPolynomial) {
 	  free_memory(tree->child1);
 	  tree->child1 = NULL;
+	  tree->memRefChildFromPolynomial = 0;
 	}
       }
       return copyTree(tree);
@@ -11194,6 +11195,7 @@ node* hornerUnsimplified(node *tree) {
 	if (!isHorner(tree->child1)) {
 	  free_memory(tree->child1);
 	  tree->child1 = NULL;
+	  tree->memRefChildFromPolynomial = 0;
 	}
       }
       return copyTree(tree);
@@ -11506,6 +11508,7 @@ node* horner(node *tree) {
       if (!isHorner(tree->child1)) {
 	free_memory(tree->child1);
 	tree->child1 = NULL;
+	tree->memRefChildFromPolynomial = 0;
       }
     }
     return copyTree(tree);
@@ -12046,9 +12049,13 @@ node *substitute(node* tree, node *t) {
 
   if ((tree->nodeType == MEMREF) &&
       (t->nodeType == MEMREF)) {
-
-
-
+    if (tree->polynomialRepresentation == NULL) {
+      tryRepresentAsPolynomial(tree);
+    }
+    if ((tree->polynomialRepresentation != NULL) &&
+	(t->polynomialRepresentation == NULL)) {
+      tryRepresentAsPolynomial(t);
+    }
     if ((tree->polynomialRepresentation != NULL) &&
 	(t->polynomialRepresentation != NULL)) {
       res = addMemRefEvenOnNull(NULL);
@@ -13563,6 +13570,7 @@ node *makeCanonical(node *tree, mp_prec_t prec) {
 	if (!isCanonical(tree->child1)) {
 	  free_memory(tree->child1);
 	  tree->child1 = NULL;
+	  tree->memRefChildFromPolynomial = 0;
 	}
       }
       return copyTree(tree);
