@@ -6928,12 +6928,7 @@ int polynomialIsIdentity(polynomial_t p, int defVal) {
   dp = __polynomialGetDegreeAsIntCheap(p);
   if ((dp >= 0) && (dp != 1)) return 0;
 
-  /* Evaluate the polynomial at x = 1 and x = 2 with low precision. If it
-     does not evaluate to p(x) = x, i.e. to 1 resp. 2, it cannot be the 
-     identity function.
-  */
-  /* TODO */
-
+  /* Some optimisations are still possible */
 
   /* Sparsify the polynomial and use the test function on sparse
      polynomials 

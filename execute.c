@@ -8422,6 +8422,7 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
   int infinityCase;
   int deg;
   int counter;
+  int tern;
 
   shown = 0; shown2 = 0;
   if (isPureTree(thing)) {
@@ -8439,9 +8440,9 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
 	  printValue(accessThruMemRef(tempNode2)->value);
 	} else {
 	  mpfr_init2(a,tools_precision);
-	  mpfr_set(a, *(accessThruMemRef(tempNode2)->value), GMP_RNDN);
+	  tern = mpfr_set(a, *(accessThruMemRef(tempNode2)->value), GMP_RNDN);
 	  if (mpfr_number_p(a) && (!mpfr_zero_p(a))) {
-	    if (!noRoundingWarnings) {
+	    if ((tern != 0) && (!noRoundingWarnings)) {
 	      printMessage(1,SOLLYA_MSG_DISPLAYED_VALUE_IS_FAITHFULLY_ROUNDED,"Warning: rounding has happened. The value displayed is a faithful rounding to %d bits of the true result.\n", mpfr_get_prec(a));
 	    }
 	    printValue(&a);
