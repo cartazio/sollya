@@ -8426,7 +8426,9 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
 
   shown = 0; shown2 = 0;
   if (isPureTree(thing)) {
-    if ((treeSize(thing) < CHEAPSIMPLIFYSIZE) || rationalMode) {
+    if (((thing->nodeType == MEMREF) && (thing->polynomialRepresentation != NULL)) ||
+	(treeSize(thing) < CHEAPSIMPLIFYSIZE) || 
+	rationalMode) {
       tempNode2 = simplifyTreeErrorfree(thing);
       freeThingAfterwards = 1;
     } else {
@@ -8435,7 +8437,7 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
     }
 
     if (isConstant(tempNode2)) {
-      if (accessThruMemRef(tempNode2)->nodeType == CONSTANT) {
+      if ((!((tempNode2->nodeType == MEMREF) && (tempNode2->child1 == NULL))) && (accessThruMemRef(tempNode2)->nodeType == CONSTANT)) {
 	if (mpfr_get_prec(*(accessThruMemRef(tempNode2)->value)) < tools_precision * 4) {
 	  printValue(accessThruMemRef(tempNode2)->value);
 	} else {
@@ -8454,11 +8456,11 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
       } else {
 	if (rationalMode &&
 	    (accessThruMemRef(tempNode2)->nodeType == DIV) &&
-	    (accessThruMemRef(tempNode2)->child1->nodeType == CONSTANT) &&
-	    (accessThruMemRef(tempNode2)->child2->nodeType == CONSTANT) &&
-	    mpfr_number_p(*(accessThruMemRef(tempNode2)->child1->value)) &&
-	    mpfr_number_p(*(accessThruMemRef(tempNode2)->child2->value)) &&
-	    (!mpfr_zero_p(*(accessThruMemRef(tempNode2)->child2->value)))) {
+	    (accessThruMemRef(accessThruMemRef(tempNode2)->child1)->nodeType == CONSTANT) &&
+	    (accessThruMemRef(accessThruMemRef(tempNode2)->child2)->nodeType == CONSTANT) &&
+	    mpfr_number_p(*(accessThruMemRef(accessThruMemRef(tempNode2)->child1)->value)) &&
+	    mpfr_number_p(*(accessThruMemRef(accessThruMemRef(tempNode2)->child2)->value)) &&
+	    (!mpfr_zero_p(*(accessThruMemRef(accessThruMemRef(tempNode2)->child2)->value)))) {
           printTree(tempNode2);
 	} else {
 	  mpfr_init2(a,tools_precision);
