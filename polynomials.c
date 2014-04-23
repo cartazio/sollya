@@ -4013,6 +4013,7 @@ static inline constant_t constantRound(constant_t c, mp_prec_t prec) {
 /* Start of part for sparse polynomials */
 
 void __sparsePolynomialPrintRaw(sparse_polynomial_t);
+static inline sparse_polynomial_t __polynomialGetSparsePolynomial(polynomial_t);
 static inline int sparsePolynomialPowConstant(sparse_polynomial_t *, sparse_polynomial_t, constant_t);
 static inline int sparsePolynomialGetDegreeAsInt(sparse_polynomial_t);
 
@@ -5420,6 +5421,10 @@ static inline int sparsePolynomialFromExpression(sparse_polynomial_t *r, node *p
   /* Try to decompose expressions built on c, x, +, -, *, /, -, ^ */
   switch (p->nodeType) {
   case MEMREF:
+    if (p->polynomialRepresentation != NULL) {
+      *r = __polynomialGetSparsePolynomial(p->polynomialRepresentation);
+      return 1;
+    }
     return sparsePolynomialFromExpression(r, getMemRefChild(p));
     break;
   case VARIABLE:
@@ -7550,6 +7555,7 @@ void polynomialGetDegree(mpz_t deg, polynomial_t p) {
     mpz_mul(deg, hd, gd);
     mpz_clear(gd);
     mpz_clear(hd);    
+    return;
     break;
   case NEGATE:
     polynomialGetDegree(deg,p->value.g);
@@ -9112,6 +9118,15 @@ int polynomialIsCanonicalized(polynomial_t p) {
   return (p->outputType == CANONICAL_FORM);
 }
 
+static inline sparse_polynomial_t __polynomialGetSparsePolynomial(polynomial_t p) {
+
+  /* Handle stupid input */
+  if (p == NULL) return NULL;
+  
+  /* Sparsify the polynomial and return a copy */
+  __polynomialSparsify(p);
+  return sparsePolynomialFromCopy(p->value.sparse);
+}
 
 void __polynomialPrintRaw(polynomial_t p) {
   sollyaFprintf(stderr, "Polynomial %p:\n", p);

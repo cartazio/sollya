@@ -63,6 +63,7 @@ struct __eval_hook_t_struct {
   int (*evaluateHook)(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, void *);
   void (*freeHook)(void *);
   int (*compareHook)(void *, void *);
+  void *(*copyHook)(void *);
   eval_hook_t *nextHook;
 };
 
@@ -70,7 +71,10 @@ int addEvaluationHook(eval_hook_t **,
 		      void *, 
 		      int (*)(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, void *), 
 		      void (*)(void *),
-		      int (*)(void *, void *));
+		      int (*)(void *, void *),
+		      void *(*)(void *));
+
+int addEvaluationHookFromCopy(eval_hook_t **, eval_hook_t *);
 
 void freeEvaluationHook(eval_hook_t **);
 
@@ -92,7 +96,7 @@ node_eval_hook_t *createNodeEvalHook(struct nodeStruct *, sollya_mpfi_t, sollya_
 int evaluateNodeEvalHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, void *);
 void freeNodeEvalHook(void *);
 int compareNodeEvalHook(void *, void *);
-
+void *copyNodeEvalHook(void *);
 
 
 /* Polynomial replacement function evaluation hooks */
@@ -134,7 +138,7 @@ poly_eval_hook_t *createPolyEvalHook(int, mpfr_t *, sollya_mpfi_t, sollya_mpfi_t
 int evaluatePolyEvalHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, void *);
 void freePolyEvalHook(void *);
 int comparePolyEvalHook(void *, void *);
-
+void *copyPolyEvalHook(void *);
 
 /* Helper functions that install either a general or a polynomial replacement hook */
 

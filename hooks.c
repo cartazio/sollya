@@ -57,7 +57,8 @@ int addEvaluationHook(eval_hook_t **hookPtr,
 		      void *data, 
 		      int (*evaluateFunc)(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, void *), 
 		      void (*freeFunc)(void *),
-		      int (*compareFunc)(void *, void *)) {
+		      int (*compareFunc)(void *, void *),
+		      void *(*copyFunc)(void *)) {
   eval_hook_t *newHook, *curr;
 
   /* Check if this hook has already been installed. If yes, deallocate
@@ -82,6 +83,7 @@ int addEvaluationHook(eval_hook_t **hookPtr,
   newHook->evaluateHook = evaluateFunc;
   newHook->freeHook = freeFunc;
   newHook->compareHook = compareFunc;
+  newHook->copyHook = copyFunc;
   newHook->nextHook = *hookPtr;
 
   /* Assign the new hook */
@@ -89,6 +91,23 @@ int addEvaluationHook(eval_hook_t **hookPtr,
   
   /* Signal success */
   return 1;
+}
+
+int addEvaluationHookFromCopy(eval_hook_t **newHookPtr, eval_hook_t *hook) {
+  int res, r;
+  eval_hook_t *curr;
+
+  res = 0;
+  for (curr=hook; curr != NULL; curr=curr->nextHook) {
+    r = addEvaluationHook(newHookPtr, 
+			  curr->copyHook(curr->data),
+			  curr->evaluateHook,
+			  curr->freeHook,
+			  curr->compareHook,
+			  curr->copyHook);
+    res = res || r;
+  }
+  return res;
 }
 
 void freeEvaluationHook(eval_hook_t **hookPtr) {
@@ -186,6 +205,13 @@ void freeNodeEvalHook(void *data) {
   sollya_mpfi_clear(hook->delta);
   sollya_mpfi_clear(hook->t);
   safeFree(hook);
+}
+
+void *copyNodeEvalHook(void *data) {
+  node_eval_hook_t *hook;
+
+  hook = (node_eval_hook_t *) data;
+  return (void *) createNodeEvalHook(hook->func, hook->domain, hook->delta, hook->t);
 }
 
 int compareNodeEvalHook(void *data1, void *data2) {
@@ -359,6 +385,52 @@ poly_eval_hook_t *createPolyEvalHook(int degree, mpfr_t *coeffs, sollya_mpfi_t d
 
   return newPolyEvalHook;
 }
+
+void *copyPolyEvalHook(void *data) {
+  poly_eval_hook_t *hook, *newPolyEvalHook;
+  int i;
+
+  hook = (poly_eval_hook_t *) data;
+
+  /* Allocate memory for the hook */
+  newPolyEvalHook = (poly_eval_hook_t *) safeMalloc(sizeof(poly_eval_hook_t));
+
+  /* Set some technical stuff */
+  newPolyEvalHook->reusedVarMyYInit = 0;
+  newPolyEvalHook->reusedVarXInit = 0;
+  newPolyEvalHook->reusedVarTempInit = 0;
+  newPolyEvalHook->reusedVarMyYBInit = 0;
+  newPolyEvalHook->reusedVarXAInit = 0;
+  newPolyEvalHook->reusedVarXBInit = 0;
+  newPolyEvalHook->reusedVarMyYRndInit = 0;
+  newPolyEvalHook->reusedVarMyYRndWithDeltaInit = 0;
+  newPolyEvalHook->reusedVarAInit = 0;
+  newPolyEvalHook->reusedVarBInit = 0;
+
+  /* Copy the basic stuff */
+  sollya_mpfi_init2(newPolyEvalHook->domain, sollya_mpfi_get_prec(hook->domain));
+  sollya_mpfi_set(newPolyEvalHook->domain, hook->domain);
+  sollya_mpfi_init2(newPolyEvalHook->delta, sollya_mpfi_get_prec(hook->delta));
+  sollya_mpfi_set(newPolyEvalHook->delta, hook->delta);
+  sollya_mpfi_init2(newPolyEvalHook->t, sollya_mpfi_get_prec(hook->t));
+  sollya_mpfi_set(newPolyEvalHook->t, hook->t);
+  newPolyEvalHook->degree = hook->degree;
+  newPolyEvalHook->coefficients = (mpfr_t *) safeCalloc(hook->degree + 1, sizeof(mpfr_t));
+  for (i=0;i<=hook->degree;i++) {
+    mpfr_init2(newPolyEvalHook->coefficients[i], mpfr_get_prec(hook->coefficients[i]));
+    mpfr_set(newPolyEvalHook->coefficients[i], hook->coefficients[i], GMP_RNDN); /* exact as precision the same */
+  }
+  
+  /* Copy the precomputed stuff */
+  newPolyEvalHook->polynomialIsMonotone = hook->polynomialIsMonotone; 
+  newPolyEvalHook->exactRepresentation = hook->exactRepresentation;
+  newPolyEvalHook->maxPrecKnown = hook->maxPrecKnown;
+  newPolyEvalHook->maxPrec = hook->maxPrec;
+
+  /* Return the copy */
+  return (void *) newPolyEvalHook;
+}
+
 
 int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void *data) {
   poly_eval_hook_t *hook;
@@ -628,7 +700,7 @@ int addPolyEvaluationHook(eval_hook_t **hookPtr, node *func, sollya_mpfi_t dom, 
   
   if (coeffsOkay && (!(sollya_mpfi_has_nan(globalDelta) || sollya_mpfi_has_infinity(globalDelta)))) {
     okay = addEvaluationHook(hookPtr, (void *) createPolyEvalHook(degree, evaluatedCoeffs, dom, globalDelta, t),
-			     evaluatePolyEvalHook, freePolyEvalHook, comparePolyEvalHook);
+			     evaluatePolyEvalHook, freePolyEvalHook, comparePolyEvalHook, copyPolyEvalHook); 
   } else {
     okay = 0;
   }
@@ -645,7 +717,7 @@ int addPolyEvaluationHook(eval_hook_t **hookPtr, node *func, sollya_mpfi_t dom, 
 int addNodeEvaluationHook(eval_hook_t **hookPtr, node *func, sollya_mpfi_t dom, sollya_mpfi_t delta, sollya_mpfi_t t, mp_prec_t prec) {
   UNUSED_PARAM(prec);
   return addEvaluationHook(hookPtr, (void *) createNodeEvalHook(func, dom, delta, t), 
-			   evaluateNodeEvalHook, freeNodeEvalHook, compareNodeEvalHook);
+			   evaluateNodeEvalHook, freeNodeEvalHook, compareNodeEvalHook, copyNodeEvalHook); 
 }
 
 int chooseAndAddEvaluationHook(eval_hook_t **hookPtr, node *func, sollya_mpfi_t dom, sollya_mpfi_t delta, sollya_mpfi_t t, mp_prec_t prec) {
