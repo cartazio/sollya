@@ -11487,7 +11487,7 @@ int isHornerUnsafe(node *tree) {
 
 int isHorner(node *tree) {
   if (tree->nodeType == MEMREF) {
-    if (tree->polynomialRepresentation != NULL) {
+    if ((tree->child1 == NULL) && (tree->polynomialRepresentation != NULL)) {
       return polynomialIsHornerized(tree->polynomialRepresentation);
     }
     return isHorner(getMemRefChild(tree));
@@ -13543,7 +13543,12 @@ int isCanonicalMonomial(node *tree) {
 int isCanonicalUnsafe(node *tree) {
   int deg1, deg2;
 
-  if (tree->nodeType == MEMREF) return isCanonicalUnsafe(getMemRefChild(tree));
+  if (tree->nodeType == MEMREF) {
+    if ((tree->child1 == NULL) && (tree->polynomialRepresentation != NULL)) {
+      return polynomialIsCanonicalized(tree->polynomialRepresentation);
+    }
+    return isCanonicalUnsafe(getMemRefChild(tree));
+  }
 
   if (isConstant(tree) || isCanonicalMonomial(tree)) return 1;
 
