@@ -4014,6 +4014,7 @@ static inline constant_t constantRound(constant_t c, mp_prec_t prec) {
 
 void __sparsePolynomialPrintRaw(sparse_polynomial_t);
 static inline int sparsePolynomialPowConstant(sparse_polynomial_t *, sparse_polynomial_t, constant_t);
+static inline int sparsePolynomialGetDegreeAsInt(sparse_polynomial_t);
 
 static inline sparse_polynomial_t __sparsePolynomialAllocate() {
   return (sparse_polynomial_t) safeMalloc(sizeof(struct __sparse_polynomial_struct_t));
@@ -4800,6 +4801,7 @@ static inline int sparsePolynomialIsIdentity(sparse_polynomial_t p, int defVal) 
   int res;
 
   if (p == NULL) return defVal;
+  if (sparsePolynomialGetDegreeAsInt(p) != 1) return 0;
 
   /* Can be optimized */
   q = sparsePolynomialFromIdentity();
@@ -5508,6 +5510,10 @@ static inline void sparsePolynomialGetDegree(mpz_t deg, sparse_polynomial_t p) {
 
 static inline int sparsePolynomialGetDegreeAsInt(sparse_polynomial_t p) {
   int deg;
+
+  /* Make compiler happy */
+  deg = -1;
+  /* End of compiler happiness */
 
   if (p == NULL) return -1;
   if (!tryConstantToInt(&deg, p->deg)) return -1;
@@ -6619,6 +6625,8 @@ void __sparsePolynomialPrintRaw(sparse_polynomial_t p) {
 
 /* Start of part for general (composed) polynomials */
 
+static inline void __polynomialSparsify(polynomial_t);
+
 static inline polynomial_t __polynomialAllocate() {
   return (polynomial_t) safeMalloc(sizeof(struct __polynomial_struct_t));
 }
@@ -6642,6 +6650,72 @@ static inline polynomial_t __polynomialBuildFromSparse(sparse_polynomial_t p) {
 
   /* Return the newly built polynomial */
   return res;
+}
+
+static inline sparse_polynomial_t __polynomialSparsifyComposition(polynomial_t p, 
+								  sparse_polynomial_t q) {
+  sparse_polynomial_t g, h, r;
+
+  /* Handle stupid input */
+  if (p == NULL) return NULL;
+  if (q == NULL) return NULL;
+
+  /* Consider the structure of p */
+  switch (p->type) {
+  case SPARSE:
+    return sparsePolynomialCompose(p->value.sparse, q);
+    break;
+  case ADDITION:
+    g = __polynomialSparsifyComposition(p->value.pair.g, q);
+    h = __polynomialSparsifyComposition(p->value.pair.h, q);
+    r = sparsePolynomialAdd(g, h);
+    sparsePolynomialFree(g);
+    sparsePolynomialFree(h);
+    return r;
+    break;
+  case SUBTRACTION:
+    g = __polynomialSparsifyComposition(p->value.pair.g, q);
+    h = __polynomialSparsifyComposition(p->value.pair.h, q);
+    r = sparsePolynomialSub(g, h);
+    sparsePolynomialFree(g);
+    sparsePolynomialFree(h);
+    return r;
+    break;
+  case MULTIPLICATION:
+    g = __polynomialSparsifyComposition(p->value.pair.g, q);
+    h = __polynomialSparsifyComposition(p->value.pair.h, q);
+    r = sparsePolynomialMul(g, h);
+    sparsePolynomialFree(g);
+    sparsePolynomialFree(h);
+    return r;
+    break;
+  case COMPOSITION:
+    h = __polynomialSparsifyComposition(p->value.pair.h, 
+					q);
+    r = __polynomialSparsifyComposition(p->value.pair.g, h);
+    sparsePolynomialFree(h);
+    return r;
+    break;
+  case NEGATE:
+    g = __polynomialSparsifyComposition(p->value.g, q);
+    r = sparsePolynomialNeg(g);
+    sparsePolynomialFree(g);
+    return r;
+    break;
+  case POWER:
+    g = __polynomialSparsifyComposition(p->value.powering.g, q);
+    if (!sparsePolynomialPowConstant(&r, g, p->value.powering.c)) {
+      sollyaFprintf(stderr,"Error: __polynomialSparsifyComposition: could not compute power of sparse polynomial\n");
+      exit(1);
+    }
+    sparsePolynomialFree(g);
+    return r;
+    break;
+  default:
+    break;
+  }
+  __polynomialSparsify(p);
+  return sparsePolynomialCompose(p->value.sparse, q);
 }
 
 static inline void __polynomialSparsify(polynomial_t p) {
@@ -6684,10 +6758,9 @@ static inline void __polynomialSparsify(polynomial_t p) {
     p->value.sparse = sp;
     break;
   case COMPOSITION:
-    __polynomialSparsify(p->value.pair.g);
     __polynomialSparsify(p->value.pair.h);
-    sp = sparsePolynomialCompose(p->value.pair.g->value.sparse,
-				 p->value.pair.h->value.sparse);
+    sp = __polynomialSparsifyComposition(p->value.pair.g, 
+					 p->value.pair.h->value.sparse);
     polynomialFree(p->value.pair.g);
     polynomialFree(p->value.pair.h);
     p->value.sparse = sp;
@@ -6713,6 +6786,144 @@ static inline void __polynomialSparsify(polynomial_t p) {
   p->type = SPARSE;
 }
 
+static inline polynomial_t __polynomialExecuteCompositionCompose(polynomial_t p, polynomial_t q) {
+  polynomial_t res, t;
+
+  /* Handle stupid input */
+  if (p == NULL) return NULL;
+  if (q == NULL) return NULL;
+
+  /* General case */
+  switch (p->type) {
+  case SPARSE:
+    __polynomialSparsify(q);
+    res = __polynomialAllocate();
+    res->refCount = 1u;
+    res->outputType = ANY_FORM;
+    res->value.sparse = sparsePolynomialCompose(p->value.sparse,  
+						q->value.sparse);
+    res->type = SPARSE;
+    break;
+  case ADDITION:
+  case SUBTRACTION:
+  case MULTIPLICATION:
+    res = __polynomialAllocate();
+    res->refCount = 1u;
+    res->outputType = ANY_FORM;
+    res->type = p->type;
+    res->value.pair.g = __polynomialExecuteCompositionCompose(p->value.pair.g, q);
+    res->value.pair.h = __polynomialExecuteCompositionCompose(p->value.pair.h, q);
+    break;
+  case COMPOSITION:
+    t = __polynomialExecuteCompositionCompose(p->value.pair.h, q);
+    res = __polynomialExecuteCompositionCompose(p->value.pair.g, t);
+    polynomialFree(t);
+    break;
+  case NEGATE:
+    res = __polynomialAllocate();
+    res->refCount = 1u;
+    res->outputType = ANY_FORM;
+    res->type = NEGATE;
+    res->value.g = __polynomialExecuteCompositionCompose(p->value.g, q);
+    break;
+  case POWER:
+    res = __polynomialAllocate();
+    res->refCount = 1u;
+    res->outputType = ANY_FORM;
+    res->type = POWER;
+    res->value.powering.g = __polynomialExecuteCompositionCompose(p->value.powering.g, q);
+    res->value.powering.c = constantFromCopy(p->value.powering.c);
+    break;
+  }  
+
+  return res;
+}
+
+static inline void __polynomialExecuteComposition(polynomial_t p) {
+  sparse_polynomial_t sp;
+  constant_t c;
+  polynomial_type_t t;
+  polynomial_t g, h;
+
+  /* Handle stupid input */
+  if (p == NULL) return;
+  
+  /* General case */
+  switch (p->type) {
+  case SPARSE:
+    /* Nothing to do */
+    return;
+    break;
+  case ADDITION:
+  case SUBTRACTION:
+  case MULTIPLICATION:
+    __polynomialExecuteComposition(p->value.pair.g);
+    __polynomialExecuteComposition(p->value.pair.h);
+    break;
+  case COMPOSITION:
+    __polynomialExecuteComposition(p->value.pair.g);
+    __polynomialExecuteComposition(p->value.pair.h);
+    t = p->value.pair.g->type;
+    switch (t) {
+    case SPARSE:
+      __polynomialSparsify(p->value.pair.h);
+      sp = sparsePolynomialCompose(p->value.pair.g->value.sparse, 
+				   p->value.pair.h->value.sparse);
+      polynomialFree(p->value.pair.g);
+      polynomialFree(p->value.pair.h);
+      p->value.sparse = sp;
+      p->type = SPARSE;
+      return;
+      break;
+    case ADDITION:
+    case SUBTRACTION:
+    case MULTIPLICATION:
+      g = __polynomialExecuteCompositionCompose(p->value.pair.g->value.pair.g, 
+						p->value.pair.h);
+      h = __polynomialExecuteCompositionCompose(p->value.pair.g->value.pair.h, 
+						p->value.pair.h);
+      polynomialFree(p->value.pair.g);
+      polynomialFree(p->value.pair.h);
+      p->value.pair.g = g;
+      p->value.pair.h = h;
+      p->type = t;
+      return;
+      break;
+    case COMPOSITION:
+      /* Should never happen */
+      __polynomialSparsify(p);
+      return;
+      break;
+    case NEGATE:
+      g = __polynomialExecuteCompositionCompose(p->value.pair.g->value.g, 
+						p->value.pair.h);
+      polynomialFree(p->value.pair.g);
+      polynomialFree(p->value.pair.h);
+      p->value.g = g;
+      p->type = NEGATE;
+      return;
+      break;
+    case POWER:
+      g = __polynomialExecuteCompositionCompose(p->value.pair.g->value.powering.g, 
+						p->value.pair.h);
+      c = constantFromCopy(p->value.pair.g->value.powering.c);
+      polynomialFree(p->value.pair.g);
+      polynomialFree(p->value.pair.h);
+      p->value.powering.g = g;
+      p->value.powering.c = c;
+      p->type = POWER;
+      return;
+      break;
+    }
+    break;
+  case NEGATE:
+    __polynomialExecuteComposition(p->value.g);
+    break;
+  case POWER:
+    __polynomialExecuteComposition(p->value.powering.g);
+    break;
+  }
+}
 
 polynomial_t polynomialFromMpfrConstant(mpfr_t c) {
   return __polynomialBuildFromSparse(sparsePolynomialFromMpfrConstant(c));
@@ -7559,8 +7770,8 @@ static inline node *__polynomialGetExpressionAnyForm(polynomial_t p) {
 
   /* Handle composition */
   if (p->type == COMPOSITION) {
-    __polynomialSparsify(p);
-    return sparsePolynomialGetExpression(p->value.sparse, 0);
+    __polynomialExecuteComposition(p);
+    return __polynomialGetExpressionAnyForm(p);
   }
   
   /* General case */
@@ -8076,7 +8287,7 @@ polynomial_t polynomialNeg(polynomial_t p) {
 }
 
 polynomial_t polynomialCompose(polynomial_t p, polynomial_t q) {
-  polynomial_t res;
+  polynomial_t res, g, h;
 
   /* Handle stupid inputs */
   if (p == NULL) return NULL;
@@ -8092,6 +8303,14 @@ polynomial_t polynomialCompose(polynomial_t p, polynomial_t q) {
     }
   }
 
+  /* If q is sparse and the identity polynomial, just return a copy of
+     p. 
+  */
+  if ((q->type == SPARSE) &&
+      (sparsePolynomialIsIdentity(q->value.sparse, 0))) {
+    return polynomialFromCopy(p);
+  }
+
   /* If p is of the form p = r^c, we have p(q) = (r(q))^c */
   if (p->type == POWER) {
     res = __polynomialAllocate();
@@ -8101,6 +8320,63 @@ polynomial_t polynomialCompose(polynomial_t p, polynomial_t q) {
     res->value.powering.g = polynomialCompose(p->value.powering.g, q);
     res->value.powering.c = constantFromCopy(p->value.powering.c);
     return res;
+  }
+
+  /* If q is sparse and only has one monomial but is not constant,
+     perform the composition by recursion.
+  */
+  if ((q->type == SPARSE) &&
+      (sparsePolynomialGetMonomialCount(q->value.sparse) <= 1u) &&
+      (!sparsePolynomialIsConstant(q->value.sparse,0))) {
+    switch (p->type) {
+    case SPARSE:
+      return __polynomialBuildFromSparse(sparsePolynomialCompose(p->value.sparse,
+								 q->value.sparse));
+      break;
+    case ADDITION:
+      g = polynomialCompose(p->value.pair.g, q);
+      h = polynomialCompose(p->value.pair.h, q);
+      res = polynomialAdd(g, h);
+      polynomialFree(g);
+      polynomialFree(h);
+      break;
+    case SUBTRACTION:
+      g = polynomialCompose(p->value.pair.g, q);
+      h = polynomialCompose(p->value.pair.h, q);
+      res = polynomialSub(g, h);
+      polynomialFree(g);
+      polynomialFree(h);
+      break;
+    case MULTIPLICATION:
+      g = polynomialCompose(p->value.pair.g, q);
+      h = polynomialCompose(p->value.pair.h, q);
+      res = polynomialMul(g, h);
+      polynomialFree(g);
+      polynomialFree(h);
+      break;
+    case COMPOSITION:
+      h = polynomialCompose(p->value.pair.h, q);
+      res = polynomialCompose(p->value.pair.g, h);
+      polynomialFree(h);
+      return res;
+      break;
+    case NEGATE:
+      g = polynomialCompose(p->value.g, q);
+      res = polynomialNeg(g);
+      polynomialFree(g);
+      break;
+    case POWER:
+      res = __polynomialAllocate();
+      res->refCount = 1u;
+      res->type = POWER;
+      res->outputType = ANY_FORM;
+      res->value.powering.g = polynomialCompose(p->value.powering.g, q);
+      res->value.powering.c = constantFromCopy(p->value.powering.c);
+      return res;      
+      break;
+    default:
+      break;
+    }
   }
 
   /* General case: construct the composed polynomial */
@@ -8627,8 +8903,8 @@ static inline polynomial_t __polynomialRoundDyadicAnyForm(polynomial_t p, mp_pre
 
   /* Handle composition */
   if (p->type == COMPOSITION) {
-    __polynomialSparsify(p);
-    return __polynomialBuildFromSparse(sparsePolynomialRoundDyadic(p->value.sparse, prec));
+    __polynomialExecuteComposition(p);
+    return __polynomialRoundDyadicAnyForm(p, prec);
   }
 
   /* Handle the problem recursively, keeping the expression structure
@@ -8698,8 +8974,8 @@ static inline polynomial_t __polynomialRoundRationalAnyForm(polynomial_t p, mp_p
 
   /* Handle composition */
   if (p->type == COMPOSITION) {
-    __polynomialSparsify(p);
-    return __polynomialBuildFromSparse(sparsePolynomialRoundRational(p->value.sparse, prec));
+    __polynomialExecuteComposition(p);
+    return __polynomialRoundRationalAnyForm(p, prec);
   }
 
   /* Handle the problem recursively, keeping the expression structure
@@ -8769,8 +9045,8 @@ static inline polynomial_t __polynomialRoundAnyForm(polynomial_t p, mp_prec_t pr
 
   /* Handle composition */
   if (p->type == COMPOSITION) {
-    __polynomialSparsify(p);
-    return __polynomialBuildFromSparse(sparsePolynomialRound(p->value.sparse, prec));
+    __polynomialExecuteComposition(p);
+    return __polynomialRoundAnyForm(p, prec);
   }
 
   /* Handle the problem recursively, keeping the expression structure
@@ -8825,6 +9101,17 @@ polynomial_t polynomialRound(polynomial_t p, mp_prec_t prec) {
   __polynomialSparsify(p);
   return __polynomialBuildFromSparse(sparsePolynomialRound(p->value.sparse, prec));		       
 }
+
+int polynomialIsHornerized(polynomial_t p) {
+  if (p == NULL) return 0;
+  return (p->outputType == HORNER_FORM);
+}
+
+int polynomialIsCanonicalized(polynomial_t p) {
+  if (p == NULL) return 0;
+  return (p->outputType == CANONICAL_FORM);
+}
+
 
 void __polynomialPrintRaw(polynomial_t p) {
   sollyaFprintf(stderr, "Polynomial %p:\n", p);

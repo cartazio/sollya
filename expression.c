@@ -11486,7 +11486,12 @@ int isHornerUnsafe(node *tree) {
 }
 
 int isHorner(node *tree) {
-  if (tree->nodeType == MEMREF) return isHorner(getMemRefChild(tree));
+  if (tree->nodeType == MEMREF) {
+    if (tree->polynomialRepresentation != NULL) {
+      return polynomialIsHornerized(tree->polynomialRepresentation);
+    }
+    return isHorner(getMemRefChild(tree));
+  }
   if ((tree->nodeType == ADD) || (tree->nodeType == SUB))
     return isHornerUnsafe(tree);
   if (tree->nodeType == MUL) {

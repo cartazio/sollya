@@ -4873,7 +4873,10 @@ int isRangeNonEmpty(node *tree) {
 
 
 int isError(node *tree) {
-  if (tree->nodeType == MEMREF) return isError(getMemRefChild(tree));
+  if (tree->nodeType == MEMREF) {
+    if (tree->polynomialRepresentation != NULL) return 0;
+    return isError(getMemRefChild(tree));
+  }
   if (tree->nodeType == ERRORSPECIAL) return 1;
   return 0;
 }
@@ -4887,7 +4890,10 @@ int isBoolean(node *tree) {
 }
 
 int isUnit(node *tree) {
-  if (tree->nodeType == MEMREF) return isUnit(getMemRefChild(tree));
+  if (tree->nodeType == MEMREF) {
+    if (tree->polynomialRepresentation != NULL) return 0;
+    return isUnit(getMemRefChild(tree));
+  }
   if (tree->nodeType == UNIT) return 1;
   return 0;
 }
@@ -4918,7 +4924,10 @@ int isFalseRestart(node *tree) {
 
 
 int isExternalProcedureUsage(node *tree) {
-  if (tree->nodeType == MEMREF) return isExternalProcedureUsage(getMemRefChild(tree));
+  if (tree->nodeType == MEMREF) {
+    if (tree->polynomialRepresentation != NULL) return 0;
+    return isExternalProcedureUsage(getMemRefChild(tree));
+  }
   if (tree->nodeType == EXTERNALPROCEDUREUSAGE) return 1;
   return 0;
 }
@@ -8584,11 +8593,12 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
 	  shown = 1;
 	}
       }
-      if ((treeSize(tempNode3) > MAXHORNERTREESIZE) || (isPolynomialExtraSafe(tempNode3) && (((deg = getDegreeSilent(tempNode3)) > MAXHORNERDEGREE) || (deg < 0)))) {
+      if (((!((tempNode3->nodeType == MEMREF) && (tempNode3->polynomialRepresentation != NULL))) && (treeSize(tempNode3) > MAXHORNERTREESIZE)) || 
+	  (isPolynomialExtraSafe(tempNode3) && (((deg = getDegreeSilent(tempNode3)) > MAXHORNERDEGREE) || (deg < 0)))) {
 	if (canonical)
 	  printMessage(1,SOLLYA_MSG_EXPRESSION_TOO_BIG_FOR_CANONICAL_FORM,"Warning: the expression is too big for being written in canonical form.\n");
 	else {
-	  if (!(isHorner(tempNode3) || isPowerOfVariable(tempNode3))) {
+	  if (!(isHorner(tempNode3) || ((tempNode3->nodeType == MEMREF) && (tempNode3->polynomialRepresentation != NULL)) || isPowerOfVariable(tempNode3))) {
 	    printMessage(1,SOLLYA_MSG_EXPRESSION_TOO_BIG_FOR_HORNER_FORM,"Warning: the expression is too big for being written in Horner form.\n");
 	  }
 	}

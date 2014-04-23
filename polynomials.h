@@ -97,6 +97,10 @@ polynomial_t polynomialDeriv(polynomial_t);
 polynomial_t polynomialHornerize(polynomial_t);
 polynomial_t polynomialCanonicalize(polynomial_t);
 
+/* Tests for rewrite operations */
+int polynomialIsHornerized(polynomial_t);
+int polynomialIsCanonicalized(polynomial_t);
+
 /* Accessors */
 void polynomialGetDegree(mpz_t, polynomial_t);
 int polynomialGetDegreeAsInt(polynomial_t);
