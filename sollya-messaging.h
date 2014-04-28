@@ -561,6 +561,7 @@ static const messageEntry messageTextsTable[] = {
   { SOLLYA_MSG_INF_CONVERTED_TO_NUMBER_ON_CONSTANT_RETRIEVAL          , "An infinity has been converted to a number upon retrieval of a constant." },
   { SOLLYA_MSG_ANNOTATION_COULD_NOT_BE_SET_UP                         , "The annotation could not be set up. The function is returned as-is." },
   { SOLLYA_MSG_GENERIC_SOLLYA_LIBRARY_MSG                             , "An external program using the Sollya library has displayed a message." },
+  { SOLLYA_MSG_GUESSDEGREE_POSSIBLE_SINGULAR_WEIGHT                   , "The weight function in guessdegree might not be continuous over the given interval." },
   /* Add your new warning message texts above here. */
 
   { -1, "Unknown message number -1" }   /* Do not ever change the text in this default entry, which must be the last entry in the list */

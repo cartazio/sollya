@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-<title>Users' manual for the Sollya tool - Release 4.1</title>
+<title>Users' manual for the Sollya tool - SVN trunk</title>
 <meta name="author" content="Sylvain Chevillard" >
 <meta name="copyright" content="2009-2013 Laboratoire de l'Informatique du Parallélisme - UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668; LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2), Nancy, France; Laboratoire d'Informatique de Paris 6, Équipe PEQUAN, UPMC Université Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France; INRIA Sophia-Antipolis Méditerranée, APICS Team, Sophia-Antipolis, France">
 <meta name="keywords" content="help, sollya, User's Manual">
@@ -38,10 +38,10 @@ dd.omit:before { content: "\00a0\00a0\00a0\00a0"; }
 <body>
 
 <p>
-<h1 style="text-align:center">Users' manual for the <span class="sollya">Sollya</span> tool - Release 4.1</h1>
+<h1 style="text-align:center">Users' manual for the <span class="sollya">Sollya</span> tool - SVN trunk</h1>
 <div style="text-align:center; line-height: 1.5em;">Sylvain Chevillard (<a href="sylvain.chevillard@ens-lyon.org">sylvain.chevillard@ens-lyon.org</a>),</div>
 <div style="text-align:center; line-height: 1.5em;">Christoph Lauter (<a href="christoph.lauter@ens-lyon.org; line-height: 1.5em;">christoph.lauter@ens-lyon.org</a>)</div>
-<div style="text-align:center">and Mioara Joldeș (<a href="joldes@lass.fr">joldes@lass.fr</a>).</div>
+<div style="text-align:center">and Mioara Joldeș (<a href="joldes@laas.fr">joldes@laas.fr</a>).</div>
 
 <h2 style="margin-top: 3em;">License</h2>
 <p style="font-size:small;">
