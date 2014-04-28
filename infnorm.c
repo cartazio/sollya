@@ -1004,15 +1004,148 @@ void makeMpfiAroundMpfr(sollya_mpfi_t res, mpfr_t x, unsigned int thousandUlps) 
   mpfr_clear(xs);
 }
 
-static inline interval_eval_t __tryEvaluateOnQuasiPointIntervalRecurse(sollya_mpfi_t, node *, sollya_mpfi_t);
+static inline interval_eval_t __tryEvaluateOnQuasiPointIntervalRecurse(sollya_mpfi_t, node *, sollya_mpfi_t, mp_prec_t extraPrec);
 
-static inline interval_eval_t __tryEvaluateOnQuasiPointIntervalDoIt(sollya_mpfi_t y, node *f, sollya_mpfi_t x) {
-  /* TODO */
+static inline sollya_mpfi_t *chooseAndIntMpfiPtr(sollya_mpfi_t *localPtr, mp_prec_t prec) {
+  sollya_mpfi_t *ptr;
+
+  ptr = getReusedGlobalMPFIVars(1, prec);
+  if (ptr == NULL) {
+    sollya_mpfi_init2(*localPtr, prec);
+    ptr = localPtr;
+  }
+  return ptr;
+}
+
+static inline void clearChosenMpfiPtr(sollya_mpfi_t *ptr, sollya_mpfi_t *localPtr) {
+  if (ptr == localPtr) {
+    sollya_mpfi_clear(*localPtr);
+    return;
+  }
+  returnReusedGlobalMPIVars(1);
+}
+
+static inline interval_eval_t __tryEvaluateOnQuasiPointIntervalAddSub(sollya_mpfi_t y, int subtract, node *g, node *h, sollya_mpfi_t x, mp_prec_t extraPrec) {
   return EVAL_FAILURE_NOT_RECOVERABLE;
 }
 
-static inline interval_eval_t __tryEvaluateOnQuasiPointIntervalRecurse(sollya_mpfi_t y, node *f, sollya_mpfi_t x) {
-  switch (__tryEvaluateOnQuasiPointIntervalDoIt(y, f, x)) {
+static inline interval_eval_t __tryEvaluateOnQuasiPointIntervalMulDiv(sollya_mpfi_t y, int divide, node *g, node *h, sollya_mpfi_t x, mp_prec_t extraPrec) {
+  mp_prec_t prec;
+  sollya_mpfi_t v_gy, v_hy;
+  sollya_mpfi_t *gy, *hy;
+  interval_eval_t res, resG, resH;
+
+  res = EVAL_FAILURE_RECOVERABLE;
+  prec = sollya_mpfi_get_prec(y) + 2 + extraPrec;
+  gy = chooseAndIntMpfiPtr(&v_gy, prec);
+  hy = chooseAndIntMpfiPtr(&v_hy, prec);
+  resG = __tryEvaluateOnQuasiPointIntervalRecurse(*gy, g, x, extraPrec);
+  if (resG == EVAL_SUCCESS) {
+    resH = __tryEvaluateOnQuasiPointIntervalRecurse(*hy, h, x, extraPrec);
+    if (resH == EVAL_SUCCESS) {
+      if (divide) {
+	sollya_mpfi_div(y, *gy, *hy);
+      } else {
+	sollya_mpfi_mul(y, *gy, *hy);
+      }
+      if (!(sollya_mpfi_has_infinity(y) ||
+	    sollya_mpfi_has_nan(y))) {
+	res = EVAL_SUCCESS;
+      }
+    } else {
+      if (resH == EVAL_FAILURE_NOT_RECOVERABLE) { 
+	res = EVAL_FAILURE_NOT_RECOVERABLE;
+      }
+    }
+  } else {
+    if (resG == EVAL_FAILURE_NOT_RECOVERABLE) { 
+      res = EVAL_FAILURE_NOT_RECOVERABLE;
+    }
+  }
+  clearChosenMpfiPtr(gy, &v_gy);
+  clearChosenMpfiPtr(hy, &v_hy);
+  return res;
+}
+
+static inline interval_eval_t __tryEvaluateOnQuasiPointIntervalPow(sollya_mpfi_t y, node *g, node *h, sollya_mpfi_t x, mp_prec_t extraPrec) {
+  return EVAL_FAILURE_NOT_RECOVERABLE;
+}
+
+static inline interval_eval_t __tryEvaluateOnQuasiPointIntervalUnivariate(sollya_mpfi_t y, int nodeType, node *g, sollya_mpfi_t x, mp_prec_t extraPrec) {
+  return EVAL_FAILURE_NOT_RECOVERABLE;
+}
+
+static inline interval_eval_t __tryEvaluateOnQuasiPointIntervalDoIt(sollya_mpfi_t y, node *f, sollya_mpfi_t x, mp_prec_t extraPrec) {
+  interval_eval_t res;
+
+  if (f == NULL) return EVAL_FAILURE_NOT_RECOVERABLE;
+  switch (f->nodeType) {
+  case MEMREF:
+    /* TODO: Caching for DAGs */
+    return __tryEvaluateOnQuasiPointIntervalDoIt(y, getMemRefChild(f), x, extraPrec);
+    break;
+  case VARIABLE:
+    sollya_mpfi_set(y, x);
+    return EVAL_SUCCESS;
+    break;
+  case CONSTANT:
+    sollya_mpfi_set_fr(y, *(f->value));
+    return EVAL_SUCCESS;
+    break;
+  case PI_CONST:
+    sollya_mpfi_const_pi(y);
+    return EVAL_SUCCESS;
+    break;
+  case ADD:
+  case SUB:
+    return __tryEvaluateOnQuasiPointIntervalAddSub(y, f->nodeType == SUB, f->child1, f->child2, x, extraPrec);
+    break;
+  case MUL:
+  case DIV:
+    return __tryEvaluateOnQuasiPointIntervalMulDiv(y, f->nodeType == DIV, f->child1, f->child2, x, extraPrec);
+    break;
+  case POW:
+    return __tryEvaluateOnQuasiPointIntervalPow(y, f->child1, f->child2, x, extraPrec);
+    break;
+  case NEG:
+    /* So terribly trivial that we do it here */
+    res = __tryEvaluateOnQuasiPointIntervalDoIt(y, f->child1, x, extraPrec);
+    if (res == EVAL_SUCCESS) {
+      sollya_mpfi_neg(y, y);
+    }
+    return res;
+    break;
+  case SQRT:
+  case EXP:
+  case LOG:
+  case LOG_2:
+  case LOG_10:
+  case SIN:
+  case COS:
+  case TAN:
+  case ASIN:
+  case ACOS:
+  case ATAN:
+  case SINH:
+  case COSH:
+  case TANH:
+  case ASINH:
+  case ACOSH:
+  case ATANH:
+  case ERF:
+  case ERFC:
+  case LOG_1P:
+  case EXP_M1:
+    return __tryEvaluateOnQuasiPointIntervalUnivariate(y, f->nodeType, f->child1, x, extraPrec);
+    break;
+  default:
+    return EVAL_FAILURE_NOT_RECOVERABLE;
+  }
+  return EVAL_FAILURE_NOT_RECOVERABLE;
+}
+
+static inline interval_eval_t __tryEvaluateOnQuasiPointIntervalRecurse(sollya_mpfi_t y, node *f, sollya_mpfi_t x, mp_prec_t extraPrec) {
+  switch (__tryEvaluateOnQuasiPointIntervalDoIt(y, f, x, extraPrec)) {
   case EVAL_SUCCESS:
     if (sollya_mpfi_is_quasi_point_and_real(y)) return EVAL_SUCCESS;
     return EVAL_FAILURE_RECOVERABLE;
@@ -1027,7 +1160,7 @@ static inline interval_eval_t __tryEvaluateOnQuasiPointIntervalRecurse(sollya_mp
 }
 
 static inline int __tryEvaluateOnQuasiPointInterval(sollya_mpfi_t y, node *f, sollya_mpfi_t x) {
-  return (__tryEvaluateOnQuasiPointIntervalDoIt(y, f, x) == EVAL_SUCCESS);
+  return (__tryEvaluateOnQuasiPointIntervalDoIt(y, f, x, 0) == EVAL_SUCCESS);
 }
 
 chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t prec, int simplifiesA, int simplifiesB, mpfr_t *hopitalPoint, exprBoundTheo *theo, int noExcludes, int fastAddSub, int workForThin) {
@@ -1385,7 +1518,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
     case CEIL:
     case FLOOR:
     case NEARESTINT:
-      reusedVars = getReusedGlobalMPFIVars(2, prec);
+      reusedVars = getReusedGlobalMPFIVars(1, prec);
       if (reusedVars == NULL) break;
       evaluateI(reusedVars[0], tree->child1, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub, workForThin);
       if (sollya_mpfi_has_nan(reusedVars[0]) ||
