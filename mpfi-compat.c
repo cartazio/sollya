@@ -1077,6 +1077,38 @@ int sollya_mpfi_is_point_and_real(sollya_mpfi_t op) {
 	  (mpfr_equal_p(&(op->left),&(op->right))));
 }
 
+int sollya_mpfi_is_quasi_point_and_real(sollya_mpfi_t op) {
+  mp_exp_t el, er, ea, eb, d;
+
+  /* HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
+  */
+  if (!mpfr_number_p(&(op->left))) return 0;
+  if (!mpfr_number_p(&(op->right))) return 0;
+  if (mpfr_equal_p(&(op->left), &(op->right))) return 1;
+  if (mpfr_get_prec(&(op->left)) != mpfr_get_prec(&(op->right))) return 0;
+  if (mpfr_cmp(&(op->left), &(op->right)) > 0) return 0;
+  if (mpfr_zero_p(&(op->left)) || mpfr_zero_p(&(op->right))) return 0;
+  if (mpfr_sgn(&(op->left)) != mpfr_sgn(&(op->right))) return 0;
+  el = mpfr_get_exp(&(op->left));
+  er = mpfr_get_exp(&(op->right));
+  ea = el; eb = er;
+  if (eb > ea) {
+    ea = er; eb = el;
+  }
+  d = eb - ea;
+  if ((d < 0) || (d > 1)) return 0;
+  mpfr_nextabove(&(op->left));
+  if (mpfr_equal_p(&(op->left), &(op->right))) {
+      mpfr_nextbelow(&(op->left));
+      return 1;
+  }
+  mpfr_nextbelow(&(op->left));
+  return 0;
+
+
+}
+
 int sollya_mpfi_equal_p(sollya_mpfi_t op1, sollya_mpfi_t op2) {
   /* HACK ALERT: For performance reasons, we will access the internals
      of an mpfi_t !!!

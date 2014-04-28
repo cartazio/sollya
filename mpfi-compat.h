@@ -163,6 +163,7 @@ int sollya_mpfi_prec_round(sollya_mpfi_t rop, mp_prec_t op);
 int sollya_mpfi_union(sollya_mpfi_t rop, sollya_mpfi_t op1, sollya_mpfi_t op2);
 int sollya_init_and_convert_interval(sollya_mpfi_t rop, mpfi_t op);
 int sollya_mpfi_is_point_and_real(sollya_mpfi_t op);
+int sollya_mpfi_is_quasi_point_and_real(sollya_mpfi_t op);
 int sollya_mpfi_equal_p(sollya_mpfi_t op1, sollya_mpfi_t op2);
 
 #endif /* ifdef MPFI_COMPAT_H */
