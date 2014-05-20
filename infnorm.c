@@ -6895,6 +6895,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSub(mpfr_t y, int sub
   point_eval_t res;
 
   myG = g; myH = h;
+  swapped = 0;
   switch (accessThruMemRef(h)->nodeType) {
   case CONSTANT:
   case VARIABLE:
