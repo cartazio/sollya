@@ -14347,6 +14347,22 @@ void freeThing(node *tree) {
 	sollya_mpfi_clear(*(tree->evalCacheY));
 	safeFree(tree->evalCacheY);
       }
+      if (tree->quasiPointNoAdaptCacheX != NULL) {
+	sollya_mpfi_clear(*(tree->quasiPointNoAdaptCacheX));
+	safeFree(tree->quasiPointNoAdaptCacheX);
+      }
+      if (tree->quasiPointNoAdaptCacheY != NULL) {
+	sollya_mpfi_clear(*(tree->quasiPointNoAdaptCacheY));
+	safeFree(tree->quasiPointNoAdaptCacheY);
+      }
+      if (tree->quasiPointCacheX != NULL) {
+	sollya_mpfi_clear(*(tree->quasiPointCacheX));
+	safeFree(tree->quasiPointCacheX);
+      }
+      if (tree->quasiPointCacheY != NULL) {
+	sollya_mpfi_clear(*(tree->quasiPointCacheY));
+	safeFree(tree->quasiPointCacheY);
+      }
       safeFree(tree);
     }
     return;
@@ -24586,8 +24602,8 @@ node *evaluateThingInnerst(node *tree) {
     }
     break;
   case EVALUATE:
-    copy->child1 = evaluateThingInner(tree->child1); 
-    copy->child2 = evaluateThingInner(tree->child2);
+    copy->child1 = addMemRef(evaluateThingInner(tree->child1)); 
+    copy->child2 = addMemRef(evaluateThingInner(tree->child2));
     if (isPureTree(copy->child1)) {
       if (isPureTree(copy->child2)) {
 	if (isConstant(copy->child2)) {

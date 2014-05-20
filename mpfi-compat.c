@@ -134,7 +134,7 @@ int sollya_mpfi_is_empty(sollya_mpfi_t op) {
   */
   if (sollya_mpfi_has_nan_opt(op))
     return 0;
-  else return ( mpfr_cmp(&(op->left), &(op->right)) > 0 );
+  else return mpfr_greater_p(&(op->left), &(op->right)); 
 
 }
 
@@ -144,7 +144,7 @@ static inline int sollya_mpfi_is_empty_opt(sollya_mpfi_t op) {
   */
   if (sollya_mpfi_has_nan_opt(op))
     return 0;
-  else return ( mpfr_cmp(&(op->left), &(op->right)) > 0 );
+  else return mpfr_greater_p(&(op->left), &(op->right)); 
 
 }
 
@@ -469,6 +469,31 @@ int sollya_mpfi_interv_si_safe(sollya_mpfi_t rop, long op1, long op2) {
     sollyaFprintf(stderr,"Error: trying to define an interval with reversed bounds.\nThis should never happen. Please report the bug to the developers.\n");
     exit(1);
   }
+  return res;
+}
+
+int sollya_mpfi_interv_si_2exp(sollya_mpfi_t rop, long op1, mp_exp_t op2, long op3, mp_exp_t op4) {
+  int res, ra, rb;
+  /* HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
+  */
+  ra = mpfr_set_si_2exp(&(rop->left), op1, op2, GMP_RNDD);
+  rb = mpfr_set_si_2exp(&(rop->right), op3, op4, GMP_RNDU);
+  if ((ra == 0) && (rb == 0)) {
+    res = MPFI_FLAGS_BOTH_ENDPOINTS_EXACT;
+  } else {
+    if ((ra != 0) && (rb != 0)) {
+	res = MPFI_FLAGS_BOTH_ENDPOINTS_EXACT;
+    } else {
+      if (ra != 0) {
+	res = MPFI_FLAGS_LEFT_ENDPOINT_INEXACT;
+      } else {
+	res = MPFI_FLAGS_RIGHT_ENDPOINT_INEXACT;
+      }
+    }
+  }
+  sollya_mpfi_nan_normalize_opt(rop);
+  sollya_mpfi_empty_normalize_opt(rop);
   return res;
 }
 
@@ -1096,17 +1121,18 @@ int sollya_mpfi_is_quasi_point_and_real(sollya_mpfi_t op) {
   if (eb > ea) {
     ea = er; eb = el;
   }
-  d = eb - ea;
+  d = ea - eb;
   if ((d < 0) || (d > 1)) return 0;
   mpfr_nextabove(&(op->left));
-  if (mpfr_equal_p(&(op->left), &(op->right))) {
+  mpfr_nextabove(&(op->left));
+  if (mpfr_cmp(&(op->left), &(op->right)) >= 0) {
+      mpfr_nextbelow(&(op->left));
       mpfr_nextbelow(&(op->left));
       return 1;
   }
   mpfr_nextbelow(&(op->left));
+  mpfr_nextbelow(&(op->left));
   return 0;
-
-
 }
 
 int sollya_mpfi_equal_p(sollya_mpfi_t op1, sollya_mpfi_t op2) {
@@ -1115,4 +1141,30 @@ int sollya_mpfi_equal_p(sollya_mpfi_t op1, sollya_mpfi_t op2) {
   */
   return (mpfr_equal_p(&(op1->left),&(op2->left)) && 
 	  mpfr_equal_p(&(op1->right),&(op2->right)));
+}
+
+mp_exp_t sollya_mpfi_max_exp(sollya_mpfi_t op) {
+  mp_exp_t rl, rr;
+
+ /* HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
+  */
+  if (!mpfr_number_p(&(op->left))) return mpfr_get_emin_min();
+  if (!mpfr_number_p(&(op->right))) return mpfr_get_emin_min();
+  if (mpfr_zero_p(&(op->left))) {
+    if (mpfr_zero_p(&(op->right))) {
+      return mpfr_get_emin_min();
+    } else {
+      return mpfr_get_exp(&(op->right));
+    }
+  } else {
+    if (mpfr_zero_p(&(op->right))) {
+      return mpfr_get_exp(&(op->left));
+    } else {
+      rl = mpfr_get_exp(&(op->left));
+      rr = mpfr_get_exp(&(op->right));
+      return (rl > rr ? rl : rr);
+    }
+  }
+  return mpfr_get_emin_min();
 }

@@ -101,48 +101,12 @@ static inline void copyTreeAnnotations(node *new, node *old) {
 int isSyntacticallyEqualCheap(node *tree1, node *tree2);
 
 void simplifyMpfrPrec(mpfr_t rop, mpfr_t op) {
-  mpz_t mant;
-  mp_exp_t expo;
   mp_prec_t prec;
-  mpfr_t x;
-  unsigned int dyadicValue;
-  int p;
-
-  if (mpfr_number_p(op) && (!mpfr_zero_p(op))) {
-    mpz_init(mant);
-    expo = mpfr_get_z_exp(mant,op);
-    prec = mpz_sizeinbase(mant, 2);
-    dyadicValue = mpz_scan1(mant, 0);
-    p = prec - dyadicValue;
-    if (p < 12) prec = 12; else prec = p;
-    mpfr_init2(x,prec);
-    mpfr_set_z(x,mant,GMP_RNDN);
-    mpfr_mul_2si(x,x,expo,GMP_RNDN);
-    if (mpfr_cmp(x,op) == 0) {
-      mpfr_set_prec(rop,prec);
-      mpfr_set(rop,x,GMP_RNDN);
-    } else {
-      prec = mpfr_get_prec(op);
-      mpfr_set_prec(x,prec);
-      mpfr_set(x,op,GMP_RNDN);
-      mpfr_set_prec(rop,prec);
-      mpfr_set(rop,x,GMP_RNDN);
-    }
-    mpfr_clear(x);
-    mpz_clear(mant);
-  } else {
-    if (mpfr_zero_p(op)) {
-      mpfr_set_prec(rop,12);
-      mpfr_set(rop,op,GMP_RNDN);
-    } else {
-      prec = mpfr_get_prec(op);
-      mpfr_init2(x,prec);
-      mpfr_set(x,op,GMP_RNDN);
-      mpfr_set_prec(rop,prec);
-      mpfr_set(rop,x,GMP_RNDN);
-      mpfr_clear(x);
-    }
-  }
+  
+  prec = mpfr_min_prec(op);
+  if (prec < 12) prec = 12;
+  mpfr_set_prec(rop, prec);
+  mpfr_set(rop, op, GMP_RNDN); /* exact */
 }
 
 

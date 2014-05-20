@@ -6794,6 +6794,10 @@ static inline void __polynomialSparsify(polynomial_t p) {
 static inline polynomial_t __polynomialExecuteCompositionCompose(polynomial_t p, polynomial_t q) {
   polynomial_t res, t;
 
+  /* Make compiler happy */
+  res = NULL;
+  /* End of compiler happiness */
+
   /* Handle stupid input */
   if (p == NULL) return NULL;
   if (q == NULL) return NULL;

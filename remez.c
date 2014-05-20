@@ -348,7 +348,7 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
                  step will be a bisection step.
   */
 
-  mpfr_t zero_mpfr;
+  mpfr_t zero_mpfr, cutoff;
   mpfr_t u, v, epsa, fepsa, epsb, fepsb, f0;
   int sgnfepsa, sgnfepsb, sgnf0;
   int codefa, codeNegfa;
@@ -380,8 +380,10 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
   mpfr_init2(u, prec_bounds);
   mpfr_init2(v, prec_bounds);
   mpfr_init2(zero_mpfr, prec);
+  mpfr_init2(cutoff, 12);
 
   mpfr_set_si(zero_mpfr, 0, GMP_RNDN);
+  mpfr_set_si(cutoff, 0, GMP_RNDN);
 
   if ( (mpfr_cmp_ui(a,0)>0) || mpfr_cmp_ui(b,0)<0 ) {
     mpfr_set(u, a, GMP_RNDU); /* exact */
@@ -411,7 +413,7 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
        -1 is coded by 2
        NaN is coded by 3
     */
-    r = evaluateFaithfulWithCutOffFast(fepsa, f, f_diff, epsa, zero_mpfr, prec);
+    r = evaluateFaithfulWithCutOffFast(fepsa, f, f_diff, epsa, cutoff, prec);
     if(r==0) mpfr_set_d(fepsa,0,GMP_RNDN);
     if (!mpfr_number_p(fepsa)) sgnfepsa = 3;
     else {
@@ -419,7 +421,7 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
       if (sgnfepsa!=0) sgnfepsa = (sgnfepsa>0) ? 1 : 2;
     }
 
-    r = evaluateFaithfulWithCutOffFast(f0, f, f_diff, zero_mpfr, zero_mpfr, prec);
+    r = evaluateFaithfulWithCutOffFast(f0, f, f_diff, zero_mpfr, cutoff, prec);
     if(r==0) mpfr_set_d(f0,0,GMP_RNDN);
     if (!mpfr_number_p(f0)) sgnf0 = 3;
     else {
@@ -427,7 +429,7 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
       if (sgnf0!=0) sgnf0 = (sgnf0>0) ? 1 : 2;
     }
 
-    r = evaluateFaithfulWithCutOffFast(fepsb, f, f_diff, epsb, zero_mpfr, prec);
+    r = evaluateFaithfulWithCutOffFast(fepsb, f, f_diff, epsb, cutoff, prec);
     if(r==0) mpfr_set_d(fepsb,0,GMP_RNDN);
     if (!mpfr_number_p(fepsb)) sgnfepsb = 3;
     else {
@@ -630,7 +632,7 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
     /* Main loop */
     nbr_iter = 0;
     while(!stop_algo) {
-      r = evaluateFaithfulWithCutOffFast(xNew, iterator, NULL, x, zero_mpfr, prec);
+      r = evaluateFaithfulWithCutOffFast(xNew, iterator, NULL, x, cutoff, prec);
       if(r==0) mpfr_set_d(xNew,0,GMP_RNDN);
 
       if ( ((mpfr_cmp(u, x)==0) && (mpfr_cmp(v, xNew)==0)) ||
@@ -651,7 +653,7 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
 	}
       }
 
-      r = evaluateFaithfulWithCutOffFast(yNew, f, f_diff, xNew, zero_mpfr, prec); /* yNew=f[xNew] */
+      r = evaluateFaithfulWithCutOffFast(yNew, f, f_diff, xNew, cutoff, prec); /* yNew=f[xNew] */
       if(r==0) mpfr_set_d(yNew, 0, GMP_RNDN);
 
       if (mpfr_number_p(yNew)) {
@@ -699,6 +701,7 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
   printMessage(8, SOLLYA_MSG_CONTINUATION, "Information (Newton's algorithm): x = %v\n",res);
 
   mpfr_clear(zero_mpfr);
+  mpfr_clear(cutoff);
   mpfr_clear(u);
   mpfr_clear(v);
 
@@ -723,7 +726,7 @@ int newtonFaithful(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, mp_pre
 
 /* Finds the zeros of a function on an interval. */
 chain *uncertifiedFindZeros(node *tree, mpfr_t a, mpfr_t b, unsigned long int points, mp_prec_t prec) {
-  mpfr_t zero_mpfr, h, x1, x2, y1, y2;
+  mpfr_t cutoff, h, x1, x2, y1, y2;
   mpfr_t *temp;
   node *diff_tree;
   chain *result=NULL;
@@ -733,20 +736,20 @@ chain *uncertifiedFindZeros(node *tree, mpfr_t a, mpfr_t b, unsigned long int po
   mpfr_init2(y2,prec);
   mpfr_init2(x1,prec);
   mpfr_init2(x2,prec);
-  mpfr_init2(zero_mpfr,prec);
+  mpfr_init2(cutoff,12);
 
   diff_tree = differentiate(tree);
 
-  mpfr_set_d(zero_mpfr, 0., GMP_RNDN);
-
+  mpfr_set_si(cutoff, 0, GMP_RNDN);
+  
   mpfr_sub(h,b,a,GMP_RNDD);
   mpfr_div_si(h,h,points,GMP_RNDD);
 
   mpfr_set(x1,b,GMP_RNDN);
   mpfr_sub(x2,b,h,GMP_RNDD);
 
-  evaluateFaithfulWithCutOffFast(y1, tree, diff_tree, x1, zero_mpfr, prec);
-  evaluateFaithfulWithCutOffFast(y2, tree, diff_tree, x2, zero_mpfr, prec);
+  evaluateFaithfulWithCutOffFast(y1, tree, diff_tree, x1, cutoff, prec);
+  evaluateFaithfulWithCutOffFast(y2, tree, diff_tree, x2, cutoff, prec);
   /* Little trick: if a=b, h=0, thus x1=x2=a=b */
   /* By doing this, we avoid entering the loop */
   if(mpfr_equal_p(a,b)) { mpfr_nextbelow(x2); }
@@ -771,12 +774,12 @@ chain *uncertifiedFindZeros(node *tree, mpfr_t a, mpfr_t b, unsigned long int po
     mpfr_set(x1,x2,GMP_RNDN);
     mpfr_sub(x2,x2,h,GMP_RNDD);
     mpfr_set(y1,y2,GMP_RNDN);
-    evaluateFaithfulWithCutOffFast(y2, tree, diff_tree, x2, zero_mpfr, prec);
+    evaluateFaithfulWithCutOffFast(y2, tree, diff_tree, x2, cutoff, prec);
   }
 
   if(! mpfr_equal_p(x1,a)) {
     mpfr_set(x2,a,GMP_RNDU);
-    evaluateFaithfulWithCutOffFast(y2, tree, diff_tree, x2, zero_mpfr, prec);
+    evaluateFaithfulWithCutOffFast(y2, tree, diff_tree, x2, cutoff, prec);
     if (mpfr_sgn(y1)==0) {
       temp = safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*temp, prec);
@@ -809,7 +812,7 @@ chain *uncertifiedFindZeros(node *tree, mpfr_t a, mpfr_t b, unsigned long int po
   mpfr_clear(y2);
   mpfr_clear(x1);
   mpfr_clear(x2);
-  mpfr_clear(zero_mpfr);
+  mpfr_clear(cutoff);
 
   free_memory(diff_tree);
 

@@ -108,6 +108,7 @@ int sollya_mpfi_interv_si(sollya_mpfi_t rop, long op1, long op2);
 int sollya_mpfi_interv_d_safe(sollya_mpfi_t rop, double op1, double op2);
 int sollya_mpfi_interv_fr_safe(sollya_mpfi_t rop, mpfr_t op1, mpfr_t op2);
 int sollya_mpfi_interv_si_safe(sollya_mpfi_t rop, long op1, long op2);
+int sollya_mpfi_interv_si_2exp(sollya_mpfi_t rop, long op1, mp_exp_t op2, long op3, mp_exp_t op4);
 int sollya_mpfi_abs(sollya_mpfi_t rop, sollya_mpfi_t op);
 int sollya_mpfi_acos(sollya_mpfi_t rop, sollya_mpfi_t op);
 int sollya_mpfi_acosh(sollya_mpfi_t rop, sollya_mpfi_t op);
@@ -165,6 +166,7 @@ int sollya_init_and_convert_interval(sollya_mpfi_t rop, mpfi_t op);
 int sollya_mpfi_is_point_and_real(sollya_mpfi_t op);
 int sollya_mpfi_is_quasi_point_and_real(sollya_mpfi_t op);
 int sollya_mpfi_equal_p(sollya_mpfi_t op1, sollya_mpfi_t op2);
+mp_exp_t sollya_mpfi_max_exp(sollya_mpfi_t op);
 
 #endif /* ifdef MPFI_COMPAT_H */
 

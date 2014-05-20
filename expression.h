@@ -144,6 +144,9 @@ struct nodeStruct
   eval_hook_t *evaluationHook;
   polynomial_t polynomialRepresentation;
   int memRefChildFromPolynomial;
+  sollya_mpfi_t *quasiPointNoAdaptCacheX, *quasiPointNoAdaptCacheY;
+  sollya_mpfi_t *quasiPointCacheX, *quasiPointCacheY;
+  mp_exp_t quasiPointCacheCutoff;
 };
 
 /* HELPER TYPE FOR THE PARSER */
@@ -207,6 +210,10 @@ static inline node* addMemRefEvenOnNull(node *tree) {
   res->evaluationHook = NULL;
   res->polynomialRepresentation = NULL;
   res->memRefChildFromPolynomial = 0;
+  res->quasiPointNoAdaptCacheX = NULL;
+  res->quasiPointNoAdaptCacheY = NULL;
+  res->quasiPointCacheX = NULL;
+  res->quasiPointCacheY = NULL;
 
   return res;
 }
