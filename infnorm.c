@@ -6514,7 +6514,8 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
 								    mpfr_t y, int subtract, node *g, node *h, mpfr_t x, mp_exp_t cutoff, 
 								    mp_prec_t prec, mp_prec_t minPrec,
 								    mp_prec_t *maxPrecUsed) {
-  mpfr_t gy, hy, radiusG, radiusH;
+  mpfr_t v_gy, v_hy, v_radiusG, v_radiusH;
+  mpfr_t *gy, *hy, *radiusG, *radiusH;
   point_eval_t resG, resH;
   int ternary;
   mp_exp_t gotBits;
@@ -6535,16 +6536,16 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
   recCutoffG = recCutoff;
   recCutoffH = recCutoff;
 
-  mpfr_init2(gy, prec);
-  mpfr_init2(hy, prec);
+  gy = chooseAndInitMpfrPtr(&v_gy, prec);
+  hy = chooseAndInitMpfrPtr(&v_hy, prec);
   
   recMaxPrecUsedG = 0;
-  resG = __tryFaithEvaluationOptimizedDoIt(gy, g, x, recCutoffG, minPrec, &recMaxPrecUsedG);
+  resG = __tryFaithEvaluationOptimizedDoIt(*gy, g, x, recCutoffG, minPrec, &recMaxPrecUsedG);
   switch (resG) {
   case POINT_EVAL_EXACT:
   case POINT_EVAL_CORRECTLY_ROUNDED:
   case POINT_EVAL_FAITHFULLY_ROUNDED:
-    recCutoffHP = mpfr_get_exp(gy) - mpfr_get_prec(y) - 5;
+    recCutoffHP = mpfr_get_exp(*gy) - mpfr_get_prec(y) - 5;
     if (recCutoffHP >= 0) recCutoffHP = -1;
     if (recCutoffHP > recCutoffH) recCutoffH = recCutoffHP;
     break;
@@ -6552,18 +6553,18 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
     break;
   }
   recMaxPrecUsedH = 0;
-  resH = __tryFaithEvaluationOptimizedDoIt(hy, h, x, recCutoffH, minPrec, &recMaxPrecUsedH);
+  resH = __tryFaithEvaluationOptimizedDoIt(*hy, h, x, recCutoffH, minPrec, &recMaxPrecUsedH);
   if (resG == POINT_EVAL_FAILURE) {
     switch (resH) {
     case POINT_EVAL_EXACT:
     case POINT_EVAL_CORRECTLY_ROUNDED:
     case POINT_EVAL_FAITHFULLY_ROUNDED:
-      recCutoffGP = mpfr_get_exp(hy) - mpfr_get_prec(y) - 5;
+      recCutoffGP = mpfr_get_exp(*hy) - mpfr_get_prec(y) - 5;
       if (recCutoffGP >= 0) recCutoffGP = -1;
       if (recCutoffGP > recCutoffG) { 
 	recCutoffG = recCutoffGP;
 	recMaxPrecUsedH = 0;
-	resG = __tryFaithEvaluationOptimizedDoIt(gy, g, x, recCutoffG, minPrec, &recMaxPrecUsedG);
+	resG = __tryFaithEvaluationOptimizedDoIt(*gy, g, x, recCutoffG, minPrec, &recMaxPrecUsedG);
       }
       break;
     default:
@@ -6576,8 +6577,8 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
   
   if ((resG == POINT_EVAL_FAILURE) || 
       (resH == POINT_EVAL_FAILURE)) {
-    mpfr_clear(hy);
-    mpfr_clear(gy);    
+    clearChosenMpfrPtr(hy, &v_hy);
+    clearChosenMpfrPtr(gy, &v_gy);
     *retry = 0;
     return POINT_EVAL_FAILURE;
   }
@@ -6585,149 +6586,153 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
   if ((resG == POINT_EVAL_EXACT) &&
       (resH == POINT_EVAL_EXACT)) {
     if (subtract) {
-      ternary = mpfr_sub(y, gy, hy, GMP_RNDN);
+      ternary = mpfr_sub(y, *gy, *hy, GMP_RNDN);
     } else {
-      ternary = mpfr_add(y, gy, hy, GMP_RNDN);
+      ternary = mpfr_add(y, *gy, *hy, GMP_RNDN);
     }
-    mpfr_clear(hy);
-    mpfr_clear(gy);
+    clearChosenMpfrPtr(hy, &v_hy);
+    clearChosenMpfrPtr(gy, &v_gy);
     if (ternary == 0) return POINT_EVAL_EXACT;
     return POINT_EVAL_CORRECTLY_ROUNDED;    
   }
   
-  if ((resG == POINT_EVAL_EXACT) && mpfr_zero_p(gy)) {
+  if ((resG == POINT_EVAL_EXACT) && mpfr_zero_p(*gy)) {
     if (subtract) {
-      ternary = mpfr_neg(y, hy, GMP_RNDN);
+      ternary = mpfr_neg(y, *hy, GMP_RNDN);
     } else {
-      ternary = mpfr_set(y, hy, GMP_RNDN);
+      ternary = mpfr_set(y, *hy, GMP_RNDN);
     }
-    mpfr_clear(hy);
-    mpfr_clear(gy);
+    clearChosenMpfrPtr(hy, &v_hy);
+    clearChosenMpfrPtr(gy, &v_gy);
     if (ternary == 0) return resH;
     /* TODO: Proof required */
     return POINT_EVAL_FAITHFULLY_ROUNDED;    
   }
 
-  if ((resH == POINT_EVAL_EXACT) && mpfr_zero_p(hy)) {
-    ternary = mpfr_set(y, hy, GMP_RNDN);
-    mpfr_clear(hy);
-    mpfr_clear(gy);
+  if ((resH == POINT_EVAL_EXACT) && mpfr_zero_p(*hy)) {
+    ternary = mpfr_set(y, *hy, GMP_RNDN);
+    clearChosenMpfrPtr(hy, &v_hy);
+    clearChosenMpfrPtr(gy, &v_gy);
     if (ternary == 0) return resG;
     /* TODO: Proof required */
     return POINT_EVAL_FAITHFULLY_ROUNDED;    
   }
 
-  if ((!mpfr_number_p(gy)) ||
-      (!mpfr_number_p(hy))) {
+  if ((!mpfr_number_p(*gy)) ||
+      (!mpfr_number_p(*hy))) {
+    clearChosenMpfrPtr(hy, &v_hy);
+    clearChosenMpfrPtr(gy, &v_gy);    
     *retry = 0;
     return POINT_EVAL_FAILURE;
   }
 
-  mpfr_init2(radiusG, 12);
-  mpfr_init2(radiusH, 12);
+  radiusG = chooseAndInitMpfrPtr(&v_radiusG, 12);
+  radiusH = chooseAndInitMpfrPtr(&v_radiusH, 12);
 
   switch (resG) {
   case POINT_EVAL_FAILURE:
-    mpfr_clear(radiusH);
-    mpfr_clear(radiusG);
-    mpfr_clear(hy);
-    mpfr_clear(gy);
+    clearChosenMpfrPtr(radiusH, &v_radiusH);
+    clearChosenMpfrPtr(radiusG, &v_radiusG);    
+    clearChosenMpfrPtr(hy, &v_hy);
+    clearChosenMpfrPtr(gy, &v_gy);    
     *retry = 0;
     return POINT_EVAL_FAILURE;
     break;
   case POINT_EVAL_EXACT:
-    mpfr_set_si(radiusG, 0, GMP_RNDN); /* exact */
+    mpfr_set_si(*radiusG, 0, GMP_RNDN); /* exact */
     break;
   case POINT_EVAL_CORRECTLY_ROUNDED:
-    if (mpfr_zero_p(gy)) {
+    if (mpfr_zero_p(*gy)) {
       /* This case should never happen */
-      mpfr_abs(radiusG, gy, GMP_RNDU);
-      mpfr_mul_2si(radiusG, radiusG, 1, GMP_RNDN); /* exact */
+      mpfr_abs(*radiusG, *gy, GMP_RNDU);
+      mpfr_nextabove(*radiusG);
     } else {
-      mpfr_set_si_2exp(radiusG, 1, mpfr_get_exp(gy) - mpfr_get_prec(gy) - 1, GMP_RNDN); /* exact */
+      mpfr_set_si_2exp(*radiusG, 1, mpfr_get_exp(*gy) - mpfr_get_prec(*gy) - 1, GMP_RNDN); /* exact */
     }
     break;
   case POINT_EVAL_FAITHFULLY_ROUNDED:
-    if (mpfr_zero_p(gy)) {
+    if (mpfr_zero_p(*gy)) {
       /* This case should never happen */
-      mpfr_abs(radiusG, gy, GMP_RNDU);
-      mpfr_mul_2si(radiusG, radiusG, 2, GMP_RNDN); /* exact */
+      mpfr_abs(*radiusG, *gy, GMP_RNDU);
+      mpfr_nextabove(*radiusG);
+      mpfr_nextabove(*radiusG);
     } else {
-      mpfr_set_si_2exp(radiusG, 1, mpfr_get_exp(gy) - mpfr_get_prec(gy), GMP_RNDN); /* exact */
+      mpfr_set_si_2exp(*radiusG, 1, mpfr_get_exp(*gy) - mpfr_get_prec(*gy), GMP_RNDN); /* exact */
     }    
     break;
   case POINT_EVAL_BELOW_CUTOFF:
-    mpfr_set_si(gy, 0, GMP_RNDN);
-    mpfr_set_si_2exp(radiusG, 1, recCutoffG, GMP_RNDN); /* exact */
+    mpfr_set_si(*gy, 0, GMP_RNDN);
+    mpfr_set_si_2exp(*radiusG, 1, recCutoffG, GMP_RNDN); /* exact */
     break;
   }
 
   switch (resH) {
   case POINT_EVAL_FAILURE:
-    mpfr_clear(radiusH);
-    mpfr_clear(radiusG);
-    mpfr_clear(hy);
-    mpfr_clear(gy);
+    clearChosenMpfrPtr(radiusH, &v_radiusH);
+    clearChosenMpfrPtr(radiusG, &v_radiusG);    
+    clearChosenMpfrPtr(hy, &v_hy);
+    clearChosenMpfrPtr(gy, &v_gy);    
     *retry = 0;
     return POINT_EVAL_FAILURE;
     break;
   case POINT_EVAL_EXACT:
-    mpfr_set_si(radiusH, 0, GMP_RNDN); /* exact */
+    mpfr_set_si(*radiusH, 0, GMP_RNDN); /* exact */
     break;
   case POINT_EVAL_CORRECTLY_ROUNDED:
-    if (mpfr_zero_p(hy)) {
+    if (mpfr_zero_p(*hy)) {
       /* This case should never happen */
-      mpfr_abs(radiusH, hy, GMP_RNDU);
-      mpfr_mul_2si(radiusH, radiusH, 1, GMP_RNDN); /* exact */
+      mpfr_abs(*radiusH, *hy, GMP_RNDU);
+      mpfr_nextabove(*radiusH);
     } else {
-      mpfr_set_si_2exp(radiusH, 1, mpfr_get_exp(hy) - mpfr_get_prec(hy) - 1, GMP_RNDN); /* exact */
+      mpfr_set_si_2exp(*radiusH, 1, mpfr_get_exp(*hy) - mpfr_get_prec(*hy) - 1, GMP_RNDN); /* exact */
     }
     break;
   case POINT_EVAL_FAITHFULLY_ROUNDED:
-    if (mpfr_zero_p(hy)) {
+    if (mpfr_zero_p(*hy)) {
       /* This case should never happen */
-      mpfr_abs(radiusH, gy, GMP_RNDU);
-      mpfr_mul_2si(radiusH, radiusH, 2, GMP_RNDN); /* exact */
+      mpfr_abs(*radiusH, *gy, GMP_RNDU);
+      mpfr_nextabove(*radiusH);
+      mpfr_nextabove(*radiusH);
     } else {
-      mpfr_set_si_2exp(radiusH, 1, mpfr_get_exp(hy) - mpfr_get_prec(hy), GMP_RNDN); /* exact */
+      mpfr_set_si_2exp(*radiusH, 1, mpfr_get_exp(*hy) - mpfr_get_prec(*hy), GMP_RNDN); /* exact */
     }    
     break;
   case POINT_EVAL_BELOW_CUTOFF:
-    mpfr_set_si(hy, 0, GMP_RNDN);
-    mpfr_set_si_2exp(radiusH, 1, recCutoffH, GMP_RNDN); /* exact */
+    mpfr_set_si(*hy, 0, GMP_RNDN);
+    mpfr_set_si_2exp(*radiusH, 1, recCutoffH, GMP_RNDN); /* exact */
     break;
   }
   
   /* Mid-point radius interval addition/subtraction */
-  mpfr_add(radiusG, radiusG, radiusH, GMP_RNDU);
+  mpfr_add(*radiusG, *radiusG, *radiusH, GMP_RNDU);
   if (subtract) {
-    ternary = mpfr_sub(y, gy, hy, GMP_RNDN);
+    ternary = mpfr_sub(y, *gy, *hy, GMP_RNDN);
   } else {
-    ternary = mpfr_add(y, gy, hy, GMP_RNDN);
+    ternary = mpfr_add(y, *gy, *hy, GMP_RNDN);
   }
   if (!mpfr_number_p(y)) {
-    mpfr_clear(radiusH);
-    mpfr_clear(radiusG);
-    mpfr_clear(hy);
-    mpfr_clear(gy);
+    clearChosenMpfrPtr(radiusH, &v_radiusH);
+    clearChosenMpfrPtr(radiusG, &v_radiusG);    
+    clearChosenMpfrPtr(hy, &v_hy);
+    clearChosenMpfrPtr(gy, &v_gy);    
     *retry = 0;
     return POINT_EVAL_FAILURE;
   }
   if (ternary != 0) {
     if (mpfr_zero_p(y)) {
       /* This case should never happen */
-      mpfr_abs(radiusH, y, GMP_RNDU);
-      mpfr_nextabove(radiusH);
+      mpfr_abs(*radiusH, y, GMP_RNDU);
+      mpfr_nextabove(*radiusH);
     } else {
-      mpfr_set_si_2exp(radiusH, 1, mpfr_get_exp(y) - mpfr_get_prec(y) - 1, GMP_RNDN); /* exact */
+      mpfr_set_si_2exp(*radiusH, 1, mpfr_get_exp(y) - mpfr_get_prec(y) - 1, GMP_RNDN); /* exact */
     }
-    mpfr_add(radiusG, radiusG, radiusH, GMP_RNDU);
+    mpfr_add(*radiusG, *radiusG, *radiusH, GMP_RNDU);
   }
-  if (!mpfr_number_p(radiusG)) {
-    mpfr_clear(radiusH);
-    mpfr_clear(radiusG);
-    mpfr_clear(hy);
-    mpfr_clear(gy);
+  if (!mpfr_number_p(*radiusG)) {
+    clearChosenMpfrPtr(radiusH, &v_radiusH);
+    clearChosenMpfrPtr(radiusG, &v_radiusG);    
+    clearChosenMpfrPtr(hy, &v_hy);
+    clearChosenMpfrPtr(gy, &v_gy);    
     *retry = 0;
     return POINT_EVAL_FAILURE;
   }
@@ -6735,43 +6740,43 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
   /* Look at y and its associated radius (radiusG) to see if we got a
      useful result 
   */
-  if (mpfr_zero_p(radiusG)) {
-    mpfr_clear(radiusH);
-    mpfr_clear(radiusG);
-    mpfr_clear(hy);
-    mpfr_clear(gy);
+  if (mpfr_zero_p(*radiusG)) {
+    clearChosenMpfrPtr(radiusH, &v_radiusH);
+    clearChosenMpfrPtr(radiusG, &v_radiusG);    
+    clearChosenMpfrPtr(hy, &v_hy);
+    clearChosenMpfrPtr(gy, &v_gy);    
     return POINT_EVAL_EXACT;
   }
 
-  if (mpfr_cmpabs(y, radiusG) <= 0) {
+  if (mpfr_cmpabs(y, *radiusG) <= 0) {
     /* We don't even know the sign of y 
 
        Check the cutoff.
 
     */
-    if (mpfr_get_exp(radiusG) < cutoff) {
-      mpfr_clear(radiusH);
-      mpfr_clear(radiusG);
-      mpfr_clear(hy);
-      mpfr_clear(gy);
+    if (mpfr_get_exp(*radiusG) < cutoff) {
+      clearChosenMpfrPtr(radiusH, &v_radiusH);
+      clearChosenMpfrPtr(radiusG, &v_radiusG);    
+      clearChosenMpfrPtr(hy, &v_hy);
+      clearChosenMpfrPtr(gy, &v_gy);    
       return POINT_EVAL_BELOW_CUTOFF;
     } else {
       *retry = 1;
       *newPrecSet = 0;
-      if (mpfr_number_p(gy) &&
-	  (!mpfr_zero_p(gy)) &&
-	  (mpfr_get_exp(gy) > cutoff) &&
-	  (mpfr_get_exp(gy) - cutoff < 8 * prec + 10)) {
+      if (mpfr_number_p(*gy) &&
+	  (!mpfr_zero_p(*gy)) &&
+	  (mpfr_get_exp(*gy) > cutoff) &&
+	  (mpfr_get_exp(*gy) - cutoff < 8 * prec + 10)) {
 	*newPrecSet = 1;
-	*newPrec = mpfr_get_exp(gy) - cutoff + 10;
+	*newPrec = mpfr_get_exp(*gy) - cutoff + 10;
 	if (*newPrec < 2 * prec) {
 	  *newPrecSet = 0;
 	}
       }
-      mpfr_clear(radiusH);
-      mpfr_clear(radiusG);
-      mpfr_clear(hy);
-      mpfr_clear(gy);
+      clearChosenMpfrPtr(radiusH, &v_radiusH);
+      clearChosenMpfrPtr(radiusG, &v_radiusG);    
+      clearChosenMpfrPtr(hy, &v_hy);
+      clearChosenMpfrPtr(gy, &v_gy);    
       return POINT_EVAL_FAILURE;
     }
   }
@@ -6783,37 +6788,37 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
      Compute the mi-ulp resp. quarter-ulp of y in radiusH.
      
   */
-  mpfr_set_si_2exp(radiusH, 1, mpfr_get_exp(y) - 1, GMP_RNDN); /* exact */
-  if (mpfr_cmpabs(y, radiusH) == 0) {
+  mpfr_set_si_2exp(*radiusH, 1, mpfr_get_exp(y) - 1, GMP_RNDN); /* exact */
+  if (mpfr_cmpabs(y, *radiusH) == 0) {
     /* y is an integer power of 2, compute a quarter-ulp */
-    mpfr_set_si_2exp(radiusH, 1, mpfr_get_exp(y) - mpfr_get_prec(y) - 2, GMP_RNDN); /* exact */
+    mpfr_set_si_2exp(*radiusH, 1, mpfr_get_exp(y) - mpfr_get_prec(y) - 2, GMP_RNDN); /* exact */
   } else {
     /* y is not an integer power of 2, compute a mi-ulp */
-    mpfr_set_si_2exp(radiusH, 1, mpfr_get_exp(y) - mpfr_get_prec(y) - 1, GMP_RNDN); /* exact */
+    mpfr_set_si_2exp(*radiusH, 1, mpfr_get_exp(y) - mpfr_get_prec(y) - 1, GMP_RNDN); /* exact */
   }
 
   /* If the error radius on y (radiusG) is (strictly) less than a mi-ulp (resp. quarter-ulp) of
      y, we got a correct rounding. 
   */
-  if (mpfr_cmp(radiusG, radiusH) < 0) {
-    mpfr_clear(radiusH);
-    mpfr_clear(radiusG);
-    mpfr_clear(hy);
-    mpfr_clear(gy);
+  if (mpfr_cmp(*radiusG, *radiusH) < 0) {
+    clearChosenMpfrPtr(radiusH, &v_radiusH);
+    clearChosenMpfrPtr(radiusG, &v_radiusG);    
+    clearChosenMpfrPtr(hy, &v_hy);
+    clearChosenMpfrPtr(gy, &v_gy);    
     return POINT_EVAL_CORRECTLY_ROUNDED;
   }
 
   /* Multiply the maxium error (in radiusH) by two. */
-  mpfr_mul_2si(radiusH, radiusH, 1, GMP_RNDN); /* exact */
+  mpfr_mul_2si(*radiusH, *radiusH, 1, GMP_RNDN); /* exact */
   
   /* If the error radius on y (radiusG) is (strictly) less than an ulp (resp. mi-ulp) of
      y, we got a faithful rounding. 
   */
-  if (mpfr_cmp(radiusG, radiusH) < 0) {
-    mpfr_clear(radiusH);
-    mpfr_clear(radiusG);
-    mpfr_clear(hy);
-    mpfr_clear(gy);
+  if (mpfr_cmp(*radiusG, *radiusH) < 0) {
+    clearChosenMpfrPtr(radiusH, &v_radiusH);
+    clearChosenMpfrPtr(radiusG, &v_radiusG);    
+    clearChosenMpfrPtr(hy, &v_hy);
+    clearChosenMpfrPtr(gy, &v_gy);    
     return POINT_EVAL_FAITHFULLY_ROUNDED;
   }
 
@@ -6823,7 +6828,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
      Consider the amount of bits we have and add what is missing to newPrec.
 
   */
-  gotBits = mpfr_get_exp(y) - mpfr_get_exp(radiusG) - 1;
+  gotBits = mpfr_get_exp(y) - mpfr_get_exp(*radiusG) - 1;
 
   *retry = 1;
   if (gotBits >= 4) {
@@ -6831,22 +6836,22 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
     *newPrec = (prec - gotBits) + mpfr_get_prec(y) + 10;
   } else {
     *newPrecSet = 0;
-    if (mpfr_number_p(gy) &&
-	(!mpfr_zero_p(gy)) &&
-	(mpfr_get_exp(gy) > cutoff) &&
-	(mpfr_get_exp(gy) - cutoff < 8 * prec + 10)) {
+    if (mpfr_number_p(*gy) &&
+	(!mpfr_zero_p(*gy)) &&
+	(mpfr_get_exp(*gy) > cutoff) &&
+	(mpfr_get_exp(*gy) - cutoff < 8 * prec + 10)) {
       *newPrecSet = 1;
-      *newPrec = mpfr_get_exp(gy) - cutoff + 10;
+      *newPrec = mpfr_get_exp(*gy) - cutoff + 10;
       if (*newPrec < 2 * prec) {
 	*newPrecSet = 0;
       }
     }
   }
 
-  mpfr_clear(radiusH);
-  mpfr_clear(radiusG);
-  mpfr_clear(hy);
-  mpfr_clear(gy);
+  clearChosenMpfrPtr(radiusH, &v_radiusH);
+  clearChosenMpfrPtr(radiusG, &v_radiusG);    
+  clearChosenMpfrPtr(hy, &v_hy);
+  clearChosenMpfrPtr(gy, &v_gy);    
   return POINT_EVAL_FAILURE;
 }
 
@@ -6980,7 +6985,8 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSub(mpfr_t y, int sub
 
 static inline point_eval_t __tryFaithEvaluationOptimizedMulDivInner(int *retry, mpfr_t y, int divide, node *g, node *h, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_prec_t *maxPrecUsed) {
   mp_prec_t precG, precH;
-  mpfr_t gy, hy;
+  mpfr_t v_gy, v_hy;
+  mpfr_t *gy, *hy;
   point_eval_t resG, resH;
   int ternary;
   mp_exp_t recCutoff;
@@ -7012,92 +7018,92 @@ static inline point_eval_t __tryFaithEvaluationOptimizedMulDivInner(int *retry, 
   }
   if (precG < minPrec) precG = minPrec;
   if (precH < minPrec) precH = minPrec;
-  mpfr_init2(gy, precG);
-  mpfr_init2(hy, precH);
+  gy = chooseAndInitMpfrPtr(&v_gy, precG);
+  hy = chooseAndInitMpfrPtr(&v_hy, precH);
   recMaxPrecUsed = 0;
-  resG = __tryFaithEvaluationOptimizedDoIt(gy, g, x, recCutoff, minPrec, &recMaxPrecUsed); 
+  resG = __tryFaithEvaluationOptimizedDoIt(*gy, g, x, recCutoff, minPrec, &recMaxPrecUsed); 
   __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsed);
   if (resG == POINT_EVAL_FAILURE) {
-    mpfr_clear(hy);
-    mpfr_clear(gy);
+    clearChosenMpfrPtr(hy, &v_hy);
+    clearChosenMpfrPtr(gy, &v_gy);    
     *retry = 0;
     __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsed);
     return POINT_EVAL_FAILURE;
   }
   recMaxPrecUsed = 0;
-  resH = __tryFaithEvaluationOptimizedDoIt(hy, h, x, (divide ? mpfr_get_emin_min() : recCutoff), minPrec, &recMaxPrecUsed); 
+  resH = __tryFaithEvaluationOptimizedDoIt(*hy, h, x, (divide ? mpfr_get_emin_min() : recCutoff), minPrec, &recMaxPrecUsed); 
   __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsed);
   if (resH == POINT_EVAL_FAILURE) {
-    mpfr_clear(hy);
-    mpfr_clear(gy);
+    clearChosenMpfrPtr(hy, &v_hy);
+    clearChosenMpfrPtr(gy, &v_gy);    
     *retry = 0;
     return POINT_EVAL_FAILURE;
   }
   if ((resG == POINT_EVAL_EXACT) && 
       (resH == POINT_EVAL_EXACT)) {
     if (divide) {
-      ternary = mpfr_div(y, gy, hy, GMP_RNDN);
+      ternary = mpfr_div(y, *gy, *hy, GMP_RNDN);
     } else {
-      ternary = mpfr_mul(y, gy, hy, GMP_RNDN);
+      ternary = mpfr_mul(y, *gy, *hy, GMP_RNDN);
     }
-    mpfr_clear(hy);
-    mpfr_clear(gy);
+    clearChosenMpfrPtr(hy, &v_hy);
+    clearChosenMpfrPtr(gy, &v_gy);    
     if (ternary == 0) return POINT_EVAL_EXACT;
     return POINT_EVAL_CORRECTLY_ROUNDED;
   }
   if ((resG == POINT_EVAL_EXACT) &&
-      mpfr_zero_p(gy)) {
+      mpfr_zero_p(*gy)) {
     mpfr_set_si(y, 0, GMP_RNDN);
-    mpfr_clear(hy);
-    mpfr_clear(gy);
+    clearChosenMpfrPtr(hy, &v_hy);
+    clearChosenMpfrPtr(gy, &v_gy);    
     return POINT_EVAL_EXACT;
   }
   if ((resH == POINT_EVAL_EXACT) &&
-      mpfr_zero_p(hy) &&
+      mpfr_zero_p(*hy) &&
       (!divide)) {
     mpfr_set_si(y, 0, GMP_RNDN);
-    mpfr_clear(hy);
-    mpfr_clear(gy);
+    clearChosenMpfrPtr(hy, &v_hy);
+    clearChosenMpfrPtr(gy, &v_gy);    
     return POINT_EVAL_EXACT;
   }
   if ((resG == POINT_EVAL_BELOW_CUTOFF) ||
       (resH == POINT_EVAL_BELOW_CUTOFF)) {
     if ((resH == POINT_EVAL_BELOW_CUTOFF) && divide) {
       /* This case should never happen */
-      mpfr_clear(hy);
-      mpfr_clear(gy);
+      clearChosenMpfrPtr(hy, &v_hy);
+      clearChosenMpfrPtr(gy, &v_gy);    
       *retry = 0;
       return POINT_EVAL_FAILURE;      
     }
     if ((resG == POINT_EVAL_BELOW_CUTOFF) &&
 	(resH == POINT_EVAL_BELOW_CUTOFF)) {
-      mpfr_clear(hy);
-      mpfr_clear(gy);
+      clearChosenMpfrPtr(hy, &v_hy);
+      clearChosenMpfrPtr(gy, &v_gy);    
       mpfr_set_si(y, 0, GMP_RNDN); /* exact */
       return POINT_EVAL_BELOW_CUTOFF;
     }
     if (cutoff <= mpfr_get_emin_min() + 32) {
-      mpfr_clear(hy);
-      mpfr_clear(gy);
+      clearChosenMpfrPtr(hy, &v_hy);
+      clearChosenMpfrPtr(gy, &v_gy);    
       *retry = 1;
       return POINT_EVAL_FAILURE;
     }
     if (resG == POINT_EVAL_BELOW_CUTOFF) {
       if (divide) {
-	if (mpfr_number_p(hy) &&
-	    (!mpfr_zero_p(hy)) && 
-	    (((mp_exp_t) 2) - mpfr_get_exp(hy) < cutoff - recCutoff)) {
-	  mpfr_clear(hy);
-	  mpfr_clear(gy);
+	if (mpfr_number_p(*hy) &&
+	    (!mpfr_zero_p(*hy)) && 
+	    (((mp_exp_t) 2) - mpfr_get_exp(*hy) < cutoff - recCutoff)) {
+	  clearChosenMpfrPtr(hy, &v_hy);
+	  clearChosenMpfrPtr(gy, &v_gy);    
 	  mpfr_set_si(y, 0, GMP_RNDN); /* exact */
 	  return POINT_EVAL_BELOW_CUTOFF;
 	}
       } else {
-	if (mpfr_number_p(hy) && 
-	    (mpfr_zero_p(hy) || 
-	     (mpfr_get_exp(hy) + ((mp_exp_t) 2) < cutoff - recCutoff))) {
-	  mpfr_clear(hy);
-	  mpfr_clear(gy);
+	if (mpfr_number_p(*hy) && 
+	    (mpfr_zero_p(*hy) || 
+	     (mpfr_get_exp(*hy) + ((mp_exp_t) 2) < cutoff - recCutoff))) {
+	  clearChosenMpfrPtr(hy, &v_hy);
+	  clearChosenMpfrPtr(gy, &v_gy);    
 	  mpfr_set_si(y, 0, GMP_RNDN); /* exact */
 	  return POINT_EVAL_BELOW_CUTOFF;
 	}
@@ -7105,29 +7111,29 @@ static inline point_eval_t __tryFaithEvaluationOptimizedMulDivInner(int *retry, 
     }
     if (resH == POINT_EVAL_BELOW_CUTOFF) {
       if (!divide) {
-	if (mpfr_number_p(gy) && 
-	    (mpfr_zero_p(gy) || 
-	     (mpfr_get_exp(gy) + ((mp_exp_t) 2) < cutoff - recCutoff))) {
-	  mpfr_clear(hy);
-	  mpfr_clear(gy);
+	if (mpfr_number_p(*gy) && 
+	    (mpfr_zero_p(*gy) || 
+	     (mpfr_get_exp(*gy) + ((mp_exp_t) 2) < cutoff - recCutoff))) {
+	  clearChosenMpfrPtr(hy, &v_hy);
+	  clearChosenMpfrPtr(gy, &v_gy);    
 	  mpfr_set_si(y, 0, GMP_RNDN); /* exact */
 	  return POINT_EVAL_BELOW_CUTOFF;
 	}
       } 
     }    
-    mpfr_clear(hy);
-    mpfr_clear(gy);
+    clearChosenMpfrPtr(hy, &v_hy);
+    clearChosenMpfrPtr(gy, &v_gy);    
     *retry = 1;
     return POINT_EVAL_FAILURE;
   }
   /* TODO: Proof required */
   if (divide) {
-    ternary = mpfr_div(y, gy, hy, GMP_RNDN);
+    ternary = mpfr_div(y, *gy, *hy, GMP_RNDN);
   } else {
-    ternary = mpfr_mul(y, gy, hy, GMP_RNDN);
+    ternary = mpfr_mul(y, *gy, *hy, GMP_RNDN);
   }
-  mpfr_clear(hy);
-  mpfr_clear(gy);
+  clearChosenMpfrPtr(hy, &v_hy);
+  clearChosenMpfrPtr(gy, &v_gy);    
   if (ternary == 0) return POINT_EVAL_CORRECTLY_ROUNDED;
   return POINT_EVAL_FAITHFULLY_ROUNDED;
 }
@@ -7197,6 +7203,8 @@ static inline point_eval_t __tryFaithEvaluationOptimizedMulDiv(mpfr_t y, int div
   __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsed);
   return res;
 }
+
+/* TODO: Continue from here */
 
 static inline point_eval_t __tryFaithEvaluationOptimizedPow(mpfr_t y, node *g, node *h, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_prec_t *maxPrecUsed) {
   mp_prec_t precG, precH;
@@ -8072,6 +8080,82 @@ static inline point_eval_t __tryFaithEvaluationOptimizedPolynomialRepresentation
   return res;
 }
 
+static inline point_eval_t __tryFaithEvaluationOptimizedHooks(mpfr_t y, eval_hook_t *hook, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_prec_t *maxPrecUsed) { 
+  sollya_mpfi_t v_Y, v_X;
+  sollya_mpfi_t *Y, *X;
+  mp_prec_t prec;
+  point_eval_t res;
+  mpfr_t t;
+  int tern1, tern2;
+  int hookRes;
+
+  if (hook == NULL) return POINT_EVAL_FAILURE;
+
+  prec = mpfr_get_prec(y) + 12;
+  prec = prec + (prec >> 1);
+  if (prec < minPrec) prec = minPrec;
+  __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, prec);
+  
+  Y = chooseAndInitMpfiPtr(&v_Y, prec);
+  X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(x));
+  
+  sollya_mpfi_set_fr(*X, x);
+  hookRes = evaluateWithEvaluationHook(*Y, *X, prec + 10, hook);
+  if (!hookRes) {
+    clearChosenMpfiPtr(X, &v_X);
+    clearChosenMpfiPtr(Y, &v_Y);
+    return POINT_EVAL_FAILURE;
+  }
+  
+  mpfr_init2(t, mpfr_get_prec(y));
+  /* HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
+  */
+  tern1 = mpfr_set(y, &((*Y)->left), GMP_RNDN); /* rounds to final precision */
+  tern2 = mpfr_set(t, &((*Y)->right), GMP_RNDN); /* rounds to final precision */
+
+  if (mpfr_number_p(t) && mpfr_number_p(y)) {
+    if (mpfr_equal_p(t, y)) {
+      if ((tern1 == 0) && (tern2 == 0)) {
+	res = POINT_EVAL_EXACT;
+      } else {
+	res = POINT_EVAL_CORRECTLY_ROUNDED;
+      }
+    } else {
+      if (mpfr_cmp(y, t) < 0) {
+	mpfr_nextbelow(t);
+	if (mpfr_equal_p(t, y)) {
+	  res = POINT_EVAL_FAITHFULLY_ROUNDED;
+	} else {
+	  if ((!(sollya_mpfi_has_nan(*Y) || sollya_mpfi_has_infinity(*Y))) && (sollya_mpfi_max_exp(*Y) < cutoff)) {
+	    res = POINT_EVAL_BELOW_CUTOFF;
+	  } else {
+	    res = POINT_EVAL_FAILURE;
+	  }
+	}
+      } else {
+	if ((!(sollya_mpfi_has_nan(*Y) || sollya_mpfi_has_infinity(*Y))) && (sollya_mpfi_max_exp(*Y) < cutoff)) {
+	  res = POINT_EVAL_BELOW_CUTOFF;
+	} else {
+	  res = POINT_EVAL_FAILURE;
+	}
+      }
+    }
+  } else {
+    if ((!(sollya_mpfi_has_nan(*Y) || sollya_mpfi_has_infinity(*Y))) && (sollya_mpfi_max_exp(*Y) < cutoff)) {
+      res = POINT_EVAL_BELOW_CUTOFF;
+    } else {
+      res = POINT_EVAL_FAILURE;
+    }
+  }
+
+  mpfr_clear(t);
+  clearChosenMpfiPtr(X, &v_X);
+  clearChosenMpfiPtr(Y, &v_Y);
+
+  return res;
+}
+
 static inline point_eval_t __tryFaithEvaluationOptimizedDeducedLowerPrecResult(mpfr_t y, mpfr_t x, point_eval_t approx, mp_exp_t approxCutoff, mp_exp_t cutoff) {
   int ternary, tern1, tern2;
   sollya_mpfi_t v_X;
@@ -8183,7 +8267,10 @@ static inline point_eval_t __tryFaithEvaluationOptimizedDoIt(mpfr_t y, node *f, 
     if ((f->polynomialRepresentation != NULL) && (f->child1 == NULL)) {
       res = __tryFaithEvaluationOptimizedPolynomialRepresentation(y, f->polynomialRepresentation, x, cutoff, minPrec, maxPrecUsed);
     } else {
-      res = __tryFaithEvaluationOptimizedDoIt(y, getMemRefChild(f), x, cutoff, minPrec, maxPrecUsed);
+      res = __tryFaithEvaluationOptimizedHooks(y, f->evaluationHook, x, cutoff, minPrec, maxPrecUsed);
+      if (res == POINT_EVAL_FAILURE) {
+	res = __tryFaithEvaluationOptimizedDoIt(y, getMemRefChild(f), x, cutoff, minPrec, maxPrecUsed);
+      }
     } 
     if ((res != POINT_EVAL_FAILURE) && (f->libFunDeriv >= 2) && mpfr_number_p(y)) {
       if (f->pointEvalCacheX == NULL) {
