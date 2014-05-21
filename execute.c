@@ -14363,6 +14363,14 @@ void freeThing(node *tree) {
 	sollya_mpfi_clear(*(tree->quasiPointCacheY));
 	safeFree(tree->quasiPointCacheY);
       }
+      if (tree->pointEvalCacheX != NULL) {
+	mpfr_clear(*(tree->pointEvalCacheX));
+	safeFree(tree->pointEvalCacheX);
+      }
+      if (tree->pointEvalCacheY != NULL) {
+	mpfr_clear(*(tree->pointEvalCacheY));
+	safeFree(tree->pointEvalCacheY);
+      }
       safeFree(tree);
     }
     return;

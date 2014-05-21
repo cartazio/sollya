@@ -69,6 +69,15 @@
 #include "hooks.h"
 #include "polynomials.h"
 
+enum __point_eval_enum_t {
+  POINT_EVAL_FAILURE = 0,
+  POINT_EVAL_EXACT,
+  POINT_EVAL_CORRECTLY_ROUNDED,
+  POINT_EVAL_FAITHFULLY_ROUNDED,
+  POINT_EVAL_BELOW_CUTOFF
+};
+typedef enum __point_eval_enum_t point_eval_t;
+
 #define VARIABLE 0
 #define CONSTANT 1
 #define ADD 2
@@ -147,6 +156,9 @@ struct nodeStruct
   sollya_mpfi_t *quasiPointNoAdaptCacheX, *quasiPointNoAdaptCacheY;
   sollya_mpfi_t *quasiPointCacheX, *quasiPointCacheY;
   mp_exp_t quasiPointCacheCutoff;
+  mpfr_t *pointEvalCacheX, *pointEvalCacheY;
+  mp_exp_t pointEvalCacheCutoff;
+  point_eval_t pointEvalCacheResultType;
 };
 
 /* HELPER TYPE FOR THE PARSER */
@@ -214,6 +226,8 @@ static inline node* addMemRefEvenOnNull(node *tree) {
   res->quasiPointNoAdaptCacheY = NULL;
   res->quasiPointCacheX = NULL;
   res->quasiPointCacheY = NULL;
+  res->pointEvalCacheX = NULL;
+  res->pointEvalCacheY = NULL;
 
   return res;
 }

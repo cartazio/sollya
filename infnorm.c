@@ -85,15 +85,6 @@ enum __interval_eval_enum_t {
   EVAL_FAILURE_RECOVERABLE
 };
 
-typedef enum __point_eval_enum_t point_eval_t;
-enum __point_eval_enum_t {
-  POINT_EVAL_FAILURE = 0,
-  POINT_EVAL_EXACT,
-  POINT_EVAL_CORRECTLY_ROUNDED,
-  POINT_EVAL_FAITHFULLY_ROUNDED,
-  POINT_EVAL_BELOW_CUTOFF
-};
-
 void printInterval(sollya_mpfi_t interval);
 
 int sollya_mpfi_equal_p(sollya_mpfi_t r1, sollya_mpfi_t r2) {
@@ -8062,16 +8053,135 @@ static inline point_eval_t __tryFaithEvaluationOptimizedPolynomialRepresentation
   return res;
 }
 
+static inline point_eval_t __tryFaithEvaluationOptimizedDeducedLowerPrecResult(mpfr_t y, mpfr_t x, point_eval_t approx, mp_exp_t approxCutoff, mp_exp_t cutoff) {
+  int ternary, tern1, tern2;
+  sollya_mpfi_t v_X;
+  sollya_mpfi_t *X;
+  mpfr_t t;
+  point_eval_t res;
+
+  if (approx == POINT_EVAL_FAILURE) return POINT_EVAL_FAILURE;
+  if (!mpfr_number_p(x)) return POINT_EVAL_FAILURE;
+  if (approx == POINT_EVAL_EXACT) {
+    ternary = mpfr_set(y, x, GMP_RNDN);
+    if (ternary == 0) return POINT_EVAL_EXACT;
+    return POINT_EVAL_CORRECTLY_ROUNDED;
+  }
+
+  switch (approx) {
+  case POINT_EVAL_FAILURE:
+    return POINT_EVAL_FAILURE;
+    break;
+  case POINT_EVAL_EXACT:
+    X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(x));
+    sollya_mpfi_set_fr(*X, x);
+    break;
+  case POINT_EVAL_CORRECTLY_ROUNDED:
+    X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(x) + 1);
+    sollya_mpfi_set_fr(*X, x);
+    sollya_mpfi_blow_1ulp(*X);
+    break;
+  case POINT_EVAL_FAITHFULLY_ROUNDED:
+    X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(x));
+    sollya_mpfi_set_fr(*X, x);
+    sollya_mpfi_blow_1ulp(*X);
+    break;
+  case POINT_EVAL_BELOW_CUTOFF:
+    X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(x));
+    sollya_mpfi_interv_si_2exp(*X, -1, approxCutoff, 1, approxCutoff);
+    break;
+  }
+  
+  mpfr_init2(t, mpfr_get_prec(y));
+  /* HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
+  */
+  tern1 = mpfr_set(y, &((*X)->left), GMP_RNDN); /* rounds to final precision */
+  tern2 = mpfr_set(t, &((*X)->right), GMP_RNDN); /* rounds to final precision */
+
+  if (mpfr_number_p(t) && mpfr_number_p(y)) {
+    if (mpfr_equal_p(t, y)) {
+      if ((tern1 == 0) && (tern2 == 0)) {
+	res = POINT_EVAL_EXACT;
+      } else {
+	res = POINT_EVAL_CORRECTLY_ROUNDED;
+      }
+    } else {
+      if (mpfr_cmp(y, t) < 0) {
+	mpfr_nextbelow(t);
+	if (mpfr_equal_p(t, y)) {
+	  res = POINT_EVAL_FAITHFULLY_ROUNDED;
+	} else {
+	  if ((!(sollya_mpfi_has_nan(*X) || sollya_mpfi_has_infinity(*X))) && (sollya_mpfi_max_exp(*X) < cutoff)) {
+	    res = POINT_EVAL_BELOW_CUTOFF;
+	  } else {
+	    res = POINT_EVAL_FAILURE;
+	  }
+	}
+      } else {
+	if ((!(sollya_mpfi_has_nan(*X) || sollya_mpfi_has_infinity(*X))) && (sollya_mpfi_max_exp(*X) < cutoff)) {
+	  res = POINT_EVAL_BELOW_CUTOFF;
+	} else {
+	  res = POINT_EVAL_FAILURE;
+	}
+      }
+    }
+  } else {
+    if ((!(sollya_mpfi_has_nan(*X) || sollya_mpfi_has_infinity(*X))) && (sollya_mpfi_max_exp(*X) < cutoff)) {
+      res = POINT_EVAL_BELOW_CUTOFF;
+    } else {
+      res = POINT_EVAL_FAILURE;
+    }
+  }
+  
+  mpfr_clear(t);
+  clearChosenMpfiPtr(X, &v_X);
+  return res;
+}
+
 static inline point_eval_t __tryFaithEvaluationOptimizedDoIt(mpfr_t y, node *f, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_prec_t *maxPrecUsed) { 
   point_eval_t res;
 
   switch (f->nodeType) {
   case MEMREF:
+    if ((f->pointEvalCacheX != NULL) &&
+	(f->pointEvalCacheY != NULL) &&
+	(f->pointEvalCacheResultType != POINT_EVAL_FAILURE) &&
+	(f->pointEvalCacheCutoff <= cutoff) &&
+	(mpfr_get_prec(*(f->pointEvalCacheY)) >= mpfr_get_prec(y)) &&
+	mpfr_number_p(x) &&
+	mpfr_number_p(*(f->pointEvalCacheX)) &&
+	mpfr_number_p(*(f->pointEvalCacheY)) &&
+	mpfr_equal_p(*(f->pointEvalCacheX), x)) {
+      if (mpfr_get_prec(*(f->pointEvalCacheY)) == mpfr_get_prec(y)) {
+	mpfr_set(y, *(f->pointEvalCacheY), GMP_RNDN); /* exact */
+	return f->pointEvalCacheResultType;
+      } else {
+	res = __tryFaithEvaluationOptimizedDeducedLowerPrecResult(y, *(f->pointEvalCacheY), f->pointEvalCacheResultType, f->pointEvalCacheCutoff, cutoff);
+	if (res != POINT_EVAL_FAILURE) return res;
+      }
+    }
     if ((f->polynomialRepresentation != NULL) && (f->child1 == NULL)) {
       res = __tryFaithEvaluationOptimizedPolynomialRepresentation(y, f->polynomialRepresentation, x, cutoff, minPrec, maxPrecUsed);
     } else {
       res = __tryFaithEvaluationOptimizedDoIt(y, getMemRefChild(f), x, cutoff, minPrec, maxPrecUsed);
     } 
+    if ((res != POINT_EVAL_FAILURE) && (f->libFunDeriv >= 2) && mpfr_number_p(y)) {
+      if (f->pointEvalCacheX == NULL) {
+	f->pointEvalCacheX = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+        mpfr_init2(*(f->pointEvalCacheX), mpfr_get_prec(x));
+      }
+      if (f->pointEvalCacheY == NULL) {
+	f->pointEvalCacheY = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+        mpfr_init2(*(f->pointEvalCacheY), mpfr_get_prec(y));
+      }
+      mpfr_set_prec(*(f->pointEvalCacheX), mpfr_get_prec(x));
+      mpfr_set_prec(*(f->pointEvalCacheY), mpfr_get_prec(y));
+      mpfr_set(*(f->pointEvalCacheX), x, GMP_RNDN); /* exact */
+      mpfr_set(*(f->pointEvalCacheY), y, GMP_RNDN); /* exact */
+      f->pointEvalCacheCutoff = cutoff;
+      f->pointEvalCacheResultType = res;
+    }
     return res;
     break;
   case VARIABLE:
