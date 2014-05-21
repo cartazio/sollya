@@ -8091,16 +8091,16 @@ static inline point_eval_t __tryFaithEvaluationOptimizedHooks(mpfr_t y, eval_hoo
 
   if (hook == NULL) return POINT_EVAL_FAILURE;
 
-  prec = mpfr_get_prec(y) + 12;
+  prec = mpfr_get_prec(y) + 10;
   prec = prec + (prec >> 1);
   if (prec < minPrec) prec = minPrec;
   __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, prec);
   
-  Y = chooseAndInitMpfiPtr(&v_Y, prec);
+  Y = chooseAndInitMpfiPtr(&v_Y, mpfr_get_prec(y) + 3);
   X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(x));
   
   sollya_mpfi_set_fr(*X, x);
-  hookRes = evaluateWithEvaluationHook(*Y, *X, prec + 10, hook);
+  hookRes = evaluateWithEvaluationHook(*Y, *X, prec, hook);
   if (!hookRes) {
     clearChosenMpfiPtr(X, &v_X);
     clearChosenMpfiPtr(Y, &v_Y);
