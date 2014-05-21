@@ -8344,7 +8344,7 @@ static inline int firstTryEvaluateFaithfulWithCutOffFastInternalImplementation(i
     if (__tryFaithEvaluationOptimized(retVal, y, func, x, myCutoff, startprec, &maxPrecUsed)) {
       return 1;
     }
-    sollyaFprintf(stderr, "func = %b, x = %v, prec(y) = %lld: failure with %lld bits\n", func, x, mpfr_get_prec(y), maxPrecUsed);
+    // sollyaFprintf(stderr, "func = %b, x = %v, prec(y) = %lld: failure with %lld bits\n", func, x, mpfr_get_prec(y), maxPrecUsed);
   }    
 
   /* Get the precisions of the x and y arguments */
