@@ -94,7 +94,7 @@
 #include <execinfo.h>
 #endif
 
-/* A constant for the global reused MPFI variables */
+/* A constant for the global reused MPFI and MPFR variables */
 #define GLOBAL_REUSED_VARS_MAX_ALLOC 2048
 
 /* STATE OF THE TOOL */
@@ -239,14 +239,20 @@ sollya_mpfi_t __sparsePolynomialEvalMpfi_scratch;
    FUNCTIONS 
 */
 
-/* Globally reused MPFI variables */
+/* Globally reused MPFI and MPFR variables */
 sollya_mpfi_t *globalReusedMPFIVars = NULL;
 unsigned int globalReusedMPFIVarsAllocated = 0;
 unsigned int globalReusedMPFIVarsUsed = 0;
 unsigned int globalReusedMPFIVarsInitialized = 0;
 unsigned int globalReusedMPFIVarsMaxAllocated = GLOBAL_REUSED_VARS_MAX_ALLOC;
 
-/* End of globally reused MPFI variables */
+mpfr_t *globalReusedMPFRVars = NULL;
+unsigned int globalReusedMPFRVarsAllocated = 0;
+unsigned int globalReusedMPFRVarsUsed = 0;
+unsigned int globalReusedMPFRVarsInitialized = 0;
+unsigned int globalReusedMPFRVarsMaxAllocated = GLOBAL_REUSED_VARS_MAX_ALLOC;
+
+/* End of globally reused MPFI and MPFR variables */
 
 /* A global variable to check if sollyaLibPrintmessage has ever been
    called. 
@@ -270,6 +276,7 @@ extern int parserCheckEof();
 #define BACKTRACELENGTH 100
 
 void freeGlobalReusedMPFIVars();
+void freeGlobalReusedMPFRVars();
 void freeTool();
 
 void makeToolDie() {
@@ -1123,6 +1130,7 @@ void freeTool() {
   freeDeclaredSymbolTable(declaredSymbolTable, freeThingOnVoid);
   freeFunctionSpecialVariables();
   freeGlobalReusedMPFIVars();
+  freeGlobalReusedMPFRVars();
   declaredSymbolTable = NULL;
   mpfr_clear(statediam);
   safeFree(temporyDirectory); temporyDirectory = NULL;
@@ -1172,6 +1180,11 @@ void initToolDefaults() {
   globalReusedMPFIVarsUsed = 0;
   globalReusedMPFIVarsInitialized = 0;
   globalReusedMPFIVarsMaxAllocated = GLOBAL_REUSED_VARS_MAX_ALLOC;
+  globalReusedMPFRVars = NULL;
+  globalReusedMPFRVarsAllocated = 0;
+  globalReusedMPFRVarsUsed = 0;
+  globalReusedMPFRVarsInitialized = 0;
+  globalReusedMPFRVarsMaxAllocated = GLOBAL_REUSED_VARS_MAX_ALLOC;
   sollyaLibPrintmessageCalled = 0;
   parseMode();
 }
@@ -1183,6 +1196,7 @@ void restartTool() {
   freeDeclaredSymbolTable(declaredSymbolTable, freeThingOnVoid);
   freeFunctionSpecialVariables();
   freeGlobalReusedMPFIVars();
+  freeGlobalReusedMPFRVars();
   declaredSymbolTable = NULL;
   freeFunctionLibraries();
   freeConstantLibraries();
@@ -1517,6 +1531,7 @@ int finalizeLibraryMode() {
   freeDeclaredSymbolTable(declaredSymbolTable, freeThingOnVoid);
   freeFunctionSpecialVariables();
   freeGlobalReusedMPFIVars();
+  freeGlobalReusedMPFRVars();
   declaredSymbolTable = NULL;
   mpfr_clear(statediam);
   safeFree(temporyDirectory); temporyDirectory = NULL;
@@ -1558,6 +1573,15 @@ void allocateReusedGlobalMPFIVars() {
   globalReusedMPFIVarsInitialized = 0;
 }
 
+void allocateReusedGlobalMPFRVars() {
+  if (globalReusedMPFRVars != NULL) return;
+  if (globalReusedMPFRVarsAllocated != 0) return;
+  globalReusedMPFRVars = (mpfr_t *) safeCalloc(globalReusedMPFRVarsMaxAllocated, sizeof(mpfr_t));
+  globalReusedMPFRVarsAllocated = globalReusedMPFRVarsMaxAllocated;
+  globalReusedMPFRVarsUsed = 0;
+  globalReusedMPFRVarsInitialized = 0;
+}
+
 sollya_mpfi_t *getReusedGlobalMPFIVars(unsigned int n, mp_prec_t prec) {
   sollya_mpfi_t *ptr;
   unsigned int i;
@@ -1581,12 +1605,44 @@ sollya_mpfi_t *getReusedGlobalMPFIVars(unsigned int n, mp_prec_t prec) {
   return ptr;
 }
 
+mpfr_t *getReusedGlobalMPFRVars(unsigned int n, mp_prec_t prec) {
+  mpfr_t *ptr;
+  unsigned int i;
+
+  if (n == 0) return NULL;
+  if ((globalReusedMPFRVars == NULL) || 
+      (globalReusedMPFRVarsAllocated == 0)) allocateReusedGlobalMPFRVars();
+  if ((globalReusedMPFRVarsAllocated - globalReusedMPFRVarsUsed) < n) return NULL;
+  ptr = &(globalReusedMPFRVars[globalReusedMPFRVarsUsed]);
+  globalReusedMPFRVarsUsed += n;
+  for (i=globalReusedMPFRVarsInitialized;i<globalReusedMPFRVarsUsed;i++) {
+    mpfr_init2(globalReusedMPFRVars[i],prec);
+  }
+  if (globalReusedMPFRVarsUsed > globalReusedMPFRVarsInitialized) {
+    globalReusedMPFRVarsInitialized = globalReusedMPFRVarsUsed;
+  }
+  for (i=0;i<n;i++) {
+    mpfr_set_prec(ptr[i],prec);
+  }
+
+  return ptr;
+}
+
 void returnReusedGlobalMPIVars(unsigned int n) {
   if (n == 0) return;
   if (n > globalReusedMPFIVarsUsed) {
     globalReusedMPFIVarsUsed = 0;
   } else {
     globalReusedMPFIVarsUsed -= n;
+  }
+}
+
+void returnReusedGlobalMPFRVars(unsigned int n) {
+  if (n == 0) return;
+  if (n > globalReusedMPFRVarsUsed) {
+    globalReusedMPFRVarsUsed = 0;
+  } else {
+    globalReusedMPFRVarsUsed -= n;
   }
 }
 
@@ -1604,6 +1660,22 @@ void freeGlobalReusedMPFIVars() {
   globalReusedMPFIVarsAllocated = 0;
   globalReusedMPFIVarsUsed = 0;
   globalReusedMPFIVarsInitialized = 0;
+}
+
+void freeGlobalReusedMPFRVars() {
+  unsigned int i;
+
+  if (globalReusedMPFRVars == NULL) return;
+  if (globalReusedMPFRVarsAllocated == 0) return;
+
+  for (i=0;i<globalReusedMPFRVarsInitialized;i++) {
+    mpfr_clear(globalReusedMPFRVars[i]);
+  }
+  safeFree(globalReusedMPFRVars);
+  globalReusedMPFRVars = NULL;
+  globalReusedMPFRVarsAllocated = 0;
+  globalReusedMPFRVarsUsed = 0;
+  globalReusedMPFRVarsInitialized = 0;
 }
 
 int general(int argc, char *argv[]) {

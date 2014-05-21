@@ -6484,6 +6484,25 @@ int sollya_mpfi_have_common_real_point(sollya_mpfi_t a, sollya_mpfi_t b) {
   return res;
 }
 
+static inline mpfr_t *chooseAndInitMpfrPtr(mpfr_t *localPtr, mp_prec_t prec) {
+  mpfr_t *ptr;
+
+  ptr = getReusedGlobalMPFRVars(1, prec);
+  if (ptr == NULL) {
+    mpfr_init2(*localPtr, prec);
+    ptr = localPtr;
+  }
+  return ptr;
+}
+
+static inline void clearChosenMpfrPtr(mpfr_t *ptr, mpfr_t *localPtr) {
+  if (ptr == localPtr) {
+    mpfr_clear(*localPtr);
+    return;
+  }
+  returnReusedGlobalMPFRVars(1);
+}
+
 static inline point_eval_t __tryFaithEvaluationOptimizedDoIt(mpfr_t, node *, mpfr_t, mp_exp_t, mp_prec_t, mp_prec_t *);
 
 static inline void __tryFaithEvaluationOptimizedUpdateMaxPrec(mp_prec_t *maxPrec, mp_prec_t prec) {
