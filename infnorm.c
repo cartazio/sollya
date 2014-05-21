@@ -6493,16 +6493,23 @@ int sollya_mpfi_have_common_real_point(sollya_mpfi_t a, sollya_mpfi_t b) {
   return res;
 }
 
-static inline point_eval_t __tryFaithEvaluationOptimizedDoIt(mpfr_t, node *, mpfr_t, mp_exp_t, mp_prec_t);
+static inline point_eval_t __tryFaithEvaluationOptimizedDoIt(mpfr_t, node *, mpfr_t, mp_exp_t, mp_prec_t, mp_prec_t *);
+
+static inline void __tryFaithEvaluationOptimizedUpdateMaxPrec(mp_prec_t *maxPrec, mp_prec_t prec) {
+  if (maxPrec == NULL) return;
+  if (prec > *maxPrec) *maxPrec = prec;
+}
 
 static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, int *newPrecSet, mp_prec_t *newPrec, 
 								    mpfr_t y, int subtract, node *g, node *h, mpfr_t x, mp_exp_t cutoff, 
-								    mp_prec_t prec, mp_prec_t minPrec) {
+								    mp_prec_t prec, mp_prec_t minPrec,
+								    mp_prec_t *maxPrecUsed) {
   mpfr_t gy, hy, radiusG, radiusH;
   point_eval_t resG, resH;
   int ternary;
   mp_exp_t gotBits;
   mp_exp_t recCutoff, recCutoffG, recCutoffH, recCutoffGP, recCutoffHP;
+  mp_prec_t recMaxPrecUsedG, recMaxPrecUsedH;
 
   *retry = 0;
   *newPrecSet = 0;
@@ -6521,7 +6528,8 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
   mpfr_init2(gy, prec);
   mpfr_init2(hy, prec);
   
-  resG = __tryFaithEvaluationOptimizedDoIt(gy, g, x, recCutoffG, minPrec);
+  recMaxPrecUsedG = 0;
+  resG = __tryFaithEvaluationOptimizedDoIt(gy, g, x, recCutoffG, minPrec, &recMaxPrecUsedG);
   switch (resG) {
   case POINT_EVAL_EXACT:
   case POINT_EVAL_CORRECTLY_ROUNDED:
@@ -6533,7 +6541,8 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
   default:
     break;
   }
-  resH = __tryFaithEvaluationOptimizedDoIt(hy, h, x, recCutoffH, minPrec);
+  recMaxPrecUsedH = 0;
+  resH = __tryFaithEvaluationOptimizedDoIt(hy, h, x, recCutoffH, minPrec, &recMaxPrecUsedH);
   if (resG == POINT_EVAL_FAILURE) {
     switch (resH) {
     case POINT_EVAL_EXACT:
@@ -6543,14 +6552,18 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
       if (recCutoffGP >= 0) recCutoffGP = -1;
       if (recCutoffGP > recCutoffG) { 
 	recCutoffG = recCutoffGP;
-	resG = __tryFaithEvaluationOptimizedDoIt(gy, g, x, recCutoffG, minPrec);
+	recMaxPrecUsedH = 0;
+	resG = __tryFaithEvaluationOptimizedDoIt(gy, g, x, recCutoffG, minPrec, &recMaxPrecUsedG);
       }
       break;
     default:
       break;
     }
   }
-
+  
+  __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsedG);
+  __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsedH);
+  
   if ((resG == POINT_EVAL_FAILURE) || 
       (resH == POINT_EVAL_FAILURE)) {
     mpfr_clear(hy);
@@ -6738,7 +6751,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
       if (mpfr_number_p(gy) &&
 	  (!mpfr_zero_p(gy)) &&
 	  (mpfr_get_exp(gy) > cutoff) &&
-	  (mpfr_get_exp(gy) - cutoff < 32 * prec)) {
+	  (mpfr_get_exp(gy) - cutoff < 8 * prec + 10)) {
 	*newPrecSet = 1;
 	*newPrec = mpfr_get_exp(gy) - cutoff + 10;
 	if (*newPrec < 2 * prec) {
@@ -6811,7 +6824,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
     if (mpfr_number_p(gy) &&
 	(!mpfr_zero_p(gy)) &&
 	(mpfr_get_exp(gy) > cutoff) &&
-	(mpfr_get_exp(gy) - cutoff < 32 * prec)) {
+	(mpfr_get_exp(gy) - cutoff < 8 * prec + 10)) {
       *newPrecSet = 1;
       *newPrec = mpfr_get_exp(gy) - cutoff + 10;
       if (*newPrec < 2 * prec) {
@@ -6827,53 +6840,49 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
   return POINT_EVAL_FAILURE;
 }
 
-static inline point_eval_t __tryFaithEvaluationOptimizedAddSubMain(mpfr_t y, int subtract, node *g, node *h, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec) {
-  mp_prec_t precG, precH, prec, newPrec;
+static inline point_eval_t __tryFaithEvaluationOptimizedAddSubMain(mpfr_t y, int subtract, node *g, node *h, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_prec_t *maxPrecUsed) {
+  mp_prec_t prec, newPrec;
   point_eval_t res;
   int retry, newPrecSet;
+  mp_prec_t recMaxPrecUsed;
 
-  if (accessThruMemRef(g)->nodeType == CONSTANT) {
-    precG = mpfr_get_prec(*(accessThruMemRef(g)->value));
-  } else {
-    if (accessThruMemRef(g)->nodeType == VARIABLE) {
-      precG = mpfr_get_prec(x);
-    } else {
-      precG = mpfr_get_prec(y) + 50;
-    }
-  }
-  if (accessThruMemRef(h)->nodeType == CONSTANT) {
-    precH = mpfr_get_prec(*(accessThruMemRef(h)->value));
-  } else {
-    if (accessThruMemRef(h)->nodeType == VARIABLE) {
-      precH = mpfr_get_prec(x);
-    } else {
-      precH = mpfr_get_prec(y) + 50;
-    }
-  }
-  prec = (precG > precH ? precG : precH);
+  prec = mpfr_get_prec(y) + 15;
   if (prec < minPrec) prec = minPrec;
 
   /* 1st try */
   retry = 0;
   newPrecSet = 0;
   newPrec = prec;
-  res = __tryFaithEvaluationOptimizedAddSubInner(&retry, &newPrecSet, &newPrec, y, subtract, g, h, x, cutoff, prec, minPrec);
-  if (res != POINT_EVAL_FAILURE) return res;
-  if (!retry) return POINT_EVAL_FAILURE;
+  recMaxPrecUsed = 0;
+  res = __tryFaithEvaluationOptimizedAddSubInner(&retry, &newPrecSet, &newPrec, y, subtract, g, h, x, cutoff, prec, minPrec, &recMaxPrecUsed);
+  if (res != POINT_EVAL_FAILURE) {
+    __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsed);
+    return res;
+  }
+  if (!retry) {
+    __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsed);
+    return POINT_EVAL_FAILURE;
+  }
   if (!newPrecSet) {
-    newPrec = prec * 3;
+    newPrec = prec * 2;
   } 
   prec = newPrec;
   if (prec < minPrec) prec = minPrec;  
-
 
   /* 2nd try */
   retry = 0;
   newPrecSet = 0;
   newPrec = prec;
-  res = __tryFaithEvaluationOptimizedAddSubInner(&retry, &newPrecSet, &newPrec, y, subtract, g, h, x, cutoff, prec, minPrec);
-  if (res != POINT_EVAL_FAILURE) return res;
-  if (!retry) return POINT_EVAL_FAILURE;
+  recMaxPrecUsed = 0;
+  res = __tryFaithEvaluationOptimizedAddSubInner(&retry, &newPrecSet, &newPrec, y, subtract, g, h, x, cutoff, prec, minPrec, &recMaxPrecUsed);
+  if (res != POINT_EVAL_FAILURE) {
+    __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsed);
+    return res;
+  }
+  if (!retry) {
+    __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsed);
+    return POINT_EVAL_FAILURE;
+  }
   if (!newPrecSet) {
     newPrec = prec * 2;
   }
@@ -6884,16 +6893,60 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubMain(mpfr_t y, int
   retry = 0;
   newPrecSet = 0;
   newPrec = prec;
-  res = __tryFaithEvaluationOptimizedAddSubInner(&retry, &newPrecSet, &newPrec, y, subtract, g, h, x, cutoff, prec, minPrec);
+  recMaxPrecUsed = 0;
+  res = __tryFaithEvaluationOptimizedAddSubInner(&retry, &newPrecSet, &newPrec, y, subtract, g, h, x, cutoff, prec, minPrec, &recMaxPrecUsed);
+  __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsed);
 
   return res;
 }
 
-static inline point_eval_t __tryFaithEvaluationOptimizedAddSub(mpfr_t y, int subtract, node *g, node *h, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec) {
+static inline point_eval_t __tryFaithEvaluationOptimizedAddSub(mpfr_t y, int subtract, node *g, node *h, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_prec_t *maxPrecUsed) {
   node *myG, *myH;
   int swapped;
   point_eval_t res;
+  int ternary;
 
+  if ((accessThruMemRef(g)->nodeType == CONSTANT) &&
+      (accessThruMemRef(h)->nodeType == CONSTANT)) {
+    if (subtract) {
+      ternary = mpfr_sub(y, *(accessThruMemRef(g)->value), *(accessThruMemRef(h)->value), GMP_RNDN);
+    } else {
+      ternary = mpfr_add(y, *(accessThruMemRef(g)->value), *(accessThruMemRef(h)->value), GMP_RNDN);
+    }
+    if (ternary == 0) return POINT_EVAL_EXACT;
+    return POINT_EVAL_CORRECTLY_ROUNDED;
+  } 
+  if ((accessThruMemRef(g)->nodeType == CONSTANT) &&
+      (accessThruMemRef(h)->nodeType == VARIABLE)) {
+    if (subtract) {
+      ternary = mpfr_sub(y, *(accessThruMemRef(g)->value), x, GMP_RNDN);
+    } else {
+      ternary = mpfr_add(y, *(accessThruMemRef(g)->value), x, GMP_RNDN);
+    }
+    if (ternary == 0) return POINT_EVAL_EXACT;
+    return POINT_EVAL_CORRECTLY_ROUNDED;
+  } 
+  if ((accessThruMemRef(g)->nodeType == VARIABLE) &&
+      (accessThruMemRef(h)->nodeType == CONSTANT)) {
+    if (subtract) {
+      ternary = mpfr_sub(y, x, *(accessThruMemRef(h)->value), GMP_RNDN);
+    } else {
+      ternary = mpfr_add(y, x, *(accessThruMemRef(h)->value), GMP_RNDN);
+    }
+    if (ternary == 0) return POINT_EVAL_EXACT;
+    return POINT_EVAL_CORRECTLY_ROUNDED;
+  } 
+  if ((accessThruMemRef(g)->nodeType == VARIABLE) &&
+      (accessThruMemRef(h)->nodeType == VARIABLE)) {
+    if (subtract) {
+      ternary = mpfr_sub(y, x, x, GMP_RNDN);
+    } else {
+      ternary = mpfr_add(y, x, x, GMP_RNDN);
+    }
+    if (ternary == 0) return POINT_EVAL_EXACT;
+    return POINT_EVAL_CORRECTLY_ROUNDED;
+  } 
+  
   myG = g; myH = h;
   swapped = 0;
   switch (accessThruMemRef(h)->nodeType) {
@@ -6906,7 +6959,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSub(mpfr_t y, int sub
     break;
   }
   
-  res = __tryFaithEvaluationOptimizedAddSubMain(y, subtract, myG, myH, x, cutoff, minPrec);
+  res = __tryFaithEvaluationOptimizedAddSubMain(y, subtract, myG, myH, x, cutoff, minPrec, maxPrecUsed);
   
   if (swapped && subtract && (res != POINT_EVAL_FAILURE)) {
     mpfr_neg(y, y, GMP_RNDN); /* exact */
@@ -6915,12 +6968,13 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSub(mpfr_t y, int sub
   return res;
 }
 
-static inline point_eval_t __tryFaithEvaluationOptimizedMulDivInner(int *retry, mpfr_t y, int divide, node *g, node *h, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec) {
+static inline point_eval_t __tryFaithEvaluationOptimizedMulDivInner(int *retry, mpfr_t y, int divide, node *g, node *h, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_prec_t *maxPrecUsed) {
   mp_prec_t precG, precH;
   mpfr_t gy, hy;
   point_eval_t resG, resH;
   int ternary;
   mp_exp_t recCutoff;
+  mp_prec_t recMaxPrecUsed;
 
   if (cutoff >= mpfr_get_emin_min() + 64) {
     recCutoff = cutoff - 64;
@@ -6950,14 +7004,19 @@ static inline point_eval_t __tryFaithEvaluationOptimizedMulDivInner(int *retry, 
   if (precH < minPrec) precH = minPrec;
   mpfr_init2(gy, precG);
   mpfr_init2(hy, precH);
-  resG = __tryFaithEvaluationOptimizedDoIt(gy, g, x, recCutoff, minPrec); 
+  recMaxPrecUsed = 0;
+  resG = __tryFaithEvaluationOptimizedDoIt(gy, g, x, recCutoff, minPrec, &recMaxPrecUsed); 
+  __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsed);
   if (resG == POINT_EVAL_FAILURE) {
     mpfr_clear(hy);
     mpfr_clear(gy);
     *retry = 0;
+    __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsed);
     return POINT_EVAL_FAILURE;
   }
-  resH = __tryFaithEvaluationOptimizedDoIt(hy, h, x, (divide ? mpfr_get_emin_min() : recCutoff), minPrec); 
+  recMaxPrecUsed = 0;
+  resH = __tryFaithEvaluationOptimizedDoIt(hy, h, x, (divide ? mpfr_get_emin_min() : recCutoff), minPrec, &recMaxPrecUsed); 
+  __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsed);
   if (resH == POINT_EVAL_FAILURE) {
     mpfr_clear(hy);
     mpfr_clear(gy);
@@ -7063,21 +7122,73 @@ static inline point_eval_t __tryFaithEvaluationOptimizedMulDivInner(int *retry, 
   return POINT_EVAL_FAITHFULLY_ROUNDED;
 }
 
-static inline point_eval_t __tryFaithEvaluationOptimizedMulDiv(mpfr_t y, int divide, node *g, node *h, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec) {
+static inline point_eval_t __tryFaithEvaluationOptimizedMulDiv(mpfr_t y, int divide, node *g, node *h, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_prec_t *maxPrecUsed) {
   int retry;
   point_eval_t res;
+  mp_prec_t recMaxPrecUsed;
+  int ternary;
+
+  if ((accessThruMemRef(g)->nodeType == CONSTANT) &&
+      (accessThruMemRef(h)->nodeType == CONSTANT)) {
+    if (divide) {
+      ternary = mpfr_div(y, *(accessThruMemRef(g)->value), *(accessThruMemRef(h)->value), GMP_RNDN);
+    } else {
+      ternary = mpfr_mul(y, *(accessThruMemRef(g)->value), *(accessThruMemRef(h)->value), GMP_RNDN);
+    }
+    if (ternary == 0) return POINT_EVAL_EXACT;
+    return POINT_EVAL_CORRECTLY_ROUNDED;
+  } 
+  if ((accessThruMemRef(g)->nodeType == CONSTANT) &&
+      (accessThruMemRef(h)->nodeType == VARIABLE)) {
+    if (divide) {
+      ternary = mpfr_div(y, *(accessThruMemRef(g)->value), x, GMP_RNDN);
+    } else {
+      ternary = mpfr_mul(y, *(accessThruMemRef(g)->value), x, GMP_RNDN);
+    }
+    if (ternary == 0) return POINT_EVAL_EXACT;
+    return POINT_EVAL_CORRECTLY_ROUNDED;
+  } 
+  if ((accessThruMemRef(g)->nodeType == VARIABLE) &&
+      (accessThruMemRef(h)->nodeType == CONSTANT)) {
+    if (divide) {
+      ternary = mpfr_div(y, x, *(accessThruMemRef(h)->value), GMP_RNDN);
+    } else {
+      ternary = mpfr_mul(y, x, *(accessThruMemRef(h)->value), GMP_RNDN);
+    }
+    if (ternary == 0) return POINT_EVAL_EXACT;
+    return POINT_EVAL_CORRECTLY_ROUNDED;
+  } 
+  if ((accessThruMemRef(g)->nodeType == VARIABLE) &&
+      (accessThruMemRef(h)->nodeType == VARIABLE)) {
+    if (divide) {
+      ternary = mpfr_div(y, x, x, GMP_RNDN);
+    } else {
+      ternary = mpfr_mul(y, x, x, GMP_RNDN);
+    }
+    if (ternary == 0) return POINT_EVAL_EXACT;
+    return POINT_EVAL_CORRECTLY_ROUNDED;
+  } 
+  
+  retry = 0;
+  recMaxPrecUsed = 0;
+  res = __tryFaithEvaluationOptimizedMulDivInner(&retry, y, divide, g, h, x, cutoff, minPrec, &recMaxPrecUsed);
+  if (res != POINT_EVAL_FAILURE) {
+    __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsed);
+    return res;
+  }
+  if (!retry) {
+    __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsed);
+    return POINT_EVAL_FAILURE;
+  }
 
   retry = 0;
-  res = __tryFaithEvaluationOptimizedMulDivInner(&retry, y, divide, g, h, x, cutoff, minPrec);
-  if (res != POINT_EVAL_FAILURE) return res;
-  if (!retry) return POINT_EVAL_FAILURE;
-
-  retry = 0;
-  res = __tryFaithEvaluationOptimizedMulDivInner(&retry, y, divide, g, h, x, mpfr_get_emin_min(), minPrec);
+  recMaxPrecUsed = 0;
+  res = __tryFaithEvaluationOptimizedMulDivInner(&retry, y, divide, g, h, x, mpfr_get_emin_min(), minPrec, &recMaxPrecUsed);
+  __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsed);
   return res;
 }
 
-static inline point_eval_t __tryFaithEvaluationOptimizedPow(mpfr_t y, node *g, node *h, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec) {
+static inline point_eval_t __tryFaithEvaluationOptimizedPow(mpfr_t y, node *g, node *h, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_prec_t *maxPrecUsed) {
   mp_prec_t precG, precH;
   mpfr_t gy, hy;
   point_eval_t resG, resH;
@@ -7086,7 +7197,32 @@ static inline point_eval_t __tryFaithEvaluationOptimizedPow(mpfr_t y, node *g, n
   sollya_mpfi_t *X, *Y, *Z;
   point_eval_t res;
   mp_exp_t cutoffH;
+  mp_prec_t recMaxPrecUsed;
 
+  if ((accessThruMemRef(g)->nodeType == CONSTANT) &&
+      (accessThruMemRef(h)->nodeType == CONSTANT)) {
+    ternary = mpfr_pow(y, *(accessThruMemRef(g)->value), *(accessThruMemRef(h)->value), GMP_RNDN);
+    if (ternary == 0) return POINT_EVAL_EXACT;
+    return POINT_EVAL_CORRECTLY_ROUNDED;
+  } 
+  if ((accessThruMemRef(g)->nodeType == CONSTANT) &&
+      (accessThruMemRef(h)->nodeType == VARIABLE)) {
+    ternary = mpfr_pow(y, *(accessThruMemRef(g)->value), x, GMP_RNDN);
+    if (ternary == 0) return POINT_EVAL_EXACT;
+    return POINT_EVAL_CORRECTLY_ROUNDED;
+  } 
+  if ((accessThruMemRef(g)->nodeType == VARIABLE) &&
+      (accessThruMemRef(h)->nodeType == CONSTANT)) {
+    ternary = mpfr_pow(y, x, *(accessThruMemRef(h)->value), GMP_RNDN);
+    if (ternary == 0) return POINT_EVAL_EXACT;
+    return POINT_EVAL_CORRECTLY_ROUNDED;
+  } 
+  if ((accessThruMemRef(g)->nodeType == VARIABLE) &&
+      (accessThruMemRef(h)->nodeType == VARIABLE)) {
+    ternary = mpfr_pow(y, x, x, GMP_RNDN);
+    if (ternary == 0) return POINT_EVAL_EXACT;
+    return POINT_EVAL_CORRECTLY_ROUNDED;
+  } 
 
   if (accessThruMemRef(g)->nodeType == CONSTANT) {
     precG = mpfr_get_prec(*(accessThruMemRef(g)->value));
@@ -7110,7 +7246,9 @@ static inline point_eval_t __tryFaithEvaluationOptimizedPow(mpfr_t y, node *g, n
   if (precH < minPrec) precH = minPrec;
   mpfr_init2(gy, precG);
   mpfr_init2(hy, precH);
-  resG = __tryFaithEvaluationOptimizedDoIt(gy, g, x, mpfr_get_emin_min(), minPrec);
+  recMaxPrecUsed = 0;
+  resG = __tryFaithEvaluationOptimizedDoIt(gy, g, x, mpfr_get_emin_min(), minPrec, &recMaxPrecUsed);
+  __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsed);
   if ((resG == POINT_EVAL_FAILURE) ||
       (resG == POINT_EVAL_BELOW_CUTOFF)) {
     mpfr_clear(hy);
@@ -7119,7 +7257,9 @@ static inline point_eval_t __tryFaithEvaluationOptimizedPow(mpfr_t y, node *g, n
   }
   cutoffH = -(2 * mpfr_get_prec(y) + 25);
   if ((cutoffH >= 0) || (cutoffH < mpfr_get_emin_min())) cutoffH = mpfr_get_emin_min();
-  resH = __tryFaithEvaluationOptimizedDoIt(hy, h, x, cutoffH, minPrec);
+  recMaxPrecUsed = 0;
+  resH = __tryFaithEvaluationOptimizedDoIt(hy, h, x, cutoffH, minPrec, &recMaxPrecUsed);
+  __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsed);
   if (resH == POINT_EVAL_FAILURE) {
     mpfr_clear(hy);
     mpfr_clear(gy);
@@ -7190,8 +7330,8 @@ static inline point_eval_t __tryFaithEvaluationOptimizedPow(mpfr_t y, node *g, n
   /* HACK ALERT: For performance reasons, we will access the internals
      of an mpfi_t !!!
   */
-  tern1 = mpfr_set(y, &((*Y)->left), GMP_RNDN); /* rounds to final precision */
-  tern2 = mpfr_set(hy, &((*Y)->right), GMP_RNDN); /* rounds to final precision */
+  tern1 = mpfr_set(y, &((*Z)->left), GMP_RNDN); /* rounds to final precision */
+  tern2 = mpfr_set(hy, &((*Z)->right), GMP_RNDN); /* rounds to final precision */
 
   if (mpfr_number_p(hy) && mpfr_number_p(y)) {
     if (mpfr_equal_p(hy, y)) {
@@ -7202,18 +7342,26 @@ static inline point_eval_t __tryFaithEvaluationOptimizedPow(mpfr_t y, node *g, n
       }
     } else {
       if (mpfr_cmp(y, hy) < 0) {
-	mpfr_nextbelow(x);
+	mpfr_nextbelow(hy);
 	if (mpfr_equal_p(hy, y)) {
 	  res = POINT_EVAL_FAITHFULLY_ROUNDED;
 	} else {
-	  res = POINT_EVAL_FAILURE;
+	  if ((!(sollya_mpfi_has_nan(*Z) || sollya_mpfi_has_infinity(*Z))) && (sollya_mpfi_max_exp(*Z) < cutoff)) {
+	    res = POINT_EVAL_BELOW_CUTOFF;
+	  } else {
+	    res = POINT_EVAL_FAILURE;
+	  }
 	}
       } else {
- 	res = POINT_EVAL_FAILURE;
+	if ((!(sollya_mpfi_has_nan(*Z) || sollya_mpfi_has_infinity(*Z))) && (sollya_mpfi_max_exp(*Z) < cutoff)) {
+	  res = POINT_EVAL_BELOW_CUTOFF;
+	} else {
+	  res = POINT_EVAL_FAILURE;
+	}
       }
     }
   } else {
-    if (sollya_mpfi_max_exp(*Y) < cutoff) {
+    if ((!(sollya_mpfi_has_nan(*Z) || sollya_mpfi_has_infinity(*Z))) && (sollya_mpfi_max_exp(*Z) < cutoff)) {
       res = POINT_EVAL_BELOW_CUTOFF;
     } else {
       res = POINT_EVAL_FAILURE;
@@ -7571,14 +7719,14 @@ static inline point_eval_t __tryFaithEvaluationOptimizedUnivariateImpreciseArg(m
 	if (mpfr_equal_p(x, y)) {
 	  res = POINT_EVAL_FAITHFULLY_ROUNDED;
 	} else {
-	  if (sollya_mpfi_max_exp(*Y) < cutoffY) {
+	  if ((!(sollya_mpfi_has_nan(*Y) || sollya_mpfi_has_infinity(*Y))) && (sollya_mpfi_max_exp(*Y) < cutoffY)) {
 	    res = POINT_EVAL_BELOW_CUTOFF;
 	  } else {
 	    res = POINT_EVAL_FAILURE;
 	  }
 	}
       } else {
-	if (sollya_mpfi_max_exp(*Y) < cutoffY) {
+	if ((!(sollya_mpfi_has_nan(*Y) || sollya_mpfi_has_infinity(*Y))) && (sollya_mpfi_max_exp(*Y) < cutoffY)) {
 	  res = POINT_EVAL_BELOW_CUTOFF;
 	} else {
 	  res = POINT_EVAL_FAILURE;
@@ -7586,20 +7734,25 @@ static inline point_eval_t __tryFaithEvaluationOptimizedUnivariateImpreciseArg(m
       }
     }
   } else {
-    res = POINT_EVAL_FAILURE;
+    if ((!(sollya_mpfi_has_nan(*Y) || sollya_mpfi_has_infinity(*Y))) && (sollya_mpfi_max_exp(*Y) < cutoffY)) {
+      res = POINT_EVAL_BELOW_CUTOFF;
+    } else {
+      res = POINT_EVAL_FAILURE;
+    }
   }
   clearChosenMpfiPtr(Y, &v_Y);
   clearChosenMpfiPtr(X, &v_X);
   return res;
 }
 
-static inline point_eval_t __tryFaithEvaluationOptimizedUnivariate(mpfr_t y, int nodeType, node *g, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec) {
+static inline point_eval_t __tryFaithEvaluationOptimizedUnivariate(mpfr_t y, int nodeType, node *g, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_exp_t *maxPrecUsed) {
   mpfr_srcptr gyptr;
   int ternary;
   mp_prec_t prec;
   mpfr_t t;
   point_eval_t resG, res;
   mp_exp_t cutoffX;
+  mp_prec_t recMaxPrecUsed;
 
   /* Handle the case when g(x) = c or g(x) = x */
   switch (accessThruMemRef(g)->nodeType) {
@@ -7680,6 +7833,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedUnivariate(mpfr_t y, int
       return POINT_EVAL_FAILURE;
       break;
     }
+    __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, mpfr_get_prec(y));
     if (ternary == 0) return POINT_EVAL_EXACT;
     return POINT_EVAL_CORRECTLY_ROUNDED;
     break;
@@ -7693,7 +7847,9 @@ static inline point_eval_t __tryFaithEvaluationOptimizedUnivariate(mpfr_t y, int
   cutoffX = __tryFaithEvaluationOptimizedUnivariateGetRecurseCutoff(nodeType, cutoff, mpfr_get_prec(y));
   if ((cutoffX >= 0) || (cutoffX < mpfr_get_emin_min())) cutoffX = mpfr_get_emin_min();
   mpfr_init2(t, prec);
-  resG = __tryFaithEvaluationOptimizedDoIt(t, g, x, cutoffX, minPrec);
+  recMaxPrecUsed = 0;
+  resG = __tryFaithEvaluationOptimizedDoIt(t, g, x, cutoffX, minPrec, &recMaxPrecUsed);
+  __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsed);
   switch (resG) {
   case POINT_EVAL_FAILURE:
     mpfr_clear(t);
@@ -7788,42 +7944,165 @@ static inline point_eval_t __tryFaithEvaluationOptimizedUnivariate(mpfr_t y, int
   return POINT_EVAL_FAILURE;
 }
 
+static inline int __tryFaithEvaluationOptimizedFuncSupported(node *f) {
 
-static inline point_eval_t __tryFaithEvaluationOptimizedDoIt(mpfr_t y, node *f, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec) { 
+  switch (f->nodeType) {
+  case MEMREF:
+    if (f->polynomialRepresentation != NULL) return 1;
+    return __tryFaithEvaluationOptimizedFuncSupported(getMemRefChild(f));
+    break;
+  case VARIABLE:
+  case CONSTANT:
+  case PI_CONST:
+    return 1;
+    break;
+  case ADD:
+  case SUB:
+  case MUL:
+  case DIV:
+  case POW:
+    return (__tryFaithEvaluationOptimizedFuncSupported(f->child1) &&
+	    __tryFaithEvaluationOptimizedFuncSupported(f->child2));
+    break;
+  case NEG:
+  case SQRT:
+  case EXP:
+  case LOG:
+  case LOG_2:
+  case LOG_10:
+  case SIN:
+  case COS:
+  case TAN:
+  case ASIN:
+  case ACOS:
+  case ATAN:
+  case SINH:
+  case COSH:
+  case TANH:
+  case ASINH:
+  case ACOSH:
+  case ATANH:
+  case ERF:
+  case ERFC:
+  case LOG_1P:
+  case EXP_M1:
+    return __tryFaithEvaluationOptimizedFuncSupported(f->child1);
+    break;
+  default:
+    return 0;
+  }
+  return 0;
+}
+
+static inline point_eval_t __tryFaithEvaluationOptimizedPolynomialRepresentation(mpfr_t y, polynomial_t p, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_prec_t *maxPrecUsed) { 
+  sollya_mpfi_t v_Y, v_X;
+  sollya_mpfi_t *Y, *X;
+  mp_prec_t prec;
+  point_eval_t res;
+  mpfr_t t;
+  int tern1, tern2;
+
+  prec = mpfr_get_prec(y) + 12;
+  prec = prec + (prec >> 1);
+  if (prec < minPrec) prec = minPrec;
+  __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, prec);
+  
+  Y = chooseAndInitMpfiPtr(&v_Y, prec);
+  X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(x));
+  
+  sollya_mpfi_set_fr(*X, x);
+  polynomialEvalMpfi(*Y, p, *X);
+  
+  mpfr_init2(t, mpfr_get_prec(y));
+  /* HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
+  */
+  tern1 = mpfr_set(y, &((*Y)->left), GMP_RNDN); /* rounds to final precision */
+  tern2 = mpfr_set(t, &((*Y)->right), GMP_RNDN); /* rounds to final precision */
+
+  if (mpfr_number_p(t) && mpfr_number_p(y)) {
+    if (mpfr_equal_p(t, y)) {
+      if ((tern1 == 0) && (tern2 == 0)) {
+	res = POINT_EVAL_EXACT;
+      } else {
+	res = POINT_EVAL_CORRECTLY_ROUNDED;
+      }
+    } else {
+      if (mpfr_cmp(y, t) < 0) {
+	mpfr_nextbelow(t);
+	if (mpfr_equal_p(t, y)) {
+	  res = POINT_EVAL_FAITHFULLY_ROUNDED;
+	} else {
+	  if ((!(sollya_mpfi_has_nan(*Y) || sollya_mpfi_has_infinity(*Y))) && (sollya_mpfi_max_exp(*Y) < cutoff)) {
+	    res = POINT_EVAL_BELOW_CUTOFF;
+	  } else {
+	    res = POINT_EVAL_FAILURE;
+	  }
+	}
+      } else {
+	if ((!(sollya_mpfi_has_nan(*Y) || sollya_mpfi_has_infinity(*Y))) && (sollya_mpfi_max_exp(*Y) < cutoff)) {
+	  res = POINT_EVAL_BELOW_CUTOFF;
+	} else {
+	  res = POINT_EVAL_FAILURE;
+	}
+      }
+    }
+  } else {
+    if ((!(sollya_mpfi_has_nan(*Y) || sollya_mpfi_has_infinity(*Y))) && (sollya_mpfi_max_exp(*Y) < cutoff)) {
+      res = POINT_EVAL_BELOW_CUTOFF;
+    } else {
+      res = POINT_EVAL_FAILURE;
+    }
+  }
+
+  mpfr_clear(t);
+  clearChosenMpfiPtr(X, &v_X);
+  clearChosenMpfiPtr(Y, &v_Y);
+
+  return res;
+}
+
+static inline point_eval_t __tryFaithEvaluationOptimizedDoIt(mpfr_t y, node *f, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_prec_t *maxPrecUsed) { 
   point_eval_t res;
 
   switch (f->nodeType) {
   case MEMREF:
-    /* TODO: Handle polynomial representation */
-    /* TODO: Caching */
-    return __tryFaithEvaluationOptimizedDoIt(y, getMemRefChild(f), x, cutoff, minPrec);
+    if ((f->polynomialRepresentation != NULL) && (f->child1 == NULL)) {
+      res = __tryFaithEvaluationOptimizedPolynomialRepresentation(y, f->polynomialRepresentation, x, cutoff, minPrec, maxPrecUsed);
+    } else {
+      res = __tryFaithEvaluationOptimizedDoIt(y, getMemRefChild(f), x, cutoff, minPrec, maxPrecUsed);
+    } 
+    return res;
     break;
   case VARIABLE:
+    __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, mpfr_get_prec(y));
     if (mpfr_set(y, x, GMP_RNDN) == 0) return POINT_EVAL_EXACT;
     return POINT_EVAL_CORRECTLY_ROUNDED;
     break;
   case CONSTANT:
+    __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, mpfr_get_prec(y));
     if (mpfr_set(y, *(f->value), GMP_RNDN) == 0) return POINT_EVAL_EXACT;
     return POINT_EVAL_CORRECTLY_ROUNDED;
     break;
   case PI_CONST:
+    __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, mpfr_get_prec(y));
     if (mpfr_const_pi(y, GMP_RNDN) == 0) return POINT_EVAL_EXACT;
     return POINT_EVAL_CORRECTLY_ROUNDED;    
     break;
   case ADD:
   case SUB:
-    return __tryFaithEvaluationOptimizedAddSub(y, (f->nodeType == SUB), f->child1, f->child2, x, cutoff, minPrec);
+    return __tryFaithEvaluationOptimizedAddSub(y, (f->nodeType == SUB), f->child1, f->child2, x, cutoff, minPrec, maxPrecUsed);
     break;
   case MUL:
   case DIV:
-    return __tryFaithEvaluationOptimizedMulDiv(y, (f->nodeType == DIV), f->child1, f->child2, x, cutoff, minPrec);
+    return __tryFaithEvaluationOptimizedMulDiv(y, (f->nodeType == DIV), f->child1, f->child2, x, cutoff, minPrec, maxPrecUsed);
     break;
   case POW:
-    return __tryFaithEvaluationOptimizedPow(y, f->child1, f->child2, x, cutoff, minPrec);
+    return __tryFaithEvaluationOptimizedPow(y, f->child1, f->child2, x, cutoff, minPrec, maxPrecUsed);
     break;
   case NEG:
     /* So terribly trivial that we do it here */
-    res = __tryFaithEvaluationOptimizedDoIt(y, f->child1, x, cutoff, minPrec);
+    res = __tryFaithEvaluationOptimizedDoIt(y, f->child1, x, cutoff, minPrec, maxPrecUsed);
     if (res != POINT_EVAL_FAILURE) {
       mpfr_neg(y, y, GMP_RNDN); /* exact */
     }
@@ -7850,7 +8129,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedDoIt(mpfr_t y, node *f, 
   case ERFC:
   case LOG_1P:
   case EXP_M1:
-    return __tryFaithEvaluationOptimizedUnivariate(y, f->nodeType, f->child1, x, cutoff, minPrec);
+    return __tryFaithEvaluationOptimizedUnivariate(y, f->nodeType, f->child1, x, cutoff, minPrec, maxPrecUsed);
     break;
   default:
     return POINT_EVAL_FAILURE;
@@ -7858,8 +8137,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedDoIt(mpfr_t y, node *f, 
   return POINT_EVAL_FAILURE;
 }
 
-
-static inline int __tryFaithEvaluationOptimized(int *retVal, mpfr_t y, node *func, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec) {
+static inline int __tryFaithEvaluationOptimized(int *retVal, mpfr_t y, node *func, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_prec_t *maxPrecUsed) {
   point_eval_t res;
 
   /* Refuse work if x and y are the same MPFR variable */
@@ -7872,8 +8150,7 @@ static inline int __tryFaithEvaluationOptimized(int *retVal, mpfr_t y, node *fun
   if (!mpfr_number_p(x)) return 0;
   
   /* Call inner function and translate the success information */
-  res = __tryFaithEvaluationOptimizedDoIt(y, func, x, cutoff, minPrec);
-
+  res = __tryFaithEvaluationOptimizedDoIt(y, func, x, cutoff, minPrec, maxPrecUsed);
   switch (res) {
   case POINT_EVAL_FAILURE:
     return 0;
@@ -7922,20 +8199,25 @@ static inline int firstTryEvaluateFaithfulWithCutOffFastInternalImplementation(i
   mp_prec_t pX, pY;
   int tern1, tern2;
   mp_exp_t myCutoff;
+  mp_prec_t maxPrecUsed;
 
   /* Refuse work if x and y are the same MPFR variable */
   if (((void *) x) == ((void *) y)) return 0;
 
   /* Try to use a still more optimized function */
-  if (cutoff == NULL) {
-    myCutoff = mpfr_get_emin_min();
-  } else {
-    myCutoff = *cutoff;
-  }
-  if (__tryFaithEvaluationOptimized(retVal, y, func, x, myCutoff, startprec)) {
-    return 1;
-  }
-  
+  if (__tryFaithEvaluationOptimizedFuncSupported(func)) {
+    if (cutoff == NULL) {
+      myCutoff = mpfr_get_emin_min();
+    } else {
+      myCutoff = *cutoff;
+    }
+    maxPrecUsed = 0;
+    if (__tryFaithEvaluationOptimized(retVal, y, func, x, myCutoff, startprec, &maxPrecUsed)) {
+      return 1;
+    }
+    sollyaFprintf(stderr, "func = %b, x = %v, prec(y) = %lld: failure with %lld bits\n", func, x, mpfr_get_prec(y), maxPrecUsed);
+  }    
+
   /* Get the precisions of the x and y arguments */
   pX = mpfr_get_prec(x);
   pY = mpfr_get_prec(y);
