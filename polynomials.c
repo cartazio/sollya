@@ -1946,6 +1946,18 @@ static inline constant_t constantFromMpz(mpz_t c) {
   return res;
 }
 
+static inline constant_t constantFromBinomialUnsignedInt(unsigned int n, unsigned int i) {
+  mpz_t bin;
+  constant_t res;
+
+  mpz_init(bin);
+  mpz_bin_uiui(bin, n, i);
+  res = constantFromMpz(bin);
+  mpz_clear(bin);
+
+  return res;
+}
+
 static inline constant_t constantFromCopy(constant_t c) {
   if (c == NULL) return NULL;
   c->refCount++;
@@ -2919,9 +2931,19 @@ static inline constant_t constantAdd(constant_t a, constant_t b) {
        construct the expression for the operation
        and build the result constant.
     */
-    aExpr = constantToExpression(a);
-    bExpr = constantToExpression(b);
-    cExpr = addMemRef(makeAdd(aExpr, bExpr));
+    if (b->type != EXPRESSION) {
+      aExpr = constantToExpression(b);
+      bExpr = constantToExpression(a);
+    } else {
+      aExpr = constantToExpression(a);
+      bExpr = constantToExpression(b);
+    }
+    if (isSyntacticallyEqual(aExpr,bExpr)) {
+      cExpr = addMemRef(makeMul(aExpr, makeConstantInt(2)));
+      freeThing(bExpr);
+    } else {
+      cExpr = addMemRef(makeAdd(aExpr, bExpr));
+    }
     res = constantFromExpression(cExpr);
     freeThing(cExpr);
     return res;
@@ -3298,9 +3320,19 @@ static inline constant_t constantMul(constant_t a, constant_t b) {
        construct the expression for the operation
        and build the result constant.
     */
-    aExpr = constantToExpression(a);
-    bExpr = constantToExpression(b);
-    cExpr = addMemRef(makeMul(aExpr, bExpr));
+    if (b->type != EXPRESSION) {
+      aExpr = constantToExpression(b);
+      bExpr = constantToExpression(a);
+    } else {
+      aExpr = constantToExpression(a);
+      bExpr = constantToExpression(b);
+    }
+    if (isSyntacticallyEqual(aExpr,bExpr)) {
+      cExpr = addMemRef(makePow(aExpr, makeConstantInt(2)));
+      freeThing(bExpr);
+    } else {
+      cExpr = addMemRef(makeMul(aExpr, bExpr));
+    }
     res = constantFromExpression(cExpr);
     freeThing(cExpr);
     return res;
@@ -4015,6 +4047,7 @@ static inline constant_t constantRound(constant_t c, mp_prec_t prec) {
 static inline sparse_polynomial_t __polynomialGetSparsePolynomial(polynomial_t);
 static inline int sparsePolynomialPowConstant(sparse_polynomial_t *, sparse_polynomial_t, constant_t);
 static inline int sparsePolynomialGetDegreeAsInt(sparse_polynomial_t);
+static inline int sparsePolynomialCoefficientsAreRational(sparse_polynomial_t, int);
 
 static inline sparse_polynomial_t __sparsePolynomialAllocate() {
   return (sparse_polynomial_t) safeMalloc(sizeof(struct __sparse_polynomial_struct_t));
@@ -5195,6 +5228,77 @@ static inline void sparsePolynomialDiv(sparse_polynomial_t *quot, sparse_polynom
   *rest = r;
 }
 
+static inline sparse_polynomial_t __sparsePolynomialPowUnsignedIntAlternate(sparse_polynomial_t p, unsigned int n) {
+  sparse_polynomial_t res, r, rp, t, s, temp;
+  constant_t c, d, nC, bin, kc, cp, dp, nc;
+  unsigned int i, k;
+
+  /* Handle stupid input */
+  if (p == NULL) return NULL;
+
+  /* Handle easy cases */
+  if (n == 0u) return sparsePolynomialFromIntConstant(1);
+  if (n == 1u) return sparsePolynomialFromCopy(p);
+  if (n == 2u) return sparsePolynomialMul(p,p);
+  
+  /* Handle the case when the polynomial only has one monomial */
+  if (p->monomialCount == 1u) {
+    nC = constantFromUnsignedInt(n);
+    res = __sparsePolynomialAllocate();
+    res->refCount = 1;
+    res->monomialCount = 1;
+    res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
+    res->coeffs[0] = constantPow(p->coeffs[0],nC);
+    res->monomialDegrees = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
+    res->monomialDegrees[0] = constantMul(p->monomialDegrees[0],nC);
+    res->deg = constantFromCopy(res->monomialDegrees[0]);
+    constantFree(nC);
+    return res;
+  }
+
+  /* The polynomial has at least two monomials 
+
+     Write p(x) = c * x^d + r(x)
+
+     and obtain
+
+     (p(x))^n = sum_i=0^n bin(n,i) * c^(n-i) * x^(d * (n-i)) * (r(x))^i
+
+              = (r(x))^n + sum_i=0^(n-1) bin(n,i) * c^(n-i) * x^(d * (n-i)) * (r(x))^i
+                
+
+  */
+  __sparsePolynomialGetLeadingCoefficient(&c, &d, &r, p);
+  res = __sparsePolynomialPowUnsignedIntAlternate(r, n);
+  for (i=0u;i<n;i++) {
+    rp = __sparsePolynomialPowUnsignedIntAlternate(r, i);
+    k = n - i;
+    bin = constantFromBinomialUnsignedInt(n, i);
+    kc = constantFromUnsignedInt(k);
+    cp = constantPow(c, kc);
+    dp = constantMul(d, kc);
+    nc = constantMul(bin, cp);
+    t = __sparsePolynomialFromMonomial(nc, dp);
+    s = sparsePolynomialMul(t, rp);
+    temp = sparsePolynomialAdd(res, s);
+    sparsePolynomialFree(res);
+    res = temp;
+    sparsePolynomialFree(rp);
+    constantFree(bin);
+    constantFree(kc);
+    constantFree(cp);
+    constantFree(dp);
+    constantFree(nc);
+    sparsePolynomialFree(t);
+    sparsePolynomialFree(s);
+  }
+  constantFree(c);
+  constantFree(d);
+  sparsePolynomialFree(r);
+
+  return res;
+}
+
 static inline sparse_polynomial_t sparsePolynomialPowUnsignedInt(sparse_polynomial_t p, unsigned int n) {
   sparse_polynomial_t res, t, tmp;
   constant_t nC;
@@ -5220,6 +5324,13 @@ static inline sparse_polynomial_t sparsePolynomialPowUnsignedInt(sparse_polynomi
     res->deg = constantFromCopy(res->monomialDegrees[0]);
     constantFree(nC);
     return res;
+  }
+
+  /* Use alternate algorithm for polynomials that might have
+     non-rational coefficients 
+  */
+  if (!sparsePolynomialCoefficientsAreRational(p, 0)) {
+    return __sparsePolynomialPowUnsignedIntAlternate(p, n);
   }
 
   /* Square and multiply loop */
