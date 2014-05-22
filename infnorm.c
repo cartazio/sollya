@@ -7268,6 +7268,11 @@ static inline point_eval_t __tryFaithEvaluationOptimizedPow(mpfr_t y, node *g, n
   mp_exp_t cutoffH;
   mp_prec_t recMaxPrecUsed;
 
+  /* Make compiler happy */
+  X = NULL;
+  Y = NULL;
+  /* End of compiler happiness */
+
   if ((accessThruMemRef(g)->nodeType == CONSTANT) &&
       (accessThruMemRef(h)->nodeType == CONSTANT)) {
     ternary = mpfr_pow(y, *(accessThruMemRef(g)->value), *(accessThruMemRef(h)->value), GMP_RNDN);
@@ -7566,6 +7571,10 @@ static inline mp_prec_t __tryFaithEvaluationOptimizedUnivariateGetRecursePrec(in
   int considerCutoff;
   mp_prec_t cutoffPrec;
 
+  /* Make compiler happy */
+  cutoffPrec = 12;
+  /* End of compiler happiness */
+
   /* Consider log2(abs(x * diff(f)/f)) over some reasonable range 
 
      Consider cutoff if it implies precision in some reasonable range.
@@ -7846,6 +7855,10 @@ static inline point_eval_t __tryFaithEvaluationOptimizedUnivariate(mpfr_t y, int
   point_eval_t resG, res;
   mp_exp_t cutoffX;
   mp_prec_t recMaxPrecUsed;
+
+  /* Make compiler happy */
+  gyptr = NULL; 
+  /* End of compiler happiness */
 
   /* Handle the case when g(x) = c or g(x) = x */
   if ((nodeType != LIBRARYFUNCTION) &&
@@ -8252,6 +8265,10 @@ static inline point_eval_t __tryFaithEvaluationOptimizedDeducedLowerPrecResult(m
   mpfr_t v_t;
   mpfr_t *t;
   point_eval_t res;
+
+  /* Make compiler happy */
+  X = NULL;
+  /* End of compiler happiness */
 
   if (approx == POINT_EVAL_FAILURE) return POINT_EVAL_FAILURE;
   if (!mpfr_number_p(x)) return POINT_EVAL_FAILURE;
