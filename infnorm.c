@@ -7547,6 +7547,14 @@ static inline mp_exp_t __tryFaithEvaluationOptimizedUnivariateGetRecurseCutoff(i
     res = cutoff - 1;
     if ((res >= 0) || (res < mpfr_get_emin_min())) res = mpfr_get_emin_min();
     break;
+  case LIBRARYFUNCTION:
+  case PROCEDUREFUNCTION:
+    /* Actually, we have no idea how the function behaves */
+    res = cutoff - 1;
+    if ((res >= 0) || (res < mpfr_get_emin_min())) res = mpfr_get_emin_min();
+    if (-(prec + 5) < res) res = -(prec + 5);
+    if ((res >= 0) || (res < mpfr_get_emin_min())) res = mpfr_get_emin_min();
+    break;
   default:
     return mpfr_get_emin_min();
     break;
@@ -7654,6 +7662,11 @@ static inline mp_prec_t __tryFaithEvaluationOptimizedUnivariateGetRecursePrec(in
     /* Range: double precision range */
     return prec + 12;         
     break;
+  case LIBRARYFUNCTION:
+  case PROCEDUREFUNCTION:
+    /* Actually, we have no idea how the function behaves */
+    return prec + 15;
+    break;
   default:
     /* Some default answer */
     return prec + 10;
@@ -7662,11 +7675,12 @@ static inline mp_prec_t __tryFaithEvaluationOptimizedUnivariateGetRecursePrec(in
   return prec + 10; 
 }
 
-static inline point_eval_t __tryFaithEvaluationOptimizedUnivariateImpreciseArg(mpfr_t y, int nodeType, mpfr_t x, point_eval_t err, mp_exp_t cutoffY, mp_exp_t cutoffX) {
+static inline point_eval_t __tryFaithEvaluationOptimizedUnivariateImpreciseArg(mpfr_t y, int nodeType, mpfr_t x, point_eval_t err, mp_exp_t cutoffY, mp_exp_t cutoffX, node *g) {
   sollya_mpfi_t v_X, v_Y;
   sollya_mpfi_t *X, *Y;
   point_eval_t res;
   int tern1, tern2;
+  mpfi_t temp; /* The type is not a mistake, we use a library function */
 
   if (err == POINT_EVAL_FAILURE) return POINT_EVAL_FAILURE;
   if (!mpfr_number_p(x)) return POINT_EVAL_FAILURE;
@@ -7759,6 +7773,15 @@ static inline point_eval_t __tryFaithEvaluationOptimizedUnivariateImpreciseArg(m
   case EXP_M1:
     sollya_mpfi_expm1(*Y, *X);
     break;
+  case LIBRARYFUNCTION:
+    mpfi_init2(temp, sollya_mpfi_get_prec(*Y));
+    g->libFun->code(temp, *X, g->libFunDeriv);
+    sollya_init_and_convert_interval(*Y, temp);
+    mpfi_clear(temp);
+    break;
+  case PROCEDUREFUNCTION:
+    computeFunctionWithProcedure(*Y, g->child2, *X, (unsigned int) g->libFunDeriv);
+    break;
   default:
     clearChosenMpfiPtr(Y, &v_Y);
     clearChosenMpfiPtr(X, &v_X);
@@ -7814,7 +7837,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedUnivariateImpreciseArg(m
   return res;
 }
 
-static inline point_eval_t __tryFaithEvaluationOptimizedUnivariate(mpfr_t y, int nodeType, node *g, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_exp_t *maxPrecUsed) {
+static inline point_eval_t __tryFaithEvaluationOptimizedUnivariate(mpfr_t y, int nodeType, node *g, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_exp_t *maxPrecUsed, node *f) {
   mpfr_srcptr gyptr;
   int ternary;
   mp_prec_t prec;
@@ -7825,90 +7848,93 @@ static inline point_eval_t __tryFaithEvaluationOptimizedUnivariate(mpfr_t y, int
   mp_prec_t recMaxPrecUsed;
 
   /* Handle the case when g(x) = c or g(x) = x */
-  switch (accessThruMemRef(g)->nodeType) {
-  case CONSTANT:
-  case VARIABLE:
+  if ((nodeType != LIBRARYFUNCTION) &&
+      (nodeType != PROCEDUREFUNCTION)) {
     switch (accessThruMemRef(g)->nodeType) {
     case CONSTANT:
-      gyptr = *(accessThruMemRef(g)->value);
-      break;
     case VARIABLE:
-      gyptr = x;
-    }
-    switch (nodeType) {
-    case SQRT:
-      ternary = mpfr_sqrt(y, gyptr, GMP_RNDN);
-      break;
-    case EXP:
-      ternary = mpfr_exp(y, gyptr, GMP_RNDN);
-      break;
-    case LOG:
-      ternary = mpfr_log(y, gyptr, GMP_RNDN);
-      break;
-    case LOG_2:
-      ternary = mpfr_log2(y, gyptr, GMP_RNDN);
-      break;
-    case LOG_10:
-      ternary = mpfr_log10(y, gyptr, GMP_RNDN);
-      break;
-    case SIN:
-      ternary = mpfr_sin(y, gyptr, GMP_RNDN);
-      break;
-    case COS:
-      ternary = mpfr_cos(y, gyptr, GMP_RNDN);
-      break;
-    case TAN:
-      ternary = mpfr_tan(y, gyptr, GMP_RNDN);
-      break;
-    case ASIN:
-      ternary = mpfr_asin(y, gyptr, GMP_RNDN);
-      break;
-    case ACOS:
-      ternary = mpfr_acos(y, gyptr, GMP_RNDN);
-      break;
-    case ATAN:
-      ternary = mpfr_atan(y, gyptr, GMP_RNDN);
-      break;
-    case SINH:
-      ternary = mpfr_sinh(y, gyptr, GMP_RNDN);
-      break;
-    case COSH:
-      ternary = mpfr_cosh(y, gyptr, GMP_RNDN);
-      break;
-    case TANH:
-      ternary = mpfr_tanh(y, gyptr, GMP_RNDN);
-      break;
-    case ASINH:
-      ternary = mpfr_asinh(y, gyptr, GMP_RNDN);
-      break;
-    case ACOSH:
-      ternary = mpfr_acosh(y, gyptr, GMP_RNDN);
-      break;
-    case ATANH:
-      ternary = mpfr_atanh(y, gyptr, GMP_RNDN);
-      break;
-    case ERF:
-      ternary = mpfr_erf(y, gyptr, GMP_RNDN);
-      break;
-    case ERFC:
-      ternary = mpfr_erfc(y, gyptr, GMP_RNDN);
-      break;
-    case LOG_1P:
-      ternary = mpfr_log1p(y, gyptr, GMP_RNDN);
-      break;
-    case EXP_M1:
-      ternary = mpfr_expm1(y, gyptr, GMP_RNDN);
+      switch (accessThruMemRef(g)->nodeType) {
+      case CONSTANT:
+	gyptr = *(accessThruMemRef(g)->value);
+	break;
+      case VARIABLE:
+	gyptr = x;
+      }
+      switch (nodeType) {
+      case SQRT:
+	ternary = mpfr_sqrt(y, gyptr, GMP_RNDN);
+	break;
+      case EXP:
+	ternary = mpfr_exp(y, gyptr, GMP_RNDN);
+	break;
+      case LOG:
+	ternary = mpfr_log(y, gyptr, GMP_RNDN);
+	break;
+      case LOG_2:
+	ternary = mpfr_log2(y, gyptr, GMP_RNDN);
+	break;
+      case LOG_10:
+	ternary = mpfr_log10(y, gyptr, GMP_RNDN);
+	break;
+      case SIN:
+	ternary = mpfr_sin(y, gyptr, GMP_RNDN);
+	break;
+      case COS:
+	ternary = mpfr_cos(y, gyptr, GMP_RNDN);
+	break;
+      case TAN:
+	ternary = mpfr_tan(y, gyptr, GMP_RNDN);
+	break;
+      case ASIN:
+	ternary = mpfr_asin(y, gyptr, GMP_RNDN);
+	break;
+      case ACOS:
+	ternary = mpfr_acos(y, gyptr, GMP_RNDN);
+	break;
+      case ATAN:
+	ternary = mpfr_atan(y, gyptr, GMP_RNDN);
+	break;
+      case SINH:
+	ternary = mpfr_sinh(y, gyptr, GMP_RNDN);
+	break;
+      case COSH:
+	ternary = mpfr_cosh(y, gyptr, GMP_RNDN);
+	break;
+      case TANH:
+	ternary = mpfr_tanh(y, gyptr, GMP_RNDN);
+	break;
+      case ASINH:
+	ternary = mpfr_asinh(y, gyptr, GMP_RNDN);
+	break;
+      case ACOSH:
+	ternary = mpfr_acosh(y, gyptr, GMP_RNDN);
+	break;
+      case ATANH:
+	ternary = mpfr_atanh(y, gyptr, GMP_RNDN);
+	break;
+      case ERF:
+	ternary = mpfr_erf(y, gyptr, GMP_RNDN);
+	break;
+      case ERFC:
+	ternary = mpfr_erfc(y, gyptr, GMP_RNDN);
+	break;
+      case LOG_1P:
+	ternary = mpfr_log1p(y, gyptr, GMP_RNDN);
+	break;
+      case EXP_M1:
+	ternary = mpfr_expm1(y, gyptr, GMP_RNDN);
+	break;
+      default:
+	return POINT_EVAL_FAILURE;
+	break;
+      }
+      __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, mpfr_get_prec(y));
+      if (ternary == 0) return POINT_EVAL_EXACT;
+      return POINT_EVAL_CORRECTLY_ROUNDED;
       break;
     default:
-      return POINT_EVAL_FAILURE;
       break;
     }
-    __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, mpfr_get_prec(y));
-    if (ternary == 0) return POINT_EVAL_EXACT;
-    return POINT_EVAL_CORRECTLY_ROUNDED;
-    break;
-  default:
-    break;
   }
 
   /* Handle the general case */
@@ -7990,6 +8016,12 @@ static inline point_eval_t __tryFaithEvaluationOptimizedUnivariate(mpfr_t y, int
     case EXP_M1:
       ternary = mpfr_expm1(y, *t, GMP_RNDN);
       break;
+    case LIBRARYFUNCTION:
+    case PROCEDUREFUNCTION:
+      res = __tryFaithEvaluationOptimizedUnivariateImpreciseArg(y, nodeType, *t, resG, cutoff, cutoffX, f);
+      clearChosenMpfrPtr(t, &v_t);
+      return res;
+      break;
     default:
       clearChosenMpfrPtr(t, &v_t);
       return POINT_EVAL_FAILURE;
@@ -8002,7 +8034,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedUnivariate(mpfr_t y, int
   case POINT_EVAL_CORRECTLY_ROUNDED:
   case POINT_EVAL_FAITHFULLY_ROUNDED:
   case POINT_EVAL_BELOW_CUTOFF:
-    res = __tryFaithEvaluationOptimizedUnivariateImpreciseArg(y, nodeType, *t, resG, cutoff, cutoffX);
+    res = __tryFaithEvaluationOptimizedUnivariateImpreciseArg(y, nodeType, *t, resG, cutoff, cutoffX, f);
     clearChosenMpfrPtr(t, &v_t);
     return res;
     break;
@@ -8057,6 +8089,8 @@ static inline int __tryFaithEvaluationOptimizedFuncSupported(node *f) {
   case ERFC:
   case LOG_1P:
   case EXP_M1:
+  case LIBRARYFUNCTION:
+  case PROCEDUREFUNCTION:
     return __tryFaithEvaluationOptimizedFuncSupported(f->child1);
     break;
   default:
@@ -8151,7 +8185,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedHooks(mpfr_t y, eval_hoo
   if (prec < minPrec) prec = minPrec;
   __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, prec);
   
-  Y = chooseAndInitMpfiPtr(&v_Y, mpfr_get_prec(y) + 3);
+  Y = chooseAndInitMpfiPtr(&v_Y, mpfr_get_prec(y) + 5);
   X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(x));
   
   sollya_mpfi_set_fr(*X, x);
@@ -8401,7 +8435,9 @@ static inline point_eval_t __tryFaithEvaluationOptimizedDoIt(mpfr_t y, node *f, 
   case ERFC:
   case LOG_1P:
   case EXP_M1:
-    return __tryFaithEvaluationOptimizedUnivariate(y, f->nodeType, f->child1, x, cutoff, minPrec, maxPrecUsed);
+  case LIBRARYFUNCTION:
+  case PROCEDUREFUNCTION:
+    return __tryFaithEvaluationOptimizedUnivariate(y, f->nodeType, f->child1, x, cutoff, minPrec, maxPrecUsed, f);
     break;
   default:
     return POINT_EVAL_FAILURE;
@@ -8487,7 +8523,6 @@ static inline int firstTryEvaluateFaithfulWithCutOffFastInternalImplementation(i
     if (__tryFaithEvaluationOptimized(retVal, y, func, x, myCutoff, startprec, &maxPrecUsed)) {
       return 1;
     }
-    // sollyaFprintf(stderr, "func = %b, x = %v, prec(y) = %lld: failure with %lld bits\n", func, x, mpfr_get_prec(y), maxPrecUsed);
   }    
 
   /* Get the precisions of the x and y arguments */

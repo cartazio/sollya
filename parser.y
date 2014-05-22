@@ -3603,7 +3603,7 @@ help:                   CONSTANTTOKEN
 #ifdef HELP_ANNOTATEFUNCTION_TEXT
 			    outputMode(); sollyaPrintf(HELP_ANNOTATEFUNCTION_TEXT);
 #else
-			    outputMode(); sollyaPrintf("Remez: annotatefunction(f,p,dom,delta[,t]).\n");
+			    outputMode(); sollyaPrintf("Function annotation: annotatefunction(f,p,dom,delta[,t]).\n");
 #if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
 #warning "No help text for ANNOTATEFUNCTION"
 #endif
