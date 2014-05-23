@@ -14347,22 +14347,6 @@ void freeThing(node *tree) {
 	sollya_mpfi_clear(*(tree->evalCacheY));
 	safeFree(tree->evalCacheY);
       }
-      if (tree->quasiPointNoAdaptCacheX != NULL) {
-	sollya_mpfi_clear(*(tree->quasiPointNoAdaptCacheX));
-	safeFree(tree->quasiPointNoAdaptCacheX);
-      }
-      if (tree->quasiPointNoAdaptCacheY != NULL) {
-	sollya_mpfi_clear(*(tree->quasiPointNoAdaptCacheY));
-	safeFree(tree->quasiPointNoAdaptCacheY);
-      }
-      if (tree->quasiPointCacheX != NULL) {
-	sollya_mpfi_clear(*(tree->quasiPointCacheX));
-	safeFree(tree->quasiPointCacheX);
-      }
-      if (tree->quasiPointCacheY != NULL) {
-	sollya_mpfi_clear(*(tree->quasiPointCacheY));
-	safeFree(tree->quasiPointCacheY);
-      }
       if (tree->pointEvalCacheX != NULL) {
 	mpfr_clear(*(tree->pointEvalCacheX));
 	safeFree(tree->pointEvalCacheX);
