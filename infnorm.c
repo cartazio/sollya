@@ -7121,9 +7121,10 @@ static inline int firstTryEvaluateFaithfulWithCutOffFastInternalImplementation(i
       myCutoff = *cutoff;
     }
     maxPrecUsed = 0;
-    if (__tryFaithEvaluationOptimized(retVal, y, func, x, myCutoff, ((startprec << 1) < 12 ? 12 : startprec << 1), &maxPrecUsed)) {
+    if (__tryFaithEvaluationOptimized(retVal, y, func, x, myCutoff, startprec, &maxPrecUsed)) {
       return 1;
     }
+    // sollyaFprintf(stderr, "Optimized faithful evaluation: failure: f = %b, x = %v, prec(y) = %lld, cutoff = %lld: maxPrecUsed = %lld\n", func, x, mpfr_get_prec(y), myCutoff, maxPrecUsed);
   }    
 
   /* Get the precisions of the x and y arguments */
