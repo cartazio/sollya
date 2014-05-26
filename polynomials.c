@@ -2906,7 +2906,7 @@ static inline char *constantToString(constant_t c) {
 }
 
 static inline constant_t constantAdd(constant_t a, constant_t b) {
-  node *aExpr, *bExpr, *cExpr, *cExprT1, *cExprT2;
+  node *aExpr, *bExpr, *cExpr;
   constant_t res;
   mpq_t aS, bS, cS;
   mp_exp_t EA, EB, EC;
@@ -2933,13 +2933,7 @@ static inline constant_t constantAdd(constant_t a, constant_t b) {
     */
     aExpr = constantToExpression(a);
     bExpr = constantToExpression(b);
-    cExprT1 = addMemRef(makeAdd(copyThing(aExpr), copyThing(bExpr)));
-    cExprT2 = addMemRef(dagifyTree(cExprT1, aExpr));
-    cExpr = addMemRef(dagifyTree(cExprT2, bExpr));
-    freeThing(aExpr);
-    freeThing(bExpr);
-    freeThing(cExprT1);
-    freeThing(cExprT2);
+    cExpr = addMemRef(makeAdd(aExpr, bExpr));
     res = constantFromExpression(cExpr);
     freeThing(cExpr);
     return res;
@@ -3292,7 +3286,7 @@ static inline constant_t constantSub(constant_t a, constant_t b) {
 }
 
 static inline constant_t constantMul(constant_t a, constant_t b) {
-  node *aExpr, *bExpr, *cExpr, *cExprT1, *cExprT2;
+  node *aExpr, *bExpr, *cExpr;
   constant_t res;
   mpq_t aS, bS, cS;
   mp_exp_t EA, EB, EC;
@@ -3318,13 +3312,7 @@ static inline constant_t constantMul(constant_t a, constant_t b) {
     */
     aExpr = constantToExpression(a);
     bExpr = constantToExpression(b);
-    cExprT1 = addMemRef(makeMul(copyThing(aExpr), copyThing(bExpr)));
-    cExprT2 = addMemRef(dagifyTree(cExprT1, aExpr));
-    cExpr = addMemRef(dagifyTree(cExprT2, bExpr));
-    freeThing(aExpr);
-    freeThing(bExpr);
-    freeThing(cExprT1);
-    freeThing(cExprT2);
+    cExpr = addMemRef(makeMul(aExpr, bExpr));
     res = constantFromExpression(cExpr);
     freeThing(cExpr);
     return res;

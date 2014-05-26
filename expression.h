@@ -316,7 +316,6 @@ int mpfr_to_mpq( mpq_t y, mpfr_t x);
 int mpfr_to_mpz( mpz_t y, mpfr_t x);
 mp_prec_t getMpzPrecision(mpz_t x);
 int containsOnlyRealNumbers(node * tree);
-node *dagifyTree(node *tree, node *factor);
 
 node *makeVariable();
 node *makeConstant(mpfr_t x);
