@@ -3517,23 +3517,7 @@ int isTrivialInfnormCase(rangetype result, node *func) {
   return isTrivial;
 }
 
-void  uncertifiedInfnormInner(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned long int points, mp_prec_t prec);
-
 void uncertifiedInfnorm(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned long int points, mp_prec_t prec) {
-  mpfr_t myres;
-
-  if (prec >= mpfr_get_prec(result)) {
-    uncertifiedInfnormInner(result, f, a, b, points, prec);
-    return;
-  }
-
-  mpfr_init2(myres, prec);
-  uncertifiedInfnormInner(myres, f, a, b, points, prec);
-  mpfr_set(result, myres, GMP_RNDN); /* exact */
-  mpfr_clear(myres);
-}
-
-void uncertifiedInfnormInner(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned long int points, mp_prec_t prec) {
   mpfr_t current_x, x1, x2, x3, step, y1, y2, y3, max, cutoff;
   mpfr_t ystar, y1diff, y3diff, xstar;
   mpfr_t zero_mpfr;
@@ -3715,7 +3699,8 @@ void uncertifiedInfnormInner(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigne
     }
 
     /* Call to Newton's algorithm if necessary */
-    if ( (mpfr_cmpabs(y2,y1)>=0) && (mpfr_cmpabs(y2,y3)>=0) && (mpfr_cmp_d(y2,0.)!=0) ) {
+    if (( (mpfr_cmpabs(y2,y1)>=0) && (mpfr_cmpabs(y2,y3)>=0) && (mpfr_cmp_d(y2,0.)!=0) ) || (r == 2)) {
+
       if (f_diff2 == NULL) f_diff2 = differentiate(f_diff);
 
       r = evaluateFaithfulWithCutOffFast(y1diff, f_diff, f_diff2, x1, zero_mpfr, prec+10);
@@ -3731,6 +3716,7 @@ void uncertifiedInfnormInner(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigne
                                                      /* use Newton's algorithm since we already have */
                                                      /* the zero. Moreover, note that y1 and y3 have */
                                                      /* already been taken into account in max.      */
+
 	findZero(xstar, f_diff, f_diff2, x1, x3, mpfr_sgn(y1diff), NULL, 0, (prec_bound >> 1) + 10);
 
 	/* If xstar = NaN, a warning has already been produced by Newton's algorithm. */
@@ -5150,13 +5136,17 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
 								    mpfr_t y, int subtract, node *g, node *h, mpfr_t x, mp_exp_t cutoff, 
 								    mp_prec_t prec, mp_prec_t minPrec,
 								    mp_prec_t *maxPrecUsed) {
-  mpfr_t v_gy, v_hy, v_radiusG, v_radiusH;
-  mpfr_t *gy, *hy, *radiusG, *radiusH;
-  point_eval_t resG, resH;
-  int ternary;
-  mp_exp_t gotBits;
+  mpfr_t v_gy, v_hy, v_t;
+  mpfr_t *gy, *hy, *t;
+  point_eval_t resG, resH, res;
+  int ternary, tern1, tern2;
   mp_exp_t recCutoff, recCutoffG, recCutoffH, recCutoffGP, recCutoffHP;
   mp_prec_t recMaxPrecUsedG, recMaxPrecUsedH;
+  sollya_mpfi_t v_X, v_Y, v_Z;
+  sollya_mpfi_t *X, *Y, *Z;
+  int zeroG, zeroH;
+  mp_exp_t expBeforeCancel, expAfterCancel; 
+  mp_prec_t lostPrec, newPrecCutoff;
 
   *retry = 0;
   *newPrecSet = 0;
@@ -5181,9 +5171,11 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
   case POINT_EVAL_EXACT:
   case POINT_EVAL_CORRECTLY_ROUNDED:
   case POINT_EVAL_FAITHFULLY_ROUNDED:
-    recCutoffHP = mpfr_get_exp(*gy) - mpfr_get_prec(y) - 5;
-    if (recCutoffHP >= 0) recCutoffHP = -1;
-    if (recCutoffHP > recCutoffH) recCutoffH = recCutoffHP;
+    if (mpfr_number_p(*gy) && (!mpfr_zero_p(*gy))) {
+      recCutoffHP = mpfr_get_exp(*gy) - mpfr_get_prec(y) - 5;
+      if (recCutoffHP >= 0) recCutoffHP = -1;
+      if (recCutoffHP > recCutoffH) recCutoffH = recCutoffHP;
+    }
     break;
   default:
     break;
@@ -5195,12 +5187,14 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
     case POINT_EVAL_EXACT:
     case POINT_EVAL_CORRECTLY_ROUNDED:
     case POINT_EVAL_FAITHFULLY_ROUNDED:
-      recCutoffGP = mpfr_get_exp(*hy) - mpfr_get_prec(y) - 5;
-      if (recCutoffGP >= 0) recCutoffGP = -1;
-      if (recCutoffGP > recCutoffG) { 
-	recCutoffG = recCutoffGP;
-	recMaxPrecUsedH = 0;
-	resG = __tryFaithEvaluationOptimizedDoIt(*gy, g, x, recCutoffG, minPrec, &recMaxPrecUsedG);
+      if (mpfr_number_p(*hy) && (!mpfr_zero_p(*hy))) {
+	recCutoffGP = mpfr_get_exp(*hy) - mpfr_get_prec(y) - 5;
+	if (recCutoffGP >= 0) recCutoffGP = -1;
+	if (recCutoffGP > recCutoffG) { 
+	  recCutoffG = recCutoffGP;
+	  recMaxPrecUsedH = 0;
+	  resG = __tryFaithEvaluationOptimizedDoIt(*gy, g, x, recCutoffG, minPrec, &recMaxPrecUsedG);
+	}
       }
       break;
     default:
@@ -5232,28 +5226,6 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
     return POINT_EVAL_CORRECTLY_ROUNDED;    
   }
   
-  if ((resG == POINT_EVAL_EXACT) && mpfr_zero_p(*gy)) {
-    if (subtract) {
-      ternary = mpfr_neg(y, *hy, GMP_RNDN);
-    } else {
-      ternary = mpfr_set(y, *hy, GMP_RNDN);
-    }
-    clearChosenMpfrPtr(hy, &v_hy);
-    clearChosenMpfrPtr(gy, &v_gy);
-    if (ternary == 0) return resH;
-    /* TODO: Proof required */
-    return POINT_EVAL_FAITHFULLY_ROUNDED;    
-  }
-
-  if ((resH == POINT_EVAL_EXACT) && mpfr_zero_p(*hy)) {
-    ternary = mpfr_set(y, *hy, GMP_RNDN);
-    clearChosenMpfrPtr(hy, &v_hy);
-    clearChosenMpfrPtr(gy, &v_gy);
-    if (ternary == 0) return resG;
-    /* TODO: Proof required */
-    return POINT_EVAL_FAITHFULLY_ROUNDED;    
-  }
-
   if ((!mpfr_number_p(*gy)) ||
       (!mpfr_number_p(*hy))) {
     clearChosenMpfrPtr(hy, &v_hy);
@@ -5262,233 +5234,180 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
     return POINT_EVAL_FAILURE;
   }
 
-  radiusG = chooseAndInitMpfrPtr(&v_radiusG, 12);
-  radiusH = chooseAndInitMpfrPtr(&v_radiusH, 12);
-
   switch (resG) {
   case POINT_EVAL_FAILURE:
-    clearChosenMpfrPtr(radiusH, &v_radiusH);
-    clearChosenMpfrPtr(radiusG, &v_radiusG);    
     clearChosenMpfrPtr(hy, &v_hy);
-    clearChosenMpfrPtr(gy, &v_gy);    
-    *retry = 0;
+    clearChosenMpfrPtr(gy, &v_gy);
     return POINT_EVAL_FAILURE;
     break;
   case POINT_EVAL_EXACT:
-    mpfr_set_si(*radiusG, 0, GMP_RNDN); /* exact */
+    X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(*gy));
+    sollya_mpfi_set_fr(*X, *gy);
     break;
   case POINT_EVAL_CORRECTLY_ROUNDED:
-    if (mpfr_zero_p(*gy)) {
-      /* This case should never happen */
-      mpfr_abs(*radiusG, *gy, GMP_RNDU);
-      mpfr_nextabove(*radiusG);
-    } else {
-      mpfr_set_si_2exp(*radiusG, 1, mpfr_get_exp(*gy) - mpfr_get_prec(*gy) - 1, GMP_RNDN); /* exact */
-    }
+    X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(*gy) + 1);
+    sollya_mpfi_set_fr(*X, *gy);
+    sollya_mpfi_blow_1ulp(*X);
     break;
   case POINT_EVAL_FAITHFULLY_ROUNDED:
-    if (mpfr_zero_p(*gy)) {
-      /* This case should never happen */
-      mpfr_abs(*radiusG, *gy, GMP_RNDU);
-      mpfr_nextabove(*radiusG);
-      mpfr_nextabove(*radiusG);
-    } else {
-      mpfr_set_si_2exp(*radiusG, 1, mpfr_get_exp(*gy) - mpfr_get_prec(*gy), GMP_RNDN); /* exact */
-    }    
+    X = chooseAndInitMpfiPtr(&v_Y, mpfr_get_prec(*gy));
+    sollya_mpfi_set_fr(*X, *gy);
+    sollya_mpfi_blow_1ulp(*X);
     break;
   case POINT_EVAL_BELOW_CUTOFF:
-    mpfr_set_si(*gy, 0, GMP_RNDN);
-    mpfr_set_si_2exp(*radiusG, 1, recCutoffG, GMP_RNDN); /* exact */
+    X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(*gy));
+    sollya_mpfi_interv_si_2exp(*X, -1, recCutoffG, 1, recCutoffG);
     break;
   }
-
+  
   switch (resH) {
   case POINT_EVAL_FAILURE:
-    clearChosenMpfrPtr(radiusH, &v_radiusH);
-    clearChosenMpfrPtr(radiusG, &v_radiusG);    
+    clearChosenMpfiPtr(X, &v_X);    
     clearChosenMpfrPtr(hy, &v_hy);
-    clearChosenMpfrPtr(gy, &v_gy);    
-    *retry = 0;
+    clearChosenMpfrPtr(gy, &v_gy);
     return POINT_EVAL_FAILURE;
     break;
   case POINT_EVAL_EXACT:
-    mpfr_set_si(*radiusH, 0, GMP_RNDN); /* exact */
+    Y = chooseAndInitMpfiPtr(&v_Y, mpfr_get_prec(*hy));
+    sollya_mpfi_set_fr(*Y, *hy);
     break;
   case POINT_EVAL_CORRECTLY_ROUNDED:
-    if (mpfr_zero_p(*hy)) {
-      /* This case should never happen */
-      mpfr_abs(*radiusH, *hy, GMP_RNDU);
-      mpfr_nextabove(*radiusH);
-    } else {
-      mpfr_set_si_2exp(*radiusH, 1, mpfr_get_exp(*hy) - mpfr_get_prec(*hy) - 1, GMP_RNDN); /* exact */
-    }
+    Y = chooseAndInitMpfiPtr(&v_Y, mpfr_get_prec(*hy) + 1);
+    sollya_mpfi_set_fr(*Y, *hy);
+    sollya_mpfi_blow_1ulp(*Y);
     break;
   case POINT_EVAL_FAITHFULLY_ROUNDED:
-    if (mpfr_zero_p(*hy)) {
-      /* This case should never happen */
-      mpfr_abs(*radiusH, *gy, GMP_RNDU);
-      mpfr_nextabove(*radiusH);
-      mpfr_nextabove(*radiusH);
-    } else {
-      mpfr_set_si_2exp(*radiusH, 1, mpfr_get_exp(*hy) - mpfr_get_prec(*hy), GMP_RNDN); /* exact */
-    }    
+    Y = chooseAndInitMpfiPtr(&v_Y, mpfr_get_prec(*hy));
+    sollya_mpfi_set_fr(*Y, *hy);
+    sollya_mpfi_blow_1ulp(*Y);
     break;
   case POINT_EVAL_BELOW_CUTOFF:
-    mpfr_set_si(*hy, 0, GMP_RNDN);
-    mpfr_set_si_2exp(*radiusH, 1, recCutoffH, GMP_RNDN); /* exact */
+    Y = chooseAndInitMpfiPtr(&v_Y, mpfr_get_prec(*hy));
+    sollya_mpfi_interv_si_2exp(*Y, -1, recCutoffH, 1, recCutoffH);
     break;
   }
-  
-  /* Mid-point radius interval addition/subtraction */
-  mpfr_add(*radiusG, *radiusG, *radiusH, GMP_RNDU);
+  Z = chooseAndInitMpfiPtr(&v_Z, (mpfr_get_prec(*gy) > mpfr_get_prec(*hy)? mpfr_get_prec(*gy) : mpfr_get_prec(*hy)) + 10);
+
   if (subtract) {
-    ternary = mpfr_sub(y, *gy, *hy, GMP_RNDN);
+    sollya_mpfi_sub(*Z, *X, *Y);
   } else {
-    ternary = mpfr_add(y, *gy, *hy, GMP_RNDN);
+    sollya_mpfi_add(*Z, *X, *Y);
   }
-  if (!mpfr_number_p(y)) {
-    clearChosenMpfrPtr(radiusH, &v_radiusH);
-    clearChosenMpfrPtr(radiusG, &v_radiusG);    
-    clearChosenMpfrPtr(hy, &v_hy);
-    clearChosenMpfrPtr(gy, &v_gy);    
-    *retry = 0;
-    return POINT_EVAL_FAILURE;
-  }
-  if (ternary != 0) {
-    if (mpfr_zero_p(y)) {
-      /* This case should never happen */
-      mpfr_abs(*radiusH, y, GMP_RNDU);
-      mpfr_nextabove(*radiusH);
-    } else {
-      mpfr_set_si_2exp(*radiusH, 1, mpfr_get_exp(y) - mpfr_get_prec(y) - 1, GMP_RNDN); /* exact */
-    }
-    mpfr_add(*radiusG, *radiusG, *radiusH, GMP_RNDU);
-  }
-  if (!mpfr_number_p(*radiusG)) {
-    clearChosenMpfrPtr(radiusH, &v_radiusH);
-    clearChosenMpfrPtr(radiusG, &v_radiusG);    
-    clearChosenMpfrPtr(hy, &v_hy);
-    clearChosenMpfrPtr(gy, &v_gy);    
-    *retry = 0;
-    return POINT_EVAL_FAILURE;
-  }
-  
-  /* Look at y and its associated radius (radiusG) to see if we got a
-     useful result 
+
+  t = chooseAndInitMpfrPtr(&v_t, mpfr_get_prec(y));
+
+  /* HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
   */
-  if (mpfr_zero_p(*radiusG)) {
-    clearChosenMpfrPtr(radiusH, &v_radiusH);
-    clearChosenMpfrPtr(radiusG, &v_radiusG);    
-    clearChosenMpfrPtr(hy, &v_hy);
-    clearChosenMpfrPtr(gy, &v_gy);    
-    return POINT_EVAL_EXACT;
-  }
+  tern1 = mpfr_set(y, &((*Z)->left), GMP_RNDN); /* rounds to final precision */
+  tern2 = mpfr_set(*t, &((*Z)->right), GMP_RNDN); /* rounds to final precision */
 
-  if (mpfr_cmpabs(y, *radiusG) <= 0) {
-    /* We don't even know the sign of y 
-
-       Check the cutoff.
-
-    */
-    if (mpfr_get_exp(*radiusG) < cutoff) {
-      clearChosenMpfrPtr(radiusH, &v_radiusH);
-      clearChosenMpfrPtr(radiusG, &v_radiusG);    
-      clearChosenMpfrPtr(hy, &v_hy);
-      clearChosenMpfrPtr(gy, &v_gy);    
-      return POINT_EVAL_BELOW_CUTOFF;
+  if (mpfr_number_p(*t) && mpfr_number_p(y)) {
+    if (mpfr_equal_p(*t, y)) {
+      if ((tern1 == 0) && (tern2 == 0)) {
+	res = POINT_EVAL_EXACT;
+      } else {
+	res = POINT_EVAL_CORRECTLY_ROUNDED;
+      }
     } else {
-      *retry = 1;
-      *newPrecSet = 0;
-      if (mpfr_number_p(*gy) &&
-	  (!mpfr_zero_p(*gy)) &&
-	  (mpfr_get_exp(*gy) > cutoff) &&
-	  (mpfr_get_exp(*gy) - cutoff < 8 * prec + 10)) {
-	*newPrecSet = 1;
-	*newPrec = mpfr_get_exp(*gy) - cutoff + 10;
-	if (*newPrec < 2 * prec) {
-	  *newPrecSet = 0;
+      if (mpfr_cmp(y, *t) < 0) {
+	mpfr_nextbelow(*t);
+	if (mpfr_equal_p(*t, y)) {
+	  res = POINT_EVAL_FAITHFULLY_ROUNDED;
+	} else {
+	  if ((!(sollya_mpfi_has_nan(*Z) || sollya_mpfi_has_infinity(*Z))) && (sollya_mpfi_max_exp(*Z) < cutoff)) {
+	    res = POINT_EVAL_BELOW_CUTOFF;
+	  } else {
+	    res = POINT_EVAL_FAILURE;
+	  }
+	}
+      } else {
+	if ((!(sollya_mpfi_has_nan(*Z) || sollya_mpfi_has_infinity(*Z))) && (sollya_mpfi_max_exp(*Z) < cutoff)) {
+	  res = POINT_EVAL_BELOW_CUTOFF;
+	} else {
+	  res = POINT_EVAL_FAILURE;
 	}
       }
-      clearChosenMpfrPtr(radiusH, &v_radiusH);
-      clearChosenMpfrPtr(radiusG, &v_radiusG);    
-      clearChosenMpfrPtr(hy, &v_hy);
-      clearChosenMpfrPtr(gy, &v_gy);    
-      return POINT_EVAL_FAILURE;
     }
-  }
-  
-  /* Here, we know at least the sign of y. 
-
-     We are sure that y != 0 and radiusG != 0.
-
-     Compute the mi-ulp resp. quarter-ulp of y in radiusH.
-     
-  */
-  mpfr_set_si_2exp(*radiusH, 1, mpfr_get_exp(y) - 1, GMP_RNDN); /* exact */
-  if (mpfr_cmpabs(y, *radiusH) == 0) {
-    /* y is an integer power of 2, compute a quarter-ulp */
-    mpfr_set_si_2exp(*radiusH, 1, mpfr_get_exp(y) - mpfr_get_prec(y) - 2, GMP_RNDN); /* exact */
   } else {
-    /* y is not an integer power of 2, compute a mi-ulp */
-    mpfr_set_si_2exp(*radiusH, 1, mpfr_get_exp(y) - mpfr_get_prec(y) - 1, GMP_RNDN); /* exact */
-  }
-
-  /* If the error radius on y (radiusG) is (strictly) less than a mi-ulp (resp. quarter-ulp) of
-     y, we got a correct rounding. 
-  */
-  if (mpfr_cmp(*radiusG, *radiusH) < 0) {
-    clearChosenMpfrPtr(radiusH, &v_radiusH);
-    clearChosenMpfrPtr(radiusG, &v_radiusG);    
-    clearChosenMpfrPtr(hy, &v_hy);
-    clearChosenMpfrPtr(gy, &v_gy);    
-    return POINT_EVAL_CORRECTLY_ROUNDED;
-  }
-
-  /* Multiply the maxium error (in radiusH) by two. */
-  mpfr_mul_2si(*radiusH, *radiusH, 1, GMP_RNDN); /* exact */
-  
-  /* If the error radius on y (radiusG) is (strictly) less than an ulp (resp. mi-ulp) of
-     y, we got a faithful rounding. 
-  */
-  if (mpfr_cmp(*radiusG, *radiusH) < 0) {
-    clearChosenMpfrPtr(radiusH, &v_radiusH);
-    clearChosenMpfrPtr(radiusG, &v_radiusG);    
-    clearChosenMpfrPtr(hy, &v_hy);
-    clearChosenMpfrPtr(gy, &v_gy);    
-    return POINT_EVAL_FAITHFULLY_ROUNDED;
-  }
-
-  /* Here, we have precise rounding to the precision of y yet but we
-     have some bits. 
-
-     Consider the amount of bits we have and add what is missing to newPrec.
-
-  */
-  gotBits = mpfr_get_exp(y) - mpfr_get_exp(*radiusG) - 1;
-
-  *retry = 1;
-  if (gotBits >= 4) {
-    *newPrecSet = 1;
-    *newPrec = (prec - gotBits) + mpfr_get_prec(y) + 10;
-  } else {
-    *newPrecSet = 0;
-    if (mpfr_number_p(*gy) &&
-	(!mpfr_zero_p(*gy)) &&
-	(mpfr_get_exp(*gy) > cutoff) &&
-	(mpfr_get_exp(*gy) - cutoff < 8 * prec + 10)) {
-      *newPrecSet = 1;
-      *newPrec = mpfr_get_exp(*gy) - cutoff + 10;
-      if (*newPrec < 2 * prec) {
-	*newPrecSet = 0;
-      }
+    if ((!(sollya_mpfi_has_nan(*Z) || sollya_mpfi_has_infinity(*Z))) && (sollya_mpfi_max_exp(*Z) < cutoff)) {
+      res = POINT_EVAL_BELOW_CUTOFF;
+    } else {
+      res = POINT_EVAL_FAILURE;
     }
   }
 
-  clearChosenMpfrPtr(radiusH, &v_radiusH);
-  clearChosenMpfrPtr(radiusG, &v_radiusG);    
+  /* If we couldn't compute an answer, try find a precision at which
+     we might be able to compute an answer 
+  */
+  if ((res == POINT_EVAL_FAILURE) &&
+      (resG != POINT_EVAL_FAILURE) &&
+      (resH != POINT_EVAL_FAILURE) &&
+      mpfr_number_p(*gy) &&
+      mpfr_number_p(*hy) &&
+      (!(sollya_mpfi_has_nan(*Z) || sollya_mpfi_has_infinity(*Z)))) {
+    zeroG = mpfr_zero_p(*gy);
+    zeroH = mpfr_zero_p(*hy);
+    if (zeroG && zeroH) {
+      /* f(x) = g(x) + h(x), g(x) and h(x) both cancel, cutoff not yet
+	 met. 
+      */
+      *retry = 1;
+      *newPrecSet = 0;
+    } else {
+      if (!(zeroG || zeroH)) {
+	/* Got exponent of both terms g(x) and h(x) */
+	if (sollya_mpfi_is_zero(*Z)) {
+	  /* Cancels out completely, need at least all cancelled bits
+	     plus the bits of y to get the bits of y 
+	  */
+	  *newPrec = mpfr_get_prec(y) + sollya_mpfi_get_prec(*Z) + 5;
+	  *newPrecSet = 1;
+	  *retry = 1;
+	} else {
+	  /* Does not cancel out completely; estimate the number of
+	     bits that cancelled. 
+	  */
+	  if (zeroG) {
+	    expBeforeCancel = mpfr_get_exp(*hy);
+	  } else {
+	    if (zeroH) {
+	      expBeforeCancel = mpfr_get_exp(*gy);
+	    } else {
+	      expBeforeCancel = mpfr_get_exp(*gy);
+	      if (mpfr_get_exp(*hy) > expBeforeCancel) expBeforeCancel = mpfr_get_exp(*hy);
+	    }
+	  }
+	  expAfterCancel = sollya_mpfi_max_exp(*Z);
+	  lostPrec = expBeforeCancel - expAfterCancel + 4;
+	  *newPrec = prec + lostPrec + 10;
+	  if (*newPrec < 12) *newPrec = 12;
+	  if (*newPrec < minPrec) *newPrec = minPrec;
+	  if (*newPrec < (prec + 10)) *newPrec = prec + 10;
+	  if ((lostPrec < 1) || (*newPrec > 2 * prec + 10)) *newPrec = 2 * prec + 10;
+	  if ((expBeforeCancel > mpfr_get_emin_min() + 10 + 2 * prec) &&
+	      (expBeforeCancel - (2 * prec + 10) <= cutoff) &&
+	      (expBeforeCancel > cutoff)) {
+	    newPrecCutoff = expBeforeCancel - cutoff;
+	    if (newPrecCutoff > *newPrec) {
+	      *newPrec = newPrecCutoff;
+	    }
+	  }
+	  *newPrecSet = 1;
+	  *retry = 1;
+	}
+      } 
+    }
+  }
+
+
+  clearChosenMpfrPtr(t, &v_t);    
+  clearChosenMpfiPtr(Z, &v_Z);    
+  clearChosenMpfiPtr(Y, &v_Y);    
+  clearChosenMpfiPtr(X, &v_X);    
   clearChosenMpfrPtr(hy, &v_hy);
   clearChosenMpfrPtr(gy, &v_gy);    
-  return POINT_EVAL_FAILURE;
+  return res;
 }
 
 static inline point_eval_t __tryFaithEvaluationOptimizedAddSubMain(mpfr_t y, int subtract, node *g, node *h, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_prec_t *maxPrecUsed) {
@@ -5497,7 +5416,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubMain(mpfr_t y, int
   int retry, newPrecSet;
   mp_prec_t recMaxPrecUsed;
 
-  prec = mpfr_get_prec(y) + 15;
+  prec = mpfr_get_prec(y) + 20;
   if (prec < minPrec) prec = minPrec;
 
   /* 1st try */
@@ -7080,6 +6999,7 @@ static inline int __tryFaithEvaluationOptimized(int *retVal, mpfr_t y, node *fun
     return 1;
     break;
   case POINT_EVAL_BELOW_CUTOFF:
+    
     if (!mpfr_number_p(y)) return 0;
     *retVal = 2;
     return 1;    
@@ -7122,6 +7042,7 @@ static inline int firstTryEvaluateFaithfulWithCutOffFastInternalImplementation(i
     }
     maxPrecUsed = 0;
     if (__tryFaithEvaluationOptimized(retVal, y, func, x, myCutoff, startprec, &maxPrecUsed)) {
+      
       return 1;
     }
     // sollyaFprintf(stderr, "Optimized faithful evaluation: failure: f = %b, x = %v, prec(y) = %lld, cutoff = %lld: maxPrecUsed = %lld\n", func, x, mpfr_get_prec(y), myCutoff, maxPrecUsed);

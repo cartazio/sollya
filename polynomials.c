@@ -2906,7 +2906,7 @@ static inline char *constantToString(constant_t c) {
 }
 
 static inline constant_t constantAdd(constant_t a, constant_t b) {
-  node *aExpr, *bExpr, *cExpr;
+  node *aExpr, *bExpr, *cExpr, *cExprT1, *cExprT2;
   constant_t res;
   mpq_t aS, bS, cS;
   mp_exp_t EA, EB, EC;
@@ -2931,19 +2931,15 @@ static inline constant_t constantAdd(constant_t a, constant_t b) {
        construct the expression for the operation
        and build the result constant.
     */
-    if (b->type != EXPRESSION) {
-      aExpr = constantToExpression(b);
-      bExpr = constantToExpression(a);
-    } else {
-      aExpr = constantToExpression(a);
-      bExpr = constantToExpression(b);
-    }
-    if (isSyntacticallyEqual(aExpr,bExpr)) {
-      cExpr = addMemRef(makeMul(aExpr, makeConstantInt(2)));
-      freeThing(bExpr);
-    } else {
-      cExpr = addMemRef(makeAdd(aExpr, bExpr));
-    }
+    aExpr = constantToExpression(a);
+    bExpr = constantToExpression(b);
+    cExprT1 = addMemRef(makeAdd(copyThing(aExpr), copyThing(bExpr)));
+    cExprT2 = addMemRef(dagifyTree(cExprT1, aExpr));
+    cExpr = addMemRef(dagifyTree(cExprT2, bExpr));
+    freeThing(aExpr);
+    freeThing(bExpr);
+    freeThing(cExprT1);
+    freeThing(cExprT2);
     res = constantFromExpression(cExpr);
     freeThing(cExpr);
     return res;
@@ -3296,7 +3292,7 @@ static inline constant_t constantSub(constant_t a, constant_t b) {
 }
 
 static inline constant_t constantMul(constant_t a, constant_t b) {
-  node *aExpr, *bExpr, *cExpr;
+  node *aExpr, *bExpr, *cExpr, *cExprT1, *cExprT2;
   constant_t res;
   mpq_t aS, bS, cS;
   mp_exp_t EA, EB, EC;
@@ -3320,19 +3316,15 @@ static inline constant_t constantMul(constant_t a, constant_t b) {
        construct the expression for the operation
        and build the result constant.
     */
-    if (b->type != EXPRESSION) {
-      aExpr = constantToExpression(b);
-      bExpr = constantToExpression(a);
-    } else {
-      aExpr = constantToExpression(a);
-      bExpr = constantToExpression(b);
-    }
-    if (isSyntacticallyEqual(aExpr,bExpr)) {
-      cExpr = addMemRef(makePow(aExpr, makeConstantInt(2)));
-      freeThing(bExpr);
-    } else {
-      cExpr = addMemRef(makeMul(aExpr, bExpr));
-    }
+    aExpr = constantToExpression(a);
+    bExpr = constantToExpression(b);
+    cExprT1 = addMemRef(makeMul(copyThing(aExpr), copyThing(bExpr)));
+    cExprT2 = addMemRef(dagifyTree(cExprT1, aExpr));
+    cExpr = addMemRef(dagifyTree(cExprT2, bExpr));
+    freeThing(aExpr);
+    freeThing(bExpr);
+    freeThing(cExprT1);
+    freeThing(cExprT2);
     res = constantFromExpression(cExpr);
     freeThing(cExpr);
     return res;
@@ -4039,6 +4031,7 @@ static inline constant_t constantRound(constant_t c, mp_prec_t prec) {
 
   return res;
 }
+
 
 /* End of part for constants */
 
@@ -6713,6 +6706,7 @@ static inline unsigned int sparsePolynomialGetReferenceCount(sparse_polynomial_t
   if (p == NULL) return 0u;
   return p->refCount;
 }
+
 
 /* End of part for sparse polynomials */
 

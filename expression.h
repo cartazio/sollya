@@ -316,6 +316,7 @@ int mpfr_to_mpq( mpq_t y, mpfr_t x);
 int mpfr_to_mpz( mpz_t y, mpfr_t x);
 mp_prec_t getMpzPrecision(mpz_t x);
 int containsOnlyRealNumbers(node * tree);
+node *dagifyTree(node *tree, node *factor);
 
 node *makeVariable();
 node *makeConstant(mpfr_t x);
@@ -363,6 +364,7 @@ node *makeAsinh(node *op1);
 node *makeAcosh(node *op1);
 node *makeAtanh(node *op1);
 node *makeUnary(node *op1, int nodeType);
+node *makeBinary(node *op1, node *op2, int opType);
 
 node* addMemRef(node *);
 node* accessThruMemRef(node *);

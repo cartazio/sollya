@@ -124,5 +124,4 @@ polynomial_t polynomialRoundDyadic(polynomial_t, mp_prec_t);
 polynomial_t polynomialRoundRational(polynomial_t, mp_prec_t);
 polynomial_t polynomialRound(polynomial_t, mp_prec_t);
 
-
 #endif /* ifdef POLYNOMIALS_H*/

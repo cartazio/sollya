@@ -119,6 +119,10 @@ supnorm(p,f,d,mode,theta);
 print("=============== Check Supnorm #14 ================");
 testSupnorm = proc(p,f,I,mode,theta) {
   var oldPrec, r, s;
+  var oldDisplay;
+
+  oldDisplay = display;
+  display=dyadic!;
   oldPrec = prec;
   prec = -ceil(log2(theta))+30;
   if (mode == absolute)
@@ -130,7 +134,7 @@ testSupnorm = proc(p,f,I,mode,theta) {
   print("Testing example: supnorm(",p,",",f,",",I,",",mode,",",theta,")");
 
   if !(r in s)
-  then print("   --> testSupnorm detected an error: true infnorm not in the interval");
+  then print("   --> testSupnorm detected an error: true infnorm not in the interval, r = ", r, ", s = ", s);
 
   if (inf(s) < 0)
   then print("   --> testSupnorm error: computed interval contains negative numbers");
@@ -138,6 +142,7 @@ testSupnorm = proc(p,f,I,mode,theta) {
   if (sup(s)-inf(s)) > inf(s)*theta
   then print("   --> testSupnorm: error on the accuracy of the result on");
 
+  display=oldDisplay!;
   return void;
 };
 

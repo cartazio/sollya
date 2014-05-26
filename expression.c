@@ -5387,6 +5387,94 @@ node *simplifyTreeErrorfree(node *tree) {
   return temp;
 }
 
+node *dagifyTree(node *tree, node *factor) {
+  node *copy;
+
+  /* Handle stupid input */
+  if ((tree == NULL) || (factor == NULL)) return copyTree(tree);
+
+  /* General case: tree and factor are equal, use a copy of factor */
+  if (isSyntacticallyEqual(tree, factor)) return copyTree(factor);
+  
+  /* General case: recursion */
+  switch (tree->nodeType) {
+  case MEMREF:
+    if ((tree->polynomialRepresentation != NULL) && (tree->child1 == NULL)) return copyTree(tree);
+    copy = addMemRef(dagifyTree(getMemRefChild(tree), factor));
+    copyTreeAnnotations(copy, tree);
+    return copy;
+    break;
+  case VARIABLE:
+  case CONSTANT:
+  case PI_CONST:
+  case LIBRARYCONSTANT:
+    return copyTree(tree);
+    break;
+  case ADD:
+  case SUB:
+  case MUL:
+  case DIV:
+  case POW:
+    return addMemRef(makeBinary(dagifyTree(tree->child1, factor), 
+				dagifyTree(tree->child2, factor), tree->nodeType));
+    break;
+  case SQRT:
+  case EXP:
+  case LOG:
+  case LOG_2:
+  case LOG_10:
+  case SIN:
+  case COS:
+  case TAN:
+  case ASIN:
+  case ACOS:
+  case ATAN:
+  case SINH:
+  case COSH:
+  case TANH:
+  case ASINH:
+  case ACOSH:
+  case ATANH:
+  case NEG:
+  case ABS:
+  case DOUBLE:
+  case SINGLE:
+  case QUAD:
+  case HALFPRECISION:
+  case DOUBLEDOUBLE:
+  case TRIPLEDOUBLE:
+  case ERF:
+  case ERFC:
+  case LOG_1P:
+  case EXP_M1:
+  case DOUBLEEXTENDED:
+  case CEIL:
+  case FLOOR:
+  case NEARESTINT:
+    return addMemRef(makeUnary(dagifyTree(tree->child1, factor), tree->nodeType));
+    break;
+  case LIBRARYFUNCTION:
+    copy = (node*) safeMalloc(sizeof(node));
+    copy->nodeType = LIBRARYFUNCTION;
+    copy->libFun = tree->libFun;
+    copy->libFunDeriv = tree->libFunDeriv;
+    copy->child1 = dagifyTree(tree->child1, factor);
+    return addMemRef(copy);
+    break;
+  case PROCEDUREFUNCTION:
+    copy = (node*) safeMalloc(sizeof(node));
+    copy->nodeType = PROCEDUREFUNCTION;
+    copy->libFunDeriv = tree->libFunDeriv;
+    copy->child1 = dagifyTree(tree->child1, factor);
+    copy->child2 = copyThing(tree->child2);
+    return addMemRef(copy);
+    break;
+  default:
+    sollyaFprintf(stderr,"Error: dagifyTree: unknown identifier (%d) in the tree\n", tree->nodeType);
+    exit(1);
+  }
+  return copyTree(tree);
+}
 
 int isPolynomial(node *tree);
 node *differentiatePolynomialUnsafe(node *tree);
