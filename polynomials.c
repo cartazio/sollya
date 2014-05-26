@@ -4029,6 +4029,7 @@ static inline sparse_polynomial_t __polynomialGetSparsePolynomial(polynomial_t);
 static inline int sparsePolynomialPowConstant(sparse_polynomial_t *, sparse_polynomial_t, constant_t);
 static inline int sparsePolynomialGetDegreeAsInt(sparse_polynomial_t);
 static inline int sparsePolynomialCoefficientsAreRational(sparse_polynomial_t, int);
+static inline sparse_polynomial_t sparsePolynomialPowUnsignedInt(sparse_polynomial_t, unsigned int);
 
 static inline sparse_polynomial_t __sparsePolynomialAllocate() {
   return (sparse_polynomial_t) safeMalloc(sizeof(struct __sparse_polynomial_struct_t));
@@ -5076,7 +5077,7 @@ static inline sparse_polynomial_t sparsePolynomialCompose(sparse_polynomial_t p,
   return res;
 }
 
-static inline void __sparsePolynomialGetLeadingCoefficient(constant_t *c, constant_t *d, sparse_polynomial_t *r, sparse_polynomial_t p) {
+ static inline void __sparsePolynomialGetLeadingCoefficient(constant_t *c, constant_t *d, sparse_polynomial_t *r, sparse_polynomial_t p) {
   sparse_polynomial_t res;
   unsigned int i;
 
@@ -5209,11 +5210,71 @@ static inline void sparsePolynomialDiv(sparse_polynomial_t *quot, sparse_polynom
   *rest = r;
 }
 
-static inline sparse_polynomial_t __sparsePolynomialPowUnsignedIntAlternate(sparse_polynomial_t p, unsigned int n) {
-  sparse_polynomial_t res, r, rp, t, s, temp;
-  constant_t c, d, nC, bin, kc, cp, dp, nc;
-  unsigned int i, k;
+static inline void __sparsePolynomialCutIntoHalves(sparse_polynomial_t *r, sparse_polynomial_t *q, sparse_polynomial_t p) {
+  unsigned int i, monomialCount1, monomialCount2;
+  sparse_polynomial_t res;
 
+  /* Handle stupid input */
+  if (p == NULL) {
+    *r = NULL;
+    *q = NULL;
+    return;
+  }
+
+  /* Handle the case when p has no monomials */
+  if (p->monomialCount == 0u) {
+    *r = sparsePolynomialFromIntConstant(0);
+    *q = sparsePolynomialFromIntConstant(0);    
+    return;
+  }
+
+  /* Handle the case when p has only one monomial */
+  if (p->monomialCount == 1u) {
+    *r = sparsePolynomialFromCopy(p);
+    *q = sparsePolynomialFromIntConstant(0);
+    return;
+  }
+
+  /* Now, we know that we have at least 2 monomials. This implies that
+     both polynomials have at least one monomial. 
+  */
+  monomialCount1 = p->monomialCount >> 1;
+  monomialCount2 = p->monomialCount - monomialCount1;
+
+  /* Form polynomial p */
+  res = __sparsePolynomialAllocate();
+  res->refCount = 1;
+  res->monomialCount = monomialCount1;
+  res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
+  res->monomialDegrees = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
+  for (i=0u;i<monomialCount1;i++) {
+    res->coeffs[i] = constantFromCopy(p->coeffs[i]);
+    res->monomialDegrees[i] = constantFromCopy(p->monomialDegrees[i]);
+  }
+  res->deg = constantFromCopy(res->monomialDegrees[res->monomialCount-1u]);
+  __sparsePolynomialAdjustDegree(res);
+  *r = res;
+
+  /* Form polynomial q */
+  res = __sparsePolynomialAllocate();
+  res->refCount = 1;
+  res->monomialCount = monomialCount2;
+  res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
+  res->monomialDegrees = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
+  for (i=0u;i<monomialCount2;i++) {
+    res->coeffs[i] = constantFromCopy(p->coeffs[i + monomialCount1]);
+    res->monomialDegrees[i] = constantFromCopy(p->monomialDegrees[i + monomialCount1]);
+  }
+  res->deg = constantFromCopy(res->monomialDegrees[res->monomialCount-1u]);
+  __sparsePolynomialAdjustDegree(res);
+  *q = res;
+}
+
+static inline sparse_polynomial_t __sparsePolynomialPowUnsignedIntAlternate(sparse_polynomial_t p, unsigned int n) {
+  constant_t nC, bin;
+  unsigned int i;
+  sparse_polynomial_t r, q, rToTheI, qToTheNMinusI, binPoly, tempPoly1, tempPoly2, tempPoly3, res;
+  
   /* Handle stupid input */
   if (p == NULL) return NULL;
 
@@ -5239,43 +5300,35 @@ static inline sparse_polynomial_t __sparsePolynomialPowUnsignedIntAlternate(spar
 
   /* The polynomial has at least two monomials 
 
-     Write p(x) = c * x^d + r(x)
+     Write p(x) = r(x) + q(x), with r and q having approximately half
+     of the monomials,
 
      and obtain
 
-     (p(x))^n = sum_i=0^n bin(n,i) * c^(n-i) * x^(d * (n-i)) * (r(x))^i
-
-              = (r(x))^n + sum_i=0^(n-1) bin(n,i) * c^(n-i) * x^(d * (n-i)) * (r(x))^i
-                
-
+     (p(x))^n = sum_i=0^n bin(n,i) * (r(x))^i * (q(x))^(n - i)
+              = r(x)^n + sum_i=0^(n-1) bin(n,i) * (r(x))^i * (q(x))^(n - i)
   */
-  __sparsePolynomialGetLeadingCoefficient(&c, &d, &r, p);
-  res = __sparsePolynomialPowUnsignedIntAlternate(r, n);
+  __sparsePolynomialCutIntoHalves(&r, &q, p);
+  res = sparsePolynomialPowUnsignedInt(r, n);
   for (i=0u;i<n;i++) {
-    rp = __sparsePolynomialPowUnsignedIntAlternate(r, i);
-    k = n - i;
     bin = constantFromBinomialUnsignedInt(n, i);
-    kc = constantFromUnsignedInt(k);
-    cp = constantPow(c, kc);
-    dp = constantMul(d, kc);
-    nc = constantMul(bin, cp);
-    t = __sparsePolynomialFromMonomial(nc, dp);
-    s = sparsePolynomialMul(t, rp);
-    temp = sparsePolynomialAdd(res, s);
-    sparsePolynomialFree(res);
-    res = temp;
-    sparsePolynomialFree(rp);
+    binPoly = sparsePolynomialFromConstant(bin);
     constantFree(bin);
-    constantFree(kc);
-    constantFree(cp);
-    constantFree(dp);
-    constantFree(nc);
-    sparsePolynomialFree(t);
-    sparsePolynomialFree(s);
+    rToTheI = sparsePolynomialPowUnsignedInt(r, i);
+    qToTheNMinusI = sparsePolynomialPowUnsignedInt(q, n - i);
+    tempPoly1 = sparsePolynomialMul(binPoly, rToTheI);
+    tempPoly2 = sparsePolynomialMul(tempPoly1, qToTheNMinusI);
+    tempPoly3 = sparsePolynomialAdd(res, tempPoly2);
+    sparsePolynomialFree(binPoly);
+    sparsePolynomialFree(rToTheI);
+    sparsePolynomialFree(qToTheNMinusI);
+    sparsePolynomialFree(tempPoly1);
+    sparsePolynomialFree(tempPoly2);
+    sparsePolynomialFree(res);
+    res = tempPoly3;
   }
-  constantFree(c);
-  constantFree(d);
   sparsePolynomialFree(r);
+  sparsePolynomialFree(q);
 
   return res;
 }
