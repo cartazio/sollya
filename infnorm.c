@@ -5148,6 +5148,13 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
   mp_exp_t expBeforeCancel, expAfterCancel; 
   mp_prec_t lostPrec, newPrecCutoff;
 
+  /* Make compiler happy */
+  X = NULL;
+  Y = NULL;
+  Z = NULL;
+  /* End of compiler happiness */
+
+
   *retry = 0;
   *newPrecSet = 0;
 
