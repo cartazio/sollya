@@ -1168,3 +1168,13 @@ mp_exp_t sollya_mpfi_max_exp(sollya_mpfi_t op) {
   }
   return mpfr_get_emin_min();
 }
+
+int sollya_mpfi_fr_in_interval(mpfr_t op1, sollya_mpfi_t op2) {
+  if (!mpfr_number_p(op1)) return 0;
+  if (sollya_mpfi_has_nan_opt(op2)) return 0;
+  /* HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
+  */
+  return (mpfr_lessequal_p(&(op2->left), op1) && 
+	  mpfr_lessequal_p(op1, &(op2->right)));
+}

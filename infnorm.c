@@ -1,6 +1,6 @@
 /*
 
-  Copyright 2006-2013 by
+  Copyright 2006-2014 by
 
   Laboratoire de l'Informatique du Parallelisme,
   UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
@@ -5177,7 +5177,9 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
   switch (resG) {
   case POINT_EVAL_EXACT:
   case POINT_EVAL_CORRECTLY_ROUNDED:
+  case POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT:
   case POINT_EVAL_FAITHFULLY_ROUNDED:
+  case POINT_EVAL_FAITHFULLY_ROUNDED_PROVEN_INEXACT:
     if (mpfr_number_p(*gy) && (!mpfr_zero_p(*gy))) {
       recCutoffHP = mpfr_get_exp(*gy) - mpfr_get_prec(y) - 5;
       if (recCutoffHP >= 0) recCutoffHP = -1;
@@ -5193,7 +5195,9 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
     switch (resH) {
     case POINT_EVAL_EXACT:
     case POINT_EVAL_CORRECTLY_ROUNDED:
+    case POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT:
     case POINT_EVAL_FAITHFULLY_ROUNDED:
+    case POINT_EVAL_FAITHFULLY_ROUNDED_PROVEN_INEXACT:
       if (mpfr_number_p(*hy) && (!mpfr_zero_p(*hy))) {
 	recCutoffGP = mpfr_get_exp(*hy) - mpfr_get_prec(y) - 5;
 	if (recCutoffGP >= 0) recCutoffGP = -1;
@@ -5230,7 +5234,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
     clearChosenMpfrPtr(hy, &v_hy);
     clearChosenMpfrPtr(gy, &v_gy);
     if (ternary == 0) return POINT_EVAL_EXACT;
-    return POINT_EVAL_CORRECTLY_ROUNDED;    
+    return POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;    
   }
   
   if ((!mpfr_number_p(*gy)) ||
@@ -5252,11 +5256,13 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
     sollya_mpfi_set_fr(*X, *gy);
     break;
   case POINT_EVAL_CORRECTLY_ROUNDED:
+  case POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT:
     X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(*gy) + 1);
     sollya_mpfi_set_fr(*X, *gy);
     sollya_mpfi_blow_1ulp(*X);
     break;
   case POINT_EVAL_FAITHFULLY_ROUNDED:
+  case POINT_EVAL_FAITHFULLY_ROUNDED_PROVEN_INEXACT:
     X = chooseAndInitMpfiPtr(&v_Y, mpfr_get_prec(*gy));
     sollya_mpfi_set_fr(*X, *gy);
     sollya_mpfi_blow_1ulp(*X);
@@ -5279,11 +5285,13 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
     sollya_mpfi_set_fr(*Y, *hy);
     break;
   case POINT_EVAL_CORRECTLY_ROUNDED:
+  case POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT:
     Y = chooseAndInitMpfiPtr(&v_Y, mpfr_get_prec(*hy) + 1);
     sollya_mpfi_set_fr(*Y, *hy);
     sollya_mpfi_blow_1ulp(*Y);
     break;
   case POINT_EVAL_FAITHFULLY_ROUNDED:
+  case POINT_EVAL_FAITHFULLY_ROUNDED_PROVEN_INEXACT:
     Y = chooseAndInitMpfiPtr(&v_Y, mpfr_get_prec(*hy));
     sollya_mpfi_set_fr(*Y, *hy);
     sollya_mpfi_blow_1ulp(*Y);
@@ -5314,13 +5322,21 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
       if ((tern1 == 0) && (tern2 == 0)) {
 	res = POINT_EVAL_EXACT;
       } else {
-	res = POINT_EVAL_CORRECTLY_ROUNDED;
+	if ((tern1 != 0) && (tern1 == tern2)) {
+	  res = POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
+	} else {
+	  res = POINT_EVAL_CORRECTLY_ROUNDED;
+	}
       }
     } else {
       if (mpfr_cmp(y, *t) < 0) {
 	mpfr_nextbelow(*t);
 	if (mpfr_equal_p(*t, y)) {
-	  res = POINT_EVAL_FAITHFULLY_ROUNDED;
+	  if (!sollya_mpfi_fr_in_interval(y, *Z)) {
+	    res = POINT_EVAL_FAITHFULLY_ROUNDED_PROVEN_INEXACT;
+	  } else {
+	    res = POINT_EVAL_FAITHFULLY_ROUNDED;
+	  }
 	} else {
 	  if ((!(sollya_mpfi_has_nan(*Z) || sollya_mpfi_has_infinity(*Z))) && (sollya_mpfi_max_exp(*Z) < cutoff)) {
 	    res = POINT_EVAL_BELOW_CUTOFF;
@@ -5491,7 +5507,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSub(mpfr_t y, int sub
       ternary = mpfr_add(y, *(accessThruMemRef(g)->value), *(accessThruMemRef(h)->value), GMP_RNDN);
     }
     if (ternary == 0) return POINT_EVAL_EXACT;
-    return POINT_EVAL_CORRECTLY_ROUNDED;
+    return POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
   } 
   if ((accessThruMemRef(g)->nodeType == CONSTANT) &&
       (accessThruMemRef(h)->nodeType == VARIABLE)) {
@@ -5501,7 +5517,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSub(mpfr_t y, int sub
       ternary = mpfr_add(y, *(accessThruMemRef(g)->value), x, GMP_RNDN);
     }
     if (ternary == 0) return POINT_EVAL_EXACT;
-    return POINT_EVAL_CORRECTLY_ROUNDED;
+    return POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
   } 
   if ((accessThruMemRef(g)->nodeType == VARIABLE) &&
       (accessThruMemRef(h)->nodeType == CONSTANT)) {
@@ -5511,7 +5527,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSub(mpfr_t y, int sub
       ternary = mpfr_add(y, x, *(accessThruMemRef(h)->value), GMP_RNDN);
     }
     if (ternary == 0) return POINT_EVAL_EXACT;
-    return POINT_EVAL_CORRECTLY_ROUNDED;
+    return POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
   } 
   if ((accessThruMemRef(g)->nodeType == VARIABLE) &&
       (accessThruMemRef(h)->nodeType == VARIABLE)) {
@@ -5521,7 +5537,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSub(mpfr_t y, int sub
       ternary = mpfr_add(y, x, x, GMP_RNDN);
     }
     if (ternary == 0) return POINT_EVAL_EXACT;
-    return POINT_EVAL_CORRECTLY_ROUNDED;
+    return POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
   } 
   
   myG = g; myH = h;
@@ -5611,7 +5627,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedMulDivInner(int *retry, 
     clearChosenMpfrPtr(hy, &v_hy);
     clearChosenMpfrPtr(gy, &v_gy);    
     if (ternary == 0) return POINT_EVAL_EXACT;
-    return POINT_EVAL_CORRECTLY_ROUNDED;
+    return POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
   }
   if ((resG == POINT_EVAL_EXACT) &&
       mpfr_zero_p(*gy)) {
@@ -5696,6 +5712,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedMulDivInner(int *retry, 
   }
   clearChosenMpfrPtr(hy, &v_hy);
   clearChosenMpfrPtr(gy, &v_gy);    
+  /* TODO: work for exactness predicates */
   if (ternary == 0) return POINT_EVAL_CORRECTLY_ROUNDED;
   return POINT_EVAL_FAITHFULLY_ROUNDED;
 }
@@ -5714,7 +5731,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedMulDiv(mpfr_t y, int div
       ternary = mpfr_mul(y, *(accessThruMemRef(g)->value), *(accessThruMemRef(h)->value), GMP_RNDN);
     }
     if (ternary == 0) return POINT_EVAL_EXACT;
-    return POINT_EVAL_CORRECTLY_ROUNDED;
+    return POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
   } 
   if ((accessThruMemRef(g)->nodeType == CONSTANT) &&
       (accessThruMemRef(h)->nodeType == VARIABLE)) {
@@ -5724,7 +5741,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedMulDiv(mpfr_t y, int div
       ternary = mpfr_mul(y, *(accessThruMemRef(g)->value), x, GMP_RNDN);
     }
     if (ternary == 0) return POINT_EVAL_EXACT;
-    return POINT_EVAL_CORRECTLY_ROUNDED;
+    return POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
   } 
   if ((accessThruMemRef(g)->nodeType == VARIABLE) &&
       (accessThruMemRef(h)->nodeType == CONSTANT)) {
@@ -5734,7 +5751,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedMulDiv(mpfr_t y, int div
       ternary = mpfr_mul(y, x, *(accessThruMemRef(h)->value), GMP_RNDN);
     }
     if (ternary == 0) return POINT_EVAL_EXACT;
-    return POINT_EVAL_CORRECTLY_ROUNDED;
+    return POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
   } 
   if ((accessThruMemRef(g)->nodeType == VARIABLE) &&
       (accessThruMemRef(h)->nodeType == VARIABLE)) {
@@ -5744,7 +5761,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedMulDiv(mpfr_t y, int div
       ternary = mpfr_mul(y, x, x, GMP_RNDN);
     }
     if (ternary == 0) return POINT_EVAL_EXACT;
-    return POINT_EVAL_CORRECTLY_ROUNDED;
+    return POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
   } 
   
   retry = 0;
@@ -5787,25 +5804,25 @@ static inline point_eval_t __tryFaithEvaluationOptimizedPow(mpfr_t y, node *g, n
       (accessThruMemRef(h)->nodeType == CONSTANT)) {
     ternary = mpfr_pow(y, *(accessThruMemRef(g)->value), *(accessThruMemRef(h)->value), GMP_RNDN);
     if (ternary == 0) return POINT_EVAL_EXACT;
-    return POINT_EVAL_CORRECTLY_ROUNDED;
+    return POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
   } 
   if ((accessThruMemRef(g)->nodeType == CONSTANT) &&
       (accessThruMemRef(h)->nodeType == VARIABLE)) {
     ternary = mpfr_pow(y, *(accessThruMemRef(g)->value), x, GMP_RNDN);
     if (ternary == 0) return POINT_EVAL_EXACT;
-    return POINT_EVAL_CORRECTLY_ROUNDED;
+    return POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
   } 
   if ((accessThruMemRef(g)->nodeType == VARIABLE) &&
       (accessThruMemRef(h)->nodeType == CONSTANT)) {
     ternary = mpfr_pow(y, x, *(accessThruMemRef(h)->value), GMP_RNDN);
     if (ternary == 0) return POINT_EVAL_EXACT;
-    return POINT_EVAL_CORRECTLY_ROUNDED;
+    return POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
   } 
   if ((accessThruMemRef(g)->nodeType == VARIABLE) &&
       (accessThruMemRef(h)->nodeType == VARIABLE)) {
     ternary = mpfr_pow(y, x, x, GMP_RNDN);
     if (ternary == 0) return POINT_EVAL_EXACT;
-    return POINT_EVAL_CORRECTLY_ROUNDED;
+    return POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
   } 
 
   if (accessThruMemRef(g)->nodeType == CONSTANT) {
@@ -5855,7 +5872,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedPow(mpfr_t y, node *g, n
     clearChosenMpfrPtr(hy, &v_hy);
     clearChosenMpfrPtr(gy, &v_gy);
     if (ternary == 0) return POINT_EVAL_EXACT;
-    return POINT_EVAL_CORRECTLY_ROUNDED;
+    return POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
   }
   switch (resG) {
   case POINT_EVAL_FAILURE:
@@ -5869,11 +5886,13 @@ static inline point_eval_t __tryFaithEvaluationOptimizedPow(mpfr_t y, node *g, n
     sollya_mpfi_set_fr(*X, *gy);
     break;
   case POINT_EVAL_CORRECTLY_ROUNDED:
+  case POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT:
     X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(*gy) + 1);
     sollya_mpfi_set_fr(*X, *gy);
     sollya_mpfi_blow_1ulp(*X);
     break;
   case POINT_EVAL_FAITHFULLY_ROUNDED:
+  case POINT_EVAL_FAITHFULLY_ROUNDED_PROVEN_INEXACT:
     X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(*gy));
     sollya_mpfi_set_fr(*X, *gy);
     sollya_mpfi_blow_1ulp(*X);
@@ -5891,11 +5910,13 @@ static inline point_eval_t __tryFaithEvaluationOptimizedPow(mpfr_t y, node *g, n
     sollya_mpfi_set_fr(*Y, *hy);
     break;
   case POINT_EVAL_CORRECTLY_ROUNDED:
+  case POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT:
     Y = chooseAndInitMpfiPtr(&v_Y, mpfr_get_prec(*hy) + 1);
     sollya_mpfi_set_fr(*Y, *hy);
     sollya_mpfi_blow_1ulp(*Y);
     break;
   case POINT_EVAL_FAITHFULLY_ROUNDED:
+  case POINT_EVAL_FAITHFULLY_ROUNDED_PROVEN_INEXACT:
     Y = chooseAndInitMpfiPtr(&v_Y, mpfr_get_prec(*hy));
     sollya_mpfi_set_fr(*Y, *hy);
     sollya_mpfi_blow_1ulp(*Y);
@@ -5922,13 +5943,21 @@ static inline point_eval_t __tryFaithEvaluationOptimizedPow(mpfr_t y, node *g, n
       if ((tern1 == 0) && (tern2 == 0)) {
 	res = POINT_EVAL_EXACT;
       } else {
-	res = POINT_EVAL_CORRECTLY_ROUNDED;
+	if ((tern1 != 0) && (tern1 == tern2)) {
+	  res = POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
+	} else {
+	  res = POINT_EVAL_CORRECTLY_ROUNDED;
+	}
       }
     } else {
       if (mpfr_cmp(y, *hy) < 0) {
 	mpfr_nextbelow(*hy);
 	if (mpfr_equal_p(*hy, y)) {
-	  res = POINT_EVAL_FAITHFULLY_ROUNDED;
+	  if (!sollya_mpfi_fr_in_interval(y, *Z)) {
+	    res = POINT_EVAL_FAITHFULLY_ROUNDED_PROVEN_INEXACT;
+	  } else {
+	    res = POINT_EVAL_FAITHFULLY_ROUNDED;
+	  }
 	} else {
 	  if ((!(sollya_mpfi_has_nan(*Z) || sollya_mpfi_has_infinity(*Z))) && (sollya_mpfi_max_exp(*Z) < cutoff)) {
 	    res = POINT_EVAL_BELOW_CUTOFF;
@@ -6213,11 +6242,13 @@ static inline point_eval_t __tryFaithEvaluationOptimizedUnivariateImpreciseArg(m
     sollya_mpfi_set_fr(*X, x);
     break;
   case POINT_EVAL_CORRECTLY_ROUNDED:
+  case POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT:
     X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(x) + 1);
     sollya_mpfi_set_fr(*X, x);
     sollya_mpfi_blow_1ulp(*X);
     break;
   case POINT_EVAL_FAITHFULLY_ROUNDED:
+  case POINT_EVAL_FAITHFULLY_ROUNDED_PROVEN_INEXACT:
     X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(x));
     sollya_mpfi_set_fr(*X, x);
     sollya_mpfi_blow_1ulp(*X);
@@ -6322,13 +6353,21 @@ static inline point_eval_t __tryFaithEvaluationOptimizedUnivariateImpreciseArg(m
       if ((tern1 == 0) && (tern2 == 0)) {
 	res = POINT_EVAL_EXACT;
       } else {
-	res = POINT_EVAL_CORRECTLY_ROUNDED;
+	if ((tern1 != 0) && (tern1 == tern2)) {
+	  res = POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
+	} else {
+	  res = POINT_EVAL_CORRECTLY_ROUNDED;
+	}
       }
     } else {
       if (mpfr_cmp(y, x) < 0) {
 	mpfr_nextbelow(x);
 	if (mpfr_equal_p(x, y)) {
-	  res = POINT_EVAL_FAITHFULLY_ROUNDED;
+	  if (!sollya_mpfi_fr_in_interval(y, *Y)) {
+	    res = POINT_EVAL_FAITHFULLY_ROUNDED_PROVEN_INEXACT;
+	  } else {
+	    res = POINT_EVAL_FAITHFULLY_ROUNDED;
+	  }
 	} else {
 	  if ((!(sollya_mpfi_has_nan(*Y) || sollya_mpfi_has_infinity(*Y))) && (sollya_mpfi_max_exp(*Y) < cutoffY)) {
 	    res = POINT_EVAL_BELOW_CUTOFF;
@@ -6453,7 +6492,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedUnivariate(mpfr_t y, int
       }
       __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, mpfr_get_prec(y));
       if (ternary == 0) return POINT_EVAL_EXACT;
-      return POINT_EVAL_CORRECTLY_ROUNDED;
+      return POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
       break;
     default:
       break;
@@ -6552,10 +6591,12 @@ static inline point_eval_t __tryFaithEvaluationOptimizedUnivariate(mpfr_t y, int
     }
     clearChosenMpfrPtr(t, &v_t);
     if (ternary == 0) return POINT_EVAL_EXACT;
-    return POINT_EVAL_CORRECTLY_ROUNDED;
+    return POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
     break;
   case POINT_EVAL_CORRECTLY_ROUNDED:
+  case POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT:
   case POINT_EVAL_FAITHFULLY_ROUNDED:
+  case POINT_EVAL_FAITHFULLY_ROUNDED_PROVEN_INEXACT:
   case POINT_EVAL_BELOW_CUTOFF:
     res = __tryFaithEvaluationOptimizedUnivariateImpreciseArg(y, nodeType, *t, resG, cutoff, cutoffX, f);
     clearChosenMpfrPtr(t, &v_t);
@@ -6654,13 +6695,21 @@ static inline point_eval_t __tryFaithEvaluationOptimizedPolynomialRepresentation
       if ((tern1 == 0) && (tern2 == 0)) {
 	res = POINT_EVAL_EXACT;
       } else {
-	res = POINT_EVAL_CORRECTLY_ROUNDED;
+	if ((tern1 != 0) && (tern1 == tern2)) {
+	  res = POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
+	} else {
+	  res = POINT_EVAL_CORRECTLY_ROUNDED;
+	}
       }
     } else {
       if (mpfr_cmp(y, *t) < 0) {
 	mpfr_nextbelow(*t);
 	if (mpfr_equal_p(*t, y)) {
-	  res = POINT_EVAL_FAITHFULLY_ROUNDED;
+	  if (!sollya_mpfi_fr_in_interval(y, *Y)) {
+	    res = POINT_EVAL_FAITHFULLY_ROUNDED_PROVEN_INEXACT;
+	  } else {
+	    res = POINT_EVAL_FAITHFULLY_ROUNDED;
+	  }
 	} else {
 	  if ((!(sollya_mpfi_has_nan(*Y) || sollya_mpfi_has_infinity(*Y))) && (sollya_mpfi_max_exp(*Y) < cutoff)) {
 	    res = POINT_EVAL_BELOW_CUTOFF;
@@ -6731,13 +6780,21 @@ static inline point_eval_t __tryFaithEvaluationOptimizedHooks(mpfr_t y, eval_hoo
       if ((tern1 == 0) && (tern2 == 0)) {
 	res = POINT_EVAL_EXACT;
       } else {
-	res = POINT_EVAL_CORRECTLY_ROUNDED;
+	if ((tern1 != 0) && (tern1 == tern2)) {
+	  res = POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
+	} else {
+	  res = POINT_EVAL_CORRECTLY_ROUNDED;
+	}
       }
     } else {
       if (mpfr_cmp(y, *t) < 0) {
 	mpfr_nextbelow(*t);
 	if (mpfr_equal_p(*t, y)) {
-	  res = POINT_EVAL_FAITHFULLY_ROUNDED;
+	  if (!sollya_mpfi_fr_in_interval(y, *Y)) {
+	    res = POINT_EVAL_FAITHFULLY_ROUNDED_PROVEN_INEXACT;
+	  } else {
+	    res = POINT_EVAL_FAITHFULLY_ROUNDED;
+	  }
 	} else {
 	  if ((!(sollya_mpfi_has_nan(*Y) || sollya_mpfi_has_infinity(*Y))) && (sollya_mpfi_max_exp(*Y) < cutoff)) {
 	    res = POINT_EVAL_BELOW_CUTOFF;
@@ -6785,7 +6842,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedDeducedLowerPrecResult(m
   if (approx == POINT_EVAL_EXACT) {
     ternary = mpfr_set(y, x, GMP_RNDN);
     if (ternary == 0) return POINT_EVAL_EXACT;
-    return POINT_EVAL_CORRECTLY_ROUNDED;
+    return POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
   }
 
   switch (approx) {
@@ -6797,11 +6854,13 @@ static inline point_eval_t __tryFaithEvaluationOptimizedDeducedLowerPrecResult(m
     sollya_mpfi_set_fr(*X, x);
     break;
   case POINT_EVAL_CORRECTLY_ROUNDED:
+  case POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT:
     X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(x) + 1);
     sollya_mpfi_set_fr(*X, x);
     sollya_mpfi_blow_1ulp(*X);
     break;
   case POINT_EVAL_FAITHFULLY_ROUNDED:
+  case POINT_EVAL_FAITHFULLY_ROUNDED_PROVEN_INEXACT:
     X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(x));
     sollya_mpfi_set_fr(*X, x);
     sollya_mpfi_blow_1ulp(*X);
@@ -6824,13 +6883,21 @@ static inline point_eval_t __tryFaithEvaluationOptimizedDeducedLowerPrecResult(m
       if ((tern1 == 0) && (tern2 == 0)) {
 	res = POINT_EVAL_EXACT;
       } else {
-	res = POINT_EVAL_CORRECTLY_ROUNDED;
+	if ((tern1 != 0) && (tern1 == tern2)) {
+	  res = POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
+	} else {
+	  res = POINT_EVAL_CORRECTLY_ROUNDED;
+	}
       }
     } else {
       if (mpfr_cmp(y, *t) < 0) {
 	mpfr_nextbelow(*t);
 	if (mpfr_equal_p(*t, y)) {
-	  res = POINT_EVAL_FAITHFULLY_ROUNDED;
+	  if (!sollya_mpfi_fr_in_interval(y, *X)) {
+	    res = POINT_EVAL_FAITHFULLY_ROUNDED_PROVEN_INEXACT;
+	  } else {
+	    res = POINT_EVAL_FAITHFULLY_ROUNDED;
+	  }
 	} else {
 	  if ((!(sollya_mpfi_has_nan(*X) || sollya_mpfi_has_infinity(*X))) && (sollya_mpfi_max_exp(*X) < cutoff)) {
 	    res = POINT_EVAL_BELOW_CUTOFF;
@@ -6910,17 +6977,17 @@ static inline point_eval_t __tryFaithEvaluationOptimizedDoIt(mpfr_t y, node *f, 
   case VARIABLE:
     __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, mpfr_get_prec(y));
     if (mpfr_set(y, x, GMP_RNDN) == 0) return POINT_EVAL_EXACT;
-    return POINT_EVAL_CORRECTLY_ROUNDED;
+    return POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
     break;
   case CONSTANT:
     __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, mpfr_get_prec(y));
     if (mpfr_set(y, *(f->value), GMP_RNDN) == 0) return POINT_EVAL_EXACT;
-    return POINT_EVAL_CORRECTLY_ROUNDED;
+    return POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;
     break;
   case PI_CONST:
     __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, mpfr_get_prec(y));
     if (mpfr_const_pi(y, GMP_RNDN) == 0) return POINT_EVAL_EXACT;
-    return POINT_EVAL_CORRECTLY_ROUNDED;    
+    return POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT;    
     break;
   case ADD:
   case SUB:
@@ -7000,13 +7067,22 @@ static inline int __tryFaithEvaluationOptimized(int *retVal, mpfr_t y, node *fun
     *retVal = 6;
     return 1;
     break;
+  case POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT:
+    if (!mpfr_number_p(y)) return 0;
+    *retVal = 7;
+    return 1;
+    break;
   case POINT_EVAL_FAITHFULLY_ROUNDED:
     if (!mpfr_number_p(y)) return 0;
     *retVal = 1;
     return 1;
     break;
+  case POINT_EVAL_FAITHFULLY_ROUNDED_PROVEN_INEXACT:
+    if (!mpfr_number_p(y)) return 0;
+    *retVal = 5;
+    return 1;
+    break;
   case POINT_EVAL_BELOW_CUTOFF:
-    
     if (!mpfr_number_p(y)) return 0;
     *retVal = 2;
     return 1;    

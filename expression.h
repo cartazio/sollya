@@ -1,6 +1,6 @@
 /*
 
-  Copyright 2006-2013 by
+  Copyright 2006-2014 by
 
   Laboratoire de l'Informatique du Parallelisme,
   UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
@@ -73,7 +73,9 @@ enum __point_eval_enum_t {
   POINT_EVAL_FAILURE = 0,
   POINT_EVAL_EXACT,
   POINT_EVAL_CORRECTLY_ROUNDED,
+  POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT,
   POINT_EVAL_FAITHFULLY_ROUNDED,
+  POINT_EVAL_FAITHFULLY_ROUNDED_PROVEN_INEXACT,
   POINT_EVAL_BELOW_CUTOFF
 };
 typedef enum __point_eval_enum_t point_eval_t;
