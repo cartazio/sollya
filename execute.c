@@ -8432,7 +8432,9 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
   int deg;
   int counter;
   int tern;
+  int faithfulRoundingIsExact;
 
+  faithfulRoundingIsExact = 0;
   shown = 0; shown2 = 0;
   if (isPureTree(thing)) {
     if (((thing->nodeType == MEMREF) && (thing->polynomialRepresentation != NULL)) ||
@@ -8487,14 +8489,22 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
 	    freeThing(simplCst);
 	  }
 	  if (faithfulAlreadyKnown || evaluateFaithful(a,tempNode2,b,tools_precision)) {
+	    if ((accessThruMemRef(tempNode2)->nodeType == CONSTANT) &&
+		(mpfr_number_p(*(accessThruMemRef(tempNode2)->value)))) {
+	      mpfr_set_prec(a, mpfr_get_prec(*(accessThruMemRef(tempNode2)->value)));
+	      faithfulRoundingIsExact = (mpfr_set(a, *(accessThruMemRef(tempNode2)->value), GMP_RNDN) == 0);
+	      if (!mpfr_number_p(a)) faithfulRoundingIsExact = 0;
+	    }
 	    if (mpfr_number_p(a)) {
-	      if (!noRoundingWarnings) {
-		if (!shown) {
-		  if ((!faithfulAlreadyKnown) || (!mpfr_zero_p(a))) {
-		    printMessage(1,SOLLYA_MSG_DISPLAYED_VALUE_IS_FAITHFULLY_ROUNDED,"Warning: rounding has happened. The value displayed is a faithful rounding to %d bits of the true result.\n", mpfr_get_prec(a));
+	      if (!faithfulRoundingIsExact) {
+		if (!noRoundingWarnings) {
+		  if (!shown) {
+		    if ((!faithfulAlreadyKnown) || (!mpfr_zero_p(a))) {
+		      printMessage(1,SOLLYA_MSG_DISPLAYED_VALUE_IS_FAITHFULLY_ROUNDED,"Warning: rounding has happened. The value displayed is a faithful rounding to %d bits of the true result.\n", mpfr_get_prec(a));
+		    }
 		  }
+		  shown = 1;
 		}
-		shown = 1;
 	      }
 	    } else {
 	      if (mpfr_nan_p(a)) {
