@@ -8426,6 +8426,20 @@ polynomial_t polynomialCompose(polynomial_t p, polynomial_t q) {
   if (p == NULL) return NULL;
   if (q == NULL) return NULL;
     
+  /* If q easily proves constant, just construct the composition
+     polynomial. This takes almost no space and no time and allows for
+     later approximate evaluation of the constructed constant.
+  */
+  if (__polynomialIsConstantCheap(q)) {
+    res = __polynomialAllocate();
+    res->refCount = 1u;
+    res->type = COMPOSITION;
+    res->outputType = ANY_FORM;
+    res->value.pair.g = polynomialFromCopy(p);
+    res->value.pair.h = polynomialFromCopy(q);
+    return res;
+  }
+
   /* If both polynomials are sparse, and polynomial q only has one
      monomial, perform the operation on sparse polynomials.
   */

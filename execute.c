@@ -8433,6 +8433,7 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
   int counter;
   int tern;
   int faithfulRoundingIsExact;
+  int marker;
 
   faithfulRoundingIsExact = 0;
   shown = 0; shown2 = 0;
@@ -8488,9 +8489,10 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
 	    }
 	    freeThing(simplCst);
 	  }
-	  if (faithfulAlreadyKnown || evaluateFaithful(a,tempNode2,b,tools_precision)) {
-	    if ((accessThruMemRef(tempNode2)->nodeType == CONSTANT) &&
-		(mpfr_number_p(*(accessThruMemRef(tempNode2)->value)))) {
+	  marker = 0;
+	  if (faithfulAlreadyKnown || (marker = evaluateFaithful(a,tempNode2,b,tools_precision))) {
+	    if (marker && ((accessThruMemRef(tempNode2)->nodeType == CONSTANT) &&
+			   (mpfr_number_p(*(accessThruMemRef(tempNode2)->value))))) {
 	      mpfr_set_prec(a, mpfr_get_prec(*(accessThruMemRef(tempNode2)->value)));
 	      faithfulRoundingIsExact = (mpfr_set(a, *(accessThruMemRef(tempNode2)->value), GMP_RNDN) == 0);
 	      if (!mpfr_number_p(a)) faithfulRoundingIsExact = 0;
