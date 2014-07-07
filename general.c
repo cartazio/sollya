@@ -89,6 +89,7 @@
 #include "sollya-messaging.h"
 #include "bitfields.h"
 #include "printf.h"
+#include "assignment.h"
 
 #if HAVE_BACKTRACE
 #include <execinfo.h>
@@ -264,7 +265,10 @@ int sollyaLibPrintmessageCalled = 0;
    called. 
 */
 
-
+/* Variables for the prompt-passed arguments */
+char **argsArgv = NULL;
+int argsArgc = 0;
+/* End of variables for the prompt-passed arguments */
 
 extern int yyparse(void *); 
 extern void yylex_destroy(void *);
@@ -1140,6 +1144,13 @@ void freeTool() {
 }
 
 void initToolDefaults() {
+  int k;
+  node *tempNode;
+  chain *tempList;
+  char *pidStr, *uniqueStr;
+  unsigned int mySeed;
+  char *c;
+
   if(variablename != NULL) safeFree(variablename);
   variablename = NULL;
   if(suppressedMessages != NULL) freeBitfield(suppressedMessages);
@@ -1186,6 +1197,35 @@ void initToolDefaults() {
   globalReusedMPFRVarsInitialized = 0;
   globalReusedMPFRVarsMaxAllocated = GLOBAL_REUSED_VARS_MAX_ALLOC;
   sollyaLibPrintmessageCalled = 0;
+
+  if ((argsArgc < 1) || (argsArgv == NULL)) {
+    tempNode = makeEmptyList();
+  } else {
+    tempList = NULL;
+    for (k=argsArgc-1;k>=0;k--) {
+      tempList = addElement(tempList, makeString(argsArgv[k]));      
+    }
+    tempNode = makeList(tempList);
+  }
+  tempNode = addMemRef(tempNode);
+  symbolTable = addEntry(symbolTable, "__argv", tempNode, copyThingOnVoid);
+  freeThing(tempNode);
+  pidStr = getUniqueId();
+  uniqueStr = (char *) safeCalloc(strlen(PACKAGE_STRING) + 1 + strlen(pidStr) + 1 + 8 * sizeof(int) + 1, sizeof(char));
+  mySeed = (unsigned int) time(NULL);
+  sprintf(uniqueStr, "%s-%s-%d", PACKAGE_STRING, pidStr, rand_r(&mySeed));
+  for (c=uniqueStr;*c!='\0';c++) {
+    if ((*c == ' ') || 
+	(*c == '\t') || 
+	(*c == '\n') ||
+	(*c == '/')) {
+      *c = '_';
+    }
+  }
+  tempNode = makeString(uniqueStr);
+  symbolTable = addEntry(symbolTable, "__unique_id", tempNode, copyThingOnVoid);
+  freeThing(tempNode);
+  safeFree(uniqueStr);
   parseMode();
 }
 
@@ -1689,6 +1729,9 @@ int general(int argc, char *argv[]) {
   int repeatSetRLimit;
   int lastWasError;
   int finishedBeforeParsing;
+  int argsArgRead;
+  char **temp;
+  int k;
 
   messageCallback = NULL;
   libraryMode = 0;
@@ -1705,90 +1748,108 @@ int general(int argc, char *argv[]) {
     eliminatePromptBackup = 1;
   }
 
+  argsArgRead = 0;
+  argsArgv = NULL;
+  argsArgc = 0;
   for (i=1;i<argc;i++) {
-    if (strcmp(argv[i],"--help") == 0) {
-      sollyaPrintf("This is %s connected to ",PACKAGE_STRING);
-      if (eliminatePromptBackup)
-	sollyaPrintf("a regular file");
-      else
-	sollyaPrintf("a terminal");
-      sollyaPrintf(".\n\nUsage: %s [options]\n\nPossible options are:\n",PACKAGE_NAME);
-      sollyaPrintf("--donotmodifystacksize : do not attempt to set the maximal stack size to the maximum size allowed on the system\n");
-      sollyaPrintf("--flush : flush standard output and standard error after each command\n");
-      sollyaPrintf("--help : print this help text\n");
-      sollyaPrintf("--nocolor : do not color the output using ANSI escape sequences\n");
-      sollyaPrintf("--noprompt : do not print a prompt symbol\n");
-      sollyaPrintf("--oldautoprint : print commas between autoprinted elements separated by commas\n");
-      sollyaPrintf("--oldrlwrapcompatible : acheive some compatibilty with old rlwrap versions by emitting wrong ANSI sequences (deprecated)\n");
-      sollyaPrintf("--warninfile[append] <file> : print warning messages into a file instead on the standard output\n");
-      sollyaPrintf("--warnonstderr : print warning messages on error output instead on the standard output\n");
-      sollyaPrintf("\nFor help on %s commands type \"help;\" on the %s prompt\n",PACKAGE_NAME,PACKAGE_NAME);
-      sollyaPrintf("More documentation on %s is available on the %s website http://sollya.gforge.inria.fr/.\nFor bug reports send an email to %s.\n",PACKAGE_NAME,PACKAGE_NAME,PACKAGE_BUGREPORT);
-      sollyaPrintf("\n%s is Copyright 2006-2013 by\n\n    Laboratoire de l'Informatique du Parallelisme,\n    UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668, Lyon, France,\n\n    LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2), Nancy, France,\n\n    Laboratoire d'Informatique de Paris 6, equipe PEQUAN,\n    UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France,\n\nand by\n\n    INRIA Sophia-Antipolis Mediterranee, APICS Team,\n    Sophia-Antipolis, France.\n\nAll rights reserved.\n\nContributors are S. Chevillard, N. Jourdan, M. Joldes and Ch. Lauter.\n\nThis software is governed by the CeCILL-C license under French law and\nabiding by the rules of distribution of free software.  You can  use,\nmodify and/ or redistribute the software under the terms of the CeCILL-C\nlicense as circulated by CEA, CNRS and INRIA at the following URL\n\"http://www.cecill.info\".\n\nThis program is distributed WITHOUT ANY WARRANTY; without even the\nimplied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\nThis build of %s is based on GMP %s, MPFR %s and MPFI %s.\n",PACKAGE_STRING,PACKAGE_STRING,gmp_version,mpfr_get_version(),sollya_mpfi_get_version());
+    if (argsArgRead) {
+      argsArgc++;
+      temp = (char **) safeCalloc(argsArgc, sizeof(char *));
+      if (argsArgc > 1) {
+	for (k=0;k<argsArgc-1;k++) {
+	  temp[k] = argsArgv[k];
+	}
+	safeFree(argsArgv);
+      }
+      argsArgv = temp;
+      argsArgv[argsArgc-1] = (char *) safeCalloc(strlen(argv[i])+1, sizeof(char));
+      strcpy(argsArgv[argsArgc-1], argv[i]);
+    } else {
+      if (strcmp(argv[i],"--help") == 0) {
+	sollyaPrintf("This is %s connected to ",PACKAGE_STRING);
+	if (eliminatePromptBackup)
+	  sollyaPrintf("a regular file");
+	else
+	  sollyaPrintf("a terminal");
+	sollyaPrintf(".\n\nUsage: %s [options]\n\nPossible options are:\n",PACKAGE_NAME);
+	sollyaPrintf("--donotmodifystacksize : do not attempt to set the maximal stack size to the maximum size allowed on the system\n");
+	sollyaPrintf("--flush : flush standard output and standard error after each command\n");
+	sollyaPrintf("--help : print this help text\n");
+	sollyaPrintf("--nocolor : do not color the output using ANSI escape sequences\n");
+	sollyaPrintf("--noprompt : do not print a prompt symbol\n");
+	sollyaPrintf("--oldautoprint : print commas between autoprinted elements separated by commas\n");
+	sollyaPrintf("--oldrlwrapcompatible : acheive some compatibilty with old rlwrap versions by emitting wrong ANSI sequences (deprecated)\n");
+	sollyaPrintf("--warninfile[append] <file> : print warning messages into a file instead on the standard output\n");
+	sollyaPrintf("--warnonstderr : print warning messages on error output instead on the standard output\n");
+	sollyaPrintf("\nFor help on %s commands type \"help;\" on the %s prompt\n",PACKAGE_NAME,PACKAGE_NAME);
+	sollyaPrintf("More documentation on %s is available on the %s website http://sollya.gforge.inria.fr/.\nFor bug reports send an email to %s.\n",PACKAGE_NAME,PACKAGE_NAME,PACKAGE_BUGREPORT);
+	sollyaPrintf("\n%s is Copyright 2006-2013 by\n\n    Laboratoire de l'Informatique du Parallelisme,\n    UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668, Lyon, France,\n\n    LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2), Nancy, France,\n\n    Laboratoire d'Informatique de Paris 6, equipe PEQUAN,\n    UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France,\n\nand by\n\n    INRIA Sophia-Antipolis Mediterranee, APICS Team,\n    Sophia-Antipolis, France.\n\nAll rights reserved.\n\nContributors are S. Chevillard, N. Jourdan, M. Joldes and Ch. Lauter.\n\nThis software is governed by the CeCILL-C license under French law and\nabiding by the rules of distribution of free software.  You can  use,\nmodify and/ or redistribute the software under the terms of the CeCILL-C\nlicense as circulated by CEA, CNRS and INRIA at the following URL\n\"http://www.cecill.info\".\n\nThis program is distributed WITHOUT ANY WARRANTY; without even the\nimplied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\nThis build of %s is based on GMP %s, MPFR %s and MPFI %s.\n",PACKAGE_STRING,PACKAGE_STRING,gmp_version,mpfr_get_version(),sollya_mpfi_get_version());
 #if defined(HAVE_FPLLL_VERSION_STRING)
-      sollyaPrintf("%s uses FPLLL as: \"%s\"\n",PACKAGE_STRING,HAVE_FPLLL_VERSION_STRING);
+	sollyaPrintf("%s uses FPLLL as: \"%s\"\n",PACKAGE_STRING,HAVE_FPLLL_VERSION_STRING);
 #endif
-      sollyaPrintf("\n");
-      return 1;
-    } else
-      if (strcmp(argv[i],"--nocolor") == 0) noColor = 1; else
-	if (strcmp(argv[i],"--noprompt") == 0) eliminatePromptBackup = 1; else
-	  if (strcmp(argv[i],"--oldrlwrapcompatible") == 0) oldrlwrapcompatible = 1; else
-            if (strcmp(argv[i],"--flush") == 0) flushOutput = 1; else
-              if (strcmp(argv[i],"--oldautoprint") == 0) oldAutoPrint = 1; else
-                if (strcmp(argv[i],"--warnonstderr") == 0) {
-                  if (printMode != PRINT_MODE_WARNING_TO_FILE) {
-                    printMode = PRINT_MODE_WARNING_TO_STDERR;
-                  } else {
-                    sollyaPrintf("Error: only one of the --warnonstderr or --warninfile options can be given.\n");
-                    return 1;
-                  }
-                } else
-                  if ((strcmp(argv[i],"--warninfile") == 0) ||
-                      (strcmp(argv[i],"--warninfileappend") == 0)){
-                    if (printMode != PRINT_MODE_WARNING_TO_STDERR) {
-                      if (i+1<argc) {
-                        i++;
-                        if (strcmp(argv[i-1],"--warninfileappend") == 0) {
-                          fd = fopen(argv[i],"a");
-                        } else {
-                          fd = fopen(argv[i],"w");
-                        }
-                        if (fd != NULL) {
-                          warnFile = fd;
-                          fd = NULL;
-                          printMode = PRINT_MODE_WARNING_TO_FILE;
-                        } else {
-                          sollyaPrintf("Error: the file \"%s\" could not be opened for warning display: %s\n",argv[i],strerror(errno));
-                          return 1;
-                        }
-                      } else {
-                        sollyaPrintf("Error: no file argument is given for the --warninfile option.\n");
-                        return 1;
-                      }
-                    } else {
-                      sollyaPrintf("Error: only one of the --warnonstderr or --warninfile options can be given.\n");
-                      return 1;
-                    }
-                  } else {
-                    if (strcmp(argv[i],"--donotmodifystacksize") == 0) doNotModifyStackSize = 1; else {
-                      if (!inputFileOpened) {
-                        fd = fopen(argv[i],"r");
-                        if (fd != NULL) {
-                          inputFile = fd;
-                          inputFileOpened = 1;
-                          eliminatePromptBackup = 1;
-                          noColor = 1;
-                        } else {
-                          sollyaPrintf("Error: the file \"%s\" could not be opened: %s\n",argv[i],strerror(errno));
-                          return 1;
-                        }
-                      } else {
-                        sollyaPrintf("Error: another input file besides \"%s\" has been indicated and opened.\n",argv[i]);
-                        return 1;
-                      }
-                    }
-                  }
+	sollyaPrintf("\n");
+	return 1;
+      } else
+	if (strcmp(argv[i],"--args") == 0) argsArgRead = 1; else
+	  if (strcmp(argv[i],"--nocolor") == 0) noColor = 1; else
+	    if (strcmp(argv[i],"--noprompt") == 0) eliminatePromptBackup = 1; else
+	      if (strcmp(argv[i],"--oldrlwrapcompatible") == 0) oldrlwrapcompatible = 1; else
+		if (strcmp(argv[i],"--flush") == 0) flushOutput = 1; else
+		  if (strcmp(argv[i],"--oldautoprint") == 0) oldAutoPrint = 1; else
+		    if (strcmp(argv[i],"--warnonstderr") == 0) {
+		      if (printMode != PRINT_MODE_WARNING_TO_FILE) {
+			printMode = PRINT_MODE_WARNING_TO_STDERR;
+		      } else {
+			sollyaPrintf("Error: only one of the --warnonstderr or --warninfile options can be given.\n");
+			return 1;
+		      }
+		    } else
+		      if ((strcmp(argv[i],"--warninfile") == 0) ||
+			  (strcmp(argv[i],"--warninfileappend") == 0)){
+			if (printMode != PRINT_MODE_WARNING_TO_STDERR) {
+			  if (i+1<argc) {
+			    i++;
+			    if (strcmp(argv[i-1],"--warninfileappend") == 0) {
+			      fd = fopen(argv[i],"a");
+			    } else {
+			      fd = fopen(argv[i],"w");
+			    }
+			    if (fd != NULL) {
+			      warnFile = fd;
+			      fd = NULL;
+			      printMode = PRINT_MODE_WARNING_TO_FILE;
+			    } else {
+			      sollyaPrintf("Error: the file \"%s\" could not be opened for warning display: %s\n",argv[i],strerror(errno));
+			      return 1;
+			    }
+			  } else {
+			    sollyaPrintf("Error: no file argument is given for the --warninfile option.\n");
+			    return 1;
+			  }
+			} else {
+			  sollyaPrintf("Error: only one of the --warnonstderr or --warninfile options can be given.\n");
+			  return 1;
+			}
+		      } else {
+			if (strcmp(argv[i],"--donotmodifystacksize") == 0) doNotModifyStackSize = 1; else {
+			  if (!inputFileOpened) {
+			    fd = fopen(argv[i],"r");
+			    if (fd != NULL) {
+			      inputFile = fd;
+			      inputFileOpened = 1;
+			      eliminatePromptBackup = 1;
+			      noColor = 1;
+			    } else {
+			      sollyaPrintf("Error: the file \"%s\" could not be opened: %s\n",argv[i],strerror(errno));
+			      return 1;
+			    }
+			  } else {
+			    sollyaPrintf("Error: another input file besides \"%s\" has been indicated and opened.\n",argv[i]);
+			    return 1;
+			  }
+			}
+		      }
+    }
   }
 
   yylex_init(&scanner);
@@ -1957,6 +2018,13 @@ int general(int argc, char *argv[]) {
 
   freeTool();
 
+  if (argsArgv != NULL) {
+    for (k=0;k<argsArgc;k++) {
+      safeFree(argsArgv[k]);
+    }
+    safeFree(argsArgv);
+  }
+  
   if (!eliminatePromptBackup) sollyaPrintf("\n");
 
   if (inputFileOpened) {
