@@ -1732,6 +1732,7 @@ int general(int argc, char *argv[]) {
   int argsArgRead;
   char **temp;
   int k;
+  int sollyaOptions;
 
   messageCallback = NULL;
   libraryMode = 0;
@@ -1772,6 +1773,7 @@ int general(int argc, char *argv[]) {
 	else
 	  sollyaPrintf("a terminal");
 	sollyaPrintf(".\n\nUsage: %s [options]\n\nPossible options are:\n",PACKAGE_NAME);
+	sollyaPrintf("--args : Transmit the following arguments verbatim to the interpreter\n");
 	sollyaPrintf("--donotmodifystacksize : do not attempt to set the maximal stack size to the maximum size allowed on the system\n");
 	sollyaPrintf("--flush : flush standard output and standard error after each command\n");
 	sollyaPrintf("--help : print this help text\n");
@@ -1844,8 +1846,39 @@ int general(int argc, char *argv[]) {
 			      return 1;
 			    }
 			  } else {
-			    sollyaPrintf("Error: another input file besides \"%s\" has been indicated and opened.\n",argv[i]);
-			    return 1;
+			    sollyaOptions = 0;
+			    for (k=i;(k<argc)&&(!sollyaOptions);k++) {
+			      if ((strcmp(argv[k], "--args") == 0) ||
+				  (strcmp(argv[k], "--donotmodifystacksize") == 0) ||
+				  (strcmp(argv[k], "--flush") == 0) ||
+				  (strcmp(argv[k], "--help") == 0) ||
+				  (strcmp(argv[k], "--nocolor") == 0) ||
+				  (strcmp(argv[k], "--noprompt") == 0) ||
+				  (strcmp(argv[k], "--oldautoprint") == 0) ||
+				  (strcmp(argv[k], "--oldrlwrapcompatible") == 0) ||
+				  (strcmp(argv[k], "--warninfile") == 0) ||
+				  (strcmp(argv[k], "--warninfileappend") == 0) ||
+				  (strcmp(argv[k], "--warnonstderr") == 0)) {
+				sollyaOptions = 1;
+			      }
+			    }
+			    if (sollyaOptions) {
+			      sollyaPrintf("Error: another input file besides \"%s\" has been indicated and opened and the order of options is ambiguous.\n",argv[i]);
+			      return 1;
+			    } else {
+			      argsArgRead = 1;
+			      argsArgc++;
+			      temp = (char **) safeCalloc(argsArgc, sizeof(char *));
+			      if (argsArgc > 1) {
+				for (k=0;k<argsArgc-1;k++) {
+				  temp[k] = argsArgv[k];
+				}
+				safeFree(argsArgv);
+			      }
+			      argsArgv = temp;
+			      argsArgv[argsArgc-1] = (char *) safeCalloc(strlen(argv[i])+1, sizeof(char));
+			      strcpy(argsArgv[argsArgc-1], argv[i]);
+			    }
 			  }
 			}
 		      }
