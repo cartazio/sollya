@@ -273,7 +273,7 @@ then
     $GET_PRG "http://www-sop.inria.fr/members/Sylvain.Chevillard/$fplll_patch_configure" 1> $TMPBUFFER 2>&1 ; failure_check
     printf "done.\n"
     printf "Patching bug in FPLLL configure file... "
-    patch -p0 < "$fplll_patch_configure" 1> $TMPBUFFER 2>&1 ; failure_check
+    patch < "$fplll_patch_configure" 1> $TMPBUFFER 2>&1 ; failure_check
     printf "done.\n"
   fi
   if test "$fplll_patch_makefile" != "false"
@@ -284,14 +284,14 @@ then
     $GET_PRG "http://www-sop.inria.fr/members/Sylvain.Chevillard/$fplll_patch_makefile" 1> $TMPBUFFER 2>&1 ; failure_check
     printf "done.\n"
     printf "Patching bug in FPLLL Makefile... "
-    patch -p0 < "$fplll_patch_makefile" 1> $TMPBUFFER 2>&1 ; failure_check
+    patch < "$fplll_patch_makefile" 1> $TMPBUFFER 2>&1 ; failure_check
     cd .. 1> $TMPBUFFER 2>&1 ; failure_check
     printf "done.\n"
   fi
   if test \( \( "$fplll_patch_configure" != "false" \) -o \( "$fplll_patch_makefile" != "false" \) \) -a \( "$FPLLL_PKG_NAME" != "libfplll-3.0.12" \)
   then
     printf "Running autotools... "
-    autoreconf -i 1> $TMPBUFFER 2>&1 ; failure_check
+    autoreconf --force -i 1> $TMPBUFFER 2>&1 ; failure_check
     if which libtoolize 1> /dev/null 2>&1
     then
       libtoolize 1> $TMPBUFFER 2>&1 ; failure_check
