@@ -1,3 +1,7 @@
+############# IMPORTANT NOTE ###############
+# This script is not up to date anymore since when we switched from svn to git to manage Sollya
+# It must be updated.
+
 #!/bin/sh
 
 start_rev=2023

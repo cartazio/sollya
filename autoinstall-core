@@ -333,9 +333,9 @@ if test -n "$SOLLYA_PKG_NAME"
 then
   printf "Downloading Sollya... "
   case "$SOLLYA_PKG_NAME" in
-    sollya-svn )
+    sollya-git )
       rm -rf "$SOLLYA_PKG_NAME"
-      svn co svn://scm.gforge.inria.fr/svn/sollya/trunk $SOLLYA_PKG_NAME 1> $TMPBUFFER 2>&1 ; failure_check
+      git clone https://gforge.inria.fr/git/sollya/sollya.git $SOLLYA_PKG_NAME 1> $TMPBUFFER 2>&1 ; failure_check
       ;;
     sollya-4.1 )
       SOLLYA_URL=http://www-sop.inria.fr/members/Sylvain.Chevillard/sollya-4.1.tar.bz2
@@ -359,14 +359,14 @@ then
       echo "Unknown package $SOLLYA_PKG_NAME" > $TMPBUFFER; false; failure_check
       ;;
     esac
-  if test "$SOLLYA_PKG_NAME" != "sollya-svn"
+  if test "$SOLLYA_PKG_NAME" != "sollya-git"
   then
     rm -rf "$SOLLYA_PKG_NAME.tar.bz2"
     $GET_PRG $SOLLYA_URL 1> $TMPBUFFER 2>&1 ; failure_check
   fi
   printf "done.\n"
 
-  if test "$SOLLYA_PKG_NAME" != "sollya-svn"
+  if test "$SOLLYA_PKG_NAME" != "sollya-git"
   then
     rm -rf "$SOLLYA_PKG_NAME"
     tar -jxvf $SOLLYA_PKG_NAME.tar.bz2 1> $TMPBUFFER 2>&1 ; failure_check
