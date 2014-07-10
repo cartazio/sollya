@@ -623,6 +623,21 @@ void tanh_diff(sollya_mpfi_t *res, sollya_mpfi_t x, int n, int *silent) {
   return;
 }
 
+/*
+   Some thoughts:
+   For all holonomic functions, but especially for those below, it would certainly be more interesting to use the recurrence relation that exists between the successive values of the derivative at point x, instead of using a recurrence on the polynomials giving the closed form of the n-th derivative.
+
+   The fact is that the recurrence on the polynomials is more general, as it gives an expression for the derivative *at any point*, but since we are only interested at evaluating the successive derivatives at one single point, it is probably not a good idea as each polynomial requires O(n) operations to be constructed and evaluated, hence a total O(degree^2) operations. This should be compared with O(degree) operations with the recurrence on the coefficients, but it might be that it is not suitable for interval computations, as it may involve recurrence with two or more terms.
+
+   Moreover, the code could be automatically generated (this of few interest here, but could turn very interesting if it were to be recoded inside COQ for instance) for any holonomic function. Here is something I began to write on this topic, on the example of asin:
+   deq := holexprtodiffeq(arcsin(x+x0),y(x));
+   rec := diffeqtorec(deq,y(x),a(n));
+   recc := op(1, rec); cond := [seq(op(i, rec), i=2..nops(rec))];
+   recc := collect(recc,a(n)); # a(n) is asin^(n)(x0)/n! and recc is the recurrence it satisfies
+   recc := add(factor(op(i,recc)),i=1..nops(recc));
+*/
+
+
 
 /* atan_diff : reccurence formula: p_(n+1) = (p'_n * (1+x^2) - 2nx * p_n) / (n+1)
    atan^(0) = atan(x)
