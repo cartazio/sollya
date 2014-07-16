@@ -719,7 +719,7 @@ mp_exp_t *sollya_mpfi_min_exp(sollya_mpfi_t x) {
 /* Let a be the constant given by the expression cste and f the function with */
 /* node type nodeType. This functions generates code for the implementation   */
 /* of f(a) in precision prec+gamma0, the result being stored in resName.      */
-int unaryFunctionCase(int nodeType, node *cste, char *functionName, int gamma0, struct implementCsteProgram *program) {
+int unaryFunctionCase(baseFunction *baseFun, node *cste, int gamma0, struct implementCsteProgram *program) {
   sollya_mpfi_t a, b, u, v, tmp;
   mpfr_t alpha, beta;
   mp_prec_t prec = getToolPrecision();
@@ -736,7 +736,7 @@ int unaryFunctionCase(int nodeType, node *cste, char *functionName, int gamma0, 
   mpfr_init2(alpha, prec);
   mpfr_init2(beta, prec);
 
-  func = makeUnary(makeVariable(), nodeType);
+  func = makeUnary(makeVariable(), baseFun);
   deriv = differentiate(func);
 
   evaluateInterval(a, cste, NULL, a);
@@ -748,7 +748,7 @@ int unaryFunctionCase(int nodeType, node *cste, char *functionName, int gamma0, 
     mpfr_clear(alpha); mpfr_clear(beta);
     free_memory(func); free_memory(deriv);
 
-    func = makeUnary(copyTree(cste), nodeType);
+    func = makeUnary(copyTree(cste), baseFun);
     printMessage(1,SOLLYA_MSG_EXPR_SEEMS_TO_BE_ZERO_INCREASE_PREC,"Error in implementconstant: the following expression seems to be exactly zero: \n%b\nIf it is not exactly zero, increasing prec should solve the issue.\nAbort.\n",func);
     free_memory(func);
     return 2;
@@ -777,7 +777,7 @@ int unaryFunctionCase(int nodeType, node *cste, char *functionName, int gamma0, 
   res = constantImplementer(cste, gamma0+gamma, program);
   program->counter = counter;
   appendSetprecProg(counter, gamma0+2, program);
-  appendUnaryfuncProg(functionName, counter, counter+1, program);
+  appendUnaryfuncProg(baseFun->mpfrName, counter, counter+1, program);
 
   sollya_mpfi_clear(a);
   sollya_mpfi_clear(b);
@@ -1190,59 +1190,29 @@ int constantImplementer(node *c, int gamma0, struct implementCsteProgram *progra
   case DIV:
     res = implementDivMul(c, gamma0, program);
     break;
+  case NEG:
+    res = constantImplementer(accessThruMemRef(c)->child1, gamma0, program);
+    appendUnaryfuncProg("mpfr_neg", program->counter, program->counter, program);
+    break;
   case POW:
     res = implementPow(c, gamma0, program);
     break;
   case CONSTANT:
     res = implementCsteCase(c, gamma0, program);
     break;
-  case NEG:
-    res = constantImplementer(accessThruMemRef(c)->child1, gamma0, program);
-    appendUnaryfuncProg("mpfr_neg", program->counter, program->counter, program);
-    break;
-  case ABS:
-    res = constantImplementer(accessThruMemRef(c)->child1, gamma0, program);
-    appendUnaryfuncProg("mpfr_abs", program->counter, program->counter, program);
-    break;
-  case DOUBLE:
-    printMessage(1,SOLLYA_MSG_A_BASE_FUNC_IS_NOT_SUPPORTED_BY_IMPLEMENTCONST,"implementconstant: error: the double function is not supported by this command.\nNo code will be produced.\n");
-    res = 1;
-    break;
-  case DOUBLEDOUBLE:
-    printMessage(1,SOLLYA_MSG_A_BASE_FUNC_IS_NOT_SUPPORTED_BY_IMPLEMENTCONST,"implementconstant: error: the doubledouble function is not supported by this command.\nNo code will be produced.\n");
-    res = 1;
-    break;
-  case TRIPLEDOUBLE:
-    printMessage(1,SOLLYA_MSG_A_BASE_FUNC_IS_NOT_SUPPORTED_BY_IMPLEMENTCONST,"implementconstant: error: the tripledouble function is not supported by this command.\nNo code will be produced.\n");
-    res = 1;
-    break;
-  case DOUBLEEXTENDED:
-    printMessage(1,SOLLYA_MSG_A_BASE_FUNC_IS_NOT_SUPPORTED_BY_IMPLEMENTCONST,"implementconstant: error: the doubleextended function is not supported by this command.\nNo code will be produced.\n");
-    res = 1;
-    break;
-  case SINGLE:
-    printMessage(1,SOLLYA_MSG_A_BASE_FUNC_IS_NOT_SUPPORTED_BY_IMPLEMENTCONST,"implementconstant: error: the single function is not supported by this command.\nNo code will be produced.\n");
-    res = 1;
-    break;
-  case HALFPRECISION:
-    printMessage(1,SOLLYA_MSG_A_BASE_FUNC_IS_NOT_SUPPORTED_BY_IMPLEMENTCONST,"implementconstant: error: the half-precision function is not supported by this command.\nNo code will be produced.\n");
-    res = 1;
-    break;
-  case QUAD:
-    printMessage(1,SOLLYA_MSG_A_BASE_FUNC_IS_NOT_SUPPORTED_BY_IMPLEMENTCONST,"implementconstant: error: the quad function is not supported by this command.\nNo code will be produced.\n");
-    res = 1;
-    break;
-  case NEARESTINT:
-    printMessage(1,SOLLYA_MSG_A_BASE_FUNC_IS_NOT_SUPPORTED_BY_IMPLEMENTCONST,"implementconstant: error: the nearestint function is not supported by this command.\nNo code will be produced.\n");
-    res = 1;
-    break;
-  case CEIL:
-    printMessage(1,SOLLYA_MSG_A_BASE_FUNC_IS_NOT_SUPPORTED_BY_IMPLEMENTCONST,"implementconstant: error: the ceil function is not supported by this command.\nNo code will be produced.\n");
-    res = 1;
-    break;
-  case FLOOR:
-    printMessage(1,SOLLYA_MSG_A_BASE_FUNC_IS_NOT_SUPPORTED_BY_IMPLEMENTCONST,"implementconstant: error: the floor function is not supported by this command.\nNo code will be produced.\n");
-    res = 1;
+  case UNARY_BASE_FUNC:
+    if (accessThruMemRef(c)->baseFun->handledByImplementconst) {
+      if (accessThruMemRef(c)->baseFun->baseFunctionCode == ABS) {
+        res = constantImplementer(accessThruMemRef(c)->child1, gamma0, program);
+        appendUnaryfuncProg(accessThruMemRef(c)->baseFun->mpfrName, program->counter, program->counter, program);
+      }
+      else
+        res = unaryFunctionCase(accessThruMemRef(c)->baseFun, accessThruMemRef(c)->child1, gamma0, program);
+    }
+    else {
+      printMessage(1,SOLLYA_MSG_A_BASE_FUNC_IS_NOT_SUPPORTED_BY_IMPLEMENTCONST,"implementconstant: error: the %s function is not supported by this command.\nNo code will be produced.\n", accessThruMemRef(c)->baseFun->functionName );
+      res = 1;
+    }
     break;
   case PI_CONST:
     appendSetprecProg(program->counter, gamma0, program);
@@ -1253,70 +1223,6 @@ int constantImplementer(node *c, int gamma0, struct implementCsteProgram *progra
     appendPrecisionProg(program->counter, gamma0, program);
     appendLibraryConstantProg(c, gamma0, program);
     res = 0;
-    break;
-
-  case SQRT:
-    res = unaryFunctionCase(accessThruMemRef(c)->nodeType, accessThruMemRef(c)->child1, "mpfr_sqrt", gamma0, program);
-    break;
-  case EXP:
-    res = unaryFunctionCase(accessThruMemRef(c)->nodeType, accessThruMemRef(c)->child1, "mpfr_exp", gamma0, program);
-    break;
-  case LOG:
-    res = unaryFunctionCase(accessThruMemRef(c)->nodeType, accessThruMemRef(c)->child1, "mpfr_log", gamma0, program);
-    break;
-  case LOG_2:
-    res = unaryFunctionCase(accessThruMemRef(c)->nodeType, accessThruMemRef(c)->child1, "mpfr_log2", gamma0, program);
-    break;
-  case LOG_10:
-    res = unaryFunctionCase(accessThruMemRef(c)->nodeType, accessThruMemRef(c)->child1, "mpfr_log10", gamma0, program);
-    break;
-  case SIN:
-    res = unaryFunctionCase(accessThruMemRef(c)->nodeType, accessThruMemRef(c)->child1, "mpfr_sin", gamma0, program);
-    break;
-  case COS:
-    res = unaryFunctionCase(accessThruMemRef(c)->nodeType, accessThruMemRef(c)->child1, "mpfr_cos", gamma0, program);
-    break;
-  case TAN:
-    res = unaryFunctionCase(accessThruMemRef(c)->nodeType, accessThruMemRef(c)->child1, "mpfr_tan", gamma0, program);
-    break;
-  case ASIN:
-    res = unaryFunctionCase(accessThruMemRef(c)->nodeType, accessThruMemRef(c)->child1, "mpfr_asin", gamma0, program);
-    break;
-  case ACOS:
-    res = unaryFunctionCase(accessThruMemRef(c)->nodeType, accessThruMemRef(c)->child1, "mpfr_acos", gamma0, program);
-    break;
-  case ATAN:
-    res = unaryFunctionCase(accessThruMemRef(c)->nodeType, accessThruMemRef(c)->child1, "mpfr_atan", gamma0, program);
-    break;
-  case SINH:
-    res = unaryFunctionCase(accessThruMemRef(c)->nodeType, accessThruMemRef(c)->child1, "mpfr_sinh", gamma0, program);
-    break;
-  case COSH:
-    res = unaryFunctionCase(accessThruMemRef(c)->nodeType, accessThruMemRef(c)->child1, "mpfr_cosh", gamma0, program);
-    break;
-  case TANH:
-    res = unaryFunctionCase(accessThruMemRef(c)->nodeType, accessThruMemRef(c)->child1, "mpfr_tanh", gamma0, program);
-    break;
-  case ASINH:
-    res = unaryFunctionCase(accessThruMemRef(c)->nodeType, accessThruMemRef(c)->child1, "mpfr_asinh", gamma0, program);
-    break;
-  case ACOSH:
-    res = unaryFunctionCase(accessThruMemRef(c)->nodeType, accessThruMemRef(c)->child1, "mpfr_acosh", gamma0, program);
-    break;
-  case ATANH:
-    res = unaryFunctionCase(accessThruMemRef(c)->nodeType, accessThruMemRef(c)->child1, "mpfr_atanh", gamma0, program);
-    break;
-  case ERF:
-    res = unaryFunctionCase(accessThruMemRef(c)->nodeType, accessThruMemRef(c)->child1, "mpfr_erf", gamma0, program);
-    break;
-  case ERFC:
-    res = unaryFunctionCase(accessThruMemRef(c)->nodeType, accessThruMemRef(c)->child1, "mpfr_erfc", gamma0, program);
-    break;
-  case LOG_1P:
-    res = unaryFunctionCase(accessThruMemRef(c)->nodeType, accessThruMemRef(c)->child1, "mpfr_log1p", gamma0, program);
-    break;
-  case EXP_M1:
-    res = unaryFunctionCase(accessThruMemRef(c)->nodeType, accessThruMemRef(c)->child1, "mpfr_expm1", gamma0, program);
     break;
   case LIBRARYFUNCTION:
     printMessage(1,SOLLYA_MSG_A_BASE_FUNC_IS_NOT_SUPPORTED_BY_IMPLEMENTCONST,"implementconstant: error: library functions are not supported by this command.\nNo code will be produced.\n");

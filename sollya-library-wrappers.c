@@ -3116,113 +3116,118 @@ int sollya_lib_v_decompose_function(sollya_obj_t obj1, sollya_base_function_t *b
     case DIV:
       *base_func = SOLLYA_BASE_FUNC_DIV;
       break;
-    case SQRT:
-      *base_func = SOLLYA_BASE_FUNC_SQRT;
-      break;
-    case EXP:
-      *base_func = SOLLYA_BASE_FUNC_EXP;
-      break;
-    case LOG:
-      *base_func = SOLLYA_BASE_FUNC_LOG;
-      break;
-    case LOG_2:
-      *base_func = SOLLYA_BASE_FUNC_LOG_2;
-      break;
-    case LOG_10:
-      *base_func = SOLLYA_BASE_FUNC_LOG_10;
-      break;
-    case SIN:
-      *base_func = SOLLYA_BASE_FUNC_SIN;
-      break;
-    case COS:
-      *base_func = SOLLYA_BASE_FUNC_COS;
-      break;
-    case TAN:
-      *base_func = SOLLYA_BASE_FUNC_TAN;
-      break;
-    case ASIN:
-      *base_func = SOLLYA_BASE_FUNC_ASIN;
-      break;
-    case ACOS:
-      *base_func = SOLLYA_BASE_FUNC_ACOS;
-      break;
-    case ATAN:
-      *base_func = SOLLYA_BASE_FUNC_ATAN;
-      break;
-    case SINH:
-      *base_func = SOLLYA_BASE_FUNC_SINH;
-      break;
-    case COSH:
-      *base_func = SOLLYA_BASE_FUNC_COSH;
-      break;
-    case TANH:
-      *base_func = SOLLYA_BASE_FUNC_TANH;
-      break;
-    case ASINH:
-      *base_func = SOLLYA_BASE_FUNC_ASINH;
-      break;
-    case ACOSH:
-      *base_func = SOLLYA_BASE_FUNC_ACOSH;
-      break;
-    case ATANH:
-      *base_func = SOLLYA_BASE_FUNC_ATANH;
-      break;
-    case POW:
-      *base_func = SOLLYA_BASE_FUNC_POW;
-      break;
     case NEG:
       *base_func = SOLLYA_BASE_FUNC_NEG;
       break;
-    case ABS:
-      *base_func = SOLLYA_BASE_FUNC_ABS;
-      break;
-    case DOUBLE:
-      *base_func = SOLLYA_BASE_FUNC_DOUBLE;
-      break;
-    case SINGLE:
-      *base_func = SOLLYA_BASE_FUNC_SINGLE;
-      break;
-    case QUAD:
-      *base_func = SOLLYA_BASE_FUNC_QUAD;
-      break;
-    case HALFPRECISION:
-      *base_func = SOLLYA_BASE_FUNC_HALFPRECISION;
-      break;
-    case DOUBLEDOUBLE:
-      *base_func = SOLLYA_BASE_FUNC_DOUBLEDOUBLE;
-      break;
-    case TRIPLEDOUBLE:
-      *base_func = SOLLYA_BASE_FUNC_TRIPLEDOUBLE;
-      break;
-    case ERF:
-      *base_func = SOLLYA_BASE_FUNC_ERF;
-      break;
-    case ERFC:
-      *base_func = SOLLYA_BASE_FUNC_ERFC;
-      break;
-    case LOG_1P:
-      *base_func = SOLLYA_BASE_FUNC_LOG_1P;
-      break;
-    case EXP_M1:
-      *base_func = SOLLYA_BASE_FUNC_EXP_M1;
-      break;
-    case DOUBLEEXTENDED:
-      *base_func = SOLLYA_BASE_FUNC_DOUBLEEXTENDED;
+    case UNARY_BASE_FUNC:
+      switch (obj1->baseFun->baseFunctionCode) {
+      case SQRT:
+        *base_func = SOLLYA_BASE_FUNC_SQRT;
+        break;
+      case EXP:
+        *base_func = SOLLYA_BASE_FUNC_EXP;
+        break;
+      case LOG:
+        *base_func = SOLLYA_BASE_FUNC_LOG;
+        break;
+      case LOG_2:
+        *base_func = SOLLYA_BASE_FUNC_LOG_2;
+        break;
+      case LOG_10:
+        *base_func = SOLLYA_BASE_FUNC_LOG_10;
+        break;
+      case SIN:
+        *base_func = SOLLYA_BASE_FUNC_SIN;
+        break;
+      case COS:
+        *base_func = SOLLYA_BASE_FUNC_COS;
+        break;
+      case TAN:
+        *base_func = SOLLYA_BASE_FUNC_TAN;
+        break;
+      case ASIN:
+        *base_func = SOLLYA_BASE_FUNC_ASIN;
+        break;
+      case ACOS:
+        *base_func = SOLLYA_BASE_FUNC_ACOS;
+        break;
+      case ATAN:
+        *base_func = SOLLYA_BASE_FUNC_ATAN;
+        break;
+      case SINH:
+        *base_func = SOLLYA_BASE_FUNC_SINH;
+        break;
+      case COSH:
+        *base_func = SOLLYA_BASE_FUNC_COSH;
+        break;
+      case TANH:
+        *base_func = SOLLYA_BASE_FUNC_TANH;
+        break;
+      case ASINH:
+        *base_func = SOLLYA_BASE_FUNC_ASINH;
+        break;
+      case ACOSH:
+        *base_func = SOLLYA_BASE_FUNC_ACOSH;
+        break;
+      case ATANH:
+        *base_func = SOLLYA_BASE_FUNC_ATANH;
+        break;
+      case ABS:
+        *base_func = SOLLYA_BASE_FUNC_ABS;
+        break;
+      case DOUBLE:
+        *base_func = SOLLYA_BASE_FUNC_DOUBLE;
+        break;
+      case SINGLE:
+        *base_func = SOLLYA_BASE_FUNC_SINGLE;
+        break;
+      case QUAD:
+        *base_func = SOLLYA_BASE_FUNC_QUAD;
+        break;
+      case HALFPRECISION:
+        *base_func = SOLLYA_BASE_FUNC_HALFPRECISION;
+        break;
+      case DOUBLEDOUBLE:
+        *base_func = SOLLYA_BASE_FUNC_DOUBLEDOUBLE;
+        break;
+      case TRIPLEDOUBLE:
+        *base_func = SOLLYA_BASE_FUNC_TRIPLEDOUBLE;
+        break;
+      case ERF:
+        *base_func = SOLLYA_BASE_FUNC_ERF;
+        break;
+      case ERFC:
+        *base_func = SOLLYA_BASE_FUNC_ERFC;
+        break;
+      case LOG_1P:
+        *base_func = SOLLYA_BASE_FUNC_LOG_1P;
+        break;
+      case EXP_M1:
+        *base_func = SOLLYA_BASE_FUNC_EXP_M1;
+        break;
+      case DOUBLEEXTENDED:
+        *base_func = SOLLYA_BASE_FUNC_DOUBLEEXTENDED;
+        break;
+      case CEIL:
+        *base_func = SOLLYA_BASE_FUNC_CEIL;
+        break;
+      case FLOOR:
+        *base_func = SOLLYA_BASE_FUNC_FLOOR;
+        break;
+      case NEARESTINT:
+        *base_func = SOLLYA_BASE_FUNC_NEARESTINT;
+        break;
+      default:
+        return 0;
+      }
+    case POW:
+      *base_func = SOLLYA_BASE_FUNC_POW;
       break;
     case LIBRARYFUNCTION:
       *base_func = SOLLYA_BASE_FUNC_LIBRARYFUNCTION;
       break;
     case PROCEDUREFUNCTION:
       *base_func = SOLLYA_BASE_FUNC_PROCEDUREFUNCTION;
-      break;
-    case CEIL:
-      *base_func = SOLLYA_BASE_FUNC_CEIL;
-      break;
-    case FLOOR:
-      *base_func = SOLLYA_BASE_FUNC_FLOOR;
-      break;
-    case NEARESTINT:
-      *base_func = SOLLYA_BASE_FUNC_NEARESTINT;
       break;
     case PI_CONST:
       *base_func = SOLLYA_BASE_FUNC_PI;

@@ -155,41 +155,15 @@ node *headFunction(node *tree) {
   case LIBRARYCONSTANT:
     copy = NULL;
     break;
-  case SQRT:
-  case EXP:
-  case LOG:
-  case LOG_2:
-  case LOG_10:
-  case SIN:
-  case COS:
-  case TAN:
-  case ASIN:
-  case ACOS:
-  case ATAN:
-  case SINH:
-  case COSH:
-  case TANH:
-  case ASINH:
-  case ACOSH:
-  case ATANH:
   case NEG:
-  case ABS:
-  case DOUBLE:
-  case SINGLE:
-  case QUAD:
-  case HALFPRECISION:
-  case DOUBLEDOUBLE:
-  case TRIPLEDOUBLE:
-  case ERF:
-  case ERFC:
-  case LOG_1P:
-  case EXP_M1:
-  case DOUBLEEXTENDED:
-  case CEIL:
-  case FLOOR:
-  case NEARESTINT:
     copy = (node *) safeMalloc(sizeof(node));
     copy->nodeType = tree->nodeType;
+    copy->child1 = makeVariable();
+    break;
+  case UNARY_BASE_FUNC:
+    copy = (node *) safeMalloc(sizeof(node));
+    copy->nodeType = tree->nodeType;
+    copy->baseFun = tree->baseFun;
     copy->child1 = makeVariable();
     break;
   case LIBRARYFUNCTION:
@@ -491,39 +465,8 @@ int tryMatchExtendedPureTree(chain **associations, node *thingToMatch, node *pos
     if (rightAssoc != NULL) freeChain(rightAssoc, freeEntryOnVoid);
     return okay;
     break;
-  case SQRT:
-  case EXP:
-  case LOG:
-  case LOG_2:
-  case LOG_10:
-  case SIN:
-  case COS:
-  case TAN:
-  case ASIN:
-  case ACOS:
-  case ATAN:
-  case SINH:
-  case COSH:
-  case TANH:
-  case ASINH:
-  case ACOSH:
-  case ATANH:
   case NEG:
-  case ABS:
-  case DOUBLE:
-  case SINGLE:
-  case QUAD:
-  case HALFPRECISION:
-  case DOUBLEDOUBLE:
-  case TRIPLEDOUBLE:
-  case ERF:
-  case ERFC:
-  case LOG_1P:
-  case EXP_M1:
-  case DOUBLEEXTENDED:
-  case CEIL:
-  case FLOOR:
-  case NEARESTINT:
+  case UNARY_BASE_FUNC:
     /* Unary functions: we have a match if we have a match on recursion
        Possible associations are established on recursion.
     */

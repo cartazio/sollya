@@ -1598,121 +1598,16 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
       }
     }
     break;
-  case SQRT:
+  case NEG:
     excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_sqrt(stack3, stack1);
+    sollya_mpfi_neg(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
-  case EXP:
+  case UNARY_BASE_FUNC:
     excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_exp(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case LOG:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_log(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case LOG_2:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_log2(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case LOG_10:
-    evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_log10(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case SIN:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_sin(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case COS:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_cos(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case TAN:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_tan(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case ASIN:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_asin(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case ACOS:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_acos(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case ATAN:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_atan(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case SINH:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_sinh(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case COSH:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_cosh(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case TANH:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_tanh(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case ASINH:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_asinh(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case ACOSH:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_acosh(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case ATANH:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_atanh(stack3, stack1);
+    tree->baseFun->interval_eval(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
@@ -1726,97 +1621,6 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
       sollya_mpfi_set(*(internalTheo->boundRight),stack2);
     }
     excludes = concatChains(leftExcludes,rightExcludes);
-    break;
-  case NEG:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_neg(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case ABS:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_abs(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case DOUBLE:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_round_to_double(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case SINGLE:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_round_to_single(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case HALFPRECISION:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_round_to_halfprecision(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case QUAD:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_round_to_quad(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case DOUBLEDOUBLE:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_round_to_doubledouble(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case TRIPLEDOUBLE:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_round_to_tripledouble(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case ERF:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_erf(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case ERFC:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_erfc(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case LOG_1P:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_log1p(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case EXP_M1:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_expm1(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case DOUBLEEXTENDED:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_round_to_doubleextended(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
     break;
   case LIBRARYFUNCTION:
     excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
@@ -1833,27 +1637,6 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
   case PROCEDUREFUNCTION:
     excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
     computeFunctionWithProcedure(stack3, tree->child2, stack1, (unsigned int) tree->libFunDeriv);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case CEIL:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_ceil(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case FLOOR:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_floor(stack3, stack1);
-    if (internalTheo != NULL) {
-      sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
-    }
-    break;
-  case NEARESTINT:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes);
-    sollya_mpfi_nearestint(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
@@ -4021,55 +3804,10 @@ chain *uncertifiedZeroDenominators(node *tree, mpfr_t a, mpfr_t b, mp_prec_t pre
     leftPoles = concatChains(leftPoles,rightPoles);
     return concatChains(leftPoles,newZeros);
     break;
-  case SQRT:
+  case NEG:
     return uncertifiedZeroDenominators(tree->child1,a,b,prec);
     break;
-  case EXP:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case LOG:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case LOG_2:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case LOG_10:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case SIN:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case COS:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case TAN:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case ASIN:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case ACOS:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case ATAN:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case SINH:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case COSH:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case TANH:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case ASINH:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case ACOSH:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case ATANH:
+  case UNARY_BASE_FUNC:
     return uncertifiedZeroDenominators(tree->child1,a,b,prec);
     break;
   case POW:
@@ -4077,58 +3815,10 @@ chain *uncertifiedZeroDenominators(node *tree, mpfr_t a, mpfr_t b, mp_prec_t pre
     rightPoles = uncertifiedZeroDenominators(tree->child2,a,b,prec);
     return concatChains(leftPoles,rightPoles);
     break;
-  case NEG:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case ABS:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case DOUBLE:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case SINGLE:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case QUAD:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case HALFPRECISION:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case DOUBLEDOUBLE:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case TRIPLEDOUBLE:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case ERF:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case ERFC:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case LOG_1P:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case EXP_M1:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case DOUBLEEXTENDED:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
   case LIBRARYFUNCTION:
     return uncertifiedZeroDenominators(tree->child1,a,b,prec);
     break;
   case PROCEDUREFUNCTION:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case CEIL:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case FLOOR:
-    return uncertifiedZeroDenominators(tree->child1,a,b,prec);
-    break;
-  case NEARESTINT:
     return uncertifiedZeroDenominators(tree->child1,a,b,prec);
     break;
   default:

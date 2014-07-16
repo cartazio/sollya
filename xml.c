@@ -121,105 +121,15 @@ void fPrintXmlInner(FILE *fd, node *tree) {
     fPrintXmlInner(fd, tree->child2);
     sollyaFprintf(fd,"</apply>\n");
     break;
-  case SQRT:
+  case NEG:
     sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<root/>\n");
+    sollyaFprintf(fd,"<minus/>\n");
     fPrintXmlInner(fd, tree->child1);
     sollyaFprintf(fd,"</apply>\n");
     break;
-  case EXP:
+  case UNARY_BASE_FUNC:
     sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<exp/>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case LOG:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<ln/>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case LOG_2:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<log/><logbase><cn>2</cn></logbase>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case LOG_10:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<log/>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case SIN:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<sin/>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case COS:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<cos/>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case TAN:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<tan/>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case ASIN:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<arcsin/>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case ACOS:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<arccos/>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case ATAN:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<arctan/>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case SINH:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<sinh/>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case COSH:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<cosh/>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case TANH:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<tanh/>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case ASINH:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<arcsinh/>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case ACOSH:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<arccosh/>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case ATANH:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<arctanh/>\n");
+    sollyaFprintf(fd, "%s", tree->baseFun->xmlString);
     fPrintXmlInner(fd, tree->child1);
     sollyaFprintf(fd,"</apply>\n");
     break;
@@ -228,88 +138,6 @@ void fPrintXmlInner(FILE *fd, node *tree) {
     sollyaFprintf(fd,"<power/>\n");
     fPrintXmlInner(fd, tree->child1);
     fPrintXmlInner(fd, tree->child2);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case NEG:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<minus/>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case ABS:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<abs/>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case DOUBLE:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">double</csymbol>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case SINGLE:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">single</csymbol>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case QUAD:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">quad</csymbol>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case HALFPRECISION:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">halfprecision</csymbol>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case DOUBLEDOUBLE:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">doubledouble</csymbol>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case TRIPLEDOUBLE:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">tripledouble</csymbol>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case ERF:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<csymbol definitionURL=\"http://www.openmath.org/CDs/errorFresnelInts.ocd\" encoding=\"OpenMath\">erf</csymbol>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case ERFC:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<csymbol definitionURL=\"http://www.openmath.org/CDs/errorFresnelInts.ocd\" encoding=\"OpenMath\">erfc</csymbol>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case LOG_1P:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">log1p</csymbol>\n");
-    /*    fprintf(fd,"<log/><apply><plus/><cn>1</cn>\n");*/
-    fPrintXmlInner(fd, tree->child1);
-    /*    fprintf(fd,"</apply></apply>\n");*/
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case EXP_M1:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">expm1</csymbol>\n");
-    /*    fprintf(fd,"<apply><minus/><apply><exp>\n");*/
-    fPrintXmlInner(fd, tree->child1);
-    /*    fprintf(fd,"</apply><cn>1</cn></apply>\n");*/
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case DOUBLEEXTENDED:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">doubleextended</csymbol>\n");
-    fPrintXmlInner(fd, tree->child1);
     sollyaFprintf(fd,"</apply>\n");
     break;
   case LIBRARYFUNCTION:
@@ -369,24 +197,6 @@ void fPrintXmlInner(FILE *fd, node *tree) {
       sollyaFprintf(fd,"</apply>\n");
       sollyaFprintf(fd,"</apply>\n");
     }
-    break;
-  case CEIL:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<ceiling/>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case FLOOR:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<floor/>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
-    break;
-  case NEARESTINT:
-    sollyaFprintf(fd,"<apply>\n");
-    sollyaFprintf(fd,"<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">nearestint</csymbol>\n");
-    fPrintXmlInner(fd, tree->child1);
-    sollyaFprintf(fd,"</apply>\n");
     break;
   case PI_CONST:
     sollyaFprintf(fd,"<pi/>");

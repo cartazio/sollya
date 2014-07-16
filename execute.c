@@ -463,99 +463,15 @@ node *copyThingInner(node *tree) {
     copy->child1 = copyThingInner(tree->child1);
     copy->child2 = copyThingInner(tree->child2);
     break;
-  case SQRT:
+  case NEG:
     copy->child1 = copyThingInner(tree->child1);
     break;
-  case EXP:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case LOG:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case LOG_2:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case LOG_10:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case SIN:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case COS:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case TAN:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case ASIN:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case ACOS:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case ATAN:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case SINH:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case COSH:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case TANH:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case ASINH:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case ACOSH:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case ATANH:
+  case UNARY_BASE_FUNC:
     copy->child1 = copyThingInner(tree->child1);
     break;
   case POW:
     copy->child1 = copyThingInner(tree->child1);
     copy->child2 = copyThingInner(tree->child2);
-    break;
-  case NEG:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case ABS:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case DOUBLE:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case SINGLE:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case HALFPRECISION:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case QUAD:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case DOUBLEDOUBLE:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case TRIPLEDOUBLE:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case ERF:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case ERFC:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case LOG_1P:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case EXP_M1:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case DOUBLEEXTENDED:
-    copy->child1 = copyThingInner(tree->child1);
     break;
   case LIBRARYFUNCTION:
     copy->libFun = tree->libFun;
@@ -569,15 +485,6 @@ node *copyThingInner(node *tree) {
     copy->libFunDeriv = tree->libFunDeriv;
     copy->child1 = copyThingInner(tree->child1);
     copy->child2 = copyThingInner(tree->child2);
-    break;
-  case CEIL:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case FLOOR:
-    copy->child1 = copyThingInner(tree->child1);
-    break;
-  case NEARESTINT:
-    copy->child1 = copyThingInner(tree->child1);
     break;
   case PI_CONST:
     break;
@@ -1345,99 +1252,15 @@ node *deepCopyThing(node *tree) {
     copy->child1 = deepCopyThing(tree->child1);
     copy->child2 = deepCopyThing(tree->child2);
     break;
-  case SQRT:
+  case NEG:
     copy->child1 = deepCopyThing(tree->child1);
     break;
-  case EXP:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case LOG:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case LOG_2:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case LOG_10:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case SIN:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case COS:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case TAN:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case ASIN:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case ACOS:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case ATAN:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case SINH:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case COSH:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case TANH:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case ASINH:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case ACOSH:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case ATANH:
+  case UNARY_BASE_FUNC:
     copy->child1 = deepCopyThing(tree->child1);
     break;
   case POW:
     copy->child1 = deepCopyThing(tree->child1);
     copy->child2 = deepCopyThing(tree->child2);
-    break;
-  case NEG:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case ABS:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case DOUBLE:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case SINGLE:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case HALFPRECISION:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case QUAD:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case DOUBLEDOUBLE:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case TRIPLEDOUBLE:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case ERF:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case ERFC:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case LOG_1P:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case EXP_M1:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case DOUBLEEXTENDED:
-    copy->child1 = deepCopyThing(tree->child1);
     break;
   case LIBRARYFUNCTION:
     copy->libFun = tree->libFun;
@@ -1451,15 +1274,6 @@ node *deepCopyThing(node *tree) {
     copy->libFunDeriv = tree->libFunDeriv;
     copy->child1 = deepCopyThing(tree->child1);
     copy->child2 = deepCopyThing(tree->child2);
-    break;
-  case CEIL:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case FLOOR:
-    copy->child1 = deepCopyThing(tree->child1);
-    break;
-  case NEARESTINT:
-    copy->child1 = deepCopyThing(tree->child1);
     break;
   case PI_CONST:
     break;
@@ -2258,97 +2072,13 @@ char *getTimingStringForThing(node *tree) {
   case DIV:
     constString = NULL;
     break;
-  case SQRT:
-    constString = NULL;
-    break;
-  case EXP:
-    constString = NULL;
-    break;
-  case LOG:
-    constString = NULL;
-    break;
-  case LOG_2:
-    constString = NULL;
-    break;
-  case LOG_10:
-    constString = NULL;
-    break;
-  case SIN:
-    constString = NULL;
-    break;
-  case COS:
-    constString = NULL;
-    break;
-  case TAN:
-    constString = NULL;
-    break;
-  case ASIN:
-    constString = NULL;
-    break;
-  case ACOS:
-    constString = NULL;
-    break;
-  case ATAN:
-    constString = NULL;
-    break;
-  case SINH:
-    constString = NULL;
-    break;
-  case COSH:
-    constString = NULL;
-    break;
-  case TANH:
-    constString = NULL;
-    break;
-  case ASINH:
-    constString = NULL;
-    break;
-  case ACOSH:
-    constString = NULL;
-    break;
-  case ATANH:
-    constString = NULL;
-    break;
-  case POW:
-    constString = NULL;
-    break;
   case NEG:
     constString = NULL;
     break;
-  case ABS:
+  case UNARY_BASE_FUNC:
     constString = NULL;
     break;
-  case DOUBLE:
-    constString = NULL;
-    break;
-  case SINGLE:
-    constString = NULL;
-    break;
-  case QUAD:
-    constString = NULL;
-    break;
-  case HALFPRECISION:
-    constString = NULL;
-    break;
-  case DOUBLEDOUBLE:
-    constString = NULL;
-    break;
-  case TRIPLEDOUBLE:
-    constString = NULL;
-    break;
-  case ERF:
-    constString = NULL;
-    break;
-  case ERFC:
-    constString = NULL;
-    break;
-  case LOG_1P:
-    constString = NULL;
-    break;
-  case EXP_M1:
-    constString = NULL;
-    break;
-  case DOUBLEEXTENDED:
+  case POW:
     constString = NULL;
     break;
   case LIBRARYFUNCTION:
@@ -2358,15 +2088,6 @@ char *getTimingStringForThing(node *tree) {
     constString = NULL;
     break;
   case PROCEDUREFUNCTION:
-    constString = NULL;
-    break;
-  case CEIL:
-    constString = NULL;
-    break;
-  case FLOOR:
-    constString = NULL;
-    break;
-  case NEARESTINT:
     constString = NULL;
     break;
   case PI_CONST:
@@ -3090,98 +2811,14 @@ int isPureTree(node *tree) {
   case DIV:
     return (isPureTree(tree->child1) && isPureTree(tree->child2));
     break;
-  case SQRT:
+  case NEG:
     return isPureTree(tree->child1);
     break;
-  case EXP:
-    return isPureTree(tree->child1);
-    break;
-  case LOG:
-    return isPureTree(tree->child1);
-    break;
-  case LOG_2:
-    return isPureTree(tree->child1);
-    break;
-  case LOG_10:
-    return isPureTree(tree->child1);
-    break;
-  case SIN:
-    return isPureTree(tree->child1);
-    break;
-  case COS:
-    return isPureTree(tree->child1);
-    break;
-  case TAN:
-    return isPureTree(tree->child1);
-    break;
-  case ASIN:
-    return isPureTree(tree->child1);
-    break;
-  case ACOS:
-    return isPureTree(tree->child1);
-    break;
-  case ATAN:
-    return isPureTree(tree->child1);
-    break;
-  case SINH:
-    return isPureTree(tree->child1);
-    break;
-  case COSH:
-    return isPureTree(tree->child1);
-    break;
-  case TANH:
-    return isPureTree(tree->child1);
-    break;
-  case ASINH:
-    return isPureTree(tree->child1);
-    break;
-  case ACOSH:
-    return isPureTree(tree->child1);
-    break;
-  case ATANH:
+  case UNARY_BASE_FUNC:
     return isPureTree(tree->child1);
     break;
   case POW:
     return (isPureTree(tree->child1) && isPureTree(tree->child2));
-    break;
-  case NEG:
-    return isPureTree(tree->child1);
-    break;
-  case ABS:
-    return isPureTree(tree->child1);
-    break;
-  case DOUBLE:
-    return isPureTree(tree->child1);
-    break;
-  case SINGLE:
-    return isPureTree(tree->child1);
-    break;
-  case QUAD:
-    return isPureTree(tree->child1);
-    break;
-  case HALFPRECISION:
-    return isPureTree(tree->child1);
-    break;
-  case DOUBLEDOUBLE:
-    return isPureTree(tree->child1);
-    break;
-  case TRIPLEDOUBLE:
-    return isPureTree(tree->child1);
-    break;
-  case ERF:
-    return isPureTree(tree->child1);
-    break;
-  case ERFC:
-    return isPureTree(tree->child1);
-    break;
-  case LOG_1P:
-    return isPureTree(tree->child1);
-    break;
-  case EXP_M1:
-    return isPureTree(tree->child1);
-    break;
-  case DOUBLEEXTENDED:
-    return isPureTree(tree->child1);
     break;
   case LIBRARYFUNCTION:
     return isPureTree(tree->child1);
@@ -3190,15 +2827,6 @@ int isPureTree(node *tree) {
     return 1;
     break;
   case PROCEDUREFUNCTION:
-    return isPureTree(tree->child1);
-    break;
-  case CEIL:
-    return isPureTree(tree->child1);
-    break;
-  case FLOOR:
-    return isPureTree(tree->child1);
-    break;
-  case NEARESTINT:
     return isPureTree(tree->child1);
     break;
   case PI_CONST:
@@ -3253,98 +2881,11 @@ int isExtendedPureTree(node *tree) {
   case DIV:
     return (isExtendedPureTree(tree->child1) && isExtendedPureTree(tree->child2));
     break;
-  case SQRT:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case EXP:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case LOG:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case LOG_2:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case LOG_10:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case SIN:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case COS:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case TAN:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case ASIN:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case ACOS:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case ATAN:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case SINH:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case COSH:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case TANH:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case ASINH:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case ACOSH:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case ATANH:
+  case UNARY_BASE_FUNC:
     return isExtendedPureTree(tree->child1);
     break;
   case POW:
     return (isExtendedPureTree(tree->child1) && isExtendedPureTree(tree->child2));
-    break;
-  case NEG:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case ABS:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case DOUBLE:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case SINGLE:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case QUAD:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case HALFPRECISION:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case DOUBLEDOUBLE:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case TRIPLEDOUBLE:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case ERF:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case ERFC:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case LOG_1P:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case EXP_M1:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case DOUBLEEXTENDED:
-    return isExtendedPureTree(tree->child1);
     break;
   case LIBRARYFUNCTION:
     return isExtendedPureTree(tree->child1);
@@ -3353,15 +2894,6 @@ int isExtendedPureTree(node *tree) {
     return 1;
     break;
   case PROCEDUREFUNCTION:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case CEIL:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case FLOOR:
-    return isExtendedPureTree(tree->child1);
-    break;
-  case NEARESTINT:
     return isExtendedPureTree(tree->child1);
     break;
   case PI_CONST:
@@ -4827,90 +4359,16 @@ char *sRawPrintThing(node *tree) {
 						    concatAndFree(sRawPrintThing(tree->child2),
 								  newString(")")))));
     break;
-  case SQRT:
-    res = concatAndFree(newString("sqrt("),
+  case NEG: /* TODO: curiously NEG is handled here as -(%s) while in expression.c, there is always a special code for choosing if parentheses should be displayed or not */
+    res = concatAndFree(newString("-("),
 			concatAndFree(sRawPrintThing(tree->child1),
 				      newString(")")));
     break;
-  case EXP:
-    res = concatAndFree(newString("exp("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case LOG:
-    res = concatAndFree(newString("log("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case LOG_2:
-    res = concatAndFree(newString("log2("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case LOG_10:
-    res = concatAndFree(newString("log10("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case SIN:
-    res = concatAndFree(newString("sin("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case COS:
-    res = concatAndFree(newString("cos("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case TAN:
-    res = concatAndFree(newString("tan("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case ASIN:
-    res = concatAndFree(newString("asin("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case ACOS:
-    res = concatAndFree(newString("acos("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case ATAN:
-    res = concatAndFree(newString("atan("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case SINH:
-    res = concatAndFree(newString("sinh("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case COSH:
-    res = concatAndFree(newString("cosh("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case TANH:
-    res = concatAndFree(newString("tanh("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case ASINH:
-    res = concatAndFree(newString("asinh("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case ACOSH:
-    res = concatAndFree(newString("acosh("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case ATANH:
-    res = concatAndFree(newString("atanh("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
+  case UNARY_BASE_FUNC:
+    res = newString(tree->baseFun->functionName);
+    res = concatAndFree(res, newString("("));
+    res = concatAndFree(res, sRawPrintThing(tree->child1));
+    res = concatAndFree(res, newString(")"));
     break;
   case POW:
     res = concatAndFree(newString("("),
@@ -4918,71 +4376,6 @@ char *sRawPrintThing(node *tree) {
 				      concatAndFree(newString(") ^ ("),
 						    concatAndFree(sRawPrintThing(tree->child2),
 								  newString(")")))));
-    break;
-  case NEG:
-    res = concatAndFree(newString("-("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case ABS:
-    res = concatAndFree(newString("abs("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case DOUBLE:
-    res = concatAndFree(newString("double("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case SINGLE:
-    res = concatAndFree(newString("single("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case HALFPRECISION:
-    res = concatAndFree(newString("halfprecision("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case QUAD:
-    res = concatAndFree(newString("quad("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case DOUBLEDOUBLE:
-    res = concatAndFree(newString("doubledouble("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case TRIPLEDOUBLE:
-    res = concatAndFree(newString("tripledouble("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case ERF:
-    res = concatAndFree(newString("erf("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case ERFC:
-    res = concatAndFree(newString("erfc("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case LOG_1P:
-    res = concatAndFree(newString("log1p("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case EXP_M1:
-    res = concatAndFree(newString("expm1("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case DOUBLEEXTENDED:
-    res = concatAndFree(newString("doubleextended("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
     break;
   case LIBRARYFUNCTION:
     {
@@ -5057,21 +4450,6 @@ char *sRawPrintThing(node *tree) {
     break;
   case LIBRARYCONSTANT:
     res = newString(tree->libFun->functionName);
-    break;
-  case CEIL:
-    res = concatAndFree(newString("ceil("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case FLOOR:
-    res = concatAndFree(newString("floor("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
-    break;
-  case NEARESTINT:
-    res = concatAndFree(newString("nearestint("),
-			concatAndFree(sRawPrintThing(tree->child1),
-				      newString(")")));
     break;
   case PI_CONST:
     res = newString("pi");
@@ -12993,129 +12371,17 @@ void freeThing(node *tree) {
     freeThing(tree->child2);
     safeFree(tree);
     break;
-  case SQRT:
+  case NEG:
     freeThing(tree->child1);
     safeFree(tree);
     break;
-  case EXP:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case LOG:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case LOG_2:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case LOG_10:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case SIN:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case COS:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case TAN:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case ASIN:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case ACOS:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case ATAN:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case SINH:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case COSH:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case TANH:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case ASINH:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case ACOSH:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case ATANH:
+  case UNARY_BASE_FUNC:
     freeThing(tree->child1);
     safeFree(tree);
     break;
   case POW:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    safeFree(tree);
-    break;
-  case NEG:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case ABS:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case DOUBLE:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case SINGLE:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case HALFPRECISION:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case QUAD:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case DOUBLEDOUBLE:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case TRIPLEDOUBLE:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case ERF:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case ERFC:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case LOG_1P:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case EXP_M1:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case DOUBLEEXTENDED:
-    freeThing(tree->child1);
     safeFree(tree);
     break;
   case LIBRARYFUNCTION:
@@ -13128,18 +12394,6 @@ void freeThing(node *tree) {
   case PROCEDUREFUNCTION:
     freeThing(tree->child1);
     freeThing(tree->child2);
-    safeFree(tree);
-    break;
-  case CEIL:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case FLOOR:
-    freeThing(tree->child1);
-    safeFree(tree);
-    break;
-  case NEARESTINT:
-    freeThing(tree->child1);
     safeFree(tree);
     break;
   case PI_CONST:
@@ -14143,99 +13397,15 @@ int isEqualThing(node *tree, node *tree2) {
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     if (!isEqualThing(tree->child2,tree2->child2)) return 0;
     break;
-  case SQRT:
+  case NEG:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break;
-  case EXP:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case LOG:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case LOG_2:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case LOG_10:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case SIN:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case COS:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case TAN:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case ASIN:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case ACOS:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case ATAN:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case SINH:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case COSH:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case TANH:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case ASINH:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case ACOSH:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case ATANH:
+  case UNARY_BASE_FUNC:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break;
   case POW:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     if (!isEqualThing(tree->child2,tree2->child2)) return 0;
-    break;
-  case NEG:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case ABS:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case DOUBLE:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case SINGLE:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case HALFPRECISION:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case QUAD:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case DOUBLEDOUBLE:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case TRIPLEDOUBLE:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case ERF:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case ERFC:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case LOG_1P:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case EXP_M1:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case DOUBLEEXTENDED:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break;
   case LIBRARYFUNCTION:
     if (tree->libFun != tree2->libFun) return 0;
@@ -14249,15 +13419,6 @@ int isEqualThing(node *tree, node *tree2) {
     if (tree->libFunDeriv != tree2->libFunDeriv) return 0;
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     if (!isEqualThing(tree->child2,tree2->child2)) return 0;
-    break;
-  case CEIL:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case FLOOR:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
-    break;
-  case NEARESTINT:
-    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break;
   case PI_CONST:
     break;
@@ -16384,40 +15545,9 @@ int variableUsePreventsPreevaluation(node *tree) {
   case BIND:
     return (variableUsePreventsPreevaluation(tree->child1) && variableUsePreventsPreevaluation(tree->child2));
     break;
-  case SQRT:
-  case EXP:
-  case LOG:
-  case LOG_2:
-  case LOG_10:
-  case SIN:
-  case COS:
-  case TAN:
-  case ASIN:
-  case ACOS:
-  case ATAN:
-  case SINH:
-  case COSH:
-  case TANH:
-  case ASINH:
-  case ACOSH:
-  case ATANH:
   case NEG:
-  case ABS:
-  case DOUBLE:
-  case SINGLE:
-  case QUAD:
-  case HALFPRECISION:
-  case DOUBLEDOUBLE:
-  case TRIPLEDOUBLE:
-  case ERF:
-  case ERFC:
-  case LOG_1P:
-  case EXP_M1:
-  case DOUBLEEXTENDED:
+  case UNARY_BASE_FUNC:
   case LIBRARYFUNCTION:
-  case CEIL:
-  case FLOOR:
-  case NEARESTINT:
   case NOPARG:
   case PRINTHEXA:
   case PRINTFLOAT:
@@ -16767,99 +15897,15 @@ node *preevaluateMatcher(node *tree) {
     copy->child1 = preevaluateMatcher(tree->child1);
     copy->child2 = preevaluateMatcher(tree->child2);
     break;
-  case SQRT:
+  case NEG:
     copy->child1 = preevaluateMatcher(tree->child1);
     break;
-  case EXP:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case LOG:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case LOG_2:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case LOG_10:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case SIN:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case COS:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case TAN:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case ASIN:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case ACOS:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case ATAN:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case SINH:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case COSH:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case TANH:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case ASINH:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case ACOSH:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case ATANH:
+  case UNARY_BASE_FUNC:
     copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case POW:
     copy->child1 = preevaluateMatcher(tree->child1);
     copy->child2 = preevaluateMatcher(tree->child2);
-    break;
-  case NEG:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case ABS:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case DOUBLE:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case SINGLE:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case QUAD:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case HALFPRECISION:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case DOUBLEDOUBLE:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case TRIPLEDOUBLE:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case ERF:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case ERFC:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case LOG_1P:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case EXP_M1:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case DOUBLEEXTENDED:
-    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case LIBRARYFUNCTION:
     copy->libFun = tree->libFun;
@@ -16873,15 +15919,6 @@ node *preevaluateMatcher(node *tree) {
     copy->libFunDeriv = tree->libFunDeriv;
     copy->child1 = preevaluateMatcher(tree->child1);
     copy->child2 = preevaluateMatcher(tree->child2);
-    break;
-  case CEIL:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case FLOOR:
-    copy->child1 = preevaluateMatcher(tree->child1);
-    break;
-  case NEARESTINT:
-    copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case PI_CONST:
     break;
@@ -18675,7 +17712,7 @@ node *evaluateThingInnerst(node *tree) {
       }
     }
     break;
-  case SQRT:
+  case NEG:
     copy->child1 = evaluateThingInner(tree->child1);
     if (isRangeNonEmpty(copy->child1)) {
       pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
@@ -18684,7 +17721,7 @@ node *evaluateThingInnerst(node *tree) {
       sollya_mpfi_init2(tempIA,pTemp);
       sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
       sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_sqrt(tempIC,tempIA);
+      sollya_mpfi_neg(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
@@ -18697,7 +17734,7 @@ node *evaluateThingInnerst(node *tree) {
       sollya_mpfi_clear(tempIC);
     }
     break;
-  case EXP:
+  case UNARY_BASE_FUNC:
     copy->child1 = evaluateThingInner(tree->child1);
     if (isRangeNonEmpty(copy->child1)) {
       pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
@@ -18706,337 +17743,7 @@ node *evaluateThingInnerst(node *tree) {
       sollya_mpfi_init2(tempIA,pTemp);
       sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
       sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_exp(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case LOG:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_log(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case LOG_2:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_log2(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case LOG_10:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_log10(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case SIN:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_sin(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case COS:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_cos(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case TAN:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_tan(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case ASIN:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_asin(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case ACOS:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_acos(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case ATAN:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_atan(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case SINH:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_sinh(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case COSH:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_cosh(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case TANH:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_tanh(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case ASINH:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_asinh(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case ACOSH:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_acosh(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case ATANH:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_atanh(tempIC,tempIA);
+      tree->baseFun->interval_eval(tempIC,tempIA);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);
@@ -19182,292 +17889,6 @@ node *evaluateThingInnerst(node *tree) {
       }
     }
     break;
-  case NEG:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_neg(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case ABS:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_abs(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case DOUBLE:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_round_to_double(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case SINGLE:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_round_to_single(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case QUAD:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_round_to_quad(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case HALFPRECISION:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_round_to_halfprecision(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case DOUBLEDOUBLE:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_round_to_doubledouble(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case TRIPLEDOUBLE:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_round_to_tripledouble(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case ERF:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_erf(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case ERFC:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_erfc(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case LOG_1P:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_log1p(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case EXP_M1:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_expm1(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case DOUBLEEXTENDED:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_round_to_doubleextended(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
   case LIBRARYFUNCTION:
     copy->libFun = tree->libFun;
     copy->libFunDeriv = tree->libFunDeriv;
@@ -19520,72 +17941,6 @@ node *evaluateThingInnerst(node *tree) {
     break;
   case LIBRARYCONSTANT:
     copy->libFun = tree->libFun;
-    break;
-  case CEIL:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_ceil(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case FLOOR:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_floor(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
-    break;
-  case NEARESTINT:
-    copy->child1 = evaluateThingInner(tree->child1);
-    if (isRangeNonEmpty(copy->child1)) {
-      pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
-      pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      if (pTemp2 > pTemp) pTemp = pTemp2;
-      sollya_mpfi_init2(tempIA,pTemp);
-      sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
-      sollya_mpfi_init2(tempIC,tools_precision);
-      sollya_mpfi_nearestint(tempIC,tempIA);
-      freeThing(copy);
-      mpfr_init2(a,tools_precision);
-      mpfr_init2(b,tools_precision);
-      sollya_mpfi_get_left(a,tempIC);
-      sollya_mpfi_get_right(b,tempIC);
-      copy = makeRange(makeConstant(a),makeConstant(b));
-      mpfr_clear(a);
-      mpfr_clear(b);
-      sollya_mpfi_clear(tempIA);
-      sollya_mpfi_clear(tempIC);
-    }
     break;
   case PI_CONST:
     break;

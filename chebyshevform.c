@@ -49,6 +49,7 @@
 #include "infnorm.h"
 #include "autodiff.h"
 #include "general.h"
+#include "base-functions.h"
 #include <mpfr.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -543,12 +544,12 @@ void composition_CM(chebModel *t,chebModel *g, chebModel *f, int boundLevel, mpf
 /* This function computes a cheb remainder for a function on an interval, assuming
    the n-th derivative is monotone.
    typeOfFunction is used to separate the cases:
-   * MONOTONE_REMAINDER_BASE_FUNCTION --> we consider a base function, represented by its nodeType (p and f are useless)
-   * MONOTONE_REMAINDER_LIBRARY_FUNCTION --> we consider a base function, represented by its nodeType (p and nodeType are useless)
-   * MONOTONE_REMAINDER_PROCEDURE_FUNCTION --> we consider a base function, represented by its nodeType (p and nodeType are useless)
-   * MONOTONE_REMAINDER_INV  --> we consider (x -> 1/x) (nodeType, f, and p are useless)
-   * MONOTONE_REMAINDER_CONSTPOWERVAR --> we consider (x -> p^x) (nodeType and f are useless)
-   * MONOTONE_REMAINDER_VARCONSTPOWER --> we consider (x -> x^p) (nodeType and f are useless)
+   * MONOTONE_REMAINDER_BASE_FUNCTION --> we consider a base function, given by basefun (p and f are useless)
+   * MONOTONE_REMAINDER_LIBRARY_FUNCTION --> we consider a library function, represented by f (p and basefun are useless)
+   * MONOTONE_REMAINDER_PROCEDURE_FUNCTION --> we consider a procedure function, represented by f (p and basefun are useless)
+   * MONOTONE_REMAINDER_INV  --> we consider (x -> 1/x) (basefun, f, and p are useless)
+   * MONOTONE_REMAINDER_CONSTPOWERVAR --> we consider (x -> p^x) (basefun and f are useless)
+   * MONOTONE_REMAINDER_VARCONSTPOWER --> we consider (x -> x^p) (basefun and f are useless)
 
    The coeffs of the interpolation polynomial
    are given as an array of mpfi's, developed over x.
@@ -556,7 +557,7 @@ void composition_CM(chebModel *t,chebModel *g, chebModel *f, int boundLevel, mpf
 */
 
 
-void computeMonotoneRemainderCheb(sollya_mpfi_t *bound, int typeOfFunction, int nodeType, node *f, mpfr_t p,
+void computeMonotoneRemainderCheb(sollya_mpfi_t *bound, int typeOfFunction, baseFunction *basefun, node *f, mpfr_t p,
                                   int n, sollya_mpfi_t *poly_array, sollya_mpfi_t x){
   sollya_mpfi_t xinf, xsup;
   mpfr_t xinfFr, xsupFr;
@@ -586,8 +587,8 @@ void computeMonotoneRemainderCheb(sollya_mpfi_t *bound, int typeOfFunction, int 
   /* enclosure of f(xinf) and f(xsup) */
   switch(typeOfFunction) {
   case MONOTONE_REMAINDER_BASE_FUNCTION:
-    baseFunction_diff(&boundf1,nodeType,xinf,0, &silent);
-    baseFunction_diff(&boundf2,nodeType,xsup,0, &silent);
+    basefun->baseAutodiff(&boundf1,xinf,0, &silent);
+    basefun->baseAutodiff(&boundf2,xsup,0, &silent);
     break;
   case MONOTONE_REMAINDER_LIBRARY_FUNCTION:
     libraryFunction_diff(&boundf1, accessThruMemRef(f), xinf, 0, &silent);
@@ -640,7 +641,7 @@ void computeMonotoneRemainderCheb(sollya_mpfi_t *bound, int typeOfFunction, int 
 
 /* This function computes a cheb model for a basic function, with the same convention
    as with computeMonotoneRemainderCheb */
-void base_CMAux(chebModel *t, int typeOfFunction, int nodeType, node *f, mpfr_t p, int n, sollya_mpfi_t x,int verbosity, mp_prec_t prec){
+void base_CMAux(chebModel *t, int typeOfFunction, baseFunction *basefun, node *f, mpfr_t p, int n, sollya_mpfi_t x,int verbosity, mp_prec_t prec){
   int i;
   chebModel *tt;
   sollya_mpfi_t *nDeriv;
@@ -665,9 +666,9 @@ void base_CMAux(chebModel *t, int typeOfFunction, int nodeType, node *f, mpfr_t 
 
   switch(typeOfFunction) {
   case MONOTONE_REMAINDER_BASE_FUNCTION:
-    baseFunction_diff(nDeriv, nodeType, x, n+1,&silent);
+    basefun->baseAutodiff(nDeriv, x, n+1,&silent);
     for(i=0;i<n;i++){
-      baseFunction_diff(&fValues[i],nodeType,(*tt->cheb_array)[i],0,&silent);
+      basefun->baseAutodiff(&fValues[i],(*tt->cheb_array)[i],0,&silent);
     }
     break;
   case MONOTONE_REMAINDER_LIBRARY_FUNCTION:
@@ -713,7 +714,7 @@ void base_CMAux(chebModel *t, int typeOfFunction, int nodeType, node *f, mpfr_t 
   /* Use Zumkeller technique to improve the bound in the absolute case,
      when the (n+1)th derivative has constant sign */
   if((sollya_mpfi_is_nonpos(nDeriv[n+1]) > 0)||(sollya_mpfi_is_nonneg(nDeriv[n+1]) > 0)){
-    computeMonotoneRemainderCheb(&tt->rem_bound, typeOfFunction, nodeType, accessThruMemRef(f), p, n, tt->poly_array, x);
+    computeMonotoneRemainderCheb(&tt->rem_bound, typeOfFunction, basefun, accessThruMemRef(f), p, n, tt->poly_array, x);
   }
   else{
     /* just keep the bound obtained using AD, nDeriv[n] */
@@ -914,48 +915,20 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int boundLevel, i
       clearcModelLight(tt);
       sollya_mpfi_clear(rangeg);
       break;
-    case SQRT:
-    case EXP:
-    case LOG:
-    case LOG_2:
-    case LOG_10:
-    case SIN:
-    case COS:
-    case TAN:
-    case ASIN:
-    case ACOS:
-    case ATAN:
-    case SINH:
-    case COSH:
-    case TANH:
-    case ASINH:
-    case ACOSH:
-    case ATANH:
-    case ABS:
-    case SINGLE:
-    case DOUBLE:
-    case DOUBLEDOUBLE:
-    case TRIPLEDOUBLE:
-    case ERF:
-    case ERFC:
-    case LOG_1P:
-    case EXP_M1:
-    case DOUBLEEXTENDED:
-    case CEIL:
-    case FLOOR:
-    case NEARESTINT:
+
+
+    case UNARY_BASE_FUNC:
     case LIBRARYFUNCTION:
     case PROCEDUREFUNCTION:
-
       if ((accessThruMemRef((accessThruMemRef(f)->child1))->nodeType)==VARIABLE) {
         child1_tm=createEmptycModelPrecomp(n,t->x, t->cheb_array,t->cheb_matrix, prec);
         /* CM for elementary function */
         if (accessThruMemRef(f)->nodeType == LIBRARYFUNCTION)
-          base_CMAux(child1_tm, MONOTONE_REMAINDER_LIBRARY_FUNCTION, 0, accessThruMemRef(f), NULL, n, x, verbosity,prec);
+          base_CMAux(child1_tm, MONOTONE_REMAINDER_LIBRARY_FUNCTION, NULL, accessThruMemRef(f), NULL, n, x, verbosity,prec);
         else if (accessThruMemRef(f)->nodeType == PROCEDUREFUNCTION)
-          base_CMAux(child1_tm, MONOTONE_REMAINDER_PROCEDURE_FUNCTION, 0, accessThruMemRef(f), NULL, n, x, verbosity,prec);
+          base_CMAux(child1_tm, MONOTONE_REMAINDER_PROCEDURE_FUNCTION, NULL, accessThruMemRef(f), NULL, n, x, verbosity,prec);
         else
-          base_CMAux(child1_tm, MONOTONE_REMAINDER_BASE_FUNCTION, accessThruMemRef(f)->nodeType, NULL, NULL, n,x, verbosity,prec);
+          base_CMAux(child1_tm, MONOTONE_REMAINDER_BASE_FUNCTION, accessThruMemRef(f)->baseFun, NULL, NULL, n,x, verbosity,prec);
 
         copycModel(t,child1_tm);
         clearcModelLight(child1_tm);
@@ -977,11 +950,11 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int boundLevel, i
 
         /*CM for elementary functions*/
         if (accessThruMemRef(f)->nodeType == LIBRARYFUNCTION)
-          base_CMAux(child2_tm, MONOTONE_REMAINDER_LIBRARY_FUNCTION, 0, accessThruMemRef(f), NULL, n, rangeg, verbosity,prec);
+          base_CMAux(child2_tm, MONOTONE_REMAINDER_LIBRARY_FUNCTION, NULL, accessThruMemRef(f), NULL, n, rangeg, verbosity,prec);
         else if (accessThruMemRef(f)->nodeType == PROCEDUREFUNCTION)
-          base_CMAux(child2_tm, MONOTONE_REMAINDER_PROCEDURE_FUNCTION, 0, accessThruMemRef(f), NULL, n, rangeg, verbosity,prec);
+          base_CMAux(child2_tm, MONOTONE_REMAINDER_PROCEDURE_FUNCTION, NULL, accessThruMemRef(f), NULL, n, rangeg, verbosity,prec);
         else
-          base_CMAux(child2_tm, MONOTONE_REMAINDER_BASE_FUNCTION, accessThruMemRef(f)->nodeType, NULL, NULL, n,rangeg, verbosity,prec);
+          base_CMAux(child2_tm, MONOTONE_REMAINDER_BASE_FUNCTION, accessThruMemRef(f)->baseFun, NULL, NULL, n,rangeg, verbosity,prec);
 
 
 
@@ -1029,7 +1002,7 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int boundLevel, i
 
         /*create cm for x^p over rangeg*/
         ctPowVar_tm=createEmptycModelCompute(n,rangeg,1,1, prec);
-        base_CMAux(ctPowVar_tm, MONOTONE_REMAINDER_CONSTPOWERVAR, 0, NULL, *(accessThruMemRef(simplifiedChild2)->value), n,rangeg, verbosity,prec);
+        base_CMAux(ctPowVar_tm, MONOTONE_REMAINDER_CONSTPOWERVAR, NULL, NULL, *(accessThruMemRef(simplifiedChild2)->value), n,rangeg, verbosity,prec);
 
         /*compose*/
         tt=createEmptycModelPrecomp(n,child1_tm->x, child1_tm->cheb_array, child1_tm->cheb_matrix, prec);
@@ -1057,7 +1030,7 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int boundLevel, i
         sollya_mpfi_add(rangeg,child2_tm->rem_bound, child2_tm->poly_bound);
         /*create cm for p^x over rangeg*/
         ctPowVar_tm=createEmptycModelCompute(n,rangeg,1,1, prec);
-        base_CMAux(ctPowVar_tm, MONOTONE_REMAINDER_VARCONSTPOWER, 0, NULL, *(accessThruMemRef(simplifiedChild1)->value), n,rangeg, verbosity,prec);
+        base_CMAux(ctPowVar_tm, MONOTONE_REMAINDER_VARCONSTPOWER, NULL, NULL, *(accessThruMemRef(simplifiedChild1)->value), n,rangeg, verbosity,prec);
         /*compose*/
         tt=createEmptycModelPrecomp(n,t->x,t->cheb_array, t->cheb_matrix, prec);
         composition_CM(tt,ctPowVar_tm,child2_tm, boundLevel, NULL,prec);
@@ -1089,7 +1062,7 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int boundLevel, i
         chebPolynomialBound(child1_tm->poly_bound, n, child1_tm->poly_array, boundLevel);
         sollya_mpfi_add(rangef,child1_tm->rem_bound, child1_tm->poly_bound);
         logx_tm=createEmptycModelCompute(n,rangef,1,1, prec);
-        base_CMAux(logx_tm, MONOTONE_REMAINDER_BASE_FUNCTION, LOG, NULL, NULL, n, rangef, verbosity,prec);
+        base_CMAux(logx_tm, MONOTONE_REMAINDER_BASE_FUNCTION, basefun_log, NULL, NULL, n, rangef, verbosity,prec);
         logf_tm=createEmptycModelPrecomp(n,t->x,t->cheb_array, t->cheb_matrix, prec);
         composition_CM(logf_tm, logx_tm,child1_tm, boundLevel, NULL,prec);
 
@@ -1102,7 +1075,7 @@ void cheb_model(chebModel *t, node *f, int n, sollya_mpfi_t x, int boundLevel, i
         chebPolynomialBound(ttt->poly_bound, n,ttt->poly_array,boundLevel);
         sollya_mpfi_add(rangef,ttt->rem_bound, ttt->poly_bound);
         expx_tm=createEmptycModelCompute(n,rangef,1,1, prec);
-        base_CMAux(expx_tm, MONOTONE_REMAINDER_BASE_FUNCTION, EXP, NULL, NULL, n,rangef, verbosity,prec);
+        base_CMAux(expx_tm, MONOTONE_REMAINDER_BASE_FUNCTION, basefun_exp, NULL, NULL, n,rangef, verbosity,prec);
 
         tt=createEmptycModelPrecomp(n,t->x,t->cheb_array, t->cheb_matrix, prec);
         composition_CM(tt,expx_tm,ttt, boundLevel, NULL,prec);

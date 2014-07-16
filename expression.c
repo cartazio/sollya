@@ -186,129 +186,17 @@ void free_memory(node *tree) {
     free_memory(tree->child2);
     safeFree(tree);
     break;
-  case SQRT:
+  case NEG:
     free_memory(tree->child1);
     safeFree(tree);
     break;
-  case EXP:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case LOG:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case LOG_2:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case LOG_10:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case SIN:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case COS:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case TAN:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case ASIN:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case ACOS:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case ATAN:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case SINH:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case COSH:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case TANH:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case ASINH:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case ACOSH:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case ATANH:
+  case UNARY_BASE_FUNC:
     free_memory(tree->child1);
     safeFree(tree);
     break;
   case POW:
     free_memory(tree->child1);
     free_memory(tree->child2);
-    safeFree(tree);
-    break;
-  case NEG:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case ABS:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case DOUBLE:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case SINGLE:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case QUAD:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case HALFPRECISION:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case DOUBLEDOUBLE:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case TRIPLEDOUBLE:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case ERF:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case ERFC:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case LOG_1P:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case EXP_M1:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case DOUBLEEXTENDED:
-    free_memory(tree->child1);
     safeFree(tree);
     break;
   case LIBRARYFUNCTION:
@@ -318,18 +206,6 @@ void free_memory(node *tree) {
   case PROCEDUREFUNCTION:
     free_memory(tree->child1);
     freeThing(tree->child2);
-    safeFree(tree);
-    break;
-  case CEIL:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case FLOOR:
-    free_memory(tree->child1);
-    safeFree(tree);
-    break;
-  case NEARESTINT:
-    free_memory(tree->child1);
     safeFree(tree);
     break;
   case PI_CONST:
@@ -374,98 +250,15 @@ void fprintHeadFunction(FILE *fd,node *tree, char *x, char *y) {
   case DIV:
     sollyaFprintf(fd,"%s / %s",x,y);
     break;
-  case SQRT:
-    sollyaFprintf(fd,"sqrt(%s)",x);
+  case NEG:
+    sollyaFprintf(fd,"-%s",x); /* TODO: curiously NEG is handled here as -%s while everywhere else, there is always a special code for choosing if parentheses should be displayed or not */
     break;
-  case EXP:
-    sollyaFprintf(fd,"exp(%s)",x);
-    break;
-  case LOG:
-    sollyaFprintf(fd,"log(%s)",x);
-    break;
-  case LOG_2:
-    sollyaFprintf(fd,"log2(%s)",x);
-    break;
-  case LOG_10:
-    sollyaFprintf(fd,"log10(%s)",x);
-    break;
-  case SIN:
-    sollyaFprintf(fd,"sin(%s)",x);
-    break;
-  case COS:
-    sollyaFprintf(fd,"cos(%s)",x);
-    break;
-  case TAN:
-    sollyaFprintf(fd,"tan(%s)",x);
-    break;
-  case ASIN:
-    sollyaFprintf(fd,"asin(%s)",x);
-    break;
-  case ACOS:
-    sollyaFprintf(fd,"acos(%s)",x);
-    break;
-  case ATAN:
-    sollyaFprintf(fd,"atan(%s)",x);
-    break;
-  case SINH:
-    sollyaFprintf(fd,"sinh(%s)",x);
-    break;
-  case COSH:
-    sollyaFprintf(fd,"cosh(%s)",x);
-    break;
-  case TANH:
-    sollyaFprintf(fd,"tanh(%s)",x);
-    break;
-  case ASINH:
-    sollyaFprintf(fd,"asinh(%s)",x);
-    break;
-  case ACOSH:
-    sollyaFprintf(fd,"acosh(%s)",x);
-    break;
-  case ATANH:
-    sollyaFprintf(fd,"atanh(%s)",x);
+  case UNARY_BASE_FUNC:
+    sollyaFprintf(fd,"%s",tree->baseFun->functionName);
+    sollyaFprintf(fd,"(%s)",x);
     break;
   case POW:
     sollyaFprintf(fd,"%s^%s",x,y);
-    break;
-  case NEG:
-    sollyaFprintf(fd,"-%s",x);
-    break;
-  case ABS:
-    sollyaFprintf(fd,"abs(%s)",x);
-    break;
-  case DOUBLE:
-    sollyaFprintf(fd,"double(%s)",x);
-    break;
-  case SINGLE:
-    sollyaFprintf(fd,"single(%s)",x);
-    break;
-  case QUAD:
-    sollyaFprintf(fd,"quad(%s)",x);
-    break;
-  case HALFPRECISION:
-    sollyaFprintf(fd,"halfprecision(%s)",x);
-    break;
-  case DOUBLEDOUBLE:
-    sollyaFprintf(fd,"doubledouble(%s)",x);
-    break;
-  case TRIPLEDOUBLE:
-    sollyaFprintf(fd,"tripledouble(%s)",x);
-    break;
-  case ERF:
-    sollyaFprintf(fd,"erf(%s)",x);
-    break;
-  case ERFC:
-    sollyaFprintf(fd,"erfc(%s)",x);
-    break;
-  case LOG_1P:
-    sollyaFprintf(fd,"log1p(%s)",x);
-    break;
-  case EXP_M1:
-    sollyaFprintf(fd,"expm1(%s)",x);
-    break;
-  case DOUBLEEXTENDED:
-    sollyaFprintf(fd,"doubleextended(%s)",x);
     break;
   case LIBRARYFUNCTION:
     {
@@ -494,15 +287,6 @@ void fprintHeadFunction(FILE *fd,node *tree, char *x, char *y) {
       }
       sollyaFprintf(fd,")(%s)",x);
     }
-    break;
-  case CEIL:
-    sollyaFprintf(fd,"ceil(%s)",x);
-    break;
-  case FLOOR:
-    sollyaFprintf(fd,"floor(%s)",x);
-    break;
-  case NEARESTINT:
-    sollyaFprintf(fd,"nearestint(%s)",x);
     break;
   case PI_CONST:
     sollyaFprintf(fd,"pi");
@@ -1206,88 +990,16 @@ void fprintTreeWithPrintMode(FILE *fd, node *tree) {
     if (isInfix(tree->child2) && (precedence(tree->child2) <= pred))
       sollyaFprintf(fd,")");
     break;
-  case SQRT:
-    sollyaFprintf(fd,"sqrt(");
+  case NEG:
+    sollyaFprintf(fd,"-");
+    if (isInfix(tree->child1) && (precedence(tree->child1) <= pred))
+      sollyaFprintf(fd,"(");
     fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
+    if (isInfix(tree->child1) && (precedence(tree->child1) <= pred))
+      sollyaFprintf(fd,")");
     break;
-  case EXP:
-    sollyaFprintf(fd,"exp(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case LOG:
-    sollyaFprintf(fd,"log(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case LOG_2:
-    sollyaFprintf(fd,"log2(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case LOG_10:
-    sollyaFprintf(fd,"log10(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case SIN:
-    sollyaFprintf(fd,"sin(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case COS:
-    sollyaFprintf(fd,"cos(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case TAN:
-    sollyaFprintf(fd,"tan(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case ASIN:
-    sollyaFprintf(fd,"asin(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case ACOS:
-    sollyaFprintf(fd,"acos(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case ATAN:
-    sollyaFprintf(fd,"atan(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case SINH:
-    sollyaFprintf(fd,"sinh(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case COSH:
-    sollyaFprintf(fd,"cosh(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case TANH:
-    sollyaFprintf(fd,"tanh(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case ASINH:
-    sollyaFprintf(fd,"asinh(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case ACOSH:
-    sollyaFprintf(fd,"acosh(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case ATANH:
-    sollyaFprintf(fd,"atanh(");
+  case UNARY_BASE_FUNC:
+    sollyaFprintf(fd,"%s(",tree->baseFun->functionName);
     fprintTreeWithPrintMode(fd,tree->child1);
     sollyaFprintf(fd,")");
     break;
@@ -1309,74 +1021,6 @@ void fprintTreeWithPrintMode(FILE *fd, node *tree) {
 				      && ((dyadic == 2) || (dyadic == 3))))) {
       sollyaFprintf(fd,")");
     }
-    break;
-  case NEG:
-    sollyaFprintf(fd,"-");
-    if (isInfix(tree->child1) && (precedence(tree->child1) <= pred))
-      sollyaFprintf(fd,"(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    if (isInfix(tree->child1) && (precedence(tree->child1) <= pred))
-      sollyaFprintf(fd,")");
-    break;
-  case ABS:
-    sollyaFprintf(fd,"abs(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case DOUBLE:
-    sollyaFprintf(fd,"double(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case SINGLE:
-    sollyaFprintf(fd,"single(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case HALFPRECISION:
-    sollyaFprintf(fd,"halfprecision(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case QUAD:
-    sollyaFprintf(fd,"quad(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case DOUBLEDOUBLE:
-    sollyaFprintf(fd,"doubledouble(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case TRIPLEDOUBLE:
-    sollyaFprintf(fd,"tripledouble(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case ERF:
-    sollyaFprintf(fd,"erf(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case ERFC:
-    sollyaFprintf(fd,"erfc(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case LOG_1P:
-    sollyaFprintf(fd,"log1p(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case EXP_M1:
-    sollyaFprintf(fd,"expm1(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case DOUBLEEXTENDED:
-    sollyaFprintf(fd,"doubleextended(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
     break;
   case LIBRARYFUNCTION:
     {
@@ -1445,21 +1089,6 @@ void fprintTreeWithPrintMode(FILE *fd, node *tree) {
 	}
       }
     }
-    break;
-  case CEIL:
-    sollyaFprintf(fd,"ceil(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case FLOOR:
-    sollyaFprintf(fd,"floor(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case NEARESTINT:
-    sollyaFprintf(fd,"nearestint(");
-    fprintTreeWithPrintMode(fd,tree->child1);
-    sollyaFprintf(fd,")");
     break;
   case PI_CONST:
     sollyaFprintf(fd,"pi");
@@ -1677,88 +1306,16 @@ void printTree(node *tree) {
     if (isInfix(tree->child2) && (precedence(tree->child2) <= pred))
       sollyaPrintf(")");
     break;
-  case SQRT:
-    sollyaPrintf("sqrt(");
+  case NEG:
+    sollyaPrintf("-");
+    if (isInfix(tree->child1) && (precedence(tree->child1) <= pred))
+      sollyaPrintf("(");
     printTree(tree->child1);
-    sollyaPrintf(")");
+    if (isInfix(tree->child1) && (precedence(tree->child1) <= pred))
+      sollyaPrintf(")");
     break;
-  case EXP:
-    sollyaPrintf("exp(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case LOG:
-    sollyaPrintf("log(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case LOG_2:
-    sollyaPrintf("log2(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case LOG_10:
-    sollyaPrintf("log10(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case SIN:
-    sollyaPrintf("sin(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case COS:
-    sollyaPrintf("cos(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case TAN:
-    sollyaPrintf("tan(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case ASIN:
-    sollyaPrintf("asin(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case ACOS:
-    sollyaPrintf("acos(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case ATAN:
-    sollyaPrintf("atan(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case SINH:
-    sollyaPrintf("sinh(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case COSH:
-    sollyaPrintf("cosh(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case TANH:
-    sollyaPrintf("tanh(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case ASINH:
-    sollyaPrintf("asinh(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case ACOSH:
-    sollyaPrintf("acosh(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case ATANH:
-    sollyaPrintf("atanh(");
+  case UNARY_BASE_FUNC:
+    sollyaPrintf("%s(",tree->baseFun->functionName);
     printTree(tree->child1);
     sollyaPrintf(")");
     break;
@@ -1780,74 +1337,6 @@ void printTree(node *tree) {
 				      && ((dyadic == 2) || (dyadic == 3))))) {
       sollyaPrintf(")");
     }
-    break;
-  case NEG:
-    sollyaPrintf("-");
-    if (isInfix(tree->child1) && (precedence(tree->child1) <= pred))
-      sollyaPrintf("(");
-    printTree(tree->child1);
-    if (isInfix(tree->child1) && (precedence(tree->child1) <= pred))
-      sollyaPrintf(")");
-    break;
-  case ABS:
-    sollyaPrintf("abs(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case DOUBLE:
-    sollyaPrintf("double(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case SINGLE:
-    sollyaPrintf("single(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case HALFPRECISION:
-    sollyaPrintf("halfprecision(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case QUAD:
-    sollyaPrintf("quad(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case DOUBLEDOUBLE:
-    sollyaPrintf("doubledouble(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case TRIPLEDOUBLE:
-    sollyaPrintf("tripledouble(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case ERF:
-    sollyaPrintf("erf(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case ERFC:
-    sollyaPrintf("erfc(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case LOG_1P:
-    sollyaPrintf("log1p(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case EXP_M1:
-    sollyaPrintf("expm1(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case DOUBLEEXTENDED:
-    sollyaPrintf("doubleextended(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
     break;
   case LIBRARYFUNCTION:
     {
@@ -1916,21 +1405,6 @@ void printTree(node *tree) {
 	}
       }
     }
-    break;
-  case CEIL:
-    sollyaPrintf("ceil(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case FLOOR:
-    sollyaPrintf("floor(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
-    break;
-  case NEARESTINT:
-    sollyaPrintf("nearestint(");
-    printTree(tree->child1);
-    sollyaPrintf(")");
     break;
   case PI_CONST:
     sollyaPrintf("pi");
@@ -2037,90 +1511,15 @@ char *sprintTree(node *tree) {
     if (isInfix(tree->child2) && (precedence(tree->child2) <= pred))
       tempBuf += sprintf(tempBuf,")");
     break;
-  case SQRT:
+  case NEG:
     buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 8, sizeof(char));
-    sprintf(buffer,"sqrt(%s)",buffer1);
+    buffer = (char *) safeCalloc(strlen(buffer1) + 4, sizeof(char));
+    if (isInfix(tree->child1)) sprintf(buffer,"-(%s)",buffer1); else sprintf(buffer,"-%s",buffer1);
     break;
-  case EXP:
+  case UNARY_BASE_FUNC:
     buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 8, sizeof(char));
-    sprintf(buffer,"exp(%s)",buffer1);
-    break;
-  case LOG:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 8, sizeof(char));
-    sprintf(buffer,"log(%s)",buffer1);
-    break;
-  case LOG_2:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 8, sizeof(char));
-    sprintf(buffer,"log2(%s)",buffer1);
-    break;
-  case LOG_10:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 9, sizeof(char));
-    sprintf(buffer,"log10(%s)",buffer1);
-    break;
-  case SIN:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 8, sizeof(char));
-    sprintf(buffer,"sin(%s)",buffer1);
-    break;
-  case COS:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 8, sizeof(char));
-    sprintf(buffer,"cos(%s)",buffer1);
-    break;
-  case TAN:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 8, sizeof(char));
-    sprintf(buffer,"tan(%s)",buffer1);
-    break;
-  case ASIN:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 8, sizeof(char));
-    sprintf(buffer,"asin(%s)",buffer1);
-    break;
-  case ACOS:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 8, sizeof(char));
-    sprintf(buffer,"acos(%s)",buffer1);
-    break;
-  case ATAN:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 8, sizeof(char));
-    sprintf(buffer,"atan(%s)",buffer1);
-    break;
-  case SINH:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 8, sizeof(char));
-    sprintf(buffer,"sinh(%s)",buffer1);
-    break;
-  case COSH:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 8, sizeof(char));
-    sprintf(buffer,"cosh(%s)",buffer1);
-    break;
-  case TANH:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 8, sizeof(char));
-    sprintf(buffer,"tanh(%s)",buffer1);
-    break;
-  case ASINH:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 9, sizeof(char));
-    sprintf(buffer,"asinh(%s)",buffer1);
-    break;
-  case ACOSH:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 9, sizeof(char));
-    sprintf(buffer,"acosh(%s)",buffer1);
-    break;
-  case ATANH:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 9, sizeof(char));
-    sprintf(buffer,"atanh(%s)",buffer1);
+    buffer = (char *) safeCalloc(strlen(buffer1) + strlen(tree->baseFun->functionName) + 3, sizeof(char));
+    sprintf(buffer,"%s(%s)",tree->baseFun->functionName, buffer1);
     break;
   case POW:
     buffer1 = sprintTree(tree->child1);
@@ -2142,71 +1541,6 @@ char *sprintTree(node *tree) {
 				  || ((accessThruMemRef(tree->child2)->nodeType == CONSTANT)
 				      && ((dyadic == 2) || (dyadic == 3)))))
       tempBuf += sprintf(tempBuf,")");
-    break;
-  case NEG:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 4, sizeof(char));
-    if (isInfix(tree->child1)) sprintf(buffer,"-(%s)",buffer1); else sprintf(buffer,"-%s",buffer1);
-    break;
-  case ABS:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 8, sizeof(char));
-    sprintf(buffer,"abs(%s)",buffer1);
-    break;
-  case DOUBLE:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 10, sizeof(char));
-    sprintf(buffer,"double(%s)",buffer1);
-    break;
-  case SINGLE:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 10, sizeof(char));
-    sprintf(buffer,"single(%s)",buffer1);
-    break;
-  case HALFPRECISION:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 17, sizeof(char));
-    sprintf(buffer,"halfprecision(%s)",buffer1);
-    break;
-  case QUAD:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 8, sizeof(char));
-    sprintf(buffer,"quad(%s)",buffer1);
-    break;
-  case DOUBLEDOUBLE:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 16, sizeof(char));
-    sprintf(buffer,"doubledouble(%s)",buffer1);
-    break;
-  case TRIPLEDOUBLE:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 16, sizeof(char));
-    sprintf(buffer,"tripledouble(%s)",buffer1);
-    break;
-  case ERF:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 8, sizeof(char));
-    sprintf(buffer,"erf(%s)",buffer1);
-    break;
-  case ERFC:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 8, sizeof(char));
-    sprintf(buffer,"erfc(%s)",buffer1);
-    break;
-  case LOG_1P:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 9, sizeof(char));
-    sprintf(buffer,"log1p(%s)",buffer1);
-    break;
-  case EXP_M1:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 9, sizeof(char));
-    sprintf(buffer,"expm1(%s)",buffer1);
-    break;
-  case DOUBLEEXTENDED:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 19, sizeof(char));
-    sprintf(buffer,"doubleextended(%s)",buffer1);
     break;
   case LIBRARYFUNCTION:
     {
@@ -2290,21 +1624,6 @@ char *sprintTree(node *tree) {
 	}
       }
     }
-    break;
-  case CEIL:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 8, sizeof(char));
-    sprintf(buffer,"ceil(%s)",buffer1);
-    break;
-  case FLOOR:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 9, sizeof(char));
-    sprintf(buffer,"floor(%s)",buffer1);
-    break;
-  case NEARESTINT:
-    buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 12, sizeof(char));
-    sprintf(buffer,"nearestint(%s)",buffer1);
     break;
   case PI_CONST:
     buffer = (char *) safeCalloc(3, sizeof(char));
@@ -2398,88 +1717,16 @@ void fprintTree(FILE *fd, node *tree) {
     if (isInfix(tree->child2))
       sollyaFprintf(fd,")");
     break;
-  case SQRT:
-    sollyaFprintf(fd,"sqrt(");
+  case NEG:
+    sollyaFprintf(fd,"-");
+    if (isInfix(tree->child1))
+      sollyaFprintf(fd,"(");
     fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
+    if (isInfix(tree->child1))
+      sollyaFprintf(fd,")");
     break;
-  case EXP:
-    sollyaFprintf(fd,"exp(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case LOG:
-    sollyaFprintf(fd,"log(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case LOG_2:
-    sollyaFprintf(fd,"log2(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case LOG_10:
-    sollyaFprintf(fd,"log10(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case SIN:
-    sollyaFprintf(fd,"sin(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case COS:
-    sollyaFprintf(fd,"cos(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case TAN:
-    sollyaFprintf(fd,"tan(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case ASIN:
-    sollyaFprintf(fd,"asin(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case ACOS:
-    sollyaFprintf(fd,"acos(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case ATAN:
-    sollyaFprintf(fd,"atan(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case SINH:
-    sollyaFprintf(fd,"sinh(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case COSH:
-    sollyaFprintf(fd,"cosh(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case TANH:
-    sollyaFprintf(fd,"tanh(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case ASINH:
-    sollyaFprintf(fd,"asinh(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case ACOSH:
-    sollyaFprintf(fd,"acosh(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case ATANH:
-    sollyaFprintf(fd,"atanh(");
+  case UNARY_BASE_FUNC:
+    sollyaFprintf(fd,"%s(",tree->baseFun->functionName);
     fprintTree(fd,tree->child1);
     sollyaFprintf(fd,")");
     break;
@@ -2491,74 +1738,6 @@ void fprintTree(FILE *fd, node *tree) {
       sollyaFprintf(fd,")");
     sollyaFprintf(fd,"^(");
     fprintTree(fd,tree->child2);
-    sollyaFprintf(fd,")");
-    break;
-  case NEG:
-    sollyaFprintf(fd,"-");
-    if (isInfix(tree->child1))
-      sollyaFprintf(fd,"(");
-    fprintTree(fd,tree->child1);
-    if (isInfix(tree->child1))
-      sollyaFprintf(fd,")");
-    break;
-  case ABS:
-    sollyaFprintf(fd,"abs(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case DOUBLE:
-    sollyaFprintf(fd,"double(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case SINGLE:
-    sollyaFprintf(fd,"single(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case QUAD:
-    sollyaFprintf(fd,"quad(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case HALFPRECISION:
-    sollyaFprintf(fd,"halfprecision(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case DOUBLEDOUBLE:
-    sollyaFprintf(fd,"doubledouble(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case TRIPLEDOUBLE:
-    sollyaFprintf(fd,"tripledouble(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case ERF:
-    sollyaFprintf(fd,"erf(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case ERFC:
-    sollyaFprintf(fd,"erfc(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case LOG_1P:
-    sollyaFprintf(fd,"log1p(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case EXP_M1:
-    sollyaFprintf(fd,"expm1(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case DOUBLEEXTENDED:
-    sollyaFprintf(fd,"doubleextended(");
-    fprintTree(fd,tree->child1);
     sollyaFprintf(fd,")");
     break;
   case LIBRARYFUNCTION:
@@ -2628,21 +1807,6 @@ void fprintTree(FILE *fd, node *tree) {
 	}
       }
     }
-    break;
-  case CEIL:
-    sollyaFprintf(fd,"ceil(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case FLOOR:
-    sollyaFprintf(fd,"floor(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
-    break;
-  case NEARESTINT:
-    sollyaFprintf(fd,"nearestint(");
-    fprintTree(fd,tree->child1);
-    sollyaFprintf(fd,")");
     break;
   case PI_CONST:
     sollyaFprintf(fd,"pi");
@@ -2719,89 +1883,15 @@ node* copyTreeInner(node *tree) {
     copy->child1 = copyTreeInner(tree->child1);
     copy->child2 = copyTreeInner(tree->child2);
     break;
-  case SQRT:
+  case NEG:
     copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = SQRT;
+    copy->nodeType = NEG;
     copy->child1 = copyTreeInner(tree->child1);
     break;
-  case EXP:
+  case UNARY_BASE_FUNC:
     copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = EXP;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case LOG:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = LOG;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case LOG_2:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = LOG_2;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case LOG_10:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = LOG_10;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case SIN:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = SIN;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case COS:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = COS;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case TAN:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = TAN;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case ASIN:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ASIN;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case ACOS:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ACOS;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case ATAN:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ATAN;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case SINH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = SINH;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case COSH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = COSH;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case TANH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = TANH;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case ASINH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ASINH;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case ACOSH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ACOSH;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case ATANH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ATANH;
+    copy->nodeType = UNARY_BASE_FUNC;
+    copy->baseFun = tree->baseFun;
     copy->child1 = copyTreeInner(tree->child1);
     break;
   case POW:
@@ -2809,71 +1899,6 @@ node* copyTreeInner(node *tree) {
     copy->nodeType = POW;
     copy->child1 = copyTreeInner(tree->child1);
     copy->child2 = copyTreeInner(tree->child2);
-    break;
-  case NEG:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = NEG;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case ABS:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ABS;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case DOUBLE:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = DOUBLE;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case SINGLE:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = SINGLE;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case QUAD:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = QUAD;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case HALFPRECISION:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = HALFPRECISION;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case DOUBLEDOUBLE:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = DOUBLEDOUBLE;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case TRIPLEDOUBLE:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = TRIPLEDOUBLE;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case ERF:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ERF;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case ERFC:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ERFC;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case LOG_1P:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = LOG_1P;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case EXP_M1:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = EXP_M1;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case DOUBLEEXTENDED:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = DOUBLEEXTENDED;
-    copy->child1 = copyTreeInner(tree->child1);
     break;
   case LIBRARYFUNCTION:
     copy = (node*) safeMalloc(sizeof(node));
@@ -2888,21 +1913,6 @@ node* copyTreeInner(node *tree) {
     copy->libFunDeriv = tree->libFunDeriv;
     copy->child1 = copyTreeInner(tree->child1);
     copy->child2 = copyThing(tree->child2);
-    break;
-  case CEIL:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = CEIL;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case FLOOR:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = FLOOR;
-    copy->child1 = copyTreeInner(tree->child1);
-    break;
-  case NEARESTINT:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = NEARESTINT;
-    copy->child1 = copyTreeInner(tree->child1);
     break;
   case PI_CONST:
     copy = (node*) safeMalloc(sizeof(node));
@@ -8595,43 +7605,10 @@ int arity(node *tree) {
     break;
 
   case VARIABLE:
-  case SQRT:
-  case EXP:
-  case LOG:
-  case LOG_2:
-  case LOG_10:
-  case SIN:
-  case COS:
-  case TAN:
-  case ASIN:
-  case ACOS:
-  case ATAN:
-  case SINH:
-  case COSH:
-  case TANH:
-  case ASINH:
-  case ACOSH:
-  case ATANH:
   case NEG:
-  case ABS:
-  case DOUBLE:
-  case SINGLE:
-  case QUAD:
-  case HALFPRECISION:
-  case DOUBLEDOUBLE:
-  case TRIPLEDOUBLE:
-  case ERF:
-  case ERFC:
-  case LOG_1P:
-  case EXP_M1:
-  case DOUBLEEXTENDED:
+  case UNARY_BASE_FUNC:
   case LIBRARYFUNCTION:
   case PROCEDUREFUNCTION:
-    return 1;
-    break;
-  case CEIL:
-  case FLOOR:
-  case NEARESTINT:
     return 1;
     break;
 
@@ -8710,40 +7687,12 @@ int isPolynomial(node *tree) {
   case DIV:
     res = isPolynomial(tree->child1) && isConstant(tree->child2);
     break;
+  case NEG:
+    res = isPolynomial(tree->child1);
+    break;
 
-  case SQRT:
-  case EXP:
-  case LOG:
-  case LOG_2:
-  case LOG_10:
-  case SIN:
-  case COS:
-  case TAN:
-  case ASIN:
-  case ACOS:
-  case ATAN:
-  case SINH:
-  case COSH:
-  case TANH:
-  case ASINH:
-  case ACOSH:
-  case ATANH:
-  case ABS:
-  case DOUBLE:
-  case SINGLE:
-  case QUAD:
-  case HALFPRECISION:
-  case DOUBLEDOUBLE:
-  case TRIPLEDOUBLE:
-  case ERF:
-  case ERFC:
-  case LOG_1P:
-  case EXP_M1:
-  case DOUBLEEXTENDED:
+  case UNARY_BASE_FUNC:
   case LIBRARYFUNCTION:
-  case CEIL:
-  case FLOOR:
-  case NEARESTINT:
     res = 0;
     break;
 
@@ -8765,9 +7714,6 @@ int isPolynomial(node *tree) {
 	if (accessThruMemRef(tree->child2)->nodeType != CONSTANT) free_memory(temp);
       }
     }
-    break;
-  case NEG:
-    res = isPolynomial(tree->child1);
     break;
 
   case PROCEDUREFUNCTION:
@@ -14007,16 +12953,16 @@ node *makeBinary(node *op1, node *op2, int opType) {
   return res;
 }
 
-node *makeUnary(node *op1, int opType) {
+node *makeUnary(node *op1, baseFunction *f) {
   node *res;
 
   res = (node *) safeMalloc(sizeof(node));
-  res->nodeType = opType;
+  res->nodeType = UNARY_BASE_FUNC;
+  res->baseFun = f;
   res->child1 = op1;
 
   return res;
 }
-
 
 node *makeAdd(node *op1, node *op2) {
   return makeBinary(op1,op2,ADD);
@@ -14034,116 +12980,18 @@ node *makeDiv(node *op1, node *op2) {
   return makeBinary(op1,op2,DIV);
 }
 
-node *makeSqrt(node *op1) {
-  return makeUnary(op1,SQRT);
-}
+node *makeNeg(node *op1) {
+  node *res;
 
-node *makeExp(node *op1) {
-  return makeUnary(op1,EXP);
-}
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = NEG;
+  res->child1 = op1;
 
-node *makeLog(node *op1) {
-  return makeUnary(op1,LOG);
-}
-
-node *makeLog2(node *op1) {
-  return makeUnary(op1,LOG_2);
-}
-
-node *makeLog10(node *op1) {
-  return makeUnary(op1,LOG_10);
-}
-
-node *makeSin(node *op1) {
-  return makeUnary(op1,SIN);
-}
-
-node *makeCos(node *op1) {
-  return makeUnary(op1,COS);
-}
-
-node *makeTan(node *op1) {
-  return makeUnary(op1,TAN);
-}
-
-node *makeAsin(node *op1) {
-  return makeUnary(op1,ASIN);
-}
-
-node *makeAcos(node *op1) {
-  return makeUnary(op1,ACOS);
-}
-
-node *makeAtan(node *op1) {
-  return makeUnary(op1,ATAN);
+  return res;
 }
 
 node *makePow(node *op1, node *op2) {
   return makeBinary(op1,op2,POW);
-}
-
-node *makeNeg(node *op1) {
-  return makeUnary(op1,NEG);
-}
-
-node *makeAbs(node *op1) {
-  return makeUnary(op1,ABS);
-}
-
-node *makeDouble(node *op1) {
-  return makeUnary(op1,DOUBLE);
-}
-
-node *makeSingle(node *op1) {
-  return makeUnary(op1,SINGLE);
-}
-
-node *makeQuad(node *op1) {
-  return makeUnary(op1,QUAD);
-}
-
-node *makeHalfPrecision(node *op1) {
-  return makeUnary(op1,HALFPRECISION);
-}
-
-node *makeDoubledouble(node *op1) {
-  return makeUnary(op1,DOUBLEDOUBLE);
-}
-
-node *makeTripledouble(node *op1) {
-  return makeUnary(op1,TRIPLEDOUBLE);
-}
-
-node *makeErf(node *op1 ) {
-  return makeUnary(op1,ERF);
-}
-
-node *makeErfc(node *op1) {
-  return makeUnary(op1,ERFC);
-}
-
-node *makeLog1p(node *op1) {
-  return makeUnary(op1,LOG_1P);
-}
-
-node *makeExpm1(node *op1) {
-  return makeUnary(op1,EXP_M1);
-}
-
-node *makeDoubleextended(node *op1) {
-  return makeUnary(op1,DOUBLEEXTENDED);
-}
-
-node *makeCeil(node *op1) {
-  return makeUnary(op1,CEIL);
-}
-
-node *makeFloor(node *op1) {
-  return makeUnary(op1,FLOOR);
-}
-
-node *makeNearestInt(node *op1) {
-  return makeUnary(op1,NEARESTINT);
 }
 
 node *makePi() {
@@ -14154,31 +13002,6 @@ node *makePi() {
 
   return res;
 }
-
-node *makeSinh(node *op1) {
-  return makeUnary(op1,SINH);
-}
-
-node *makeCosh(node *op1) {
-  return makeUnary(op1,COSH);
-}
-
-node *makeTanh(node *op1) {
-  return makeUnary(op1,TANH);
-}
-
-node *makeAsinh(node *op1) {
-  return makeUnary(op1,ASINH);
-}
-
-node *makeAcosh(node *op1) {
-  return makeUnary(op1,ACOSH);
-}
-
-node *makeAtanh(node *op1) {
-  return makeUnary(op1,ATANH);
-}
-
 
 int readDecimalConstant(mpfr_t result, char *str) {
   mpfr_t a,b;
