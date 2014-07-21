@@ -52,7 +52,15 @@
 #include "base-functions.h"
 #include "autodiff.h"
 #include "mpfi-compat.h"
+#include "infnorm.h"
 
+
+
+/******************************************************************************/
+/*                                                                            */
+/*                    AUTOMATIC DIFFERENTIATION FUNCTIONS                     */
+/*                                                                            */
+/******************************************************************************/
 
 void sqrt_diff(sollya_mpfi_t *res, sollya_mpfi_t x, int n, int *silent) {
   mpfr_t oneHalf;
@@ -1119,144 +1127,2029 @@ void nearestint_diff(sollya_mpfi_t *res, sollya_mpfi_t x, int n, int *silent){
   mpfr_clear(temp);
 }
 
-/*
-
-functionName = "sqrt";
-functionName = "exp";
-functionName = "log";
-functionName = "log2";
-functionName = "log10";
-functionName = "sin";
-functionName = "cos";
-functionName = "tan";
-functionName = "asin";
-functionName = "acos";
-functionName = "atan";
-functionName = "sinh";
-functionName = "cosh";
-functionName = "tanh";
-functionName = "asinh";
-functionName = "acosh";
-functionName = "atanh";
-functionName = "-";
-functionName = "abs";
-functionName = "double";
-functionName = "single";
-functionName = "halfprecision";
-functionName = "quad";
-functionName = "doubledouble";
-functionName = "tripledouble";
-functionName = "erf";
-functionName = "erfc";
-functionName = "log1p";
-functionName = "expm1";
-functionName = "doubleextended";
-functionName = "ceil";
-functionName = "floor";
-functionName = "nearestint";
 
 
 
-xmlString = "<root/>\n";
-xmlString = "<exp/>\n";
-xmlString = "<ln/>\n";
-xmlString = "<log/><logbase><cn>2</cn></logbase>\n";
-xmlString = "<log/>\n";
-xmlString = "<sin/>\n";
-xmlString = "<cos/>\n";
-xmlString = "<tan/>\n";
-xmlString = "<arcsin/>\n";
-xmlString = "<arccos/>\n";
-xmlString = "<arctan/>\n";
-xmlString = "<sinh/>\n";
-xmlString = "<cosh/>\n";
-xmlString = "<tanh/>\n";
-xmlString = "<arcsinh/>\n";
-xmlString = "<arccosh/>\n";
-xmlString = "<arctanh/>\n";
-xmlString = "<abs/>\n";
-xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">double</csymbol>\n";
-xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">single</csymbol>\n";
-xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">quad</csymbol>\n";
-xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">halfprecision</csymbol>\n";
-xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">doubledouble</csymbol>\n";
-xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">tripledouble</csymbol>\n";
-xmlString = "<csymbol definitionURL=\"http://www.openmath.org/CDs/errorFresnelInts.ocd\" encoding=\"OpenMath\">erf</csymbol>\n";
-xmlString = "<csymbol definitionURL=\"http://www.openmath.org/CDs/errorFresnelInts.ocd\" encoding=\"OpenMath\">erfc</csymbol>\n";
-xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">log1p</csymbol>\n";
-xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">expm1</csymbol>\n";
-xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">doubleextended</csymbol>\n";
-xmlString = "<ceiling/>\n";
-xmlString = "<floor/>\n";
-xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">nearestint</csymbol>\n";
 
-interval_eval = sollya_mpfi_exp;
-interval_eval = sollya_mpfi_log;
-interval_eval = sollya_mpfi_log2;
-interval_eval = sollya_mpfi_log10;
-interval_eval = sollya_mpfi_sin;
-interval_eval = sollya_mpfi_cos;
-interval_eval = sollya_mpfi_tan;
-interval_eval = sollya_mpfi_asin;
-interval_eval = sollya_mpfi_acos;
-interval_eval = sollya_mpfi_atan;
-interval_eval = sollya_mpfi_sinh;
-interval_eval = sollya_mpfi_cosh;
-interval_eval = sollya_mpfi_tanh;
-interval_eval = sollya_mpfi_asinh;
-interval_eval = sollya_mpfi_acosh;
-interval_eval = sollya_mpfi_atanh;
-interval_eval = sollya_mpfi_abs;
-interval_eval = sollya_mpfi_round_to_double;
-interval_eval = sollya_mpfi_round_to_single;
-interval_eval = sollya_mpfi_round_to_halfprecision;
-interval_eval = sollya_mpfi_round_to_quad;
-interval_eval = sollya_mpfi_round_to_doubledouble;
-interval_eval = sollya_mpfi_round_to_tripledouble;
-interval_eval = sollya_mpfi_erf;
-interval_eval = sollya_mpfi_erfc;
-interval_eval = sollya_mpfi_log1p;
-interval_eval = sollya_mpfi_expm1;
-interval_eval = sollya_mpfi_round_to_doubleextended;
-interval_eval = sollya_mpfi_ceil;
-interval_eval = sollya_mpfi_floor;
-interval_eval = sollya_mpfi_nearestint;
-*/
 
-baseFunction *basefun_sqrt;
-baseFunction *basefun_exp;
-baseFunction *basefun_log;
-baseFunction *basefun_log2;
-baseFunction *basefun_log10;
-baseFunction *basefun_sin;
-baseFunction *basefun_cos;
-baseFunction *basefun_tan;
-baseFunction *basefun_asin;
-baseFunction *basefun_acos;
-baseFunction *basefun_atan;
-baseFunction *basefun_sinh;
-baseFunction *basefun_cosh;
-baseFunction *basefun_tanh;
-baseFunction *basefun_asinh;
-baseFunction *basefun_acosh;
-baseFunction *basefun_atanh;
-baseFunction *basefun_abs;
-baseFunction *basefun_double;
-baseFunction *basefun_single;
-baseFunction *basefun_halfprecision;
-baseFunction *basefun_quad;
-baseFunction *basefun_doubledouble;
-baseFunction *basefun_tripledouble;
-baseFunction *basefun_erf;
-baseFunction *basefun_erfc;
-baseFunction *basefun_log1p;
-baseFunction *basefun_expm1;
-baseFunction *basefun_doubleextended;
-baseFunction *basefun_ceil;
-baseFunction *basefun_floor;
-baseFunction *basefun_nearestint;
+/******************************************************************************/
+/*                                                                            */
+/*                    EXPRESSION DIFFERENTIATION FUNCTIONS                    */
+/*                                                                            */
+/******************************************************************************/
 
-/* Shortcuts */
+node *sqrt_diff_expr(node *g) {
+  return makeDiv( differentiateUnsimplified(g),
+                  makeMul(makeConstantDouble(2.0),
+                          makeSqrt(copyTree(g))
+                          )
+                  );
+}
+
+node *exp_diff_expr(node *g) {
+  return makeMul( makeExp(copyTree(g)),
+                  differentiateUnsimplified(g)
+                  );
+}
+
+node *log_diff_expr(node *g) {
+  return makeMul( makeDiv(makeDoubleConstant(1.0), copyTree(g)),
+                  differentiateUnsimplified(g)
+                  );
+}
+
+node *log2_diff_expr(node *g) {
+  return makeMul( makeDiv( makeConstantDouble(1.0),
+                           makeMul(copyTree(g), makeLog(makeConstantDouble(2.0)))
+                           ),
+                  differentiateUnsimplified(g)
+                  );
+}
+
+node *log10_diff_expr(node *g) {
+  return makeMul( makeDiv( makeConstantDouble(1.0),
+                           makeMul(copyTree(g), makeLog(makeConstantDouble(10.0)))
+                           ),
+                  differentiateUnsimplified(g)
+                  );
+}
+
+node *sin_diff_expr(node *g) {
+  return makeMul( makeCos(copyTree(g)),
+                  differentiateUnsimplified(g)
+                  );
+}
+
+node *cos_diff_expr(node *g) {
+  return makeMul( makeNeg(makeSin(copyTree(g))),
+                  differentiateUnsimplified(g)
+                  );
+}
+
+node *tan_diff_expr(node *g) {
+  return makeMul( makeAdd(makeConstantDouble(1.0),
+                          makePow(makeTan(copyTree(g)), makeConstantDouble(2.0))
+                          ),
+                  differentiateUnsimplified(g)
+                  );
+}
+
+node *asin_diff_expr(node *g) {
+  return makeMul( makeDiv(makeConstantDouble(1.0),
+                          makeSqrt(makeSub(makeConstantDouble(1.0),
+                                           makePow(copyTree(g), makeConstantDouble(2.0))
+                                           )
+                                   )
+                          ),
+                  differentiateUnsimplified(g)
+                  );
+}
+
+node *acos_diff_expr(node *g) {
+  return makeMul( makeDiv(makeConstantDouble(-1.0),
+                          makeSqrt(makeSub(makeConstantDouble(1.0),
+                                           makePow(copyTree(g), makeConstantDouble(2.0))
+                                           )
+                                   )
+                          ),
+                  differentiateUnsimplified(g)
+                  );
+}
+
+node *atan_diff_expr(node *g) {
+  return makeMul( makeDiv(makeDoubleConstant(1.0),
+                          makeAdd(makeDoubleConstant(1.0),
+                                  makeMul(copyTree(g), copyTree(g))
+                                  )
+                          ),
+                  differentiateUnsimplified(g)
+                  );
+}
+
+node *sinh_diff_expr(node *g) {
+  return makeMul( makeCosh(copyTree(g)),
+                  differentiateUnsimplified(g)
+                  );
+}
+
+node *cosh_diff_expr(node *g) {
+  return makeMul( makeSinh(copyTree(g)),
+                  differentiateUnsimplified(g)
+                  );
+}
+
+node *tanh_diff_expr(node *g) {
+  return makeMul( makeSub(makeConstantDouble(1.0),
+                          makePow(makeTanh(copyTree(g)), makeConstantDouble(2.0))
+                          ),
+                  differentiateUnsimplified(g)
+                  );
+}
+
+node *asinh_diff_expr(node *g) {
+  return makeMul( makeDiv(makeConstantDouble(1.0),
+                          makeSqrt(makeAdd(makeConstantDouble(1.0),
+                                           makeMul(copyTree(g), copyTree(g))
+                                           )
+                                   )
+                          ),
+                  differentiateUnsimplified(g)
+                  );
+}
+
+node *acosh_diff_expr(node *g) {
+  return makeMul( makeDiv(makeConstantDouble(1.0),
+                          makeSqrt(makeAdd(makeConstantDouble(-1.0),
+                                           makeMul(copyTree(g), copyTree(g))
+                                           )
+                                   )
+                          ),
+                  differentiateUnsimplified(g)
+                  );
+}
+
+node *atanh_diff_expr(node *g) {
+  return makeMul( makeDiv(makeConstantDouble(1.0),
+                          makeSub(makeConstantDouble(1.0),
+                                  makeMul(copyTree(g), copyTree(g))
+                                  )
+                          ),
+                  differentiateUnsimplified(g)
+                  );
+}
+
+node *erf_diff_expr(node *g) {
+  return makeMul( makeDiv(makeExp(makeNeg(makePow(copyTree(g), makeConstantDouble(2.0)))),
+                          makeSqrt(makeAtan(makeConstantDouble(1.0)))
+                          ),
+                  differentiateUnsimplified(g)
+                  );
+}
+
+node *erfc_diff_expr(node *g) {
+  return makeMul( makeDiv(makeNeg(makeExp(makeNeg(makePow(copyTree(g), makeConstantDouble(2.0))))),
+                          makeSqrt(makeAtan(makeConstantDouble(1.0)))
+                          ),
+                  differentiateUnsimplified(g)
+                  );
+}
+
+node *log1p_diff_expr(node *g) {
+  return makeMul( makeDiv(makeConstantDouble(1.0),
+                          makeAdd(makeConstantDouble(1.0),
+                                  copyTree(g)
+                                  )
+                          ),
+                  differentiateUnsimplified(g)
+                  );
+}
+
+node *expm1_diff_expr(node *g) {
+  return makeMul( makeExp(copyTree(g)),
+                  differentiateUnsimplified(g)
+                  );
+}
+
+node *abs_diff_expr(node *g) {
+  return makeMul( makeDiv(copyTree(g),
+                          makeAbs(copyTree(g))
+                          ),
+                  differentiateUnsimplified(g)
+                  );
+}
+
+node *double_diff_expr(node *g) {
+  printMessage(1,SOLLYA_MSG_DOUBLE_NOT_DIFFERENTIABLE,
+               "Warning: the double rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
+  return makeConstantDouble(0.0);
+}
+
+node *single_diff_expr(node *g) {
+	printMessage(1,SOLLYA_MSG_SINGLE_NOT_DIFFERENTIABLE,
+		     "Warning: the single rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
+  return makeConstantDouble(0.0);
+}
+
+node *quad_diff_expr(node *g) {
+	printMessage(1,SOLLYA_MSG_QUAD_NOT_DIFFERENTIABLE,
+		     "Warning: the quad rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
+  return makeConstantDouble(0.0);
+}
+
+node *halfprecision_diff_expr(node *g) {
+	printMessage(1,SOLLYA_MSG_HALF_NOT_DIFFERENTIABLE,
+		     "Warning: the half-precision rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
+  return makeConstantDouble(0.0);
+}
+
+node *doubledouble_diff_expr(node *g) {
+	printMessage(1,SOLLYA_MSG_DOUBLE_DOUBLE_NOT_DIFFERENTIABLE,
+		     "Warning: the double-double rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
+  return makeConstantDouble(0.0);
+}
+
+node *tripledouble_diff_expr(node *g) {
+	printMessage(1,SOLLYA_MSG_TRIPLE_DOUBLE_NOT_DIFFERENTIABLE,
+		     "Warning: the triple-double rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
+  return makeConstantDouble(0.0);
+}
+
+node *doubleextended_diff_expr(node *g) {
+	printMessage(1,SOLLYA_MSG_DOUBLEEXTENDED_NOT_DIFFERENTIABLE,
+		     "Warning: the double-extended rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
+  return makeConstantDouble(0.0);
+}
+
+node *ceil_diff_expr(node *g) {
+	printMessage(1,SOLLYA_MSG_CEIL_NOT_DIFFERENTIABLE,
+		     "Warning: the ceil operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
+  return makeConstantDouble(0.0);
+}
+
+node *floor_diff_expr(node *g) {
+	printMessage(1,SOLLYA_MSG_FLOOR_NOT_DIFFERENTIABLE,
+		     "Warning: the floor operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
+  return makeConstantDouble(0.0);
+}
+
+node *nearestint_diff_expr(node *g) {
+	printMessage(1,SOLLYA_MSG_NEARESTINT_NOT_DIFFERENTIABLE,
+		     "Warning: the nearestint operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
+  return makeConstantDouble(0.0);
+}
+
+
+
+
+
+
+/******************************************************************************/
+/*                                                                            */
+/*                   FUNCTIONS FOR SIMPLIFYING EXPRESSIONS                    */
+/*                                                                            */
+/******************************************************************************/
+
+/* Generic algorithm for simplifying an expression of the form f(g) where g is already simplified */
+node *simplify_generic(baseFunction *f, node *g) {
+  node *simplified;
+  mpfr_t *value;
+
+  simplified = (node*) safeMalloc(sizeof(node));
+
+  if (accessThruMemRef(g)->nodeType == CONSTANT) {
+    value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+    mpfr_init2(*value, tools_precision);
+    if ( (f->baseFun->point_eval(*value, *(accessThruMemRef(g)->value), GMP_RNDN) == 0) &&
+         mpfr_number_p(*value) )  {
+      simplified->nodeType = CONSTANT;
+      simplified->value = value;
+      free_memory(g);
+      return simplified;
+    }
+    else {
+      mpfr_clear(*value);
+      safeFree(value);
+    }
+  }
+
+  /* Default case: we do nothing but constructing f(g) */
+  simplified->nodeType = UNARY_BASE_FUNC;
+  simplified->baseFun = f;
+  simplified->child1 = g;
+  return simplified;
+}
+
+/* Algorithm for simplifying an expression of the form f(g) where f is nearestint|floor|ceil and g is already simplified */
+node *simplify_integer_rounding_functions(baseFunction *f, node *g) {
+  node *simplified;
+  mpfr_t *value;
+  rangetype x, y;
+  int ok = 0;
+
+  simplified = (node*) safeMalloc(sizeof(node));
+
+  if (accessThruMemRef(g)->nodeType == CONSTANT) {
+    value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+    mpfr_init2(*value, tools_precision);
+    if ( (f->baseFun->point_eval(*value, *(accessThruMemRef(g)->value), GMP_RNDN) == 0) &&
+         mpfr_number_p(*value) )  {
+      simplified->nodeType = CONSTANT;
+      simplified->value = value;
+      free_memory(g);
+      return simplified;
+    }
+    else {
+      mpfr_clear(*value);
+      safeFree(value);
+    }
+  }
+  else if (isConstant(g)) {
+    xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+    xrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+    yrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+    yrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+    mpfr_init2(*(yrange.a),tools_precision);
+    mpfr_init2(*(yrange.b),tools_precision);
+    mpfr_init2(*(xrange.a),4 * tools_precision);
+    mpfr_init2(*(xrange.b),4 * tools_precision);
+    mpfr_set_ui(*(xrange.a),1,GMP_RNDD);
+    mpfr_set_ui(*(xrange.b),1,GMP_RNDU);
+    evaluateRangeFunction(yrange, g, xrange, 8 * tools_precision);
+    f->baseFun->point_eval(*(xrange.a),*(yrange.a),GMP_RNDD);
+    f->baseFun->point_eval(*(xrange.b),*(yrange.b),GMP_RNDU);
+    if ( mpfr_number_p(*(xrange.a)) &&
+         mpfr_number_p(*(xrange.b)) &&
+         (mpfr_cmp(*(xrange.a),*(xrange.b)) == 0) ) {
+      simplified->nodeType = CONSTANT;
+      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+      mpfr_init2(*value,tools_precision);
+      simplified->value = value;
+      mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact. TODO: why should it be exact? */
+      free_memory(g);
+      ok = 1;
+    }
+    mpfr_clear(*(xrange.a));
+    mpfr_clear(*(xrange.b));
+    mpfr_clear(*(yrange.a));
+    mpfr_clear(*(yrange.b));
+    safeFree(xrange.a);
+    safeFree(xrange.b);
+    safeFree(yrange.a);
+    safeFree(yrange.b);
+    if (ok) return simplified;
+  }
+
+  /* Default case: we do nothing but constructing f(g) */
+  simplified->nodeType = UNARY_BASE_FUNC;
+  simplified->baseFun = f;
+  simplified->child1 = g;
+  return simplified;
+}
+
+
+node *simplify_sqrt(node *g) {
+  node *simplified;
+  mpfr_t *value;
+  mp_prec_t prec, p;
+
+  simplified = (node*) safeMalloc(sizeof(node));
+  if (accessThruMemRef(g)->nodeType == CONSTANT) {
+    simplified->nodeType = CONSTANT;
+    value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+    prec = tools_precision;
+    p = mpfr_get_prec(*(accessThruMemRef(g)->value));
+    if (p > prec) prec = p;
+    prec += 10;
+    if (prec > 256 * tools_precision) prec = 256 * tools_precision;
+    mpfr_init2(*value,prec);
+    simplified->value = value;
+    if ((mpfr_sqrt(*value, *(accessThruMemRef(g)->value), GMP_RNDN) != 0) ||
+        (!mpfr_number_p(*value))) {
+      simplified->nodeType = UNARY_BASE_FUNC;
+      simplified->baseFun = basefun_sqrt;
+      simplified->child1 = g;
+      mpfr_clear(*value);
+      safeFree(value);
+    } else {
+      free_memory(g);
+    }
+  } else {
+    if ((accessThruMemRef(g)->nodeType == POW) &&
+        (accessThruMemRef(accessThruMemRef(g)->child2)->nodeType == CONSTANT) &&
+        (mpfr_cmp_d(*(accessThruMemRef(accessThruMemRef(g)->child2)->value),2.0) == 0.0) &&
+        (!mpfr_nan_p(*(accessThruMemRef(accessThruMemRef(g)->child2)->value)))) {
+      simplified->nodeType = UNARY_BASE_FUNC;
+      simplified->baseFun = basefun_abs;
+      simplified->child1 = copyTree(accessThruMemRef(g)->child1);
+      free_memory(g);
+    } else {
+      simplified->nodeType = UNARY_BASE_FUNC;
+      simplified->baseFun = basefun_sqrt;
+      simplified->child1 = g;
+    }
+  }
+  return simplified;
+}
+
+
+node *simplify_log(node *g) {
+  node *simplified;
+  mpfr_t *value;
+
+  simplified = (node*) safeMalloc(sizeof(node));
+  if (accessThruMemRef(g)->nodeType == CONSTANT) {
+    simplified->nodeType = CONSTANT;
+    value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+    mpfr_init2(*value,tools_precision);
+    simplified->value = value;
+    if ((mpfr_log(*value, *(accessThruMemRef(g)->value), GMP_RNDN) != 0) ||
+        (!mpfr_number_p(*value))) {
+      simplified->nodeType = UNARY_BASE_FUNC;
+      simplified->baseFun = basefun_log;
+      simplified->child1 = g;
+      mpfr_clear(*value);
+      safeFree(value);
+    } else {
+      free_memory(g);
+    }
+  } else {
+    if ((accessThruMemRef(g)->nodeType == ADD) &&
+        (accessThruMemRef(accessThruMemRef(g)->child1)->nodeType == CONSTANT) &&
+        (mpfr_cmp_d(*(accessThruMemRef(accessThruMemRef(g)->child1)->value),1.0) == 0.0) &&
+        (!mpfr_nan_p(*(accessThruMemRef(accessThruMemRef(g)->child1)->value)))) {
+      simplified->nodeType = UNARY_BASE_FUNC;
+      simplified->baseFun = basefun_log1p;
+      simplified->child1 = copyTree(accessThruMemRef(g)->child2);
+      free_memory(g);
+    } else {
+      if ((accessThruMemRef(g)->nodeType == ADD) &&
+          (accessThruMemRef(accessThruMemRef(g)->child2)->nodeType == CONSTANT) &&
+          (mpfr_cmp_d(*(accessThruMemRef(accessThruMemRef(g)->child2)->value),1.0) == 0.0) &&
+          (!mpfr_nan_p(*(accessThruMemRef(accessThruMemRef(g)->child2)->value)))) {
+        simplified->nodeType = UNARY_BASE_FUNC;
+        simplified->baseFun = basefun_log1p;
+        simplified->child1 = copyTree(accessThruMemRef(g)->child1);
+        free_memory(g);
+      } else {
+        if ( (accessThruMemRef(g)->nodeType == UNARY_BASE_FUNC) &&
+             (accessThruMemRef(g)->baseFun->baseFunctionCode == EXP) ) {
+          safeFree(simplified);
+          simplified = copyTree(accessThruMemRef(g)->child1);
+          free_memory(g);
+        } else {
+          simplified->nodeType = UNARY_BASE_FUNC;
+          simplified->baseFun = basefun_log;
+          simplified->child1 = g;
+        }
+      }
+    }
+  }
+  return simplified;
+}
+
+
+
+
+node *simplify_asin(node *g) {
+  node *simplified;
+  mpfr_t *value;
+  mpfr_t temp;
+
+  simplified = (node*) safeMalloc(sizeof(node));
+  if (accessThruMemRef(g)->nodeType == CONSTANT) {
+    mpfr_init2(temp,53);
+    mpfr_set_ui(temp,1,GMP_RNDN);
+    if ((mpfr_cmp(temp, *(accessThruMemRef(g)->value)) == 0) && (!mpfr_nan_p(*(accessThruMemRef(g)->value)))) {
+      free_memory(g);
+      simplified->child2 = (node *) safeMalloc(sizeof(node));
+      simplified->child2->nodeType = CONSTANT;
+      simplified->child2->value = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      mpfr_init2(*(simplified->child2->value),53);
+      mpfr_set_si(*(simplified->child2->value),2,GMP_RNDN);
+      simplified->nodeType = DIV;
+      simplified->child1 = (node *) safeMalloc(sizeof(node));
+      simplified->child1->nodeType = PI_CONST;
+    } else {
+      mpfr_set_si(temp,-1,GMP_RNDN);
+      if ((mpfr_cmp(temp, *(accessThruMemRef(g)->value)) == 0) && (!mpfr_nan_p(*(accessThruMemRef(g)->value)))) {
+        free_memory(g);
+        simplified->child2 = (node *) safeMalloc(sizeof(node));
+        simplified->child2->nodeType = CONSTANT;
+        simplified->child2->value = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+        mpfr_init2(*(simplified->child2->value),53);
+        mpfr_set_si(*(simplified->child2->value),-2,GMP_RNDN);
+        simplified->nodeType = DIV;
+        simplified->child1 = (node *) safeMalloc(sizeof(node));
+        simplified->child1->nodeType = PI_CONST;
+      } else {
+        simplified->nodeType = CONSTANT;
+        value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+        mpfr_init2(*value,tools_precision);
+        simplified->value = value;
+        if ((mpfr_asin(*value, *(accessThruMemRef(g)->value), GMP_RNDN) != 0) ||
+            (!mpfr_number_p(*value))) {
+          simplified->nodeType = UNARY_BASE_FUNC;
+          simplified->baseFun = basefun_asin;
+          simplified->child1 = g;
+          mpfr_clear(*value);
+          safeFree(value);
+        } else {
+          free_memory(g);
+        }
+      }
+    }
+    mpfr_clear(temp);
+  } else {
+    simplified->nodeType = UNARY_BASE_FUNC;
+    simplified->baseFun = basefun_asin;
+    simplified->child1 = g;
+  }
+  return simplified;
+}
+
+
+node *simplify_acos(node *g) {
+  node *simplified;
+  mpfr_t *value;
+  mpfr_t temp;
+
+  simplified = (node*) safeMalloc(sizeof(node));
+  if (accessThruMemRef(g)->nodeType == CONSTANT) {
+    mpfr_init2(temp,53);
+    mpfr_set_si(temp,-1,GMP_RNDN);
+    if ((mpfr_cmp(temp, *(accessThruMemRef(g)->value)) == 0) && (!mpfr_nan_p(*(accessThruMemRef(g)->value)))) {
+      free_memory(g);
+      simplified->nodeType = PI_CONST;
+    } else {
+      simplified->nodeType = CONSTANT;
+      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+      mpfr_init2(*value,tools_precision);
+      simplified->value = value;
+      if ((mpfr_acos(*value, *(accessThruMemRef(g)->value), GMP_RNDN) != 0) ||
+          (!mpfr_number_p(*value))) {
+        simplified->nodeType = UNARY_BASE_FUNC;
+        simplified->baseFun = basefun_acos;
+        simplified->child1 = g;
+        mpfr_clear(*value);
+        safeFree(value);
+      } else {
+        free_memory(g);
+      }
+    }
+    mpfr_clear(temp);
+  } else {
+    simplified->nodeType = UNARY_BASE_FUNC;
+    simplified->baseFun = basefun_acos;
+    simplified->child1 = g;
+  }
+  return simplified;
+}
+
+
+node *simplify_atan(node *g) {
+  node *simplified;
+  mpfr_t *value;
+  mpfr_t temp;
+
+  simplified = (node*) safeMalloc(sizeof(node));
+  if (accessThruMemRef(g)->nodeType == CONSTANT) {
+    mpfr_init2(temp,53);
+    mpfr_set_ui(temp,1,GMP_RNDN);
+    if ((mpfr_cmp(temp, *(accessThruMemRef(g)->value)) == 0) && (!mpfr_nan_p(*(accessThruMemRef(g)->value)))) {
+      free_memory(g);
+      simplified->child2 = (node *) safeMalloc(sizeof(node));
+      simplified->child2->nodeType = CONSTANT;
+      simplified->child2->value = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      mpfr_init2(*(simplified->child2->value),53);
+      mpfr_set_si(*(simplified->child2->value),4,GMP_RNDN);
+      simplified->nodeType = DIV;
+      simplified->child1 = (node *) safeMalloc(sizeof(node));
+      simplified->child1->nodeType = PI_CONST;
+    } else {
+      mpfr_set_si(temp,-1,GMP_RNDN);
+      if ((mpfr_cmp(temp, *(accessThruMemRef(g)->value)) == 0) && (!mpfr_nan_p(*(accessThruMemRef(g)->value)))) {
+        free_memory(g);
+        simplified->child2 = (node *) safeMalloc(sizeof(node));
+        simplified->child2->nodeType = CONSTANT;
+        simplified->child2->value = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+        mpfr_init2(*(simplified->child2->value),53);
+        mpfr_set_si(*(simplified->child2->value),-4,GMP_RNDN);
+        simplified->nodeType = DIV;
+        simplified->child1 = (node *) safeMalloc(sizeof(node));
+        simplified->child1->nodeType = PI_CONST;
+      } else {
+        simplified->nodeType = CONSTANT;
+        value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+        mpfr_init2(*value,tools_precision);
+        simplified->value = value;
+        if ((mpfr_atan(*value, *(accessThruMemRef(g)->value), GMP_RNDN) != 0) ||
+            (!mpfr_number_p(*value))) {
+          simplified->nodeType = UNARY_BASE_FUNC;
+          simplified->baseFun = basefun_atan;
+          simplified->child1 = g;
+          mpfr_clear(*value);
+          safeFree(value);
+        } else {
+          free_memory(g);
+        }
+      }
+    }
+    mpfr_clear(temp);
+  } else {
+    simplified->nodeType = UNARY_BASE_FUNC;
+    simplified->baseFun = basefun_atan;
+    simplified->child1 = g;
+  }
+  return simplified;
+}
+
+
+
+node *simplify_abs(node *g) {
+  node *simplified;
+  mpfr_t *value;
+
+  simplified = (node*) safeMalloc(sizeof(node));
+
+  if (accessThruMemRef(g)->nodeType == CONSTANT) {
+    value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+    mpfr_init2(*value, tools_precision);
+    if ( (mpfr_abs(*value, *(accessThruMemRef(g)->value), GMP_RNDN) == 0) &&
+         mpfr_number_p(*value) )  {
+      simplified->nodeType = CONSTANT;
+      simplified->value = value;
+      free_memory(g);
+      return simplified;
+    }
+    else {
+      mpfr_clear(*value);
+      safeFree(value);
+    }
+  }
+
+  /* abs(abs(something)) --> abs(something) */
+  if ( (accessThruMemRef(g)->nodeType == UNARY_BASE_FUNC) &&
+       (accessThruMemRef(g)->baseFun->baseFunctionCode == ABS) ) {
+    simplified->nodeType = UNARY_BASE_FUNC;
+    simplified->baseFun = basefun_abs;
+    simplified->child1 = copyTree(accessThruMemRef(g)->child1);
+    free_memory(g);
+    return simplified;
+  }
+
+  /* Default case: we do nothing but constructing f(g) */
+  simplified->nodeType = UNARY_BASE_FUNC;
+  simplified->baseFun = basefun_abs;
+  simplified->child1 = g;
+  return simplified;
+}
+
+
+node *simplify_double(node *g) {
+  node *simplified;
+  mpfr_t *value;
+  rangetype x, y;
+
+  simplified = (node*) safeMalloc(sizeof(node));
+  if (accessThruMemRef(g)->nodeType == CONSTANT) {
+    simplified->nodeType = CONSTANT;
+    value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+    mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
+    simplified->value = value;
+    mpfr_round_to_double(*value, *(accessThruMemRef(g)->value));
+    if (!mpfr_number_p(*value)) {
+      simplified->nodeType = UNARY_BASE_FUNC;
+      simplified->baseFun = basefun_double;
+      simplified->child1 = g;
+      mpfr_clear(*value);
+      safeFree(value);
+    } else {
+      free_memory(g);
+    }
+  } else {
+    if (isConstant(g)) {
+      xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      xrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      yrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      yrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      mpfr_init2(*(yrange.a),4* tools_precision);
+      mpfr_init2(*(yrange.b),4 * tools_precision);
+      mpfr_init2(*(xrange.a),((tools_precision > 64)? tools_precision : 64));
+      mpfr_init2(*(xrange.b),((tools_precision > 64)? tools_precision : 64));
+      mpfr_set_ui(*(xrange.a),1,GMP_RNDD);
+      mpfr_set_ui(*(xrange.b),1,GMP_RNDU);
+      evaluateRangeFunction(yrange, g, xrange, 8 * tools_precision);
+      mpfr_round_to_double(*(xrange.a),*(yrange.a));
+      mpfr_round_to_double(*(xrange.b),*(yrange.b));
+      if (mpfr_number_p(*(xrange.a)) &&
+          mpfr_number_p(*(xrange.b)) &&
+          (mpfr_cmp(*(xrange.a),*(xrange.b)) == 0)) {
+        simplified->nodeType = CONSTANT;
+        value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+        mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
+        simplified->value = value;
+        mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
+        free_memory(g);
+      } else {
+        simplified->nodeType = UNARY_BASE_FUNC;
+        simplified->baseFun = basefun_double;
+        simplified->child1 = g;
+      }
+      mpfr_clear(*(xrange.a));
+      mpfr_clear(*(xrange.b));
+      mpfr_clear(*(yrange.a));
+      mpfr_clear(*(yrange.b));
+      safeFree(xrange.a);
+      safeFree(xrange.b);
+      safeFree(yrange.a);
+      safeFree(yrange.b);
+    } else {
+      simplified->nodeType = UNARY_BASE_FUNC;
+      simplified->baseFun = basefun_double;
+      simplified->child1 = g;
+    }
+  }
+  return simplified;
+}
+
+
+node *simplify_single(node *g) {
+  node *simplified;
+  mpfr_t *value;
+  rangetype x, y;
+
+  simplified = (node*) safeMalloc(sizeof(node));
+  if (accessThruMemRef(g)->nodeType == CONSTANT) {
+    simplified->nodeType = CONSTANT;
+    value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+    mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
+    simplified->value = value;
+    mpfr_round_to_single(*value, *(accessThruMemRef(g)->value));
+    if (!mpfr_number_p(*value)) {
+      simplified->nodeType = UNARY_BASE_FUNC;
+      simplified->baseFun = basefun_single;
+      simplified->child1 = g;
+      mpfr_clear(*value);
+      safeFree(value);
+    } else {
+      free_memory(g);
+    }
+  } else {
+    if (isConstant(g)) {
+      xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      xrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      yrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      yrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      mpfr_init2(*(yrange.a),4* tools_precision);
+      mpfr_init2(*(yrange.b),4 * tools_precision);
+      mpfr_init2(*(xrange.a),((tools_precision > 64)? tools_precision : 64));
+      mpfr_init2(*(xrange.b),((tools_precision > 64)? tools_precision : 64));
+      mpfr_set_ui(*(xrange.a),1,GMP_RNDD);
+      mpfr_set_ui(*(xrange.b),1,GMP_RNDU);
+      evaluateRangeFunction(yrange, g, xrange, 8 * tools_precision);
+      mpfr_round_to_single(*(xrange.a),*(yrange.a));
+      mpfr_round_to_single(*(xrange.b),*(yrange.b));
+      if (mpfr_number_p(*(xrange.a)) &&
+          mpfr_number_p(*(xrange.b)) &&
+          (mpfr_cmp(*(xrange.a),*(xrange.b)) == 0)) {
+        simplified->nodeType = CONSTANT;
+        value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+        mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
+        simplified->value = value;
+        mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
+        free_memory(g);
+      } else {
+        simplified->nodeType = UNARY_BASE_FUNC;
+        simplified->baseFun = basefun_single;
+        simplified->child1 = g;
+      }
+      mpfr_clear(*(xrange.a));
+      mpfr_clear(*(xrange.b));
+      mpfr_clear(*(yrange.a));
+      mpfr_clear(*(yrange.b));
+      safeFree(xrange.a);
+      safeFree(xrange.b);
+      safeFree(yrange.a);
+      safeFree(yrange.b);
+    } else {
+      simplified->nodeType = UNARY_BASE_FUNC;
+      simplified->baseFun = basefun_single;
+      simplified->child1 = g;
+    }
+  }
+  return simplified;
+}
+
+
+node *simplify_quad(node *g) {
+  node *simplified;
+  mpfr_t *value;
+  rangetype x, y;
+
+  simplified = (node*) safeMalloc(sizeof(node));
+  if (accessThruMemRef(g)->nodeType == CONSTANT) {
+    simplified->nodeType = CONSTANT;
+    value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+    mpfr_init2(*value,((tools_precision > 128)? tools_precision : 128));
+    simplified->value = value;
+    mpfr_round_to_quad(*value, *(accessThruMemRef(g)->value));
+    if (!mpfr_number_p(*value)) {
+      simplified->nodeType = UNARY_BASE_FUNC;
+      simplified->baseFun = basefun_quad;
+      simplified->child1 = g;
+      mpfr_clear(*value);
+      safeFree(value);
+    } else {
+      free_memory(g);
+    }
+  } else {
+    if (isConstant(g)) {
+      xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      xrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      yrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      yrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      mpfr_init2(*(yrange.a),4* tools_precision);
+      mpfr_init2(*(yrange.b),4 * tools_precision);
+      mpfr_init2(*(xrange.a),((tools_precision > 128)? tools_precision : 128));
+      mpfr_init2(*(xrange.b),((tools_precision > 128)? tools_precision : 128));
+      mpfr_set_ui(*(xrange.a),1,GMP_RNDD);
+      mpfr_set_ui(*(xrange.b),1,GMP_RNDU);
+      evaluateRangeFunction(yrange, g, xrange, 8 * tools_precision);
+      mpfr_round_to_quad(*(xrange.a),*(yrange.a));
+      mpfr_round_to_quad(*(xrange.b),*(yrange.b));
+      if (mpfr_number_p(*(xrange.a)) &&
+          mpfr_number_p(*(xrange.b)) &&
+          (mpfr_cmp(*(xrange.a),*(xrange.b)) == 0)) {
+        simplified->nodeType = CONSTANT;
+        value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+        mpfr_init2(*value,((tools_precision > 128)? tools_precision : 128));
+        simplified->value = value;
+        mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
+        free_memory(g);
+      } else {
+        simplified->nodeType = UNARY_BASE_FUNC;
+        simplified->baseFun = basefun_quad;
+        simplified->child1 = g;
+      }
+      mpfr_clear(*(xrange.a));
+      mpfr_clear(*(xrange.b));
+      mpfr_clear(*(yrange.a));
+      mpfr_clear(*(yrange.b));
+      safeFree(xrange.a);
+      safeFree(xrange.b);
+      safeFree(yrange.a);
+      safeFree(yrange.b);
+    } else {
+      simplified->nodeType = UNARY_BASE_FUNC;
+      simplified->baseFun = basefun_quad;
+      simplified->child1 = g;
+    }
+  }
+  return simplified;
+}
+
+
+node *simplify_halfprecision(node *g) {
+  node *simplified;
+  mpfr_t *value;
+  rangetype x, y;
+
+  simplified = (node*) safeMalloc(sizeof(node));
+  if (accessThruMemRef(g)->nodeType == CONSTANT) {
+    simplified->nodeType = CONSTANT;
+    value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+    mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
+    simplified->value = value;
+    mpfr_round_to_halfprecision(*value, *(accessThruMemRef(g)->value));
+    if (!mpfr_number_p(*value)) {
+      simplified->nodeType = UNARY_BASE_FUNC;
+      simplified->baseFun = basefun_halfprecision;
+      simplified->child1 = g;
+      mpfr_clear(*value);
+      safeFree(value);
+    } else {
+      free_memory(g);
+    }
+  } else {
+    if (isConstant(g)) {
+      xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      xrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      yrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      yrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      mpfr_init2(*(yrange.a),4* tools_precision);
+      mpfr_init2(*(yrange.b),4 * tools_precision);
+      mpfr_init2(*(xrange.a),((tools_precision > 64)? tools_precision : 64));
+      mpfr_init2(*(xrange.b),((tools_precision > 64)? tools_precision : 64));
+      mpfr_set_ui(*(xrange.a),1,GMP_RNDD);
+      mpfr_set_ui(*(xrange.b),1,GMP_RNDU);
+      evaluateRangeFunction(yrange, g, xrange, 8 * tools_precision);
+      mpfr_round_to_halfprecision(*(xrange.a),*(yrange.a));
+      mpfr_round_to_halfprecision(*(xrange.b),*(yrange.b));
+      if (mpfr_number_p(*(xrange.a)) &&
+          mpfr_number_p(*(xrange.b)) &&
+          (mpfr_cmp(*(xrange.a),*(xrange.b)) == 0)) {
+        simplified->nodeType = CONSTANT;
+        value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+        mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
+        simplified->value = value;
+        mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
+        free_memory(g);
+      } else {
+        simplified->nodeType = UNARY_BASE_FUNC;
+        simplified->baseFun = basefun_halfprecision;
+        simplified->child1 = g;
+      }
+      mpfr_clear(*(xrange.a));
+      mpfr_clear(*(xrange.b));
+      mpfr_clear(*(yrange.a));
+      mpfr_clear(*(yrange.b));
+      safeFree(xrange.a);
+      safeFree(xrange.b);
+      safeFree(yrange.a);
+      safeFree(yrange.b);
+    } else {
+      simplified->nodeType = UNARY_BASE_FUNC;
+      simplified->baseFun = basefun_halfprecision;
+      simplified->child1 = g;
+    }
+  }
+  return simplified;
+}
+
+
+node *simplify_doubledouble(node *g) {
+  node *simplified;
+  mpfr_t *value;
+  rangetype x, y;
+
+  simplified = (node*) safeMalloc(sizeof(node));
+  if (accessThruMemRef(g)->nodeType == CONSTANT) {
+    simplified->nodeType = CONSTANT;
+    value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+    mpfr_init2(*value,((tools_precision > 129)? tools_precision : 129));
+    simplified->value = value;
+    mpfr_round_to_doubledouble(*value, *(accessThruMemRef(g)->value));
+    if (!mpfr_number_p(*value)) {
+      simplified->nodeType = UNARY_BASE_FUNC;
+      simplified->baseFun = basefun_doubledouble;
+      simplified->child1 = g;
+      mpfr_clear(*value);
+      safeFree(value);
+    } else {
+      free_memory(g);
+    }
+  } else {
+    if (isConstant(g)) {
+      xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      xrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      yrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      yrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      mpfr_init2(*(yrange.a),4* tools_precision);
+      mpfr_init2(*(yrange.b),4 * tools_precision);
+      mpfr_init2(*(xrange.a),((tools_precision > 129)? tools_precision : 129));
+      mpfr_init2(*(xrange.b),((tools_precision > 129)? tools_precision : 129));
+      mpfr_set_ui(*(xrange.a),1,GMP_RNDD);
+      mpfr_set_ui(*(xrange.b),1,GMP_RNDU);
+      evaluateRangeFunction(yrange, g, xrange, 8 * tools_precision);
+      mpfr_round_to_doubledouble(*(xrange.a),*(yrange.a));
+      mpfr_round_to_doubledouble(*(xrange.b),*(yrange.b));
+      if (mpfr_number_p(*(xrange.a)) &&
+          mpfr_number_p(*(xrange.b)) &&
+          (mpfr_cmp(*(xrange.a),*(xrange.b)) == 0)) {
+        simplified->nodeType = CONSTANT;
+        value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+        mpfr_init2(*value,((tools_precision > 129)? tools_precision : 129));
+        simplified->value = value;
+        mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
+        free_memory(g);
+      } else {
+        simplified->nodeType = UNARY_BASE_FUNC;
+        simplified->baseFun = basefun_doubledouble;
+        simplified->child1 = g;
+      }
+      mpfr_clear(*(xrange.a));
+      mpfr_clear(*(xrange.b));
+      mpfr_clear(*(yrange.a));
+      mpfr_clear(*(yrange.b));
+      safeFree(xrange.a);
+      safeFree(xrange.b);
+      safeFree(yrange.a);
+      safeFree(yrange.b);
+    } else {
+      simplified->nodeType = UNARY_BASE_FUNC;
+      simplified->baseFun = basefun_doubledouble;
+      simplified->child1 = g;
+    }
+  }
+  return simplified;
+}
+
+
+node *simplify_tripledouble(node *g) {
+  node *simplified;
+  mpfr_t *value;
+  rangetype x, y;
+
+  simplified = (node*) safeMalloc(sizeof(node));
+  if (accessThruMemRef(g)->nodeType == CONSTANT) {
+    simplified->nodeType = CONSTANT;
+    value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+    mpfr_init2(*value,((tools_precision > 200)? tools_precision : 200));
+    simplified->value = value;
+    mpfr_round_to_tripledouble(*value, *(accessThruMemRef(g)->value));
+    if (!mpfr_number_p(*value)) {
+      simplified->nodeType = UNARY_BASE_FUNC;
+      simplified->baseFun = basefun_tripledouble;
+      simplified->child1 = g;
+      mpfr_clear(*value);
+      safeFree(value);
+    } else {
+      free_memory(g);
+    }
+  } else {
+    if (isConstant(g)) {
+      xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      xrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      yrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      yrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      mpfr_init2(*(yrange.a),4* tools_precision);
+      mpfr_init2(*(yrange.b),4 * tools_precision);
+      mpfr_init2(*(xrange.a),((tools_precision > 200)? tools_precision : 200));
+      mpfr_init2(*(xrange.b),((tools_precision > 200)? tools_precision : 200));
+      mpfr_set_ui(*(xrange.a),1,GMP_RNDD);
+      mpfr_set_ui(*(xrange.b),1,GMP_RNDU);
+      evaluateRangeFunction(yrange, g, xrange, 8 * tools_precision);
+      mpfr_round_to_tripledouble(*(xrange.a),*(yrange.a));
+      mpfr_round_to_tripledouble(*(xrange.b),*(yrange.b));
+      if (mpfr_number_p(*(xrange.a)) &&
+          mpfr_number_p(*(xrange.b)) &&
+          (mpfr_cmp(*(xrange.a),*(xrange.b)) == 0)) {
+        simplified->nodeType = CONSTANT;
+        value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+        mpfr_init2(*value,((tools_precision > 200)? tools_precision : 200));
+        simplified->value = value;
+        mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
+        free_memory(g);
+      } else {
+        simplified->nodeType = UNARY_BASE_FUNC;
+        simplified->baseFun = basefun_tripledouble;
+        simplified->child1 = g;
+      }
+      mpfr_clear(*(xrange.a));
+      mpfr_clear(*(xrange.b));
+      mpfr_clear(*(yrange.a));
+      mpfr_clear(*(yrange.b));
+      safeFree(xrange.a);
+      safeFree(xrange.b);
+      safeFree(yrange.a);
+      safeFree(yrange.b);
+    } else {
+      simplified->nodeType = UNARY_BASE_FUNC;
+      simplified->baseFun = basefun_tripledouble;
+      simplified->child1 = g;
+    }
+  }
+  return simplified;
+}
+
+
+node *simplify_doubleextended(node *g) {
+  node *simplified;
+  mpfr_t *value;
+  rangetype x, y;
+
+  simplified = (node*) safeMalloc(sizeof(node));
+  if (accessThruMemRef(g)->nodeType == CONSTANT) {
+    simplified->nodeType = CONSTANT;
+    value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+    mpfr_init2(*value,((tools_precision > 128)? tools_precision : 128));
+    simplified->value = value;
+    mpfr_round_to_doubleextended(*value, *(accessThruMemRef(g)->value));
+    if (!mpfr_number_p(*value)) {
+      simplified->nodeType = UNARY_BASE_FUNC;
+      simplified->baseFun = basefun_doubleextended;
+      simplified->child1 = g;
+      mpfr_clear(*value);
+      safeFree(value);
+    } else {
+      free_memory(g);
+    }
+  } else {
+    if (isConstant(g)) {
+      xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      xrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      yrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      yrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+      mpfr_init2(*(yrange.a),4* tools_precision);
+      mpfr_init2(*(yrange.b),4 * tools_precision);
+      mpfr_init2(*(xrange.a),((tools_precision > 128)? tools_precision : 128));
+      mpfr_init2(*(xrange.b),((tools_precision > 128)? tools_precision : 128));
+      mpfr_set_ui(*(xrange.a),1,GMP_RNDD);
+      mpfr_set_ui(*(xrange.b),1,GMP_RNDU);
+      evaluateRangeFunction(yrange, g, xrange, 8 * tools_precision);
+      mpfr_round_to_doubleextended(*(xrange.a),*(yrange.a));
+      mpfr_round_to_doubleextended(*(xrange.b),*(yrange.b));
+      if (mpfr_number_p(*(xrange.a)) &&
+          mpfr_number_p(*(xrange.b)) &&
+          (mpfr_cmp(*(xrange.a),*(xrange.b)) == 0)) {
+        simplified->nodeType = CONSTANT;
+        value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
+        mpfr_init2(*value,((tools_precision > 128)? tools_precision : 128));
+        simplified->value = value;
+        mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
+        free_memory(g);
+      } else {
+        simplified->nodeType = UNARY_BASE_FUNC;
+        simplified->baseFun = basefun_doubleextended;
+        simplified->child1 = g;
+      }
+      mpfr_clear(*(xrange.a));
+      mpfr_clear(*(xrange.b));
+      mpfr_clear(*(yrange.a));
+      mpfr_clear(*(yrange.b));
+      safeFree(xrange.a);
+      safeFree(xrange.b);
+      safeFree(yrange.a);
+      safeFree(yrange.b);
+    } else {
+      simplified->nodeType = UNARY_BASE_FUNC;
+      simplified->baseFun = basefun_doubleextended;
+      simplified->child1 = g;
+    }
+  }
+  return simplified;
+}
+
+
+
+
+
+
+/******************************************************************************/
+/*                                                                            */
+/*                     FUNCTIONS FOR EVALUATING THE SIGN                      */
+/*                                                                            */
+/******************************************************************************/
+
+int evaluateSignTrigoUnsafe(int *s, node *child, int baseFunctionCode) {
+  mpfr_t value, value2;
+  mpfr_t piHalf;
+  mpfr_t dummyX;
+  int okay, res;
+  node *tempNode;
+  int signA;
+
+  okay = 0;
+
+  mpfr_init2(value,defaultprecision);
+  mpfr_init2(piHalf,defaultprecision);
+  mpfr_init2(dummyX,12);
+  mpfr_set_ui(dummyX,1,GMP_RNDN);
+  if (evaluateFaithful(value, child, dummyX, defaultprecision) &&
+      mpfr_number_p(value)) {
+    mpfr_const_pi(piHalf,GMP_RNDN);
+    mpfr_div_2ui(piHalf,piHalf,1,GMP_RNDN);
+    mpfr_div(value,value,piHalf,GMP_RNDN);
+    mpfr_rint(value,value,GMP_RNDN);
+    mpfr_div_2ui(value,value,1,GMP_RNDN);
+    /* Here, diff is approximately value * pi
+       and value * 2 is an integer
+    */
+    tempNode = makeMul(makeConstant(value),makePi());
+    if (compareConstant(&signA, child, tempNode, NULL, 0)) {
+      if (signA == 0) {
+	/* Here, we have proven that child is equal to value * pi
+	 */
+	mpfr_init2(value2,defaultprecision);
+	mpfr_rint(value2,value,GMP_RNDN);      /* exact, same precision */
+	mpfr_sub(value,value,value2,GMP_RNDN); /* exact, Sterbenz */
+	/* Here, we know that child is equal to (n + value) * pi for
+	   some integer n. We know that value can only be 0 or +/- 0.5
+	*/
+	switch (baseFunctionCode) {
+	case SIN:
+	  /* sin is zero for all n * pi, n in Z */
+	  if (mpfr_zero_p(value)) {
+	    okay = 1;
+	    res = 0;
+	  }
+	  break;
+	case COS:
+	  /* cos is zero for all (n + 1/2) * pi, n in Z */
+	  if (!mpfr_zero_p(value)) {
+	    okay = 1;
+	    res = 0;
+	  }
+	  break;
+	case TAN:
+	  /* tan is zero for all n * pi, n in Z */
+	  if (mpfr_zero_p(value)) {
+	    okay = 1;
+	    res = 0;
+	  }
+	  break;
+	default:
+	  sollyaFprintf(stderr,"Error: evaluateSignTrigoUnsafe: unknown identifier (%d) in the tree\n",baseFunctionCode);
+	  exit(1);
+	}
+	mpfr_clear(value2);
+      }
+    }
+    free_memory(tempNode);
+  }
+  mpfr_clear(dummyX);
+  mpfr_clear(piHalf);
+  mpfr_clear(value);
+
+  if (okay) *s = res;
+  return okay;
+}
+
+int sqrt_evalsign(int *sign, node *c) {
+  int okayA, signA;
+  okayA = evaluateSign(&signA, c);
+  if (okayA && (signA >= 0)) {
+    *sign = signA;
+    return 1;
+  }
+  return 0;
+}
+
+int exp_evalsign(int *sign, node *c) {
+  int okayA, signA;
+  if (evaluateSign(&signA, c)) { /* TODO: I do not understand why we make a difference, e.g. between exp and cosh */
+    *sign = 1;
+    return 1;
+  }
+  return 0;
+}
+
+int log_evalsign(int *sign, node *c) {
+  int okayA, signA, okayB, signB;
+  node * tempNode;
+  tempNode = makeDoubleConstant(1.0);
+  okayA = compareConstant(&signA, c, tempNode, NULL, 0);
+  free_memory(tempNode);
+  okayB = evaluateSign(&signB, c);
+  if (okayA && okayB && (signB > 0)) {
+    *sign = signA;
+    return 1;
+  }
+  return 0;
+}
+
+int sin_evalsign(int *sign, node *c) {
+  int okayA, signA;
+  okayA = evaluateSign(&signA, c);
+  if (okayA && (signA == 0)) {
+    *sign = 0;
+    return 1;
+  }
+  /* else */
+  return evaluateSignTrigoUnsafe(sign, c, SIN);
+}
+
+int cos_evalsign(int *sign, node *c) {
+  int okayA, signA;
+  okayA = evaluateSign(&signA, c);
+  if (okayA && (signA == 0)) {
+    *sign = 0;
+    return 1;
+  }
+  /* else */
+  return evaluateSignTrigoUnsafe(sign, c, COS);
+}
+
+int tan_evalsign(int *sign, node *c) {
+  int okayA, signA;
+  okayA = evaluateSign(&signA, c);
+  if (okayA && (signA == 0)) {
+    *sign = 0;
+    return 1;
+  }
+  /* else */
+  return evaluateSignTrigoUnsafe(sign, c, TAN);
+}
+
+
+int asin_evalsign(int *sign, node *c) {
+  int okayA, signA, okayB, signB;
+  node *tempNode, *tempNode2;
+  okayA = evaluateSign(&signA, c);
+  tempNode = makeAbs(copyTree(c));
+  tempNode2 = makeDoubleConstant(1.0);
+  okayB = compareConstant(&signB, tempNode, tempNode2, NULL, 0);
+  free_memory(tempNode);
+  free_memory(tempNode2);
+
+  if (okayA && okayB && (signB <= 0)) {
+    *sign = signA;
+    return 1;
+  }
+  return 0;
+}
+
+int acos_evalsign(int *sign, node *c) {
+  int okayA, signA, okayB, signB, okayC, signC;
+  node *tempNode, *tempNode2;
+  okayA = evaluateSign(&signA, c);
+  tempNode = makeAbs(copyTree(c));
+  tempNode2 = makeDoubleConstant(1.0);
+  okayB = compareConstant(&signB, tempNode, tempNode2, NULL, 0);
+  okayC = compareConstant(&signC, c, tempNode2, NULL, 0);
+  free_memory(tempNode);
+  free_memory(tempNode2);
+
+  if (okayA && okayB && okayC && (signB <= 0)) {
+    if (signC == 0) *sign = 0; else *sign = 1;
+    return 1;
+  }
+  return 0;
+}
+
+int odd_increasing_function_evalsign(int *sign, node *c) {
+  return evaluateSign(sign, c);
+}
+
+int positive_function_evalsign(int *sign, node *c) {
+  *sign = 1;
+  return 1;
+}
+
+int acosh_evalsign(int *sign, node *c) {
+  int okayA, signA;
+  node *tempNode;
+  tempNode = makeDoubleConstant(1.0);
+  okayA = compareConstant(&signA, c, tempNode, NULL, 0);
+  free_memory(tempNode);
+  if (okayA && (signA >= 0)) {
+    *sign = 1;
+    return 1;
+  }
+  return 0;
+}
+
+int atanh_evalsign(int *sign, node *c) {
+  int okayA, signA, okayB, signB;
+  node *tempNode, *tempNode2;
+  okayA = evaluateSign(&signA, c);
+  tempNode = makeAbs(copyTree(c));
+  tempNode2 = makeDoubleConstant(1.0);
+  okayB = compareConstant(&signB, tempNode, tempNode2, NULL, 0);
+  free_memory(tempNode);
+  free_memory(tempNode2);
+  if (okayA && okayB && (signB < 0)) {
+    *sign = signA;
+    return 1;
+  }
+  return 0;
+}
+
+int abs_evalsign(int *sign, node *c) {
+  int okayA, signA;
+  okayA = evaluateSign(&signA, c);
+  if (okayA) {
+    if (signA == 0) *sign = 0; else *sign = 1;
+    return 1;
+  }
+  return 0;
+}
+
+int void_evalsign(int *sign, node *c) {
+  UNUSED_PARAM(sign);
+  UNUSED_PARAM(c);
+  return 0;
+}
+
+int log1p_evalsign(int *sign, node *c) {
+  int okayA, signA, okayB, signB;
+  node *tempNode, *tempNode2;
+  tempNode = makeDoubleConstant(-1.0);
+  okayA = compareConstant(&signA, c, tempNode, NULL, 0);
+  okayB = evaluateSign(&signB, c);
+  free_memory(tempNode);
+  if (okayA && okayB && (signA > 0)) {
+    *sign = signB;
+    return 1;
+  }
+  return 0;
+}
+
+int ceil_evalsign(int *sign, node *c) {
+  int okay, s, okayA, signA, okayB, signB;
+  node *tempNode, *tempNode2;
+  okayA = evaluateSign(&signA, c);
+  tempNode = makeDoubleConstant(-1.0);
+  if (okayA)
+    okayB = compareConstant(&signB, c, tempNode, NULL, 0);
+  else
+    okayB = 0;
+  if (okayA && okayB) {
+    okay = 1;
+    if (signB <= 0) {
+      s = -1;
+    } else {
+      if (signA <= 0) {
+        s = 0;
+      } else {
+        s = 1;
+      }
+    }
+  }
+  free_memory(tempNode);
+  if (okay) *sign = s;
+  return okay;
+}
+
+int floor_evalsign(int *sign, node *c) {
+  int okay, s, okayA, signA, okayB, signB;
+  node *tempNode, *tempNode2;
+  okayA = evaluateSign(&signA, c);
+  tempNode = makeDoubleConstant(1.0);
+  if (okayA)
+    okayB = compareConstant(&signB, c, tempNode, NULL, 0);
+  else
+    okayB = 0;
+  if (okayA && okayB) {
+    okay = 1;
+    if (signA < 0) {
+      s = -1;
+    } else {
+      if (signB < 0) {
+        s = 0;
+      } else {
+        s = 1;
+      }
+    }
+  }
+  free_memory(tempNode);
+  if (okay) *sign = s;
+  return okay;
+}
+
+
+
+
+
+
+/******************************************************************************/
+/*                                                                            */
+/*                       POINTWISE EVALUATION FUNCTIONS                       */
+/*                                                                            */
+/******************************************************************************/
+
+int double_point_eval(mpfr_t res, mpfr_t x, gmp_rnd_t rnd) {
+  mpfr_t myResult;
+  int r;
+  mpfr_init2(myResult, ((mpfr_get_prec(result) > 64)? mpfr_get_prec(result) : 64));
+  mpfr_round_to_double(myResult, x);
+  r = mpfr_set(result, myResult, rnd);
+  mpfr_clear(myResult);
+  return r;
+}
+
+int single_point_eval(mpfr_t res, mpfr_t x, gmp_rnd_t rnd) {
+  mpfr_t myResult;
+  int r;
+  mpfr_init2(myResult, ((mpfr_get_prec(result) > 64)? mpfr_get_prec(result) : 64));
+  mpfr_round_to_single(myResult, x);
+  r = mpfr_set(result, myResult, rnd);
+  mpfr_clear(myResult);
+  return r;
+}
+
+int quad_point_eval(mpfr_t res, mpfr_t x, gmp_rnd_t rnd) {
+  mpfr_t myResult;
+  int r;
+  mpfr_init2(myResult, ((mpfr_get_prec(result) > 128)? mpfr_get_prec(result) : 128));
+  mpfr_round_to_quad(myResult, x);
+  r = mpfr_set(result, myResult, rnd);
+  mpfr_clear(myResult);
+  return r;
+}
+
+int halfprecision_point_eval(mpfr_t res, mpfr_t x, gmp_rnd_t rnd) {
+  mpfr_t myResult;
+  int r;
+  mpfr_init2(myResult, ((mpfr_get_prec(result) > 64)? mpfr_get_prec(result) : 64));
+  mpfr_round_to_halfprecision(myResult, x);
+  r = mpfr_set(result, myResult, rnd);
+  mpfr_clear(myResult);
+  return r;
+}
+
+int doubledouble_point_eval(mpfr_t res, mpfr_t x, gmp_rnd_t rnd) {
+  mpfr_t myResult;
+  int r;
+  mpfr_init2(myResult, ((mpfr_get_prec(result) > 129)? mpfr_get_prec(result) : 129));
+  mpfr_round_to_doubledouble(myResult, x);
+  r = mpfr_set(result, myResult, rnd);
+  mpfr_clear(myResult);
+  return r;
+}
+
+int tripledouble_point_eval(mpfr_t res, mpfr_t x, gmp_rnd_t rnd) {
+  mpfr_t myResult;
+  int r;
+  mpfr_init2(myResult, ((mpfr_get_prec(result) > 200)? mpfr_get_prec(result) : 200));
+  mpfr_round_to_tripledouble(myResult, x);
+  r = mpfr_set(result, myResult, rnd);
+  mpfr_clear(myResult);
+  return r;
+}
+
+int doubleextended_point_eval(mpfr_t res, mpfr_t x, gmp_rnd_t rnd) {
+  mpfr_t myResult;
+  int r;
+  mpfr_init2(myResult, ((mpfr_get_prec(result) > 128)? mpfr_get_prec(result) : 128));
+  mpfr_round_to_doubleextended(myResult, x);
+  r = mpfr_set(result, myResult, rnd);
+  mpfr_clear(myResult);
+  return r;
+}
+
+
+
+
+
+
+/******************************************************************************/
+/*                                                                            */
+/*                     DEFINITIONS OF THE BASEFUN OBJECTS                     */
+/*                                                                            */
+/******************************************************************************/
+
+baseFunction basefun_sqrt_obj = {
+  baseFunctionCode = SQRT;
+  functionName = "sqrt";
+  xmlString = "<root/>\n";
+  mpfrName = "mpfr_sqrt";
+  handledByImplementconst = 1;
+  baseAutodiff = sqrt_diff;
+  interval_eval = sollya_mpfi_sqrt;
+  point_eval = mpfr_sqrt;
+  diff_expr = sqrt_diff_expr;
+  simplify = simplify_sqrt;
+  evalsign = sqrt_evalsign;
+}
+baseFunction *basefun_sqrt = &basefun_sqrt_obj;
+
+baseFunction basefun_exp_obj = {
+  baseFunctionCode = EXP;
+  functionName = "exp";
+  xmlString = "<exp/>\n";
+  mpfrName = "mpfr_exp";
+  handledByImplementconst = 1;
+  baseAutodiff = exp_diff;
+  interval_eval = sollya_mpfi_exp;
+  point_eval = mpfr_exp;
+  diff_expr = exp_diff_expr;
+  simplify = simplify_exp;
+  evalsign = exp_evalsign;
+}
+baseFunction *basefun_exp = &basefun_exp_obj;
+
+baseFunction basefun_log_obj = {
+  baseFunctionCode = LOG;
+  functionName = "log";
+  xmlString = "<ln/>\n";
+  mpfrName = "mpfr_log";
+  handledByImplementconst = 1;
+  baseAutodiff = log_diff;
+  interval_eval = sollya_mpfi_log;
+  point_eval = mpfr_log;
+  diff_expr = log_diff_expr;
+  simplify = simplify_log;
+  evalsign = log_evalsign;
+}
+baseFunction *basefun_log = &basefun_log_obj;
+
+baseFunction basefun_log2_obj = {
+  baseFunctionCode = LOG_2;
+  functionName = "log2";
+  xmlString = "<log/><logbase><cn>2</cn></logbase>\n";
+  mpfrName = "mpfr_log2";
+  handledByImplementconst = 1;
+  baseAutodiff = log2_diff;
+  interval_eval = sollya_mpfi_log2;
+  point_eval = mpfr_log2;
+  diff_expr = log2_diff_expr;
+  simplify = simplify_log2;
+  evalsign = log2_evalsign;
+}
+baseFunction *basefun_log2 = &basefun_log2_obj;
+
+baseFunction basefun_log10_obj = {
+  baseFunctionCode = LOG_10;
+  functionName = "log10";
+  xmlString = "<log/>\n";
+  mpfrName = "mpfr_log10";
+  handledByImplementconst = 1;
+  baseAutodiff = log10_diff;
+  interval_eval = sollya_mpfi_log10;
+  point_eval = mpfr_log10;
+  diff_expr = log10_diff_expr;
+  simplify = simplify_log10;
+  evalsign = log10_evalsign;
+}
+baseFunction *basefun_log10 = &basefun_log10_obj;
+
+baseFunction basefun_sin_obj = {
+  baseFunctionCode = SIN;
+  functionName = "sin";
+  xmlString = "<sin/>\n";
+  mpfrName = "mpfr_sin";
+  handledByImplementconst = 1;
+  baseAutodiff = sin_diff;
+  interval_eval = sollya_mpfi_sin;
+  point_eval = mpfr_sin;
+  diff_expr = sin_diff_expr;
+  simplify = simplify_sin;
+  evalsign = sin_evalsign;
+}
+baseFunction *basefun_sin = &basefun_sin_obj;
+
+baseFunction basefun_cos_obj = {
+  baseFunctionCode = COS;
+  functionName = "cos";
+  xmlString = "<cos/>\n";
+  mpfrName = "mpfr_cos";
+  handledByImplementconst = 1;
+  baseAutodiff = cos_diff;
+  interval_eval = sollya_mpfi_cos;
+  point_eval = mpfr_cos;
+  diff_expr = cos_diff_expr;
+  simplify = simplify_cos;
+  evalsign = cos_evalsign;
+}
+baseFunction *basefun_cos = &basefun_cos_obj;
+
+baseFunction basefun_tan_obj = {
+  baseFunctionCode = TAN;
+  functionName = "tan";
+  xmlString = "<tan/>\n";
+  mpfrName = "mpfr_tan";
+  handledByImplementconst = 1;
+  baseAutodiff = tan_diff;
+  interval_eval = sollya_mpfi_tan;
+  point_eval = mpfr_tan;
+  diff_expr = tan_diff_expr;
+  simplify = simplify_tan;
+  evalsign = tan_evalsign;
+}
+baseFunction *basefun_tan = &basefun_tan_obj;
+
+baseFunction basefun_asin_obj = {
+  baseFunctionCode = ASIN;
+  functionName = "asin";
+  xmlString = "<arcsin/>\n";
+  mpfrName = "mpfr_asin";
+  handledByImplementconst = 1;
+  baseAutodiff = asin_diff;
+  interval_eval = sollya_mpfi_asin;
+  point_eval = mpfr_asin;
+  diff_expr = asin_diff_expr;
+  simplify = simplify_asin;
+  evalsign = asin_evalsign;
+}
+baseFunction *basefun_asin = &basefun_asin_obj;
+
+baseFunction basefun_acos_obj = {
+  baseFunctionCode = ACOS;
+  functionName = "acos";
+  xmlString = "<arccos/>\n";
+  mpfrName = "mpfr_acos";
+  handledByImplementconst = 1;
+  baseAutodiff = acos_diff;
+  interval_eval = sollya_mpfi_acos;
+  point_eval = mpfr_acos;
+  diff_expr = acos_diff_expr;
+  simplify = simplify_acos;
+  evalsign = acos_evalsign;
+}
+baseFunction *basefun_acos = &basefun_acos_obj;
+
+baseFunction basefun_atan_obj = {
+  baseFunctionCode = ATAN;
+  functionName = "atan";
+  xmlString = "<arctan/>\n";
+  mpfrName = "mpfr_atan";
+  handledByImplementconst = 1;
+  baseAutodiff = atan_diff;
+  interval_eval = sollya_mpfi_atan;
+  point_eval = mpfr_atan;
+  diff_expr = atan_diff_expr;
+  simplify = simplify_atan;
+  evalsign = atan_evalsign;
+}
+baseFunction *basefun_atan = &basefun_atan_obj;
+
+baseFunction basefun_sinh_obj = {
+  baseFunctionCode = SINH;
+  functionName = "sinh";
+  xmlString = "<sinh/>\n";
+  mpfrName = "mpfr_sinh";
+  handledByImplementconst = 1;
+  baseAutodiff = sinh_diff;
+  interval_eval = sollya_mpfi_sinh;
+  point_eval = mpfr_sinh;
+  diff_expr = sinh_diff_expr;
+  simplify = simplify_sinh;
+  evalsign = sinh_evalsign;
+}
+baseFunction *basefun_sinh = &basefun_sinh_obj;
+
+baseFunction basefun_cosh_obj = {
+  baseFunctionCode = COSH;
+  functionName = "cosh";
+  xmlString = "<cosh/>\n";
+  mpfrName = "mpfr_cosh";
+  handledByImplementconst = 1;
+  baseAutodiff = cosh_diff;
+  interval_eval = sollya_mpfi_cosh;
+  point_eval = mpfr_cosh;
+  diff_expr = cosh_diff_expr;
+  simplify = simplify_cosh;
+  evalsign = cosh_evalsign;
+}
+baseFunction *basefun_cosh = &basefun_cosh_obj;
+
+baseFunction basefun_tanh_obj = {
+  baseFunctionCode = TANH;
+  functionName = "tanh";
+  xmlString = "<tanh/>\n";
+  mpfrName = "mpfr_tanh";
+  handledByImplementconst = 1;
+  baseAutodiff = tanh_diff;
+  interval_eval = sollya_mpfi_tanh;
+  point_eval = mpfr_tanh;
+  diff_expr = tanh_diff_expr;
+  simplify = simplify_tanh;
+  evalsign = tanh_evalsign;
+}
+baseFunction *basefun_tanh = &basefun_tanh_obj;
+
+baseFunction basefun_asinh_obj = {
+  baseFunctionCode = ASINH;
+  functionName = "asinh";
+  xmlString = "<arcsinh/>\n";
+  mpfrName = "mpfr_asinh";
+  handledByImplementconst = 1;
+  baseAutodiff = asinh_diff;
+  interval_eval = sollya_mpfi_asinh;
+  point_eval = mpfr_asinh;
+  diff_expr = asinh_diff_expr;
+  simplify = simplify_asinh;
+  evalsign = asinh_evalsign;
+}
+baseFunction *basefun_asinh = &basefun_asinh_obj;
+
+baseFunction basefun_acosh_obj = {
+  baseFunctionCode = ACOSH;
+  functionName = "acosh";
+  xmlString = "<arccosh/>\n";
+  mpfrName = "mpfr_acosh";
+  handledByImplementconst = 1;
+  baseAutodiff = acosh_diff;
+  interval_eval = sollya_mpfi_acosh;
+  point_eval = mpfr_acosh;
+  diff_expr = acosh_diff_expr;
+  simplify = simplify_acosh;
+  evalsign = acosh_evalsign;
+}
+baseFunction *basefun_acosh = &basefun_acosh_obj;
+
+baseFunction basefun_atanh_obj = {
+  baseFunctionCode = ATANH;
+  functionName = "atanh";
+  xmlString = "<arctanh/>\n";
+  mpfrName = "mpfr_atanh";
+  handledByImplementconst = 1;
+  baseAutodiff = atanh_diff;
+  interval_eval = sollya_mpfi_atanh;
+  point_eval = mpfr_atanh;
+  diff_expr = atanh_diff_expr;
+  simplify = simplify_atanh;
+  evalsign = atanh_evalsign;
+}
+baseFunction *basefun_atanh = &basefun_atanh_obj;
+
+baseFunction basefun_abs_obj = {
+  baseFunctionCode = ABS;
+  functionName = "abs";
+  xmlString = "<abs/>\n";
+  mpfrName = "mpfr_abs";
+  handledByImplementconst = 1;
+  baseAutodiff = abs_diff;
+  interval_eval = sollya_mpfi_abs;
+  point_eval = mpfr_abs;
+  diff_expr = abs_diff_expr;
+  simplify = simplify_abs;
+  evalsign = abs_evalsign;
+}
+baseFunction *basefun_abs = &basefun_abs_obj;
+
+baseFunction basefun_erf_obj = {
+  baseFunctionCode = ERF;
+  functionName = "erf";
+  xmlString = "<csymbol definitionURL=\"http://www.openmath.org/CDs/errorFresnelInts.ocd\" encoding=\"OpenMath\">erf</csymbol>\n";
+  mpfrName = "mpfr_erf";
+  handledByImplementconst = 1;
+  baseAutodiff = erf_diff;
+  interval_eval = sollya_mpfi_erf;
+  point_eval = mpfr_erf;
+  diff_expr = erf_diff_expr;
+  simplify = simplify_erf;
+  evalsign = erf_evalsign;
+}
+baseFunction *basefun_erf = &basefun_erf_obj;
+
+baseFunction basefun_erfc_obj = {
+  baseFunctionCode = ERFC;
+  functionName = "erfc";
+  xmlString = "<csymbol definitionURL=\"http://www.openmath.org/CDs/errorFresnelInts.ocd\" encoding=\"OpenMath\">erfc</csymbol>\n";
+  mpfrName = "mpfr_erfc";
+  handledByImplementconst = 1;
+  baseAutodiff = erfc_diff;
+  interval_eval = sollya_mpfi_erfc;
+  point_eval = mpfr_erfc;
+  diff_expr = erfc_diff_expr;
+  simplify = simplify_erfc;
+  evalsign = erfc_evalsign;
+}
+baseFunction *basefun_erfc = &basefun_erfc_obj;
+
+baseFunction basefun_log1p_obj = {
+  baseFunctionCode = LOG_1P;
+  functionName = "log1p";
+  xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">log1p</csymbol>\n";
+  mpfrName = "mpfr_log1p";
+  handledByImplementconst = 1;
+  baseAutodiff = log1p_diff;
+  interval_eval = sollya_mpfi_log1p;
+  point_eval = mpfr_log1p;
+  diff_expr = log1p_diff_expr;
+  simplify = simplify_log1p;
+  evalsign = log1p_evalsign;
+}
+baseFunction *basefun_log1p = &basefun_log1p_obj;
+
+baseFunction basefun_expm1_obj = {
+  baseFunctionCode = EXP_M1;
+  functionName = "expm1";
+  xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">expm1</csymbol>\n";
+  mpfrName = "mpfr_expm1";
+  handledByImplementconst = 1;
+  baseAutodiff = expm1_diff;
+  interval_eval = sollya_mpfi_expm1;
+  point_eval = mpfr_expm1;
+  diff_expr = expm1_diff_expr;
+  simplify = simplify_expm1;
+  evalsign = expm1_evalsign;
+}
+baseFunction *basefun_expm1 = &basefun_expm1_obj;
+
+baseFunction basefun_double_obj = {
+  baseFunctionCode = DOUBLE;
+  functionName = "double";
+  xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">double</csymbol>\n";
+  mpfrName = "";
+  handledByImplementconst = 0;
+  baseAutodiff = double_diff;
+  interval_eval = sollya_mpfi_round_to_double;
+  point_eval = double_point_eval;
+  diff_expr = double_diff_expr;
+  simplify = simplify_double;
+  evalsign = double_evalsign;
+}
+baseFunction *basefun_double = &basefun_double_obj;
+
+baseFunction basefun_single_obj = {
+  baseFunctionCode = SINGLE;
+  functionName = "single";
+  xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">single</csymbol>\n";
+  mpfrName = "";
+  handledByImplementconst = 0;
+  baseAutodiff = single_diff;
+  interval_eval = sollya_mpfi_round_to_single;
+  point_eval = single_point_eval;
+  diff_expr = single_diff_expr;
+  simplify = simplify_single;
+  evalsign = single_evalsign;
+}
+baseFunction *basefun_single = &basefun_single_obj;
+
+baseFunction basefun_halfprecision_obj = {
+  baseFunctionCode = HALFPRECISION;
+  functionName = "halfprecision";
+  xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">halfprecision</csymbol>\n";
+  mpfrName = "";
+  handledByImplementconst = 0;
+  baseAutodiff = halfprecision_diff;
+  interval_eval = sollya_mpfi_round_to_halfprecision;
+  point_eval = halfprecision_point_eval;
+  diff_expr = halfprecision_diff_expr;
+  simplify = simplify_halfprecision;
+  evalsign = halprecision_evalsign;
+}
+baseFunction *basefun_halfprecision = &basefun_halfprecision_obj;
+
+baseFunction basefun_quad_obj = {
+  baseFunctionCode = QUAD;
+  functionName = "quad";
+  xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">quad</csymbol>\n";
+  mpfrName = "";
+  handledByImplementconst = 0;
+  baseAutodiff = quad_diff;
+  interval_eval = sollya_mpfi_round_to_quad;
+  point_eval = quad_point_eval;
+  diff_expr = quad_diff_expr;
+  simplify = simplify_quad;
+  evalsign = quad_evalsign;
+}
+baseFunction *basefun_quad = &basefun_quad_obj;
+
+baseFunction basefun_doubledouble_obj = {
+  baseFunctionCode = DOUBLEDOUBLE;
+  functionName = "doubledouble";
+  xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">doubledouble</csymbol>\n";
+  mpfrName = "";
+  handledByImplementconst = 0;
+  baseAutodiff = doubledouble_diff;
+  interval_eval = sollya_mpfi_round_to_doubledouble;
+  point_eval = doubledouble_point_eval;
+  diff_expr = doubledouble_diff_expr;
+  simplify = simplify_doubledouble;
+  evalsign = doubledouble_evalsign;
+}
+baseFunction *basefun_doubledouble = &basefun_doubledouble_obj;
+
+baseFunction basefun_tripledouble_obj = {
+  baseFunctionCode = TRIPLEDOUBLE;
+  functionName = "tripledouble";
+  xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">tripledouble</csymbol>\n";
+  mpfrName = "";
+  handledByImplementconst = 0;
+  baseAutodiff = tripledouble_diff;
+  interval_eval = sollya_mpfi_round_to_tripledouble;
+  point_eval = tripledouble_point_eval;
+  diff_expr = tripledouble_diff_expr;
+  simplify = simplify_tripledouble;
+  evalsign = tripledouble_evalsign;
+}
+baseFunction *basefun_tripledouble = &basefun_tripledouble_obj;
+
+baseFunction basefun_doubleextended_obj = {
+  baseFunctionCode = DOUBLEEXTENDED;
+  functionName = "doubleextended";
+  xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">doubleextended</csymbol>\n";
+  mpfrName = "";
+  handledByImplementconst = 0;
+  baseAutodiff = doubleextended_diff;
+  interval_eval = sollya_mpfi_round_to_doubleextended;
+  point_eval = doubleextended_point_eval;
+  diff_expr = doubleextended_diff_expr;
+  simplify = simplify_doubleextended;
+  evalsign = doubleextended_evalsign;
+}
+baseFunction *basefun_doubleextended = &basefun_doubleextended_obj;
+
+baseFunction basefun_ceil_obj = {
+  baseFunctionCode = CEIL;
+  functionName = "ceil";
+  xmlString = "<ceiling/>\n";
+  mpfrName = "";
+  handledByImplementconst = 0;
+  baseAutodiff = ceil_diff;
+  interval_eval = sollya_mpfi_ceil;
+  point_eval = mpfr_ceil;
+  diff_expr = ceil_diff_expr;
+  simplify = simplify_ceil;
+  evalsign = ceil_evalsign;
+}
+baseFunction *basefun_ceil = &basefun_ceil_obj;
+
+baseFunction basefun_floor_obj = {
+  baseFunctionCode = FLOOR;
+  functionName = "floor";
+  xmlString = "<floor/>\n";
+  mpfrName = "";
+  handledByImplementconst = 0;
+  baseAutodiff = floor_diff;
+  interval_eval = sollya_mpfi_floor;
+  point_eval = mpfr_floor;
+  diff_expr = floor_diff_expr;
+  simplify = simplify_floor;
+  evalsign = floor_evalsign;
+}
+baseFunction *basefun_floor = &basefun_floor_obj;
+
+baseFunction basefun_nearestint_obj = {
+  baseFunctionCode = NEARESTINT;
+  functionName = "nearestint";
+  xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">nearestint</csymbol>\n";
+  mpfrName = "";
+  handledByImplementconst = 0;
+  baseAutodiff = nearestint_diff;
+  interval_eval = sollya_mpfi_nearestint;
+  point_eval = sollya_mpfr_rint_nearestint;
+  diff_expr = nearestint_diff_expr;
+  simplify = simplify_nearestint;
+  evalsign = nearestint_evalsign;
+}
+baseFunction *basefun_nearestint = &basefun_nearestint_obj;
+
+
+
+
+
+
+/******************************************************************************/
+/*                                                                            */
+/*                     SHORTCUTS FOR CONSTRUCTING FUNCTIONS                   */
+/*                                                                            */
+/******************************************************************************/
+
 node *makeSqrt(node *op1) {
   return makeUnary(op1,basefun_sqrt);
 }

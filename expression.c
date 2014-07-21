@@ -2057,8 +2057,9 @@ int tryEvaluateConstantTermToMpq(mpq_t res, node *tree) {
       mpq_div(resC,resA,resB);
     } else result = 0;
     break;
-  case SQRT:
-    if (tryEvaluateConstantTermToMpq(resA, tree->child1)) {
+  case UNARY_BASE_FUNC:
+    if ( (tree->baseFun->baseFunctionCode == SQRT)
+         && tryEvaluateConstantTermToMpq(resA, tree->child1) ) {
       if (mpq_sgn(resA) >= 0) {
 	mpz_init(num);
 	mpz_init(denom);
@@ -2886,11 +2887,13 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
 	      simplified->child2 = copyTree(accessThruMemRef(simplChild2)->child1);
 	      free_memory(simplChild2);
 	    } else {
-	      if ((accessThruMemRef(simplChild1)->nodeType == EXP) &&
+	      if ((accessThruMemRef(simplChild1)->nodeType == UNARY_BASE_FUNC) &&
+                  (accessThruMemRef(simplChild1)->baseFun->baseFunctionCode == EXP) &&
 		  (accessThruMemRef(simplChild2)->nodeType == CONSTANT) &&
 		  (mpfr_cmp_d(*(accessThruMemRef(simplChild2)->value),1.0) == 0) &&
 		  (!mpfr_nan_p(*(accessThruMemRef(simplChild2)->value)))) {
-		simplified->nodeType = EXP_M1;
+		simplified->nodeType = UNARY_BASE_FUNC;
+                simplified->baseFun = basefun_expm1;
 		simplified->child1 = copyTree(accessThruMemRef(simplChild1)->child1);
 		free_memory(simplChild1);
 		free_memory(simplChild2);
@@ -3213,10 +3216,13 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
 			simplified = recsimplified;
 		      }
 		    } else {
-		      if ((simplChild1->nodeType == SIN) &&
-			  (simplChild2->nodeType == COS) &&
+		      if ((simplChild1->nodeType == UNARY_BASE_FUNC) &&
+                          (simplChild1->baseFun->baseFunctionCode == SIN) &&
+			  (simplChild2->nodeType == UNARY_BASE_FUNC) &&
+                          (simplChild2->baseFun->baseFunctionCode == COS) &&
 			  (isSyntacticallyEqual(accessThruMemRef(simplChild1)->child1,accessThruMemRef(simplChild2)->child1))) {
-			simplified->nodeType = TAN;
+			simplified->nodeType = UNARY_BASE_FUNC;
+			simplified->baseFun = basefun_tan;
 			simplified->child1 = copyTree(accessThruMemRef(simplChild1)->child1);
 			free_memory(simplChild1);
 			free_memory(simplChild2);
@@ -3235,7 +3241,7 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
       }
     }
     break;
-  case SQRT:
+  case NEG:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
     simplified = (node*) safeMalloc(sizeof(node));
     if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
@@ -3248,9 +3254,9 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
       if (prec > 256 * tools_precision) prec = 256 * tools_precision;
       mpfr_init2(*value,prec);
       simplified->value = value;
-      if ((mpfr_sqrt(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = SQRT;
+      if ((mpfr_neg(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
+	  (mpfr_nan_p(*value))) {
+	simplified->nodeType = NEG;
 	simplified->child1 = simplChild1;
 	mpfr_clear(*value);
 	safeFree(value);
@@ -3258,458 +3264,19 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
 	free_memory(simplChild1);
       }
     } else {
-      if ((accessThruMemRef(simplChild1)->nodeType == POW) &&
-	  (accessThruMemRef(accessThruMemRef(simplChild1)->child2)->nodeType == CONSTANT) &&
-	  (mpfr_cmp_d(*(accessThruMemRef(accessThruMemRef(simplChild1)->child2)->value),2.0) == 0.0) &&
-	  (!mpfr_nan_p(*(accessThruMemRef(accessThruMemRef(simplChild1)->child2)->value)))) {
-	simplified->nodeType = ABS;
-	simplified->child1 = copyTree(accessThruMemRef(simplChild1)->child1);
+      if (accessThruMemRef(simplChild1)->nodeType == NEG) {
+	safeFree(simplified);
+	simplified = copyTree(accessThruMemRef(simplChild1)->child1);
 	free_memory(simplChild1);
       } else {
-	simplified->nodeType = SQRT;
+	simplified->nodeType = NEG;
 	simplified->child1 = simplChild1;
       }
     }
     break;
-  case EXP:
+  case UNARY_BASE_FUNC:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      if ((mpfr_exp(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = EXP;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      simplified->nodeType = EXP;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case LOG:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      if ((mpfr_log(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = LOG;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      if ((accessThruMemRef(simplChild1)->nodeType == ADD) &&
-	  (accessThruMemRef(accessThruMemRef(simplChild1)->child1)->nodeType == CONSTANT) &&
-	  (mpfr_cmp_d(*(accessThruMemRef(accessThruMemRef(simplChild1)->child1)->value),1.0) == 0.0) &&
-	  (!mpfr_nan_p(*(accessThruMemRef(accessThruMemRef(simplChild1)->child1)->value)))) {
-	simplified->nodeType = LOG_1P;
-	simplified->child1 = copyTree(accessThruMemRef(simplChild1)->child2);
-	free_memory(simplChild1);
-      } else {
-	if ((accessThruMemRef(simplChild1)->nodeType == ADD) &&
-	    (accessThruMemRef(accessThruMemRef(simplChild1)->child2)->nodeType == CONSTANT) &&
-	    (mpfr_cmp_d(*(accessThruMemRef(accessThruMemRef(simplChild1)->child2)->value),1.0) == 0.0) &&
-	    (!mpfr_nan_p(*(accessThruMemRef(accessThruMemRef(simplChild1)->child2)->value)))) {
-	  simplified->nodeType = LOG_1P;
-	  simplified->child1 = copyTree(accessThruMemRef(simplChild1)->child1);
-	  free_memory(simplChild1);
-	} else {
-	  if (accessThruMemRef(simplChild1)->nodeType == EXP) {
-	    safeFree(simplified);
-	    simplified = copyTree(accessThruMemRef(simplChild1)->child1);
-	    free_memory(simplChild1);
-	  } else {
-	    simplified->nodeType = LOG;
-	    simplified->child1 = simplChild1;
-	  }
-	}
-      }
-    }
-    break;
-  case LOG_2:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      if ((mpfr_log2(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = LOG_2;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      simplified->nodeType = LOG_2;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case LOG_10:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      if ((mpfr_log10(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = LOG_10;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      simplified->nodeType = LOG_10;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case SIN:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      if ((mpfr_sin(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = SIN;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      simplified->nodeType = SIN;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case COS:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      if ((mpfr_cos(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = COS;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      simplified->nodeType = COS;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case TAN:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      if ((mpfr_tan(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = TAN;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      simplified->nodeType = TAN;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ASIN:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      mpfr_init2(temp,53);
-      mpfr_set_ui(temp,1,GMP_RNDN);
-      if ((mpfr_cmp(temp, *(accessThruMemRef(simplChild1)->value)) == 0) && (!mpfr_nan_p(*(accessThruMemRef(simplChild1)->value)))) {
-	free_memory(simplChild1);
-	simplified->child2 = (node *) safeMalloc(sizeof(node));
-	simplified->child2->nodeType = CONSTANT;
-	simplified->child2->value = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*(simplified->child2->value),53);
-	mpfr_set_si(*(simplified->child2->value),2,GMP_RNDN);
-	simplified->nodeType = DIV;
-	simplified->child1 = (node *) safeMalloc(sizeof(node));
-	simplified->child1->nodeType = PI_CONST;
-      } else {
-	mpfr_set_si(temp,-1,GMP_RNDN);
-	if ((mpfr_cmp(temp, *(accessThruMemRef(simplChild1)->value)) == 0) && (!mpfr_nan_p(*(accessThruMemRef(simplChild1)->value)))) {
-	  free_memory(simplChild1);
-	  simplified->child2 = (node *) safeMalloc(sizeof(node));
-	  simplified->child2->nodeType = CONSTANT;
-	  simplified->child2->value = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-	  mpfr_init2(*(simplified->child2->value),53);
-	  mpfr_set_si(*(simplified->child2->value),-2,GMP_RNDN);
-	  simplified->nodeType = DIV;
-	  simplified->child1 = (node *) safeMalloc(sizeof(node));
-	  simplified->child1->nodeType = PI_CONST;
-	} else {
-	  simplified->nodeType = CONSTANT;
-	  value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	  mpfr_init2(*value,tools_precision);
-	  simplified->value = value;
-	  if ((mpfr_asin(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	      (!mpfr_number_p(*value))) {
-	    simplified->nodeType = ASIN;
-	    simplified->child1 = simplChild1;
-	    mpfr_clear(*value);
-	    safeFree(value);
-	  } else {
-	    free_memory(simplChild1);
-	  }
-	}
-      }
-      mpfr_clear(temp);
-    } else {
-      simplified->nodeType = ASIN;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ACOS:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      mpfr_init2(temp,53);
-      mpfr_set_si(temp,-1,GMP_RNDN);
-      if ((mpfr_cmp(temp, *(accessThruMemRef(simplChild1)->value)) == 0) && (!mpfr_nan_p(*(accessThruMemRef(simplChild1)->value)))) {
-	free_memory(simplChild1);
-	simplified->nodeType = PI_CONST;
-      } else {
-	simplified->nodeType = CONSTANT;
-	value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*value,tools_precision);
-	simplified->value = value;
-	if ((mpfr_acos(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	    (!mpfr_number_p(*value))) {
-	  simplified->nodeType = ACOS;
-	  simplified->child1 = simplChild1;
-	  mpfr_clear(*value);
-	  safeFree(value);
-	} else {
-	  free_memory(simplChild1);
-	}
-      }
-      mpfr_clear(temp);
-    } else {
-      simplified->nodeType = ACOS;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ATAN:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      mpfr_init2(temp,53);
-      mpfr_set_ui(temp,1,GMP_RNDN);
-      if ((mpfr_cmp(temp, *(accessThruMemRef(simplChild1)->value)) == 0) && (!mpfr_nan_p(*(accessThruMemRef(simplChild1)->value)))) {
-	free_memory(simplChild1);
-	simplified->child2 = (node *) safeMalloc(sizeof(node));
-	simplified->child2->nodeType = CONSTANT;
-	simplified->child2->value = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*(simplified->child2->value),53);
-	mpfr_set_si(*(simplified->child2->value),4,GMP_RNDN);
-	simplified->nodeType = DIV;
-	simplified->child1 = (node *) safeMalloc(sizeof(node));
-	simplified->child1->nodeType = PI_CONST;
-      } else {
-	mpfr_set_si(temp,-1,GMP_RNDN);
-	if ((mpfr_cmp(temp, *(accessThruMemRef(simplChild1)->value)) == 0) && (!mpfr_nan_p(*(accessThruMemRef(simplChild1)->value)))) {
-	  free_memory(simplChild1);
-	  simplified->child2 = (node *) safeMalloc(sizeof(node));
-	  simplified->child2->nodeType = CONSTANT;
-	  simplified->child2->value = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-	  mpfr_init2(*(simplified->child2->value),53);
-	  mpfr_set_si(*(simplified->child2->value),-4,GMP_RNDN);
-	  simplified->nodeType = DIV;
-	  simplified->child1 = (node *) safeMalloc(sizeof(node));
-	  simplified->child1->nodeType = PI_CONST;
-	} else {
-	  simplified->nodeType = CONSTANT;
-	  value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	  mpfr_init2(*value,tools_precision);
-	  simplified->value = value;
-	  if ((mpfr_atan(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	      (!mpfr_number_p(*value))) {
-	    simplified->nodeType = ATAN;
-	    simplified->child1 = simplChild1;
-	    mpfr_clear(*value);
-	    safeFree(value);
-	  } else {
-	    free_memory(simplChild1);
-	  }
-	}
-      }
-      mpfr_clear(temp);
-    } else {
-      simplified->nodeType = ATAN;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case SINH:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      if ((mpfr_sinh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = SINH;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      simplified->nodeType = SINH;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case COSH:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      if ((mpfr_cosh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = COSH;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      simplified->nodeType = COSH;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case TANH:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      if ((mpfr_tanh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = TANH;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      simplified->nodeType = TANH;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ASINH:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      if ((mpfr_asinh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = ASINH;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      simplified->nodeType = ASINH;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ACOSH:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      if ((mpfr_acosh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = ACOSH;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      simplified->nodeType = ACOSH;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ATANH:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      if ((mpfr_atanh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = ATANH;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      simplified->nodeType = ATANH;
-      simplified->child1 = simplChild1;
-    }
+    simplified = tree->baseFun->simplify(simplChild1);
     break;
   case POW:
     simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
@@ -3756,7 +3323,8 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
 	  if ((accessThruMemRef(simplChild2)->nodeType == CONSTANT) &&
 	      (mpfr_cmp_d(*(accessThruMemRef(simplChild2)->value),2.0) == 0) &&
 	      (!mpfr_nan_p(*(accessThruMemRef(simplChild2)->value))) &&
-	      (accessThruMemRef(simplChild1)->nodeType == SQRT)) {
+	      (accessThruMemRef(simplChild1)->nodeType == UNARY_BASE_FUNC) &&
+              (accessThruMemRef(simplChild1)->baseFun->baseFunctionCode == SQRT)) {
 	    safeFree(simplified);
 	    simplified = copyTree(accessThruMemRef(simplChild1)->child1);
 	    free_memory(simplChild1);
@@ -3767,568 +3335,6 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
 	    simplified->child2 = simplChild2;
 	  }
 	}
-      }
-    }
-    break;
-  case NEG:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      prec = tools_precision;
-      p = mpfr_get_prec(*(accessThruMemRef(simplChild1)->value));
-      if (p > prec) prec = p;
-      prec += 10;
-      if (prec > 256 * tools_precision) prec = 256 * tools_precision;
-      mpfr_init2(*value,prec);
-      simplified->value = value;
-      if ((mpfr_neg(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	  (mpfr_nan_p(*value))) {
-	simplified->nodeType = NEG;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      if (accessThruMemRef(simplChild1)->nodeType == NEG) {
-	safeFree(simplified);
-	simplified = copyTree(accessThruMemRef(simplChild1)->child1);
-	free_memory(simplChild1);
-      } else {
-	simplified->nodeType = NEG;
-	simplified->child1 = simplChild1;
-      }
-    }
-    break;
-  case ABS:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      if ((mpfr_abs(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = ABS;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      if (accessThruMemRef(simplChild1)->nodeType == ABS) {
-	simplified->nodeType = ABS;
-	simplified->child1 = copyTree(accessThruMemRef(simplChild1)->child1);
-	free_memory(simplChild1);
-      } else {
-	simplified->nodeType = ABS;
-	simplified->child1 = simplChild1;
-      }
-    }
-    break;
-  case DOUBLE:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
-      simplified->value = value;
-      mpfr_round_to_double(*value, *(accessThruMemRef(simplChild1)->value));
-      if (!mpfr_number_p(*value)) {
-	simplified->nodeType = DOUBLE;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      if (isConstant(simplChild1)) {
-        xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        xrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        yrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        yrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        mpfr_init2(*(yrange.a),4* tools_precision);
-        mpfr_init2(*(yrange.b),4 * tools_precision);
-        mpfr_init2(*(xrange.a),((tools_precision > 64)? tools_precision : 64));
-        mpfr_init2(*(xrange.b),((tools_precision > 64)? tools_precision : 64));
-        mpfr_set_ui(*(xrange.a),1,GMP_RNDD);
-        mpfr_set_ui(*(xrange.b),1,GMP_RNDU);
-        evaluateRangeFunction(yrange, simplChild1, xrange, 8 * tools_precision);
-        mpfr_round_to_double(*(xrange.a),*(yrange.a));
-        mpfr_round_to_double(*(xrange.b),*(yrange.b));
-        if (mpfr_number_p(*(xrange.a)) &&
-            mpfr_number_p(*(xrange.b)) &&
-            (mpfr_cmp(*(xrange.a),*(xrange.b)) == 0)) {
-          simplified->nodeType = CONSTANT;
-          value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-          mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
-          simplified->value = value;
-          mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
-	  free_memory(simplChild1);
-        } else {
-          simplified->nodeType = DOUBLE;
-          simplified->child1 = simplChild1;
-        }
-        mpfr_clear(*(xrange.a));
-        mpfr_clear(*(xrange.b));
-        mpfr_clear(*(yrange.a));
-        mpfr_clear(*(yrange.b));
-        safeFree(xrange.a);
-        safeFree(xrange.b);
-        safeFree(yrange.a);
-        safeFree(yrange.b);
-      } else {
-        simplified->nodeType = DOUBLE;
-        simplified->child1 = simplChild1;
-      }
-    }
-    break;
-  case SINGLE:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
-      simplified->value = value;
-      mpfr_round_to_single(*value, *(accessThruMemRef(simplChild1)->value));
-      if (!mpfr_number_p(*value)) {
-	simplified->nodeType = SINGLE;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      if (isConstant(simplChild1)) {
-        xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        xrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        yrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        yrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        mpfr_init2(*(yrange.a),4* tools_precision);
-        mpfr_init2(*(yrange.b),4 * tools_precision);
-        mpfr_init2(*(xrange.a),((tools_precision > 64)? tools_precision : 64));
-        mpfr_init2(*(xrange.b),((tools_precision > 64)? tools_precision : 64));
-        mpfr_set_ui(*(xrange.a),1,GMP_RNDD);
-        mpfr_set_ui(*(xrange.b),1,GMP_RNDU);
-        evaluateRangeFunction(yrange, simplChild1, xrange, 8 * tools_precision);
-        mpfr_round_to_single(*(xrange.a),*(yrange.a));
-        mpfr_round_to_single(*(xrange.b),*(yrange.b));
-        if (mpfr_number_p(*(xrange.a)) &&
-            mpfr_number_p(*(xrange.b)) &&
-            (mpfr_cmp(*(xrange.a),*(xrange.b)) == 0)) {
-          simplified->nodeType = CONSTANT;
-          value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-          mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
-          simplified->value = value;
-          mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
-	  free_memory(simplChild1);
-        } else {
-          simplified->nodeType = SINGLE;
-          simplified->child1 = simplChild1;
-        }
-        mpfr_clear(*(xrange.a));
-        mpfr_clear(*(xrange.b));
-        mpfr_clear(*(yrange.a));
-        mpfr_clear(*(yrange.b));
-        safeFree(xrange.a);
-        safeFree(xrange.b);
-        safeFree(yrange.a);
-        safeFree(yrange.b);
-      } else {
-        simplified->nodeType = SINGLE;
-        simplified->child1 = simplChild1;
-      }
-    }
-    break;
-  case QUAD:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,((tools_precision > 128)? tools_precision : 128));
-      simplified->value = value;
-      mpfr_round_to_quad(*value, *(accessThruMemRef(simplChild1)->value));
-      if (!mpfr_number_p(*value)) {
-	simplified->nodeType = QUAD;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      if (isConstant(simplChild1)) {
-        xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        xrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        yrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        yrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        mpfr_init2(*(yrange.a),4* tools_precision);
-        mpfr_init2(*(yrange.b),4 * tools_precision);
-        mpfr_init2(*(xrange.a),((tools_precision > 128)? tools_precision : 128));
-        mpfr_init2(*(xrange.b),((tools_precision > 128)? tools_precision : 128));
-        mpfr_set_ui(*(xrange.a),1,GMP_RNDD);
-        mpfr_set_ui(*(xrange.b),1,GMP_RNDU);
-        evaluateRangeFunction(yrange, simplChild1, xrange, 8 * tools_precision);
-        mpfr_round_to_quad(*(xrange.a),*(yrange.a));
-        mpfr_round_to_quad(*(xrange.b),*(yrange.b));
-        if (mpfr_number_p(*(xrange.a)) &&
-            mpfr_number_p(*(xrange.b)) &&
-            (mpfr_cmp(*(xrange.a),*(xrange.b)) == 0)) {
-          simplified->nodeType = CONSTANT;
-          value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-          mpfr_init2(*value,((tools_precision > 128)? tools_precision : 128));
-          simplified->value = value;
-          mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
-	  free_memory(simplChild1);
-        } else {
-          simplified->nodeType = QUAD;
-          simplified->child1 = simplChild1;
-        }
-        mpfr_clear(*(xrange.a));
-        mpfr_clear(*(xrange.b));
-        mpfr_clear(*(yrange.a));
-        mpfr_clear(*(yrange.b));
-        safeFree(xrange.a);
-        safeFree(xrange.b);
-        safeFree(yrange.a);
-        safeFree(yrange.b);
-      } else {
-        simplified->nodeType = QUAD;
-        simplified->child1 = simplChild1;
-      }
-    }
-    break;
-  case HALFPRECISION:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
-      simplified->value = value;
-      mpfr_round_to_halfprecision(*value, *(accessThruMemRef(simplChild1)->value));
-      if (!mpfr_number_p(*value)) {
-	simplified->nodeType = HALFPRECISION;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      if (isConstant(simplChild1)) {
-        xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        xrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        yrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        yrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        mpfr_init2(*(yrange.a),4* tools_precision);
-        mpfr_init2(*(yrange.b),4 * tools_precision);
-        mpfr_init2(*(xrange.a),((tools_precision > 64)? tools_precision : 64));
-        mpfr_init2(*(xrange.b),((tools_precision > 64)? tools_precision : 64));
-        mpfr_set_ui(*(xrange.a),1,GMP_RNDD);
-        mpfr_set_ui(*(xrange.b),1,GMP_RNDU);
-        evaluateRangeFunction(yrange, simplChild1, xrange, 8 * tools_precision);
-        mpfr_round_to_halfprecision(*(xrange.a),*(yrange.a));
-        mpfr_round_to_halfprecision(*(xrange.b),*(yrange.b));
-        if (mpfr_number_p(*(xrange.a)) &&
-            mpfr_number_p(*(xrange.b)) &&
-            (mpfr_cmp(*(xrange.a),*(xrange.b)) == 0)) {
-          simplified->nodeType = CONSTANT;
-          value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-          mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
-          simplified->value = value;
-          mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
-	  free_memory(simplChild1);
-        } else {
-          simplified->nodeType = HALFPRECISION;
-          simplified->child1 = simplChild1;
-        }
-        mpfr_clear(*(xrange.a));
-        mpfr_clear(*(xrange.b));
-        mpfr_clear(*(yrange.a));
-        mpfr_clear(*(yrange.b));
-        safeFree(xrange.a);
-        safeFree(xrange.b);
-        safeFree(yrange.a);
-        safeFree(yrange.b);
-      } else {
-        simplified->nodeType = HALFPRECISION;
-        simplified->child1 = simplChild1;
-      }
-    }
-    break;
-  case DOUBLEDOUBLE:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,((tools_precision > 129)? tools_precision : 129));
-      simplified->value = value;
-      mpfr_round_to_doubledouble(*value, *(accessThruMemRef(simplChild1)->value));
-      if (!mpfr_number_p(*value)) {
-	simplified->nodeType = DOUBLEDOUBLE;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      if (isConstant(simplChild1)) {
-        xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        xrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        yrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        yrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        mpfr_init2(*(yrange.a),4* tools_precision);
-        mpfr_init2(*(yrange.b),4 * tools_precision);
-        mpfr_init2(*(xrange.a),((tools_precision > 129)? tools_precision : 129));
-        mpfr_init2(*(xrange.b),((tools_precision > 129)? tools_precision : 129));
-        mpfr_set_ui(*(xrange.a),1,GMP_RNDD);
-        mpfr_set_ui(*(xrange.b),1,GMP_RNDU);
-        evaluateRangeFunction(yrange, simplChild1, xrange, 8 * tools_precision);
-        mpfr_round_to_doubledouble(*(xrange.a),*(yrange.a));
-        mpfr_round_to_doubledouble(*(xrange.b),*(yrange.b));
-        if (mpfr_number_p(*(xrange.a)) &&
-            mpfr_number_p(*(xrange.b)) &&
-            (mpfr_cmp(*(xrange.a),*(xrange.b)) == 0)) {
-          simplified->nodeType = CONSTANT;
-          value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-          mpfr_init2(*value,((tools_precision > 129)? tools_precision : 129));
-          simplified->value = value;
-          mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
-	  free_memory(simplChild1);
-        } else {
-          simplified->nodeType = DOUBLEDOUBLE;
-          simplified->child1 = simplChild1;
-        }
-        mpfr_clear(*(xrange.a));
-        mpfr_clear(*(xrange.b));
-        mpfr_clear(*(yrange.a));
-        mpfr_clear(*(yrange.b));
-        safeFree(xrange.a);
-        safeFree(xrange.b);
-        safeFree(yrange.a);
-        safeFree(yrange.b);
-      } else {
-        simplified->nodeType = DOUBLEDOUBLE;
-        simplified->child1 = simplChild1;
-      }
-    }
-    break;
-  case TRIPLEDOUBLE:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,((tools_precision > 200)? tools_precision : 200));
-      simplified->value = value;
-      mpfr_round_to_tripledouble(*value, *(accessThruMemRef(simplChild1)->value));
-      if (!mpfr_number_p(*value)) {
-	simplified->nodeType = TRIPLEDOUBLE;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      if (isConstant(simplChild1)) {
-        xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        xrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        yrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        yrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        mpfr_init2(*(yrange.a),4* tools_precision);
-        mpfr_init2(*(yrange.b),4 * tools_precision);
-        mpfr_init2(*(xrange.a),((tools_precision > 200)? tools_precision : 200));
-        mpfr_init2(*(xrange.b),((tools_precision > 200)? tools_precision : 200));
-        mpfr_set_ui(*(xrange.a),1,GMP_RNDD);
-        mpfr_set_ui(*(xrange.b),1,GMP_RNDU);
-        evaluateRangeFunction(yrange, simplChild1, xrange, 8 * tools_precision);
-        mpfr_round_to_tripledouble(*(xrange.a),*(yrange.a));
-        mpfr_round_to_tripledouble(*(xrange.b),*(yrange.b));
-        if (mpfr_number_p(*(xrange.a)) &&
-            mpfr_number_p(*(xrange.b)) &&
-            (mpfr_cmp(*(xrange.a),*(xrange.b)) == 0)) {
-          simplified->nodeType = CONSTANT;
-          value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-          mpfr_init2(*value,((tools_precision > 200)? tools_precision : 200));
-          simplified->value = value;
-          mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
-	  free_memory(simplChild1);
-        } else {
-          simplified->nodeType = TRIPLEDOUBLE;
-          simplified->child1 = simplChild1;
-        }
-        mpfr_clear(*(xrange.a));
-        mpfr_clear(*(xrange.b));
-        mpfr_clear(*(yrange.a));
-        mpfr_clear(*(yrange.b));
-        safeFree(xrange.a);
-        safeFree(xrange.b);
-        safeFree(yrange.a);
-        safeFree(yrange.b);
-      } else {
-        simplified->nodeType = TRIPLEDOUBLE;
-        simplified->child1 = simplChild1;
-      }
-    }
-    break;
-  case ERF:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      if ((mpfr_erf(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = ERF;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      simplified->nodeType = ERF;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ERFC:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      if ((mpfr_erfc(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = ERFC;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      simplified->nodeType = ERFC;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case LOG_1P:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      if ((mpfr_log1p(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = LOG_1P;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      simplified->nodeType = LOG_1P;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case EXP_M1:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      if ((mpfr_expm1(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = EXP_M1;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      simplified->nodeType = EXP_M1;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case DOUBLEEXTENDED:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,((tools_precision > 128)? tools_precision : 128));
-      simplified->value = value;
-      mpfr_round_to_doubleextended(*value, *(accessThruMemRef(simplChild1)->value));
-      if (!mpfr_number_p(*value)) {
-	simplified->nodeType = DOUBLEEXTENDED;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      if (isConstant(simplChild1)) {
-        xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        xrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        yrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        yrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        mpfr_init2(*(yrange.a),4* tools_precision);
-        mpfr_init2(*(yrange.b),4 * tools_precision);
-        mpfr_init2(*(xrange.a),((tools_precision > 128)? tools_precision : 128));
-        mpfr_init2(*(xrange.b),((tools_precision > 128)? tools_precision : 128));
-        mpfr_set_ui(*(xrange.a),1,GMP_RNDD);
-        mpfr_set_ui(*(xrange.b),1,GMP_RNDU);
-        evaluateRangeFunction(yrange, simplChild1, xrange, 8 * tools_precision);
-        mpfr_round_to_doubleextended(*(xrange.a),*(yrange.a));
-        mpfr_round_to_doubleextended(*(xrange.b),*(yrange.b));
-        if (mpfr_number_p(*(xrange.a)) &&
-            mpfr_number_p(*(xrange.b)) &&
-            (mpfr_cmp(*(xrange.a),*(xrange.b)) == 0)) {
-          simplified->nodeType = CONSTANT;
-          value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-          mpfr_init2(*value,((tools_precision > 128)? tools_precision : 128));
-          simplified->value = value;
-          mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
-	  free_memory(simplChild1);
-        } else {
-          simplified->nodeType = DOUBLEEXTENDED;
-          simplified->child1 = simplChild1;
-        }
-        mpfr_clear(*(xrange.a));
-        mpfr_clear(*(xrange.b));
-        mpfr_clear(*(yrange.a));
-        mpfr_clear(*(yrange.b));
-        safeFree(xrange.a);
-        safeFree(xrange.b);
-        safeFree(yrange.a);
-        safeFree(yrange.b);
-      } else {
-        simplified->nodeType = DOUBLEEXTENDED;
-        simplified->child1 = simplChild1;
       }
     }
     break;
@@ -4345,183 +3351,6 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
     simplified->libFunDeriv = tree->libFunDeriv;
     simplified->child2 = copyThing(tree->child2);
     simplified->child1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    break;
-  case CEIL:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,(tools_precision<mpfr_get_prec(*(accessThruMemRef(simplChild1)->value))?mpfr_get_prec(*(accessThruMemRef(simplChild1)->value)):tools_precision));
-      simplified->value = value;
-      if ((mpfr_rint_ceil(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = CEIL;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      if (isConstant(simplChild1)) {
-        xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        xrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        yrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        yrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        mpfr_init2(*(yrange.a),4* tools_precision);
-        mpfr_init2(*(yrange.b),4 * tools_precision);
-        mpfr_init2(*(xrange.a),tools_precision);
-        mpfr_init2(*(xrange.b),tools_precision);
-        mpfr_set_ui(*(xrange.a),1,GMP_RNDD);
-        mpfr_set_ui(*(xrange.b),1,GMP_RNDU);
-        evaluateRangeFunction(yrange, simplChild1, xrange, 8 * tools_precision);
-        mpfr_rint_ceil(*(xrange.a),*(yrange.a),GMP_RNDD);
-        mpfr_rint_ceil(*(xrange.b),*(yrange.b),GMP_RNDU);
-        if (mpfr_number_p(*(xrange.a)) &&
-            mpfr_number_p(*(xrange.b)) &&
-            (mpfr_cmp(*(xrange.a),*(xrange.b)) == 0)) {
-          simplified->nodeType = CONSTANT;
-          value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-          mpfr_init2(*value,tools_precision);
-          simplified->value = value;
-          mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
-	  free_memory(simplChild1);
-        } else {
-          simplified->nodeType = CEIL;
-          simplified->child1 = simplChild1;
-        }
-        mpfr_clear(*(xrange.a));
-        mpfr_clear(*(xrange.b));
-        mpfr_clear(*(yrange.a));
-        mpfr_clear(*(yrange.b));
-        safeFree(xrange.a);
-        safeFree(xrange.b);
-        safeFree(yrange.a);
-        safeFree(yrange.b);
-      } else {
-        simplified->nodeType = CEIL;
-        simplified->child1 = simplChild1;
-      }
-    }
-    break;
-  case FLOOR:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,(tools_precision<mpfr_get_prec(*(accessThruMemRef(simplChild1)->value))?mpfr_get_prec(*(accessThruMemRef(simplChild1)->value)):tools_precision));
-      simplified->value = value;
-      if ((mpfr_rint_floor(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = FLOOR;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      if (isConstant(simplChild1)) {
-        xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        xrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        yrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        yrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        mpfr_init2(*(yrange.a),tools_precision);
-        mpfr_init2(*(yrange.b),tools_precision);
-        mpfr_init2(*(xrange.a),4 * tools_precision);
-        mpfr_init2(*(xrange.b),4 * tools_precision);
-        mpfr_set_ui(*(xrange.a),1,GMP_RNDD);
-        mpfr_set_ui(*(xrange.b),1,GMP_RNDU);
-        evaluateRangeFunction(yrange, simplChild1, xrange, 8 * tools_precision);
-        mpfr_rint_floor(*(xrange.a),*(yrange.a),GMP_RNDD);
-        mpfr_rint_floor(*(xrange.b),*(yrange.b),GMP_RNDU);
-        if (mpfr_number_p(*(xrange.a)) &&
-            mpfr_number_p(*(xrange.b)) &&
-            (mpfr_cmp(*(xrange.a),*(xrange.b)) == 0)) {
-          simplified->nodeType = CONSTANT;
-          value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-          mpfr_init2(*value,tools_precision);
-          simplified->value = value;
-          mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
-	  free_memory(simplChild1);
-        } else {
-          simplified->nodeType = FLOOR;
-          simplified->child1 = simplChild1;
-        }
-        mpfr_clear(*(xrange.a));
-        mpfr_clear(*(xrange.b));
-        mpfr_clear(*(yrange.a));
-        mpfr_clear(*(yrange.b));
-        safeFree(xrange.a);
-        safeFree(xrange.b);
-        safeFree(yrange.a);
-        safeFree(yrange.b);
-      } else {
-        simplified->nodeType = FLOOR;
-        simplified->child1 = simplChild1;
-      }
-    }
-    break;
-  case NEARESTINT:
-    simplChild1 = simplifyTreeErrorfreeInner(tree->child1,rec, doRational);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,(tools_precision<mpfr_get_prec(*(accessThruMemRef(simplChild1)->value))?mpfr_get_prec(*(accessThruMemRef(simplChild1)->value)):tools_precision));
-      simplified->value = value;
-      if ((sollya_mpfr_rint_nearestint(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
-	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = NEARESTINT;
-	simplified->child1 = simplChild1;
-	mpfr_clear(*value);
-	safeFree(value);
-      } else {
-	free_memory(simplChild1);
-      }
-    } else {
-      if (isConstant(simplChild1)) {
-        xrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        xrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        yrange.a = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        yrange.b = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
-        mpfr_init2(*(yrange.a),tools_precision);
-        mpfr_init2(*(yrange.b),tools_precision);
-        mpfr_init2(*(xrange.a),4 * tools_precision);
-        mpfr_init2(*(xrange.b),4 * tools_precision);
-        mpfr_set_ui(*(xrange.a),1,GMP_RNDD);
-        mpfr_set_ui(*(xrange.b),1,GMP_RNDU);
-        evaluateRangeFunction(yrange, simplChild1, xrange, 8 * tools_precision);
-        sollya_mpfr_rint_nearestint(*(xrange.a),*(yrange.a),GMP_RNDD);
-        sollya_mpfr_rint_nearestint(*(xrange.b),*(yrange.b),GMP_RNDU);
-        if (mpfr_number_p(*(xrange.a)) &&
-            mpfr_number_p(*(xrange.b)) &&
-            (mpfr_cmp(*(xrange.a),*(xrange.b)) == 0)) {
-          simplified->nodeType = CONSTANT;
-          value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-          mpfr_init2(*value,tools_precision);
-          simplified->value = value;
-          mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
-	  free_memory(simplChild1);
-        } else {
-          simplified->nodeType = NEARESTINT;
-          simplified->child1 = simplChild1;
-        }
-        mpfr_clear(*(xrange.a));
-        mpfr_clear(*(xrange.b));
-        mpfr_clear(*(yrange.a));
-        mpfr_clear(*(yrange.b));
-        safeFree(xrange.a);
-        safeFree(xrange.b);
-        safeFree(yrange.a);
-        safeFree(yrange.b);
-      } else {
-        simplified->nodeType = NEARESTINT;
-        simplified->child1 = simplChild1;
-      }
-    }
     break;
   case PI_CONST:
     simplified = (node*) safeMalloc(sizeof(node));
@@ -4695,455 +3524,15 @@ node* differentiateUnsimplified(node *tree) {
 	temp_node3->child2 = temp_node2;
 	derivative = temp_node3;
 	break;
-      case SQRT:
-	h_copy = copyTree(tree);
+      case NEG:
 	g_diff = differentiateUnsimplified(tree->child1);
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,2.0,GMP_RNDN);
-	temp_node3->value = mpfr_temp;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = MUL;
-	temp_node2->child1 = temp_node3;
-	temp_node2->child2 = h_copy;
 	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = DIV;
+	temp_node->nodeType = NEG;
 	temp_node->child1 = g_diff;
-	temp_node->child2 = temp_node2;
 	derivative = temp_node;
 	break;
-      case EXP:
-	g_copy = copyTree(tree->child1);
-	g_diff = differentiateUnsimplified(tree->child1);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = MUL;
-	temp_node->child2 = g_diff;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = EXP;
-	temp_node->child1 = temp_node2;
-	temp_node2->child1 = g_copy;
-	derivative = temp_node;
-	break;
-      case LOG:
-	g_copy = copyTree(tree->child1);
-	g_diff = differentiateUnsimplified(tree->child1);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = MUL;
-	temp_node->child2 = g_diff;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = DIV;
-	temp_node->child1 = temp_node2;
-	temp_node2->child2 = g_copy;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,1.0,GMP_RNDN);
-	temp_node3->value = mpfr_temp;
-	temp_node2->child1 = temp_node3;
-	derivative = temp_node;
-	break;
-      case LOG_2:
-	g_copy = copyTree(tree->child1);
-	g_diff = differentiateUnsimplified(tree->child1);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = MUL;
-	temp_node->child2 = g_diff;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = DIV;
-	temp_node->child1 = temp_node2;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,1.0,GMP_RNDN);
-	temp_node3->value = mpfr_temp;
-	temp_node2->child1 = temp_node3;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node2->child2 = temp_node3;
-	temp_node3->nodeType = MUL;
-	temp_node3->child1 = g_copy;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = LOG;
-	temp_node3->child2 = temp_node2;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,2.0,GMP_RNDN);
-	temp_node3->value = mpfr_temp;
-	temp_node2->child1 = temp_node3;
-	derivative = temp_node;
-	break;
-      case LOG_10:
-	g_copy = copyTree(tree->child1);
-	g_diff = differentiateUnsimplified(tree->child1);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = MUL;
-	temp_node->child2 = g_diff;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = DIV;
-	temp_node->child1 = temp_node2;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,1.0,GMP_RNDN);
-	temp_node3->value = mpfr_temp;
-	temp_node2->child1 = temp_node3;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node2->child2 = temp_node3;
-	temp_node3->nodeType = MUL;
-	temp_node3->child1 = g_copy;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = LOG;
-	temp_node3->child2 = temp_node2;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,10.0,GMP_RNDN);
-	temp_node3->value = mpfr_temp;
-	temp_node2->child1 = temp_node3;
-	derivative = temp_node;
-	break;
-      case SIN:
-	g_copy = copyTree(tree->child1);
-	g_diff = differentiateUnsimplified(tree->child1);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = MUL;
-	temp_node->child2 = g_diff;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = COS;
-	temp_node->child1 = temp_node2;
-	temp_node2->child1 = g_copy;
-	derivative = temp_node;
-	break;
-      case COS:
-	g_copy = copyTree(tree->child1);
-	g_diff = differentiateUnsimplified(tree->child1);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = MUL;
-	temp_node->child2 = g_diff;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = SIN;
-	temp_node2->child1 = g_copy;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = NEG;
-	temp_node3->child1 = temp_node2;
-	temp_node->child1 = temp_node3;
-	derivative = temp_node;
-	break;
-      case TAN:
-	g_diff = differentiateUnsimplified(tree->child1);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = MUL;
-	temp_node->child2 = g_diff;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = ADD;
-	temp_node->child1 = temp_node2;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,1.0,GMP_RNDN);
-	temp_node3->value = mpfr_temp;
-	temp_node2->child1 = temp_node3;
-	h_copy = copyTree(tree);
-	temp_node4 = (node*) safeMalloc(sizeof(node));
-	temp_node4->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,2.0,GMP_RNDN);
-	temp_node4->value = mpfr_temp;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = POW;
-	temp_node2->child2 = temp_node3;
-	temp_node3->child1 = h_copy;
-	temp_node3->child2 = temp_node4;
-	derivative = temp_node;
-	break;
-      case ASIN:
-	g_copy = copyTree(tree->child1);
-	g_diff = differentiateUnsimplified(tree->child1);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = MUL;
-	temp_node->child2 = g_diff;
-	temp_node4 = (node*) safeMalloc(sizeof(node));
-	temp_node4->nodeType = DIV;
-	temp_node->child1 = temp_node4;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,1.0,GMP_RNDN);
-	temp_node3->value = mpfr_temp;
-	temp_node4->child1 = temp_node3;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = POW;
-	temp_node3->child1 = g_copy;
-	temp_node5 = (node*) safeMalloc(sizeof(node));
-	temp_node5->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,2.0,GMP_RNDN);
-	temp_node5->value = mpfr_temp;
-	temp_node3->child2 = temp_node5;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = SUB;
-	temp_node2->child2 = temp_node3;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,1.0,GMP_RNDN);
-	temp_node3->value = mpfr_temp;
-	temp_node2->child1 = temp_node3;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = SQRT;
-	temp_node3->child1 = temp_node2;
-	temp_node4->child2 = temp_node3;
-	derivative = temp_node;
-	break;
-      case ACOS:
-	g_copy = copyTree(tree->child1);
-	g_diff = differentiateUnsimplified(tree->child1);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = MUL;
-	temp_node->child2 = g_diff;
-	temp_node4 = (node*) safeMalloc(sizeof(node));
-	temp_node4->nodeType = DIV;
-	temp_node->child1 = temp_node4;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,-1.0,GMP_RNDN);
-	temp_node3->value = mpfr_temp;
-	temp_node4->child1 = temp_node3;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = POW;
-	temp_node3->child1 = g_copy;
-	temp_node5 = (node*) safeMalloc(sizeof(node));
-	temp_node5->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,2.0,GMP_RNDN);
-	temp_node5->value = mpfr_temp;
-	temp_node3->child2 = temp_node5;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = SUB;
-	temp_node2->child2 = temp_node3;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,1.0,GMP_RNDN);
-	temp_node3->value = mpfr_temp;
-	temp_node2->child1 = temp_node3;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = SQRT;
-	temp_node3->child1 = temp_node2;
-	temp_node4->child2 = temp_node3;
-	derivative = temp_node;
-	break;
-      case ATAN:
-	g_copy = copyTree(tree->child1);
-	g_copy2 = copyTree(tree->child1);
-	g_diff = differentiateUnsimplified(tree->child1);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = MUL;
-	temp_node->child2 = g_diff;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = MUL;
-	temp_node2->child1 = g_copy;
-	temp_node2->child2 = g_copy2;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,1.0,GMP_RNDN);
-	temp_node3->value = mpfr_temp;
-	temp_node4 = (node*) safeMalloc(sizeof(node));
-	temp_node4->nodeType = ADD;
-	temp_node4->child1 = temp_node3;
-	temp_node4->child2 = temp_node2;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = DIV;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,1.0,GMP_RNDN);
-	temp_node3->value = mpfr_temp;
-	temp_node2->child1 = temp_node3;
-	temp_node2->child2 = temp_node4;
-	temp_node->child1 = temp_node2;
-	derivative = temp_node;
-	break;
-      case SINH:
-	g_copy = copyTree(tree->child1);
-	g_diff = differentiateUnsimplified(tree->child1);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = MUL;
-	temp_node->child2 = g_diff;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = COSH;
-	temp_node2->child1 = g_copy;
-	temp_node->child1 = temp_node2;
-	derivative = temp_node;
-	break;
-      case COSH:
-	g_copy = copyTree(tree->child1);
-	g_diff = differentiateUnsimplified(tree->child1);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = MUL;
-	temp_node->child2 = g_diff;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = SINH;
-	temp_node2->child1 = g_copy;
-	temp_node->child1 = temp_node2;
-	derivative = temp_node;
-	break;
-      case TANH:
-	g_diff = differentiateUnsimplified(tree->child1);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = MUL;
-	temp_node->child2 = g_diff;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = SUB;
-	temp_node->child1 = temp_node2;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,1.0,GMP_RNDN);
-	temp_node3->value = mpfr_temp;
-	temp_node2->child1 = temp_node3;
-	h_copy = copyTree(tree);
-	temp_node4 = (node*) safeMalloc(sizeof(node));
-	temp_node4->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,2.0,GMP_RNDN);
-	temp_node4->value = mpfr_temp;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = POW;
-	temp_node2->child2 = temp_node3;
-	temp_node3->child1 = h_copy;
-	temp_node3->child2 = temp_node4;
-	derivative = temp_node;
-	break;
-      case ASINH:
-	g_copy = copyTree(tree->child1);
-	g_copy2 = copyTree(tree->child1);
-	g_diff = differentiateUnsimplified(tree->child1);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = MUL;
-	temp_node->child2 = g_diff;
-	temp_node4 = (node*) safeMalloc(sizeof(node));
-	temp_node4->nodeType = DIV;
-	temp_node->child1 = temp_node4;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,1.0,GMP_RNDN);
-	temp_node3->value = mpfr_temp;
-	temp_node4->child1 = temp_node3;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = MUL;
-	temp_node3->child1 = g_copy;
-	temp_node3->child2 = g_copy2;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = ADD;
-	temp_node2->child2 = temp_node3;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,1.0,GMP_RNDN);
-	temp_node3->value = mpfr_temp;
-	temp_node2->child1 = temp_node3;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = SQRT;
-	temp_node3->child1 = temp_node2;
-	temp_node4->child2 = temp_node3;
-	derivative = temp_node;
-	break;
-      case ACOSH:
-	g_copy = copyTree(tree->child1);
-	g_copy2 = copyTree(tree->child1);
-	g_diff = differentiateUnsimplified(tree->child1);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = MUL;
-	temp_node->child2 = g_diff;
-	temp_node4 = (node*) safeMalloc(sizeof(node));
-	temp_node4->nodeType = DIV;
-	temp_node->child1 = temp_node4;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,1.0,GMP_RNDN);
-	temp_node3->value = mpfr_temp;
-	temp_node4->child1 = temp_node3;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = MUL;
-	temp_node3->child1 = g_copy;
-	temp_node3->child2 = g_copy2;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = ADD;
-	temp_node2->child2 = temp_node3;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,-1.0,GMP_RNDN);
-	temp_node3->value = mpfr_temp;
-	temp_node2->child1 = temp_node3;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = SQRT;
-	temp_node3->child1 = temp_node2;
-	temp_node4->child2 = temp_node3;
-	derivative = temp_node;
-	break;
-      case ATANH:
-	g_copy = copyTree(tree->child1);
-	g_copy2 = copyTree(tree->child1);
-	g_diff = differentiateUnsimplified(tree->child1);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = MUL;
-	temp_node->child2 = g_diff;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = MUL;
-	temp_node2->child1 = g_copy;
-	temp_node2->child2 = g_copy2;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,1.0,GMP_RNDN);
-	temp_node3->value = mpfr_temp;
-	temp_node4 = (node*) safeMalloc(sizeof(node));
-	temp_node4->nodeType = SUB;
-	temp_node4->child1 = temp_node3;
-	temp_node4->child2 = temp_node2;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = DIV;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,1.0,GMP_RNDN);
-	temp_node3->value = mpfr_temp;
-	temp_node2->child1 = temp_node3;
-	temp_node2->child2 = temp_node4;
-	temp_node->child1 = temp_node2;
-	derivative = temp_node;
-	break;
+      case UNARY_BASE_FUNC:
+        derivative = tree->baseFun->diff_expr(tree->child1);
       case POW:
 	if (isConstant(tree->child2)) {
 	  g_copy = copyTree(tree->child2);
@@ -5174,261 +3563,19 @@ node* differentiateUnsimplified(node *tree) {
 	  temp_node->child2 = temp_node2;
 	  derivative = temp_node;
 	} else {
-	  h_copy = copyTree(tree);
 	  f_diff = differentiateUnsimplified(tree->child1);
 	  f_copy = copyTree(tree->child1);
 	  f_copy2 = copyTree(tree->child1);
 	  g_copy = copyTree(tree->child2);
 	  g_diff = differentiateUnsimplified(tree->child2);
-	  temp_node4 = (node*) safeMalloc(sizeof(node));
-	  temp_node4->nodeType = LOG;
-	  temp_node4->child1 = f_copy;
-	  temp_node3 = (node*) safeMalloc(sizeof(node));
-	  temp_node3->nodeType = MUL;
-	  temp_node3->child1 = g_diff;
-	  temp_node3->child2 = temp_node4;
-	  temp_node2 = (node*) safeMalloc(sizeof(node));
-	  temp_node2->nodeType = MUL;
-	  temp_node2->child1 = f_diff;
-	  temp_node2->child2 = g_copy;
-	  temp_node = (node*) safeMalloc(sizeof(node));
-	  temp_node->nodeType = DIV;
-	  temp_node->child1 = temp_node2;
-	  temp_node->child2 = f_copy2;
-	  temp_node4 = (node*) safeMalloc(sizeof(node));
-	  temp_node4->nodeType = ADD;
-	  temp_node4->child1 = temp_node;
-	  temp_node4->child2 = temp_node3;
-	  temp_node = (node*) safeMalloc(sizeof(node));
-	  temp_node->nodeType = MUL;
-	  temp_node->child1 = h_copy;
-	  temp_node->child2 = temp_node4;
-	  derivative = temp_node;
-	}
-	break;
-      case NEG:
-	g_diff = differentiateUnsimplified(tree->child1);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = NEG;
-	temp_node->child1 = g_diff;
-	derivative = temp_node;
-	break;
-      case ABS:
-	g_copy = copyTree(tree->child1);
-	h_copy = copyTree(tree);
-	g_diff = differentiateUnsimplified(tree->child1);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = MUL;
-	temp_node->child2 = g_diff;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = DIV;
-	temp_node->child1 = temp_node2;
-	temp_node2->child1 = g_copy;
-	temp_node2->child2 = h_copy;
-	derivative = temp_node;
-	break;
-      case DOUBLE:
-	printMessage(1,SOLLYA_MSG_DOUBLE_NOT_DIFFERENTIABLE,
-		     "Warning: the double rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,0.0,GMP_RNDN);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = CONSTANT;
-	temp_node->value = mpfr_temp;
-	derivative = temp_node;
-	break;
-      case SINGLE:
-	printMessage(1,SOLLYA_MSG_SINGLE_NOT_DIFFERENTIABLE,
-		     "Warning: the single rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,0.0,GMP_RNDN);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = CONSTANT;
-	temp_node->value = mpfr_temp;
-	derivative = temp_node;
-	break;
-      case QUAD:
-	printMessage(1,SOLLYA_MSG_QUAD_NOT_DIFFERENTIABLE,
-		     "Warning: the quad rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,0.0,GMP_RNDN);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = CONSTANT;
-	temp_node->value = mpfr_temp;
-	derivative = temp_node;
-	break;
-      case HALFPRECISION:
-	printMessage(1,SOLLYA_MSG_HALF_NOT_DIFFERENTIABLE,
-		     "Warning: the half-precision rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,0.0,GMP_RNDN);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = CONSTANT;
-	temp_node->value = mpfr_temp;
-	derivative = temp_node;
-	break;
-      case DOUBLEDOUBLE:
-	printMessage(1,SOLLYA_MSG_DOUBLE_DOUBLE_NOT_DIFFERENTIABLE,
-		     "Warning: the double-double rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,0.0,GMP_RNDN);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = CONSTANT;
-	temp_node->value = mpfr_temp;
-	derivative = temp_node;
-	break;
-      case TRIPLEDOUBLE:
-	printMessage(1,SOLLYA_MSG_TRIPLE_DOUBLE_NOT_DIFFERENTIABLE,
-		     "Warning: the triple-double rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,0.0,GMP_RNDN);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = CONSTANT;
-	temp_node->value = mpfr_temp;
-	derivative = temp_node;
-	break;
-      case ERF:
-	g_copy = copyTree(tree->child1);
-	g_diff = differentiateUnsimplified(tree->child1);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = MUL;
-	temp_node->child2 = g_diff;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = DIV;
-	temp_node3 = (node *) safeMalloc(sizeof(node));
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,1.0,GMP_RNDN);
-	temp_node3->nodeType = CONSTANT;
-	temp_node3->value = mpfr_temp;
-	temp_node4 = (node *) safeMalloc(sizeof(node));
-	temp_node4->nodeType = ATAN;
-	temp_node4->child1 = temp_node3;
-	temp_node3 = (node *) safeMalloc(sizeof(node));
-	temp_node3->nodeType = SQRT;
-	temp_node3->child1 = temp_node4;
-	temp_node2->child2 = temp_node3;
-	temp_node3 = (node *) safeMalloc(sizeof(node));
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,2.0,GMP_RNDN);
-	temp_node3->nodeType = CONSTANT;
-	temp_node3->value = mpfr_temp;
-	temp_node4 = (node *) safeMalloc(sizeof(node));
-	temp_node4->nodeType = POW;
-	temp_node4->child1 = g_copy;
-	temp_node4->child2 = temp_node3;
-	temp_node3 = (node *) safeMalloc(sizeof(node));
-	temp_node3->nodeType = NEG;
-	temp_node3->child1 = temp_node4;
-	temp_node4 = (node *) safeMalloc(sizeof(node));
-	temp_node4->nodeType = EXP;
-	temp_node4->child1 = temp_node3;
-	temp_node2->child1 = temp_node4;
-	temp_node->child1 = temp_node2;
-	derivative = temp_node;
-	break;
-      case ERFC:
-	g_copy = copyTree(tree->child1);
-	g_diff = differentiateUnsimplified(tree->child1);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = MUL;
-	temp_node->child2 = g_diff;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = DIV;
-	temp_node3 = (node *) safeMalloc(sizeof(node));
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,1.0,GMP_RNDN);
-	temp_node3->nodeType = CONSTANT;
-	temp_node3->value = mpfr_temp;
-	temp_node4 = (node *) safeMalloc(sizeof(node));
-	temp_node4->nodeType = ATAN;
-	temp_node4->child1 = temp_node3;
-	temp_node3 = (node *) safeMalloc(sizeof(node));
-	temp_node3->nodeType = SQRT;
-	temp_node3->child1 = temp_node4;
-	temp_node2->child2 = temp_node3;
-	temp_node3 = (node *) safeMalloc(sizeof(node));
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,2.0,GMP_RNDN);
-	temp_node3->nodeType = CONSTANT;
-	temp_node3->value = mpfr_temp;
-	temp_node4 = (node *) safeMalloc(sizeof(node));
-	temp_node4->nodeType = POW;
-	temp_node4->child1 = g_copy;
-	temp_node4->child2 = temp_node3;
-	temp_node3 = (node *) safeMalloc(sizeof(node));
-	temp_node3->nodeType = NEG;
-	temp_node3->child1 = temp_node4;
-	temp_node4 = (node *) safeMalloc(sizeof(node));
-	temp_node4->nodeType = EXP;
-	temp_node4->child1 = temp_node3;
-	temp_node3 = (node *) safeMalloc(sizeof(node));
-	temp_node3->nodeType = NEG;
-	temp_node3->child1 = temp_node4;
-	temp_node2->child1 = temp_node3;
-	temp_node->child1 = temp_node2;
-	derivative = temp_node;
-	break;
-      case LOG_1P:
-	g_copy = copyTree(tree->child1);
-	g_diff = differentiateUnsimplified(tree->child1);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = MUL;
-	temp_node->child2 = g_diff;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = DIV;
-	temp_node->child1 = temp_node2;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,1.0,GMP_RNDN);
-	temp_node3->value = mpfr_temp;
-	temp_node4 = (node*) safeMalloc(sizeof(node));
-	temp_node4->nodeType = ADD;
-	temp_node4->child1 = temp_node3;
-	temp_node4->child2 = g_copy;
-	temp_node2->child2 = temp_node4;
-	temp_node3 = (node*) safeMalloc(sizeof(node));
-	temp_node3->nodeType = CONSTANT;
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,1.0,GMP_RNDN);
-	temp_node3->value = mpfr_temp;
-	temp_node2->child1 = temp_node3;
-	derivative = temp_node;
-	break;
-      case EXP_M1:
-	g_copy = copyTree(tree->child1);
-	g_diff = differentiateUnsimplified(tree->child1);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = MUL;
-	temp_node->child2 = g_diff;
-	temp_node2 = (node*) safeMalloc(sizeof(node));
-	temp_node2->nodeType = EXP;
-	temp_node->child1 = temp_node2;
-	temp_node2->child1 = g_copy;
-	derivative = temp_node;
-	break;
-      case DOUBLEEXTENDED:
-	printMessage(1,SOLLYA_MSG_DOUBLEEXTENDED_NOT_DIFFERENTIABLE,
-		     "Warning: the double-extended rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,0.0,GMP_RNDN);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = CONSTANT;
-	temp_node->value = mpfr_temp;
-	derivative = temp_node;
+          derivative = makeMul( copyTree(tree),
+                                makeAdd( makeDiv( makeMul(f_diff,  g_copy),
+                                                  f_copy2
+                                                  ),
+                                         makeMul(g_diff, makeLog(f_copy))
+                                         )
+                                );
+        }
 	break;
       case LIBRARYFUNCTION:
 	g_copy = copyTree(tree->child1);
@@ -5456,39 +3603,6 @@ node* differentiateUnsimplified(node *tree) {
 	temp_node2->libFunDeriv = tree->libFunDeriv + 1;
 	temp_node->child1 = temp_node2;
 	temp_node2->child1 = g_copy;
-	derivative = temp_node;
-	break;
-      case CEIL:
-	printMessage(1,SOLLYA_MSG_CEIL_NOT_DIFFERENTIABLE,
-		     "Warning: the ceil operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,0.0,GMP_RNDN);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = CONSTANT;
-	temp_node->value = mpfr_temp;
-	derivative = temp_node;
-	break;
-      case FLOOR:
-	printMessage(1,SOLLYA_MSG_FLOOR_NOT_DIFFERENTIABLE,
-		     "Warning: the floor operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,0.0,GMP_RNDN);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = CONSTANT;
-	temp_node->value = mpfr_temp;
-	derivative = temp_node;
-	break;
-      case NEARESTINT:
-	printMessage(1,SOLLYA_MSG_NEARESTINT_NOT_DIFFERENTIABLE,
-		     "Warning: the nearestint operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
-	mpfr_temp = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-	mpfr_init2(*mpfr_temp,tools_precision);
-	mpfr_set_d(*mpfr_temp,0.0,GMP_RNDN);
-	temp_node = (node*) safeMalloc(sizeof(node));
-	temp_node->nodeType = CONSTANT;
-	temp_node->value = mpfr_temp;
 	derivative = temp_node;
 	break;
       case PI_CONST:
@@ -5584,90 +3698,15 @@ int evaluateConstantExpression(mpfr_t result, node *tree, mp_prec_t prec) {
     if (!isConstant) break;
     mpfr_div(result, stack1, stack2, GMP_RNDN);
     break;
-  case SQRT:
+  case NEG:
     isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
     if (!isConstant) break;
-    mpfr_sqrt(result, stack1, GMP_RNDN);
+    mpfr_neg(result, stack1, GMP_RNDN);
     break;
-  case EXP:
+  case UNARY_BASE_FUNC:
     isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
     if (!isConstant) break;
-    mpfr_exp(result, stack1, GMP_RNDN);
-    break;
-  case LOG:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_log(result, stack1, GMP_RNDN);
-    break;
-  case LOG_2:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_log2(result, stack1, GMP_RNDN);
-    break;
-  case LOG_10:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_log10(result, stack1, GMP_RNDN);
-    break;
-  case SIN:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_sin(result, stack1, GMP_RNDN);
-    break;
-  case COS:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_cos(result, stack1, GMP_RNDN);
-    break;
-  case TAN:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_tan(result, stack1, GMP_RNDN);
-    break;
-  case ASIN:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_asin(result, stack1, GMP_RNDN);
-    break;
-  case ACOS:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_acos(result, stack1, GMP_RNDN);
-    break;
-  case ATAN:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_atan(result, stack1, GMP_RNDN);
-    break;
-  case SINH:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_sinh(result, stack1, GMP_RNDN);
-    break;
-  case COSH:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_cosh(result, stack1, GMP_RNDN);
-    break;
-  case TANH:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_tanh(result, stack1, GMP_RNDN);
-    break;
-  case ASINH:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_asinh(result, stack1, GMP_RNDN);
-    break;
-  case ACOSH:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_acosh(result, stack1, GMP_RNDN);
-    break;
-  case ATANH:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_atanh(result, stack1, GMP_RNDN);
+    tree->baseFun->point_eval(result, stack1, GMP_RNDN);
     break;
   case POW:
     isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
@@ -5675,91 +3714,6 @@ int evaluateConstantExpression(mpfr_t result, node *tree, mp_prec_t prec) {
     isConstant = evaluateConstantExpression(stack2, tree->child2, prec);
     if (!isConstant) break;
     mpfr_pow(result, stack1, stack2, GMP_RNDN);
-    break;
-  case NEG:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_neg(result, stack1, GMP_RNDN);
-    break;
-  case ABS:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_abs(result, stack1, GMP_RNDN);
-    break;
-  case DOUBLE:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_init2(myResult, ((mpfr_get_prec(result) > 64)? mpfr_get_prec(result) : 64));
-    mpfr_round_to_double(myResult, stack1);
-    mpfr_set(result, myResult, GMP_RNDN);
-    mpfr_clear(myResult);
-    break;
-  case SINGLE:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_init2(myResult, ((mpfr_get_prec(result) > 64)? mpfr_get_prec(result) : 64));
-    mpfr_round_to_single(myResult, stack1);
-    mpfr_set(result, myResult, GMP_RNDN);
-    mpfr_clear(myResult);
-    break;
-  case QUAD:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_init2(myResult, ((mpfr_get_prec(result) > 128)? mpfr_get_prec(result) : 128));
-    mpfr_round_to_quad(myResult, stack1);
-    mpfr_set(result, myResult, GMP_RNDN);
-    mpfr_clear(myResult);
-    break;
-  case HALFPRECISION:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_init2(myResult, ((mpfr_get_prec(result) > 64)? mpfr_get_prec(result) : 64));
-    mpfr_round_to_halfprecision(myResult, stack1);
-    mpfr_set(result, myResult, GMP_RNDN);
-    mpfr_clear(myResult);
-    break;
-  case DOUBLEDOUBLE:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_init2(myResult, ((mpfr_get_prec(result) > 129)? mpfr_get_prec(result) : 129));
-    mpfr_round_to_doubledouble(myResult, stack1);
-    mpfr_set(result, myResult, GMP_RNDN);
-    mpfr_clear(myResult);
-  case TRIPLEDOUBLE:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_init2(myResult, ((mpfr_get_prec(result) > 200)? mpfr_get_prec(result) : 200));
-    mpfr_round_to_tripledouble(myResult, stack1);
-    mpfr_set(result, myResult, GMP_RNDN);
-    mpfr_clear(myResult);
-    break;
-  case ERF:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_erf(result, stack1, GMP_RNDN);
-    break;
-  case ERFC:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_erfc(result, stack1, GMP_RNDN);
-    break;
-  case LOG_1P:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_log1p(result, stack1, GMP_RNDN);
-    break;
-  case EXP_M1:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_expm1(result, stack1, GMP_RNDN);
-    break;
-  case DOUBLEEXTENDED:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_init2(myResult, ((mpfr_get_prec(result) > 128)? mpfr_get_prec(result) : 128));
-    mpfr_round_to_doubleextended(myResult, stack1);
-    mpfr_set(result, myResult, GMP_RNDN);
-    mpfr_clear(myResult);
     break;
   case LIBRARYFUNCTION:
     isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
@@ -5770,21 +3724,6 @@ int evaluateConstantExpression(mpfr_t result, node *tree, mp_prec_t prec) {
     isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
     if (!isConstant) break;
     computeFunctionWithProcedureMpfr(result, tree->child2, stack1, (unsigned int) tree->libFunDeriv);
-    break;
-  case CEIL:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_ceil(result, stack1);
-    break;
-  case FLOOR:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    mpfr_floor(result, stack1);
-    break;
-  case NEARESTINT:
-    isConstant = evaluateConstantExpression(stack1, tree->child1, prec);
-    if (!isConstant) break;
-    sollya_mpfr_rint_nearestint(result, stack1, GMP_RNDN);
     break;
   case PI_CONST:
     mpfr_const_pi(result, GMP_RNDN);
@@ -6030,7 +3969,7 @@ node* simplifyTreeInnerst(node *tree) {
       }
     }
     break;
-  case SQRT:
+  case NEG:
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
     if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
@@ -6038,14 +3977,14 @@ node* simplifyTreeInnerst(node *tree) {
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_sqrt(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
+      mpfr_neg(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
-      simplified->nodeType = SQRT;
+      simplified->nodeType = NEG;
       simplified->child1 = simplChild1;
     }
     break;
-  case EXP:
+  case UNARY_BASE_FUNC: /* TODO: notice that in the case of double, single, etc., the precision of value used to be changed to be at least 64, 32, etc. */
     simplChild1 = simplifyTreeInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
     if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
@@ -6053,235 +3992,11 @@ node* simplifyTreeInnerst(node *tree) {
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_exp(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
+      tree->baseFun->point_eval(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
-      simplified->nodeType = EXP;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case LOG:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_log(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = LOG;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case LOG_2:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_log2(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = LOG_2;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case LOG_10:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_log10(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = LOG_10;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case SIN:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_sin(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = SIN;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case COS:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_cos(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = COS;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case TAN:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_tan(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = TAN;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ASIN:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_asin(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = ASIN;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ACOS:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_acos(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = ACOS;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ATAN:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_atan(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = ATAN;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case SINH:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_sinh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = SINH;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case COSH:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_cosh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = COSH;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case TANH:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_tanh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = TANH;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ASINH:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_asinh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = ASINH;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ACOSH:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_acosh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = ACOSH;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ATANH:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_atanh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = ATANH;
+      simplified->nodeType = UNARY_BASE_FUNC;
+      simplified->baseFun = tree->baseFun;
       simplified->child1 = simplChild1;
     }
     break;
@@ -6307,201 +4022,6 @@ node* simplifyTreeInnerst(node *tree) {
 	simplified->child1 = simplChild1;
 	simplified->child2 = simplChild2;
       }
-    }
-    break;
-  case NEG:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_neg(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = NEG;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ABS:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_abs(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = ABS;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case DOUBLE:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
-      simplified->value = value;
-      mpfr_round_to_double(*value, *(accessThruMemRef(simplChild1)->value));
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = DOUBLE;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case SINGLE:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
-      simplified->value = value;
-      mpfr_round_to_single(*value, *(accessThruMemRef(simplChild1)->value));
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = SINGLE;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case QUAD:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,((tools_precision > 128)? tools_precision : 128));
-      simplified->value = value;
-      mpfr_round_to_quad(*value, *(accessThruMemRef(simplChild1)->value));
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = QUAD;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case HALFPRECISION:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
-      simplified->value = value;
-      mpfr_round_to_halfprecision(*value, *(accessThruMemRef(simplChild1)->value));
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = HALFPRECISION;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case DOUBLEDOUBLE:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,((tools_precision > 129)? tools_precision : 129));
-      simplified->value = value;
-      mpfr_round_to_doubledouble(*value, *(accessThruMemRef(simplChild1)->value));
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = DOUBLEDOUBLE;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case TRIPLEDOUBLE:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,((tools_precision > 200)? tools_precision : 200));
-      simplified->value = value;
-      mpfr_round_to_tripledouble(*value, *(accessThruMemRef(simplChild1)->value));
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = TRIPLEDOUBLE;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ERF:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_erf(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = ERF;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ERFC:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_erfc(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = ERFC;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case LOG_1P:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_log1p(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = LOG_1P;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case EXP_M1:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_expm1(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = EXP_M1;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case DOUBLEEXTENDED:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,((tools_precision > 128)? tools_precision : 128));
-      simplified->value = value;
-      mpfr_round_to_doubleextended(*value, *(accessThruMemRef(simplChild1)->value));
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = DOUBLEEXTENDED;
-      simplified->child1 = simplChild1;
     }
     break;
   case LIBRARYFUNCTION:
@@ -6536,51 +4056,6 @@ node* simplifyTreeInnerst(node *tree) {
       simplified->child1 = simplChild1;
       simplified->child2 = copyThing(tree->child2);
       simplified->libFunDeriv = tree->libFunDeriv;
-    }
-    break;
-  case CEIL:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_ceil(*value, *(accessThruMemRef(simplChild1)->value));
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = CEIL;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case FLOOR:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_floor(*value, *(accessThruMemRef(simplChild1)->value));
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = FLOOR;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case NEARESTINT:
-    simplChild1 = simplifyTreeInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      sollya_mpfr_rint_nearestint(*value, *(accessThruMemRef(simplChild1)->value),GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = NEARESTINT;
-      simplified->child1 = simplChild1;
     }
     break;
   case PI_CONST:
@@ -6762,7 +4237,7 @@ node* simplifyAllButDivisionInnerst(node *tree) {
     simplified->child1 = simplChild1;
     simplified->child2 = simplChild2;
     break;
-  case SQRT:
+  case NEG:
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
     if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
@@ -6770,14 +4245,14 @@ node* simplifyAllButDivisionInnerst(node *tree) {
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_sqrt(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
+      mpfr_neg(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
-      simplified->nodeType = SQRT;
+      simplified->nodeType = NEG;
       simplified->child1 = simplChild1;
     }
     break;
-  case EXP:
+  case UNARY_BASE_FUNC: /* TODO: notice that in the case of double, single, etc., the precision of value used to be changed to be at least 64, 32, etc. */
     simplChild1 = simplifyAllButDivisionInner(tree->child1);
     simplified = (node*) safeMalloc(sizeof(node));
     if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
@@ -6785,235 +4260,11 @@ node* simplifyAllButDivisionInnerst(node *tree) {
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_exp(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
+      tree->baseFun->point_eval(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
       free_memory(simplChild1);
     } else {
-      simplified->nodeType = EXP;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case LOG:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_log(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = LOG;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case LOG_2:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_log2(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = LOG_2;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case LOG_10:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_log10(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = LOG_10;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case SIN:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_sin(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = SIN;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case COS:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_cos(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = COS;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case TAN:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_tan(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = TAN;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ASIN:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_asin(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = ASIN;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ACOS:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_acos(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = ACOS;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ATAN:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_atan(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = ATAN;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case SINH:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_sinh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = SINH;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case COSH:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_cosh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = COSH;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case TANH:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_tanh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = TANH;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ASINH:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_asinh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = ASINH;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ACOSH:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_acosh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = ACOSH;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ATANH:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_atanh(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = ATANH;
+      simplified->nodeType = UNARY_BASE_FUNC;
+      simplified->baseFun = tree->baseFun;
       simplified->child1 = simplChild1;
     }
     break;
@@ -7039,201 +4290,6 @@ node* simplifyAllButDivisionInnerst(node *tree) {
 	simplified->child1 = simplChild1;
 	simplified->child2 = simplChild2;
       }
-    }
-    break;
-  case NEG:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_neg(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = NEG;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ABS:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_abs(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = ABS;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case DOUBLE:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
-      simplified->value = value;
-      mpfr_round_to_double(*value, *(accessThruMemRef(simplChild1)->value));
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = DOUBLE;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case SINGLE:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
-      simplified->value = value;
-      mpfr_round_to_single(*value, *(accessThruMemRef(simplChild1)->value));
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = SINGLE;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case HALFPRECISION:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,((tools_precision > 64)? tools_precision : 64));
-      simplified->value = value;
-      mpfr_round_to_halfprecision(*value, *(accessThruMemRef(simplChild1)->value));
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = HALFPRECISION;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case QUAD:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,((tools_precision > 128)? tools_precision : 128));
-      simplified->value = value;
-      mpfr_round_to_quad(*value, *(accessThruMemRef(simplChild1)->value));
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = QUAD;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case DOUBLEDOUBLE:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,((tools_precision > 129)? tools_precision : 129));
-      simplified->value = value;
-      mpfr_round_to_doubledouble(*value, *(accessThruMemRef(simplChild1)->value));
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = DOUBLEDOUBLE;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case TRIPLEDOUBLE:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,((tools_precision > 200)? tools_precision : 200));
-      simplified->value = value;
-      mpfr_round_to_tripledouble(*value, *(accessThruMemRef(simplChild1)->value));
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = TRIPLEDOUBLE;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ERF:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_erf(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = ERF;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case ERFC:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_erfc(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = ERFC;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case LOG_1P:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_log1p(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = LOG_1P;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case EXP_M1:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_expm1(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = EXP_M1;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case DOUBLEEXTENDED:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,((tools_precision > 128)? tools_precision : 128));
-      simplified->value = value;
-      mpfr_round_to_doubleextended(*value, *(accessThruMemRef(simplChild1)->value));
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = DOUBLEEXTENDED;
-      simplified->child1 = simplChild1;
     }
     break;
   case LIBRARYFUNCTION:
@@ -7268,51 +4324,6 @@ node* simplifyAllButDivisionInnerst(node *tree) {
       simplified->child1 = simplChild1;
       simplified->child2 = copyThing(tree->child2);
       simplified->libFunDeriv = tree->libFunDeriv;
-    }
-    break;
-  case CEIL:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_ceil(*value, *(accessThruMemRef(simplChild1)->value));
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = CEIL;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case FLOOR:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      mpfr_floor(*value, *(accessThruMemRef(simplChild1)->value));
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = FLOOR;
-      simplified->child1 = simplChild1;
-    }
-    break;
-  case NEARESTINT:
-    simplChild1 = simplifyAllButDivisionInner(tree->child1);
-    simplified = (node*) safeMalloc(sizeof(node));
-    if (accessThruMemRef(simplChild1)->nodeType == CONSTANT) {
-      simplified->nodeType = CONSTANT;
-      value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-      mpfr_init2(*value,tools_precision);
-      simplified->value = value;
-      sollya_mpfr_rint_nearestint(*value, *(accessThruMemRef(simplChild1)->value),GMP_RNDN);
-      free_memory(simplChild1);
-    } else {
-      simplified->nodeType = NEARESTINT;
-      simplified->child1 = simplChild1;
     }
     break;
   case PI_CONST:
@@ -7401,151 +4412,18 @@ void evaluate(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
     evaluate(stack2, tree->child2, x, prec);
     mpfr_div(result, stack1, stack2, GMP_RNDN);
     break;
-  case SQRT:
+  case NEG:
     evaluate(stack1, tree->child1, x, prec);
-    mpfr_sqrt(result, stack1, GMP_RNDN);
+    mpfr_neg(result, stack1, GMP_RNDN);
     break;
-  case EXP:
+  case UNARY_BASE_FUNC:
     evaluate(stack1, tree->child1, x, prec);
-    mpfr_exp(result, stack1, GMP_RNDN);
-    break;
-  case LOG:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_log(result, stack1, GMP_RNDN);
-    break;
-  case LOG_2:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_log2(result, stack1, GMP_RNDN);
-    break;
-  case LOG_10:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_log10(result, stack1, GMP_RNDN);
-    break;
-  case SIN:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_sin(result, stack1, GMP_RNDN);
-    break;
-  case COS:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_cos(result, stack1, GMP_RNDN);
-    break;
-  case TAN:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_tan(result, stack1, GMP_RNDN);
-    break;
-  case ASIN:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_asin(result, stack1, GMP_RNDN);
-    break;
-  case ACOS:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_acos(result, stack1, GMP_RNDN);
-    break;
-  case ATAN:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_atan(result, stack1, GMP_RNDN);
-    break;
-  case SINH:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_sinh(result, stack1, GMP_RNDN);
-    break;
-  case COSH:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_cosh(result, stack1, GMP_RNDN);
-    break;
-  case TANH:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_tanh(result, stack1, GMP_RNDN);
-    break;
-  case ASINH:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_asinh(result, stack1, GMP_RNDN);
-    break;
-  case ACOSH:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_acosh(result, stack1, GMP_RNDN);
-    break;
-  case ATANH:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_atanh(result, stack1, GMP_RNDN);
+    tree->baseFun->point_eval(result, stack1, GMP_RNDN);
     break;
   case POW:
     evaluate(stack1, tree->child1, x, prec);
     evaluate(stack2, tree->child2, x, prec);
     mpfr_pow(result, stack1, stack2, GMP_RNDN);
-    break;
-  case NEG:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_neg(result, stack1, GMP_RNDN);
-    break;
-  case ABS:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_abs(result, stack1, GMP_RNDN);
-    break;
-  case DOUBLE:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_init2(myResult, ((mpfr_get_prec(result) > 64)? mpfr_get_prec(result) : 64));
-    mpfr_round_to_double(myResult, stack1);
-    mpfr_set(result, myResult, GMP_RNDN);
-    mpfr_clear(myResult);
-    break;
-  case SINGLE:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_init2(myResult, ((mpfr_get_prec(result) > 64)? mpfr_get_prec(result) : 64));
-    mpfr_round_to_single(myResult, stack1);
-    mpfr_set(result, myResult, GMP_RNDN);
-    mpfr_clear(myResult);
-    break;
-  case QUAD:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_init2(myResult, ((mpfr_get_prec(result) > 128)? mpfr_get_prec(result) : 128));
-    mpfr_round_to_single(myResult, stack1);
-    mpfr_set(result, myResult, GMP_RNDN);
-    mpfr_clear(myResult);
-    break;
-  case HALFPRECISION:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_init2(myResult, ((mpfr_get_prec(result) > 64)? mpfr_get_prec(result) : 64));
-    mpfr_round_to_single(myResult, stack1);
-    mpfr_set(result, myResult, GMP_RNDN);
-    mpfr_clear(myResult);
-    break;
-  case DOUBLEDOUBLE:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_init2(myResult, ((mpfr_get_prec(result) > 129)? mpfr_get_prec(result) : 129));
-    mpfr_round_to_single(myResult, stack1);
-    mpfr_set(result, myResult, GMP_RNDN);
-    mpfr_clear(myResult);
-    break;
-  case TRIPLEDOUBLE:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_init2(myResult, ((mpfr_get_prec(result) > 200)? mpfr_get_prec(result) : 200));
-    mpfr_round_to_single(myResult, stack1);
-    mpfr_set(result, myResult, GMP_RNDN);
-    mpfr_clear(myResult);
-    break;
-  case ERF:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_erf(result, stack1, GMP_RNDN);
-    break;
-  case ERFC:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_erfc(result, stack1, GMP_RNDN);
-    break;
-  case LOG_1P:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_log1p(result, stack1, GMP_RNDN);
-    break;
-  case EXP_M1:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_expm1(result, stack1, GMP_RNDN);
-    break;
-  case DOUBLEEXTENDED:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_init2(myResult, ((mpfr_get_prec(result) > 128)? mpfr_get_prec(result) : 128));
-    mpfr_round_to_single(myResult, stack1);
-    mpfr_set(result, myResult, GMP_RNDN);
-    mpfr_clear(myResult);
     break;
   case LIBRARYFUNCTION:
     evaluate(stack1, tree->child1, x, prec);
@@ -7554,18 +4432,6 @@ void evaluate(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
   case PROCEDUREFUNCTION:
     evaluate(stack1, tree->child1, x, prec);
     computeFunctionWithProcedureMpfr(result, tree->child2, stack1, (unsigned int) tree->libFunDeriv);
-    break;
-  case CEIL:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_ceil(result, stack1);
-    break;
-  case FLOOR:
-    evaluate(stack1, tree->child1, x, prec);
-    mpfr_floor(result, stack1);
-    break;
-  case NEARESTINT:
-    evaluate(stack1, tree->child1, x, prec);
-    sollya_mpfr_rint_nearestint(result, stack1, GMP_RNDN);
     break;
   case PI_CONST:
     mpfr_const_pi(result, GMP_RNDN);
@@ -7812,41 +4678,14 @@ int isAffine(node *tree) {
   case MUL:
     res = isAffine(tree->child1) && isAffine(tree->child2);
     break;
+  case NEG:
+    res = isAffine(tree->child1);
+    break;
 
   case DIV:
-  case SQRT:
-  case EXP:
-  case LOG:
-  case LOG_2:
-  case LOG_10:
-  case SIN:
-  case COS:
-  case TAN:
-  case ASIN:
-  case ACOS:
-  case ATAN:
-  case SINH:
-  case COSH:
-  case TANH:
-  case ASINH:
-  case ACOSH:
-  case ATANH:
-  case ABS:
-  case DOUBLE:
-  case SINGLE:
-  case QUAD:
-  case HALFPRECISION:
-  case DOUBLEDOUBLE:
-  case TRIPLEDOUBLE:
-  case ERF:
-  case ERFC:
-  case LOG_1P:
-  case EXP_M1:
-  case DOUBLEEXTENDED:
+  case UNARY_BASE_FUNC:
   case LIBRARYFUNCTION:
-  case CEIL:
-  case FLOOR:
-  case NEARESTINT:
+  case PROCEDUREFUNCTION:
     res = 0;
     break;
 
@@ -7869,13 +4708,7 @@ int isAffine(node *tree) {
       }
     }
     break;
-  case NEG:
-    res = isAffine(tree->child1);
-    break;
 
-  case PROCEDUREFUNCTION:
-    res = 0;
-    break;
   case PI_CONST:
   case LIBRARYCONSTANT:
     res = 1;
@@ -8618,89 +5451,15 @@ node* expandDivision(node *tree) {
       copy->child2 = right;
     }
     break;
-  case SQRT:
+  case NEG:
     copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = SQRT;
+    copy->nodeType = NEG;
     copy->child1 = expandDivision(tree->child1);
     break;
-  case EXP:
+  case UNARY_BASE_FUNC:
     copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = EXP;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case LOG:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = LOG;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case LOG_2:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = LOG_2;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case LOG_10:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = LOG_10;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case SIN:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = SIN;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case COS:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = COS;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case TAN:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = TAN;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case ASIN:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ASIN;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case ACOS:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ACOS;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case ATAN:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ATAN;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case SINH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = SINH;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case COSH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = COSH;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case TANH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = TANH;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case ASINH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ASINH;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case ACOSH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ACOSH;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case ATANH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ATANH;
+    copy->nodeType = UNARY_BASE_FUNC;
+    copy->baseFun = tree->baseFun;
     copy->child1 = expandDivision(tree->child1);
     break;
   case POW:
@@ -8708,71 +5467,6 @@ node* expandDivision(node *tree) {
     copy->nodeType = POW;
     copy->child1 = expandDivision(tree->child1);
     copy->child2 = expandDivision(tree->child2);
-    break;
-  case NEG:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = NEG;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case ABS:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ABS;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case DOUBLE:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = DOUBLE;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case SINGLE:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = SINGLE;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case QUAD:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = QUAD;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case HALFPRECISION:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = HALFPRECISION;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case DOUBLEDOUBLE:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = DOUBLEDOUBLE;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case TRIPLEDOUBLE:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = TRIPLEDOUBLE;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case ERF:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ERF;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case ERFC:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ERFC;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case LOG_1P:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = LOG_1P;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case EXP_M1:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = EXP_M1;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case DOUBLEEXTENDED:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = DOUBLEEXTENDED;
-    copy->child1 = expandDivision(tree->child1);
     break;
   case LIBRARYFUNCTION:
     copy = (node*) safeMalloc(sizeof(node));
@@ -8787,21 +5481,6 @@ node* expandDivision(node *tree) {
     copy->libFunDeriv = tree->libFunDeriv;
     copy->child1 = expandDivision(tree->child1);
     copy->child2 = copyThing(tree->child2);
-    break;
-  case CEIL:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = CEIL;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case FLOOR:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = FLOOR;
-    copy->child1 = expandDivision(tree->child1);
-    break;
-  case NEARESTINT:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = NEARESTINT;
-    copy->child1 = expandDivision(tree->child1);
     break;
   case PI_CONST:
     copy = (node*) safeMalloc(sizeof(node));
@@ -9225,89 +5904,15 @@ node* expandUnsimplified(node *tree) {
     copy->child1 = expand(tree->child1);
     copy->child2 = expand(tree->child2);
     break;
-  case SQRT:
+  case NEG:
     copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = SQRT;
+    copy->nodeType = NEG;
     copy->child1 = expand(tree->child1);
     break;
-  case EXP:
+  case UNARY_BASE_FUNC:
     copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = EXP;
-    copy->child1 = expand(tree->child1);
-    break;
-  case LOG:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = LOG;
-    copy->child1 = expand(tree->child1);
-    break;
-  case LOG_2:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = LOG_2;
-    copy->child1 = expand(tree->child1);
-    break;
-  case LOG_10:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = LOG_10;
-    copy->child1 = expand(tree->child1);
-    break;
-  case SIN:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = SIN;
-    copy->child1 = expand(tree->child1);
-    break;
-  case COS:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = COS;
-    copy->child1 = expand(tree->child1);
-    break;
-  case TAN:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = TAN;
-    copy->child1 = expand(tree->child1);
-    break;
-  case ASIN:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ASIN;
-    copy->child1 = expand(tree->child1);
-    break;
-  case ACOS:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ACOS;
-    copy->child1 = expand(tree->child1);
-    break;
-  case ATAN:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ATAN;
-    copy->child1 = expand(tree->child1);
-    break;
-  case SINH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = SINH;
-    copy->child1 = expand(tree->child1);
-    break;
-  case COSH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = COSH;
-    copy->child1 = expand(tree->child1);
-    break;
-  case TANH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = TANH;
-    copy->child1 = expand(tree->child1);
-    break;
-  case ASINH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ASINH;
-    copy->child1 = expand(tree->child1);
-    break;
-  case ACOSH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ACOSH;
-    copy->child1 = expand(tree->child1);
-    break;
-  case ATANH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ATANH;
+    copy->nodeType = UNARY_BASE_FUNC;
+    copy->baseFun = tree->baseFun;
     copy->child1 = expand(tree->child1);
     break;
   case POW:
@@ -9315,71 +5920,6 @@ node* expandUnsimplified(node *tree) {
     copy->nodeType = POW;
     copy->child1 = expand(tree->child1);
     copy->child2 = expand(tree->child2);
-    break;
-  case NEG:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = NEG;
-    copy->child1 = expand(tree->child1);
-    break;
-  case ABS:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ABS;
-    copy->child1 = expand(tree->child1);
-    break;
-  case DOUBLE:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = DOUBLE;
-    copy->child1 = expand(tree->child1);
-    break;
-  case SINGLE:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = SINGLE;
-    copy->child1 = expand(tree->child1);
-    break;
-  case HALFPRECISION:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = HALFPRECISION;
-    copy->child1 = expand(tree->child1);
-    break;
-  case QUAD:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = QUAD;
-    copy->child1 = expand(tree->child1);
-    break;
-  case DOUBLEDOUBLE:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = DOUBLEDOUBLE;
-    copy->child1 = expand(tree->child1);
-    break;
-  case TRIPLEDOUBLE:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = TRIPLEDOUBLE;
-    copy->child1 = expand(tree->child1);
-    break;
-  case ERF:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ERF;
-    copy->child1 = expand(tree->child1);
-    break;
-  case ERFC:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ERFC;
-    copy->child1 = expand(tree->child1);
-    break;
-  case LOG_1P:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = LOG_1P;
-    copy->child1 = expand(tree->child1);
-    break;
-  case EXP_M1:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = EXP_M1;
-    copy->child1 = expand(tree->child1);
-    break;
-  case DOUBLEEXTENDED:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = DOUBLEEXTENDED;
-    copy->child1 = expand(tree->child1);
     break;
   case LIBRARYFUNCTION:
     copy = (node*) safeMalloc(sizeof(node));
@@ -9394,21 +5934,6 @@ node* expandUnsimplified(node *tree) {
     copy->libFunDeriv = tree->libFunDeriv;
     copy->child1 = expand(tree->child1);
     copy->child2 = copyThing(tree->child2);
-    break;
-  case CEIL:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = CEIL;
-    copy->child1 = expand(tree->child1);
-    break;
-  case FLOOR:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = FLOOR;
-    copy->child1 = expand(tree->child1);
-    break;
-  case NEARESTINT:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = NEARESTINT;
-    copy->child1 = expand(tree->child1);
     break;
   case PI_CONST:
     copy = (node*) safeMalloc(sizeof(node));
@@ -9467,41 +5992,10 @@ int isConstant(node *tree) {
     return (!(!((isConstant(tree->child1) && isConstant(tree->child2)))));
     break;
 
-  case SQRT:
-  case EXP:
-  case LOG:
-  case LOG_2:
-  case LOG_10:
-  case SIN:
-  case COS:
-  case TAN:
-  case ASIN:
-  case ACOS:
-  case ATAN:
-  case SINH:
-  case COSH:
-  case TANH:
-  case ASINH:
-  case ACOSH:
-  case ATANH:
   case NEG:
-  case ABS:
-  case DOUBLE:
-  case SINGLE:
-  case QUAD:
-  case HALFPRECISION:
-  case DOUBLEDOUBLE:
-  case TRIPLEDOUBLE:
-  case ERF:
-  case ERFC:
-  case LOG_1P:
-  case EXP_M1:
-  case DOUBLEEXTENDED:
+  case UNARY_BASE_FUNC:
   case LIBRARYFUNCTION:
   case PROCEDUREFUNCTION:
-  case CEIL:
-  case FLOOR:
-  case NEARESTINT:
     return isConstant(tree->child1);
     break;
   default:
@@ -10429,89 +6923,15 @@ node* hornerUnsimplified(node *tree) {
     copy->child1 = horner(tree->child1);
     copy->child2 = horner(tree->child2);
     break;
-  case SQRT:
+  case NEG:
     copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = SQRT;
+    copy->nodeType = NEG;
     copy->child1 = horner(tree->child1);
     break;
-  case EXP:
+  case UNARY_BASE_FUNC:
     copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = EXP;
-    copy->child1 = horner(tree->child1);
-    break;
-  case LOG:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = LOG;
-    copy->child1 = horner(tree->child1);
-    break;
-  case LOG_2:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = LOG_2;
-    copy->child1 = horner(tree->child1);
-    break;
-  case LOG_10:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = LOG_10;
-    copy->child1 = horner(tree->child1);
-    break;
-  case SIN:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = SIN;
-    copy->child1 = horner(tree->child1);
-    break;
-  case COS:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = COS;
-    copy->child1 = horner(tree->child1);
-    break;
-  case TAN:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = TAN;
-    copy->child1 = horner(tree->child1);
-    break;
-  case ASIN:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ASIN;
-    copy->child1 = horner(tree->child1);
-    break;
-  case ACOS:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ACOS;
-    copy->child1 = horner(tree->child1);
-    break;
-  case ATAN:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ATAN;
-    copy->child1 = horner(tree->child1);
-    break;
-  case SINH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = SINH;
-    copy->child1 = horner(tree->child1);
-    break;
-  case COSH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = COSH;
-    copy->child1 = horner(tree->child1);
-    break;
-  case TANH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = TANH;
-    copy->child1 = horner(tree->child1);
-    break;
-  case ASINH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ASINH;
-    copy->child1 = horner(tree->child1);
-    break;
-  case ACOSH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ACOSH;
-    copy->child1 = horner(tree->child1);
-    break;
-  case ATANH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ATANH;
+    copy->nodeType = UNARY_BASE_FUNC;
+    copy->baseFun = tree->baseFun;
     copy->child1 = horner(tree->child1);
     break;
   case POW:
@@ -10519,71 +6939,6 @@ node* hornerUnsimplified(node *tree) {
     copy->nodeType = POW;
     copy->child1 = horner(tree->child1);
     copy->child2 = horner(tree->child2);
-    break;
-  case NEG:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = NEG;
-    copy->child1 = horner(tree->child1);
-    break;
-  case ABS:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ABS;
-    copy->child1 = horner(tree->child1);
-    break;
-  case DOUBLE:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = DOUBLE;
-    copy->child1 = horner(tree->child1);
-    break;
-  case SINGLE:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = SINGLE;
-    copy->child1 = horner(tree->child1);
-    break;
-  case QUAD:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = QUAD;
-    copy->child1 = horner(tree->child1);
-    break;
-  case HALFPRECISION:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = HALFPRECISION;
-    copy->child1 = horner(tree->child1);
-    break;
-  case DOUBLEDOUBLE:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = DOUBLEDOUBLE;
-    copy->child1 = horner(tree->child1);
-    break;
-  case TRIPLEDOUBLE:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = TRIPLEDOUBLE;
-    copy->child1 = horner(tree->child1);
-    break;
-  case ERF:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ERF;
-    copy->child1 = horner(tree->child1);
-    break;
-  case ERFC:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ERFC;
-    copy->child1 = horner(tree->child1);
-    break;
-  case LOG_1P:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = LOG_1P;
-    copy->child1 = horner(tree->child1);
-    break;
-  case EXP_M1:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = EXP_M1;
-    copy->child1 = horner(tree->child1);
-    break;
-  case DOUBLEEXTENDED:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = DOUBLEEXTENDED;
-    copy->child1 = horner(tree->child1);
     break;
   case LIBRARYFUNCTION:
     copy = (node*) safeMalloc(sizeof(node));
@@ -10598,21 +6953,6 @@ node* hornerUnsimplified(node *tree) {
     copy->libFunDeriv = tree->libFunDeriv;
     copy->child1 = horner(tree->child1);
     copy->child2 = copyThing(tree->child2);
-    break;
-  case CEIL:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = CEIL;
-    copy->child1 = horner(tree->child1);
-    break;
-  case FLOOR:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = FLOOR;
-    copy->child1 = horner(tree->child1);
-    break;
-  case NEARESTINT:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = NEARESTINT;
-    copy->child1 = horner(tree->child1);
     break;
   case PI_CONST:
     copy = (node*) safeMalloc(sizeof(node));
@@ -11315,89 +7655,15 @@ node *substitute(node* tree, node *t) {
     copy->child1 = substitute(tree->child1,t);
     copy->child2 = substitute(tree->child2,t);
     break;
-  case SQRT:
+  case UNARY_BASE_FUNC:
     copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = SQRT;
+    copy->nodeType = UNARY_BASE_FUNC;
+    copy->baseFun = tree->baseFun;
     copy->child1 = substitute(tree->child1,t);
     break;
-  case EXP:
+  case NEG:
     copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = EXP;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case LOG:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = LOG;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case LOG_2:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = LOG_2;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case LOG_10:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = LOG_10;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case SIN:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = SIN;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case COS:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = COS;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case TAN:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = TAN;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case ASIN:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ASIN;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case ACOS:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ACOS;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case ATAN:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ATAN;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case SINH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = SINH;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case COSH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = COSH;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case TANH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = TANH;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case ASINH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ASINH;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case ACOSH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ACOSH;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case ATANH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ATANH;
+    copy->nodeType = NEG;
     copy->child1 = substitute(tree->child1,t);
     break;
   case POW:
@@ -11405,71 +7671,6 @@ node *substitute(node* tree, node *t) {
     copy->nodeType = POW;
     copy->child1 = substitute(tree->child1,t);
     copy->child2 = substitute(tree->child2,t);
-    break;
-  case NEG:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = NEG;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case ABS:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ABS;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case DOUBLE:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = DOUBLE;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case SINGLE:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = SINGLE;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case QUAD:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = QUAD;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case HALFPRECISION:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = HALFPRECISION;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case DOUBLEDOUBLE:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = DOUBLEDOUBLE;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case TRIPLEDOUBLE:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = TRIPLEDOUBLE;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case ERF:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ERF;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case ERFC:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ERFC;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case LOG_1P:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = LOG_1P;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case EXP_M1:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = EXP_M1;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case DOUBLEEXTENDED:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = DOUBLEEXTENDED;
-    copy->child1 = substitute(tree->child1,t);
     break;
   case LIBRARYFUNCTION:
     copy = (node*) safeMalloc(sizeof(node));
@@ -11484,21 +7685,6 @@ node *substitute(node* tree, node *t) {
     copy->libFunDeriv = tree->libFunDeriv;
     copy->child1 = substitute(tree->child1,t);
     copy->child2 = copyThing(tree->child2);
-    break;
-  case CEIL:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = CEIL;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case FLOOR:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = FLOOR;
-    copy->child1 = substitute(tree->child1,t);
-    break;
-  case NEARESTINT:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = NEARESTINT;
-    copy->child1 = substitute(tree->child1,t);
     break;
   case PI_CONST:
     copy = (node*) safeMalloc(sizeof(node));
@@ -11988,41 +8174,10 @@ int treeSize(node *tree) {
     return treeSize(tree->child1) + treeSize(tree->child2) + 1;
     break;
 
-  case SQRT:
-  case EXP:
-  case LOG:
-  case LOG_2:
-  case LOG_10:
-  case SIN:
-  case COS:
-  case TAN:
-  case ASIN:
-  case ACOS:
-  case ATAN:
-  case SINH:
-  case COSH:
-  case TANH:
-  case ASINH:
-  case ACOSH:
-  case ATANH:
   case NEG:
-  case ABS:
-  case DOUBLE:
-  case SINGLE:
-  case QUAD:
-  case HALFPRECISION:
-  case DOUBLEDOUBLE:
-  case TRIPLEDOUBLE:
-  case ERF:
-  case ERFC:
-  case LOG_1P:
-  case EXP_M1:
-  case DOUBLEEXTENDED:
+  case UNARY_BASE_FUNC:
   case LIBRARYFUNCTION:
   case PROCEDUREFUNCTION:
-  case CEIL:
-  case FLOOR:
-  case NEARESTINT:
     return treeSize(tree->child1) + 1;
     break;
 
@@ -12675,89 +8830,15 @@ node *makeCanonical(node *tree, mp_prec_t prec) {
     copy->child1 = makeCanonical(tree->child1,prec);
     copy->child2 = makeCanonical(tree->child2,prec);
     break;
-  case SQRT:
+  case NEG:
     copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = SQRT;
+    copy->nodeType = NEG;
     copy->child1 = makeCanonical(tree->child1,prec);
     break;
-  case EXP:
+  case UNARY_BASE_FUNC:
     copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = EXP;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case LOG:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = LOG;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case LOG_2:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = LOG_2;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case LOG_10:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = LOG_10;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case SIN:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = SIN;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case COS:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = COS;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case TAN:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = TAN;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case ASIN:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ASIN;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case ACOS:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ACOS;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case ATAN:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ATAN;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case SINH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = SINH;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case COSH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = COSH;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case TANH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = TANH;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case ASINH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ASINH;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case ACOSH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ACOSH;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case ATANH:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ATANH;
+    copy->nodeType = UNARY_BASE_FUNC;
+    copy->baseFun = tree->baseFun;
     copy->child1 = makeCanonical(tree->child1,prec);
     break;
   case POW:
@@ -12765,71 +8846,6 @@ node *makeCanonical(node *tree, mp_prec_t prec) {
     copy->nodeType = POW;
     copy->child1 = makeCanonical(tree->child1,prec);
     copy->child2 = makeCanonical(tree->child2,prec);
-    break;
-  case NEG:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = NEG;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case ABS:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ABS;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case DOUBLE:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = DOUBLE;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case SINGLE:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = SINGLE;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case QUAD:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = QUAD;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case HALFPRECISION:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = HALFPRECISION;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case DOUBLEDOUBLE:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = DOUBLEDOUBLE;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case TRIPLEDOUBLE:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = TRIPLEDOUBLE;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case ERF:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ERF;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case ERFC:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = ERFC;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case LOG_1P:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = LOG_1P;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case EXP_M1:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = EXP_M1;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case DOUBLEEXTENDED:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = DOUBLEEXTENDED;
-    copy->child1 = makeCanonical(tree->child1,prec);
     break;
   case LIBRARYFUNCTION:
     copy = (node*) safeMalloc(sizeof(node));
@@ -12844,21 +8860,6 @@ node *makeCanonical(node *tree, mp_prec_t prec) {
     copy->libFunDeriv = tree->libFunDeriv;
     copy->child1 = makeCanonical(tree->child1,prec);
     copy->child2 = copyThing(tree->child2);
-    break;
-  case CEIL:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = CEIL;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case FLOOR:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = FLOOR;
-    copy->child1 = makeCanonical(tree->child1,prec);
-    break;
-  case NEARESTINT:
-    copy = (node*) safeMalloc(sizeof(node));
-    copy->nodeType = NEARESTINT;
-    copy->child1 = makeCanonical(tree->child1,prec);
     break;
   case PI_CONST:
     copy = (node*) safeMalloc(sizeof(node));

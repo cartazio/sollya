@@ -4818,88 +4818,13 @@ int compareConstant(int *cmp, node *func1, node *func2, node *difference, int do
   return okay;
 }
 
-int evaluateSignTrigoUnsafe(int *s, node *child, int nodeType) {
-  mpfr_t value, value2;
-  mpfr_t piHalf;
-  mpfr_t dummyX;
-  int okay, res;
-  node *tempNode;
-  int signA;
-
-  okay = 0;
-
-  mpfr_init2(value,defaultprecision);
-  mpfr_init2(piHalf,defaultprecision);
-  mpfr_init2(dummyX,12);
-  mpfr_set_ui(dummyX,1,GMP_RNDN);
-  if (evaluateFaithful(value, child, dummyX, defaultprecision) &&
-      mpfr_number_p(value)) {
-    mpfr_const_pi(piHalf,GMP_RNDN);
-    mpfr_div_2ui(piHalf,piHalf,1,GMP_RNDN);
-    mpfr_div(value,value,piHalf,GMP_RNDN);
-    mpfr_rint(value,value,GMP_RNDN);
-    mpfr_div_2ui(value,value,1,GMP_RNDN);
-    /* Here, diff is approximately value * pi
-       and value * 2 is an integer
-    */
-    tempNode = makeMul(makeConstant(value),makePi());
-    if (compareConstant(&signA, child, tempNode, NULL, 0)) {
-      if (signA == 0) {
-	/* Here, we have proven that child is equal to value * pi
-	 */
-	mpfr_init2(value2,defaultprecision);
-	mpfr_rint(value2,value,GMP_RNDN);      /* exact, same precision */
-	mpfr_sub(value,value,value2,GMP_RNDN); /* exact, Sterbenz */
-	/* Here, we know that child is equal to (n + value) * pi for
-	   some integer n. We know that value can only be 0 or +/- 0.5
-	*/
-	switch (nodeType) {
-	case SIN:
-	  /* sin is zero for all n * pi, n in Z */
-	  if (mpfr_zero_p(value)) {
-	    okay = 1;
-	    res = 0;
-	  }
-	  break;
-	case COS:
-	  /* cos is zero for all (n + 1/2) * pi, n in Z */
-	  if (!mpfr_zero_p(value)) {
-	    okay = 1;
-	    res = 0;
-	  }
-	  break;
-	case TAN:
-	  /* tan is zero for all n * pi, n in Z */
-	  if (mpfr_zero_p(value)) {
-	    okay = 1;
-	    res = 0;
-	  }
-	  break;
-	default:
-	  sollyaFprintf(stderr,"Error: evaluateSignTrigoUnsafe: unknown identifier (%d) in the tree\n",nodeType);
-	  exit(1);
-	}
-	mpfr_clear(value2);
-      }
-    }
-    free_memory(tempNode);
-  }
-  mpfr_clear(dummyX);
-  mpfr_clear(piHalf);
-  mpfr_clear(value);
-
-  if (okay) *s = res;
-  return okay;
-}
-
-
 
 int evaluateSign(int *s, node *rawFunc) {
-  int sign, okay, okayA, okayB, okayC;
+  int sign, okay, okayA, okayB;
   mpfr_t value, dummyX;
   sollya_mpfi_t valueI;
-  int signA, signB, signC;
-  node *tempNode, *tempNode2;
+  int signA, signB;
+  node *tempNode;
   node *func, *rawFunc2;
 
   okay = 0;
@@ -4948,109 +4873,13 @@ int evaluateSign(int *s, node *rawFunc) {
 	  sign = signA * signB;
 	}
 	break;
-      case SQRT:
-	okayA = evaluateSign(&signA, accessThruMemRef(func)->child1);
-	if (okayA && (signA >= 0)) {
-	  okay = 1;
-	  sign = signA;
-	}
+      case NEG:
+	okay = evaluateSign(&signA, accessThruMemRef(func)->child1);
+	sign = -1 * signA;
 	break;
-      case EXP:
-	okayA = evaluateSign(&signA, accessThruMemRef(func)->child1);
-	if (okayA) {
-	  okay = 1;
-	  sign = 1;
-	}
-	break;
-      case LOG:
-	/* fall-through */
-      case LOG_2:
-	/* fall-through */
-      case LOG_10:
-	tempNode = makeDoubleConstant(1.0);
-	okayA = compareConstant(&signA, accessThruMemRef(func)->child1, tempNode, NULL, 0);
-	okayB = evaluateSign(&signB, accessThruMemRef(func)->child1);
-	if (okayA && okayB && (signB > 0)) {
-	  okay = 1;
-	  sign = signA;
-	}
-	free_memory(tempNode);
-	break;
-      case SIN:
-	/* fall-through */
-      case COS:
-	/* fall-through */
-      case TAN:
-	okayA = evaluateSign(&signA, accessThruMemRef(func)->child1);
-	if (okayA && (signA == 0)) {
-	  okay = 1;
-	  sign = 0;
-	} else {
-	  okay = evaluateSignTrigoUnsafe(&sign, accessThruMemRef(func)->child1, accessThruMemRef(func)->nodeType);
-	}
-	break;
-      case ASIN:
-	okayA = evaluateSign(&signA, accessThruMemRef(func)->child1);
-	tempNode = makeAbs(copyTree(accessThruMemRef(func)->child1));
-	tempNode2 = makeDoubleConstant(1.0);
-	okayB = compareConstant(&signB, tempNode, tempNode2, NULL, 0);
-	if (okayA && okayB && (signB <= 0)) {
-	  okay = 1;
-	  sign = signA;
-	}
-	free_memory(tempNode);
-	free_memory(tempNode2);
-	break;
-      case ACOS:
-	okayA = evaluateSign(&signA, accessThruMemRef(func)->child1);
-	tempNode = makeAbs(copyTree(accessThruMemRef(func)->child1));
-	tempNode2 = makeDoubleConstant(1.0);
-	okayB = compareConstant(&signB, tempNode, tempNode2, NULL, 0);
-	okayC = compareConstant(&signC, accessThruMemRef(func)->child1, tempNode2, NULL, 0);
-	if (okayA && okayB && okayC && (signB <= 0)) {
-	  okay = 1;
-	  if (signC == 0) sign = 0; else sign = 1;
-	}
-	free_memory(tempNode);
-	free_memory(tempNode2);
-	break;
-      case ATAN:
-	okay = evaluateSign(&sign, accessThruMemRef(func)->child1);
-	break;
-      case SINH:
-	okay = evaluateSign(&sign, accessThruMemRef(func)->child1);
-	break;
-      case COSH:
-	okay = 1;
-	sign = 1;
-	break;
-      case TANH:
-	okay = evaluateSign(&sign, accessThruMemRef(func)->child1);
-	break;
-      case ASINH:
-	okay = evaluateSign(&sign, accessThruMemRef(func)->child1);
-	break;
-      case ACOSH:
-	tempNode = makeDoubleConstant(1.0);
-	okayA = compareConstant(&signA, accessThruMemRef(func)->child1, tempNode, NULL, 0);
-	if (okayA && (signA >= 0)) {
-	  okay = 1;
-	  sign = 1;
-	}
-	free_memory(tempNode);
-	break;
-      case ATANH:
-	okayA = evaluateSign(&signA, accessThruMemRef(func)->child1);
-	tempNode = makeAbs(copyTree(accessThruMemRef(func)->child1));
-	tempNode2 = makeDoubleConstant(1.0);
-	okayB = compareConstant(&signB, tempNode, tempNode2, NULL, 0);
-	if (okayA && okayB && (signB < 0)) {
-	  okay = 1;
-	  sign = signA;
-	}
-	free_memory(tempNode);
-	free_memory(tempNode2);
-	break;
+      case UNARY_BASE_FUNC:
+        okay = accessThruMemRef(func)->baseFun->evalsign(&sign, accessThruMemRef(func)->child1);
+        break;
       case POW:
 	okayA = evaluateSign(&signA, accessThruMemRef(func)->child1);
 	okayB = evaluateSign(&signB, accessThruMemRef(func)->child1);
@@ -5068,117 +4897,9 @@ int evaluateSign(int *s, node *rawFunc) {
 	  }
 	}
 	break;
-      case NEG:
-	okay = evaluateSign(&signA, accessThruMemRef(func)->child1);
-	sign = -1 * signA;
-	break;
-      case ABS:
-	okayA = evaluateSign(&signA, accessThruMemRef(func)->child1);
-	if (okayA) {
-	  okay = 1;
-	  if (signA == 0) sign = 0; else sign = 1;
-	}
-	break;
-      case DOUBLE:
-	break;
-      case SINGLE:
-	break;
-      case QUAD:
-	break;
-      case HALFPRECISION:
-	break;
-      case DOUBLEDOUBLE:
-	break;
-      case TRIPLEDOUBLE:
-	break;
-      case ERF:
-	okay = evaluateSign(&sign, accessThruMemRef(func)->child1);
-	break;
-      case ERFC:
-	okay = 1;
-	sign = 1;
-	break;
-      case LOG_1P:
-	tempNode = makeDoubleConstant(-1.0);
-	okayA = compareConstant(&signA, accessThruMemRef(func)->child1, tempNode, NULL, 0);
-	okayB = evaluateSign(&signB, accessThruMemRef(func)->child1);
-	if (okayA && okayB && (signA > 0)) {
-	  okay = 1;
-	  sign = signB;
-	}
-	free_memory(tempNode);
-	break;
-      case EXP_M1:
-	okay = evaluateSign(&sign, accessThruMemRef(func)->child1);
-	break;
-      case DOUBLEEXTENDED:
-	break;
       case LIBRARYFUNCTION:
 	break;
       case PROCEDUREFUNCTION:
-	break;
-      case CEIL:
-	okayA = evaluateSign(&signA, accessThruMemRef(func)->child1);
-	tempNode = makeDoubleConstant(-1.0);
-	if (okayA)
-	  okayB = compareConstant(&signB, accessThruMemRef(func)->child1, tempNode, NULL, 0);
-	else
-	  okayB = 0;
-	if (okayA && okayB) {
-	  okay = 1;
-	  if (signB <= 0) {
-	    sign = -1;
-	  } else {
-	    if (signA <= 0) {
-	      sign = 0;
-	    } else {
-	      sign = 1;
-	    }
-	  }
-	}
-	free_memory(tempNode);
-	break;
-      case FLOOR:
-	okayA = evaluateSign(&signA, accessThruMemRef(func)->child1);
-	tempNode = makeDoubleConstant(1.0);
-	if (okayA)
-	  okayB = compareConstant(&signB, accessThruMemRef(func)->child1, tempNode, NULL, 0);
-	else
-	  okayB = 0;
-	if (okayA && okayB) {
-	  okay = 1;
-	  if (signA < 0) {
-	    sign = -1;
-	  } else {
-	    if (signB < 0) {
-	      sign = 0;
-	    } else {
-	      sign = 1;
-	    }
-	  }
-	}
-	free_memory(tempNode);
-	break;
-      case NEARESTINT:
-	okayA = evaluateSign(&signA, accessThruMemRef(func)->child1);
-	tempNode = makeDoubleConstant(1.0);
-	if (okayA)
-	  okayB = compareConstant(&signB, accessThruMemRef(func)->child1, tempNode, NULL, 0);
-	else
-	  okayB = 0;
-	if (okayA && okayB) {
-	  okay = 1;
-	  if (signA < 0) {
-	    sign = -1;
-	  } else {
-	    if (signB < 0) {
-	      sign = 0;
-	    } else {
-	      sign = 1;
-	    }
-	  }
-	}
-	free_memory(tempNode);
 	break;
       case PI_CONST:
 	okay = 1;

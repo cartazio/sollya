@@ -73,22 +73,21 @@
 #define ASINH 14
 #define ACOSH 15
 #define ATANH 16
-#define NEG 17
-#define ABS 18
-#define DOUBLE 19
-#define DOUBLEDOUBLE 20
-#define TRIPLEDOUBLE 21
-#define ERF 22
-#define ERFC 23
-#define LOG_1P 24
-#define EXP_M1 25
-#define DOUBLEEXTENDED 26
-#define CEIL 27
-#define FLOOR 28
-#define SINGLE 29
-#define NEARESTINT 30
-#define HALFPRECISION 31
-#define QUAD 32
+#define ABS 17
+#define DOUBLE 18
+#define DOUBLEDOUBLE 19
+#define TRIPLEDOUBLE 20
+#define ERF 21
+#define ERFC 22
+#define LOG_1P 23
+#define EXP_M1 24
+#define DOUBLEEXTENDED 25
+#define CEIL 26
+#define FLOOR 27
+#define SINGLE 28
+#define NEARESTINT 39
+#define HALFPRECISION 30
+#define QUAD 31
 
 typedef struct baseFunctionStruct baseFunction;
 struct baseFunctionStruct
@@ -100,6 +99,11 @@ struct baseFunctionStruct
   int handledByImplementconst; /* A boolean. Functions that must not be handled by implementconstant are those functions having a discontinuity at a representable point */
   void (*baseAutodiff)(sollya_mpfi_t *, sollya_mpfi_t, int, int *); /* Computes the vector of the f^(k)(x0)/k!, k=0..n. The last parameter is a silent parameter */
   int (*interval_eval)(sollya_mpfi_t, sollya_mpfi_t); /* Performs an interval evaluation ``à la'' mpfi */
+  int (*point_eval)(mpfr_t, mpfr_t, gmp_rnd_t); /* Performs an evaluation ``à la'' mpfr */
+  (node *)(*diff_expr)(node *); /* If g if the argument, returns a tree representing diff(f o g) */
+  (node *)(*simplify)(node *); /* If g is the argument (supposed already simplified as much as possible), returns a tree representing a simplification
+                                  (without introducing errors) of f(g). Notice that g must either be used (eaten up) to construct the new tree, or be freed by the function  */
+  int (*evalsign)(int *, node *); /* If s and g are the arguments, tries to determine the sign of f(g) assuming that g is a constant expression. In case of success, the sign is assigned to variable s and 1 is returned. Otherwise, s is left unchanged and 0 is returned */
 };
 
 
@@ -170,4 +174,3 @@ node *makeAcosh(node *op1);
 node *makeAtanh(node *op1);
 
 #endif /* ifdef BASE_FUNCTIONS */
-
