@@ -271,9 +271,10 @@ node *constructPolynomial(mpfr_t *coeff, chain *monomials, mp_prec_t prec) {
    (which derivative is f_diff) in the interval [a;b]
    using x0 as an initial guess of the zero
    If n=0 the algorithm stops when the computed zero is
-   a precise estimation of the real zero.
+   an estimation of the real zero, with an accuracy of
+   approximately prec bits.
    If n<>0, n steps are computed.
-   The algorithm uses Newton's method
+   The algorithm uses Newton's method.
    It is assumed that f(a)f(b)<=0 and x0 in [a;b]
    If x0=NULL the algorithm is free to use any initial guess
 */
@@ -393,9 +394,9 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
   if (!skip_step1) {
     mpfr_init2(epsa, prec);
     mpfr_init2(epsb, prec);
-    mpfr_init2(fepsa, prec);
-    mpfr_init2(fepsb, prec);
-    mpfr_init2(f0, prec);
+    mpfr_init2(fepsa, 12);
+    mpfr_init2(fepsb, 12);
+    mpfr_init2(f0, 12);
 
     mpfr_set_si(epsa, -1, GMP_RNDU);
     mpfr_div_2ui(epsa, epsa, 2*prec, GMP_RNDU);
@@ -411,7 +412,7 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
        -1 is coded by 2
        NaN is coded by 3
     */
-    r = evaluateFaithfulWithCutOffFast(fepsa, f, f_diff, epsa, zero_mpfr, prec);
+    r = evaluateFaithfulWithCutOffFast(fepsa, f, f_diff, epsa, zero_mpfr, 3);
     if(r==0) mpfr_set_d(fepsa,0,GMP_RNDN);
     if (!mpfr_number_p(fepsa)) sgnfepsa = 3;
     else {
@@ -419,7 +420,7 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
       if (sgnfepsa!=0) sgnfepsa = (sgnfepsa>0) ? 1 : 2;
     }
 
-    r = evaluateFaithfulWithCutOffFast(f0, f, f_diff, zero_mpfr, zero_mpfr, prec);
+    r = evaluateFaithfulWithCutOffFast(f0, f, f_diff, zero_mpfr, zero_mpfr, 3);
     if(r==0) mpfr_set_d(f0,0,GMP_RNDN);
     if (!mpfr_number_p(f0)) sgnf0 = 3;
     else {
@@ -427,7 +428,7 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
       if (sgnf0!=0) sgnf0 = (sgnf0>0) ? 1 : 2;
     }
 
-    r = evaluateFaithfulWithCutOffFast(fepsb, f, f_diff, epsb, zero_mpfr, prec);
+    r = evaluateFaithfulWithCutOffFast(fepsb, f, f_diff, epsb, zero_mpfr, 3);
     if(r==0) mpfr_set_d(fepsb,0,GMP_RNDN);
     if (!mpfr_number_p(fepsb)) sgnfepsb = 3;
     else {
@@ -605,7 +606,7 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
   if (!stop_algo) {
     mpfr_init2(x, prec);
     mpfr_init2(xNew, prec);
-    mpfr_init2(yNew, prec);
+    mpfr_init2(yNew, 12);
     mpfr_init2(tmp_mpfr, 53);
 
     if(x0!=NULL) mpfr_set(x,*x0,GMP_RNDN);
@@ -630,6 +631,7 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
     /* Main loop */
     nbr_iter = 0;
     while(!stop_algo) {
+      /* TODO: here we might adapt the precision of xNew by doubling it at each step */
       r = evaluateFaithfulWithCutOffFast(xNew, iterator, NULL, x, zero_mpfr, prec);
       if(r==0) mpfr_set_d(xNew,0,GMP_RNDN);
 
@@ -651,7 +653,7 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
 	}
       }
 
-      r = evaluateFaithfulWithCutOffFast(yNew, f, f_diff, xNew, zero_mpfr, prec); /* yNew=f[xNew] */
+      r = evaluateFaithfulWithCutOffFast(yNew, f, f_diff, xNew, zero_mpfr, 3); /* yNew=f[xNew] */
       if(r==0) mpfr_set_d(yNew, 0, GMP_RNDN);
 
       if (mpfr_number_p(yNew)) {
@@ -709,16 +711,6 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
 void newton(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, mp_prec_t prec) {
   findZero(res, f, f_diff, a, b, sgnfa, NULL, 0, prec);
   return;
-}
-
-/* Yet another wrapper compatible with Christoph's old newtonMPFR routine */
-int newtonFaithful(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, mp_prec_t prec) {
-  mpfr_t yA;
-  mpfr_init2(yA,prec);
-  evaluateFaithful(yA,f,a,prec);
-  findZero(res, f, f_diff, a, b, mpfr_sgn(yA), NULL, 0, prec);
-  mpfr_clear(yA);
-  return 1;
 }
 
 /* Finds the zeros of a function on an interval. */
