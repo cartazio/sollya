@@ -121,6 +121,8 @@ assignment.c \
 assignment.h \
 autodiff.c \
 autodiff.h \
+base-functions.c \
+base-functions.h \
 chain.c \
 chain.h \
 double.c \

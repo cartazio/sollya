@@ -162,7 +162,7 @@ node *headFunction(node *tree) {
     break;
   case UNARY_BASE_FUNC:
     copy = (node *) safeMalloc(sizeof(node));
-    copy->nodeType = tree->nodeType;
+    copy->nodeType = UNARY_BASE_FUNC;
     copy->baseFun = tree->baseFun;
     copy->child1 = makeVariable();
     break;
@@ -470,6 +470,7 @@ int tryMatchExtendedPureTree(chain **associations, node *thingToMatch, node *pos
     /* Unary functions: we have a match if we have a match on recursion
        Possible associations are established on recursion.
     */
+    if (accessThruMemRef(possibleMatcher)->baseFun != accessThruMemRef(thingToMatch)->baseFun) return 0;
     return tryMatchExtendedPureTree(associations, accessThruMemRef(thingToMatch)->child1, accessThruMemRef(possibleMatcher)->child1);
     break;
   case PI_CONST:

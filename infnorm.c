@@ -4638,6 +4638,9 @@ node *convertConstantToFunctionInPiInner(node *tree) {
   case 1:
     res = (node *) safeMalloc(sizeof(node));
     res->nodeType = tree->nodeType;
+    if (tree->nodeType == UNARY_BASE_FUNC) {
+      res->baseFun = tree->baseFun;
+    }
     if (tree->nodeType == LIBRARYFUNCTION) {
       res->libFun = tree->libFun;
       res->libFunDeriv = tree->libFunDeriv;
@@ -4749,12 +4752,11 @@ int compareConstant(int *cmp, node *func1, node *func2, node *difference, int do
 	free_memory(tempNode);
       }
       if (!okay) {
-	if (((accessThruMemRef(func1)->nodeType == EXP) && (accessThruMemRef(func2)->nodeType == EXP)) ||
-	    ((accessThruMemRef(func1)->nodeType == SINH) && (accessThruMemRef(func2)->nodeType == SINH)) ||
-	    ((accessThruMemRef(func1)->nodeType == TANH) && (accessThruMemRef(func2)->nodeType == TANH)) ||
-	    ((accessThruMemRef(func1)->nodeType == ASINH) && (accessThruMemRef(func2)->nodeType == ASINH)) ||
-	    ((accessThruMemRef(func1)->nodeType == ERF) && (accessThruMemRef(func2)->nodeType == ERF)) ||
-	    ((accessThruMemRef(func1)->nodeType == EXP_M1) && (accessThruMemRef(func2)->nodeType == EXP_M1))) {
+	if ( (accessThruMemRef(func1)->nodeType == UNARY_BASE_FUNC) &&
+             (accessThruMemRef(func2)->nodeType == UNARY_BASE_FUNC) &&
+             (accessThruMemRef(func1)->baseFun == accessThruMemRef(func2)->baseFun) &&
+             (accessThruMemRef(func1)->baseFun->isDefinedEverywhere) &&
+             (accessThruMemRef(func1)->baseFun->monotonicity == INCREASING) ) {
 	  okayA = compareConstant(&signA, accessThruMemRef(func1)->child1, accessThruMemRef(func2)->child1, NULL, 0);
 	  if (okayA) {
 	    okay = 1;
@@ -4762,8 +4764,13 @@ int compareConstant(int *cmp, node *func1, node *func2, node *difference, int do
 	  }
 	}
 	if (!okay) {
-	  if (((accessThruMemRef(func1)->nodeType == ERFC) && (accessThruMemRef(func2)->nodeType == ERFC)) ||
-	      ((accessThruMemRef(func1)->nodeType == NEG) && (accessThruMemRef(func2)->nodeType == NEG))) {
+	  if ( ((accessThruMemRef(func1)->nodeType == NEG) && (accessThruMemRef(func2)->nodeType == NEG)) ||
+               ( (accessThruMemRef(func1)->nodeType == UNARY_BASE_FUNC) &&
+                 (accessThruMemRef(func2)->nodeType == UNARY_BASE_FUNC) &&
+                 (accessThruMemRef(func1)->baseFun == accessThruMemRef(func2)->baseFun) &&
+                 (accessThruMemRef(func1)->baseFun->isDefinedEverywhere) &&
+                 (accessThruMemRef(func1)->baseFun->monotonicity == DECREASING) )
+               ) {
 	    okayA = compareConstant(&signA, accessThruMemRef(func1)->child1, accessThruMemRef(func2)->child1, NULL, 0);
 	    if (okayA) {
 	      okay = 1;

@@ -87,7 +87,10 @@
 
 #define SOLLYA_MAX_ARG_ARRAY_ALLOC_SIZE 33554432ull
 
+#ifndef NODE_TYPEDEF
+#define NODE_TYPEDEF
 typedef struct nodeStruct node;
+#endif
 
 struct nodeStruct
 {
@@ -175,6 +178,7 @@ static inline node* accessThruMemRef(node *tree) {
 
 void printTree(node *tree);
 node* differentiate(node *tree);
+node* differentiateUnsimplified(node *tree);
 node* simplifyTree(node *tree);
 void free_memory(node *tree);
 int evaluateConstantExpression(mpfr_t result, node *tree, mp_prec_t prec);

@@ -47,13 +47,14 @@
 
 */
 
+#include <stdlib.h>
 #include "general.h"
 #include "expression.h"
 #include "base-functions.h"
 #include "autodiff.h"
 #include "mpfi-compat.h"
 #include "infnorm.h"
-
+#include "double.h"
 
 
 /******************************************************************************/
@@ -64,7 +65,7 @@
 
 void sqrt_diff(sollya_mpfi_t *res, sollya_mpfi_t x, int n, int *silent) {
   mpfr_t oneHalf;
-  mpfr_init2(oneHalf, prec);
+  mpfr_init2(oneHalf, 12);
   mpfr_set_d(oneHalf, 0.5, GMP_RNDN);
   constantPower_diff(res, x, oneHalf, n, silent);
   mpfr_clear(oneHalf);
@@ -1007,7 +1008,7 @@ void double_diff(sollya_mpfi_t *res, sollya_mpfi_t x, int n, int *silent){
   mpfr_clear(temp);
 }
 
-void double_double_diff(sollya_mpfi_t *res, sollya_mpfi_t x, int n, int *silent){
+void doubledouble_diff(sollya_mpfi_t *res, sollya_mpfi_t x, int n, int *silent){
   int i;
   mpfr_t temp;
   mp_prec_t prec;
@@ -1027,7 +1028,7 @@ void double_double_diff(sollya_mpfi_t *res, sollya_mpfi_t x, int n, int *silent)
   mpfr_clear(temp);
 }
 
-void triple_double_diff(sollya_mpfi_t *res, sollya_mpfi_t x, int n, int *silent){
+void tripledouble_diff(sollya_mpfi_t *res, sollya_mpfi_t x, int n, int *silent){
   int i;
   mpfr_t temp;
   mp_prec_t prec;
@@ -1047,7 +1048,7 @@ void triple_double_diff(sollya_mpfi_t *res, sollya_mpfi_t x, int n, int *silent)
   mpfr_clear(temp);
 }
 
-void double_extended_diff(sollya_mpfi_t *res, sollya_mpfi_t x, int n, int *silent){
+void doubleextended_diff(sollya_mpfi_t *res, sollya_mpfi_t x, int n, int *silent){
   int i;
   mpfr_t temp;
   mp_prec_t prec;
@@ -1153,7 +1154,7 @@ node *exp_diff_expr(node *g) {
 }
 
 node *log_diff_expr(node *g) {
-  return makeMul( makeDiv(makeDoubleConstant(1.0), copyTree(g)),
+  return makeMul( makeDiv(makeConstantDouble(1.0), copyTree(g)),
                   differentiateUnsimplified(g)
                   );
 }
@@ -1217,8 +1218,8 @@ node *acos_diff_expr(node *g) {
 }
 
 node *atan_diff_expr(node *g) {
-  return makeMul( makeDiv(makeDoubleConstant(1.0),
-                          makeAdd(makeDoubleConstant(1.0),
+  return makeMul( makeDiv(makeConstantDouble(1.0),
+                          makeAdd(makeConstantDouble(1.0),
                                   makeMul(copyTree(g), copyTree(g))
                                   )
                           ),
@@ -1319,62 +1320,71 @@ node *abs_diff_expr(node *g) {
 }
 
 node *double_diff_expr(node *g) {
+  UNUSED_PARAM(g);
   printMessage(1,SOLLYA_MSG_DOUBLE_NOT_DIFFERENTIABLE,
                "Warning: the double rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
   return makeConstantDouble(0.0);
 }
 
 node *single_diff_expr(node *g) {
-	printMessage(1,SOLLYA_MSG_SINGLE_NOT_DIFFERENTIABLE,
-		     "Warning: the single rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
+  UNUSED_PARAM(g);
+  printMessage(1,SOLLYA_MSG_SINGLE_NOT_DIFFERENTIABLE,
+               "Warning: the single rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
   return makeConstantDouble(0.0);
 }
 
 node *quad_diff_expr(node *g) {
-	printMessage(1,SOLLYA_MSG_QUAD_NOT_DIFFERENTIABLE,
-		     "Warning: the quad rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
+  UNUSED_PARAM(g);
+  printMessage(1,SOLLYA_MSG_QUAD_NOT_DIFFERENTIABLE,
+               "Warning: the quad rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
   return makeConstantDouble(0.0);
 }
 
 node *halfprecision_diff_expr(node *g) {
-	printMessage(1,SOLLYA_MSG_HALF_NOT_DIFFERENTIABLE,
-		     "Warning: the half-precision rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
+  UNUSED_PARAM(g);
+  printMessage(1,SOLLYA_MSG_HALF_NOT_DIFFERENTIABLE,
+               "Warning: the half-precision rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
   return makeConstantDouble(0.0);
 }
 
 node *doubledouble_diff_expr(node *g) {
-	printMessage(1,SOLLYA_MSG_DOUBLE_DOUBLE_NOT_DIFFERENTIABLE,
-		     "Warning: the double-double rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
+  UNUSED_PARAM(g);
+  printMessage(1,SOLLYA_MSG_DOUBLE_DOUBLE_NOT_DIFFERENTIABLE,
+               "Warning: the double-double rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
   return makeConstantDouble(0.0);
 }
 
 node *tripledouble_diff_expr(node *g) {
-	printMessage(1,SOLLYA_MSG_TRIPLE_DOUBLE_NOT_DIFFERENTIABLE,
-		     "Warning: the triple-double rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
+  UNUSED_PARAM(g);
+  printMessage(1,SOLLYA_MSG_TRIPLE_DOUBLE_NOT_DIFFERENTIABLE,
+               "Warning: the triple-double rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
   return makeConstantDouble(0.0);
 }
 
 node *doubleextended_diff_expr(node *g) {
-	printMessage(1,SOLLYA_MSG_DOUBLEEXTENDED_NOT_DIFFERENTIABLE,
-		     "Warning: the double-extended rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
+  UNUSED_PARAM(g);
+  printMessage(1,SOLLYA_MSG_DOUBLEEXTENDED_NOT_DIFFERENTIABLE,
+               "Warning: the double-extended rounding operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
   return makeConstantDouble(0.0);
 }
 
 node *ceil_diff_expr(node *g) {
-	printMessage(1,SOLLYA_MSG_CEIL_NOT_DIFFERENTIABLE,
-		     "Warning: the ceil operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
+  UNUSED_PARAM(g);	printMessage(1,SOLLYA_MSG_CEIL_NOT_DIFFERENTIABLE,
+                                     "Warning: the ceil operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
   return makeConstantDouble(0.0);
 }
 
 node *floor_diff_expr(node *g) {
-	printMessage(1,SOLLYA_MSG_FLOOR_NOT_DIFFERENTIABLE,
-		     "Warning: the floor operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
+  UNUSED_PARAM(g);
+  printMessage(1,SOLLYA_MSG_FLOOR_NOT_DIFFERENTIABLE,
+               "Warning: the floor operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
   return makeConstantDouble(0.0);
 }
 
 node *nearestint_diff_expr(node *g) {
-	printMessage(1,SOLLYA_MSG_NEARESTINT_NOT_DIFFERENTIABLE,
-		     "Warning: the nearestint operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
+  UNUSED_PARAM(g);
+  printMessage(1,SOLLYA_MSG_NEARESTINT_NOT_DIFFERENTIABLE,
+               "Warning: the nearestint operator is not differentiable.\nReplacing it by a constant function when differentiating.\n");
   return makeConstantDouble(0.0);
 }
 
@@ -1399,7 +1409,7 @@ node *simplify_generic(baseFunction *f, node *g) {
   if (accessThruMemRef(g)->nodeType == CONSTANT) {
     value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
     mpfr_init2(*value, tools_precision);
-    if ( (f->baseFun->point_eval(*value, *(accessThruMemRef(g)->value), GMP_RNDN) == 0) &&
+    if ( (f->point_eval(*value, *(accessThruMemRef(g)->value), GMP_RNDN) == 0) &&
          mpfr_number_p(*value) )  {
       simplified->nodeType = CONSTANT;
       simplified->value = value;
@@ -1423,7 +1433,7 @@ node *simplify_generic(baseFunction *f, node *g) {
 node *simplify_integer_rounding_functions(baseFunction *f, node *g) {
   node *simplified;
   mpfr_t *value;
-  rangetype x, y;
+  rangetype xrange, yrange;
   int ok = 0;
 
   simplified = (node*) safeMalloc(sizeof(node));
@@ -1431,7 +1441,7 @@ node *simplify_integer_rounding_functions(baseFunction *f, node *g) {
   if (accessThruMemRef(g)->nodeType == CONSTANT) {
     value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
     mpfr_init2(*value, tools_precision);
-    if ( (f->baseFun->point_eval(*value, *(accessThruMemRef(g)->value), GMP_RNDN) == 0) &&
+    if ( (f->point_eval(*value, *(accessThruMemRef(g)->value), GMP_RNDN) == 0) &&
          mpfr_number_p(*value) )  {
       simplified->nodeType = CONSTANT;
       simplified->value = value;
@@ -1455,8 +1465,8 @@ node *simplify_integer_rounding_functions(baseFunction *f, node *g) {
     mpfr_set_ui(*(xrange.a),1,GMP_RNDD);
     mpfr_set_ui(*(xrange.b),1,GMP_RNDU);
     evaluateRangeFunction(yrange, g, xrange, 8 * tools_precision);
-    f->baseFun->point_eval(*(xrange.a),*(yrange.a),GMP_RNDD);
-    f->baseFun->point_eval(*(xrange.b),*(yrange.b),GMP_RNDU);
+    f->point_eval(*(xrange.a),*(yrange.a),GMP_RNDD);
+    f->point_eval(*(xrange.b),*(yrange.b),GMP_RNDU);
     if ( mpfr_number_p(*(xrange.a)) &&
          mpfr_number_p(*(xrange.b)) &&
          (mpfr_cmp(*(xrange.a),*(xrange.b)) == 0) ) {
@@ -1486,6 +1496,22 @@ node *simplify_integer_rounding_functions(baseFunction *f, node *g) {
   return simplified;
 }
 
+node *simplify_exp(node *g) { return simplify_generic(basefun_exp, g); }
+node *simplify_log2(node *g) { return simplify_generic(basefun_log2, g); }
+node *simplify_log10(node *g) { return simplify_generic(basefun_log10, g); }
+node *simplify_sin(node *g) { return simplify_generic(basefun_sin, g); }
+node *simplify_cos(node *g) { return simplify_generic(basefun_cos, g); }
+node *simplify_tan(node *g) { return simplify_generic(basefun_tan, g); }
+node *simplify_sinh(node *g) { return simplify_generic(basefun_sinh, g); }
+node *simplify_cosh(node *g) { return simplify_generic(basefun_cosh, g); }
+node *simplify_tanh(node *g) { return simplify_generic(basefun_tanh, g); }
+node *simplify_asinh(node *g) { return simplify_generic(basefun_asinh, g); }
+node *simplify_acosh(node *g) { return simplify_generic(basefun_acosh, g); }
+node *simplify_atanh(node *g) { return simplify_generic(basefun_atanh, g); }
+node *simplify_erf(node *g) { return simplify_generic(basefun_erf, g); }
+node *simplify_erfc(node *g) { return simplify_generic(basefun_erfc, g); }
+node *simplify_log1p(node *g) { return simplify_generic(basefun_log1p, g); }
+node *simplify_expm1(node *g) { return simplify_generic(basefun_expm1, g); }
 
 node *simplify_sqrt(node *g) {
   node *simplified;
@@ -1788,7 +1814,7 @@ node *simplify_abs(node *g) {
 node *simplify_double(node *g) {
   node *simplified;
   mpfr_t *value;
-  rangetype x, y;
+  rangetype xrange, yrange;
 
   simplified = (node*) safeMalloc(sizeof(node));
   if (accessThruMemRef(g)->nodeType == CONSTANT) {
@@ -1856,7 +1882,7 @@ node *simplify_double(node *g) {
 node *simplify_single(node *g) {
   node *simplified;
   mpfr_t *value;
-  rangetype x, y;
+  rangetype xrange, yrange;
 
   simplified = (node*) safeMalloc(sizeof(node));
   if (accessThruMemRef(g)->nodeType == CONSTANT) {
@@ -1924,7 +1950,7 @@ node *simplify_single(node *g) {
 node *simplify_quad(node *g) {
   node *simplified;
   mpfr_t *value;
-  rangetype x, y;
+  rangetype xrange, yrange;
 
   simplified = (node*) safeMalloc(sizeof(node));
   if (accessThruMemRef(g)->nodeType == CONSTANT) {
@@ -1992,7 +2018,7 @@ node *simplify_quad(node *g) {
 node *simplify_halfprecision(node *g) {
   node *simplified;
   mpfr_t *value;
-  rangetype x, y;
+  rangetype xrange, yrange;
 
   simplified = (node*) safeMalloc(sizeof(node));
   if (accessThruMemRef(g)->nodeType == CONSTANT) {
@@ -2060,7 +2086,7 @@ node *simplify_halfprecision(node *g) {
 node *simplify_doubledouble(node *g) {
   node *simplified;
   mpfr_t *value;
-  rangetype x, y;
+  rangetype xrange, yrange;
 
   simplified = (node*) safeMalloc(sizeof(node));
   if (accessThruMemRef(g)->nodeType == CONSTANT) {
@@ -2128,7 +2154,7 @@ node *simplify_doubledouble(node *g) {
 node *simplify_tripledouble(node *g) {
   node *simplified;
   mpfr_t *value;
-  rangetype x, y;
+  rangetype xrange, yrange;
 
   simplified = (node*) safeMalloc(sizeof(node));
   if (accessThruMemRef(g)->nodeType == CONSTANT) {
@@ -2196,7 +2222,7 @@ node *simplify_tripledouble(node *g) {
 node *simplify_doubleextended(node *g) {
   node *simplified;
   mpfr_t *value;
-  rangetype x, y;
+  rangetype xrange, yrange;
 
   simplified = (node*) safeMalloc(sizeof(node));
   if (accessThruMemRef(g)->nodeType == CONSTANT) {
@@ -2260,7 +2286,9 @@ node *simplify_doubleextended(node *g) {
   return simplified;
 }
 
-
+node *simplify_floor(node *g) { return simplify_integer_rounding_functions(basefun_floor, g); }
+node *simplify_ceil(node *g) { return simplify_integer_rounding_functions(basefun_ceil, g); }
+node *simplify_nearestint(node *g) { return simplify_integer_rounding_functions(basefun_nearestint, g); }
 
 
 
@@ -2356,7 +2384,7 @@ int sqrt_evalsign(int *sign, node *c) {
 }
 
 int exp_evalsign(int *sign, node *c) {
-  int okayA, signA;
+  int signA;
   if (evaluateSign(&signA, c)) { /* TODO: I do not understand why we make a difference, e.g. between exp and cosh */
     *sign = 1;
     return 1;
@@ -2367,7 +2395,7 @@ int exp_evalsign(int *sign, node *c) {
 int log_evalsign(int *sign, node *c) {
   int okayA, signA, okayB, signB;
   node * tempNode;
-  tempNode = makeDoubleConstant(1.0);
+  tempNode = makeConstantDouble(1.0);
   okayA = compareConstant(&signA, c, tempNode, NULL, 0);
   free_memory(tempNode);
   okayB = evaluateSign(&signB, c);
@@ -2377,6 +2405,9 @@ int log_evalsign(int *sign, node *c) {
   }
   return 0;
 }
+
+int log2_evalsign(int *sign, node *c) { return log_evalsign(sign, c); }
+int log10_evalsign(int *sign, node *c) { return log_evalsign(sign, c); }
 
 int sin_evalsign(int *sign, node *c) {
   int okayA, signA;
@@ -2417,7 +2448,7 @@ int asin_evalsign(int *sign, node *c) {
   node *tempNode, *tempNode2;
   okayA = evaluateSign(&signA, c);
   tempNode = makeAbs(copyTree(c));
-  tempNode2 = makeDoubleConstant(1.0);
+  tempNode2 = makeConstantDouble(1.0);
   okayB = compareConstant(&signB, tempNode, tempNode2, NULL, 0);
   free_memory(tempNode);
   free_memory(tempNode2);
@@ -2434,7 +2465,7 @@ int acos_evalsign(int *sign, node *c) {
   node *tempNode, *tempNode2;
   okayA = evaluateSign(&signA, c);
   tempNode = makeAbs(copyTree(c));
-  tempNode2 = makeDoubleConstant(1.0);
+  tempNode2 = makeConstantDouble(1.0);
   okayB = compareConstant(&signB, tempNode, tempNode2, NULL, 0);
   okayC = compareConstant(&signC, c, tempNode2, NULL, 0);
   free_memory(tempNode);
@@ -2451,15 +2482,26 @@ int odd_increasing_function_evalsign(int *sign, node *c) {
   return evaluateSign(sign, c);
 }
 
+int atan_evalsign(int *sign, node *c) { return odd_increasing_function_evalsign(sign, c); }
+int sinh_evalsign(int *sign, node *c) { return odd_increasing_function_evalsign(sign, c); }
+int tanh_evalsign(int *sign, node *c) { return odd_increasing_function_evalsign(sign, c); }
+int asinh_evalsign(int *sign, node *c) { return odd_increasing_function_evalsign(sign, c); }
+int erf_evalsign(int *sign, node *c) { return odd_increasing_function_evalsign(sign, c); }
+int expm1_evalsign(int *sign, node *c) { return odd_increasing_function_evalsign(sign, c); }
+
 int positive_function_evalsign(int *sign, node *c) {
+  UNUSED_PARAM(c);
   *sign = 1;
   return 1;
 }
 
+int cosh_evalsign(int *sign, node *c) { return positive_function_evalsign(sign, c); }
+int erfc_evalsign(int *sign, node *c) { return positive_function_evalsign(sign, c); }
+
 int acosh_evalsign(int *sign, node *c) {
   int okayA, signA;
   node *tempNode;
-  tempNode = makeDoubleConstant(1.0);
+  tempNode = makeConstantDouble(1.0);
   okayA = compareConstant(&signA, c, tempNode, NULL, 0);
   free_memory(tempNode);
   if (okayA && (signA >= 0)) {
@@ -2474,7 +2516,7 @@ int atanh_evalsign(int *sign, node *c) {
   node *tempNode, *tempNode2;
   okayA = evaluateSign(&signA, c);
   tempNode = makeAbs(copyTree(c));
-  tempNode2 = makeDoubleConstant(1.0);
+  tempNode2 = makeConstantDouble(1.0);
   okayB = compareConstant(&signB, tempNode, tempNode2, NULL, 0);
   free_memory(tempNode);
   free_memory(tempNode2);
@@ -2501,10 +2543,18 @@ int void_evalsign(int *sign, node *c) {
   return 0;
 }
 
+int double_evalsign(int *sign, node *c) { return void_evalsign(sign, c); }
+int single_evalsign(int *sign, node *c) { return void_evalsign(sign, c); }
+int quad_evalsign(int *sign, node *c) { return void_evalsign(sign, c); }
+int halfprecision_evalsign(int *sign, node *c) { return void_evalsign(sign, c); }
+int doubledouble_evalsign(int *sign, node *c) { return void_evalsign(sign, c); }
+int tripledouble_evalsign(int *sign, node *c) { return void_evalsign(sign, c); }
+int doubleextended_evalsign(int *sign, node *c) { return void_evalsign(sign, c); }
+
 int log1p_evalsign(int *sign, node *c) {
   int okayA, signA, okayB, signB;
-  node *tempNode, *tempNode2;
-  tempNode = makeDoubleConstant(-1.0);
+  node *tempNode;
+  tempNode = makeConstantDouble(-1.0);
   okayA = compareConstant(&signA, c, tempNode, NULL, 0);
   okayB = evaluateSign(&signB, c);
   free_memory(tempNode);
@@ -2517,9 +2567,9 @@ int log1p_evalsign(int *sign, node *c) {
 
 int ceil_evalsign(int *sign, node *c) {
   int okay, s, okayA, signA, okayB, signB;
-  node *tempNode, *tempNode2;
+  node *tempNode;
   okayA = evaluateSign(&signA, c);
-  tempNode = makeDoubleConstant(-1.0);
+  tempNode = makeConstantDouble(-1.0);
   if (okayA)
     okayB = compareConstant(&signB, c, tempNode, NULL, 0);
   else
@@ -2543,9 +2593,9 @@ int ceil_evalsign(int *sign, node *c) {
 
 int floor_evalsign(int *sign, node *c) {
   int okay, s, okayA, signA, okayB, signB;
-  node *tempNode, *tempNode2;
+  node *tempNode;
   okayA = evaluateSign(&signA, c);
-  tempNode = makeDoubleConstant(1.0);
+  tempNode = makeConstantDouble(1.0);
   if (okayA)
     okayB = compareConstant(&signB, c, tempNode, NULL, 0);
   else
@@ -2567,7 +2617,7 @@ int floor_evalsign(int *sign, node *c) {
   return okay;
 }
 
-
+int nearestint_evalsign(int *sign, node *c) { return floor_evalsign(sign, c); } /* TODO: really? */
 
 
 
@@ -2578,72 +2628,72 @@ int floor_evalsign(int *sign, node *c) {
 /*                                                                            */
 /******************************************************************************/
 
-int double_point_eval(mpfr_t res, mpfr_t x, gmp_rnd_t rnd) {
+int double_point_eval(mpfr_t res, mpfr_t x, mp_rnd_t rnd) {
   mpfr_t myResult;
   int r;
-  mpfr_init2(myResult, ((mpfr_get_prec(result) > 64)? mpfr_get_prec(result) : 64));
+  mpfr_init2(myResult, ((mpfr_get_prec(res) > 64)? mpfr_get_prec(res) : 64));
   mpfr_round_to_double(myResult, x);
-  r = mpfr_set(result, myResult, rnd);
+  r = mpfr_set(res, myResult, rnd);
   mpfr_clear(myResult);
   return r;
 }
 
-int single_point_eval(mpfr_t res, mpfr_t x, gmp_rnd_t rnd) {
+int single_point_eval(mpfr_t res, mpfr_t x, mp_rnd_t rnd) {
   mpfr_t myResult;
   int r;
-  mpfr_init2(myResult, ((mpfr_get_prec(result) > 64)? mpfr_get_prec(result) : 64));
+  mpfr_init2(myResult, ((mpfr_get_prec(res) > 64)? mpfr_get_prec(res) : 64));
   mpfr_round_to_single(myResult, x);
-  r = mpfr_set(result, myResult, rnd);
+  r = mpfr_set(res, myResult, rnd);
   mpfr_clear(myResult);
   return r;
 }
 
-int quad_point_eval(mpfr_t res, mpfr_t x, gmp_rnd_t rnd) {
+int quad_point_eval(mpfr_t res, mpfr_t x, mp_rnd_t rnd) {
   mpfr_t myResult;
   int r;
-  mpfr_init2(myResult, ((mpfr_get_prec(result) > 128)? mpfr_get_prec(result) : 128));
+  mpfr_init2(myResult, ((mpfr_get_prec(res) > 128)? mpfr_get_prec(res) : 128));
   mpfr_round_to_quad(myResult, x);
-  r = mpfr_set(result, myResult, rnd);
+  r = mpfr_set(res, myResult, rnd);
   mpfr_clear(myResult);
   return r;
 }
 
-int halfprecision_point_eval(mpfr_t res, mpfr_t x, gmp_rnd_t rnd) {
+int halfprecision_point_eval(mpfr_t res, mpfr_t x, mp_rnd_t rnd) {
   mpfr_t myResult;
   int r;
-  mpfr_init2(myResult, ((mpfr_get_prec(result) > 64)? mpfr_get_prec(result) : 64));
+  mpfr_init2(myResult, ((mpfr_get_prec(res) > 64)? mpfr_get_prec(res) : 64));
   mpfr_round_to_halfprecision(myResult, x);
-  r = mpfr_set(result, myResult, rnd);
+  r = mpfr_set(res, myResult, rnd);
   mpfr_clear(myResult);
   return r;
 }
 
-int doubledouble_point_eval(mpfr_t res, mpfr_t x, gmp_rnd_t rnd) {
+int doubledouble_point_eval(mpfr_t res, mpfr_t x, mp_rnd_t rnd) {
   mpfr_t myResult;
   int r;
-  mpfr_init2(myResult, ((mpfr_get_prec(result) > 129)? mpfr_get_prec(result) : 129));
+  mpfr_init2(myResult, ((mpfr_get_prec(res) > 129)? mpfr_get_prec(res) : 129));
   mpfr_round_to_doubledouble(myResult, x);
-  r = mpfr_set(result, myResult, rnd);
+  r = mpfr_set(res, myResult, rnd);
   mpfr_clear(myResult);
   return r;
 }
 
-int tripledouble_point_eval(mpfr_t res, mpfr_t x, gmp_rnd_t rnd) {
+int tripledouble_point_eval(mpfr_t res, mpfr_t x, mp_rnd_t rnd) {
   mpfr_t myResult;
   int r;
-  mpfr_init2(myResult, ((mpfr_get_prec(result) > 200)? mpfr_get_prec(result) : 200));
+  mpfr_init2(myResult, ((mpfr_get_prec(res) > 200)? mpfr_get_prec(res) : 200));
   mpfr_round_to_tripledouble(myResult, x);
-  r = mpfr_set(result, myResult, rnd);
+  r = mpfr_set(res, myResult, rnd);
   mpfr_clear(myResult);
   return r;
 }
 
-int doubleextended_point_eval(mpfr_t res, mpfr_t x, gmp_rnd_t rnd) {
+int doubleextended_point_eval(mpfr_t res, mpfr_t x, mp_rnd_t rnd) {
   mpfr_t myResult;
   int r;
-  mpfr_init2(myResult, ((mpfr_get_prec(result) > 128)? mpfr_get_prec(result) : 128));
+  mpfr_init2(myResult, ((mpfr_get_prec(res) > 128)? mpfr_get_prec(res) : 128));
   mpfr_round_to_doubleextended(myResult, x);
-  r = mpfr_set(result, myResult, rnd);
+  r = mpfr_set(res, myResult, rnd);
   mpfr_clear(myResult);
   return r;
 }
@@ -2660,483 +2710,611 @@ int doubleextended_point_eval(mpfr_t res, mpfr_t x, gmp_rnd_t rnd) {
 /******************************************************************************/
 
 baseFunction basefun_sqrt_obj = {
-  baseFunctionCode = SQRT;
-  functionName = "sqrt";
-  xmlString = "<root/>\n";
-  mpfrName = "mpfr_sqrt";
-  handledByImplementconst = 1;
-  baseAutodiff = sqrt_diff;
-  interval_eval = sollya_mpfi_sqrt;
-  point_eval = mpfr_sqrt;
-  diff_expr = sqrt_diff_expr;
-  simplify = simplify_sqrt;
-  evalsign = sqrt_evalsign;
-}
+  .baseFunctionCode = SQRT,
+  .functionName = "sqrt",
+  .xmlString = "<root/>\n",
+  .mpfrName = "mpfr_sqrt",
+  .handledByImplementconst = 1,
+  .isDefinedEverywhere = 0,
+  .onlyZeroIsZero = 1,
+  .doesNotVanish = 0,
+  .monotonicity = INCREASING,
+  .baseAutodiff = sqrt_diff,
+  .interval_eval = sollya_mpfi_sqrt,
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_sqrt),
+  .diff_expr = sqrt_diff_expr,
+  .simplify = simplify_sqrt,
+  .evalsign = sqrt_evalsign
+};
 baseFunction *basefun_sqrt = &basefun_sqrt_obj;
 
 baseFunction basefun_exp_obj = {
-  baseFunctionCode = EXP;
-  functionName = "exp";
-  xmlString = "<exp/>\n";
-  mpfrName = "mpfr_exp";
-  handledByImplementconst = 1;
-  baseAutodiff = exp_diff;
-  interval_eval = sollya_mpfi_exp;
-  point_eval = mpfr_exp;
-  diff_expr = exp_diff_expr;
-  simplify = simplify_exp;
-  evalsign = exp_evalsign;
-}
+  .baseFunctionCode = EXP,
+  .functionName = "exp",
+  .xmlString = "<exp/>\n",
+  .mpfrName = "mpfr_exp",
+  .handledByImplementconst = 1,
+  .isDefinedEverywhere = 1,
+  .onlyZeroIsZero = 0,
+  .doesNotVanish = 1,
+  .monotonicity = INCREASING,
+  .baseAutodiff = exp_diff,
+  .interval_eval = sollya_mpfi_exp,
+  .point_eval =  (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_exp),
+  .diff_expr = exp_diff_expr,
+  .simplify = simplify_exp,
+  .evalsign = exp_evalsign
+};
 baseFunction *basefun_exp = &basefun_exp_obj;
 
 baseFunction basefun_log_obj = {
-  baseFunctionCode = LOG;
-  functionName = "log";
-  xmlString = "<ln/>\n";
-  mpfrName = "mpfr_log";
-  handledByImplementconst = 1;
-  baseAutodiff = log_diff;
-  interval_eval = sollya_mpfi_log;
-  point_eval = mpfr_log;
-  diff_expr = log_diff_expr;
-  simplify = simplify_log;
-  evalsign = log_evalsign;
-}
+  .baseFunctionCode = LOG,
+  .functionName = "log",
+  .xmlString = "<ln/>\n",
+  .mpfrName = "mpfr_log",
+  .handledByImplementconst = 1,
+  .isDefinedEverywhere = 0,
+  .onlyZeroIsZero = 0,
+  .doesNotVanish = 0,
+  .monotonicity = INCREASING,
+  .baseAutodiff = log_diff,
+  .interval_eval = sollya_mpfi_log,
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_log),
+  .diff_expr = log_diff_expr,
+  .simplify = simplify_log,
+  .evalsign = log_evalsign
+};
 baseFunction *basefun_log = &basefun_log_obj;
 
 baseFunction basefun_log2_obj = {
-  baseFunctionCode = LOG_2;
-  functionName = "log2";
-  xmlString = "<log/><logbase><cn>2</cn></logbase>\n";
-  mpfrName = "mpfr_log2";
-  handledByImplementconst = 1;
-  baseAutodiff = log2_diff;
-  interval_eval = sollya_mpfi_log2;
-  point_eval = mpfr_log2;
-  diff_expr = log2_diff_expr;
-  simplify = simplify_log2;
-  evalsign = log2_evalsign;
-}
+  .baseFunctionCode = LOG_2,
+  .functionName = "log2",
+  .xmlString = "<log/><logbase><cn>2</cn></logbase>\n",
+  .mpfrName = "mpfr_log2",
+  .handledByImplementconst = 1,
+  .isDefinedEverywhere = 0,
+  .onlyZeroIsZero = 0,
+  .doesNotVanish = 0,
+  .monotonicity = INCREASING,
+  .baseAutodiff = log2_diff,
+  .interval_eval = sollya_mpfi_log2,
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_log2),
+  .diff_expr = log2_diff_expr,
+  .simplify = simplify_log2,
+  .evalsign = log2_evalsign
+};
 baseFunction *basefun_log2 = &basefun_log2_obj;
 
 baseFunction basefun_log10_obj = {
-  baseFunctionCode = LOG_10;
-  functionName = "log10";
-  xmlString = "<log/>\n";
-  mpfrName = "mpfr_log10";
-  handledByImplementconst = 1;
-  baseAutodiff = log10_diff;
-  interval_eval = sollya_mpfi_log10;
-  point_eval = mpfr_log10;
-  diff_expr = log10_diff_expr;
-  simplify = simplify_log10;
-  evalsign = log10_evalsign;
-}
+  .baseFunctionCode = LOG_10,
+  .functionName = "log10",
+  .xmlString = "<log/>\n",
+  .mpfrName = "mpfr_log10",
+  .handledByImplementconst = 1,
+  .isDefinedEverywhere = 0,
+  .onlyZeroIsZero = 0,
+  .doesNotVanish = 0,
+  .monotonicity = INCREASING,
+  .baseAutodiff = log10_diff,
+  .interval_eval = sollya_mpfi_log10,
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_log10),
+  .diff_expr = log10_diff_expr,
+  .simplify = simplify_log10,
+  .evalsign = log10_evalsign
+};
 baseFunction *basefun_log10 = &basefun_log10_obj;
 
 baseFunction basefun_sin_obj = {
-  baseFunctionCode = SIN;
-  functionName = "sin";
-  xmlString = "<sin/>\n";
-  mpfrName = "mpfr_sin";
-  handledByImplementconst = 1;
-  baseAutodiff = sin_diff;
-  interval_eval = sollya_mpfi_sin;
-  point_eval = mpfr_sin;
-  diff_expr = sin_diff_expr;
-  simplify = simplify_sin;
-  evalsign = sin_evalsign;
-}
+  .baseFunctionCode = SIN,
+  .functionName = "sin",
+  .xmlString = "<sin/>\n",
+  .mpfrName = "mpfr_sin",
+  .handledByImplementconst = 1,
+  .isDefinedEverywhere = 1,
+  .onlyZeroIsZero = 0,
+  .doesNotVanish = 0,
+  .monotonicity = MONOTONICITY_NONE,
+  .baseAutodiff = sin_diff,
+  .interval_eval = sollya_mpfi_sin,
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_sin),
+  .diff_expr = sin_diff_expr,
+  .simplify = simplify_sin,
+  .evalsign = sin_evalsign
+};
 baseFunction *basefun_sin = &basefun_sin_obj;
 
 baseFunction basefun_cos_obj = {
-  baseFunctionCode = COS;
-  functionName = "cos";
-  xmlString = "<cos/>\n";
-  mpfrName = "mpfr_cos";
-  handledByImplementconst = 1;
-  baseAutodiff = cos_diff;
-  interval_eval = sollya_mpfi_cos;
-  point_eval = mpfr_cos;
-  diff_expr = cos_diff_expr;
-  simplify = simplify_cos;
-  evalsign = cos_evalsign;
-}
+  .baseFunctionCode = COS,
+  .functionName = "cos",
+  .xmlString = "<cos/>\n",
+  .mpfrName = "mpfr_cos",
+  .handledByImplementconst = 1,
+  .isDefinedEverywhere = 1,
+  .onlyZeroIsZero = 0,
+  .doesNotVanish = 0,
+  .monotonicity = MONOTONICITY_NONE,
+  .baseAutodiff = cos_diff,
+  .interval_eval = sollya_mpfi_cos,
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_cos),
+  .diff_expr = cos_diff_expr,
+  .simplify = simplify_cos,
+  .evalsign = cos_evalsign
+};
 baseFunction *basefun_cos = &basefun_cos_obj;
 
 baseFunction basefun_tan_obj = {
-  baseFunctionCode = TAN;
-  functionName = "tan";
-  xmlString = "<tan/>\n";
-  mpfrName = "mpfr_tan";
-  handledByImplementconst = 1;
-  baseAutodiff = tan_diff;
-  interval_eval = sollya_mpfi_tan;
-  point_eval = mpfr_tan;
-  diff_expr = tan_diff_expr;
-  simplify = simplify_tan;
-  evalsign = tan_evalsign;
-}
+  .baseFunctionCode = TAN,
+  .functionName = "tan",
+  .xmlString = "<tan/>\n",
+  .mpfrName = "mpfr_tan",
+  .handledByImplementconst = 1,
+  .isDefinedEverywhere = 0,
+  .onlyZeroIsZero = 0,
+  .doesNotVanish = 0,
+  .monotonicity = MONOTONICITY_NONE,
+  .baseAutodiff = tan_diff,
+  .interval_eval = sollya_mpfi_tan,
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_tan),
+  .diff_expr = tan_diff_expr,
+  .simplify = simplify_tan,
+  .evalsign = tan_evalsign
+};
 baseFunction *basefun_tan = &basefun_tan_obj;
 
 baseFunction basefun_asin_obj = {
-  baseFunctionCode = ASIN;
-  functionName = "asin";
-  xmlString = "<arcsin/>\n";
-  mpfrName = "mpfr_asin";
-  handledByImplementconst = 1;
-  baseAutodiff = asin_diff;
-  interval_eval = sollya_mpfi_asin;
-  point_eval = mpfr_asin;
-  diff_expr = asin_diff_expr;
-  simplify = simplify_asin;
-  evalsign = asin_evalsign;
-}
+  .baseFunctionCode = ASIN,
+  .functionName = "asin",
+  .xmlString = "<arcsin/>\n",
+  .mpfrName = "mpfr_asin",
+  .handledByImplementconst = 1,
+  .isDefinedEverywhere = 0,
+  .onlyZeroIsZero = 1,
+  .doesNotVanish = 0,
+  .monotonicity = INCREASING,
+  .baseAutodiff = asin_diff,
+  .interval_eval = sollya_mpfi_asin,
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_asin),
+  .diff_expr = asin_diff_expr,
+  .simplify = simplify_asin,
+  .evalsign = asin_evalsign
+};
 baseFunction *basefun_asin = &basefun_asin_obj;
 
 baseFunction basefun_acos_obj = {
-  baseFunctionCode = ACOS;
-  functionName = "acos";
-  xmlString = "<arccos/>\n";
-  mpfrName = "mpfr_acos";
-  handledByImplementconst = 1;
-  baseAutodiff = acos_diff;
-  interval_eval = sollya_mpfi_acos;
-  point_eval = mpfr_acos;
-  diff_expr = acos_diff_expr;
-  simplify = simplify_acos;
-  evalsign = acos_evalsign;
-}
+  .baseFunctionCode = ACOS,
+  .functionName = "acos",
+  .xmlString = "<arccos/>\n",
+  .mpfrName = "mpfr_acos",
+  .handledByImplementconst = 1,
+  .isDefinedEverywhere = 0,
+  .onlyZeroIsZero = 0,
+  .doesNotVanish = 0,
+  .monotonicity = DECREASING,
+  .baseAutodiff = acos_diff,
+  .interval_eval = sollya_mpfi_acos,
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_acos),
+  .diff_expr = acos_diff_expr,
+  .simplify = simplify_acos,
+  .evalsign = acos_evalsign
+};
 baseFunction *basefun_acos = &basefun_acos_obj;
 
 baseFunction basefun_atan_obj = {
-  baseFunctionCode = ATAN;
-  functionName = "atan";
-  xmlString = "<arctan/>\n";
-  mpfrName = "mpfr_atan";
-  handledByImplementconst = 1;
-  baseAutodiff = atan_diff;
-  interval_eval = sollya_mpfi_atan;
-  point_eval = mpfr_atan;
-  diff_expr = atan_diff_expr;
-  simplify = simplify_atan;
-  evalsign = atan_evalsign;
-}
+  .baseFunctionCode = ATAN,
+  .functionName = "atan",
+  .xmlString = "<arctan/>\n",
+  .mpfrName = "mpfr_atan",
+  .handledByImplementconst = 1,
+  .isDefinedEverywhere = 1,
+  .onlyZeroIsZero = 1,
+  .doesNotVanish = 0,
+  .monotonicity = INCREASING,
+  .baseAutodiff = atan_diff,
+  .interval_eval = sollya_mpfi_atan,
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_atan),
+  .diff_expr = atan_diff_expr,
+  .simplify = simplify_atan,
+  .evalsign = atan_evalsign
+};
 baseFunction *basefun_atan = &basefun_atan_obj;
 
 baseFunction basefun_sinh_obj = {
-  baseFunctionCode = SINH;
-  functionName = "sinh";
-  xmlString = "<sinh/>\n";
-  mpfrName = "mpfr_sinh";
-  handledByImplementconst = 1;
-  baseAutodiff = sinh_diff;
-  interval_eval = sollya_mpfi_sinh;
-  point_eval = mpfr_sinh;
-  diff_expr = sinh_diff_expr;
-  simplify = simplify_sinh;
-  evalsign = sinh_evalsign;
-}
+  .baseFunctionCode = SINH,
+  .functionName = "sinh",
+  .xmlString = "<sinh/>\n",
+  .mpfrName = "mpfr_sinh",
+  .handledByImplementconst = 1,
+  .isDefinedEverywhere = 1,
+  .onlyZeroIsZero = 1,
+  .doesNotVanish = 0,
+  .monotonicity = INCREASING,
+  .baseAutodiff = sinh_diff,
+  .interval_eval = sollya_mpfi_sinh,
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_sinh),
+  .diff_expr = sinh_diff_expr,
+  .simplify = simplify_sinh,
+  .evalsign = sinh_evalsign
+};
 baseFunction *basefun_sinh = &basefun_sinh_obj;
 
 baseFunction basefun_cosh_obj = {
-  baseFunctionCode = COSH;
-  functionName = "cosh";
-  xmlString = "<cosh/>\n";
-  mpfrName = "mpfr_cosh";
-  handledByImplementconst = 1;
-  baseAutodiff = cosh_diff;
-  interval_eval = sollya_mpfi_cosh;
-  point_eval = mpfr_cosh;
-  diff_expr = cosh_diff_expr;
-  simplify = simplify_cosh;
-  evalsign = cosh_evalsign;
-}
+  .baseFunctionCode = COSH,
+  .functionName = "cosh",
+  .xmlString = "<cosh/>\n",
+  .mpfrName = "mpfr_cosh",
+  .handledByImplementconst = 1,
+  .isDefinedEverywhere = 1,
+  .onlyZeroIsZero = 1, /* TODO: why? */
+  .doesNotVanish = 0, /* TODO: why? */
+  .monotonicity = MONOTONICITY_NONE,
+  .baseAutodiff = cosh_diff,
+  .interval_eval = sollya_mpfi_cosh,
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_cosh),
+  .diff_expr = cosh_diff_expr,
+  .simplify = simplify_cosh,
+  .evalsign = cosh_evalsign
+};
 baseFunction *basefun_cosh = &basefun_cosh_obj;
 
 baseFunction basefun_tanh_obj = {
-  baseFunctionCode = TANH;
-  functionName = "tanh";
-  xmlString = "<tanh/>\n";
-  mpfrName = "mpfr_tanh";
-  handledByImplementconst = 1;
-  baseAutodiff = tanh_diff;
-  interval_eval = sollya_mpfi_tanh;
-  point_eval = mpfr_tanh;
-  diff_expr = tanh_diff_expr;
-  simplify = simplify_tanh;
-  evalsign = tanh_evalsign;
-}
+  .baseFunctionCode = TANH,
+  .functionName = "tanh",
+  .xmlString = "<tanh/>\n",
+  .mpfrName = "mpfr_tanh",
+  .handledByImplementconst = 1,
+  .isDefinedEverywhere = 1,
+  .onlyZeroIsZero = 1,
+  .doesNotVanish = 0,
+  .monotonicity = INCREASING,
+  .baseAutodiff = tanh_diff,
+  .interval_eval = sollya_mpfi_tanh,
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_tanh),
+  .diff_expr = tanh_diff_expr,
+  .simplify = simplify_tanh,
+  .evalsign = tanh_evalsign
+};
 baseFunction *basefun_tanh = &basefun_tanh_obj;
 
 baseFunction basefun_asinh_obj = {
-  baseFunctionCode = ASINH;
-  functionName = "asinh";
-  xmlString = "<arcsinh/>\n";
-  mpfrName = "mpfr_asinh";
-  handledByImplementconst = 1;
-  baseAutodiff = asinh_diff;
-  interval_eval = sollya_mpfi_asinh;
-  point_eval = mpfr_asinh;
-  diff_expr = asinh_diff_expr;
-  simplify = simplify_asinh;
-  evalsign = asinh_evalsign;
-}
+  .baseFunctionCode = ASINH,
+  .functionName = "asinh",
+  .xmlString = "<arcsinh/>\n",
+  .mpfrName = "mpfr_asinh",
+  .handledByImplementconst = 1,
+  .isDefinedEverywhere = 1,
+  .onlyZeroIsZero = 1,
+  .doesNotVanish = 0,
+  .monotonicity = INCREASING,
+  .baseAutodiff = asinh_diff,
+  .interval_eval = sollya_mpfi_asinh,
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_asinh),
+  .diff_expr = asinh_diff_expr,
+  .simplify = simplify_asinh,
+  .evalsign = asinh_evalsign
+};
 baseFunction *basefun_asinh = &basefun_asinh_obj;
 
 baseFunction basefun_acosh_obj = {
-  baseFunctionCode = ACOSH;
-  functionName = "acosh";
-  xmlString = "<arccosh/>\n";
-  mpfrName = "mpfr_acosh";
-  handledByImplementconst = 1;
-  baseAutodiff = acosh_diff;
-  interval_eval = sollya_mpfi_acosh;
-  point_eval = mpfr_acosh;
-  diff_expr = acosh_diff_expr;
-  simplify = simplify_acosh;
-  evalsign = acosh_evalsign;
-}
+  .baseFunctionCode = ACOSH,
+  .functionName = "acosh",
+  .xmlString = "<arccosh/>\n",
+  .mpfrName = "mpfr_acosh",
+  .handledByImplementconst = 1,
+  .isDefinedEverywhere = 0,
+  .onlyZeroIsZero = 0,
+  .doesNotVanish = 0,
+  .monotonicity = INCREASING,
+  .baseAutodiff = acosh_diff,
+  .interval_eval = sollya_mpfi_acosh,
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_acosh),
+  .diff_expr = acosh_diff_expr,
+  .simplify = simplify_acosh,
+  .evalsign = acosh_evalsign
+};
 baseFunction *basefun_acosh = &basefun_acosh_obj;
 
 baseFunction basefun_atanh_obj = {
-  baseFunctionCode = ATANH;
-  functionName = "atanh";
-  xmlString = "<arctanh/>\n";
-  mpfrName = "mpfr_atanh";
-  handledByImplementconst = 1;
-  baseAutodiff = atanh_diff;
-  interval_eval = sollya_mpfi_atanh;
-  point_eval = mpfr_atanh;
-  diff_expr = atanh_diff_expr;
-  simplify = simplify_atanh;
-  evalsign = atanh_evalsign;
-}
+  .baseFunctionCode = ATANH,
+  .functionName = "atanh",
+  .xmlString = "<arctanh/>\n",
+  .mpfrName = "mpfr_atanh",
+  .handledByImplementconst = 1,
+  .isDefinedEverywhere = 0,
+  .onlyZeroIsZero = 1,
+  .doesNotVanish = 0,
+  .monotonicity = INCREASING,
+  .baseAutodiff = atanh_diff,
+  .interval_eval = sollya_mpfi_atanh,
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_atanh),
+  .diff_expr = atanh_diff_expr,
+  .simplify = simplify_atanh,
+  .evalsign = atanh_evalsign
+};
 baseFunction *basefun_atanh = &basefun_atanh_obj;
 
 baseFunction basefun_abs_obj = {
-  baseFunctionCode = ABS;
-  functionName = "abs";
-  xmlString = "<abs/>\n";
-  mpfrName = "mpfr_abs";
-  handledByImplementconst = 1;
-  baseAutodiff = abs_diff;
-  interval_eval = sollya_mpfi_abs;
-  point_eval = mpfr_abs;
-  diff_expr = abs_diff_expr;
-  simplify = simplify_abs;
-  evalsign = abs_evalsign;
-}
+  .baseFunctionCode = ABS,
+  .functionName = "abs",
+  .xmlString = "<abs/>\n",
+  .mpfrName = "mpfr_abs",
+  .handledByImplementconst = 1,
+  .isDefinedEverywhere = 1,
+  .onlyZeroIsZero = 1,
+  .doesNotVanish = 0,
+  .monotonicity = MONOTONICITY_NONE,
+  .baseAutodiff = abs_diff,
+  .interval_eval = sollya_mpfi_abs,
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_abs),
+  .diff_expr = abs_diff_expr,
+  .simplify = simplify_abs,
+  .evalsign = abs_evalsign
+};
 baseFunction *basefun_abs = &basefun_abs_obj;
 
 baseFunction basefun_erf_obj = {
-  baseFunctionCode = ERF;
-  functionName = "erf";
-  xmlString = "<csymbol definitionURL=\"http://www.openmath.org/CDs/errorFresnelInts.ocd\" encoding=\"OpenMath\">erf</csymbol>\n";
-  mpfrName = "mpfr_erf";
-  handledByImplementconst = 1;
-  baseAutodiff = erf_diff;
-  interval_eval = sollya_mpfi_erf;
-  point_eval = mpfr_erf;
-  diff_expr = erf_diff_expr;
-  simplify = simplify_erf;
-  evalsign = erf_evalsign;
-}
+  .baseFunctionCode = ERF,
+  .functionName = "erf",
+  .xmlString = "<csymbol definitionURL=\"http://www.openmath.org/CDs/errorFresnelInts.ocd\" encoding=\"OpenMath\">erf</csymbol>\n",
+  .mpfrName = "mpfr_erf",
+  .handledByImplementconst = 1,
+  .isDefinedEverywhere = 1,
+  .onlyZeroIsZero = 1,
+  .doesNotVanish = 0,
+  .monotonicity = INCREASING,
+  .baseAutodiff = erf_diff,
+  .interval_eval = sollya_mpfi_erf,
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_erf),
+  .diff_expr = erf_diff_expr,
+  .simplify = simplify_erf,
+  .evalsign = erf_evalsign
+};
 baseFunction *basefun_erf = &basefun_erf_obj;
 
 baseFunction basefun_erfc_obj = {
-  baseFunctionCode = ERFC;
-  functionName = "erfc";
-  xmlString = "<csymbol definitionURL=\"http://www.openmath.org/CDs/errorFresnelInts.ocd\" encoding=\"OpenMath\">erfc</csymbol>\n";
-  mpfrName = "mpfr_erfc";
-  handledByImplementconst = 1;
-  baseAutodiff = erfc_diff;
-  interval_eval = sollya_mpfi_erfc;
-  point_eval = mpfr_erfc;
-  diff_expr = erfc_diff_expr;
-  simplify = simplify_erfc;
-  evalsign = erfc_evalsign;
-}
+  .baseFunctionCode = ERFC,
+  .functionName = "erfc",
+  .xmlString = "<csymbol definitionURL=\"http://www.openmath.org/CDs/errorFresnelInts.ocd\" encoding=\"OpenMath\">erfc</csymbol>\n",
+  .mpfrName = "mpfr_erfc",
+  .handledByImplementconst = 1,
+  .isDefinedEverywhere = 1,
+  .onlyZeroIsZero = 0,
+  .doesNotVanish = 1,
+  .monotonicity = DECREASING,
+  .baseAutodiff = erfc_diff,
+  .interval_eval = sollya_mpfi_erfc,
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_erfc),
+  .diff_expr = erfc_diff_expr,
+  .simplify = simplify_erfc,
+  .evalsign = erfc_evalsign
+};
 baseFunction *basefun_erfc = &basefun_erfc_obj;
 
 baseFunction basefun_log1p_obj = {
-  baseFunctionCode = LOG_1P;
-  functionName = "log1p";
-  xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">log1p</csymbol>\n";
-  mpfrName = "mpfr_log1p";
-  handledByImplementconst = 1;
-  baseAutodiff = log1p_diff;
-  interval_eval = sollya_mpfi_log1p;
-  point_eval = mpfr_log1p;
-  diff_expr = log1p_diff_expr;
-  simplify = simplify_log1p;
-  evalsign = log1p_evalsign;
-}
+  .baseFunctionCode = LOG_1P,
+  .functionName = "log1p",
+  .xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">log1p</csymbol>\n",
+  .mpfrName = "mpfr_log1p",
+  .handledByImplementconst = 1,
+  .isDefinedEverywhere = 0,
+  .onlyZeroIsZero = 0,
+  .doesNotVanish = 0,
+  .monotonicity = INCREASING,
+  .baseAutodiff = log1p_diff,
+  .interval_eval = sollya_mpfi_log1p,
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_log1p),
+  .diff_expr = log1p_diff_expr,
+  .simplify = simplify_log1p,
+  .evalsign = log1p_evalsign
+};
 baseFunction *basefun_log1p = &basefun_log1p_obj;
 
 baseFunction basefun_expm1_obj = {
-  baseFunctionCode = EXP_M1;
-  functionName = "expm1";
-  xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">expm1</csymbol>\n";
-  mpfrName = "mpfr_expm1";
-  handledByImplementconst = 1;
-  baseAutodiff = expm1_diff;
-  interval_eval = sollya_mpfi_expm1;
-  point_eval = mpfr_expm1;
-  diff_expr = expm1_diff_expr;
-  simplify = simplify_expm1;
-  evalsign = expm1_evalsign;
-}
+  .baseFunctionCode = EXP_M1,
+  .functionName = "expm1",
+  .xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">expm1</csymbol>\n",
+  .mpfrName = "mpfr_expm1",
+  .handledByImplementconst = 1,
+  .isDefinedEverywhere = 1,
+  .onlyZeroIsZero = 1,
+  .doesNotVanish = 0,
+  .monotonicity = INCREASING,
+  .baseAutodiff = expm1_diff,
+  .interval_eval = sollya_mpfi_expm1,
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_expm1),
+  .diff_expr = expm1_diff_expr,
+  .simplify = simplify_expm1,
+  .evalsign = expm1_evalsign
+};
 baseFunction *basefun_expm1 = &basefun_expm1_obj;
 
 baseFunction basefun_double_obj = {
-  baseFunctionCode = DOUBLE;
-  functionName = "double";
-  xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">double</csymbol>\n";
-  mpfrName = "";
-  handledByImplementconst = 0;
-  baseAutodiff = double_diff;
-  interval_eval = sollya_mpfi_round_to_double;
-  point_eval = double_point_eval;
-  diff_expr = double_diff_expr;
-  simplify = simplify_double;
-  evalsign = double_evalsign;
-}
+  .baseFunctionCode = DOUBLE,
+  .functionName = "double",
+  .xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">double</csymbol>\n",
+  .mpfrName = "",
+  .handledByImplementconst = 0,
+  .isDefinedEverywhere = 0, /* TODO : why? */
+  .onlyZeroIsZero = 0,
+  .doesNotVanish = 0,
+  .monotonicity = NONDECREASING,
+  .baseAutodiff = double_diff,
+  .interval_eval = sollya_mpfi_round_to_double,
+  .point_eval = double_point_eval,
+  .diff_expr = double_diff_expr,
+  .simplify = simplify_double,
+  .evalsign = double_evalsign
+};
 baseFunction *basefun_double = &basefun_double_obj;
 
 baseFunction basefun_single_obj = {
-  baseFunctionCode = SINGLE;
-  functionName = "single";
-  xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">single</csymbol>\n";
-  mpfrName = "";
-  handledByImplementconst = 0;
-  baseAutodiff = single_diff;
-  interval_eval = sollya_mpfi_round_to_single;
-  point_eval = single_point_eval;
-  diff_expr = single_diff_expr;
-  simplify = simplify_single;
-  evalsign = single_evalsign;
-}
+  .baseFunctionCode = SINGLE,
+  .functionName = "single",
+  .xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">single</csymbol>\n",
+  .mpfrName = "",
+  .handledByImplementconst = 0,
+  .isDefinedEverywhere = 0, /* TODO : why? */
+  .onlyZeroIsZero = 0,
+  .doesNotVanish = 0,
+  .monotonicity = NONDECREASING,
+  .baseAutodiff = single_diff,
+  .interval_eval = sollya_mpfi_round_to_single,
+  .point_eval = single_point_eval,
+  .diff_expr = single_diff_expr,
+  .simplify = simplify_single,
+  .evalsign = single_evalsign
+};
 baseFunction *basefun_single = &basefun_single_obj;
 
 baseFunction basefun_halfprecision_obj = {
-  baseFunctionCode = HALFPRECISION;
-  functionName = "halfprecision";
-  xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">halfprecision</csymbol>\n";
-  mpfrName = "";
-  handledByImplementconst = 0;
-  baseAutodiff = halfprecision_diff;
-  interval_eval = sollya_mpfi_round_to_halfprecision;
-  point_eval = halfprecision_point_eval;
-  diff_expr = halfprecision_diff_expr;
-  simplify = simplify_halfprecision;
-  evalsign = halprecision_evalsign;
-}
+  .baseFunctionCode = HALFPRECISION,
+  .functionName = "halfprecision",
+  .xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">halfprecision</csymbol>\n",
+  .mpfrName = "",
+  .handledByImplementconst = 0,
+  .isDefinedEverywhere = 0, /* TODO : why? */
+  .onlyZeroIsZero = 0,
+  .doesNotVanish = 0,
+  .monotonicity = NONDECREASING,
+  .baseAutodiff = halfprecision_diff,
+  .interval_eval = sollya_mpfi_round_to_halfprecision,
+  .point_eval = halfprecision_point_eval,
+  .diff_expr = halfprecision_diff_expr,
+  .simplify = simplify_halfprecision,
+  .evalsign = halfprecision_evalsign
+};
 baseFunction *basefun_halfprecision = &basefun_halfprecision_obj;
 
 baseFunction basefun_quad_obj = {
-  baseFunctionCode = QUAD;
-  functionName = "quad";
-  xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">quad</csymbol>\n";
-  mpfrName = "";
-  handledByImplementconst = 0;
-  baseAutodiff = quad_diff;
-  interval_eval = sollya_mpfi_round_to_quad;
-  point_eval = quad_point_eval;
-  diff_expr = quad_diff_expr;
-  simplify = simplify_quad;
-  evalsign = quad_evalsign;
-}
+  .baseFunctionCode = QUAD,
+  .functionName = "quad",
+  .xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">quad</csymbol>\n",
+  .mpfrName = "",
+  .handledByImplementconst = 0,
+  .isDefinedEverywhere = 0, /* TODO : why? */
+  .onlyZeroIsZero = 0,
+  .doesNotVanish = 0,
+  .monotonicity = NONDECREASING,
+  .baseAutodiff = quad_diff,
+  .interval_eval = sollya_mpfi_round_to_quad,
+  .point_eval = quad_point_eval,
+  .diff_expr = quad_diff_expr,
+  .simplify = simplify_quad,
+  .evalsign = quad_evalsign
+};
 baseFunction *basefun_quad = &basefun_quad_obj;
 
 baseFunction basefun_doubledouble_obj = {
-  baseFunctionCode = DOUBLEDOUBLE;
-  functionName = "doubledouble";
-  xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">doubledouble</csymbol>\n";
-  mpfrName = "";
-  handledByImplementconst = 0;
-  baseAutodiff = doubledouble_diff;
-  interval_eval = sollya_mpfi_round_to_doubledouble;
-  point_eval = doubledouble_point_eval;
-  diff_expr = doubledouble_diff_expr;
-  simplify = simplify_doubledouble;
-  evalsign = doubledouble_evalsign;
-}
+  .baseFunctionCode = DOUBLEDOUBLE,
+  .functionName = "doubledouble",
+  .xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">doubledouble</csymbol>\n",
+  .mpfrName = "",
+  .handledByImplementconst = 0,
+  .isDefinedEverywhere = 0, /* TODO : why? */
+  .onlyZeroIsZero = 0,
+  .doesNotVanish = 0,
+  .monotonicity = NONDECREASING,
+  .baseAutodiff = doubledouble_diff,
+  .interval_eval = sollya_mpfi_round_to_doubledouble,
+  .point_eval = doubledouble_point_eval,
+  .diff_expr = doubledouble_diff_expr,
+  .simplify = simplify_doubledouble,
+  .evalsign = doubledouble_evalsign
+};
 baseFunction *basefun_doubledouble = &basefun_doubledouble_obj;
 
 baseFunction basefun_tripledouble_obj = {
-  baseFunctionCode = TRIPLEDOUBLE;
-  functionName = "tripledouble";
-  xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">tripledouble</csymbol>\n";
-  mpfrName = "";
-  handledByImplementconst = 0;
-  baseAutodiff = tripledouble_diff;
-  interval_eval = sollya_mpfi_round_to_tripledouble;
-  point_eval = tripledouble_point_eval;
-  diff_expr = tripledouble_diff_expr;
-  simplify = simplify_tripledouble;
-  evalsign = tripledouble_evalsign;
-}
+  .baseFunctionCode = TRIPLEDOUBLE,
+  .functionName = "tripledouble",
+  .xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">tripledouble</csymbol>\n",
+  .mpfrName = "",
+  .handledByImplementconst = 0,
+  .isDefinedEverywhere = 0, /* TODO : why? */
+  .onlyZeroIsZero = 0,
+  .doesNotVanish = 0,
+  .monotonicity = NONDECREASING,
+  .baseAutodiff = tripledouble_diff,
+  .interval_eval = sollya_mpfi_round_to_tripledouble,
+  .point_eval = tripledouble_point_eval,
+  .diff_expr = tripledouble_diff_expr,
+  .simplify = simplify_tripledouble,
+  .evalsign = tripledouble_evalsign
+};
 baseFunction *basefun_tripledouble = &basefun_tripledouble_obj;
 
 baseFunction basefun_doubleextended_obj = {
-  baseFunctionCode = DOUBLEEXTENDED;
-  functionName = "doubleextended";
-  xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">doubleextended</csymbol>\n";
-  mpfrName = "";
-  handledByImplementconst = 0;
-  baseAutodiff = doubleextended_diff;
-  interval_eval = sollya_mpfi_round_to_doubleextended;
-  point_eval = doubleextended_point_eval;
-  diff_expr = doubleextended_diff_expr;
-  simplify = simplify_doubleextended;
-  evalsign = doubleextended_evalsign;
-}
+  .baseFunctionCode = DOUBLEEXTENDED,
+  .functionName = "doubleextended",
+  .xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">doubleextended</csymbol>\n",
+  .mpfrName = "",
+  .handledByImplementconst = 0,
+  .isDefinedEverywhere = 0, /* TODO : why? */
+  .onlyZeroIsZero = 0,
+  .doesNotVanish = 0,
+  .monotonicity = NONDECREASING,
+  .baseAutodiff = doubleextended_diff,
+  .interval_eval = sollya_mpfi_round_to_doubleextended,
+  .point_eval = doubleextended_point_eval,
+  .diff_expr = doubleextended_diff_expr,
+  .simplify = simplify_doubleextended,
+  .evalsign = doubleextended_evalsign
+};
 baseFunction *basefun_doubleextended = &basefun_doubleextended_obj;
 
 baseFunction basefun_ceil_obj = {
-  baseFunctionCode = CEIL;
-  functionName = "ceil";
-  xmlString = "<ceiling/>\n";
-  mpfrName = "";
-  handledByImplementconst = 0;
-  baseAutodiff = ceil_diff;
-  interval_eval = sollya_mpfi_ceil;
-  point_eval = mpfr_ceil;
-  diff_expr = ceil_diff_expr;
-  simplify = simplify_ceil;
-  evalsign = ceil_evalsign;
-}
+  .baseFunctionCode = CEIL,
+  .functionName = "ceil",
+  .xmlString = "<ceiling/>\n",
+  .mpfrName = "",
+  .handledByImplementconst = 0,
+  .isDefinedEverywhere = 0, /* TODO : why? */
+  .onlyZeroIsZero = 0,
+  .doesNotVanish = 0,
+  .monotonicity = NONDECREASING,
+  .baseAutodiff = ceil_diff,
+  .interval_eval = sollya_mpfi_ceil,
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_ceil),
+  .diff_expr = ceil_diff_expr,
+  .simplify = simplify_ceil,
+  .evalsign = ceil_evalsign
+};
 baseFunction *basefun_ceil = &basefun_ceil_obj;
 
 baseFunction basefun_floor_obj = {
-  baseFunctionCode = FLOOR;
-  functionName = "floor";
-  xmlString = "<floor/>\n";
-  mpfrName = "";
-  handledByImplementconst = 0;
-  baseAutodiff = floor_diff;
-  interval_eval = sollya_mpfi_floor;
-  point_eval = mpfr_floor;
-  diff_expr = floor_diff_expr;
-  simplify = simplify_floor;
-  evalsign = floor_evalsign;
-}
+  .baseFunctionCode = FLOOR,
+  .functionName = "floor",
+  .xmlString = "<floor/>\n",
+  .mpfrName = "",
+  .handledByImplementconst = 0,
+  .isDefinedEverywhere = 0, /* TODO : why? */
+  .doesNotVanish = 0,
+  .monotonicity = NONDECREASING,
+  .baseAutodiff = floor_diff,
+  .onlyZeroIsZero = 0,
+  .interval_eval = sollya_mpfi_floor,
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_floor),
+  .diff_expr = floor_diff_expr,
+  .simplify = simplify_floor,
+  .evalsign = floor_evalsign
+};
 baseFunction *basefun_floor = &basefun_floor_obj;
 
 baseFunction basefun_nearestint_obj = {
-  baseFunctionCode = NEARESTINT;
-  functionName = "nearestint";
-  xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">nearestint</csymbol>\n";
-  mpfrName = "";
-  handledByImplementconst = 0;
-  baseAutodiff = nearestint_diff;
-  interval_eval = sollya_mpfi_nearestint;
-  point_eval = sollya_mpfr_rint_nearestint;
-  diff_expr = nearestint_diff_expr;
-  simplify = simplify_nearestint;
-  evalsign = nearestint_evalsign;
-}
+  .baseFunctionCode = NEARESTINT,
+  .functionName = "nearestint",
+  .xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">nearestint</csymbol>\n",
+  .mpfrName = "",
+  .handledByImplementconst = 0,
+  .isDefinedEverywhere = 0, /* TODO : why? */
+  .onlyZeroIsZero = 0,
+  .doesNotVanish = 0,
+  .monotonicity = NONDECREASING,
+  .baseAutodiff = nearestint_diff,
+  .interval_eval = sollya_mpfi_nearestint,
+  .point_eval = sollya_mpfr_rint_nearestint,
+  .diff_expr = nearestint_diff_expr,
+  .simplify = simplify_nearestint,
+  .evalsign = nearestint_evalsign
+};
 baseFunction *basefun_nearestint = &basefun_nearestint_obj;
 
 

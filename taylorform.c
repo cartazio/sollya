@@ -567,8 +567,8 @@ void base_TMAux(tModel *t, int typeOfFunction, baseFunction *basefun, node *f, m
 
   switch(typeOfFunction) {
   case MONOTONE_REMAINDER_BASE_FUNCTION:
-    basefun->baseAutodiff((tt->poly_array,x0, n-1, silent);
-    basefun->baseAutodiff((nDeriv, x, (mode==RELATIVE)?(n+1):n, silent);
+    basefun->baseAutodiff(tt->poly_array,x0, n-1, silent);
+    basefun->baseAutodiff(nDeriv, x, (mode==RELATIVE)?(n+1):n, silent);
     break;
   case MONOTONE_REMAINDER_LIBRARY_FUNCTION:
     libraryFunction_diff(tt->poly_array, accessThruMemRef(f), x0, n-1, silent);

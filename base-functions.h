@@ -54,7 +54,9 @@
 #include "config.h"
 #endif
 
-#include "expression.h"
+#include <gmp.h>
+#include <mpfr.h>
+#include "mpfi-compat.h"
 
 #define SQRT 0
 #define EXP 1
@@ -89,6 +91,18 @@
 #define HALFPRECISION 30
 #define QUAD 31
 
+#define DECREASING 0         /* Indicates that for any x<y in the domain of f, f(x)>f(y) */
+#define NONINCREASING 1      /* Indicates that for any x<y in the domain of f, f(x)>=f(y) */
+#define MONOTONICITY_NONE 2  /* Indicates that f has no particular monotonic behavior */
+#define NONDECREASING 3      /* Indicates that for any x<y in the domain of f, f(x)<=f(y) */
+#define INCREASING 4         /* Indicates that for any x<y in the domain of f, f(x)<f(y) */
+
+struct nodeStruct;
+#ifndef NODE_TYPEDEF
+#define NODE_TYPEDEF
+typedef struct nodeStruct node;
+#endif
+
 typedef struct baseFunctionStruct baseFunction;
 struct baseFunctionStruct
 {
@@ -97,11 +111,15 @@ struct baseFunctionStruct
   char *xmlString;      /* The xml code for the function */
   char *mpfrName;       /* The name of the function in mpfr. Used to generate code, e.g. as in implementconstant */
   int handledByImplementconst; /* A boolean. Functions that must not be handled by implementconstant are those functions having a discontinuity at a representable point */
+  int isDefinedEverywhere; /* A boolean. True if the function is defined and finite on the whole real line */
+  int onlyZeroIsZero; /* A boolean. True if the only real zero of the function is zero */
+  int doesNotVanish; /* A boolean. True if the function never takes the value zero on the real line */
+  int monotonicity; /* One of the monotonicity code, indicating the behavior of the function on its domain */
   void (*baseAutodiff)(sollya_mpfi_t *, sollya_mpfi_t, int, int *); /* Computes the vector of the f^(k)(x0)/k!, k=0..n. The last parameter is a silent parameter */
-  int (*interval_eval)(sollya_mpfi_t, sollya_mpfi_t); /* Performs an interval evaluation ``à la'' mpfi */
-  int (*point_eval)(mpfr_t, mpfr_t, gmp_rnd_t); /* Performs an evaluation ``à la'' mpfr */
-  (node *)(*diff_expr)(node *); /* If g if the argument, returns a tree representing diff(f o g) */
-  (node *)(*simplify)(node *); /* If g is the argument (supposed already simplified as much as possible), returns a tree representing a simplification
+  void (*interval_eval)(sollya_mpfi_t, sollya_mpfi_t); /* Performs an interval evaluation ``à la'' mpfi */
+  int (*point_eval)(mpfr_t, mpfr_t, mp_rnd_t); /* Performs an evaluation ``à la'' mpfr */
+  node *(*diff_expr)(node *); /* If g if the argument, returns a tree representing diff(f o g) */
+  node *(*simplify)(node *); /* If g is the argument (supposed already simplified as much as possible), returns a tree representing a simplification
                                   (without introducing errors) of f(g). Notice that g must either be used (eaten up) to construct the new tree, or be freed by the function  */
   int (*evalsign)(int *, node *); /* If s and g are the arguments, tries to determine the sign of f(g) assuming that g is a constant expression. In case of success, the sign is assigned to variable s and 1 is returned. Otherwise, s is left unchanged and 0 is returned */
 };

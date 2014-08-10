@@ -2310,27 +2310,10 @@ int isNotUniformlyInfinite(node *tree) {
 
   /* f is of the form f = g(h), g is defined on the whole real line
      and h is not uniformly infinite, so is f.
-
   */
-  switch (accessThruMemRef(tree)->nodeType) {
-  case EXP:
-  case SIN:
-  case COS:
-  case ATAN:
-  case SINH:
-  case COSH:
-  case TANH:
-  case ASINH:
-  case ERF:
-  case ERFC:
-  case EXP_M1:
-  case NEG:
-  case ABS:
+  if ( (accessThruMemRef(tree)->nodeType == NEG) ||
+       ((accessThruMemRef(tree)->nodeType == UNARY_BASE_FUNC) && (accessThruMemRef(tree)->baseFun->isDefinedEverywhere)) )
     return isNotUniformlyInfinite(accessThruMemRef(tree)->child1);
-    break;
-  default:
-    break;
-  }
 
   /* f is of the form f = g^h, g can be shown to be strictly positive
      and finite over the reals and h is not uniformly infinite, then f is
@@ -2460,25 +2443,17 @@ int isNotUniformlyZero(node *tree) {
      interval that is not reduced to a point, then f is not uniformly
      zero over any interval that is not reduced to a point.
   */
-  switch (accessThruMemRef(tree)->nodeType) {
-  case EXP:
-  case ERFC:
+  if ( (accessThruMemRef(tree)->nodeType == UNARY_BASE_FUNC) &&
+       (accessThruMemRef(tree)->baseFun->doesNotVanish) )
     return isNotUniformlyInfinite(accessThruMemRef(tree)->child1);
-    break;
-  case ATAN:
-  case SINH:
-  case COSH:
-  case TANH:
-  case ASINH:
-  case ERF:
-  case EXP_M1:
-  case NEG:
-  case ABS:
+
+  if ((accessThruMemRef(tree)->nodeType == NEG) ||
+      ((accessThruMemRef(tree)->nodeType == UNARY_BASE_FUNC) &&
+       (accessThruMemRef(tree)->baseFun->onlyZeroIsZero) &&
+       (accessThruMemRef(tree)->baseFun->isDefinedEverywhere)
+       )
+      )
     return isNotUniformlyZero(accessThruMemRef(tree)->child1);
-    break;
-  default:
-    break;
-  }
 
   /* f is of the form f = g^h, g can be shown to be strictly positive
      over the reals and h stays both bounded by a real, then f is not
@@ -2561,7 +2536,6 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   mp_prec_t prec, p;
   int alpha, beta;
   node *temp1, *temp2, *temp3, *temp4;
-  rangetype xrange, yrange;
   mpq_t resMpq;
   mpfr_t num, denom, resDiv, resA, resB;
   int numberChilds;
@@ -3397,8 +3371,8 @@ node *differentiatePolynomialUnsafe(node *tree);
 node* differentiateUnsimplified(node *tree) {
   node *derivative;
   mpfr_t *mpfr_temp;
-  node *temp_node, *temp_node2, *temp_node3, *f_diff, *g_diff, *f_copy, *g_copy, *g_copy2, *h_copy;
-  node *temp_node4, *f_copy2, *temp_node5;
+  node *temp_node, *temp_node2, *temp_node3, *f_diff, *g_diff, *f_copy, *g_copy, *g_copy2;
+  node *temp_node4, *f_copy2;
   int deg;
 
   if (tree->nodeType == MEMREF) {
@@ -3533,6 +3507,7 @@ node* differentiateUnsimplified(node *tree) {
 	break;
       case UNARY_BASE_FUNC:
         derivative = tree->baseFun->diff_expr(tree->child1);
+        break;
       case POW:
 	if (isConstant(tree->child2)) {
 	  g_copy = copyTree(tree->child2);
@@ -3651,7 +3626,7 @@ node* differentiate(node *tree) {
 
 
 int evaluateConstantExpression(mpfr_t result, node *tree, mp_prec_t prec) {
-  mpfr_t stack1, stack2, myResult;
+  mpfr_t stack1, stack2;
   sollya_mpfi_t stackI;
   int isConstant;
 
@@ -4374,7 +4349,7 @@ node *simplifyAllButDivision(node *tree) {
 
 
 void evaluate(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
-  mpfr_t stack1, stack2, myResult;
+  mpfr_t stack1, stack2;
   sollya_mpfi_t stackI;
 
   if (tree->nodeType == MEMREF) {
@@ -4494,6 +4469,8 @@ int isSyntacticallyEqual(node *tree1, node *tree2) {
 
   if (tree1->nodeType != tree2->nodeType) return 0;
   if (tree1->nodeType == PI_CONST) return 1;
+  if ((tree1->nodeType == UNARY_BASE_FUNC) &&
+      (tree1->baseFun != tree2->baseFun)) return 0;
   if ((tree1->nodeType == LIBRARYFUNCTION) &&
       ((tree1->libFun != tree2->libFun) ||
        (tree1->libFunDeriv != tree2->libFunDeriv))) return 0;

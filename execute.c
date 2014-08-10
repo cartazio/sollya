@@ -467,6 +467,7 @@ node *copyThingInner(node *tree) {
     copy->child1 = copyThingInner(tree->child1);
     break;
   case UNARY_BASE_FUNC:
+    copy->baseFun = tree->baseFun;
     copy->child1 = copyThingInner(tree->child1);
     break;
   case POW:
@@ -1256,6 +1257,7 @@ node *deepCopyThing(node *tree) {
     copy->child1 = deepCopyThing(tree->child1);
     break;
   case UNARY_BASE_FUNC:
+    copy->baseFun = tree->baseFun;
     copy->child1 = deepCopyThing(tree->child1);
     break;
   case POW:
@@ -13401,6 +13403,7 @@ int isEqualThing(node *tree, node *tree2) {
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break;
   case UNARY_BASE_FUNC:
+    if (tree->baseFun != tree2->baseFun) return 0;
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break;
   case POW:
@@ -15901,6 +15904,7 @@ node *preevaluateMatcher(node *tree) {
     copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case UNARY_BASE_FUNC:
+    copy->baseFun = tree->baseFun;
     copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case POW:
@@ -17735,6 +17739,7 @@ node *evaluateThingInnerst(node *tree) {
     }
     break;
   case UNARY_BASE_FUNC:
+    copy->baseFun = tree->baseFun;
     copy->child1 = evaluateThingInner(tree->child1);
     if (isRangeNonEmpty(copy->child1)) {
       pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));

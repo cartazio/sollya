@@ -62,6 +62,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <mpfi.h>
+#include "base-functions.h"
 #include "expression.h"
 #include "execute.h"
 #include "chain.h"
@@ -3220,6 +3221,7 @@ int sollya_lib_v_decompose_function(sollya_obj_t obj1, sollya_base_function_t *b
       default:
         return 0;
       }
+      break;
     case POW:
       *base_func = SOLLYA_BASE_FUNC_POW;
       break;
