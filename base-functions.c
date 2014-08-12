@@ -1434,13 +1434,16 @@ node *simplify_integer_rounding_functions(baseFunction *f, node *g) {
   node *simplified;
   mpfr_t *value;
   rangetype xrange, yrange;
+  mp_prec_t prec;
   int ok = 0;
 
   simplified = (node*) safeMalloc(sizeof(node));
 
   if (accessThruMemRef(g)->nodeType == CONSTANT) {
     value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-    mpfr_init2(*value, tools_precision);
+    prec = mpfr_get_prec(*(accessThruMemRef(g)->value));
+    prec = (tools_precision<prec)?prec:tools_precision;
+    mpfr_init2(*value, prec);
     if ( (f->point_eval(*value, *(accessThruMemRef(g)->value), GMP_RNDN) == 0) &&
          mpfr_number_p(*value) )  {
       simplified->nodeType = CONSTANT;
