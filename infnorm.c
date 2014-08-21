@@ -2593,8 +2593,14 @@ chain* evaluateITaylor(sollya_mpfi_t result, node *func, node *deriv, sollya_mpf
     sollya_mpfi_set(result, *((sollya_mpfi_t *) func->arguments->next->value));
     if (!(sollya_mpfi_has_nan(result) || sollya_mpfi_has_infinity(result))) return NULL;
   }
-
-  excludes = evaluateITaylorInner(result, func, deriv, x, prec, recurse, theo, noExcludes, fastAddSub, workForThin, cutoff);
+  
+  if ((func->nodeType == MEMREF) &&
+      (func->evaluationHook != NULL) &&
+      evaluateWithEvaluationHook(result, x, prec, func->evaluationHook)) {
+    excludes = NULL;
+  } else {
+    excludes = evaluateITaylorInner(result, func, deriv, x, prec, recurse, theo, noExcludes, fastAddSub, workForThin, cutoff);
+  }
 
   if ((excludes == NULL) && (func->nodeType == MEMREF) && (!(sollya_mpfi_has_nan(result) || sollya_mpfi_has_infinity(result)))) {
     if (func->arguments != NULL) {
