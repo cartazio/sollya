@@ -678,6 +678,7 @@ int addPolyEvaluationHook(eval_hook_t **hookPtr, node *func, sollya_mpfi_t dom, 
       mpfr_init2(evaluatedCoeffs[i],mpfr_get_prec(*(accessThruMemRef(coeffs[i])->value)));
       mpfr_set(evaluatedCoeffs[i],*(accessThruMemRef(coeffs[i])->value),GMP_RNDN); /* exact */
       sollya_mpfi_set_si(c, 0);
+      freeThing(coeffs[i]);
     } else {
       mpfr_init2(evaluatedCoeffs[i],prec);
       if (coeffs[i] == NULL) {
