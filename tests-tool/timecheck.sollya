@@ -86,8 +86,8 @@ pnobug = 1.011111110010011010100011110101011000110001001001010001001101010111100
 x0 = 1.0100001_2 * 2^(-45);
 t1 = time(q=horner(simplify(pnobug(x-x0))))/yardstick;
 t2 = time(r=horner(simplify(pbug(x-x0))))/yardstick;
-if (t1 in 5.7e-4 * variance) then "Okay" else print("t1 = ", round(t1,12,RN));
-if (t2 in 4.6e-4 * variance) then "Okay" else print("t2 = ", round(t2,12,RN));
+if (t1 in 1.0e-6 * variance) then "Okay" else print("t1 = ", round(t1,12,RN));
+if (t2 in 5.0e-7 * variance) then "Okay" else print("t2 = ", round(t2,12,RN));
 rationalmode=default!;
 i := i+1;
 
