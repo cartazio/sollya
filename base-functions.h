@@ -116,47 +116,48 @@ struct baseFunctionStruct
   int doesNotVanish; /* A boolean. True if the function never takes the value zero on the real line */
   int monotonicity; /* One of the monotonicity code, indicating the behavior of the function on its domain */
   void (*baseAutodiff)(sollya_mpfi_t *, sollya_mpfi_t, int, int *); /* Computes the vector of the f^(k)(x0)/k!, k=0..n. The last parameter is a silent parameter */
-  void (*interval_eval)(sollya_mpfi_t, sollya_mpfi_t); /* Performs an interval evaluation ``à la'' mpfi */
+  int (*interval_eval)(sollya_mpfi_t, sollya_mpfi_t); /* Performs an interval evaluation ``à la'' mpfi */
   int (*point_eval)(mpfr_t, mpfr_t, mp_rnd_t); /* Performs an evaluation ``à la'' mpfr */
   node *(*diff_expr)(node *); /* If g if the argument, returns a tree representing diff(f o g) */
   node *(*simplify)(node *); /* If g is the argument (supposed already simplified as much as possible), returns a tree representing a simplification
-                                  (without introducing errors) of f(g). Notice that g must either be used (eaten up) to construct the new tree, or be freed by the function  */
+                                (without introducing errors) of f(g).
+                                Notice that g must either be used (eaten up) to construct the new tree, or be freed by the function  */
   int (*evalsign)(int *, node *); /* If s and g are the arguments, tries to determine the sign of f(g) assuming that g is a constant expression. In case of success, the sign is assigned to variable s and 1 is returned. Otherwise, s is left unchanged and 0 is returned */
 };
 
 
-baseFunction *basefun_sqrt;
-baseFunction *basefun_exp;
-baseFunction *basefun_log;
-baseFunction *basefun_log2;
-baseFunction *basefun_log10;
-baseFunction *basefun_sin;
-baseFunction *basefun_cos;
-baseFunction *basefun_tan;
-baseFunction *basefun_asin;
-baseFunction *basefun_acos;
-baseFunction *basefun_atan;
-baseFunction *basefun_sinh;
-baseFunction *basefun_cosh;
-baseFunction *basefun_tanh;
-baseFunction *basefun_asinh;
-baseFunction *basefun_acosh;
-baseFunction *basefun_atanh;
-baseFunction *basefun_abs;
-baseFunction *basefun_double;
-baseFunction *basefun_single;
-baseFunction *basefun_halfprecision;
-baseFunction *basefun_quad;
-baseFunction *basefun_doubledouble;
-baseFunction *basefun_tripledouble;
-baseFunction *basefun_erf;
-baseFunction *basefun_erfc;
-baseFunction *basefun_log1p;
-baseFunction *basefun_expm1;
-baseFunction *basefun_doubleextended;
-baseFunction *basefun_ceil;
-baseFunction *basefun_floor;
-baseFunction *basefun_nearestint;
+extern static baseFunction *basefun_sqrt;
+extern static baseFunction *basefun_exp;
+extern static baseFunction *basefun_log;
+extern static baseFunction *basefun_log2;
+extern static baseFunction *basefun_log10;
+extern static baseFunction *basefun_sin;
+extern static baseFunction *basefun_cos;
+extern static baseFunction *basefun_tan;
+extern static baseFunction *basefun_asin;
+extern static baseFunction *basefun_acos;
+extern static baseFunction *basefun_atan;
+extern static baseFunction *basefun_sinh;
+extern static baseFunction *basefun_cosh;
+extern static baseFunction *basefun_tanh;
+extern static baseFunction *basefun_asinh;
+extern static baseFunction *basefun_acosh;
+extern static baseFunction *basefun_atanh;
+extern static baseFunction *basefun_abs;
+extern static baseFunction *basefun_double;
+extern static baseFunction *basefun_single;
+extern static baseFunction *basefun_halfprecision;
+extern static baseFunction *basefun_quad;
+extern static baseFunction *basefun_doubledouble;
+extern static baseFunction *basefun_tripledouble;
+extern static baseFunction *basefun_erf;
+extern static baseFunction *basefun_erfc;
+extern static baseFunction *basefun_log1p;
+extern static baseFunction *basefun_expm1;
+extern static baseFunction *basefun_doubleextended;
+extern static baseFunction *basefun_ceil;
+extern static baseFunction *basefun_floor;
+extern static baseFunction *basefun_nearestint;
 
 node *makeSqrt(node *op1);
 node *makeExp(node *op1);

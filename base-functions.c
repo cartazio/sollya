@@ -2386,15 +2386,6 @@ int sqrt_evalsign(int *sign, node *c) {
   return 0;
 }
 
-int exp_evalsign(int *sign, node *c) {
-  int signA;
-  if (evaluateSign(&signA, c)) { /* TODO: I do not understand why we make a difference, e.g. between exp and cosh */
-    *sign = 1;
-    return 1;
-  }
-  return 0;
-}
-
 int log_evalsign(int *sign, node *c) {
   int okayA, signA, okayB, signB;
   node * tempNode;
@@ -2493,13 +2484,17 @@ int erf_evalsign(int *sign, node *c) { return odd_increasing_function_evalsign(s
 int expm1_evalsign(int *sign, node *c) { return odd_increasing_function_evalsign(sign, c); }
 
 int positive_function_evalsign(int *sign, node *c) {
-  UNUSED_PARAM(c);
-  *sign = 1;
-  return 1;
+ int signA;
+  if (evaluateSign(&signA, c)) {
+    *sign = 1;
+    return 1;
+  }
+  return 0;
 }
 
 int cosh_evalsign(int *sign, node *c) { return positive_function_evalsign(sign, c); }
 int erfc_evalsign(int *sign, node *c) { return positive_function_evalsign(sign, c); }
+int exp_evalsign(int *sign, node *c) {  return positive_function_evalsign(sign, c); }
 
 int acosh_evalsign(int *sign, node *c) {
   int okayA, signA;
@@ -2571,6 +2566,7 @@ int log1p_evalsign(int *sign, node *c) {
 int ceil_evalsign(int *sign, node *c) {
   int okay, s, okayA, signA, okayB, signB;
   node *tempNode;
+  okay = 0;
   okayA = evaluateSign(&signA, c);
   tempNode = makeConstantDouble(-1.0);
   if (okayA)
@@ -2597,6 +2593,7 @@ int ceil_evalsign(int *sign, node *c) {
 int floor_evalsign(int *sign, node *c) {
   int okay, s, okayA, signA, okayB, signB;
   node *tempNode;
+  okay = 0;
   okayA = evaluateSign(&signA, c);
   tempNode = makeConstantDouble(1.0);
   if (okayA)
@@ -2620,7 +2617,37 @@ int floor_evalsign(int *sign, node *c) {
   return okay;
 }
 
-int nearestint_evalsign(int *sign, node *c) { return floor_evalsign(sign, c); } /* TODO: really? */
+int nearestint_evalsign(int *sign, node *c) {
+  int okay, s, okayA, signA, okayB, signB;
+  node *tempNode;
+  okay = 0;
+  okayA = evaluateSign(&signA, c);
+  if (okayA) {
+    if (signA == 0) {
+      okayB = 1;
+      signB = 0;
+    }
+    else if (signA > 0) {
+      tempNode = makeConstantDouble(0.5);
+      okayB = compareConstant(&signB, c, tempNode, NULL, 0);
+    }
+    else {
+      tempNode = makeConstantDouble(-0.5);
+      okayB = compareConstant(&signB, c, tempNode, NULL, 0);
+    }
+  }
+  else okayB = 0;
+
+  if (okayA && okayB) {
+    okay = 1;
+    if ( (signA < 0) && (signB < 0) ) s = -1;
+    else if ( (signA > 0) && (signB > 0) ) s = 1;
+    else s = 0;
+  }
+  free_memory(tempNode);
+  if (okay) *sign = s;
+  return okay;
+}
 
 
 
@@ -2947,8 +2974,8 @@ baseFunction basefun_cosh_obj = {
   .mpfrName = "mpfr_cosh",
   .handledByImplementconst = 1,
   .isDefinedEverywhere = 1,
-  .onlyZeroIsZero = 1, /* TODO: why? */
-  .doesNotVanish = 0, /* TODO: why? */
+  .onlyZeroIsZero = 0,
+  .doesNotVanish = 1,
   .monotonicity = MONOTONICITY_NONE,
   .baseAutodiff = cosh_diff,
   .interval_eval = sollya_mpfi_cosh,
@@ -3136,7 +3163,7 @@ baseFunction basefun_double_obj = {
   .xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">double</csymbol>\n",
   .mpfrName = "",
   .handledByImplementconst = 0,
-  .isDefinedEverywhere = 0, /* TODO : why? */
+  .isDefinedEverywhere = 0, /* because of overflows: for large numbers, it becomes +Inf */
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = NONDECREASING,
@@ -3155,7 +3182,7 @@ baseFunction basefun_single_obj = {
   .xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">single</csymbol>\n",
   .mpfrName = "",
   .handledByImplementconst = 0,
-  .isDefinedEverywhere = 0, /* TODO : why? */
+  .isDefinedEverywhere = 0, /* because of overflows: for large numbers, it becomes +Inf */
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = NONDECREASING,
@@ -3174,7 +3201,7 @@ baseFunction basefun_halfprecision_obj = {
   .xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">halfprecision</csymbol>\n",
   .mpfrName = "",
   .handledByImplementconst = 0,
-  .isDefinedEverywhere = 0, /* TODO : why? */
+  .isDefinedEverywhere = 0, /* because of overflows: for large numbers, it becomes +Inf */
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = NONDECREASING,
@@ -3193,7 +3220,7 @@ baseFunction basefun_quad_obj = {
   .xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">quad</csymbol>\n",
   .mpfrName = "",
   .handledByImplementconst = 0,
-  .isDefinedEverywhere = 0, /* TODO : why? */
+  .isDefinedEverywhere = 0, /* because of overflows: for large numbers, it becomes +Inf */
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = NONDECREASING,
@@ -3212,7 +3239,7 @@ baseFunction basefun_doubledouble_obj = {
   .xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">doubledouble</csymbol>\n",
   .mpfrName = "",
   .handledByImplementconst = 0,
-  .isDefinedEverywhere = 0, /* TODO : why? */
+  .isDefinedEverywhere = 0, /* because of overflows: for large numbers, it becomes +Inf */
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = NONDECREASING,
@@ -3231,7 +3258,7 @@ baseFunction basefun_tripledouble_obj = {
   .xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">tripledouble</csymbol>\n",
   .mpfrName = "",
   .handledByImplementconst = 0,
-  .isDefinedEverywhere = 0, /* TODO : why? */
+  .isDefinedEverywhere = 0, /* because of overflows: for large numbers, it becomes +Inf */
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = NONDECREASING,
@@ -3250,7 +3277,7 @@ baseFunction basefun_doubleextended_obj = {
   .xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">doubleextended</csymbol>\n",
   .mpfrName = "",
   .handledByImplementconst = 0,
-  .isDefinedEverywhere = 0, /* TODO : why? */
+  .isDefinedEverywhere = 0, /* because of overflows: for large numbers, it becomes +Inf */
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = NONDECREASING,
@@ -3269,7 +3296,7 @@ baseFunction basefun_ceil_obj = {
   .xmlString = "<ceiling/>\n",
   .mpfrName = "",
   .handledByImplementconst = 0,
-  .isDefinedEverywhere = 0, /* TODO : why? */
+  .isDefinedEverywhere = 1,
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = NONDECREASING,
@@ -3288,7 +3315,7 @@ baseFunction basefun_floor_obj = {
   .xmlString = "<floor/>\n",
   .mpfrName = "",
   .handledByImplementconst = 0,
-  .isDefinedEverywhere = 0, /* TODO : why? */
+  .isDefinedEverywhere = 1,
   .doesNotVanish = 0,
   .monotonicity = NONDECREASING,
   .baseAutodiff = floor_diff,
@@ -3307,7 +3334,7 @@ baseFunction basefun_nearestint_obj = {
   .xmlString = "<csymbol definitionURL=\"http://www.google.com/\" encoding=\"OpenMath\">nearestint</csymbol>\n",
   .mpfrName = "",
   .handledByImplementconst = 0,
-  .isDefinedEverywhere = 0, /* TODO : why? */
+  .isDefinedEverywhere = 1,
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = NONDECREASING,

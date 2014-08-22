@@ -251,7 +251,7 @@ void fprintHeadFunction(FILE *fd,node *tree, char *x, char *y) {
     sollyaFprintf(fd,"%s / %s",x,y);
     break;
   case NEG:
-    sollyaFprintf(fd,"-%s",x); /* TODO: curiously NEG is handled here as -%s while everywhere else, there is always a special code for choosing if parentheses should be displayed or not */
+    sollyaFprintf(fd,"-%s",x);
     break;
   case UNARY_BASE_FUNC:
     sollyaFprintf(fd,"%s",tree->baseFun->functionName);

@@ -4361,7 +4361,7 @@ char *sRawPrintThing(node *tree) {
 						    concatAndFree(sRawPrintThing(tree->child2),
 								  newString(")")))));
     break;
-  case NEG: /* TODO: curiously NEG is handled here as -(%s) while in expression.c, there is always a special code for choosing if parentheses should be displayed or not */
+  case NEG:
     res = concatAndFree(newString("-("),
 			concatAndFree(sRawPrintThing(tree->child1),
 				      newString(")")));
