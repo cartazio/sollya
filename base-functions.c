@@ -1782,7 +1782,7 @@ node *simplify_abs(node *g) {
 
   if (accessThruMemRef(g)->nodeType == CONSTANT) {
     value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-    mpfr_init2(*value, tools_precision);
+    mpfr_init2(*value, mpfr_get_prec(*(accessThruMemRef(g)->value)));
     if ( (mpfr_abs(*value, *(accessThruMemRef(g)->value), GMP_RNDN) == 0) &&
          mpfr_number_p(*value) )  {
       simplified->nodeType = CONSTANT;
