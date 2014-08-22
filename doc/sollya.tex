@@ -124,6 +124,12 @@ commands.
 
 The following options are supported when calling \sollya:
 \begin{itemize}
+\item \texttt{--args}: The special argument indicates to \sollya that subsequent
+command line arguments are no longer to be interpreted but are to be passed as-is
+to the predefined \sollya variable \texttt{\_\_argv}. The \texttt{--args} argument
+is implicitely assumed if a \sollya script filename has already been specified with a 
+preceding command line argument and none of the subsequent command line arguments 
+is one of the special options given in this list.
 \item \texttt{--donotmodifystacksize}: When invoked, \sollya trys to increase
 the stack size that is available to a user process to the maximum size
 supported by the kernel. On some systems, the correspondent \texttt{ioctl} 
@@ -313,6 +319,29 @@ Let us state that a variable identifier, just as every identifier in
 \sollya, contains at least one character, starts with a ASCII letter
 and continues with ASCII letters or numerical digits.
 
+Two predefined variables exist when \sollya is started: 
+\begin{itemize}
+\item \texttt{\_\_argv} : This variable contains, on \sollya startup
+  and after the execution of the \texttt{restart} command, a list of
+  character strings that correspond to the command line options given
+  to \sollya after the (implicit) command line argument
+  \texttt{--args} (see above).
+\item \texttt{\_\_unique\_id} : This variable contains, on \sollya
+  startup and after the execution of the \texttt{restart} command, a
+  character string that uniquely identifies the given \sollya session
+  on a system. It hence allows for concurrent execution of \sollya
+  scripts that use temporary files for communication with other
+  tools. The character string does not contain any spaces and only
+  contains characters that are suitable for *nix filenames. After the
+  execution of the \texttt{restart} command, the
+  \texttt{\_\_unique\_id} variable is refreshed with a new, unique
+  value.
+\end{itemize}
+Even though these variables exist upon \sollya startup with predefined
+values, they behave like any other variable: the predefined value can
+be overwritten by assigning any new value to the variables, the
+variables can be shadowed by declared, local variables of the same
+name and so on.
 
 
 \section{Data types}\label{sec:data_types}

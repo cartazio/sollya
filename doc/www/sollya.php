@@ -125,7 +125,13 @@ commands.
 <p>
 The following options are supported when calling <span class="sollya">Sollya</span>:
 <ul>
-<li> <code>--donotmodifystacksize</code>: When invoked, <span class="sollya">Sollya</span> trys to increase
+<li> <code>--args</code>: The special argument indicates to <span class="sollya">Sollya</span> that subsequent
+command line arguments are no longer to be interpreted but are to be passed as-is
+to the predefined <span class="sollya">Sollya</span> variable <code>__argv</code>. The <code>--args</code> argument
+is implicitely assumed if a <span class="sollya">Sollya</span> script filename has already been specified with a 
+preceding command line argument and none of the subsequent command line arguments 
+is one of the special options given in this list.
+</li><li> <code>--donotmodifystacksize</code>: When invoked, <span class="sollya">Sollya</span> trys to increase
 the stack size that is available to a user process to the maximum size
 supported by the kernel. On some systems, the correspondent <code>ioctl</code> 
 does not work properly. Use the option to prevent <span class="sollya">Sollya</span> from changing the 
@@ -315,6 +321,31 @@ The following code examples illustrate the use of variables.
 Let us state that a variable identifier, just as every identifier in
 <span class="sollya">Sollya</span>, contains at least one character, starts with a ASCII letter
 and continues with ASCII letters or numerical digits.
+<p>
+Two predefined variables exist when <span class="sollya">Sollya</span> is started: 
+<ul>
+<li> <code>__argv</code> : This variable contains, on <span class="sollya">Sollya</span> startup
+  and after the execution of the <code class="key">restart</code> command, a list of
+  character strings that correspond to the command line options given
+  to <span class="sollya">Sollya</span> after the (implicit) command line argument
+  <code>--args</code> (see above).
+</li><li> <code>__unique_id</code> : This variable contains, on <span class="sollya">Sollya</span>
+  startup and after the execution of the <code class="key">restart</code> command, a
+  character string that uniquely identifies the given <span class="sollya">Sollya</span> session
+  on a system. It hence allows for concurrent execution of <span class="sollya">Sollya</span>
+  scripts that use temporary files for communication with other
+  tools. The character string does not contain any spaces and only
+  contains characters that are suitable for *nix filenames. After the
+  execution of the <code class="key">restart</code> command, the
+  <code>__unique_id</code> variable is refreshed with a new, unique
+  value.
+</li></ul>
+Even though these variables exist upon <span class="sollya">Sollya</span> startup with predefined
+values, they behave like any other variable: the predefined value can
+be overwritten by assigning any new value to the variables, the
+variables can be shadowed by declared, local variables of the same
+name and so on.
+
 
 <a name="sec:data_types"></a>
 <h1>5 - Data types</h1>
