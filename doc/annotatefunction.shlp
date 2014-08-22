@@ -17,7 +17,15 @@
 #PARAMETERS <t> is a constant.
 
 #DESCRIPTION
-$COMMAND(<f>, <g>, <I>, <delta>) TODO TODO
+$COMMAND(<f>, <g>, <I>, <delta>, <t>) resp. $COMMAND(<f>, <g>, <I>,
+<delta>) (where <t> is assumed to be zero) annotates the given $SOLLYA
+function object <f> with an approximation <g> in such a way that upon
+evaluation of <f> at a point in <I>
+
+
+#DESCRIPTION
+The approximation <g> can be any $SOLLYA function but particular
+performance is expected when <g> is a polynomial.
 
 #EXAMPLE
 procedure EXP(X,n,p) {
