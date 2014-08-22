@@ -22738,7 +22738,7 @@ node *evaluateThingInnerst(node *tree) {
 	      }
 	    }
 	  }
-	  copy = substitute(tempNode, tempNode2);
+	  copy = substituteEnhanced(tempNode, tempNode2, autosimplify);
 	  freeThing(tempNode2);
 	} else {
 	  mpfr_init2(a,tools_precision);
@@ -22903,7 +22903,7 @@ node *evaluateThingInnerst(node *tree) {
 	      }
 	    }
 	  }
-	  copy = substitute(tempNode, tempNode2);
+	  copy = substituteEnhanced(tempNode, tempNode2, autosimplify);
 	  freeThing(tempNode2);
 	} else {
 	  mpfr_init2(a,tools_precision);
@@ -24351,7 +24351,7 @@ node *evaluateThingInnerst(node *tree) {
     copy->child2 = evaluateThingInner(tree->child2);
     if (isPureTree(copy->child1) && isPureTree(copy->child2)) {
       if (timingString != NULL) pushTimeCounter();
-      tempNode = substitute(copy->child1,copy->child2);
+      tempNode = substituteEnhanced(copy->child1,copy->child2,autosimplify);
       freeThing(copy);
       copy = tempNode;
       if (timingString != NULL) popTimeCounter(timingString);
@@ -24663,7 +24663,7 @@ node *evaluateThingInnerst(node *tree) {
 	  }
 	  mpfr_clear(a);
 	} else {
-	  tempNode = substitute(copy->child1,copy->child2);
+	  tempNode = substituteEnhanced(copy->child1,copy->child2,autosimplify);
 	  freeThing(copy);
 	  copy = tempNode;
 	}

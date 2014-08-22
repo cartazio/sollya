@@ -12040,34 +12040,41 @@ node *substitutePolynomialUnsafe(node *p, node *q) {
   return res;
 }
 
-node *substituteInner(node* tree, node *t, int doNotEvaluate);
+node *substituteInner(node* tree, node *t, int doNotEvaluate, int maySimplify);
 
-node *substitute(node* tree, node *t) {
+node *substituteEnhanced(node* tree, node *t, int maySimplify) {
   node *res;
 
-  if ((tree->nodeType == MEMREF) &&
-      (t->nodeType == MEMREF)) {
-    if (tree->polynomialRepresentation == NULL) {
-      tryRepresentAsPolynomial(tree);
-    }
-    if ((tree->polynomialRepresentation != NULL) &&
-	(t->polynomialRepresentation == NULL)) {
-      tryRepresentAsPolynomial(t);
-    }
-    if ((tree->polynomialRepresentation != NULL) &&
-	(t->polynomialRepresentation != NULL)) {
-      res = addMemRefEvenOnNull(NULL);
-      if (res != NULL) {
-	res->polynomialRepresentation = polynomialCompose(tree->polynomialRepresentation,
-							  t->polynomialRepresentation);
-	return res;
+  if (maySimplify) {
+    if ((tree->nodeType == MEMREF) &&
+	(t->nodeType == MEMREF)) {
+      if (tree->polynomialRepresentation == NULL) {
+	tryRepresentAsPolynomial(tree);
+      }
+      if ((tree->polynomialRepresentation != NULL) &&
+	  (t->polynomialRepresentation == NULL)) {
+	tryRepresentAsPolynomial(t);
+      }
+      if ((tree->polynomialRepresentation != NULL) &&
+	  (t->polynomialRepresentation != NULL)) {
+	res = addMemRefEvenOnNull(NULL);
+	if (res != NULL) {
+	  res->polynomialRepresentation = polynomialCompose(tree->polynomialRepresentation,
+							    t->polynomialRepresentation);
+	  return res;
+	}
       }
     }
   }
-  return substituteInner(tree, t, 0);
+
+  return substituteInner(tree, t, 0, maySimplify);
 }
 
-node *substituteInner(node* tree, node *t, int doNotEvaluate) {
+node *substitute(node* tree, node *t) {
+  return substituteEnhanced(tree, t, 1);
+}
+
+node *substituteInner(node* tree, node *t, int doNotEvaluate, int maySimplify) {
   node *copy;
   mpfr_t *value;
   mpfr_t temp;
@@ -12156,7 +12163,7 @@ node *substituteInner(node* tree, node *t, int doNotEvaluate) {
   }
 
   if (tree->nodeType == MEMREF) {
-    copy = addMemRef(substituteInner(getMemRefChild(tree), t, 1));
+    copy = addMemRef(substituteInner(getMemRefChild(tree), t, 1, maySimplify));
 
     if (haveAPrioriBoundForConstantExpr) {
       if (copy->nodeType == MEMREF) {
@@ -12193,211 +12200,211 @@ node *substituteInner(node* tree, node *t, int doNotEvaluate) {
   case ADD:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = ADD;
-    copy->child1 = substitute(tree->child1,t);
-    copy->child2 = substitute(tree->child2,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
+    copy->child2 = substituteEnhanced(tree->child2,t,maySimplify);
     break;
   case SUB:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = SUB;
-    copy->child1 = substitute(tree->child1,t);
-    copy->child2 = substitute(tree->child2,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
+    copy->child2 = substituteEnhanced(tree->child2,t,maySimplify);
     break;
   case MUL:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = MUL;
-    copy->child1 = substitute(tree->child1,t);
-    copy->child2 = substitute(tree->child2,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
+    copy->child2 = substituteEnhanced(tree->child2,t,maySimplify);
     break;
   case DIV:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = DIV;
-    copy->child1 = substitute(tree->child1,t);
-    copy->child2 = substitute(tree->child2,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
+    copy->child2 = substituteEnhanced(tree->child2,t,maySimplify);
     break;
   case SQRT:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = SQRT;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case EXP:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = EXP;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case LOG:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = LOG;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case LOG_2:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = LOG_2;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case LOG_10:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = LOG_10;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case SIN:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = SIN;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case COS:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = COS;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case TAN:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = TAN;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case ASIN:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = ASIN;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case ACOS:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = ACOS;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case ATAN:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = ATAN;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case SINH:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = SINH;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case COSH:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = COSH;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case TANH:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = TANH;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case ASINH:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = ASINH;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case ACOSH:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = ACOSH;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case ATANH:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = ATANH;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case POW:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = POW;
-    copy->child1 = substitute(tree->child1,t);
-    copy->child2 = substitute(tree->child2,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
+    copy->child2 = substituteEnhanced(tree->child2,t,maySimplify);
     break;
   case NEG:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = NEG;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case ABS:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = ABS;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case DOUBLE:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = DOUBLE;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case SINGLE:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = SINGLE;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case QUAD:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = QUAD;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case HALFPRECISION:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = HALFPRECISION;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case DOUBLEDOUBLE:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = DOUBLEDOUBLE;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case TRIPLEDOUBLE:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = TRIPLEDOUBLE;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case ERF:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = ERF;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case ERFC:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = ERFC;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case LOG_1P:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = LOG_1P;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case EXP_M1:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = EXP_M1;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case DOUBLEEXTENDED:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = DOUBLEEXTENDED;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case LIBRARYFUNCTION:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = LIBRARYFUNCTION;
     copy->libFun = tree->libFun;
     copy->libFunDeriv = tree->libFunDeriv;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case PROCEDUREFUNCTION:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = PROCEDUREFUNCTION;
     copy->libFunDeriv = tree->libFunDeriv;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     copy->child2 = copyThing(tree->child2);
     break;
   case CEIL:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = CEIL;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case FLOOR:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = FLOOR;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case NEARESTINT:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = NEARESTINT;
-    copy->child1 = substitute(tree->child1,t);
+    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
     break;
   case PI_CONST:
     copy = (node*) safeMalloc(sizeof(node));
@@ -12410,7 +12417,7 @@ node *substituteInner(node* tree, node *t, int doNotEvaluate) {
     break;
 
   default:
-    sollyaFprintf(stderr,"Error: substitute: unknown identifier in the tree\n");
+    sollyaFprintf(stderr,"Error: substituteInner: unknown identifier in the tree\n");
     exit(1);
   }
   copy = addMemRef(copy);
