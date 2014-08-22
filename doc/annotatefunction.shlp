@@ -17,15 +17,46 @@
 #PARAMETERS <t> is a constant.
 
 #DESCRIPTION
-$COMMAND(<f>, <g>, <I>, <delta>, <t>) resp. $COMMAND(<f>, <g>, <I>,
-<delta>) (where <t> is assumed to be zero) annotates the given $SOLLYA
+$COMMAND(<f>, <g>, <I>, <d>, <t>) resp. $COMMAND(<f>, <g>, <I>, <d>) 
+(where <t> is assumed to be zero) annotates the given $SOLLYA
 function object <f> with an approximation <g> in such a way that upon
-evaluation of <f> at a point in <I>
+evaluation of <f> at a point in <I>, <g> is used instead of <f> as
+long as the error between <f> and <g>, which must be bounded over all
+<I> by <d>, is not too large. The approximation <g> is not evaluated
+at the same point as <f> would be evaluated but after subtraction of 
+<t> from that point.
 
+#DESCRIPTION
+In order not to provoke any incorrect behavior, the given <f>, <g>,
+<I>, <d> and <t> must satisfy the following property:
+§§forall x in I, f(x) - g(x - t) in d.§$$\forall x \in I, f(x) - g(x - t) \in d.$$§§
 
 #DESCRIPTION
 The approximation <g> can be any $SOLLYA function but particular
-performance is expected when <g> is a polynomial.
+performance is expected when <g> is a polynomial. Upon annotation with
+a polynomial, precomputations are performed to analyze certain
+properties of the given approximation polynomial.
+
+#DESCRIPTION
+The $COMMAND command returns the annotated $SOLLYA function
+object. This object is indistinguishable from the original <f> with
+respect to $SOLLYA comparisons, printing and so on. Unless $SOLLYA has
+been compiled in some particular debug mode, the $COMMAND command does
+not deeply copy the function object <f>, so the original function
+object <f> also bears the annotation.
+
+#DESCRIPTION
+$SOLLYA function objects can be annotated more than once with
+different approximations on different domains, that do not need to be
+disjoint. Upon evaluation of the annotated function object, $SOLLYA
+chooses the approximation annotation that provides for sufficient
+accuracy at the evaluation point.
+
+#DESCRIPTION
+As an absolute error bound <d> is given for annotation, $SOLLYA cannot
+reuse an approximation annotation for the derivative of the annotated
+function. If any (higher) derivative of a function needs to bear an
+annotation, that derivative needs to be annotated using $COMMAND.
 
 #EXAMPLE
 procedure EXP(X,n,p) {
@@ -33,7 +64,7 @@ procedure EXP(X,n,p) {
           oldPrec = prec;
           prec = p!;
           
-	  "Using procedure function exponential";
+          "Using procedure function exponential";
 
           res = exp(X);
           

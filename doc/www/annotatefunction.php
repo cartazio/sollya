@@ -27,7 +27,36 @@
 </div> 
 <div class="divDescription"> 
 <h2 class="category">Description: </h2><ul> 
-<li><?php linkTo("command","annotatefunction","annotatefunction");?>(<span class="arg">f</span>, <span class="arg">g</span>, <span class="arg">I</span>, <span class="arg">delta</span>) TODO TODO 
+<li><?php linkTo("command","annotatefunction","annotatefunction");?>(<span class="arg">f</span>, <span class="arg">g</span>, <span class="arg">I</span>, <span class="arg">d</span>, <span class="arg">t</span>) resp. <?php linkTo("command","annotatefunction","annotatefunction");?>(<span class="arg">f</span>, <span class="arg">g</span>, <span class="arg">I</span>, <span class="arg">d</span>)  
+(where <span class="arg">t</span> is assumed to be zero) annotates the given Sollya 
+function object <span class="arg">f</span> with an approximation <span class="arg">g</span> in such a way that upon 
+evaluation of <span class="arg">f</span> at a point in <span class="arg">I</span>, <span class="arg">g</span> is used instead of <span class="arg">f</span> as 
+long as the error between <span class="arg">f</span> and <span class="arg">g</span>, which must be bounded over all 
+<span class="arg">I</span> by <span class="arg">d</span>, is not too large. The approximation <span class="arg">g</span> is not evaluated 
+at the same point as <span class="arg">f</span> would be evaluated but after subtraction of  
+<span class="arg">t</span> from that point. 
+</li><li>In order not to provoke any incorrect behavior, the given <span class="arg">f</span>, <span class="arg">g</span>, 
+<span class="arg">I</span>, <span class="arg">d</span> and <span class="arg">t</span> must satisfy the following property: 
+forall x in I, f(x) - g(x - t) in d. 
+</li><li>The approximation <span class="arg">g</span> can be any Sollya function but particular 
+performance is expected when <span class="arg">g</span> is a polynomial. Upon annotation with 
+a polynomial, precomputations are performed to analyze certain 
+properties of the given approximation polynomial. 
+</li><li>The <?php linkTo("command","annotatefunction","annotatefunction");?> command returns the annotated Sollya function 
+object. This object is indistinguishable from the original <span class="arg">f</span> with 
+respect to Sollya comparisons, printing and so on. Unless Sollya has 
+been compiled in some particular debug mode, the <?php linkTo("command","annotatefunction","annotatefunction");?> command does 
+not deeply copy the function object <span class="arg">f</span>, so the original function 
+object <span class="arg">f</span> also bears the annotation. 
+</li><li>Sollya function objects can be annotated more than once with 
+different approximations on different domains, that do not need to be 
+disjoint. Upon evaluation of the annotated function object, Sollya 
+chooses the approximation annotation that provides for sufficient 
+accuracy at the evaluation point. 
+</li><li>As an absolute error bound <span class="arg">d</span> is given for annotation, Sollya cannot 
+reuse an approximation annotation for the derivative of the annotated 
+function. If any (higher) derivative of a function needs to bear an 
+annotation, that derivative needs to be annotated using <?php linkTo("command","annotatefunction","annotatefunction");?>. 
 </ul> 
 </div> 
 <div class="divExamples"> 
@@ -38,7 +67,7 @@
 &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;oldPrec = prec;<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;prec = p!;<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br> 
-&nbsp;&nbsp;&nbsp;&nbsp; 	&nbsp;&nbsp;"Using procedure function exponential";<br> 
+&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"Using procedure function exponential";<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;res = exp(X);<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;prec = oldPrec!;<br> 

@@ -82,7 +82,7 @@ compare equal to any other floating-point datum, including NaN.
 &nbsp;&nbsp;&nbsp;&gt; a == a;<br> 
 &nbsp;&nbsp;&nbsp;true<br> 
 &nbsp;&nbsp;&nbsp;&gt; b == b;<br> 
-&nbsp;&nbsp;&nbsp;false<br> 
+&nbsp;&nbsp;&nbsp;true<br> 
 </div> 
 </div> 
 <div class="divSeeAlso"> 

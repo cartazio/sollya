@@ -76,11 +76,11 @@ The verbosity level has been set to 1.
 Warning (174): Rounding occurred when converting the constant "0.1" to floating-
 point with 165 bits.
 If safe computation is needed, try to increase the precision.
-0.1 + 3 * x
+0.1 + x * 3
 > verbosity = 0;
 The verbosity level has been set to 0.
 > diff(0.1 * x + 1.5 * x^2);
-0.1 + 3 * x
+0.1 + x * 3
 > verbosity = 12;
 The verbosity level has been set to 12.
 > diff(0.1 * x + 1.5 * x^2);
@@ -93,9 +93,7 @@ Information (205): extraction of coefficient terms from a polynomial uses a spec
 ial algorithm for canonical forms.
 Information (195): expression '0.1 + 2 * 1.5 * x' has been simplified to express
 ion '0.1 + 3 * x'.
-Information (207): no Horner simplification will be performed because the given 
-tree is already in Horner form.
-0.1 + 3 * x
+0.1 + x * 3
 \end{Verbatim}
 \end{minipage}\end{center}
 See also: \textbf{getsuppressedmessages} (\ref{labgetsuppressedmessages}), \textbf{suppressmessage} (\ref{labsuppressmessage}), \textbf{unsuppressmessage} (\ref{labunsuppressmessage}), \textbf{verbosity} (\ref{labverbosity}), \textbf{roundingwarnings} (\ref{labroundingwarnings})

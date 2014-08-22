@@ -20,7 +20,41 @@ Parameters:
 \end{itemize}
 \noindent Description: \begin{itemize}
 
-\item \textbf{annotatefunction}(\emph{f}, \emph{g}, \emph{I}, \emph{delta}) TODO TODO
+\item \textbf{annotatefunction}(\emph{f}, \emph{g}, \emph{I}, \emph{d}, \emph{t}) resp. \textbf{annotatefunction}(\emph{f}, \emph{g}, \emph{I}, \emph{d}) 
+   (where \emph{t} is assumed to be zero) annotates the given \sollya
+   function object \emph{f} with an approximation \emph{g} in such a way that upon
+   evaluation of \emph{f} at a point in \emph{I}, \emph{g} is used instead of \emph{f} as
+   long as the error between \emph{f} and \emph{g}, which must be bounded over all
+   \emph{I} by \emph{d}, is not too large. The approximation \emph{g} is not evaluated
+   at the same point as \emph{f} would be evaluated but after subtraction of 
+   \emph{t} from that point.
+
+\item In order not to provoke any incorrect behavior, the given \emph{f}, \emph{g},
+   \emph{I}, \emph{d} and \emph{t} must satisfy the following property:
+   $$\forall x \in I, f(x) - g(x - t) \in d.$$
+
+\item The approximation \emph{g} can be any \sollya function but particular
+   performance is expected when \emph{g} is a polynomial. Upon annotation with
+   a polynomial, precomputations are performed to analyze certain
+   properties of the given approximation polynomial.
+
+\item The \textbf{annotatefunction} command returns the annotated \sollya function
+   object. This object is indistinguishable from the original \emph{f} with
+   respect to \sollya comparisons, printing and so on. Unless \sollya has
+   been compiled in some particular debug mode, the \textbf{annotatefunction} command does
+   not deeply copy the function object \emph{f}, so the original function
+   object \emph{f} also bears the annotation.
+
+\item \sollya function objects can be annotated more than once with
+   different approximations on different domains, that do not need to be
+   disjoint. Upon evaluation of the annotated function object, \sollya
+   chooses the approximation annotation that provides for sufficient
+   accuracy at the evaluation point.
+
+\item As an absolute error bound \emph{d} is given for annotation, \sollya cannot
+   reuse an approximation annotation for the derivative of the annotated
+   function. If any (higher) derivative of a function needs to bear an
+   annotation, that derivative needs to be annotated using \textbf{annotatefunction}.
 \end{itemize}
 \noindent Example 1: 
 \begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
@@ -29,7 +63,7 @@ Parameters:
             oldPrec = prec;
             prec = p!;
             
-        "Using procedure function exponential";
+            "Using procedure function exponential";
             res = exp(X);
             
             prec = oldPrec!;

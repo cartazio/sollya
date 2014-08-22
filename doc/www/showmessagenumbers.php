@@ -78,11 +78,11 @@ global mode by an indication.
 &nbsp;&nbsp;&nbsp;&gt; diff(0.1 * x + 1.5 * x^2);<br> 
 &nbsp;&nbsp;&nbsp;Warning (174): Rounding occurred when converting the constant "0.1" to floating-point with 165 bits.<br> 
 &nbsp;&nbsp;&nbsp;If safe computation is needed, try to increase the precision.<br> 
-&nbsp;&nbsp;&nbsp;0.1 + 3 * x<br> 
+&nbsp;&nbsp;&nbsp;0.1 + x * 3<br> 
 &nbsp;&nbsp;&nbsp;&gt; verbosity = 0;<br> 
 &nbsp;&nbsp;&nbsp;The verbosity level has been set to 0.<br> 
 &nbsp;&nbsp;&nbsp;&gt; diff(0.1 * x + 1.5 * x^2);<br> 
-&nbsp;&nbsp;&nbsp;0.1 + 3 * x<br> 
+&nbsp;&nbsp;&nbsp;0.1 + x * 3<br> 
 &nbsp;&nbsp;&nbsp;&gt; verbosity = 12;<br> 
 &nbsp;&nbsp;&nbsp;The verbosity level has been set to 12.<br> 
 &nbsp;&nbsp;&nbsp;&gt; diff(0.1 * x + 1.5 * x^2);<br> 
@@ -92,8 +92,7 @@ global mode by an indication.
 &nbsp;&nbsp;&nbsp;Information (197): differentiating the expression '0.1 * x + 1.5 * x^2'<br> 
 &nbsp;&nbsp;&nbsp;Information (205): extraction of coefficient terms from a polynomial uses a special algorithm for canonical forms.<br> 
 &nbsp;&nbsp;&nbsp;Information (195): expression '0.1 + 2 * 1.5 * x' has been simplified to expression '0.1 + 3 * x'.<br> 
-&nbsp;&nbsp;&nbsp;Information (207): no Horner simplification will be performed because the given tree is already in Horner form.<br> 
-&nbsp;&nbsp;&nbsp;0.1 + 3 * x<br> 
+&nbsp;&nbsp;&nbsp;0.1 + x * 3<br> 
 </div> 
 </div> 
 <div class="divSeeAlso"> 
