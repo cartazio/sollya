@@ -16383,6 +16383,884 @@ int isEqualThing(node *tree, node *tree2) {
   return 1;
 }
 
+int isEqualThingNoPolyOnVoid(void *tree, void *tree2) {
+  return isEqualThingNoPoly((node *) tree, (node *) tree2);
+}
+
+int isEqualThingNoPoly(node *tree, node *tree2) {
+  chain *curri, *currj;
+  int found;
+
+  if (tree == NULL) return 0;
+  if (tree2 == NULL) return 0;
+
+  if (tree == tree2) return 1;
+
+  if ((tree->nodeType == MEMREF) && 
+      (tree2->nodeType == MEMREF) &&
+      (tree->polynomialRepresentation != NULL) &&
+      (tree2->polynomialRepresentation != NULL)) {
+    if (tree->polynomialRepresentation == tree2->polynomialRepresentation) 
+      return 1;
+  }
+
+  if (tree->nodeType == MEMREF) {
+    return isEqualThingNoPoly(getMemRefChild(tree), tree2);
+  }
+
+  if (tree2->nodeType == MEMREF) {
+    return isEqualThingNoPoly(tree, getMemRefChild(tree2));
+  }
+
+  if (tree->nodeType != tree2->nodeType) return 0;
+
+  switch (tree->nodeType) {
+  case VARIABLE:
+    break;
+  case CONSTANT:
+    if (!mpfr_equal_p(*(tree->value),*(tree2->value))) return 0;
+    break;
+  case ADD:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case SUB:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case MUL:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case DIV:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case SQRT:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case EXP:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case LOG:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case LOG_2:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case LOG_10:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case SIN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case COS:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case TAN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case ASIN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case ACOS:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case ATAN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case SINH:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case COSH:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case TANH:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case ASINH:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case ACOSH:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case ATANH:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case POW:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case NEG:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case ABS:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DOUBLE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case SINGLE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case HALFPRECISION:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case QUAD:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DOUBLEDOUBLE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case TRIPLEDOUBLE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case ERF:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case ERFC:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case LOG_1P:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case EXP_M1:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DOUBLEEXTENDED:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case LIBRARYFUNCTION:
+    if (tree->libFun != tree2->libFun) return 0;
+    if (tree->libFunDeriv != tree2->libFunDeriv) return 0;
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case LIBRARYCONSTANT:
+    if (tree->libFun != tree2->libFun) return 0;
+    break;
+  case PROCEDUREFUNCTION:
+    if (tree->libFunDeriv != tree2->libFunDeriv) return 0;
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case CEIL:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case FLOOR:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case NEARESTINT:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case PI_CONST:
+    break;
+  case COMMANDLIST:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case WHILE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case IFELSE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case IF:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case FOR:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case FORIN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case QUIT:
+    break;
+  case NOP:
+    break;
+  case NOPARG:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case FALSEQUIT:
+    break;
+  case FALSERESTART:
+    break;
+  case RESTART:
+    break;
+  case VARIABLEDECLARATION:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
+    break;
+  case PRINT:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case SUPPRESSMESSAGE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case UNSUPPRESSMESSAGE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case NEWFILEPRINT:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case APPENDFILEPRINT:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case PLOT:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case PRINTHEXA:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case PRINTFLOAT:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case PRINTBINARY:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case PRINTEXPANSION:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case BASHEXECUTE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case EXTERNALPLOT:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case WRITE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case NEWFILEWRITE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case APPENDFILEWRITE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case ASCIIPLOT:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case PRINTXML:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case PRINTXMLNEWFILE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case PRINTXMLAPPENDFILE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case WORSTCASE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case RENAME:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
+    break;
+  case AUTOPRINT:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case ASSIGNMENT:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case FLOATASSIGNMENT:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case EXTERNALPROC:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualIntPtrOnVoid)) return 0;
+  case LIBRARYBINDING:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case LIBRARYCONSTANTBINDING:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case PRECASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case POINTSASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DIAMASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DISPLAYASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case VERBOSITYASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case CANONICALASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case AUTOSIMPLIFYASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case SHOWMESSAGENUMBERSASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case TAYLORRECURSASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case TIMINGASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case FULLPARENASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case MIDPOINTASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DIEONERRORMODEASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case RATIONALMODEASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case SUPPRESSWARNINGSASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case HOPITALRECURSASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case PRECSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case POINTSSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DIAMSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DISPLAYSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case VERBOSITYSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case CANONICALSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case AUTOSIMPLIFYSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case SHOWMESSAGENUMBERSSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case TAYLORRECURSSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case TIMINGSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case FULLPARENSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case MIDPOINTSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DIEONERRORMODESTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case RATIONALMODESTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case SUPPRESSWARNINGSSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case HOPITALRECURSSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case AND:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case OR:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case NEGATION:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case INDEX:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case COMPAREEQUAL:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case COMPAREIN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case COMPARELESS:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case COMPAREGREATER:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case COMPARELESSEQUAL:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case COMPAREGREATEREQUAL:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case COMPARENOTEQUAL:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case CONCAT:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case ADDTOLIST:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case APPEND:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case PREPEND:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case ON:
+    break;
+  case OFF:
+    break;
+  case DYADIC:
+    break;
+  case POWERS:
+    break;
+  case BINARY:
+    break;
+  case HEXADECIMAL:
+    break;
+  case FILESYM:
+    break;
+  case POSTSCRIPT:
+    break;
+  case POSTSCRIPTFILE:
+    break;
+  case PERTURB:
+    break;
+  case ROUNDDOWN:
+    break;
+  case ROUNDUP:
+    break;
+  case ROUNDTOZERO:
+    break;
+  case ROUNDTONEAREST:
+    break;
+  case HONORCOEFF:
+    break;
+  case TRUE:
+    break;
+  case UNIT:
+    break;
+  case FALSE:
+    break;
+  case DEFAULT:
+    break;
+  case DECIMAL:
+    break;
+  case ABSOLUTESYM:
+    break;
+  case RELATIVESYM:
+    break;
+  case FIXED:
+    break;
+  case FLOATING:
+    break;
+  case ERRORSPECIAL:
+    break;
+  case DOUBLESYMBOL:
+    break;
+  case SINGLESYMBOL:
+    break;
+  case HALFPRECISIONSYMBOL:
+    break;
+  case QUADSYMBOL:
+    break;
+  case DOUBLEEXTENDEDSYMBOL:
+    break;
+  case DOUBLEDOUBLESYMBOL:
+    break;
+  case TRIPLEDOUBLESYMBOL:
+    break;
+  case STRING:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case TABLEACCESS:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case ISBOUND:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case TABLEACCESSWITHSUBSTITUTE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case STRUCTACCESS:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case APPLY:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0; break;
+  case DECIMALCONSTANT:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case MIDPOINTCONSTANT:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case DYADICCONSTANT:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case HEXCONSTANT:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case HEXADECIMALCONSTANT:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case BINARYCONSTANT:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case EMPTYLIST:
+    break;
+  case LIST:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    setupRandomAccessOnLists(tree);
+    setupRandomAccessOnLists(tree2);
+    break;
+  case STRUCTURE:
+    if (lengthChain(tree->arguments) != lengthChain(tree2->arguments)) return 0;
+    for (curri=tree->arguments;curri!=NULL;curri=curri->next) {
+      found = 0;
+      currj = tree2->arguments;
+      while ((!found) &&
+	     (currj != NULL)) {
+	if ((!strcmp(((entry *) (curri->value))->name,
+		     ((entry *) (currj->value))->name)) &&
+	    (isEqualThingNoPoly(((node *) ((entry *) (curri->value))->value),
+			  ((node *) ((entry *) (currj->value))->value)))) {
+	  found = 1;
+	}
+	currj = currj->next;
+      }
+      if (!found) return 0;
+    }
+    break;
+  case FINALELLIPTICLIST:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    setupRandomAccessOnLists(tree);
+    setupRandomAccessOnLists(tree2);
+    break;
+  case ELLIPTIC:
+    break;
+  case RANGE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case DEBOUNDMAX:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case EVALCONST:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DEBOUNDMIN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DEBOUNDMID:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DIFF:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case BASHEVALUATE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case GETSUPPRESSEDMESSAGES:
+    break;
+  case DIRTYSIMPLIFY:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case SIMPLIFYSAFE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case TIME:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case REMEZ:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case ANNOTATEFUNCTION:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case MATCH:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case MATCHELEMENT:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case MIN:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case MAX:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case FPMINIMAX:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case HORNER:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case CANONICAL:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case EXPAND:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case TAYLOR:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case TAYLORFORM:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case CHEBYSHEVFORM:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case AUTODIFF:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case DEGREE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case NUMERATOR:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DENOMINATOR:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case SUBSTITUTE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case COMPOSEPOLYNOMIALS:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case COEFF:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case SUBPOLY:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case ROUNDCOEFFICIENTS:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case RATIONALAPPROX:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case ACCURATEINFNORM:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case ROUNDTOFORMAT:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case EVALUATE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case PARSE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case READXML:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case EXECUTE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case INFNORM:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case SUPNORM:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case FINDZEROS:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case FPFINDZEROS:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case DIRTYINFNORM:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case NUMBERROOTS:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case INTEGRAL:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case DIRTYINTEGRAL:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case IMPLEMENTPOLY:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case IMPLEMENTCONST:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case CHECKINFNORM:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case ZERODENOMINATORS:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case ISEVALUABLE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case SEARCHGAL:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case GUESSDEGREE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case ASSIGNMENTININDEXING:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case FLOATASSIGNMENTININDEXING:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case ASSIGNMENTINSTRUCTURE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
+    break;
+  case FLOATASSIGNMENTINSTRUCTURE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
+    break;
+  case PROTOASSIGNMENTINSTRUCTURE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case PROTOFLOATASSIGNMENTINSTRUCTURE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case DIRTYFINDZEROS:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case HEAD:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case ROUNDCORRECTLY:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case READFILE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case REVERT:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case SORT:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case MANTISSA:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case EXPONENT:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case PRECISION:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case TAIL:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case LENGTH:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case EXTERNALPROCEDUREUSAGE:
+    if (tree->libProc != tree2->libProc) return 0;
+    break;
+  case PROC:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
+    break;
+  case BIND:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;
+    break;
+  case PROCILLIM:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
+    break;
+  case PRECDEREF:
+    break;
+  case POINTSDEREF:
+    break;
+  case DIAMDEREF:
+    break;
+  case DISPLAYDEREF:
+    break;
+  case VERBOSITYDEREF:
+    break;
+  case CANONICALDEREF:
+    break;
+  case AUTOSIMPLIFYDEREF:
+    break;
+  case SHOWMESSAGENUMBERSDEREF:
+    break;
+  case TAYLORRECURSDEREF:
+    break;
+  case TIMINGDEREF:
+    break;
+  case FULLPARENDEREF:
+    break;
+  case MIDPOINTDEREF:
+    break;
+  case DIEONERRORMODEDEREF:
+    break;
+  case RATIONALMODEDEREF:
+    break;
+  case SUPPRESSWARNINGSDEREF:
+    break;
+  case HOPITALRECURSDEREF:
+    break;
+  default:
+    sollyaFprintf(stderr,"Error: isEqualThingNoPoly: unknown identifier (%d) in the tree\n",tree->nodeType);
+    exit(1);
+  }
+
+  return 1;
+}
+
+int isEqualThingEnhanced(node *tree, node *tree2, int simplify) {
+
+  if (simplify) return isEqualThing(tree, tree2);
+  return isEqualThingNoPoly(tree, tree2);
+}
 
 int isCorrectlyTypedBaseSymbol(node *tree) {
 
@@ -19541,7 +20419,6 @@ node *evaluateThingInner(node *tree) {
     return addMemRef(copyThing(tree));
   }
 
-  // sollyaPrintf("evaluateThingInner(tree = %b, tree->nodeType = %d)\n", tree, tree->nodeType);
   res = evaluateThingInnerst(tree);
 
   if ((tree != NULL) && (res != NULL) &&
@@ -21225,7 +22102,11 @@ node *evaluateThingInnerst(node *tree) {
 	(isError(copy->child2) && (!isError(tree->child2)) && (!isError(tree->child1)))) {
       printMessage(1,SOLLYA_MSG_TEST_COMPARES_ERROR_TO_SOMETHING,"Warning: the evaluation of one of the sides of an equality test yields error due to a syntax error or an error on a side-effect.\nThe other side either also yields error due to an syntax or side-effect error or does not evaluate to error.\nThe boolean returned may be meaningless.\n");
     }
-    if (isEqualThing(copy->child1,copy->child2)) {
+    if (autosimplify) {
+      tryRepresentAsPolynomialNoConstants(copy->child1);
+      tryRepresentAsPolynomialNoConstants(copy->child2);
+    }
+    if (isEqualThingEnhanced(copy->child1,copy->child2, autosimplify)) {
       if (!isError(copy->child1)) {
 	freeThing(copy);
 	copy = makeTrue();
@@ -22188,7 +23069,11 @@ node *evaluateThingInnerst(node *tree) {
 	(isError(copy->child2) && (!isError(tree->child2)) && (!isError(tree->child1)))) {
       printMessage(1,SOLLYA_MSG_TEST_COMPARES_ERROR_TO_SOMETHING,"Warning: the evaluation of one of the sides of an equality test yields error due to a syntax error or an error on a side-effect.\nThe other side either also yields error due to an syntax or side-effect error or does not evaluate to error.\nThe boolean returned may be meaningless.\n");
     }
-    if (isEqualThing(copy->child1,copy->child2)) {
+    if (autosimplify) {
+      tryRepresentAsPolynomialNoConstants(copy->child1);
+      tryRepresentAsPolynomialNoConstants(copy->child2);
+    }
+    if (isEqualThingEnhanced(copy->child1,copy->child2, autosimplify)) {
       if (!isError(copy->child1)) {
 	freeThing(copy);
 	copy = makeFalse();

@@ -4128,9 +4128,9 @@ static inline unsigned int __sparsePolynomialFindDegreeNaive(constant_t d,
 
 */
 static inline unsigned int __sparsePolynomialFindDegree(constant_t d, 
-						  constant_t *a, 
-						  unsigned int n,
-						  unsigned int g) {
+							constant_t *a, 
+							unsigned int n,
+							unsigned int g) {
   unsigned int l, r, m, i, j, p;
   unsigned long long int t;
   int tv;
@@ -4153,8 +4153,8 @@ static inline unsigned int __sparsePolynomialFindDegree(constant_t d,
   /* If g is in the valid range of indices (0 <= g <= n - 1), try to
      find the answer up to 64 steps around g. 
   */
-  if ((0u <= g) && (g <= n - 1u)) {
-    for (p=n+1u, i=g, j=0; (j<64) && (0u <= i) && (i <= n - 1u); j++) {
+  if (g <= n - 1u) { /* 0 <= g is always true because g is unsigned */
+    for (p=n+1u, i=g, j=0; (j<64u) && (i <= n - 1u); j++) {
       tv = constantIsGreaterOrEqual(a[i],d,42);
       if (tv == 42) return __sparsePolynomialFindDegreeNaive(d, a, n);
       if (tv) {

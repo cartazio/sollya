@@ -120,3 +120,6 @@ print(evaluate(sin(pi * x), [2, 2.25]));
 restart;
 print("=============== Test number 60 ================");
 print(evaluate(sin(pi * x), 2 + 0.25 * x));
+autosimplify=off;
+print(evaluate(sin(pi * x), 2 + 0.25 * x));
+
