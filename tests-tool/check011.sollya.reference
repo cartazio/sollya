@@ -69,4 +69,4 @@ The tool has been restarted.
 1 + x * (1 + x * (0.5 + x * (1 / 6 + x * (1 / 24 + x / 120))))
 The tool has been restarted.
 =============== Test number 220 ================
-x * (1 + x^2 * (1 / 6 + x^2 * (9 / 120 + x^2 * 225 / 5040)))
+x * (1 + x^2 * (1 / 6 + x^2 * (3 / 40 + x^2 * 5 / 112)))

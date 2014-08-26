@@ -80,4 +80,6 @@ The tool has been restarted.
 [-5.143390272677254630046998919961912407349224165421e-50;0.70710678118654752440084436210484903928483593768866]
 The tool has been restarted.
 =============== Test number 60 ================
+sin((pi) * 2 + x * (pi) * 0.25)
+Automatic pure tree simplification has been deactivated.
 sin((pi) * (2 + 0.25 * x))
