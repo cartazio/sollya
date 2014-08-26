@@ -4,6 +4,7 @@ tacos.c \
 tacosh.c \
 tadd.c \
 tand.c \
+tannotatefunction.c \
 tappend.c \
 tasin.c \
 tasinh.c \
