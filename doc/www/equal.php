@@ -22,14 +22,19 @@
 <div class="divDescription"> 
 <h2 class="category">Description: </h2><ul> 
 <li>The operator <?php linkTo("command","equal","==");?> evaluates to true iff its operands <span class="arg">expr1</span> and 
-<span class="arg">expr2</span> are syntactically equal and different from <?php linkTo("command","error","error");?> or constant 
+<span class="arg">expr2</span> are syntactically equal and different from <?php linkTo("command","error","error");?>, constant 
 expressions that are not constants and that evaluate to the same 
-floating-point number with the global precision <?php linkTo("command","prec","prec");?>. The user should 
-be aware of the fact that because of floating-point evaluation, the 
-operator <?php linkTo("command","equal","==");?> is not exactly the same as the mathematical 
-equality. Further remark that according to IEEE 754-2008 floating-point 
-rules, which Sollya emulates, floating-point data which are NaN do not 
-compare equal to any other floating-point datum, including NaN.  
+floating-point number with the global precision <?php linkTo("command","prec","prec");?> or polynomials  
+that are equal while automatic expression simplification is activated.  
+The user should be aware of the fact that because of floating-point  
+evaluation, the operator <?php linkTo("command","equal","==");?> is not exactly the same as the  
+mathematical equality. Further remark that according to IEEE 754-2008  
+floating-point rules, which Sollya emulates, floating-point data  
+which are NaN do not compare equal to any other floating-point datum,  
+including NaN. Further, expressions that are polynomials may not 
+be structurally equal when <?php linkTo("command","equal","==");?> evaluates to <?php linkTo("command","true","true");?>; in order 
+to obtain purely structural tests, the user should deactivate 
+automatic simplification using <?php linkTo("command","autosimplify","autosimplify");?>. 
 </ul> 
 </div> 
 <div class="divExamples"> 
@@ -84,7 +89,20 @@ compare equal to any other floating-point datum, including NaN.
 &nbsp;&nbsp;&nbsp;&gt; b == b;<br> 
 &nbsp;&nbsp;&nbsp;true<br> 
 </div> 
+<div class="divExample"> 
+<h2 class="category">Example 7: </h2> 
+&nbsp;&nbsp;&nbsp;&gt; p = x + x^2;<br> 
+&nbsp;&nbsp;&nbsp;&gt; q = x * (1 + x);<br> 
+&nbsp;&nbsp;&nbsp;&gt; autosimplify = on;<br> 
+&nbsp;&nbsp;&nbsp;Automatic pure tree simplification has been activated.<br> 
+&nbsp;&nbsp;&nbsp;&gt; p == q;<br> 
+&nbsp;&nbsp;&nbsp;true<br> 
+&nbsp;&nbsp;&nbsp;&gt; autosimplify = off;<br> 
+&nbsp;&nbsp;&nbsp;Automatic pure tree simplification has been deactivated.<br> 
+&nbsp;&nbsp;&nbsp;&gt; p == q;<br> 
+&nbsp;&nbsp;&nbsp;false<br> 
+</div> 
 </div> 
 <div class="divSeeAlso"> 
-<span class="category">See also: </span><?php linkTo("command","neq","!=");?>, <?php linkTo("command","gt","&gt;");?>, <?php linkTo("command","ge","&gt;=");?>, <?php linkTo("command","le","&lt;=");?>, <?php linkTo("command","lt","&lt;");?>, <?php linkTo("command","in","in");?>, <?php linkTo("command","not","!");?>, <?php linkTo("command","and","&&");?>, <?php linkTo("command","or","||");?>, <?php linkTo("command","error","error");?>, <?php linkTo("command","prec","prec");?> 
+<span class="category">See also: </span><?php linkTo("command","neq","!=");?>, <?php linkTo("command","gt","&gt;");?>, <?php linkTo("command","ge","&gt;=");?>, <?php linkTo("command","le","&lt;=");?>, <?php linkTo("command","lt","&lt;");?>, <?php linkTo("command","in","in");?>, <?php linkTo("command","not","!");?>, <?php linkTo("command","and","&&");?>, <?php linkTo("command","or","||");?>, <?php linkTo("command","error","error");?>, <?php linkTo("command","prec","prec");?>, <?php linkTo("command","autosimplify","autosimplify");?> 
 </div> 

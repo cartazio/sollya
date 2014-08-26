@@ -1957,6 +1957,13 @@ int main() {
 
 More involved examples are possible: for instance, instead of setting a flag, it is possible to keep in some variable what the last message was. One may even implement a stack mechanism and store the messages in a stack, in order to handle them later. (Please remember however that \verb|sollya_msg_t| is a pointer type and that the \verb|sollya_msg_t| object received as argument of a callback call has no more meaning once the callback call returned. If a stack mechanism is implemented it should store information such as the message ID, or the message text, as given by \verb|sollya_lib_get_msg_id| and \verb|sollya_lib_msg_to_text|, but not the \verb|sollya_msg_t| object itself.)
 
+In addition the \sollya library offers a way to print \sollya warning messages --or provoke callback calls if a callback is installed-- from a program that uses the \sollya library. The function supporting this feature
+is \verb|int sollya_lib_printmessage(int, int, const char *, ...)|. Set aside its first two arguments, this functions behaves like the function \verb|sollya_lib_printf|, i.e. its \verb|char *| argument is a format
+string, followed by a variadic number of arguments corresponding to that format string. The first argument of the \verb|sollya_lib_printmessage| function is the least verbosity level at which that warning shall be displayed.
+Its second argument is a boolean argument indicating if the given call of the function continues the message that has been started out printing with a previous call; if the boolean is true (non-zero integer value), the message
+is a continuation message, otherwise (zero integer value), the message is a new message. Calling \verb|sollya_lib_printmessage| with a non-zero value in second argument without having called the functions with a zero value
+in second argument results in undefined behavior.
+
 \subsection{Using \sollya in a program that has its own allocation functions}
 \label{customMemoryFunctions}
 \sollya uses its own allocation functions: as a consequence, pointers that have been allocated by \sollya functions must be freed using \verb|sollya_lib_free| instead of the usual \verb|free| function. Another consequence is that \sollya registers its own allocation functions to the \verb|GMP| library, using the mechanism provided by \verb|GMP|, so that \verb|GMP| also uses \sollya allocation functions behind the scene, when the user performs a call to, e.g., \verb|mpz_init|, \verb|mpfr_init2|, etc.

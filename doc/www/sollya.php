@@ -1951,6 +1951,13 @@ int main() {<br>
 
 <p>
 More involved examples are possible: for instance, instead of setting a flag, it is possible to keep in some variable what the last message was. One may even implement a stack mechanism and store the messages in a stack, in order to handle them later. (Please remember however that <code>sollya_msg_t</code> is a pointer type and that the <code>sollya_msg_t</code> object received as argument of a callback call has no more meaning once the callback call returned. If a stack mechanism is implemented it should store information such as the message ID, or the message text, as given by <code>sollya_lib_get_msg_id</code> and <code>sollya_lib_msg_to_text</code>, but not the <code>sollya_msg_t</code> object itself.)
+<p>
+In addition the <span class="sollya">Sollya</span> library offers a way to print <span class="sollya">Sollya</span> warning messages -or provoke callback calls if a callback is installed- from a program that uses the <span class="sollya">Sollya</span> library. The function supporting this feature
+is <code>int sollya_lib_printmessage(int, int, const char *, ...)</code>. Set aside its first two arguments, this functions behaves like the function <code>sollya_lib_printf</code>, i.e. its <code>char *</code> argument is a format
+string, followed by a variadic number of arguments corresponding to that format string. The first argument of the <code>sollya_lib_printmessage</code> function is the least verbosity level at which that warning shall be displayed.
+Its second argument is a boolean argument indicating if the given call of the function continues the message that has been started out printing with a previous call; if the boolean is true (non-zero integer value), the message
+is a continuation message, otherwise (zero integer value), the message is a new message. Calling <code>sollya_lib_printmessage</code> with a non-zero value in second argument without having called the functions with a zero value
+in second argument results in undefined behavior.
 
 <a name="customMemoryFunctions"></a>
 <h2>10.17 - Using <span class="sollya">Sollya</span> in a program that has its own allocation functions</h2>

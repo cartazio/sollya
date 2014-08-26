@@ -251,7 +251,7 @@ int sollya_lib_printmessage(int verb, int cont, const char *format, ...) {
   va_list varlist;
 
   va_start(varlist,format);
-  res = sollyaLibPrintmessage(verb, cont, format, varlist);
+  res = sollyaLibPrintmessage((verb < 0 ? 0 : verb), cont, format, varlist);
   va_end(varlist);
 
   return res;
