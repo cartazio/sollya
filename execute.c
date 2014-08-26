@@ -20423,7 +20423,7 @@ node *evaluateThingInner(node *tree) {
 
   if ((tree != NULL) && (res != NULL) &&
       (tree->nodeType == MEMREF) &&
-      (tree != res) &&
+      (tree != res) && 
       isEqualThing(tree,res)) {
     freeThing(res);
     res = copyThing(tree);

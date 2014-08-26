@@ -1,6 +1,6 @@
 The derivative of 17 is 0
 The derivative of exp(sin(x) + x) is exp(sin(x) + x) * (cos(x) + 1)
-The derivative of (x + 1)^7 is 7 + 42 * x + 105 * x^2 + 140 * x^3 + 105 * x^4 + 42 * x^5 + 7 * x^6
+The derivative of (x + 1)^7 is 7 * (1 + x)^6
 The derivative of sin(17 * x) is cos(17 * x) * 17
 The derivative of x is 1
 The derivative of exp(x) + atan(x) is exp(x) + 1 / (1 + x * x)

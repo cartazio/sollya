@@ -3011,7 +3011,7 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
   res = addMemRef(simplifyTreeErrorfreeInnerst(tree, rec, doRational));
 
   if ((tree != NULL) && (res != NULL) &&
-      (tree->nodeType == MEMREF)) {
+      (tree->nodeType == MEMREF)) { 
     if (isSyntacticallyEqualCheap(tree,res)) {
       free_memory(res);
       res = copyTree(tree);
@@ -6444,7 +6444,8 @@ node* simplifyTreeInner(node *tree) {
   res = simplifyTreeInnerst(tree);
 
   if ((tree != NULL) && (res != NULL) &&
-      (tree->nodeType == MEMREF) &&
+      (tree->nodeType == MEMREF) && 
+      (!((res->nodeType == MEMREF) && (((tree->child1 != NULL) && (!tree->memRefChildFromPolynomial)) && (res->child1 == NULL)))) &&
       isSyntacticallyEqualCheap(tree,res)) {
     free_memory(res);
     res = copyTree(tree);
@@ -6463,8 +6464,9 @@ node* simplifyTreeInnerst(node *tree) {
 
   if (tree->nodeType == MEMREF) {
     if (tree->polynomialRepresentation != NULL) {
-      if (((tree->child1 == NULL) || tree->memRefChildFromPolynomial) && polynomialCoefficientsAreDyadic(tree->polynomialRepresentation, 0))
+      if (((tree->child1 == NULL) || tree->memRefChildFromPolynomial) && polynomialCoefficientsAreDyadic(tree->polynomialRepresentation, 0)) {
 	return copyTree(tree);
+      }
       res = addMemRefEvenOnNull(NULL);
       if (res != NULL) {
 	res->polynomialRepresentation = polynomialRoundDyadic(tree->polynomialRepresentation,
@@ -7259,7 +7261,7 @@ node* simplifyAllButDivisionInner(node *tree) {
   res = simplifyAllButDivisionInnerst(tree);
 
   if ((tree != NULL) && (res != NULL) &&
-      (tree->nodeType == MEMREF) &&
+      (tree->nodeType == MEMREF) && 
       isSyntacticallyEqualCheap(tree,res)) {
     free_memory(res);
     res = copyTree(tree);

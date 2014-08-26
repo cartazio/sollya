@@ -3883,6 +3883,8 @@ static inline void constantCutTwo14(constant_t *q, constant_t *r, constant_t a) 
 static inline void constantEvalMpfr(mpfr_t rop, constant_t c) {
   mp_prec_t p;
   mpfr_t cutoff;
+  int res;
+  sollya_mpfi_t y;
 
  /* Handle stupid input */
   if (c == NULL) {
@@ -3899,7 +3901,16 @@ static inline void constantEvalMpfr(mpfr_t rop, constant_t c) {
     mpfr_set_nan(rop);
     mpfr_init2(cutoff, 12);
     mpfr_set_si(cutoff, 0, GMP_RNDN);
-    evaluateFaithfulWithCutOffFast(rop, c->value.expr, NULL, rop, cutoff, mpfr_get_prec(rop) + 10);
+    res = evaluateFaithfulWithCutOffFast(rop, c->value.expr, NULL, rop, cutoff, mpfr_get_prec(rop) + 10);
+    if (res == 0) {
+      sollya_mpfi_init2(y, mpfr_get_prec(rop) + 10);
+      evaluateConstantExpressionToInterval(y, c->value.expr);
+      if (!(sollya_mpfi_has_infinity(y) ||
+	    sollya_mpfi_has_nan(y))) {
+	mpfr_set_si(rop, 0, GMP_RNDN);
+      }
+      sollya_mpfi_clear(y);
+    }
     mpfr_clear(cutoff);
     break;
   case MPFR:
