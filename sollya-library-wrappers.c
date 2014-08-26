@@ -2151,7 +2151,7 @@ sollya_obj_t sollya_lib_pi() {
 }
 
 sollya_obj_t sollya_lib_parse_string(const char *str) {
-  return parseString((char *) str);
+  return addMemRef(parseString((char *) str));
 }
 
 sollya_obj_t sollya_lib_string(char *str) {
