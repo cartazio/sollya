@@ -304,6 +304,7 @@ ttanh.c \
 ttriple_double.c \
 ttriple_double_obj.c \
 ttrue.c \
+tv_annotatefunction.c \
 tv_build_end_elliptic_list.c \
 tv_build_list.c \
 tv_decompose_function.c \
