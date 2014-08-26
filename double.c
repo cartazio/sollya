@@ -1103,6 +1103,11 @@ int round_constant_expr_to_format_or_expansion_format(int *ternary, int *ternary
   int ta, tb;
   mp_rnd_t writeBackRnd;
 
+  /* Make compiler happy */
+  ta = 0;
+  tb = 0;
+  /* End of compiler happiness */
+
   /* Check if expression is constant */
   if (!isConstant(func)) return 0;
 

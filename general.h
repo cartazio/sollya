@@ -153,8 +153,24 @@ extern FILE *inputFile;
 extern int inputFileOpened;
 extern int flushOutput;
 
+extern node *memRefChainStart;
+
 extern void *rpl_malloc(size_t n);
 extern void *rpl_realloc(void *, size_t n);
+
+extern int __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_vars_used;
+extern int __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_x_initialized;
+extern int __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_y_initialized;
+extern int __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp_initialized;
+extern sollya_mpfi_t __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_x;
+extern sollya_mpfi_t __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_y;
+extern mpfr_t __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_temp;
+extern int    __sparsePolynomialEvalMpfr_var_used;
+extern int    __sparsePolynomialEvalMpfr_scratch_initialized;
+extern mpfr_t __sparsePolynomialEvalMpfr_scratch;
+extern int    __sparsePolynomialEvalMpfi_var_used;
+extern int    __sparsePolynomialEvalMpfi_scratch_initialized;
+extern sollya_mpfi_t __sparsePolynomialEvalMpfi_scratch;
 
 
 int general(int argc, char *argv[]);
@@ -238,5 +254,10 @@ void setRoundingWarnings(int);
 int getRationalMode();
 void setRationalMode(int);
 double sollya_mpfr_get_d(mpfr_t, mpfr_rnd_t);
+sollya_mpfi_t *getReusedGlobalMPFIVars(unsigned int, mp_prec_t);
+void returnReusedGlobalMPIVars(unsigned int);
+mpfr_t *getReusedGlobalMPFRVars(unsigned int, mp_prec_t);
+void returnReusedGlobalMPFRVars(unsigned int);
+int sollyaLibPrintmessage(int, int, const char *, va_list);
 
 #endif /* ifdef GENERAL_H*/

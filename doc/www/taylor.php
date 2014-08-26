@@ -45,7 +45,7 @@ Remark that <?php linkTo("command","taylor","taylor");?> evaluates to 0 if the d
 <div class="divExample"> 
 <h2 class="category">Example 2: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; print(taylor(asin(x),7,0));<br> 
-&nbsp;&nbsp;&nbsp;x * (1 + x^2 * (1 / 6 + x^2 * (9 / 120 + x^2 * 225 / 5040)))<br> 
+&nbsp;&nbsp;&nbsp;x * (1 + x^2 * (1 / 6 + x^2 * (3 / 40 + x^2 * 5 / 112)))<br> 
 </div> 
 <div class="divExample"> 
 <h2 class="category">Example 3: </h2> 

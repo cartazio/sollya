@@ -1,0 +1,104 @@
+\subsection{annotatefunction}
+\label{labannotatefunction}
+\noindent Name: \textbf{annotatefunction}\\
+\phantom{aaa}Annotates a \sollya function object with an approximation that is faster to evaluate\\[0.2cm]
+\noindent Library name:\\
+\verb|   sollya_obj_t sollya_lib_annotatefunction(sollya_obj_t, sollya_obj_t, |\\
+\verb|                                            sollya_obj_t, sollya_obj_t, ...);|\\[0.2cm]
+\noindent Usage: 
+\begin{center}
+\textbf{annotatefunction}(\emph{f}, \emph{g}, \emph{I}, \emph{d}) : (\textsf{function}, \textsf{function}, \textsf{range}, \textsf{range}) $\rightarrow$ \textsf{function}\\
+\textbf{annotatefunction}(\emph{f}, \emph{g}, \emph{I}, \emph{d}, \emph{t}) : (\textsf{function}, \textsf{function}, \textsf{range}, \textsf{range}, \textsf{constant}) $\rightarrow$ \textsf{function}\\
+\end{center}
+Parameters: 
+\begin{itemize}
+\item \emph{f} is a function.
+\item \emph{g} is a function, in most cases a polynomial.
+\item \emph{I} is an interval.
+\item \emph{d} is an interval.
+\item \emph{t} is a constant.
+\end{itemize}
+\noindent Description: \begin{itemize}
+
+\item \textbf{annotatefunction}(\emph{f}, \emph{g}, \emph{I}, \emph{d}, \emph{t}) resp. \textbf{annotatefunction}(\emph{f}, \emph{g}, \emph{I}, \emph{d}) 
+   (where \emph{t} is assumed to be zero) annotates the given \sollya
+   function object \emph{f} with an approximation \emph{g} in such a way that upon
+   evaluation of \emph{f} at a point in \emph{I}, \emph{g} is used instead of \emph{f} as
+   long as the error between \emph{f} and \emph{g}, which must be bounded over all
+   \emph{I} by \emph{d}, is not too large. The approximation \emph{g} is not evaluated
+   at the same point as \emph{f} would be evaluated but after subtraction of 
+   \emph{t} from that point.
+
+\item In order not to provoke any incorrect behavior, the given \emph{f}, \emph{g},
+   \emph{I}, \emph{d} and \emph{t} must satisfy the following property:
+   $$\forall x \in I, f(x) - g(x - t) \in d.$$
+
+\item The approximation \emph{g} can be any \sollya function but particular
+   performance is expected when \emph{g} is a polynomial. Upon annotation with
+   a polynomial, precomputations are performed to analyze certain
+   properties of the given approximation polynomial.
+
+\item The \textbf{annotatefunction} command returns the annotated \sollya function
+   object. This object is indistinguishable from the original \emph{f} with
+   respect to \sollya comparisons, printing and so on. Unless \sollya has
+   been compiled in some particular debug mode, the \textbf{annotatefunction} command does
+   not deeply copy the function object \emph{f}, so the original function
+   object \emph{f} also bears the annotation.
+
+\item \sollya function objects can be annotated more than once with
+   different approximations on different domains, that do not need to be
+   disjoint. Upon evaluation of the annotated function object, \sollya
+   chooses the approximation annotation that provides for sufficient
+   accuracy at the evaluation point.
+
+\item As an absolute error bound \emph{d} is given for annotation, \sollya cannot
+   reuse an approximation annotation for the derivative of the annotated
+   function. If any (higher) derivative of a function needs to bear an
+   annotation, that derivative needs to be annotated using \textbf{annotatefunction}.
+\end{itemize}
+\noindent Example 1: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> procedure EXP(X,n,p) {
+            var res, oldPrec;
+            oldPrec = prec;
+            prec = p!;
+            
+            "Using procedure function exponential";
+            res = exp(X);
+            
+            prec = oldPrec!;
+            return res;
+       };
+> g = function(EXP);
+> p = 46768052394588893382516870161332864698044514954899b-165 + x * (23384026197
+294446691258465802074096632225783601255b-164 + x * (58460065493236116729484266
+13035653821819225877423b-163 + x * (389733769954907444862769649080681513731982
+1946501b-164 + x * (7794675399098148717422744621371434831048848817417b-167 + x
+ * (24942961277114075921122941174178849425809856036737b-171 + x * (83143204257
+04876115613838900105097456456371179471b-172 + x * (190041609730397013715793569
+91645932289422670402995b-176 + x * (190041609726693241489121222544499121560039
+26801563b-179 + x * (33785175062542597526738679493857229456702396042255b-183 +
+ x * (6757035113643674378393625988264926886191860669891b-184 + x * (9828414707
+511252769908089206114262766633532289937b-188 + x * (26208861108003813314724515
+233584738706961162212965b-193 + x * (32257064253325954315953742396999456577223
+350602741b-197 + x * (578429089657689569703509185903214676926704485495b-195 + 
+x * 2467888542176675658523627105540996778984959471957b-201))))))))))))));
+> h = annotatefunction(g, p, [-1/2;1/2], [-475294848522543b-124;475294848522543b
+-124]);
+> prec = 24;
+The precision has been set to 24 bits.
+> "h(0.25) = ";
+h(0.25) = 
+> h(0.25);
+1.2840254
+> prec = 72;
+The precision has been set to 72 bits.
+> "h(0.25) = ";
+h(0.25) = 
+> h(0.25);
+Using procedure function exponential
+Using procedure function exponential
+1.2840254166877414840735
+\end{Verbatim}
+\end{minipage}\end{center}
+See also: \textbf{taylorform} (\ref{labtaylorform}), \textbf{remez} (\ref{labremez}), \textbf{supnorm} (\ref{labsupnorm}), \textbf{infnorm} (\ref{labinfnorm})

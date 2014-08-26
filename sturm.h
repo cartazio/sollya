@@ -61,7 +61,7 @@
 #include "mpfi-compat.h"
 #include "expression.h"
 
-int getNrRoots(mpfr_t res, node *f, sollya_mpfi_t range, mp_prec_t prec);
+int getNrRoots(mpfr_t res, node *f, sollya_mpfi_t range, mp_prec_t prec, int silent);
 char *sprintMpq(mpq_t x);
 char *sprintMpz(mpz_t z);
 

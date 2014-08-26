@@ -2251,7 +2251,7 @@ int implementCoefficients(mpfr_t *coefficients, int degree, FILE *fd, char *name
 }
 
 int implementHorner(mpfr_t *coefficients, int *addPrec, int *mulPrec,
-		    int degree, int variablePrecision, FILE *fd, char *name, int *powerOverlaps, int *powVarNum, chain **gappaAssign) {
+		    int degree, int variablePrecision, FILE *fd, char *name, int *powerOverlaps, int *powVarNum, chain **gappaAssign, int resultType) {
   int res, i, k, variableNumber, comingFormat, producedFormat, issuedCode, issuedVariables, c, c2, t2;
   int coeffFormat, currOverlap, t, oldCurrOverlap;
   char *code, *variables, *codeIssue, *variablesIssue, *buffer1, *buffer2;
@@ -5724,7 +5724,33 @@ int implementHorner(mpfr_t *coefficients, int *addPrec, int *mulPrec,
 
 	/* The evaluation is now complete, issue code for copying to the result variables */
 
-	switch (comingFormat) {
+	if (comingFormat != resultType) {
+	  if (comingFormat == 3) {
+	    if (currOverlap < 52) {
+	      /* We must renormalize the temporary */
+	      c = sollya_snprintf(buffer1,CODESIZE,
+				  "Renormalize3(&%s_t_%d_%dh,&%s_t_%d_%dm,&%s_t_%d_%dl,%s_t_%d_%dh,%s_t_%d_%dm,%s_t_%d_%dl);\n",
+				  name,variableNumber-1,tempVarNum[variableNumber-1]+1,name,variableNumber-1,tempVarNum[variableNumber-1]+1,name,variableNumber-1,tempVarNum[variableNumber-1]+1,
+				  name,variableNumber-1,tempVarNum[variableNumber-1],name,variableNumber-1,tempVarNum[variableNumber-1],name,variableNumber-1,tempVarNum[variableNumber-1]);
+	      if ((c < 0) || (c >= CODESIZE)) res = 0;
+	      tempVarNum[variableNumber-1]++;
+	      currOverlap = 52;
+	      c2 = sollya_snprintf(buffer2,CODESIZE,
+				   "double %s_t_%d_%dh, %s_t_%d_%dm, %s_t_%d_%dl;\n",
+				   name,variableNumber-1,tempVarNum[variableNumber-1],name,variableNumber-1,tempVarNum[variableNumber-1],name,variableNumber-1,tempVarNum[variableNumber-1]);
+	      if ((c2 < 0) || (c2 >= CODESIZE)) res = 0;
+	      t = c; t2 = c2;
+	      if (gappaAssign != NULL) {
+		sollya_snprintf(resultName,CODESIZE,"%s_t_%d_%d",name,variableNumber-1,tempVarNum[variableNumber-1]);
+		sollya_snprintf(operand1Name,CODESIZE,"%s_t_%d_%d",name,variableNumber-1,tempVarNum[variableNumber-1]-1);
+		newAssign = newGappaOperation(GAPPA_RENORMALIZE, -1, 3, currOverlap, resultName, 3, 3, operand1Name, 0, 0, NULL);
+		*gappaAssign = addElement(*gappaAssign,newAssign);
+	      }
+	    }
+	  }
+	}
+
+	switch (resultType) {
 	case 3:
 	  /* If we are not renormalized, we renormalize, otherwise we copy */
 	  if (currOverlap < 52) {
@@ -5791,8 +5817,33 @@ int implementHorner(mpfr_t *coefficients, int *addPrec, int *mulPrec,
 
       } else {
 	/* The evaluation is already complete, issue code for copying to the result variables */
+	if (comingFormat != resultType) {
+	  if (comingFormat == 3) {
+	    if (currOverlap < 52) {
+	      /* We must renormalize the temporary */
+	      c = sollya_snprintf(buffer1,CODESIZE,
+				  "Renormalize3(&%s_t_%d_%dh,&%s_t_%d_%dm,&%s_t_%d_%dl,%s_t_%d_%dh,%s_t_%d_%dm,%s_t_%d_%dl);\n",
+				  name,variableNumber-1,tempVarNum[variableNumber-1]+1,name,variableNumber-1,tempVarNum[variableNumber-1]+1,name,variableNumber-1,tempVarNum[variableNumber-1]+1,
+				  name,variableNumber-1,tempVarNum[variableNumber-1],name,variableNumber-1,tempVarNum[variableNumber-1],name,variableNumber-1,tempVarNum[variableNumber-1]);
+	      if ((c < 0) || (c >= CODESIZE)) res = 0;
+	      tempVarNum[variableNumber-1]++;
+	      currOverlap = 52;
+	      c2 = sollya_snprintf(buffer2,CODESIZE,
+				   "double %s_t_%d_%dh, %s_t_%d_%dm, %s_t_%d_%dl;\n",
+				   name,variableNumber-1,tempVarNum[variableNumber-1],name,variableNumber-1,tempVarNum[variableNumber-1],name,variableNumber-1,tempVarNum[variableNumber-1]);
+	      if ((c2 < 0) || (c2 >= CODESIZE)) res = 0;
+	      t = c; t2 = c2;
+	      if (gappaAssign != NULL) {
+		sollya_snprintf(resultName,CODESIZE,"%s_t_%d_%d",name,variableNumber-1,tempVarNum[variableNumber-1]);
+		sollya_snprintf(operand1Name,CODESIZE,"%s_t_%d_%d",name,variableNumber-1,tempVarNum[variableNumber-1]-1);
+		newAssign = newGappaOperation(GAPPA_RENORMALIZE, -1, 3, currOverlap, resultName, 3, 3, operand1Name, 0, 0, NULL);
+		*gappaAssign = addElement(*gappaAssign,newAssign);
+	      }
+	    }
+	  }
+	}
 
-	switch (comingFormat) {
+	switch (resultType) {
 	case 3:
 	  /* If we are not renormalized, we renormalize, otherwise we copy */
 	  if (currOverlap < 52) {
@@ -5938,6 +5989,7 @@ node *implementpoly(node *func, rangetype range, mpfr_t *accur, int variablePrec
   chain *assignments, *tempChain;
   chain **assignmentsPtr;
   char resultnamebuf[80];
+  int resultType;
 
   proof = NULL;
 
@@ -6102,15 +6154,18 @@ node *implementpoly(node *func, rangetype range, mpfr_t *accur, int variablePrec
     if (sollyaFprintf(fd,"double *%s_resh, double *%s_resm, double *%s_resl, ",name,name,name) < 0)
       printMessage(1,SOLLYA_MSG_COULD_NOT_WRITE_TO_THE_IMPLEMENTATION_FILE,"Warning: could not write to the file for the implementation.\n");
     if (gappaFD != NULL) proof->resultType = 3;
+    resultType = 3;
   } else {
     if (targetPrec >= 54) {
       if (sollyaFprintf(fd,"double *%s_resh, double *%s_resm, ",name,name) < 0)
 	printMessage(1,SOLLYA_MSG_COULD_NOT_WRITE_TO_THE_IMPLEMENTATION_FILE,"Warning: could not write to the file for the implementation.\n");
       if (gappaFD != NULL) proof->resultType = 2;
+      resultType = 2;
     } else {
       if (sollyaFprintf(fd,"double *%s_resh, ",name) < 0)
 	printMessage(1,SOLLYA_MSG_COULD_NOT_WRITE_TO_THE_IMPLEMENTATION_FILE,"Warning: could not write to the file for the implementation.\n");
       if (gappaFD != NULL) proof->resultType = 1;
+      resultType = 1;
     }
   }
 
@@ -6138,7 +6193,7 @@ node *implementpoly(node *func, rangetype range, mpfr_t *accur, int variablePrec
     printMessage(1,SOLLYA_MSG_CONTINUATION,"The produced implementation may be incorrect.\n");
   }
 
-  if (!implementHorner(fpCoefficients, addPrec, mulPrec, degree, variablePrecision, fd, name, overlapsPowers, powVarNum, assignmentsPtr)) {
+  if (!implementHorner(fpCoefficients, addPrec, mulPrec, degree, variablePrecision, fd, name, overlapsPowers, powVarNum, assignmentsPtr, resultType)) {
     printMessage(1,SOLLYA_MSG_ERROR_ON_CODE_GENERATION_FOR_HORNER_SCHEME,"Warning: a problem has been encountered during the generation of the code for the horner scheme.\n");
     printMessage(1,SOLLYA_MSG_CONTINUATION,"The produced implementation may be incorrect.\n");
   }

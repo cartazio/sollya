@@ -64,9 +64,20 @@ extern int libraryMode;
 
 int blockedSignalCounter = 0;
 
+int deferredMode = 0;
+int deferredSignal = 0;
+int deferredSignalIsDeferred = 0;
+
 int sollyaFprintf(FILE *fd, const char *format, ...);
 
 void signalHandler(int i) {
+  
+  if (deferredMode) {
+    if (deferredSignalIsDeferred) return;
+    deferredSignal = i;
+    deferredSignalIsDeferred = 1;
+    return;
+  }
 
   switch (i) {
   case SIGINT:
@@ -96,6 +107,22 @@ void signalHandler(int i) {
     }
     longjmp(recoverEnvironment,1);
   }
+}
+
+void deferSignalHandling() {
+  if (deferredMode) return;
+  deferredMode = 1;
+  deferredSignal = 0;
+  deferredSignalIsDeferred = 0;
+}
+
+void resumeSignalHandling() {
+  if (!deferredMode) return;
+  deferredMode = 0;
+  if (!deferredSignalIsDeferred) return;
+  deferredSignalIsDeferred = 0;
+  signalHandler(deferredSignal);
+  deferredSignal = 0;
 }
 
 void initSignalHandler() {

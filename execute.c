@@ -1,6 +1,6 @@
 /*
 
-  Copyright 2007-2013 by
+  Copyright 2007-2014 by
 
   Laboratoire de l'Informatique du Parallelisme,
   UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
@@ -94,6 +94,8 @@
 #include "match.h"
 #include "sollya-messaging.h"
 #include <setjmp.h>
+#include "hooks.h"
+#include "polynomials.h"
 
 #define READBUFFERSIZE 16000
 
@@ -125,6 +127,7 @@ void freeDoNothing(void *ptr) {
   UNUSED_PARAM(ptr);
   return;
 }
+
 
 /* Performs a fast check if a < b or a > b
 //
@@ -215,7 +218,7 @@ void setupRandomAccessOnLists(node *obj) {
 
   switch (obj->nodeType) {
   case MEMREF:
-    setupRandomAccessOnLists(obj->child1);
+    setupRandomAccessOnLists(getMemRefChild(obj));
     break;
   case LIST:
   case FINALELLIPTICLIST:
@@ -1047,6 +1050,9 @@ node *copyThingInner(node *tree) {
   case REMEZ:
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
     break;
+  case ANNOTATEFUNCTION:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
+    break;
   case MATCH:
     copy->child1 = copyThingInner(tree->child1);
     copy->arguments = copyChainWithoutReversal(tree->arguments, copyThingOnVoid);
@@ -1306,6 +1312,8 @@ node *copyThingInner(node *tree) {
   return copy;
 }
 
+
+
 void *deepCopyThingOnVoid(void *);
 void *deepCopyEntryOnVoid(void *);
 
@@ -1315,7 +1323,7 @@ node *deepCopyThing(node *tree) {
   if (tree == NULL) return NULL;
 
   if (tree->nodeType == MEMREF) {
-    return deepCopyThing(tree->child1);
+    return deepCopyThing(getMemRefChild(tree));
   }
 
   copy = (node *) safeMalloc(sizeof(node));
@@ -1929,6 +1937,9 @@ node *deepCopyThing(node *tree) {
   case REMEZ:
     copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
     break;
+  case ANNOTATEFUNCTION:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
+    break;
   case MATCH:
     copy->child1 = deepCopyThing(tree->child1);
     copy->arguments = copyChainWithoutReversal(tree->arguments, deepCopyThingOnVoid);
@@ -2196,6 +2207,10 @@ void *copyThingOnVoid(void *tree) {
   return (void *) copyThing((node *) tree);
 }
 
+void *copyThingAndAddMemRefOnVoid(void *tree) {
+  return (void *) addMemRef(copyThing((node *) tree));
+}
+
 void *copyEntryOnVoid(void *ptr) {
   entry *copy;
   copy = (entry *) safeMalloc(sizeof(entry));
@@ -2229,6 +2244,1296 @@ void freeEntryOnVoid(void *ptr) {
   safeFree(ptr);
 }
 
+struct __copyThingWithMemRefReuseInnerStruct {
+  node *reuse;
+  int *didReuse;
+};
+
+node *copyThingWithMemRefReuseInner(node *tree, node *reuse, int *didReuse);
+
+void *copyThingWithMemRefReuseInnerOnVoid(void *ptr1, void *ptr2) {
+  return (void *) copyThingWithMemRefReuseInner((node *) ptr1, 
+						((struct __copyThingWithMemRefReuseInnerStruct *) ptr2)->reuse, 
+						((struct __copyThingWithMemRefReuseInnerStruct *) ptr2)->didReuse);
+}
+
+void *copyEntryWithMemRefReuseInnerOnVoid(void *ptr, void *ptr2) {
+  entry *copy;
+  copy = (entry *) safeMalloc(sizeof(entry));
+  copy->name = (char *) safeCalloc(strlen(((entry *) ptr)->name)+1,sizeof(char));
+  strcpy(copy->name,((entry *) ptr)->name);
+  copy->value = (node *) copyThingWithMemRefReuseInnerOnVoid(((entry *) ptr)->value, ptr2);
+  return copy;
+}
+
+node *tryFindMemRefOccurrence(node *subtree, node *tree) {
+  node *rec;
+  chain *curr;
+  
+  if (subtree == NULL) return NULL;
+  if (tree == NULL) return NULL;
+  if ((tree->nodeType == MEMREF) && 
+      (isEqualThing(subtree, tree))) {
+    return tree;
+  }
+  switch (tree->nodeType) {
+  case MEMREF:
+    return tryFindMemRefOccurrence(subtree, getMemRefChild(tree));
+    break;
+  case VARIABLE:
+  case CONSTANT:
+  case LIBRARYCONSTANT:
+  case PI_CONST:
+  case QUIT:
+  case FALSEQUIT:
+  case FALSERESTART:
+  case RESTART:
+  case VARIABLEDECLARATION:
+  case NOP:
+  case RENAME:
+  case ON:
+  case OFF:
+  case DYADIC:
+  case POWERS:
+  case BINARY:
+  case HEXADECIMAL:
+  case FILESYM:
+  case POSTSCRIPT:
+  case POSTSCRIPTFILE:
+  case PERTURB:
+  case ROUNDDOWN:
+  case ROUNDUP:
+  case ROUNDTOZERO:
+  case ROUNDTONEAREST:
+  case HONORCOEFF:
+  case TRUE:
+  case UNIT:
+  case FALSE:
+  case DEFAULT:
+  case DECIMAL:
+  case ABSOLUTESYM:
+  case RELATIVESYM:
+  case FIXED:
+  case FLOATING:
+  case ERRORSPECIAL:
+  case DOUBLESYMBOL:
+  case SINGLESYMBOL:
+  case QUADSYMBOL:
+  case HALFPRECISIONSYMBOL:
+  case DOUBLEEXTENDEDSYMBOL:
+  case DOUBLEDOUBLESYMBOL:
+  case TRIPLEDOUBLESYMBOL:
+  case STRING:
+  case TABLEACCESS:
+  case ISBOUND:
+  case DECIMALCONSTANT:
+  case MIDPOINTCONSTANT:
+  case DYADICCONSTANT:
+  case HEXCONSTANT:
+  case HEXADECIMALCONSTANT:
+  case BINARYCONSTANT:
+  case EMPTYLIST:
+  case ELLIPTIC:
+  case GETSUPPRESSEDMESSAGES:
+  case EXTERNALPROCEDUREUSAGE:
+  case PRECDEREF:
+  case POINTSDEREF:
+  case DIAMDEREF:
+  case DISPLAYDEREF:
+  case VERBOSITYDEREF:
+  case CANONICALDEREF:
+  case AUTOSIMPLIFYDEREF:
+  case SHOWMESSAGENUMBERSDEREF:
+  case TAYLORRECURSDEREF:
+  case TIMINGDEREF:
+  case FULLPARENDEREF:
+  case MIDPOINTDEREF:
+  case DIEONERRORMODEDEREF:
+  case RATIONALMODEDEREF:
+  case SUPPRESSWARNINGSDEREF:
+  case HOPITALRECURSDEREF:
+    return NULL;
+    break;
+  case ADD:
+  case SUB:
+  case MUL:
+  case DIV:
+  case POW:
+  case PROCEDUREFUNCTION:
+  case WHILE:
+  case IF:
+  case FORIN:
+  case ASCIIPLOT:
+  case PRINTXMLNEWFILE:
+  case PRINTXMLAPPENDFILE:
+  case AND:
+  case OR:
+  case INDEX:
+  case COMPAREEQUAL:
+  case COMPAREIN:
+  case COMPARELESS:
+  case COMPAREGREATER:
+  case COMPARELESSEQUAL:
+  case COMPAREGREATEREQUAL:
+  case COMPARENOTEQUAL:
+  case CONCAT:
+  case ADDTOLIST:
+  case PREPEND:
+  case APPEND:
+  case RANGE:
+  case SUBSTITUTE:
+  case COMPOSEPOLYNOMIALS:
+  case COEFF:
+  case SUBPOLY:
+  case ROUNDCOEFFICIENTS:
+  case RATIONALAPPROX:
+  case EVALUATE:
+  case FINDZEROS:
+  case FPFINDZEROS:
+  case DIRTYINFNORM:
+  case NUMBERROOTS:
+  case INTEGRAL:
+  case DIRTYINTEGRAL:
+  case ZERODENOMINATORS:
+  case ISEVALUABLE:
+  case PROTOASSIGNMENTINSTRUCTURE:
+  case PROTOFLOATASSIGNMENTINSTRUCTURE:
+  case DIRTYFINDZEROS:
+  case PROC:
+  case BIND:
+  case PROCILLIM:
+    rec = tryFindMemRefOccurrence(subtree, tree->child1);
+    if (rec != NULL) return rec;
+    return tryFindMemRefOccurrence(subtree, tree->child2);
+    break;
+  case SQRT:
+  case EXP:
+  case LOG:
+  case LOG_2:
+  case LOG_10:
+  case SIN:
+  case COS:
+  case TAN:
+  case ASIN:
+  case ACOS:
+  case ATAN:
+  case SINH:
+  case COSH:
+  case TANH:
+  case ASINH:
+  case ACOSH:
+  case ATANH:
+  case NEG:
+  case ABS:
+  case DOUBLE:
+  case SINGLE:
+  case HALFPRECISION:
+  case QUAD:
+  case DOUBLEDOUBLE:
+  case TRIPLEDOUBLE:
+  case ERF:
+  case ERFC:
+  case LOG_1P:
+  case EXP_M1:
+  case DOUBLEEXTENDED:
+  case LIBRARYFUNCTION:
+  case CEIL:
+  case FLOOR:
+  case NEARESTINT:
+  case NOPARG:
+  case PRINTHEXA:
+  case PRINTFLOAT:
+  case PRINTBINARY:
+  case PRINTEXPANSION:
+  case BASHEXECUTE:
+  case PRINTXML:
+  case EXTERNALPROC:
+  case ASSIGNMENT:
+  case FLOATASSIGNMENT:
+  case LIBRARYBINDING:
+  case LIBRARYCONSTANTBINDING:
+  case PRECASSIGN:
+  case POINTSASSIGN:
+  case DIAMASSIGN:
+  case DISPLAYASSIGN:
+  case VERBOSITYASSIGN:
+  case CANONICALASSIGN:
+  case AUTOSIMPLIFYASSIGN:
+  case SHOWMESSAGENUMBERSASSIGN:
+  case TAYLORRECURSASSIGN:
+  case TIMINGASSIGN:
+  case FULLPARENASSIGN:
+  case MIDPOINTASSIGN:
+  case DIEONERRORMODEASSIGN:
+  case RATIONALMODEASSIGN:
+  case SUPPRESSWARNINGSASSIGN:
+  case HOPITALRECURSASSIGN:
+  case PRECSTILLASSIGN:
+  case POINTSSTILLASSIGN:
+  case DIAMSTILLASSIGN:
+  case DISPLAYSTILLASSIGN:
+  case VERBOSITYSTILLASSIGN:
+  case CANONICALSTILLASSIGN:
+  case AUTOSIMPLIFYSTILLASSIGN:
+  case SHOWMESSAGENUMBERSSTILLASSIGN:
+  case TAYLORRECURSSTILLASSIGN:
+  case TIMINGSTILLASSIGN:
+  case FULLPARENSTILLASSIGN:
+  case MIDPOINTSTILLASSIGN:
+  case DIEONERRORMODESTILLASSIGN:
+  case RATIONALMODESTILLASSIGN:
+  case SUPPRESSWARNINGSSTILLASSIGN:
+  case HOPITALRECURSSTILLASSIGN:
+  case NEGATION:
+  case STRUCTACCESS:
+  case DEBOUNDMAX:
+  case DEBOUNDMIN:
+  case DEBOUNDMID:
+  case EVALCONST:
+  case DIFF:
+  case DIRTYSIMPLIFY:
+  case SIMPLIFYSAFE:
+  case TIME:
+  case HORNER:
+  case CANONICAL:
+  case EXPAND:
+  case DEGREE:
+  case NUMERATOR:
+  case DENOMINATOR:
+  case PARSE:
+  case READXML:
+  case EXECUTE:
+  case ASSIGNMENTINSTRUCTURE:
+  case FLOATASSIGNMENTINSTRUCTURE:
+  case HEAD:
+  case ROUNDCORRECTLY:
+  case READFILE:
+  case REVERT:
+  case SORT:
+  case MANTISSA:
+  case EXPONENT:
+  case PRECISION:
+  case TAIL:
+  case LENGTH:
+    return tryFindMemRefOccurrence(subtree, tree->child1);
+    break;
+  case MATCHELEMENT:
+    rec = tryFindMemRefOccurrence(subtree, tree->child2);
+    if (rec != NULL) return rec;    
+    /* CAUTION: this fall-through *is* intended */
+  case NEWFILEPRINT:
+  case APPENDFILEPRINT:
+  case NEWFILEWRITE:
+  case APPENDFILEWRITE:
+  case APPLY:
+  case MATCH:
+    rec = tryFindMemRefOccurrence(subtree, tree->child1);
+    if (rec != NULL) return rec;    
+    /* CAUTION: this fall-through *is* intended */
+  case COMMANDLIST:
+  case IFELSE:
+  case FOR:
+  case PRINT:
+  case SUPPRESSMESSAGE:
+  case UNSUPPRESSMESSAGE:
+  case PLOT:
+  case EXTERNALPLOT:
+  case WRITE:
+  case WORSTCASE:
+  case AUTOPRINT:
+  case TABLEACCESSWITHSUBSTITUTE:
+  case LIST:
+  case FINALELLIPTICLIST:
+  case BASHEVALUATE:
+  case REMEZ:
+  case ANNOTATEFUNCTION:
+  case MIN:
+  case MAX:
+  case FPMINIMAX:
+  case TAYLOR:
+  case TAYLORFORM:
+  case CHEBYSHEVFORM:
+  case AUTODIFF:
+  case ACCURATEINFNORM:
+  case ROUNDTOFORMAT:
+  case INFNORM:
+  case SUPNORM:
+  case IMPLEMENTPOLY:
+  case IMPLEMENTCONST:
+  case CHECKINFNORM:
+  case SEARCHGAL:
+  case GUESSDEGREE:
+  case ASSIGNMENTININDEXING:
+  case FLOATASSIGNMENTININDEXING:
+    for (curr=tree->arguments;curr!=NULL;curr=curr->next) {
+      rec = tryFindMemRefOccurrence(subtree, (node *) (curr->value));
+      if (rec != NULL) return rec;
+    }
+    return NULL;
+    break;
+  case STRUCTURE:
+    for (curr=tree->arguments;curr!=NULL;curr=curr->next) {
+      rec = tryFindMemRefOccurrence(subtree, (node *) (((entry *) (curr->value))->value));
+      if (rec != NULL) return rec;
+    }
+    break;
+  default:
+    break;
+  }
+  
+  return NULL;
+}
+
+node *copyThingWithMemRefReuseInner(node *tree, node *reuse, int *didReuse) {
+  node *copy, *reuseRef;
+  struct __copyThingWithMemRefReuseInnerStruct argStruct;
+  int myDidReuse;
+
+  argStruct.reuse = reuse;
+  argStruct.didReuse = didReuse;
+
+  if (tree == NULL) return NULL;
+  if (tree == reuse) {
+    return copyThing(tree);
+  }
+  if (tree->nodeType == MEMREF) {
+    if ((tree->evaluationHook != NULL) || 
+	(tree->derivCache != NULL) ||
+	(tree->simplifyCache != NULL)) {
+      return copyThing(tree);
+    }
+    myDidReuse = 0;
+    copy = addMemRef(copyThingWithMemRefReuseInner(getMemRefChild(tree), reuse, &myDidReuse));
+    if (copy == NULL) {
+      *didReuse = *didReuse || myDidReuse;
+      return copy;
+    }
+    if (copy->nodeType != MEMREF) {
+      freeThing(copy);
+      return copyThing(tree);
+    }
+    if ((copy->evaluationHook != NULL) || 
+	(copy->derivCache != NULL) ||
+	(copy->simplifyCache != NULL)) {
+      *didReuse = *didReuse || myDidReuse;
+      return copy;
+    }    
+    if (!myDidReuse) {
+      freeThing(copy);
+      return copyThing(tree);
+    }
+    if (tree->libFunDeriv > copy->libFunDeriv) {
+      freeThing(copy);
+      return copyThing(tree);
+    }
+    *didReuse = *didReuse || myDidReuse;
+    return copy;
+  }
+
+  reuseRef = tryFindMemRefOccurrence(tree, reuse);
+  if (reuseRef != NULL) {
+    *didReuse = 1;
+    return addMemRef(copyThing(reuseRef));
+  }
+ 
+  copy = (node *) safeMalloc(sizeof(node));
+  copy->nodeType = tree->nodeType;
+
+  switch (tree->nodeType) {
+  case VARIABLE:
+    break;
+  case CONSTANT:
+    copy->value = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
+    mpfr_init2(*(copy->value),mpfr_get_prec(*(tree->value)));
+    mpfr_set(*(copy->value),*(tree->value),GMP_RNDN);
+    break;
+  case ADD:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case SUB:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case MUL:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case DIV:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case SQRT:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case EXP:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case LOG:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case LOG_2:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case LOG_10:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case SIN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case COS:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case TAN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case ASIN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case ACOS:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case ATAN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case SINH:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case COSH:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case TANH:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case ASINH:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case ACOSH:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case ATANH:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case POW:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case NEG:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case ABS:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case DOUBLE:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case SINGLE:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case HALFPRECISION:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case QUAD:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case DOUBLEDOUBLE:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case TRIPLEDOUBLE:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case ERF:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case ERFC:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case LOG_1P:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case EXP_M1:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case DOUBLEEXTENDED:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case LIBRARYFUNCTION:
+    copy->libFun = tree->libFun;
+    copy->libFunDeriv = tree->libFunDeriv;
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case LIBRARYCONSTANT:
+    copy->libFun = tree->libFun;
+    break;
+  case PROCEDUREFUNCTION:
+    copy->libFunDeriv = tree->libFunDeriv;
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case CEIL:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case FLOOR:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case NEARESTINT:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case PI_CONST:
+    break;
+  case COMMANDLIST:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case WHILE:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case IFELSE:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case IF:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case FOR:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case FORIN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;
+  case QUIT:
+    break;
+  case FALSEQUIT:
+    break;
+  case FALSERESTART:
+    break;
+  case RESTART:
+    break;
+  case PRINT:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case SUPPRESSMESSAGE:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case UNSUPPRESSMESSAGE:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case VARIABLEDECLARATION:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
+    break;
+  case NOP:
+    break;
+  case NOPARG:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case NEWFILEPRINT:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case APPENDFILEPRINT:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case PLOT:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case PRINTHEXA:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case PRINTFLOAT:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case PRINTBINARY:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case PRINTEXPANSION:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case BASHEXECUTE:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case EXTERNALPLOT:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case WRITE:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case NEWFILEWRITE:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case APPENDFILEWRITE:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case ASCIIPLOT:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case PRINTXML:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case PRINTXMLNEWFILE:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case PRINTXMLAPPENDFILE:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case WORSTCASE:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case RENAME:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
+    break;
+  case AUTOPRINT:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case EXTERNALPROC:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyIntPtrOnVoid);
+    break;
+  case ASSIGNMENT:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;
+  case FLOATASSIGNMENT:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;
+  case LIBRARYBINDING:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;
+  case LIBRARYCONSTANTBINDING:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;
+  case PRECASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case POINTSASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case DIAMASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case DISPLAYASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case VERBOSITYASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case CANONICALASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case AUTOSIMPLIFYASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case SHOWMESSAGENUMBERSASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case TAYLORRECURSASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case TIMINGASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case FULLPARENASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case MIDPOINTASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case DIEONERRORMODEASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case RATIONALMODEASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case SUPPRESSWARNINGSASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case HOPITALRECURSASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case PRECSTILLASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case POINTSSTILLASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case DIAMSTILLASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case DISPLAYSTILLASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case VERBOSITYSTILLASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case CANONICALSTILLASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case AUTOSIMPLIFYSTILLASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case SHOWMESSAGENUMBERSSTILLASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case TAYLORRECURSSTILLASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case TIMINGSTILLASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case FULLPARENSTILLASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case MIDPOINTSTILLASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case DIEONERRORMODESTILLASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case RATIONALMODESTILLASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case SUPPRESSWARNINGSSTILLASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case HOPITALRECURSSTILLASSIGN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case AND:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case OR:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case NEGATION:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case INDEX:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case COMPAREEQUAL:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case COMPAREIN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case COMPARELESS:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case COMPAREGREATER:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case COMPARELESSEQUAL:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case COMPAREGREATEREQUAL:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case COMPARENOTEQUAL:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case CONCAT:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case ADDTOLIST:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case PREPEND:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case APPEND:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case ON:
+    break;
+  case OFF:
+    break;
+  case DYADIC:
+    break;
+  case POWERS:
+    break;
+  case BINARY:
+    break;
+  case HEXADECIMAL:
+    break;
+  case FILESYM:
+    break;
+  case POSTSCRIPT:
+    break;
+  case POSTSCRIPTFILE:
+    break;
+  case PERTURB:
+    break;
+  case ROUNDDOWN:
+    break;
+  case ROUNDUP:
+    break;
+  case ROUNDTOZERO:
+    break;
+  case ROUNDTONEAREST:
+    break;
+  case HONORCOEFF:
+    break;
+  case TRUE:
+    break;
+  case UNIT:
+    break;
+  case FALSE:
+    break;
+  case DEFAULT:
+    break;
+  case DECIMAL:
+    break;
+  case ABSOLUTESYM:
+    break;
+  case RELATIVESYM:
+    break;
+  case FIXED:
+    break;
+  case FLOATING:
+    break;
+  case ERRORSPECIAL:
+    break;
+  case DOUBLESYMBOL:
+    break;
+  case SINGLESYMBOL:
+    break;
+  case QUADSYMBOL:
+    break;
+  case HALFPRECISIONSYMBOL:
+    break;
+  case DOUBLEEXTENDEDSYMBOL:
+    break;
+  case DOUBLEDOUBLESYMBOL:
+    break;
+  case TRIPLEDOUBLESYMBOL:
+    break;
+  case STRING:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;
+  case TABLEACCESS:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;
+  case ISBOUND:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;
+  case TABLEACCESSWITHSUBSTITUTE:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;
+  case STRUCTACCESS:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;
+  case APPLY:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case DECIMALCONSTANT:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;
+  case MIDPOINTCONSTANT:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;
+  case DYADICCONSTANT:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;
+  case HEXCONSTANT:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;
+  case HEXADECIMALCONSTANT:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;
+  case BINARYCONSTANT:
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;
+  case EMPTYLIST:
+    break;
+  case LIST:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    copy->argArray = NULL;
+    copy->argArraySize = 0;
+    copy->argArrayAllocSize = 0;
+    break;
+  case STRUCTURE:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyEntryWithMemRefReuseInnerOnVoid);
+    break;
+  case FINALELLIPTICLIST:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    copy->argArray = NULL;
+    copy->argArraySize = 0;
+    copy->argArrayAllocSize = 0;
+    break;
+  case ELLIPTIC:
+    break;
+  case RANGE:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case DEBOUNDMAX:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case DEBOUNDMIN:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case DEBOUNDMID:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case EVALCONST:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case DIFF:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case BASHEVALUATE:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case GETSUPPRESSEDMESSAGES:
+    break;
+  case DIRTYSIMPLIFY:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case SIMPLIFYSAFE:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case TIME:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case REMEZ:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case ANNOTATEFUNCTION:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case MATCH:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case MATCHELEMENT:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case MIN:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case MAX:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case FPMINIMAX:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case HORNER:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case CANONICAL:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case EXPAND:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case TAYLOR:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case TAYLORFORM:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case CHEBYSHEVFORM:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case AUTODIFF:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case DEGREE:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case NUMERATOR:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case DENOMINATOR:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case SUBSTITUTE:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case COMPOSEPOLYNOMIALS:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case COEFF:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case SUBPOLY:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case ROUNDCOEFFICIENTS:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case RATIONALAPPROX:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case ACCURATEINFNORM:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case ROUNDTOFORMAT:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case EVALUATE:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case PARSE:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case READXML:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case EXECUTE:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case INFNORM:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case SUPNORM:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case FINDZEROS:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case FPFINDZEROS:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case DIRTYINFNORM:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case NUMBERROOTS:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case INTEGRAL:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case DIRTYINTEGRAL:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case IMPLEMENTPOLY:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case IMPLEMENTCONST:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case CHECKINFNORM:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case ZERODENOMINATORS:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case ISEVALUABLE:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case SEARCHGAL:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case GUESSDEGREE:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case ASSIGNMENTININDEXING:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case FLOATASSIGNMENTININDEXING:
+    copy->arguments = copyChainAndMap(tree->arguments, &argStruct, copyThingWithMemRefReuseInnerOnVoid);
+    break;
+  case ASSIGNMENTINSTRUCTURE:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
+    break;
+  case FLOATASSIGNMENTINSTRUCTURE:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
+    break;
+  case PROTOASSIGNMENTINSTRUCTURE:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case PROTOFLOATASSIGNMENTINSTRUCTURE:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case DIRTYFINDZEROS:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
+  case HEAD:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case ROUNDCORRECTLY:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case READFILE:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case REVERT:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case SORT:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case MANTISSA:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case EXPONENT:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case PRECISION:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case TAIL:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case LENGTH:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    break;
+  case EXTERNALPROCEDUREUSAGE:
+    copy->libProc = tree->libProc;
+    break;
+  case PROC:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
+    break;
+  case BIND:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    copy->string = (char *) safeCalloc(strlen(tree->string)+1,sizeof(char));
+    strcpy(copy->string,tree->string);
+    break;
+  case PROCILLIM:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    copy->arguments = copyChainWithoutReversal(tree->arguments, copyString);
+    break;
+  case PRECDEREF:
+    break;
+  case POINTSDEREF:
+    break;
+  case DIAMDEREF:
+    break;
+  case DISPLAYDEREF:
+    break;
+  case VERBOSITYDEREF:
+    break;
+  case CANONICALDEREF:
+    break;
+  case AUTOSIMPLIFYDEREF:
+    break;
+  case SHOWMESSAGENUMBERSDEREF:
+    break;
+  case TAYLORRECURSDEREF:
+    break;
+  case TIMINGDEREF:
+    break;
+  case FULLPARENDEREF:
+    break;
+  case MIDPOINTDEREF:
+    break;
+  case DIEONERRORMODEDEREF:
+    break;
+  case RATIONALMODEDEREF:
+    break;
+  case SUPPRESSWARNINGSDEREF:
+    break;
+  case HOPITALRECURSDEREF:
+    break;
+  default:
+    sollyaFprintf(stderr,"Error: copyThingWithMemRefReuseInner: unknown identifier (%d) in the tree\n",tree->nodeType);
+    exit(1);
+  }
+
+  return addMemRef(copy);
+}
+
+node *copyThingWithMemRefReuse(node *tree, node *reuse) {
+  node *res;
+  int didReuse;
+  didReuse = 0;
+  res = copyThingWithMemRefReuseInner(tree, reuse, &didReuse);
+  return res;
+}
+
+/* Eats up its first argument, does not change (nor eat up) its second
+   argument 
+*/
+node *rewriteThingWithMemRefReuse(node *tree, node *reuse) {
+  node *copy;
+  int didReuse;
+  if (tree == NULL) return NULL;
+  if (reuse == NULL) return tree;
+  didReuse = 0;
+  copy = copyThingWithMemRefReuseInner(tree, reuse, &didReuse);
+  if (didReuse) {
+    freeThing(tree);
+    return copy;
+  }
+  freeThing(copy);
+  return tree;
+}
 
 char *getTimingStringForThing(node *tree) {
   char *constString, *newString;
@@ -2236,7 +3541,7 @@ char *getTimingStringForThing(node *tree) {
   if (tree == NULL) return NULL;
 
   if (tree->nodeType == MEMREF) {
-    return getTimingStringForThing(tree->child1);
+    return getTimingStringForThing(getMemRefChild(tree));
   }
 
   switch (tree->nodeType) {
@@ -2816,6 +4121,9 @@ char *getTimingStringForThing(node *tree) {
   case REMEZ:
     constString = "computing a minimax approximation";
     break;
+  case ANNOTATEFUNCTION:
+    constString = "annotating a function";
+    break;
   case MATCH:
     constString = "matching an expression";
   case MATCHELEMENT:
@@ -3070,7 +4378,8 @@ char *getTimingStringForThing(node *tree) {
 int isPureTree(node *tree) {
   switch (tree->nodeType) {
   case MEMREF:
-    return isPureTree(tree->child1);
+    if (tree->polynomialRepresentation != NULL) return 1;
+    return isPureTree(getMemRefChild(tree));
     break;
   case VARIABLE:
     return 1;
@@ -3212,7 +4521,8 @@ int isPureTree(node *tree) {
 int isExtendedPureTree(node *tree) {
   switch (tree->nodeType) {
   case MEMREF:
-    return isExtendedPureTree(tree->child1);
+    if (tree->polynomialRepresentation != NULL) return 1;
+    return isExtendedPureTree(getMemRefChild(tree));
     break;
   case DEFAULT:
     return 1;
@@ -3376,7 +4686,7 @@ int isMatchable(node *);
 
 int isMatchableList(node *tree) {
   chain *curr;
-  if (tree->nodeType == MEMREF) return isMatchableList(tree->child1);
+  if (tree->nodeType == MEMREF) return isMatchableList(getMemRefChild(tree));
   if (isEmptyList(tree)) return 1;
   if (!(isPureList(tree) || isPureFinalEllipticList(tree))) return 0;
   for (curr=tree->arguments;curr!=NULL;curr=curr->next) {
@@ -3388,7 +4698,7 @@ int isMatchableList(node *tree) {
 int isString(node *);
 
 int isMatchableConcat(node *tree) {
-  if (tree->nodeType == MEMREF) return isMatchableConcat(tree->child1);
+  if (tree->nodeType == MEMREF) return isMatchableConcat(getMemRefChild(tree));
   if (tree->nodeType != CONCAT) return 0;
   if (((tree->child1->nodeType == TABLEACCESS) || (tree->child1->nodeType == DEFAULT)) &&
       ((tree->child2->nodeType == TABLEACCESS) || (tree->child2->nodeType == DEFAULT))) return 0;
@@ -3411,7 +4721,7 @@ int isMatchableConcat(node *tree) {
 }
 
 int isMatchablePrepend(node *tree) {
-  if (tree->nodeType == MEMREF) return isMatchablePrepend(tree->child1);
+  if (tree->nodeType == MEMREF) return isMatchablePrepend(getMemRefChild(tree));
   if (tree->nodeType != PREPEND) return 0;
   if (isMatchable(tree->child1) &&
       (isMatchableList(tree->child2) ||
@@ -3423,7 +4733,7 @@ int isMatchablePrepend(node *tree) {
 }
 
 int isMatchableAppend(node *tree) {
-  if (tree->nodeType == MEMREF) return isMatchableAppend(tree->child1);
+  if (tree->nodeType == MEMREF) return isMatchableAppend(getMemRefChild(tree));
   if (tree->nodeType != APPEND) return 0;
   if (isMatchable(tree->child2) &&
       ((isMatchableList(tree->child1) && (!isPureFinalEllipticList(tree->child1))) ||
@@ -3436,7 +4746,7 @@ int isMatchableAppend(node *tree) {
 
 int isMatchableStructure(node *tree) {
   chain *curr;
-  if (tree->nodeType == MEMREF) return isMatchableStructure(tree->child1);
+  if (tree->nodeType == MEMREF) return isMatchableStructure(getMemRefChild(tree));
   if (tree->nodeType != STRUCTURE) return 0;
   if (associationContainsDoubleEntries(tree->arguments)) return 0;
   for (curr=tree->arguments; curr != NULL; curr = curr->next) {
@@ -3446,7 +4756,7 @@ int isMatchableStructure(node *tree) {
 }
 
 int isMatchable(node *tree) {
-  if (tree->nodeType == MEMREF) return isMatchable(tree->child1);
+  if (tree->nodeType == MEMREF) return isMatchable(getMemRefChild(tree));
   if (isExtendedPureTree(tree)) return 1;
   if (isCorrectlyTypedBaseSymbol(tree)) return 1;
   if ((tree->nodeType == RANGE) &&
@@ -3465,37 +4775,37 @@ int isMatchable(node *tree) {
 }
 
 int isDefault(node *tree) {
-  if (tree->nodeType == MEMREF) return isDefault(tree->child1);
+  if (tree->nodeType == MEMREF) return isDefault(getMemRefChild(tree));
   return (tree->nodeType == DEFAULT);
 }
 
 int isString(node *tree) {
-  if (tree->nodeType == MEMREF) return isString(tree->child1);
+  if (tree->nodeType == MEMREF) return isString(getMemRefChild(tree));
   return (tree->nodeType == STRING);
 }
 
 int isList(node *tree) {
-  if (tree->nodeType == MEMREF) return isList(tree->child1);
+  if (tree->nodeType == MEMREF) return isList(getMemRefChild(tree));
   return (tree->nodeType == LIST);
 }
 
 int isMatchElement(node *tree) {
-  if (tree->nodeType == MEMREF) return isMatchElement(tree->child1);
+  if (tree->nodeType == MEMREF) return isMatchElement(getMemRefChild(tree));
   return (tree->nodeType == MATCHELEMENT);
 }
 
 int isStructure(node *tree) {
-  if (tree->nodeType == MEMREF) return isStructure(tree->child1);
+  if (tree->nodeType == MEMREF) return isStructure(getMemRefChild(tree));
   return (tree->nodeType == STRUCTURE);
 }
 
 int isEmptyList(node *tree) {
-  if (tree->nodeType == MEMREF) return isEmptyList(tree->child1);
+  if (tree->nodeType == MEMREF) return isEmptyList(getMemRefChild(tree));
   return (tree->nodeType == EMPTYLIST);
 }
 
 int isElliptic(node *tree) {
-  if (tree->nodeType == MEMREF) return isElliptic(tree->child1);
+  if (tree->nodeType == MEMREF) return isElliptic(getMemRefChild(tree));
   return (tree->nodeType == ELLIPTIC);
 }
 
@@ -3503,7 +4813,7 @@ int isElliptic(node *tree) {
 int isPureList(node *tree) {
   chain *curr;
 
-  if (tree->nodeType == MEMREF) return isPureList(tree->child1);
+  if (tree->nodeType == MEMREF) return isPureList(getMemRefChild(tree));
 
   if (!isList(tree)) return 0;
 
@@ -3519,14 +4829,14 @@ int isPureList(node *tree) {
 }
 
 int isFinalEllipticList(node *tree) {
-  if (tree->nodeType == MEMREF) return isFinalEllipticList(tree->child1);
+  if (tree->nodeType == MEMREF) return isFinalEllipticList(getMemRefChild(tree));
   return (tree->nodeType == FINALELLIPTICLIST);
 }
 
 int isPureFinalEllipticList(node *tree) {
   chain *curr;
 
-  if (tree->nodeType == MEMREF) return isPureFinalEllipticList(tree->child1);
+  if (tree->nodeType == MEMREF) return isPureFinalEllipticList(getMemRefChild(tree));
 
   if (!isFinalEllipticList(tree)) return 0;
 
@@ -3545,7 +4855,7 @@ int isPureFinalEllipticList(node *tree) {
 
 
 int isRange(node *tree) {
-  if (tree->nodeType == MEMREF) return isRange(tree->child1);
+  if (tree->nodeType == MEMREF) return isRange(getMemRefChild(tree));
   if (tree->nodeType != RANGE) return 0;
   if (tree->child1->nodeType != CONSTANT) return 0;
   if (tree->child2->nodeType != CONSTANT) return 0;
@@ -3553,7 +4863,7 @@ int isRange(node *tree) {
 }
 
 int isRangeNonEmpty(node *tree) {
-  if (tree->nodeType == MEMREF) return isRangeNonEmpty(tree->child1);
+  if (tree->nodeType == MEMREF) return isRangeNonEmpty(getMemRefChild(tree));
   if (!isRange(tree)) return 0;
   if (mpfr_nan_p(*(tree->child1->value)) ||
       mpfr_nan_p(*(tree->child2->value))) return 1;
@@ -3563,85 +4873,94 @@ int isRangeNonEmpty(node *tree) {
 
 
 int isError(node *tree) {
-  if (tree->nodeType == MEMREF) return isError(tree->child1);
+  if (tree->nodeType == MEMREF) {
+    if (tree->polynomialRepresentation != NULL) return 0;
+    return isError(getMemRefChild(tree));
+  }
   if (tree->nodeType == ERRORSPECIAL) return 1;
   return 0;
 }
 
 
 int isBoolean(node *tree) {
-  if (tree->nodeType == MEMREF) return isBoolean(tree->child1);
+  if (tree->nodeType == MEMREF) return isBoolean(getMemRefChild(tree));
   if (tree->nodeType == TRUE) return 1;
   if (tree->nodeType == FALSE) return 1;
   return 0;
 }
 
 int isUnit(node *tree) {
-  if (tree->nodeType == MEMREF) return isUnit(tree->child1);
+  if (tree->nodeType == MEMREF) {
+    if (tree->polynomialRepresentation != NULL) return 0;
+    return isUnit(getMemRefChild(tree));
+  }
   if (tree->nodeType == UNIT) return 1;
   return 0;
 }
 
 int isQuit(node *tree) {
-  if (tree->nodeType == MEMREF) return isQuit(tree->child1);
+  if (tree->nodeType == MEMREF) return isQuit(getMemRefChild(tree));
   if (tree->nodeType == QUIT) return 1;
   return 0;
 }
 
 int isRestart(node *tree) {
-  if (tree->nodeType == MEMREF) return isRestart(tree->child1);
+  if (tree->nodeType == MEMREF) return isRestart(getMemRefChild(tree));
   if (tree->nodeType == RESTART) return 1;
   return 0;
 }
 
 int isFalseQuit(node *tree) {
-  if (tree->nodeType == MEMREF) return isFalseQuit(tree->child1);
+  if (tree->nodeType == MEMREF) return isFalseQuit(getMemRefChild(tree));
   if (tree->nodeType == FALSEQUIT) return 1;
   return 0;
 }
 
 int isFalseRestart(node *tree) {
-  if (tree->nodeType == MEMREF) return isFalseRestart(tree->child1);
+  if (tree->nodeType == MEMREF) return isFalseRestart(getMemRefChild(tree));
   if (tree->nodeType == FALSERESTART) return 1;
   return 0;
 }
 
 
 int isExternalProcedureUsage(node *tree) {
-  if (tree->nodeType == MEMREF) return isExternalProcedureUsage(tree->child1);
+  if (tree->nodeType == MEMREF) {
+    if (tree->polynomialRepresentation != NULL) return 0;
+    return isExternalProcedureUsage(getMemRefChild(tree));
+  }
   if (tree->nodeType == EXTERNALPROCEDUREUSAGE) return 1;
   return 0;
 }
 
 int isProcedure(node *tree) {
-  if (tree->nodeType == MEMREF) return isProcedure(tree->child1);
+  if (tree->nodeType == MEMREF) return isProcedure(getMemRefChild(tree));
   if (tree->nodeType == PROC) return 1;
   if (tree->nodeType == PROCILLIM) return 1;
   return 0;
 }
 
 int isProcedureNotIllim(node *tree) {
-  if (tree->nodeType == MEMREF) return isProcedureNotIllim(tree->child1);
+  if (tree->nodeType == MEMREF) return isProcedureNotIllim(getMemRefChild(tree));
   if (tree->nodeType == PROC) return 1;
   return 0;
 }
 
 int isHonorcoeffprec(node *tree) {
-  if (tree->nodeType == MEMREF) return isHonorcoeffprec(tree->child1);
+  if (tree->nodeType == MEMREF) return isHonorcoeffprec(getMemRefChild(tree));
   if (tree->nodeType == HONORCOEFF) return 1;
   return 0;
 }
 
 
 int isOnOff(node *tree) {
-  if (tree->nodeType == MEMREF) return isOnOff(tree->child1);
+  if (tree->nodeType == MEMREF) return isOnOff(getMemRefChild(tree));
   if (tree->nodeType == ON) return 1;
   if (tree->nodeType == OFF) return 1;
   return 0;
 }
 
 int isDisplayMode(node *tree) {
-  if (tree->nodeType == MEMREF) return isDisplayMode(tree->child1);
+  if (tree->nodeType == MEMREF) return isDisplayMode(getMemRefChild(tree));
   if (tree->nodeType == DECIMAL) return 1;
   if (tree->nodeType == DYADIC) return 1;
   if (tree->nodeType == POWERS) return 1;
@@ -3651,7 +4970,7 @@ int isDisplayMode(node *tree) {
 }
 
 int isRoundingSymbol(node *tree) {
-  if (tree->nodeType == MEMREF) return isRoundingSymbol(tree->child1);
+  if (tree->nodeType == MEMREF) return isRoundingSymbol(getMemRefChild(tree));
   if (tree->nodeType == ROUNDTONEAREST) return 1;
   if (tree->nodeType == ROUNDDOWN) return 1;
   if (tree->nodeType == ROUNDUP) return 1;
@@ -3660,7 +4979,7 @@ int isRoundingSymbol(node *tree) {
 }
 
 int isExpansionFormat(node *tree) {
-  if (tree->nodeType == MEMREF) return isExpansionFormat(tree->child1);
+  if (tree->nodeType == MEMREF) return isExpansionFormat(getMemRefChild(tree));
   if (tree->nodeType == SINGLESYMBOL) return 1;
   if (tree->nodeType == HALFPRECISIONSYMBOL) return 1;
   if (tree->nodeType == QUADSYMBOL) return 1;
@@ -3672,7 +4991,7 @@ int isExpansionFormat(node *tree) {
 }
 
 int isExtendedExpansionFormat(node *tree) {
-  if (tree->nodeType == MEMREF) return isExtendedExpansionFormat(tree->child1);
+  if (tree->nodeType == MEMREF) return isExtendedExpansionFormat(getMemRefChild(tree));
   if (tree->nodeType == SINGLESYMBOL) return 1;
   if (tree->nodeType == HALFPRECISIONSYMBOL) return 1;
   if (tree->nodeType == QUADSYMBOL) return 1;
@@ -3686,7 +5005,7 @@ int isExtendedExpansionFormat(node *tree) {
 
 
 int isRestrictedExpansionFormat(node *tree) {
-  if (tree->nodeType == MEMREF) return isRestrictedExpansionFormat(tree->child1);
+  if (tree->nodeType == MEMREF) return isRestrictedExpansionFormat(getMemRefChild(tree));
   if (tree->nodeType == DOUBLESYMBOL) return 1;
   if (tree->nodeType == DOUBLEDOUBLESYMBOL) return 1;
   if (tree->nodeType == TRIPLEDOUBLESYMBOL) return 1;
@@ -3695,7 +5014,7 @@ int isRestrictedExpansionFormat(node *tree) {
 
 
 int isFilePostscriptFile(node *tree) {
-  if (tree->nodeType == MEMREF) return isFilePostscriptFile(tree->child1);
+  if (tree->nodeType == MEMREF) return isFilePostscriptFile(getMemRefChild(tree));
   if (tree->nodeType == FILESYM) return 1;
   if (tree->nodeType == POSTSCRIPT) return 1;
   if (tree->nodeType == POSTSCRIPTFILE) return 1;
@@ -3703,7 +5022,7 @@ int isFilePostscriptFile(node *tree) {
 }
 
 int isExternalPlotMode(node *tree) {
-  if (tree->nodeType == MEMREF) return isExternalPlotMode(tree->child1);
+  if (tree->nodeType == MEMREF) return isExternalPlotMode(getMemRefChild(tree));
   if (tree->nodeType == ABSOLUTESYM) return 1;
   if (tree->nodeType == RELATIVESYM) return 1;
   return 0;
@@ -4785,7 +6104,7 @@ char *sRawPrintThing(node *tree) {
   }
 
   if (tree->nodeType == MEMREF) {
-    return sRawPrintThing(tree->child1);
+    return sRawPrintThing(getMemRefChild(tree));
   }
 
   switch (tree->nodeType) {
@@ -5984,6 +7303,16 @@ char *sRawPrintThing(node *tree) {
     }
     res = concatAndFree(res, newString(")"));
     break;
+  case ANNOTATEFUNCTION:
+    res = newString("annotatefunction(");
+    curr = tree->arguments;
+    while (curr != NULL) {
+      res = concatAndFree(res, sRawPrintThing((node *) (curr->value)));
+      if (curr->next != NULL) res = concatAndFree(res, newString(", "));
+      curr = curr->next;
+    }
+    res = concatAndFree(res, newString(")"));
+    break;
   case MATCH:
     res = newString("match ");
     res = concatAndFree(res, sRawPrintThing(tree->child1));
@@ -6876,7 +8205,7 @@ int assignThingToTable(char *identifier, node *thing) {
   }
 
   if (containsDeclaredEntry(declaredSymbolTable, identifier)) {
-    declaredSymbolTable = assignDeclaredEntry(declaredSymbolTable, identifier, thing, copyThingOnVoid, freeThingOnVoid);
+    declaredSymbolTable = assignDeclaredEntry(declaredSymbolTable, identifier, thing, copyThingAndAddMemRefOnVoid, freeThingOnVoid);
     return 1;
   }
 
@@ -6885,7 +8214,7 @@ int assignThingToTable(char *identifier, node *thing) {
     symbolTable = removeEntry(symbolTable, identifier, freeThingOnVoid);
   }
 
-  symbolTable = addEntry(symbolTable, identifier, thing, copyThingOnVoid);
+  symbolTable = addEntry(symbolTable, identifier, thing, copyThingAndAddMemRefOnVoid);
 
   return 1;
 }
@@ -6932,7 +8261,7 @@ node *getThingFromTable(char *identifier, int doCopy, int *didCopy) {
 
   if ((variablename != NULL) && (strcmp(variablename,identifier) == 0)) {
     if (didCopy != NULL) *didCopy = 1;
-    return makeVariable();
+    return addMemRef(makeVariable());
   }
 
   if ((tempLibraryFunction = getFunction(identifier)) != NULL) {
@@ -6943,7 +8272,7 @@ node *getThingFromTable(char *identifier, int doCopy, int *didCopy) {
     temp_node->child1 = (node *) safeMalloc(sizeof(node));
     temp_node->child1->nodeType = VARIABLE;
     if (didCopy != NULL) *didCopy = 1;
-    return temp_node;
+    return addMemRef(temp_node);
   }
 
   if ((tempLibraryFunction = getConstantFunction(identifier)) != NULL) {
@@ -6951,18 +8280,18 @@ node *getThingFromTable(char *identifier, int doCopy, int *didCopy) {
     temp_node->nodeType = LIBRARYCONSTANT;
     temp_node->libFun = tempLibraryFunction;
     if (didCopy != NULL) *didCopy = 1;
-    return temp_node;
+    return addMemRef(temp_node);
   }
 
   if ((tempLibraryProcedure = getProcedure(identifier)) != NULL) {
     if (didCopy != NULL) *didCopy = 1;
-    return makeExternalProcedureUsage(tempLibraryProcedure);
+    return addMemRef(makeExternalProcedureUsage(tempLibraryProcedure));
   }
 
   if (containsDeclaredEntry(declaredSymbolTable, identifier)) {
     if (myDoCopy) {
       if (didCopy != NULL) *didCopy = 1;
-      return getDeclaredEntry(declaredSymbolTable, identifier, copyThingOnVoid);
+      return addMemRef(getDeclaredEntry(declaredSymbolTable, identifier, copyThingOnVoid));
     }
     if (didCopy != NULL) *didCopy = 0;
     return getDeclaredEntry(declaredSymbolTable, identifier, returnThingOnVoid);
@@ -6972,7 +8301,7 @@ node *getThingFromTable(char *identifier, int doCopy, int *didCopy) {
 
   if (myDoCopy) {
     if (didCopy != NULL) *didCopy = 1;
-    return (node *) getEntry(symbolTable, identifier, copyThingOnVoid);
+    return (node *) addMemRef(getEntry(symbolTable, identifier, copyThingOnVoid));
   }
   if (didCopy != NULL) *didCopy = 0;
   return (node *) getEntry(symbolTable, identifier, returnThingOnVoid);
@@ -7102,10 +8431,16 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
   int infinityCase;
   int deg;
   int counter;
+  int tern;
+  int faithfulRoundingIsExact;
+  int marker;
 
+  faithfulRoundingIsExact = 0;
   shown = 0; shown2 = 0;
   if (isPureTree(thing)) {
-    if ((treeSize(thing) < CHEAPSIMPLIFYSIZE) || rationalMode) {
+    if (((thing->nodeType == MEMREF) && (thing->polynomialRepresentation != NULL)) ||
+	(treeSize(thing) < CHEAPSIMPLIFYSIZE) || 
+	rationalMode) {
       tempNode2 = simplifyTreeErrorfree(thing);
       freeThingAfterwards = 1;
     } else {
@@ -7114,16 +8449,30 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
     }
 
     if (isConstant(tempNode2)) {
-      if (accessThruMemRef(tempNode2)->nodeType == CONSTANT) {
-	printValue(accessThruMemRef(tempNode2)->value);
+      if ((!((tempNode2->nodeType == MEMREF) && (tempNode2->child1 == NULL))) && (accessThruMemRef(tempNode2)->nodeType == CONSTANT)) {
+	if (mpfr_get_prec(*(accessThruMemRef(tempNode2)->value)) < tools_precision * 4) {
+	  printValue(accessThruMemRef(tempNode2)->value);
+	} else {
+	  mpfr_init2(a,tools_precision);
+	  tern = mpfr_set(a, *(accessThruMemRef(tempNode2)->value), GMP_RNDN);
+	  if (mpfr_number_p(a) && (!mpfr_zero_p(a))) {
+	    if ((tern != 0) && (!noRoundingWarnings)) {
+	      printMessage(1,SOLLYA_MSG_DISPLAYED_VALUE_IS_FAITHFULLY_ROUNDED,"Warning: rounding has happened. The value displayed is a faithful rounding to %d bits of the true result.\n", mpfr_get_prec(a));
+	    }
+	    printValue(&a);
+	  } else {
+	    printValue(accessThruMemRef(tempNode2)->value);
+	  }
+	  mpfr_clear(a);
+	}
       } else {
 	if (rationalMode &&
 	    (accessThruMemRef(tempNode2)->nodeType == DIV) &&
-	    (accessThruMemRef(tempNode2)->child1->nodeType == CONSTANT) &&
-	    (accessThruMemRef(tempNode2)->child2->nodeType == CONSTANT) &&
-	    mpfr_number_p(*(accessThruMemRef(tempNode2)->child1->value)) &&
-	    mpfr_number_p(*(accessThruMemRef(tempNode2)->child2->value)) &&
-	    (!mpfr_zero_p(*(accessThruMemRef(tempNode2)->child2->value)))) {
+	    (accessThruMemRef(accessThruMemRef(tempNode2)->child1)->nodeType == CONSTANT) &&
+	    (accessThruMemRef(accessThruMemRef(tempNode2)->child2)->nodeType == CONSTANT) &&
+	    mpfr_number_p(*(accessThruMemRef(accessThruMemRef(tempNode2)->child1)->value)) &&
+	    mpfr_number_p(*(accessThruMemRef(accessThruMemRef(tempNode2)->child2)->value)) &&
+	    (!mpfr_zero_p(*(accessThruMemRef(accessThruMemRef(tempNode2)->child2)->value)))) {
           printTree(tempNode2);
 	} else {
 	  mpfr_init2(a,tools_precision);
@@ -7140,15 +8489,24 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
 	    }
 	    freeThing(simplCst);
 	  }
-	  if (faithfulAlreadyKnown || evaluateFaithful(a,tempNode2,b,tools_precision)) {
+	  marker = 0;
+	  if (faithfulAlreadyKnown || (marker = evaluateFaithful(a,tempNode2,b,tools_precision))) {
+	    if (marker && ((accessThruMemRef(tempNode2)->nodeType == CONSTANT) &&
+			   (mpfr_number_p(*(accessThruMemRef(tempNode2)->value))))) {
+	      mpfr_set_prec(a, mpfr_get_prec(*(accessThruMemRef(tempNode2)->value)));
+	      faithfulRoundingIsExact = (mpfr_set(a, *(accessThruMemRef(tempNode2)->value), GMP_RNDN) == 0);
+	      if (!mpfr_number_p(a)) faithfulRoundingIsExact = 0;
+	    }
 	    if (mpfr_number_p(a)) {
-	      if (!noRoundingWarnings) {
-		if (!shown) {
-		  if ((!faithfulAlreadyKnown) || (!mpfr_zero_p(a))) {
-		    printMessage(1,SOLLYA_MSG_DISPLAYED_VALUE_IS_FAITHFULLY_ROUNDED,"Warning: rounding has happened. The value displayed is a faithful rounding to %d bits of the true result.\n", mpfr_get_prec(a));
+	      if (!faithfulRoundingIsExact) {
+		if (!noRoundingWarnings) {
+		  if (!shown) {
+		    if ((!faithfulAlreadyKnown) || (!mpfr_zero_p(a))) {
+		      printMessage(1,SOLLYA_MSG_DISPLAYED_VALUE_IS_FAITHFULLY_ROUNDED,"Warning: rounding has happened. The value displayed is a faithful rounding to %d bits of the true result.\n", mpfr_get_prec(a));
+		    }
 		  }
+		  shown = 1;
 		}
-		shown = 1;
 	      }
 	    } else {
 	      if (mpfr_nan_p(a)) {
@@ -7247,11 +8605,12 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
 	  shown = 1;
 	}
       }
-      if ((treeSize(tempNode3) > MAXHORNERTREESIZE) || (isPolynomialExtraSafe(tempNode3) && (((deg = getDegreeSilent(tempNode3)) > MAXHORNERDEGREE) || (deg < 0)))) {
+      if (((!((tempNode3->nodeType == MEMREF) && (tempNode3->polynomialRepresentation != NULL))) && (treeSize(tempNode3) > MAXHORNERTREESIZE)) || 
+	  (isPolynomialExtraSafe(tempNode3) && (((deg = getDegreeSilent(tempNode3)) > MAXHORNERDEGREE) || (deg < 0)))) {
 	if (canonical)
 	  printMessage(1,SOLLYA_MSG_EXPRESSION_TOO_BIG_FOR_CANONICAL_FORM,"Warning: the expression is too big for being written in canonical form.\n");
 	else {
-	  if (!(isHorner(tempNode3) || isPowerOfVariable(tempNode3))) {
+	  if (!(isHorner(tempNode3) || ((tempNode3->nodeType == MEMREF) && (tempNode3->polynomialRepresentation != NULL)) || isPowerOfVariable(tempNode3))) {
 	    printMessage(1,SOLLYA_MSG_EXPRESSION_TOO_BIG_FOR_HORNER_FORM,"Warning: the expression is too big for being written in Horner form.\n");
 	  }
 	}
@@ -7726,7 +9085,7 @@ int tryToRewriteLeftHandStructAccessInner(chain **idents, node *thing) {
   chain *tempChain;
 
   if (thing->nodeType == MEMREF) {
-    return tryToRewriteLeftHandStructAccessInner(idents, thing->child1);
+    return tryToRewriteLeftHandStructAccessInner(idents, getMemRefChild(thing));
   }
 
   okay = 0;
@@ -7806,7 +9165,7 @@ node *createNestedStructure(node *value, chain *idents) {
 }
 
 
-node *recomputeLeftHandSideForAssignmentInStructure(node *oldValue, node *newValue, chain *idents) {
+node *recomputeLeftHandSideForAssignmentInStructureInner(node *oldValue, node *newValue, chain *idents) {
   chain *currentIdent;
   node *currentStruct;
   int okay, found;
@@ -7893,6 +9252,14 @@ node *recomputeLeftHandSideForAssignmentInStructure(node *oldValue, node *newVal
   return res;
 }
 
+node *recomputeLeftHandSideForAssignmentInStructure(node *oldValue, node *newValue, chain *idents) {
+  node *res;
+
+  res = recomputeLeftHandSideForAssignmentInStructureInner(oldValue, newValue, idents);
+  if (res == NULL) return res;
+  return rewriteThingWithMemRefReuse(res, oldValue);
+}
+
 int setMessageSuppressionState(int msgNum, int state) {
   if ((msgNum < 0) || (msgNum == SOLLYA_MSG_NO_MSG) || (msgNum == SOLLYA_MSG_CONTINUATION) || (!messageNumberExists(msgNum))) {
     printMessage(1,SOLLYA_MSG_CANNOT_SUPPRESS_OR_UNSUPPRESS_A_MESSAGE,
@@ -7938,7 +9305,7 @@ int executeCommandInner(node *tree) {
   /* End of compiler happiness */
 
   if (tree->nodeType == MEMREF) {
-    return executeCommandInner(tree->child1);
+    return executeCommandInner(getMemRefChild(tree));
   }
 
   result = 0;
@@ -9081,7 +10448,7 @@ int executeCommandInner(node *tree) {
     }
     break;
   case ASSIGNMENT:
-    tempNode = evaluateThing(tree->child1);
+    tempNode = addMemRef(evaluateThing(tree->child1));
     if (!assignThingToTable(tree->string, tempNode)) {
       freeThing(tempNode);
       printMessage(1,SOLLYA_MSG_ASSIGNMENT_WILL_HAVE_NO_EFFECT,"Warning: the last assignment will have no effect.\n");
@@ -9091,7 +10458,7 @@ int executeCommandInner(node *tree) {
     }
     break;
   case FLOATASSIGNMENT:
-    tempNode = evaluateThing(tree->child1);
+    tempNode = addMemRef(evaluateThing(tree->child1));
     if (isPureTree(tempNode) && isConstant(tempNode)) {
       mpfr_init2(a, tools_precision);
       floatingPointEvaluationAlreadyDone = 0;
@@ -12033,6 +13400,17 @@ node *makeRemez(chain *thinglist) {
 
 }
 
+node *makeAnnotateFunction(chain *thinglist) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = ANNOTATEFUNCTION;
+  res->arguments = thinglist;
+
+  return res;
+
+}
+
 node *makeBind(node *thing1, char *string1, node *thing2) {
   node *res;
 
@@ -12951,13 +14329,43 @@ void freeThing(node *tree) {
   if (tree->nodeType == MEMREF) {
     tree->libFunDeriv--;
     if (tree->libFunDeriv < 1) {
-      freeThing(tree->child1);
+      if (tree->simplifyCache != NULL) {
+	freeThing(tree->simplifyCache);
+	tree->simplifyCache = NULL;
+      }
+      if (tree->derivCache != NULL) {
+	freeThing(tree->derivCache);
+	tree->derivCache = NULL;
+      }
+      if (tree->derivUnsimplCache != NULL) {
+	freeThing(tree->derivUnsimplCache);
+	tree->derivUnsimplCache = NULL;
+      }
+      freeEvaluationHook(&(tree->evaluationHook));
+      if (tree->child1 != NULL) freeThing(tree->child1);
+      if (tree->polynomialRepresentation != NULL) polynomialFree(tree->polynomialRepresentation);
       if (tree->arguments != NULL) {
 	sollya_mpfi_clear(*((sollya_mpfi_t *) tree->arguments->next->value));
 	safeFree(tree->arguments->next->value);
 	safeFree(tree->arguments->next);
 	safeFree(tree->arguments->value);
 	safeFree(tree->arguments);
+      }
+      if (tree->evalCacheX != NULL) {
+	sollya_mpfi_clear(*(tree->evalCacheX));
+	safeFree(tree->evalCacheX);
+      }
+      if (tree->evalCacheY != NULL) {
+	sollya_mpfi_clear(*(tree->evalCacheY));
+	safeFree(tree->evalCacheY);
+      }
+      if (tree->pointEvalCacheX != NULL) {
+	mpfr_clear(*(tree->pointEvalCacheX));
+	safeFree(tree->pointEvalCacheX);
+      }
+      if (tree->pointEvalCacheY != NULL) {
+	mpfr_clear(*(tree->pointEvalCacheY));
+	safeFree(tree->pointEvalCacheY);
       }
       safeFree(tree);
     }
@@ -13746,6 +15154,10 @@ void freeThing(node *tree) {
     freeChain(tree->arguments, freeThingOnVoid);
     safeFree(tree);
     break;
+  case ANNOTATEFUNCTION:
+    freeChain(tree->arguments, freeThingOnVoid);
+    safeFree(tree);
+    break;
   case MATCH:
     freeThing(tree->child1);
     freeChain(tree->arguments, freeThingOnVoid);
@@ -14111,12 +15523,20 @@ int isEqualThing(node *tree, node *tree2) {
 
   if (tree == tree2) return 1;
 
+  if ((tree->nodeType == MEMREF) && 
+      (tree2->nodeType == MEMREF) &&
+      (tree->polynomialRepresentation != NULL) &&
+      (tree2->polynomialRepresentation != NULL)) {
+    return polynomialEqual(tree->polynomialRepresentation, 
+			   tree2->polynomialRepresentation, 0);
+  }
+
   if (tree->nodeType == MEMREF) {
-    return isEqualThing(tree->child1, tree2);
+    return isEqualThing(getMemRefChild(tree), tree2);
   }
 
   if (tree2->nodeType == MEMREF) {
-    return isEqualThing(tree, tree2->child1);
+    return isEqualThing(tree, getMemRefChild(tree2));
   }
 
   if (tree->nodeType != tree2->nodeType) return 0;
@@ -14702,6 +16122,9 @@ int isEqualThing(node *tree, node *tree2) {
   case REMEZ:
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
     break;
+  case ANNOTATEFUNCTION:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
+    break;
   case MATCH:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
@@ -14960,13 +16383,892 @@ int isEqualThing(node *tree, node *tree2) {
   return 1;
 }
 
+int isEqualThingNoPolyOnVoid(void *tree, void *tree2) {
+  return isEqualThingNoPoly((node *) tree, (node *) tree2);
+}
+
+int isEqualThingNoPoly(node *tree, node *tree2) {
+  chain *curri, *currj;
+  int found;
+
+  if (tree == NULL) return 0;
+  if (tree2 == NULL) return 0;
+
+  if (tree == tree2) return 1;
+
+  if ((tree->nodeType == MEMREF) && 
+      (tree2->nodeType == MEMREF) &&
+      (tree->polynomialRepresentation != NULL) &&
+      (tree2->polynomialRepresentation != NULL)) {
+    if (tree->polynomialRepresentation == tree2->polynomialRepresentation) 
+      return 1;
+  }
+
+  if (tree->nodeType == MEMREF) {
+    return isEqualThingNoPoly(getMemRefChild(tree), tree2);
+  }
+
+  if (tree2->nodeType == MEMREF) {
+    return isEqualThingNoPoly(tree, getMemRefChild(tree2));
+  }
+
+  if (tree->nodeType != tree2->nodeType) return 0;
+
+  switch (tree->nodeType) {
+  case VARIABLE:
+    break;
+  case CONSTANT:
+    if (!mpfr_equal_p(*(tree->value),*(tree2->value))) return 0;
+    break;
+  case ADD:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case SUB:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case MUL:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case DIV:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case SQRT:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case EXP:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case LOG:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case LOG_2:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case LOG_10:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case SIN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case COS:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case TAN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case ASIN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case ACOS:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case ATAN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case SINH:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case COSH:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case TANH:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case ASINH:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case ACOSH:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case ATANH:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case POW:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case NEG:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case ABS:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DOUBLE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case SINGLE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case HALFPRECISION:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case QUAD:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DOUBLEDOUBLE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case TRIPLEDOUBLE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case ERF:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case ERFC:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case LOG_1P:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case EXP_M1:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DOUBLEEXTENDED:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case LIBRARYFUNCTION:
+    if (tree->libFun != tree2->libFun) return 0;
+    if (tree->libFunDeriv != tree2->libFunDeriv) return 0;
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case LIBRARYCONSTANT:
+    if (tree->libFun != tree2->libFun) return 0;
+    break;
+  case PROCEDUREFUNCTION:
+    if (tree->libFunDeriv != tree2->libFunDeriv) return 0;
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case CEIL:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case FLOOR:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case NEARESTINT:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case PI_CONST:
+    break;
+  case COMMANDLIST:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case WHILE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case IFELSE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case IF:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case FOR:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case FORIN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case QUIT:
+    break;
+  case NOP:
+    break;
+  case NOPARG:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case FALSEQUIT:
+    break;
+  case FALSERESTART:
+    break;
+  case RESTART:
+    break;
+  case VARIABLEDECLARATION:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
+    break;
+  case PRINT:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case SUPPRESSMESSAGE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case UNSUPPRESSMESSAGE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case NEWFILEPRINT:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case APPENDFILEPRINT:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case PLOT:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case PRINTHEXA:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case PRINTFLOAT:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case PRINTBINARY:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case PRINTEXPANSION:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case BASHEXECUTE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case EXTERNALPLOT:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case WRITE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case NEWFILEWRITE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case APPENDFILEWRITE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case ASCIIPLOT:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case PRINTXML:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case PRINTXMLNEWFILE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case PRINTXMLAPPENDFILE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case WORSTCASE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case RENAME:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
+    break;
+  case AUTOPRINT:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case ASSIGNMENT:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case FLOATASSIGNMENT:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case EXTERNALPROC:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualIntPtrOnVoid)) return 0;
+  case LIBRARYBINDING:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case LIBRARYCONSTANTBINDING:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case PRECASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case POINTSASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DIAMASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DISPLAYASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case VERBOSITYASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case CANONICALASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case AUTOSIMPLIFYASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case SHOWMESSAGENUMBERSASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case TAYLORRECURSASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case TIMINGASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case FULLPARENASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case MIDPOINTASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DIEONERRORMODEASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case RATIONALMODEASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case SUPPRESSWARNINGSASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case HOPITALRECURSASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case PRECSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case POINTSSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DIAMSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DISPLAYSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case VERBOSITYSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case CANONICALSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case AUTOSIMPLIFYSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case SHOWMESSAGENUMBERSSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case TAYLORRECURSSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case TIMINGSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case FULLPARENSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case MIDPOINTSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DIEONERRORMODESTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case RATIONALMODESTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case SUPPRESSWARNINGSSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case HOPITALRECURSSTILLASSIGN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case AND:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case OR:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case NEGATION:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case INDEX:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case COMPAREEQUAL:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case COMPAREIN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case COMPARELESS:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case COMPAREGREATER:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case COMPARELESSEQUAL:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case COMPAREGREATEREQUAL:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case COMPARENOTEQUAL:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case CONCAT:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case ADDTOLIST:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case APPEND:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case PREPEND:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case ON:
+    break;
+  case OFF:
+    break;
+  case DYADIC:
+    break;
+  case POWERS:
+    break;
+  case BINARY:
+    break;
+  case HEXADECIMAL:
+    break;
+  case FILESYM:
+    break;
+  case POSTSCRIPT:
+    break;
+  case POSTSCRIPTFILE:
+    break;
+  case PERTURB:
+    break;
+  case ROUNDDOWN:
+    break;
+  case ROUNDUP:
+    break;
+  case ROUNDTOZERO:
+    break;
+  case ROUNDTONEAREST:
+    break;
+  case HONORCOEFF:
+    break;
+  case TRUE:
+    break;
+  case UNIT:
+    break;
+  case FALSE:
+    break;
+  case DEFAULT:
+    break;
+  case DECIMAL:
+    break;
+  case ABSOLUTESYM:
+    break;
+  case RELATIVESYM:
+    break;
+  case FIXED:
+    break;
+  case FLOATING:
+    break;
+  case ERRORSPECIAL:
+    break;
+  case DOUBLESYMBOL:
+    break;
+  case SINGLESYMBOL:
+    break;
+  case HALFPRECISIONSYMBOL:
+    break;
+  case QUADSYMBOL:
+    break;
+  case DOUBLEEXTENDEDSYMBOL:
+    break;
+  case DOUBLEDOUBLESYMBOL:
+    break;
+  case TRIPLEDOUBLESYMBOL:
+    break;
+  case STRING:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case TABLEACCESS:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case ISBOUND:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case TABLEACCESSWITHSUBSTITUTE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case STRUCTACCESS:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case APPLY:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0; break;
+  case DECIMALCONSTANT:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case MIDPOINTCONSTANT:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case DYADICCONSTANT:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case HEXCONSTANT:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case HEXADECIMALCONSTANT:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case BINARYCONSTANT:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case EMPTYLIST:
+    break;
+  case LIST:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    setupRandomAccessOnLists(tree);
+    setupRandomAccessOnLists(tree2);
+    break;
+  case STRUCTURE:
+    if (lengthChain(tree->arguments) != lengthChain(tree2->arguments)) return 0;
+    for (curri=tree->arguments;curri!=NULL;curri=curri->next) {
+      found = 0;
+      currj = tree2->arguments;
+      while ((!found) &&
+	     (currj != NULL)) {
+	if ((!strcmp(((entry *) (curri->value))->name,
+		     ((entry *) (currj->value))->name)) &&
+	    (isEqualThingNoPoly(((node *) ((entry *) (curri->value))->value),
+			  ((node *) ((entry *) (currj->value))->value)))) {
+	  found = 1;
+	}
+	currj = currj->next;
+      }
+      if (!found) return 0;
+    }
+    break;
+  case FINALELLIPTICLIST:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    setupRandomAccessOnLists(tree);
+    setupRandomAccessOnLists(tree2);
+    break;
+  case ELLIPTIC:
+    break;
+  case RANGE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case DEBOUNDMAX:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case EVALCONST:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DEBOUNDMIN:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DEBOUNDMID:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DIFF:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case BASHEVALUATE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case GETSUPPRESSEDMESSAGES:
+    break;
+  case DIRTYSIMPLIFY:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case SIMPLIFYSAFE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case TIME:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case REMEZ:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case ANNOTATEFUNCTION:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case MATCH:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case MATCHELEMENT:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case MIN:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case MAX:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case FPMINIMAX:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case HORNER:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case CANONICAL:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case EXPAND:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case TAYLOR:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case TAYLORFORM:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case CHEBYSHEVFORM:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case AUTODIFF:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case DEGREE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case NUMERATOR:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case DENOMINATOR:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case SUBSTITUTE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case COMPOSEPOLYNOMIALS:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case COEFF:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case SUBPOLY:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case ROUNDCOEFFICIENTS:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case RATIONALAPPROX:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case ACCURATEINFNORM:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case ROUNDTOFORMAT:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case EVALUATE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case PARSE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case READXML:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case EXECUTE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case INFNORM:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case SUPNORM:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case FINDZEROS:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case FPFINDZEROS:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case DIRTYINFNORM:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case NUMBERROOTS:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case INTEGRAL:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case DIRTYINTEGRAL:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case IMPLEMENTPOLY:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case IMPLEMENTCONST:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case CHECKINFNORM:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case ZERODENOMINATORS:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case ISEVALUABLE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case SEARCHGAL:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case GUESSDEGREE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case ASSIGNMENTININDEXING:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case FLOATASSIGNMENTININDEXING:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    break;
+  case ASSIGNMENTINSTRUCTURE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
+    break;
+  case FLOATASSIGNMENTINSTRUCTURE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
+    break;
+  case PROTOASSIGNMENTINSTRUCTURE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case PROTOFLOATASSIGNMENTINSTRUCTURE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case DIRTYFINDZEROS:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case HEAD:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case ROUNDCORRECTLY:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case READFILE:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case REVERT:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case SORT:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case MANTISSA:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case EXPONENT:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case PRECISION:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case TAIL:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case LENGTH:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    break;
+  case EXTERNALPROCEDUREUSAGE:
+    if (tree->libProc != tree2->libProc) return 0;
+    break;
+  case PROC:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
+    break;
+  case BIND:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;
+    break;
+  case PROCILLIM:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
+    break;
+  case PRECDEREF:
+    break;
+  case POINTSDEREF:
+    break;
+  case DIAMDEREF:
+    break;
+  case DISPLAYDEREF:
+    break;
+  case VERBOSITYDEREF:
+    break;
+  case CANONICALDEREF:
+    break;
+  case AUTOSIMPLIFYDEREF:
+    break;
+  case SHOWMESSAGENUMBERSDEREF:
+    break;
+  case TAYLORRECURSDEREF:
+    break;
+  case TIMINGDEREF:
+    break;
+  case FULLPARENDEREF:
+    break;
+  case MIDPOINTDEREF:
+    break;
+  case DIEONERRORMODEDEREF:
+    break;
+  case RATIONALMODEDEREF:
+    break;
+  case SUPPRESSWARNINGSDEREF:
+    break;
+  case HOPITALRECURSDEREF:
+    break;
+  default:
+    sollyaFprintf(stderr,"Error: isEqualThingNoPoly: unknown identifier (%d) in the tree\n",tree->nodeType);
+    exit(1);
+  }
+
+  return 1;
+}
+
+int isEqualThingEnhanced(node *tree, node *tree2, int simplify) {
+
+  if (simplify) return isEqualThing(tree, tree2);
+  return isEqualThingNoPoly(tree, tree2);
+}
 
 int isCorrectlyTypedBaseSymbol(node *tree) {
 
   if (tree == NULL) return 0;
 
   if (tree->nodeType == MEMREF) {
-    return isCorrectlyTypedBaseSymbol(tree->child1);
+    if (tree->polynomialRepresentation != NULL) return 0;
+    return isCorrectlyTypedBaseSymbol(getMemRefChild(tree));
   }
 
   switch (tree->nodeType) {
@@ -15031,7 +17333,8 @@ int associationContainsDoubleEntries(chain *assoc) {
 int isCorrectlyTyped(node *tree) {
   chain *curr;
 
-  if ((tree->nodeType == MEMREF) && (tree->child2 == tree->child1)) return 1;
+  if ((tree->nodeType == MEMREF) && (tree->isCorrectlyTyped)) return 1;
+  if ((tree->nodeType == MEMREF) && (tree->polynomialRepresentation != NULL)) return 1;
 
   if (isPureTree(tree)) return 1;
   if (isCorrectlyTypedBaseSymbol(tree)) return 1;
@@ -15065,6 +17368,40 @@ int isCorrectlyTyped(node *tree) {
   return 0;
 }
 
+int tryRepresentAsPolynomialNoConstants(node *tree) {
+  polynomial_t p;
+
+  if (tree->nodeType != MEMREF) return 0;
+  if (tree->polynomialRepresentation != NULL) return 0;
+  if (!isPureTree(tree)) return 0;
+  if (isConstant(tree)) return 0; /* We don't want every constant to
+				     be represented twice: once as
+				     itself, once as a constant
+				     polynomial */
+  if (!polynomialFromExpressionOnlyRealCoeffs(&p, tree)) return 0;
+  if (tree->polynomialRepresentation == NULL) {
+    tree->polynomialRepresentation = p;
+  } else {
+    polynomialFree(p);
+  }
+  return 1;
+}
+
+int tryRepresentAsPolynomial(node *tree) {
+  polynomial_t p;
+
+  if (tree->nodeType != MEMREF) return 0;
+  if (tree->polynomialRepresentation != NULL) return 0;
+  if (!isPureTree(tree)) return 0;
+  if (!polynomialFromExpressionOnlyRealCoeffs(&p, tree)) return 0;
+  if (tree->polynomialRepresentation == NULL) {
+    tree->polynomialRepresentation = p;
+  } else {
+    polynomialFree(p);
+  }
+  return 1;
+}
+
 node *evaluateThing(node *tree) {
   node *evaluated, *tempNode;
   int okay;
@@ -15073,12 +17410,12 @@ node *evaluateThing(node *tree) {
 
   if ((tree != NULL) &&
       (tree->nodeType == MEMREF) &&
-      ((tree->child2 == tree->child1) ||
+      ((tree->isCorrectlyTyped) ||
        (isCorrectlyTyped(tree) &&
 	(!(autosimplify && (isPureTree(tree) && (treeSize(tree) < MAXAUTOSIMPLSIZE))))))) {
     evaluated = addMemRef(copyThing(tree));
     if (evaluated->nodeType == MEMREF) {
-      evaluated->child2 = evaluated->child1;
+      evaluated->isCorrectlyTyped = 1;
     }
     return evaluated;
   }
@@ -15107,7 +17444,8 @@ node *evaluateThing(node *tree) {
   }
 
   if (autosimplify && isPureTree(evaluated)) {
-    if (treeSize(evaluated) < MAXAUTOSIMPLSIZE) {
+    if (((evaluated->nodeType == MEMREF) && (evaluated->polynomialRepresentation != NULL)) || 
+	(treeSize(evaluated) < MAXAUTOSIMPLSIZE)) {
       tempNode = simplifyTreeErrorfree(evaluated);
       freeThing(evaluated);
       evaluated = tempNode;
@@ -15117,7 +17455,8 @@ node *evaluateThing(node *tree) {
   }
 
   if (okay && (evaluated->nodeType == MEMREF)) {
-    evaluated->child2 = evaluated->child1;
+    tryRepresentAsPolynomialNoConstants(evaluated);
+    evaluated->isCorrectlyTyped = 1;
   }
 
   return evaluated;
@@ -15356,9 +17695,10 @@ void freeArgumentForExternalProc(void* arg, int type) {
 
 }
 
-int executeMatchBodyInner(node **resultThing, node *body, node *thingToReturn, chain *associations) {
+int executeMatchBodyInner(node **resultThing, node *body, node *thingToReturn, chain *associations, node *thingToMatch) {
   int okay, failure;
   chain *curr;
+  node *thingToDeclare;
 
   curr = accessThruMemRef(body)->arguments;
   okay = 1;
@@ -15408,7 +17748,9 @@ int executeMatchBodyInner(node **resultThing, node *body, node *thingToReturn, c
           } else {
             if (declaredSymbolTable != NULL) {
               failure = 0;
-	      declaredSymbolTable = declareNewEntry(declaredSymbolTable, ((entry *) (curr->value))->name, (node *) (((entry *) (curr->value))->value), copyThingOnVoid);
+	      thingToDeclare = copyThingWithMemRefReuse((node *) (((entry *) (curr->value))->value),thingToMatch);
+	      declaredSymbolTable = declareNewEntry(declaredSymbolTable, ((entry *) (curr->value))->name, thingToDeclare, copyThingOnVoid);
+	      freeThing(thingToDeclare);
             } else {
               printMessage(1,SOLLYA_MSG_FRAME_SYSTEM_CORRUPTED_MATCH_NOT_EXECUTED,"Warning: previous command interruptions have corrupted the frame system.\n");
               printMessage(1,SOLLYA_MSG_CONTINUATION,"The match variable \"%s\" cannot be bound to its actual value.\nThe match-with cannot be executed.\n",((entry *) (curr->value))->name);
@@ -15467,12 +17809,12 @@ int executeMatchBodyInner(node **resultThing, node *body, node *thingToReturn, c
   return 1;
 }
 
-int executeMatchBody(node **resultThing, node *body, node *thingToReturn, chain *associations) {
+int executeMatchBody(node **resultThing, node *body, node *thingToReturn, chain *associations, node *thingToMatch) {
   int res;
 
   pushTimeCounter();
 
-  res = executeMatchBodyInner(resultThing, body, thingToReturn, associations);
+  res = executeMatchBodyInner(resultThing, body, thingToReturn, associations, thingToMatch);
 
   popTimeCounter("executing the body of a match-with construct");
 
@@ -15493,7 +17835,7 @@ int executeMatch(node **result, node *thingToMatch, node **matchers, node **code
   }
 
   if (okay) {
-    okay = executeMatchBody(result, accessThruMemRef(codesToRun[i]), accessThruMemRef(thingsToReturn[i]), associations);
+    okay = executeMatchBody(result, accessThruMemRef(codesToRun[i]), accessThruMemRef(thingsToReturn[i]), associations, thingToMatch);
     if (associations != NULL) freeChain(associations, freeEntryOnVoid);
   } else {
     printMessage(1,SOLLYA_MSG_NO_MATCHING_CASE_FOUND,"Warning: no matching expression found in a match-with construct and no default case given.\n");
@@ -16230,7 +18572,7 @@ int variableUsePreventsPreevaluation(node *tree) {
   chain *curr;
 
   if (tree->nodeType == MEMREF) {
-    return variableUsePreventsPreevaluation(tree->child1);
+    return variableUsePreventsPreevaluation(getMemRefChild(tree));
   }
 
   switch (tree->nodeType) {
@@ -16505,6 +18847,7 @@ int variableUsePreventsPreevaluation(node *tree) {
   case LIST:
   case FINALELLIPTICLIST:
   case REMEZ:
+  case ANNOTATEFUNCTION:
   case BASHEVALUATE:
   case MIN:
   case MAX:
@@ -16569,7 +18912,7 @@ node *preevaluateMatcher(node *tree) {
   if (tree == NULL) return NULL;
 
   if (tree->nodeType == MEMREF) {
-    return preevaluateMatcher(tree->child1);
+    return preevaluateMatcher(getMemRefChild(tree));
   }
 
   copy = (node *) safeMalloc(sizeof(node));
@@ -17301,6 +19644,9 @@ node *preevaluateMatcher(node *tree) {
     copy->child1 = preevaluateMatcher(tree->child1);
     break;
   case REMEZ:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
+    break;
+  case ANNOTATEFUNCTION:
     copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break;
   case BASHEVALUATE:
@@ -18069,7 +20415,7 @@ node *evaluateThingInner(node *tree) {
 
   if ((tree != NULL) &&
       (tree->nodeType == MEMREF) &&
-      ((tree->child1 == tree->child2) || isCorrectlyTyped(tree))) {
+      ((tree->isCorrectlyTyped) || isCorrectlyTyped(tree))) {
     return addMemRef(copyThing(tree));
   }
 
@@ -18077,7 +20423,7 @@ node *evaluateThingInner(node *tree) {
 
   if ((tree != NULL) && (res != NULL) &&
       (tree->nodeType == MEMREF) &&
-      (tree != res) &&
+      (tree != res) && 
       isEqualThing(tree,res)) {
     freeThing(res);
     res = copyThing(tree);
@@ -18124,7 +20470,8 @@ node *evaluateThingInnerst(node *tree) {
   if (tree == NULL) return NULL;
 
   if (tree->nodeType == MEMREF) {
-    return evaluateThingInner(tree->child1);
+    if (tree->polynomialRepresentation != NULL) return copyThing(tree);
+    return evaluateThingInner(getMemRefChild(tree));
   }
 
   timingString = NULL;
@@ -19755,7 +22102,11 @@ node *evaluateThingInnerst(node *tree) {
 	(isError(copy->child2) && (!isError(tree->child2)) && (!isError(tree->child1)))) {
       printMessage(1,SOLLYA_MSG_TEST_COMPARES_ERROR_TO_SOMETHING,"Warning: the evaluation of one of the sides of an equality test yields error due to a syntax error or an error on a side-effect.\nThe other side either also yields error due to an syntax or side-effect error or does not evaluate to error.\nThe boolean returned may be meaningless.\n");
     }
-    if (isEqualThing(copy->child1,copy->child2)) {
+    if (autosimplify) {
+      tryRepresentAsPolynomialNoConstants(copy->child1);
+      tryRepresentAsPolynomialNoConstants(copy->child2);
+    }
+    if (isEqualThingEnhanced(copy->child1,copy->child2, autosimplify)) {
       if (!isError(copy->child1)) {
 	freeThing(copy);
 	copy = makeTrue();
@@ -20718,7 +23069,11 @@ node *evaluateThingInnerst(node *tree) {
 	(isError(copy->child2) && (!isError(tree->child2)) && (!isError(tree->child1)))) {
       printMessage(1,SOLLYA_MSG_TEST_COMPARES_ERROR_TO_SOMETHING,"Warning: the evaluation of one of the sides of an equality test yields error due to a syntax error or an error on a side-effect.\nThe other side either also yields error due to an syntax or side-effect error or does not evaluate to error.\nThe boolean returned may be meaningless.\n");
     }
-    if (isEqualThing(copy->child1,copy->child2)) {
+    if (autosimplify) {
+      tryRepresentAsPolynomialNoConstants(copy->child1);
+      tryRepresentAsPolynomialNoConstants(copy->child2);
+    }
+    if (isEqualThingEnhanced(copy->child1,copy->child2, autosimplify)) {
       if (!isError(copy->child1)) {
 	freeThing(copy);
 	copy = makeFalse();
@@ -21248,15 +23603,27 @@ node *evaluateThingInnerst(node *tree) {
       if (lengthChain(tree->arguments) == 1) {
 	if (evaluateThingToPureTree(&tempNode2,(node *) (tree->arguments->value))) {
 	  safeFree(copy);
-	  if (accessThruMemRef(tempNode)->nodeType == VARIABLE) {
-	    if (variablename != NULL) {
-	      printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: the identifier \"%s\" is bound to the current free variable. In a functional context it will be considered as the identity function.\n",
-			   variablename);
-	    } else {
-	      printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: \"_x_\" is the free variable. In a functional context it will be considered as the identity function.\n");
+	  if ((tempNode->nodeType == MEMREF) &&
+	      (tempNode->polynomialRepresentation != NULL)) {
+	    if (polynomialIsIdentity(tempNode->polynomialRepresentation, 0)) {
+	      if (variablename != NULL) {
+		printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: the identifier \"%s\" is bound to the current free variable. In a functional context it will be considered as the identity function.\n",
+			     variablename);
+	      } else {
+		printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: \"_x_\" is the free variable. In a functional context it will be considered as the identity function.\n");
+	      }
+	    }
+	  } else {
+	    if (accessThruMemRef(tempNode)->nodeType == VARIABLE) {
+	      if (variablename != NULL) {
+		printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: the identifier \"%s\" is bound to the current free variable. In a functional context it will be considered as the identity function.\n",
+			     variablename);
+	      } else {
+		printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: \"_x_\" is the free variable. In a functional context it will be considered as the identity function.\n");
+	      }
 	    }
 	  }
-	  copy = substitute(tempNode, tempNode2);
+	  copy = substituteEnhanced(tempNode, tempNode2, autosimplify);
 	  freeThing(tempNode2);
 	} else {
 	  mpfr_init2(a,tools_precision);
@@ -21321,7 +23688,7 @@ node *evaluateThingInnerst(node *tree) {
 	if (isProcedure(tempNode)) {
 	  tempChain = copyChainWithoutReversal(tree->arguments, evaluateThingOnVoid);
 	  tempNode2 = NULL;
-	  if (executeProcedure(&tempNode2, accessThruMemRef(tempNode), tempChain, 0)) {
+	  if (executeProcedure(&tempNode2, tempNode, tempChain, 0)) {
 	    if (tempNode2 != NULL) {
 	      safeFree(copy);
 	      copy = tempNode2;
@@ -21401,15 +23768,27 @@ node *evaluateThingInnerst(node *tree) {
       if (lengthChain(tree->arguments) == 1) {
 	if (evaluateThingToPureTree(&tempNode2,(node *) (tree->arguments->value))) {
 	  safeFree(copy);
-	  if (accessThruMemRef(tempNode)->nodeType == VARIABLE) {
-	    if (variablename != NULL) {
-	      printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: the identifier \"%s\" is bound to the current free variable. In a functional context it will be considered as the identity function.\n",
-			   variablename);
-	    } else {
-	      printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: \"_x_\" is the free variable. In a functional context it will be considered as the identity function.\n");
+	  if ((tempNode->nodeType == MEMREF) &&
+	      (tempNode->polynomialRepresentation != NULL)) {
+	    if (polynomialIsIdentity(tempNode->polynomialRepresentation, 0)) {
+	      if (variablename != NULL) {
+		printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: the identifier \"%s\" is bound to the current free variable. In a functional context it will be considered as the identity function.\n",
+			     variablename);
+	      } else {
+		printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: \"_x_\" is the free variable. In a functional context it will be considered as the identity function.\n");
+	      }
+	    }
+	  } else {
+	    if (accessThruMemRef(tempNode)->nodeType == VARIABLE) {
+	      if (variablename != NULL) {
+		printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: the identifier \"%s\" is bound to the current free variable. In a functional context it will be considered as the identity function.\n",
+			     variablename);
+	      } else {
+		printMessage(1,SOLLYA_MSG_FREE_VAR_INTERPRETED_AS_IDENTITY_FUNCTION,"Warning: \"_x_\" is the free variable. In a functional context it will be considered as the identity function.\n");
+	      }
 	    }
 	  }
-	  copy = substitute(tempNode, tempNode2);
+	  copy = substituteEnhanced(tempNode, tempNode2, autosimplify);
 	  freeThing(tempNode2);
 	} else {
 	  mpfr_init2(a,tools_precision);
@@ -21471,7 +23850,7 @@ node *evaluateThingInnerst(node *tree) {
 	if (isProcedure(tempNode)) {
 	  tempChain = copyChainWithoutReversal(tree->arguments, evaluateThingOnVoid);
 	  tempNode2 = NULL;
-	  if (executeProcedure(&tempNode2, accessThruMemRef(tempNode), tempChain, 0)) {
+	  if (executeProcedure(&tempNode2, tempNode, tempChain, 0)) {
 	    if (tempNode2 != NULL) {
 	      safeFree(copy);
 	      copy = tempNode2;
@@ -22303,6 +24682,74 @@ node *evaluateThingInnerst(node *tree) {
     safeFree(copy);
     copy = evaluateThingInnerRemez(tree, timingString);
     break;
+  case ANNOTATEFUNCTION:
+    copy->arguments = copyChainWithoutReversal(tree->arguments, evaluateThingOnVoid);
+    curr = copy->arguments;
+    if (isPureTree((node *) (curr->value))) {
+      tempNode = (node *) (curr->value);      
+      curr = curr->next;
+      if (isPureTree((node *) (curr->value))) { 
+	tempNode2 = (node *) (curr->value);
+	curr = curr->next;
+	mpfr_init2(bb,tools_precision);
+	mpfr_init2(cc,tools_precision);
+	if (isRange((node *) (curr->value)) && 
+	    evaluateThingToRange(bb,cc,(node *) (curr->value))) { 
+	  curr = curr->next;
+	  mpfr_init2(b,tools_precision);
+	  mpfr_init2(c,tools_precision);
+	  if (isRange((node *) (curr->value)) && 
+	      evaluateThingToRange(b,c,(node *) (curr->value))) { 
+	    curr = curr->next;	  
+	    resA = 0;
+	    if (curr != NULL) {
+	      if (isDefault((node *) (curr->value))) {
+		resA = 1;
+		tempNode3 = makeConstantInt(0);
+	      } else {
+		if (isPureTree((node *) (curr->value)) &&
+		    isConstant((node *) (curr->value))) {
+		  resA = 1;
+		  tempNode3 = copyThing((node *) (curr->value));
+		} else {
+		  tempNode3 = NULL;
+		  resA = 0;
+		}
+	      }
+	    } else {
+	      resA = 1;
+	      tempNode3 = makeConstantInt(0);
+	    }
+	    if (resA) {
+	      sollya_mpfi_init2(tempIA, (mpfr_get_prec(bb) > mpfr_get_prec(cc) ? mpfr_get_prec(bb) : mpfr_get_prec(cc)));
+	      sollya_mpfi_interv_fr(tempIA, bb, cc);
+	      sollya_mpfi_init2(tempIB, (mpfr_get_prec(b) > mpfr_get_prec(c) ? mpfr_get_prec(b) : mpfr_get_prec(c)));
+	      sollya_mpfi_interv_fr(tempIB, b, c);
+	      sollya_mpfi_init2(tempIC, tools_precision);
+	      evaluateConstantExpressionToSharpInterval(tempIC, tempNode3);
+	      if (!(sollya_mpfi_has_nan(tempIC) || sollya_mpfi_has_infinity(tempIC))) {
+		resB = copyFunctionAndChooseAndAddEvaluationHook(&tempNode4, tempNode, tempNode2, tempIA, tempIB, tempIC, tools_precision);
+		if (!resB) {
+		  printMessage(1,SOLLYA_MSG_ANNOTATION_COULD_NOT_BE_SET_UP,"Warning: the annotation could not be set up. The function is returned as-is.\n");
+		  tempNode4 = copyThing(tempNode);
+		}
+		freeThing(copy);
+		copy = tempNode4;
+	      }
+	      sollya_mpfi_clear(tempIC);
+	      sollya_mpfi_clear(tempIB);
+	      sollya_mpfi_clear(tempIA);
+	      freeThing(tempNode3);
+	    }
+	  }
+	  mpfr_clear(c);
+	  mpfr_clear(b);
+	}
+	mpfr_clear(cc);
+	mpfr_clear(bb);
+      } 
+    } 
+    break;
   case BIND:
     copy->child1 = evaluateThingInner(tree->child1);
     copy->child2 = evaluateThingInner(tree->child2);
@@ -22350,10 +24797,11 @@ node *evaluateThingInnerst(node *tree) {
 	}
 	if (resD) {
 	  tempNode = NULL;
-	  if ((executeMatch(&tempNode,accessThruMemRef(copy->child1),thingArray1,thingArray2,thingArray3,resB)) && (tempNode != NULL)) {
+	  if ((executeMatch(&tempNode,copy->child1,thingArray1,thingArray2,thingArray3,resB)) && (tempNode != NULL)) {
+	    tempNode = rewriteThingWithMemRefReuse(tempNode, copy->child1);
 	    freeThing(copy);
 	    copy = tempNode;
-	  }
+	  } 
 	}
 	for (resC=0;resC<resB;resC++) {
 	  freeThing(thingArray1[resC]);
@@ -22788,7 +25236,7 @@ node *evaluateThingInnerst(node *tree) {
     copy->child2 = evaluateThingInner(tree->child2);
     if (isPureTree(copy->child1) && isPureTree(copy->child2)) {
       if (timingString != NULL) pushTimeCounter();
-      tempNode = substitute(copy->child1,copy->child2);
+      tempNode = substituteEnhanced(copy->child1,copy->child2,autosimplify);
       freeThing(copy);
       copy = tempNode;
       if (timingString != NULL) popTimeCounter(timingString);
@@ -23051,8 +25499,8 @@ node *evaluateThingInnerst(node *tree) {
     }
     break;
   case EVALUATE:
-    copy->child1 = evaluateThingInner(tree->child1); 
-    copy->child2 = evaluateThingInner(tree->child2);
+    copy->child1 = addMemRef(evaluateThingInner(tree->child1)); 
+    copy->child2 = addMemRef(evaluateThingInner(tree->child2));
     if (isPureTree(copy->child1)) {
       if (isPureTree(copy->child2)) {
 	if (isConstant(copy->child2)) {
@@ -23100,7 +25548,7 @@ node *evaluateThingInnerst(node *tree) {
 	  }
 	  mpfr_clear(a);
 	} else {
-	  tempNode = substitute(copy->child1,copy->child2);
+	  tempNode = substituteEnhanced(copy->child1,copy->child2,autosimplify);
 	  freeThing(copy);
 	  copy = tempNode;
 	}
@@ -23470,7 +25918,7 @@ node *evaluateThingInnerst(node *tree) {
         sollya_mpfi_init2(tempIA,tools_precision);
         sollya_mpfi_interv_fr_safe(tempIA,a,b);
 	if (timingString != NULL) pushTimeCounter();
-	resA = getNrRoots(c, copy->child1, tempIA, tools_precision);
+	resA = getNrRoots(c, copy->child1, tempIA, tools_precision, 0);
 	if (timingString != NULL) popTimeCounter(timingString);
         sollya_mpfi_clear(tempIA);
         if (resA) {

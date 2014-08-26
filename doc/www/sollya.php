@@ -125,7 +125,13 @@ commands.
 <p>
 The following options are supported when calling <span class="sollya">Sollya</span>:
 <ul>
-<li> <code>--donotmodifystacksize</code>: When invoked, <span class="sollya">Sollya</span> trys to increase
+<li> <code>--args</code>: The special argument indicates to <span class="sollya">Sollya</span> that subsequent
+command line arguments are no longer to be interpreted but are to be passed as-is
+to the predefined <span class="sollya">Sollya</span> variable <code>__argv</code>. The <code>--args</code> argument
+is implicitely assumed if a <span class="sollya">Sollya</span> script filename has already been specified with a 
+preceding command line argument and none of the subsequent command line arguments 
+is one of the special options given in this list.
+</li><li> <code>--donotmodifystacksize</code>: When invoked, <span class="sollya">Sollya</span> trys to increase
 the stack size that is available to a user process to the maximum size
 supported by the kernel. On some systems, the correspondent <code>ioctl</code> 
 does not work properly. Use the option to prevent <span class="sollya">Sollya</span> from changing the 
@@ -315,6 +321,31 @@ The following code examples illustrate the use of variables.
 Let us state that a variable identifier, just as every identifier in
 <span class="sollya">Sollya</span>, contains at least one character, starts with a ASCII letter
 and continues with ASCII letters or numerical digits.
+<p>
+Two predefined variables exist when <span class="sollya">Sollya</span> is started: 
+<ul>
+<li> <code>__argv</code> : This variable contains, on <span class="sollya">Sollya</span> startup
+  and after the execution of the <code class="key">restart</code> command, a list of
+  character strings that correspond to the command line options given
+  to <span class="sollya">Sollya</span> after the (implicit) command line argument
+  <code>--args</code> (see above).
+</li><li> <code>__unique_id</code> : This variable contains, on <span class="sollya">Sollya</span>
+  startup and after the execution of the <code class="key">restart</code> command, a
+  character string that uniquely identifies the given <span class="sollya">Sollya</span> session
+  on a system. It hence allows for concurrent execution of <span class="sollya">Sollya</span>
+  scripts that use temporary files for communication with other
+  tools. The character string does not contain any spaces and only
+  contains characters that are suitable for *nix filenames. After the
+  execution of the <code class="key">restart</code> command, the
+  <code>__unique_id</code> variable is refreshed with a new, unique
+  value.
+</li></ul>
+Even though these variables exist upon <span class="sollya">Sollya</span> startup with predefined
+values, they behave like any other variable: the predefined value can
+be overwritten by assigning any new value to the variables, the
+variables can be shadowed by declared, local variables of the same
+name and so on.
+
 
 <a name="sec:data_types"></a>
 <h1>5 - Data types</h1>
@@ -327,7 +358,7 @@ There are two special values <code class="key">true</code> and <code class="key"
 <p>
 The comparison operators <code class="key"><</code>, <code class="key">&lt;=</code>, <code class="key">></code> and <code class="key">&gt;=</code> can only be used between two numbers or constant expressions.
 <p>
-The comparison operators <code class="key">==</code> and <code class="key">!=</code> are polymorphic. You can use them to compare any two objects, like two strings, two intervals, etc. As a matter of fact, polymorphism is allowed on both sides: it is possible to compare objects of different type. Such objects of different type, as they can never be syntactically equal, will always compare unequal (see exception for <code class="key">error</code>, section <a href="help.php?name=error&amp;goBack=none">error</a>) and never equal. It is important to remember that testing the equality between two functions will return <code class="key">true</code> if and only if the expression trees representing the two functions are exactly the same. See <a href="help.php?name=error&amp;goBack=none">error</a> for an exception concerning the special object <code class="key">error</code>. Example:
+The comparison operators <code class="key">==</code> and <code class="key">!=</code> are polymorphic. You can use them to compare any two objects, like two strings, two intervals, etc. As a matter of fact, polymorphism is allowed on both sides: it is possible to compare objects of different type. Such objects of different type, as they can never be syntactically equal, will always compare unequal (see exception for <code class="key">error</code>, section <a href="help.php?name=error&amp;goBack=none">error</a>) and never equal. It is important to remember that testing the equality between two functions will return <code class="key">true</code> if and only if the expression trees representing the two functions are exactly the same or automatic simplification is activated and both functions are polynomials that are equal. See <a href="help.php?name=error&amp;goBack=none">error</a> for an exception concerning the special object <code class="key">error</code>. Example:
 <p>
 <?php include("introExample13.php"); ?>
 
@@ -1920,6 +1951,13 @@ int main() {<br>
 
 <p>
 More involved examples are possible: for instance, instead of setting a flag, it is possible to keep in some variable what the last message was. One may even implement a stack mechanism and store the messages in a stack, in order to handle them later. (Please remember however that <code>sollya_msg_t</code> is a pointer type and that the <code>sollya_msg_t</code> object received as argument of a callback call has no more meaning once the callback call returned. If a stack mechanism is implemented it should store information such as the message ID, or the message text, as given by <code>sollya_lib_get_msg_id</code> and <code>sollya_lib_msg_to_text</code>, but not the <code>sollya_msg_t</code> object itself.)
+<p>
+In addition the <span class="sollya">Sollya</span> library offers a way to print <span class="sollya">Sollya</span> warning messages -or provoke callback calls if a callback is installed- from a program that uses the <span class="sollya">Sollya</span> library. The function supporting this feature
+is <code>int sollya_lib_printmessage(int, int, const char *, ...)</code>. Set aside its first two arguments, this functions behaves like the function <code>sollya_lib_printf</code>, i.e. its <code>char *</code> argument is a format
+string, followed by a variadic number of arguments corresponding to that format string. The first argument of the <code>sollya_lib_printmessage</code> function is the least verbosity level at which that warning shall be displayed.
+Its second argument is a boolean argument indicating if the given call of the function continues the message that has been started out printing with a previous call; if the boolean is true (non-zero integer value), the message
+is a continuation message, otherwise (zero integer value), the message is a new message. Calling <code>sollya_lib_printmessage</code> with a non-zero value in second argument without having called the functions with a zero value
+in second argument results in undefined behavior.
 
 <a name="customMemoryFunctions"></a>
 <h2>10.17 - Using <span class="sollya">Sollya</span> in a program that has its own allocation functions</h2>

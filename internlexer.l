@@ -179,6 +179,7 @@ DIRTYSIMPLIFY   "dirtysimplify"
 CANONICAL       "canonical"
 PLOT            "plot"
 REMEZ           "remez"
+ANNOTATEFUNCTION "annotatefunction"
 FPMINIMAX       "fpminimax"
 INFNORM         "infnorm"
 SUPNORM         "supnorm"
@@ -676,6 +677,7 @@ NOP             "nop"
 {DIFF}            			    {  return DIFFTOKEN; }
 {DIRTYSIMPLIFY}				    {  return DIRTYSIMPLIFYTOKEN; }
 {REMEZ}           			    {  return REMEZTOKEN; }
+{ANNOTATEFUNCTION}           		    {  return ANNOTATEFUNCTIONTOKEN; }
 {FPMINIMAX}           			    {  return FPMINIMAXTOKEN; }
 {HORNER}          			    {  return HORNERTOKEN; }
 {EXPAND}          			    {  return EXPANDTOKEN; }

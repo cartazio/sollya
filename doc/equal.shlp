@@ -9,14 +9,19 @@
 
 #DESCRIPTION 
 The operator $COMMAND evaluates to true iff its operands <expr1> and
-<expr2> are syntactically equal and different from $ERROR or constant
+<expr2> are syntactically equal and different from $ERROR, constant
 expressions that are not constants and that evaluate to the same
-floating-point number with the global precision $PREC. The user should
-be aware of the fact that because of floating-point evaluation, the
-operator $COMMAND is not exactly the same as the mathematical
-equality. Further remark that according to IEEE 754-2008 floating-point
-rules, which $SOLLYA emulates, floating-point data which are NaN do not
-compare equal to any other floating-point datum, including NaN. 
+floating-point number with the global precision $PREC or polynomials 
+that are equal while automatic expression simplification is activated. 
+The user should be aware of the fact that because of floating-point 
+evaluation, the operator $COMMAND is not exactly the same as the 
+mathematical equality. Further remark that according to IEEE 754-2008 
+floating-point rules, which $SOLLYA emulates, floating-point data 
+which are NaN do not compare equal to any other floating-point datum, 
+including NaN. Further, expressions that are polynomials may not
+be structurally equal when $COMMAND evaluates to $TRUE; in order
+to obtain purely structural tests, the user should deactivate
+automatic simplification using $AUTOSIMPLIFY.
 
 
 #EXAMPLE
@@ -47,6 +52,14 @@ b = NaN;
 a == a;
 b == b;
 
+#EXAMPLE
+p = x + x^2;
+q = x * (1 + x);
+autosimplify = on;
+p == q;
+autosimplify = off;
+p == q;
+
 #SEEALSO $NEQ
 #SEEALSO $GT
 #SEEALSO $GE
@@ -58,3 +71,4 @@ b == b;
 #SEEALSO $OR
 #SEEALSO $ERROR
 #SEEALSO $PREC
+#SEEALSO $AUTOSIMPLIFY

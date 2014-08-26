@@ -177,6 +177,7 @@ DIRTYSIMPLIFY   "dirtysimplify"
 CANONICAL       "canonical"
 PLOT            "plot"
 REMEZ           "remez"
+ANNOTATEFUNCTION "annotatefunction"
 FPMINIMAX       "fpminimax"
 INFNORM         "infnorm"
 SUPNORM         "supnorm"
@@ -684,6 +685,7 @@ NOP             "nop"
 {DIFF}            			    {  miniparserCharactersRead += yyleng; return DIFFTOKEN; }
 {DIRTYSIMPLIFY}				    {  miniparserCharactersRead += yyleng; return DIRTYSIMPLIFYTOKEN; }
 {REMEZ}           			    {  miniparserCharactersRead += yyleng; return REMEZTOKEN; }
+{ANNOTATEFUNCTION}           		    {  miniparserCharactersRead += yyleng; return ANNOTATEFUNCTIONTOKEN; }
 {FPMINIMAX}           			    {  miniparserCharactersRead += yyleng; return FPMINIMAXTOKEN; }
 {HORNER}          			    {  miniparserCharactersRead += yyleng; return HORNERTOKEN; }
 {EXPAND}          			    {  miniparserCharactersRead += yyleng; return EXPANDTOKEN; }

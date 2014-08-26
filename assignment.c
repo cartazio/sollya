@@ -268,36 +268,36 @@ int performListPrependOnEntry(chain *symTbl, char *ident, node *tree) {
   oldChecked = 0;
   newChecked = 0;
   addedChecked = 0;
-  if ((tree->nodeType == MEMREF) && (tree->child1 == tree->child2)) addedChecked = 1;
+  if ((tree->nodeType == MEMREF) && (tree->isCorrectlyTyped)) addedChecked = 1;
 
   okay = 0;
   curr = symTbl;
   while (curr != NULL) {
     if (strcmp(((entry *) (curr->value))->name,ident) == 0) {
       oldNode = (node *) (((entry *) curr->value)->value);
-      if ((oldNode->nodeType == MEMREF) && (oldNode->child1 == oldNode->child2)) oldChecked = 1;
+      if ((oldNode->nodeType == MEMREF) && (oldNode->isCorrectlyTyped)) oldChecked = 1;
       newChecked = oldChecked && addedChecked;
       while (1) {
-	if (oldNode->nodeType != MEMREF) break; else { if (!newChecked) oldNode->child2 = NULL; }
+	if (oldNode->nodeType != MEMREF) break; else { if (!newChecked) oldNode->isCorrectlyTyped = 0; }
 	if (oldNode->libFunDeriv > 1) break;
-	oldNode = oldNode->child1;
+	oldNode = getMemRefChild(oldNode);
       }
       switch (oldNode->nodeType) {
       case MEMREF:
-	if (!newChecked) oldNode->child2 = NULL;
+	if (!newChecked) oldNode->isCorrectlyTyped = 0;
 	if (oldNode->libFunDeriv > 1) {
-	  if ((oldNode->child1->nodeType == LIST) ||
-	      (oldNode->child1->nodeType == FINALELLIPTICLIST)) {
-	    newArgs = addElement(copyChainWithoutReversal(oldNode->child1->arguments, copyThingOnVoid), tree);
+	  if ((getMemRefChild(oldNode)->nodeType == LIST) ||
+	      (getMemRefChild(oldNode)->nodeType == FINALELLIPTICLIST)) {
+	    newArgs = addElement(copyChainWithoutReversal(getMemRefChild(oldNode)->arguments, copyThingOnVoid), tree);
 	    newNode = (node *) safeMalloc(sizeof(node));
-	    newNode->nodeType = oldNode->child1->nodeType;
+	    newNode->nodeType = getMemRefChild(oldNode)->nodeType;
 	    newNode->argArray = NULL;
 	    newNode->argArraySize = 0;
 	    newNode->argArrayAllocSize = 0;
 	    newNode->arguments = newArgs;
 	    newNode = addMemRef(newNode);
 	    if (newChecked && (newNode->nodeType == MEMREF)) {
-	      newNode->child2 = newNode->child1;
+	      newNode->isCorrectlyTyped = 1;
 	    }
 	    ((entry *) curr->value)->value = newNode;
 	    freeThing(oldNode);
@@ -314,7 +314,7 @@ int performListPrependOnEntry(chain *symTbl, char *ident, node *tree) {
 	      ((entry *) curr->value)->value = newNode;
 	      newNode = addMemRef(newNode);
 	      if (newChecked && (newNode->nodeType == MEMREF)) {
-		newNode->child2 = newNode->child1;
+		newNode->isCorrectlyTyped = 1;
 	      }
 	      okay = 1;
 	    } else {
@@ -386,30 +386,30 @@ int performListTailOnEntry(chain *symTbl, char *ident) {
   while (curr != NULL) {
     if (strcmp(((entry *) (curr->value))->name,ident) == 0) {
       oldNode = (node *) (((entry *) curr->value)->value);
-      if ((oldNode->nodeType == MEMREF) && (oldNode->child1 == oldNode->child2)) oldChecked = 1;
+      if ((oldNode->nodeType == MEMREF) && (oldNode->isCorrectlyTyped)) oldChecked = 1;
       while (1) {
 	if (oldNode->nodeType != MEMREF) break;
 	if (oldNode->libFunDeriv > 1) break;
-	oldNode = oldNode->child1;
+	oldNode = getMemRefChild(oldNode);
       }
       switch (oldNode->nodeType) {
       case MEMREF:
 	if (oldNode->libFunDeriv > 1) {
-	  if (((oldNode->child1->nodeType == LIST) ||
-	       (oldNode->child1->nodeType == FINALELLIPTICLIST)) &&
-	      ((oldNode->child1->arguments != NULL) &&
-	       (oldNode->child1->arguments->next != NULL) &&
-	       (oldNode->child1->arguments->next != NULL))) {
-	    newArgs = copyChainWithoutReversal(oldNode->child1->arguments->next, copyThingOnVoid);
+	  if (((getMemRefChild(oldNode)->nodeType == LIST) ||
+	       (getMemRefChild(oldNode)->nodeType == FINALELLIPTICLIST)) &&
+	      ((getMemRefChild(oldNode)->arguments != NULL) &&
+	       (getMemRefChild(oldNode)->arguments->next != NULL) &&
+	       (getMemRefChild(oldNode)->arguments->next != NULL))) {
+	    newArgs = copyChainWithoutReversal(getMemRefChild(oldNode)->arguments->next, copyThingOnVoid);
 	    newNode = (node *) safeMalloc(sizeof(node));
-	    newNode->nodeType = oldNode->child1->nodeType;
+	    newNode->nodeType = getMemRefChild(oldNode)->nodeType;
 	    newNode->arguments = newArgs;
 	    newNode->argArray = NULL;
 	    newNode->argArraySize = 0;
 	    newNode->argArrayAllocSize = 0;
 	    newNode = addMemRef(newNode);
 	    if (oldChecked && (newNode->nodeType == MEMREF)) {
-	      newNode->child2 = newNode->child1;
+	      newNode->isCorrectlyTyped = 1;
 	    }
 	    ((entry *) curr->value)->value = newNode;
 	    freeThing(oldNode);
@@ -418,9 +418,9 @@ int performListTailOnEntry(chain *symTbl, char *ident) {
 	    newNode = deepCopyThing(oldNode);
 	    if (((newNode->nodeType == LIST) ||
 		 (newNode->nodeType == FINALELLIPTICLIST)) &&
-		((oldNode->child1->arguments != NULL) &&
-		 (oldNode->child1->arguments->next != NULL) &&
-		 (oldNode->child1->arguments->next->next != NULL))) {
+		((getMemRefChild(oldNode)->arguments != NULL) &&
+		 (getMemRefChild(oldNode)->arguments->next != NULL) &&
+		 (getMemRefChild(oldNode)->arguments->next->next != NULL))) {
 	      freeThing(oldNode);
 	      freeThing((node *) (newNode->arguments->value));
 	      newArgs = newNode->arguments->next;
@@ -431,7 +431,7 @@ int performListTailOnEntry(chain *symTbl, char *ident) {
 	      newNode->argArrayAllocSize = 0;
 	      newNode = addMemRef(newNode);
 	      if (oldChecked && (newNode->nodeType == MEMREF)) {
-		newNode->child2 = newNode->child1;
+		newNode->isCorrectlyTyped = 1;
 	      }
 	      ((entry *) curr->value)->value = newNode;
 	      okay = 1;

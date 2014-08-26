@@ -631,7 +631,7 @@ match [3] with
 /* default appears to be an allowed keyword when matching structures, with
    the same behavior as "_" in OCaml. Does it work everywhere?
 */
-match 1+2 with
+match (1/17)+2 with
   a+default : { print("a + something with a = ",a); }
   default   : { print("Failure"); };
 
@@ -804,20 +804,20 @@ match f with
       exp(x) : (3)
       default : (4);
 restart;
-match 5 + 1 with 
-    1 + 5 : ("One plus five")
-    6     : ("Six")
-    5 + 1 : ("Five plus one");
+match 5 + (1/3) with 
+    (1/3) + 5 : ("One third plus five")
+    16/3      : ("Sixteen thirds")
+    5 + (1/3) : ("Five plus one third");
 
-match 6 with 
-    1 + 5 : ("One plus five")
-    6     : ("Six")
-    5 + 1 : ("Five plus one");
-  
-match 1 + 5 with 
-    1 + 5 : ("One plus five")
-    6     : ("Six")
-    5 + 1 : ("Five plus one");
+match 16/3 with 
+    (1/3) + 5 : ("One third plus five")
+    16/3      : ("Sixteen thirds")
+    5 + (1/3) : ("Five plus one third");
+
+match (1/3) + 5 with 
+    (1/3) + 5 : ("One third plus five")
+    16/3      : ("Sixteen thirds")
+    5 + (1/3) : ("Five plus one third");
 
 match [1; 5 + 1] with
     [1; 1 + 5] : ("Interval from one to one plus five")

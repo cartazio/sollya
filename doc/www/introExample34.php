@@ -22,8 +22,7 @@
 &nbsp;&nbsp;&nbsp;Warning: rounding has happened. The value displayed is a faithful rounding to 165 bits of the true result.<br>
 &nbsp;&nbsp;&nbsp;0.5<br>
 &nbsp;&nbsp;&nbsp;&gt; exp(1/7 - 3/21) / 7;<br>
-&nbsp;&nbsp;&nbsp;Warning: rounding has happened. The value displayed is a faithful rounding to 165 bits of the true result.<br>
-&nbsp;&nbsp;&nbsp;0.142857142857142857142857142857142857142857142857145<br>
+&nbsp;&nbsp;&nbsp;1 / 7<br>
 &nbsp;&nbsp;&nbsp;&gt; rationalmode = off;<br>
 &nbsp;&nbsp;&nbsp;Rational mode has been deactivated.<br>
 &nbsp;&nbsp;&nbsp;&gt; exp(1/7 - 3/21) / 7;<br>

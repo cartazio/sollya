@@ -263,6 +263,8 @@ extern "C" {
   int sollya_lib_snprintf(char *, size_t, const char *, ...);
   int sollya_lib_v_snprintf(char *, size_t, const char *, va_list);
 
+  /* A function to display Sollya messages */
+  int sollya_lib_printmessage(int, int, const char *, ...);
 
   /* A function to clear Sollya_objects */
   void sollya_lib_clear_obj(sollya_obj_t);
@@ -397,6 +399,8 @@ extern "C" {
   sollya_obj_t sollya_lib_getsuppressedmessages();
   sollya_obj_t sollya_lib_remez(sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
   sollya_obj_t sollya_lib_v_remez(sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
+  sollya_obj_t sollya_lib_annotatefunction(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
+  sollya_obj_t sollya_lib_v_annotatefunction(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
   sollya_obj_t sollya_lib_min(sollya_obj_t, ...);
   sollya_obj_t sollya_lib_v_min(sollya_obj_t, va_list);
   sollya_obj_t sollya_lib_max(sollya_obj_t, ...);

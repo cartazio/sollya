@@ -7,6 +7,7 @@ $listOfCommands=array(
 "acos","acos",
 "acosh","acosh",
 "and","&&",
+"annotatefunction","annotatefunction",
 "append",":.",
 "approx","~",
 "asciiplot","asciiplot",

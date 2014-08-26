@@ -76,7 +76,7 @@ function <span class="arg">function</span> by function <span class="arg">functio
 <div class="divExample"> 
 <h2 class="category">Example 4: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; print(evaluate(sin(pi * x), 2 + 0.25 * x));<br> 
-&nbsp;&nbsp;&nbsp;sin((pi) * (2 + 0.25 * x))<br> 
+&nbsp;&nbsp;&nbsp;sin((pi) * 2 + x * (pi) * 0.25)<br> 
 </div> 
 <div class="divExample"> 
 <h2 class="category">Example 5: </h2> 

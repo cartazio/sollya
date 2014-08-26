@@ -62,7 +62,8 @@ void initSignalHandler();
 void blockSignals();
 void initSignalHandlerCounted();
 void blockSignalsCounted();
-
+void deferSignalHandling();
+void resumeSignalHandling();
 
 #endif /* ifdef SIGNALHANDLING_H*/
 

@@ -1,6 +1,6 @@
 /*
 
-  Copyright 2006-2013 by
+  Copyright 2006-2014 by
 
   Laboratoire de l'Informatique du Parallelisme,
   UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
@@ -66,7 +66,19 @@
 #include <stdio.h>
 #include "chain.h"
 #include "library.h"
+#include "hooks.h"
+#include "polynomials.h"
 
+enum __point_eval_enum_t {
+  POINT_EVAL_FAILURE = 0,
+  POINT_EVAL_EXACT,
+  POINT_EVAL_CORRECTLY_ROUNDED,
+  POINT_EVAL_CORRECTLY_ROUNDED_PROVEN_INEXACT,
+  POINT_EVAL_FAITHFULLY_ROUNDED,
+  POINT_EVAL_FAITHFULLY_ROUNDED_PROVEN_INEXACT,
+  POINT_EVAL_BELOW_CUTOFF
+};
+typedef enum __point_eval_enum_t point_eval_t;
 
 #define VARIABLE 0
 #define CONSTANT 1
@@ -132,6 +144,20 @@ struct nodeStruct
   node **argArray;
   int argArraySize;
   size_t argArrayAllocSize;
+  sollya_mpfi_t *evalCacheX, *evalCacheY;
+  mp_prec_t evalCachePrec;
+  node *derivCache;
+  node *derivUnsimplCache;
+  int simplifyCacheDoesNotSimplify;
+  int simplifyCacheRationalMode;
+  node *simplifyCache;
+  int isCorrectlyTyped;
+  eval_hook_t *evaluationHook;
+  polynomial_t polynomialRepresentation;
+  int memRefChildFromPolynomial;
+  mpfr_t *pointEvalCacheX, *pointEvalCacheY;
+  mp_exp_t pointEvalCacheCutoff;
+  point_eval_t pointEvalCacheResultType;
 };
 
 /* HELPER TYPE FOR THE PARSER */
@@ -167,13 +193,14 @@ void *safeMalloc (size_t);
 
 static inline node* addMemRef(node *tree) { return tree; }
 
+static inline node* getMemRefChild(node *tree) { return tree->child1; }
+
+static inline node *addMemRefEvenOnNull(node *tree) { return tree; }
+
 #else
 
-static inline node* addMemRef(node *tree) {
+static inline node* addMemRefEvenOnNull(node *tree) {
   node *res;
-
-  if (tree == NULL) return NULL;
-  if (tree->nodeType == MEMREF) return tree;
 
   res = (node *) safeMalloc(sizeof(node));
   res->nodeType = MEMREF;
@@ -182,8 +209,37 @@ static inline node* addMemRef(node *tree) {
   res->child2 = NULL;
   res->arguments = NULL;
   res->value = NULL;
+  res->evalCacheX = NULL;
+  res->evalCacheY = NULL;
+  res->evalCachePrec = 0;
+  res->derivCache = NULL;
+  res->derivUnsimplCache = NULL;
+  res->simplifyCacheDoesNotSimplify = -1;
+  res->simplifyCacheRationalMode = -1;
+  res->simplifyCache = NULL;
+  res->isCorrectlyTyped = 0;
+  res->evaluationHook = NULL;
+  res->polynomialRepresentation = NULL;
+  res->memRefChildFromPolynomial = 0;
+  res->pointEvalCacheX = NULL;
+  res->pointEvalCacheY = NULL;
 
   return res;
+}
+
+static inline node* addMemRef(node *tree) {
+  if (tree == NULL) return NULL;
+  if (tree->nodeType == MEMREF) return tree;
+  return addMemRefEvenOnNull(tree);
+}
+
+static inline node* getMemRefChild(node *tree) {
+  if (tree->nodeType != MEMREF) return tree->child1;
+  if (tree->child1 != NULL) return tree->child1;
+  if (tree->polynomialRepresentation == NULL) return NULL;
+  tree->child1 = polynomialGetExpression(tree->polynomialRepresentation);
+  tree->memRefChildFromPolynomial = 1;
+  return tree->child1;
 }
 
 #endif
@@ -194,7 +250,7 @@ static inline node* accessThruMemRef(node *tree) {
   if (tree == NULL) return NULL;
   res = tree;
   while (res->nodeType == MEMREF) {
-    res = res->child1;
+    res = getMemRefChild(res);
   }
   return res;
 }
@@ -221,6 +277,7 @@ int isNotUniformlyZero(node *tree);
 int isNotUniformlyInfinite(node *tree);
 int getNumeratorDenominator(node **numerator, node **denominator, node *tree);
 node *substitute(node* tree, node *t);
+node *substituteEnhanced(node* tree, node *t, int maySimplify);
 void composePolynomials(node **, chain **, node *, node *, mp_prec_t);
 int readDyadic(mpfr_t res, char *c);
 int readHexadecimal(mpfr_t res, char *c);
@@ -261,11 +318,13 @@ node *simplifyAllButDivision(node *tree);
 int mpfr_to_mpq( mpq_t y, mpfr_t x);
 int mpfr_to_mpz( mpz_t y, mpfr_t x);
 mp_prec_t getMpzPrecision(mpz_t x);
+int containsOnlyRealNumbers(node * tree);
 
 node *makeVariable();
 node *makeConstant(mpfr_t x);
 node *makeConstantDouble(double x);
 node *makeConstantInt(int x);
+node *makeConstantUnsignedInt(unsigned int x);
 node *makeConstantMpz(mpz_t x);
 node *makeAdd(node *op1, node *op2);
 node *makeSub(node *op1, node *op2);
@@ -307,6 +366,7 @@ node *makeAsinh(node *op1);
 node *makeAcosh(node *op1);
 node *makeAtanh(node *op1);
 node *makeUnary(node *op1, int nodeType);
+node *makeBinary(node *op1, node *op2, int opType);
 
 node* addMemRef(node *);
 node* accessThruMemRef(node *);
