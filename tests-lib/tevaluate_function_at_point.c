@@ -39,7 +39,7 @@ const char *get_status(sollya_fp_result_t s) {
   }
  }
 
-/* tester cutoff = NaN, +inf, négatif */
+
 int main(void) {
   sollya_fp_result_t res;
   sollya_obj_t f, powers;
@@ -449,7 +449,7 @@ int main(void) {
 
 
   /* Evaluate tricky expressions. */
-  f = sollya_lib_parse_string("(sin(pi/6)-x)*1b100000+3");
+  f = sollya_lib_parse_string("(sin(pi/6)-x)*1b50000+3");
   mpfr_set_d(x, 0.5, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);
@@ -457,7 +457,7 @@ int main(void) {
   sollya_lib_printf("\n");
   sollya_lib_clear_obj(f);
 
-  f = sollya_lib_parse_string("(sin(pi/6)-x)*1b100000+1b50000");
+  f = sollya_lib_parse_string("(sin(pi/6)-x)*1b50000+1b25000");
   mpfr_set_d(x, 0.5, GMP_RNDN);
   mpfr_set_d(y, -17, GMP_RNDN);;
   res = sollya_lib_evaluate_function_at_point(y, f, x, NULL);

@@ -49,8 +49,8 @@ Trying to faithfuly evaluate sin((pi) / 6) - x + (1 * 2^(-100000)) at 1 * 2^(-1)
 Trying to faithfuly evaluate sin((pi) / 6) - x + (1 * 2^(-100000)) at 1 * 2^(-1) with cutoff 502168139 * 2^(-195): returns 0 (status: SOLLYA_FP_BELOW_CUTOFF)
 Trying to faithfuly evaluate sin((pi) / 6) - x + (1 * 2^(-100000)) at 1 * 2^(-1) with cutoff 4: returns 0 (status: SOLLYA_FP_BELOW_CUTOFF)
 
-Trying to faithfuly evaluate (sin((pi) / 6) - x) * (1 * 2^(100000)) + 3 at 1 * 2^(-1) with cutoff NULL: returns 3 (status: SOLLYA_FP_NOT_FAITHFUL_ZERO_CONTAINED_NOT_BELOW_THRESHOLD)
-Trying to faithfuly evaluate (sin((pi) / 6) - x) * (1 * 2^(100000)) + (1 * 2^(50000)) at 1 * 2^(-1) with cutoff NULL: returns 1 * 2^(50000) (status: SOLLYA_FP_NOT_FAITHFUL_ZERO_NOT_CONTAINED)
+Trying to faithfuly evaluate (sin((pi) / 6) - x) * (1 * 2^(50000)) + 3 at 1 * 2^(-1) with cutoff NULL: returns 1 * 2^(7738) (status: SOLLYA_FP_NOT_FAITHFUL_ZERO_CONTAINED_NOT_BELOW_THRESHOLD)
+Trying to faithfuly evaluate (sin((pi) / 6) - x) * (1 * 2^(50000)) + (1 * 2^(25000)) at 1 * 2^(-1) with cutoff NULL: returns 1 * 2^(25000) (status: SOLLYA_FP_NOT_FAITHFUL_ZERO_NOT_CONTAINED)
 Trying to faithfuly evaluate 3 + 7 * 2^(-31) * sin(1 / (35 * 2^(-17997) + sin((pi) / 6) - x)) at 1 * 2^(-1) with cutoff NULL: returns 3 (status: SOLLYA_FP_FAITHFUL)
 
 Trying to faithfuly evaluate sin((pi) / 6) - x + (1 * 2^(-100000)) at 1 * 2^(-1) with cutoff -4: returns 0 (status: SOLLYA_FP_BELOW_CUTOFF)
