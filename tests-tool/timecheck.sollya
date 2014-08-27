@@ -7,7 +7,7 @@ bigVariance = [1/1000;100];
 /* Test #0 */
 i;
 t = time(p = remez(exp(x),15,[-1b-1;1b-1]))/yardstick;
-if (t in 7.55e-2 * variance) then "Okay" else round(t,12,RN);
+if (t in 6.29e-3 * variance) then "Okay" else round(t,12,RN);
 i := i + 1;
 
 /* Test #1 */
