@@ -10907,6 +10907,7 @@ void getCoefficients(int *degree, node ***coefficients, node *poly) {
   node **myCoeffs;
 
   if (poly->nodeType == MEMREF) {
+    
     if (poly->polynomialRepresentation == NULL) {
       tryRepresentAsPolynomial(poly);
     }

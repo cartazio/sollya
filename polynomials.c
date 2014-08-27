@@ -7465,7 +7465,7 @@ void polynomialDiv(polynomial_t *quot, polynomial_t *rest, polynomial_t a, polyn
   /* If a is a negation, do the division recursively and negate the
      quotient and rest. 
   */
-  if (a->type == NEGATION) {
+  if (a->type == NEGATE) {
     polynomialDiv(&q, &r, a->value.g, b);
     *quot = polynomialNeg(q);
     *rest = polynomialNeg(r);
@@ -8422,7 +8422,7 @@ polynomial_t polynomialNeg(polynomial_t p) {
   /* General case: construct the negation polynomial */
   res = __polynomialAllocate();
   res->refCount = 1u;
-  res->type = NEGATION;
+  res->type = NEGATE;
   res->outputType = ANY_FORM;
   res->value.g = polynomialFromCopy(p);
   
@@ -8815,6 +8815,7 @@ int polynomialFromExpressionOnlyRealCoeffs(polynomial_t *r, node *p) {
       polynomialFree(zero);
       break;
     case POW:
+      
       res = polynomialPow(r, a, b);
       break;
     }
