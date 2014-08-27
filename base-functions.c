@@ -1,12 +1,24 @@
 /*
 
-  Copyright 2014 by
+  Copyright 2006-2014 by
+
+  Laboratoire de l'Informatique du Parallelisme,
+  UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
+
+  LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2),
+
+  Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
+  UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France
+
+  and by
 
   Centre de recherche INRIA Sophia-Antipolis Mediterranee, equipe APICS,
   Sophia Antipolis, France.
 
-  Contributors S. Chevillard
+  Contributors Ch. Lauter, M. Joldes, S. Chevillard
 
+  christoph.lauter@ens-lyon.org
+  joldes@laas.fr
   sylvain.chevillard@ens-lyon.org
 
   This software is a computer program whose purpose is to provide an
@@ -3302,7 +3314,7 @@ baseFunction basefun_ceil_obj = {
   .monotonicity = NONDECREASING,
   .baseAutodiff = ceil_diff,
   .interval_eval = sollya_mpfi_ceil,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_ceil),
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_rint_ceil),
   .diff_expr = ceil_diff_expr,
   .simplify = simplify_ceil,
   .evalsign = ceil_evalsign
@@ -3321,7 +3333,7 @@ baseFunction basefun_floor_obj = {
   .baseAutodiff = floor_diff,
   .onlyZeroIsZero = 0,
   .interval_eval = sollya_mpfi_floor,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_floor),
+  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_rint_floor),
   .diff_expr = floor_diff_expr,
   .simplify = simplify_floor,
   .evalsign = floor_evalsign
