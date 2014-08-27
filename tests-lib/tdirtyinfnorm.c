@@ -35,7 +35,6 @@ int boolean_not_eq(sollya_obj_t a, sollya_obj_t b) {
 
 int main(void) {
   sollya_obj_t a[NB_OF_TESTS], b[NB_OF_TESTS], c[NB_OF_TESTS];
-  sollya_obj_t vold32, vold64, vsvn;
   int i;
 
   sollya_lib_init();
