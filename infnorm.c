@@ -6044,6 +6044,7 @@ static inline mp_exp_t __tryFaithEvaluationOptimizedUnivariateGetRecurseCutoff(i
     /* Zero at zero, first Taylor coefficient 1, series does not have alternating sign */
     res = cutoff - 1;
     if ((res >= 0) || (res < mpfr_get_emin_min())) res = mpfr_get_emin_min();    
+    return res;
     break;
   case ACOS:
     /* No zero at zero, take Taylor development around zero and precision */
@@ -6057,6 +6058,7 @@ static inline mp_exp_t __tryFaithEvaluationOptimizedUnivariateGetRecurseCutoff(i
     /* Zero at zero, first Taylor coefficient 1, series does not have alternating sign */
     res = cutoff - 1;
     if ((res >= 0) || (res < mpfr_get_emin_min())) res = mpfr_get_emin_min();
+    return res;
     break;
   case COSH:
     /* No zero at zero, take Taylor development around zero and precision */
@@ -6078,11 +6080,13 @@ static inline mp_exp_t __tryFaithEvaluationOptimizedUnivariateGetRecurseCutoff(i
     /* Zero at zero, first Taylor coefficient 1, series does not have alternating sign */
     res = cutoff - 1;
     if ((res >= 0) || (res < mpfr_get_emin_min())) res = mpfr_get_emin_min();
+    return res;
     break;
   case ERF:
     /* Zero at zero, first Taylor coefficient less than 2, series has alternating sign */
     res = cutoff - 1;
     if ((res >= 0) || (res < mpfr_get_emin_min())) res = mpfr_get_emin_min();
+    return res;
     break;
   case ERFC:
     /* No zero at zero, take Taylor development around zero and precision */
@@ -6096,6 +6100,7 @@ static inline mp_exp_t __tryFaithEvaluationOptimizedUnivariateGetRecurseCutoff(i
     /* Zero at zero, first Taylor coefficient 1, series does not have alternating sign */
     res = cutoff - 1;
     if ((res >= 0) || (res < mpfr_get_emin_min())) res = mpfr_get_emin_min();
+    return res;
     break;
   case LIBRARYFUNCTION:
   case PROCEDUREFUNCTION:
@@ -6104,6 +6109,7 @@ static inline mp_exp_t __tryFaithEvaluationOptimizedUnivariateGetRecurseCutoff(i
     if ((res >= 0) || (res < mpfr_get_emin_min())) res = mpfr_get_emin_min();
     if (-(prec + 5) < res) res = -(prec + 5);
     if ((res >= 0) || (res < mpfr_get_emin_min())) res = mpfr_get_emin_min();
+    return res;
     break;
   default:
     return mpfr_get_emin_min();
