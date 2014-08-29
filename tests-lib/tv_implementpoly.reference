@@ -224,7 +224,7 @@ double p_t_3_0h, p_t_3_0m;
 p_t_1_0h = p_coeff_2h; p_t_1_0m = p_coeff_2m;
 Mul22(&p_t_2_0h,&p_t_2_0m,p_t_1_0h,p_t_1_0m,p_x_0_pow2h,p_x_0_pow2m);
 Add122(&p_t_3_0h,&p_t_3_0m,p_coeff_0h,p_t_2_0h,p_t_2_0m);
-*p_resh = p_t_3_0h; *p_resm = p_t_3_0m;
+*p_resh = p_t_3_0h;
 
 
 }
@@ -422,7 +422,7 @@ Add122(&p_t_29_0h,&p_t_29_0m,p_coeff_0h,p_t_28_0h,p_t_28_0m);
 Additionnally, the following Gappa proof is produced:
 
 # The polynomial to implement is: 15b0 + (x * (7b1 + (x * (13b0 + (x * (3b2 + (x * (11b0 + (x * (5b1 + (x * (9b0 + (x * (1b3 + (x * (7b0 + (x * (3b1 + (x * (5b0 + (x * (1b2 + (x * (3b0 + (x * (1b1 + x))))))))))))))))))))))))))
-# The polynomial implemented is: 15b0 + (x * (7b1 + (x * (13b0 + (x * (3b2 + (x * (11b0 + (x * (5b1 + (x * (9b0 + (x * (1b3 + (x * (7b0 + (x * (3b1 + (x * (5b0 + (x * (1b2 + (x * (3b0 + (x * (1b1 + (x * 1b0)))))))))))))))))))))))))))
+# The polynomial implemented is: 15b0 + (x * (7b1 + (x * (13b0 + (x * (3b2 + (x * (11b0 + (x * (5b1 + (x * (9b0 + (x * (1b3 + (x * (7b0 + (x * (3b1 + (x * (5b0 + (x * (1b2 + (x * (3b0 + (x * (1b1 + x))))))))))))))))))))))))))
 # The domain is [-1b-1;1b-1]
 # The free variable x is a double-double number, the result p_res* is stored on a double-double number.
 # The code produces 45 intermediate and final arithmetical approximations.

@@ -75,8 +75,6 @@ rangetype guessDegree(node *func, node *weight, mpfr_t a, mpfr_t b, mpfr_t eps, 
 node *constructPolynomial(mpfr_t *coeff, chain *monomials, mp_prec_t prec);
 node *constructPolynomialFromArray(mpfr_t *coeff, node **monomials, int n);
 
-int newtonFaithful(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, mp_prec_t prec);
-
 void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, mpfr_t *x0, int n, mp_prec_t prec);
 
 #endif /* ifdef REMEZ_H*/

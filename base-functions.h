@@ -115,6 +115,9 @@ struct baseFunctionStruct
   int onlyZeroIsZero; /* A boolean. True if the only real zero of the function is zero */
   int doesNotVanish; /* A boolean. True if the function never takes the value zero on the real line */
   int monotonicity; /* One of the monotonicity code, indicating the behavior of the function on its domain */
+  int faithEvaluationOptimizedSupported; /* A boolean. True if the function behaves well for faithful evaluation */
+  mp_exp_t (*getRecurseCutoff)(mp_exp_t cutoff, mp_prec_t prec); /* Supposing one desires to evaluate f(c) with accuracy 2^(-prec), allowing a cutoff of 2^(-cutoff), this function returns a guess on what cutoff should be used in the evaluation of c */
+  mp_exp_t (*getRecursePrec)(mp_exp_t cutoff, mp_prec_t prec, int considerCutoff);  /* Supposing one desires to evaluate f(c) with accuracy 2^(-prec), allowing a cutoff of 2^(-cutoff), this function returns a guess on what precision should be used in the evaluation of c */
   void (*baseAutodiff)(sollya_mpfi_t *, sollya_mpfi_t, int, int *); /* Computes the vector of the f^(k)(x0)/k!, k=0..n. The last parameter is a silent parameter */
   int (*interval_eval)(sollya_mpfi_t, sollya_mpfi_t); /* Performs an interval evaluation ``à la'' mpfi */
   int (*point_eval)(mpfr_t, mpfr_t, mp_rnd_t); /* Performs an evaluation ``à la'' mpfr */
@@ -126,38 +129,38 @@ struct baseFunctionStruct
 };
 
 
-extern static baseFunction *basefun_sqrt;
-extern static baseFunction *basefun_exp;
-extern static baseFunction *basefun_log;
-extern static baseFunction *basefun_log2;
-extern static baseFunction *basefun_log10;
-extern static baseFunction *basefun_sin;
-extern static baseFunction *basefun_cos;
-extern static baseFunction *basefun_tan;
-extern static baseFunction *basefun_asin;
-extern static baseFunction *basefun_acos;
-extern static baseFunction *basefun_atan;
-extern static baseFunction *basefun_sinh;
-extern static baseFunction *basefun_cosh;
-extern static baseFunction *basefun_tanh;
-extern static baseFunction *basefun_asinh;
-extern static baseFunction *basefun_acosh;
-extern static baseFunction *basefun_atanh;
-extern static baseFunction *basefun_abs;
-extern static baseFunction *basefun_double;
-extern static baseFunction *basefun_single;
-extern static baseFunction *basefun_halfprecision;
-extern static baseFunction *basefun_quad;
-extern static baseFunction *basefun_doubledouble;
-extern static baseFunction *basefun_tripledouble;
-extern static baseFunction *basefun_erf;
-extern static baseFunction *basefun_erfc;
-extern static baseFunction *basefun_log1p;
-extern static baseFunction *basefun_expm1;
-extern static baseFunction *basefun_doubleextended;
-extern static baseFunction *basefun_ceil;
-extern static baseFunction *basefun_floor;
-extern static baseFunction *basefun_nearestint;
+extern baseFunction *basefun_sqrt;
+extern baseFunction *basefun_exp;
+extern baseFunction *basefun_log;
+extern baseFunction *basefun_log2;
+extern baseFunction *basefun_log10;
+extern baseFunction *basefun_sin;
+extern baseFunction *basefun_cos;
+extern baseFunction *basefun_tan;
+extern baseFunction *basefun_asin;
+extern baseFunction *basefun_acos;
+extern baseFunction *basefun_atan;
+extern baseFunction *basefun_sinh;
+extern baseFunction *basefun_cosh;
+extern baseFunction *basefun_tanh;
+extern baseFunction *basefun_asinh;
+extern baseFunction *basefun_acosh;
+extern baseFunction *basefun_atanh;
+extern baseFunction *basefun_abs;
+extern baseFunction *basefun_double;
+extern baseFunction *basefun_single;
+extern baseFunction *basefun_halfprecision;
+extern baseFunction *basefun_quad;
+extern baseFunction *basefun_doubledouble;
+extern baseFunction *basefun_tripledouble;
+extern baseFunction *basefun_erf;
+extern baseFunction *basefun_erfc;
+extern baseFunction *basefun_log1p;
+extern baseFunction *basefun_expm1;
+extern baseFunction *basefun_doubleextended;
+extern baseFunction *basefun_ceil;
+extern baseFunction *basefun_floor;
+extern baseFunction *basefun_nearestint;
 
 node *makeSqrt(node *op1);
 node *makeExp(node *op1);
@@ -191,5 +194,6 @@ node *makeTanh(node *op1);
 node *makeAsinh(node *op1);
 node *makeAcosh(node *op1);
 node *makeAtanh(node *op1);
+
 
 #endif /* ifdef BASE_FUNCTIONS */

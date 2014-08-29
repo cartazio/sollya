@@ -93,13 +93,14 @@ int evaluateFaithfulWithCutOffFast(mpfr_t result, node *func, node *deriv, mpfr_
 int evaluateFaithfulAtConstantExpression(mpfr_t result, node *func, node *deriv, node *x, mpfr_t cutoff, mp_prec_t startprec);
 void evaluateConstantExpressionToInterval(sollya_mpfi_t y, node *func);
 void evaluateConstantExpressionToSharpInterval(sollya_mpfi_t y, node *func);
-void evaluateInterval(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x);
 
 int newtonMPFR(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, mpfr_t b, mp_prec_t prec);
 int evaluateSign(int *s, node *rawFunc);
+int evaluateSignFast(int *s, node *constFunc);
 int compareConstant(int *cmp, node *func1, node *func2, node *difference, int doNotEval);
 
 void sollya_mpfi_pow(sollya_mpfi_t z, sollya_mpfi_t x, sollya_mpfi_t y);
+void sollya_mpfi_pow_ulong(sollya_mpfi_t z, sollya_mpfi_t x, unsigned long t);
 void sollya_mpfi_round_to_double(sollya_mpfi_t rop, sollya_mpfi_t op);
 void sollya_mpfi_round_to_single(sollya_mpfi_t rop, sollya_mpfi_t op);
 void sollya_mpfi_round_to_doubledouble(sollya_mpfi_t rop, sollya_mpfi_t op);

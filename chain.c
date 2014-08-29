@@ -128,6 +128,27 @@ chain *copyChainWithoutReversal(chain *c, void * (*f) (void *)) {
   return copy;
 }
 
+chain *copyChainAndMap(chain *c, void *d, void * (*f) (void *, void *)) {
+  chain *curr, *copy, *prev, *elem;
+
+  if (c == NULL) return NULL;
+
+  copy = NULL;
+  for (curr=c; curr!=NULL; curr=curr->next) {
+    if (copy == NULL) {
+      copy = (chain *) safeMalloc(sizeof(chain));
+      elem = copy;
+    } else {
+      prev->next = (chain *) safeMalloc(sizeof(chain));
+      elem = prev->next;
+    }
+    elem->value = f(curr->value, d);
+    elem->next = NULL;
+    prev = elem;
+  }
+
+  return copy;
+}
 
 void *copyString(void *oldString) {
   char *newString;

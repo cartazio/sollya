@@ -124,11 +124,11 @@ Examples of use:<br>
 &nbsp;&nbsp;&nbsp;&gt; f = sin(x);<br> 
 &nbsp;&nbsp;&nbsp;&gt; I = [-3b-5;-1b-1074];<br> 
 &nbsp;&nbsp;&nbsp;&gt; time(popt = remez(1, [|1, 3, 4, 5, 7, 8, 9|], I, 1/f));<br> 
-&nbsp;&nbsp;&nbsp;0.56247400000000000001854072451124011422507464885711<br> 
+&nbsp;&nbsp;&nbsp;0.22906699999999999999879263246072014226228930056095<br> 
 &nbsp;&nbsp;&nbsp;&gt; time(p1 = remez(1, [|1, 3, 4, 5, 7, 8, 9|], I, 1/f, default, [0, 1b-73]));<br> 
-&nbsp;&nbsp;&nbsp;0.349992999999999999959955643280551385032595135271549<br> 
+&nbsp;&nbsp;&nbsp;0.143248000000000000006029898802495381460175849497318<br> 
 &nbsp;&nbsp;&nbsp;&gt; time(p2 = remez(1, [|1, 3, 4, 5, 7, 8, 9|], I, 1/f, default, [3b-72, +@Inf@]));<br> 
-&nbsp;&nbsp;&nbsp;0.4416959999999999999685182383579729048506123945117<br> 
+&nbsp;&nbsp;&nbsp;0.156266000000000000009440365156265784207789693027735<br> 
 &nbsp;&nbsp;&nbsp;&gt; dirtyinfnorm(popt/f-1, I);<br> 
 &nbsp;&nbsp;&nbsp;2.06750931454112835098093903810531156576504665659064e-22<br> 
 &nbsp;&nbsp;&nbsp;&gt; dirtyinfnorm(p1/f-1, I);<br> 

@@ -72,6 +72,7 @@ void *first(chain *c);
 chain *tail(chain *c);
 chain *copyChain(chain *c, void * (*f) (void *));
 chain *copyChainWithoutReversal(chain *c, void * (*f) (void *));
+chain *copyChainAndMap(chain *c, void *, void * (*f) (void *, void *));
 void *copyString(void *oldString);
 void *copyTreeOnVoid(void *tree);
 void *copyRangetypePtr(void *ptr);

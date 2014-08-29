@@ -54,6 +54,8 @@ print(rationalapprox(sin(pi/5.9),7));
 
 
 #SEEALSO $PRINT
+#SEEALSO $EQUAL
+#SEEALSO $NEQ
 #SEEALSO $PREC
 #SEEALSO $POINTS
 #SEEALSO $DIAM

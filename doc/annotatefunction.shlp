@@ -1,0 +1,88 @@
+#NAME $ANNOTATEFUNCTION
+#QUICK_DESCRIPTION Annotates a $SOLLYA function object with an approximation that is faster to evaluate
+
+#CALLING $COMMAND(<f>, <g>, <I>, <d>)
+#TYPE ($FUNCTION_TYPE, $FUNCTION_TYPE, $RANGE_TYPE, $RANGE_TYPE) -> $FUNCTION_TYPE
+
+#CALLING $COMMAND(<f>, <g>, <I>, <d>, <t>)
+#TYPE ($FUNCTION_TYPE, $FUNCTION_TYPE, $RANGE_TYPE, $RANGE_TYPE, $CONSTANT_TYPE) -> $FUNCTION_TYPE
+
+#LIBRARYNAME sollya_obj_t sollya_lib_annotatefunction(sollya_obj_t, sollya_obj_t, 
+#LIBRARYNAME (CONTINUED)                              sollya_obj_t, sollya_obj_t, ...);
+
+#PARAMETERS <f> is a function.
+#PARAMETERS <g> is a function, in most cases a polynomial.
+#PARAMETERS <I> is an interval.
+#PARAMETERS <d> is an interval.
+#PARAMETERS <t> is a constant.
+
+#DESCRIPTION
+$COMMAND(<f>, <g>, <I>, <d>, <t>) resp. $COMMAND(<f>, <g>, <I>, <d>) 
+(where <t> is assumed to be zero) annotates the given $SOLLYA
+function object <f> with an approximation <g> in such a way that upon
+evaluation of <f> at a point in <I>, <g> is used instead of <f> as
+long as the error between <f> and <g>, which must be bounded over all
+<I> by <d>, is not too large. The approximation <g> is not evaluated
+at the same point as <f> would be evaluated but after subtraction of 
+<t> from that point.
+
+#DESCRIPTION
+In order not to provoke any incorrect behavior, the given <f>, <g>,
+<I>, <d> and <t> must satisfy the following property:
+§§forall x in I, f(x) - g(x - t) in d.§$$\forall x \in I, f(x) - g(x - t) \in d.$$§§
+
+#DESCRIPTION
+The approximation <g> can be any $SOLLYA function but particular
+performance is expected when <g> is a polynomial. Upon annotation with
+a polynomial, precomputations are performed to analyze certain
+properties of the given approximation polynomial.
+
+#DESCRIPTION
+The $COMMAND command returns the annotated $SOLLYA function
+object. This object is indistinguishable from the original <f> with
+respect to $SOLLYA comparisons, printing and so on. Unless $SOLLYA has
+been compiled in some particular debug mode, the $COMMAND command does
+not deeply copy the function object <f>, so the original function
+object <f> also bears the annotation.
+
+#DESCRIPTION
+$SOLLYA function objects can be annotated more than once with
+different approximations on different domains, that do not need to be
+disjoint. Upon evaluation of the annotated function object, $SOLLYA
+chooses the approximation annotation that provides for sufficient
+accuracy at the evaluation point.
+
+#DESCRIPTION
+As an absolute error bound <d> is given for annotation, $SOLLYA cannot
+reuse an approximation annotation for the derivative of the annotated
+function. If any (higher) derivative of a function needs to bear an
+annotation, that derivative needs to be annotated using $COMMAND.
+
+#EXAMPLE
+procedure EXP(X,n,p) {
+          var res, oldPrec;
+          oldPrec = prec;
+          prec = p!;
+          
+          "Using procedure function exponential";
+
+          res = exp(X);
+          
+          prec = oldPrec!;
+          return res;
+     };
+g = function(EXP);
+p = 46768052394588893382516870161332864698044514954899b-165 + x * (23384026197294446691258465802074096632225783601255b-164 + x * (5846006549323611672948426613035653821819225877423b-163 + x * (3897337699549074448627696490806815137319821946501b-164 + x * (7794675399098148717422744621371434831048848817417b-167 + x * (24942961277114075921122941174178849425809856036737b-171 + x * (8314320425704876115613838900105097456456371179471b-172 + x * (19004160973039701371579356991645932289422670402995b-176 + x * (19004160972669324148912122254449912156003926801563b-179 + x * (33785175062542597526738679493857229456702396042255b-183 + x * (6757035113643674378393625988264926886191860669891b-184 + x * (9828414707511252769908089206114262766633532289937b-188 + x * (26208861108003813314724515233584738706961162212965b-193 + x * (32257064253325954315953742396999456577223350602741b-197 + x * (578429089657689569703509185903214676926704485495b-195 + x * 2467888542176675658523627105540996778984959471957b-201))))))))))))));
+h = annotatefunction(g, p, [-1/2;1/2], [-475294848522543b-124;475294848522543b-124]);
+prec = 24;
+"h(0.25) = ";
+h(0.25);
+prec = 72;
+"h(0.25) = ";
+h(0.25);
+
+#SEEALSO $TAYLORFORM
+#SEEALSO $REMEZ
+#SEEALSO $SUPNORM
+#SEEALSO $INFNORM
+

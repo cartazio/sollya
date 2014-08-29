@@ -7,13 +7,13 @@ bigVariance = [1/1000;100];
 /* Test #0 */
 i;
 t = time(p = remez(exp(x),15,[-1b-1;1b-1]))/yardstick;
-if (t in 7.55e-2 * variance) then "Okay" else round(t,12,RN);
+if (t in 6.29e-3 * variance) then "Okay" else round(t,12,RN);
 i := i + 1;
 
 /* Test #1 */
 i;
 t = time(p = remez(1,[|1,...,15|],[-1b-1;1b-1],1/sin(x)))/yardstick;
-if (t in 0.4906005859375 * variance) then "Okay" else round(t,12,RN);
+if (t in 3.24859619140625e-2 * variance) then "Okay" else round(t,12,RN);
 i := i + 1;
 
 /* Test #2 */
@@ -86,8 +86,8 @@ pnobug = 1.011111110010011010100011110101011000110001001001010001001101010111100
 x0 = 1.0100001_2 * 2^(-45);
 t1 = time(q=horner(simplify(pnobug(x-x0))))/yardstick;
 t2 = time(r=horner(simplify(pbug(x-x0))))/yardstick;
-if (t1 in 5.7e-4 * variance) then "Okay" else print("t1 = ", round(t1,12,RN));
-if (t2 in 4.6e-4 * variance) then "Okay" else print("t2 = ", round(t2,12,RN));
+if (t1 in 1.0e-6 * variance) then "Okay" else print("t1 = ", round(t1,12,RN));
+if (t2 in 5.0e-7 * variance) then "Okay" else print("t2 = ", round(t2,12,RN));
 rationalmode=default!;
 i := i+1;
 
@@ -134,7 +134,7 @@ i := i+1;
 /* Non-regression for bug #15363, solved at revision 1934 */
 i;
 f = 5 / 48 * cos(x^(-0.625) / 2)^(-3.5) + 5 / 48 * cos((x^(-0.625) + (2 * (pi)) / 3) / 2)^(-3.5) + 5 / 48 * cos((x^(-0.625) - (2 * (pi)) / 3) / 2)^(-3.5) + 5 / 48 * cos(x^(-0.625) / 2)^(-3.5) * 5 / 48 * cos((x^(-0.625) + (2 * (pi)) / 3) / 2)^(-3.5) + 5 / 48 * cos(x^(-0.625) / 2)^(-3.5) * 5 / 48 * cos((x^(-0.625) - (2 * (pi)) / 3) / 2)^(-3.5) + 5 / 48 * cos((x^(-0.625) + (2 * (pi)) / 3) / 2)^(-3.5) * 5 / 48 * cos((x^(-0.625) - (2 * (pi)) / 3) / 2)^(-3.5) + 5 / 48 * cos(x^(-0.625) / 2)^(-3.5) * 5 / 48 * cos((x^(-0.625) + (2 * (pi)) / 3) / 2)^(-3.5) * 5 / 48 * cos((x^(-0.625) - (2 * (pi)) / 3) / 2)^(-3.5);
-t = time(for iiii from 1 to 100 do a=evaluate(f, [10]))/(yardstick * 100);
+t = time(for iiii from 1 to 100 do { a=evaluate(f, [10]); b=f(1); })/(yardstick * 100);
 if (t in 3e-4 * variance) then "Okay" else round(t,12,RN);
 i := i + 1;
 
@@ -164,11 +164,11 @@ i := i+1;
 /* Test #15 */
 /* Non-regression tests for optimizations of lists introduced in the branch optimLists */
 i;
-n = 1000; L = [||]; for k from 0 to n do L = 1.:L;
+n = 60000; L = [||]; for k from 0 to n do L = 1.:L;
 t1 = time(for k from 0 to n do a = L[n]);
-n = 2000; L = [||]; for k from 0 to n do L = 1.:L;
+n = 120000; L = [||]; for k from 0 to n do L = 1.:L;
 t2 = time(for k from 0 to n do a = L[n]);
-if (1.75 <= t2/t1) && (t2/t1 <= 2.25)
+if (1.5 <= t2/t1) && (t2/t1 <= 2.5)
   then "Okay"
   else print("t1 = ", round(t1,12,RN), " and t2 = ", round(t2, 12, RN));
 i:=i+1;

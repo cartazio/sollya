@@ -2741,7 +2741,209 @@ int doubleextended_point_eval(mpfr_t res, mpfr_t x, mp_rnd_t rnd) {
 }
 
 
+/******************************************************************************/
+/*                                                                            */
+/*                          HOW TO TRANSMIT CUTOFF                            */
+/*                                                                            */
+/******************************************************************************/
 
+/* For the functions that are infinitely bad conditioned at zero (e.g. log) or
+   those for which one does not know what to return
+   --> reset cutoff to smallest possible value */
+mp_exp_t getRecurseCutoff_default(mp_exp_t cutoff, mp_prec_t prec) {
+  UNUSED_PARAM(cutoff);
+  UNUSED_PARAM(prec);
+  return mpfr_get_emin_min();
+}
+
+/* For functions f such that f(x) ~ x at zero and |f(x)|<=|x| on [-1/2, 1/2]
+   --> typically f(x) = sum a_i*x^i with a_0=0, a_1=1 and (a_i) has alternating signs */
+mp_exp_t getRecurseCutoff_linearContractive(mp_exp_t cutoff, mp_prec_t prec) {
+  UNUSED_PARAM(prec);
+  return cutoff;
+}
+
+/* For functions f such that f(x) ~ x at zero and |f(x)|<=2|x| on [-1/2, 1/2]
+   --> typically f(x) = sum a_i*x^i with a_0=0, a_1=1 and a_i >= 0 decreasing fast enough */
+mp_exp_t getRecurseCutoff_linearNotContractive(mp_exp_t cutoff, mp_prec_t prec) {
+  mp_exp_t res;
+  UNUSED_PARAM(prec);
+  res = cutoff - 1;
+  if ((res >= 0) || (res < mpfr_get_emin_min())) res = mpfr_get_emin_min();
+  return res;
+}
+
+/* For functions that behaves like a+bx around zero with |a/b| not smaller than 2 */
+mp_exp_t getRecurseCutoff_nonZeroWellConditioned(mp_exp_t cutoff, mp_prec_t prec) {
+  UNUSED_PARAM(cutoff);
+  return -(prec + 3);
+}
+
+/* Zero at zero, x < 2^(c * 2) implies sqrt(x) < 2^c */
+mp_exp_t getRecurseCutoff_sqrt(mp_exp_t cutoff, mp_prec_t prec) {
+  mp_exp_t res, temp;
+  UNUSED_PARAM(prec);
+  temp = mpfr_get_emin_min();
+  temp >>= 1;
+  temp++;
+  if (cutoff <= temp) return mpfr_get_emin_min();
+  res = cutoff << 2;
+  return res;
+}
+
+/* No zero at zero, take Taylor development around zero and precision */
+mp_exp_t getRecurseCutoff_cos(mp_exp_t cutoff, mp_prec_t prec) {
+  UNUSED_PARAM(cutoff);
+  return -((prec >> 1) + 4);
+}
+
+/* No zero at zero, take Taylor development around zero and precision */
+mp_exp_t getRecurseCutoff_cosh(mp_exp_t cutoff, mp_prec_t prec) {
+  UNUSED_PARAM(cutoff);
+  return -(prec + 3); /* TODO: why not the same as cos? */
+}
+
+/* Not defined around zero, cutoff = -1 suffices to sees that */
+mp_exp_t getRecurseCutoff_acosh(mp_exp_t cutoff, mp_prec_t prec) {
+  UNUSED_PARAM(cutoff);
+  UNUSED_PARAM(prec);
+  return -1;
+}
+
+
+
+/******************************************************************************/
+/*                                                                            */
+/*                  HOW TO TRANSMIT PRECISION ACCROSS FUNCTIONS               */
+/*                                                                            */
+/******************************************************************************/
+
+/* To use when one does not know what to do */
+mp_exp_t getRecursePrec_default(mp_exp_t cutoffPrec, mp_prec_t prec, int considerCutoff) {
+  UNUSED_PARAM(considerCutoff);
+  UNUSED_PARAM(cutoffPrec);
+  return prec+10;
+}
+
+mp_exp_t getRecursePrec_sqrt(mp_exp_t cutoffPrec, mp_prec_t prec, int considerCutoff) {
+  UNUSED_PARAM(considerCutoff);
+  UNUSED_PARAM(cutoffPrec);
+  /* Fine everywhere */
+  return prec;
+}
+mp_exp_t getRecursePrec_exp(mp_exp_t cutoffPrec, mp_prec_t prec, int considerCutoff) {
+  UNUSED_PARAM(considerCutoff);
+  UNUSED_PARAM(cutoffPrec);
+  /* Range: double precision range */
+  return prec + 12;
+}
+mp_exp_t getRecursePrec_log(mp_exp_t cutoffPrec, mp_prec_t prec, int considerCutoff) {
+  /* Fine everywhere but around 1 */
+  if (considerCutoff) return cutoffPrec;
+  return prec + 10;
+}
+mp_exp_t getRecursePrec_log2(mp_exp_t cutoffPrec, mp_prec_t prec, int considerCutoff) {
+  /* Fine everywhere but around 1 */
+  if (considerCutoff) return cutoffPrec;
+  return prec + 10;
+}
+mp_exp_t getRecursePrec_log10(mp_exp_t cutoffPrec, mp_prec_t prec, int considerCutoff) {
+  /* Fine everywhere but around 1 */
+  if (considerCutoff) return cutoffPrec;
+  return prec + 10;
+}
+mp_exp_t getRecursePrec_sin(mp_exp_t cutoffPrec, mp_prec_t prec, int considerCutoff) {
+  /* Fine everywhere but around zeros of sin */
+  if (considerCutoff) return cutoffPrec;
+  return prec + 10;
+}
+mp_exp_t getRecursePrec_cos(mp_exp_t cutoffPrec, mp_prec_t prec, int considerCutoff) {
+  /* Fine everywhere but around zeros of cos */
+  if (considerCutoff) return cutoffPrec;
+  return prec + 10;
+}
+mp_exp_t getRecursePrec_tan(mp_exp_t cutoffPrec, mp_prec_t prec, int considerCutoff) {
+  /* Fine everywhere but around zeros and poles of tan */
+  if (considerCutoff) return cutoffPrec;
+  return prec + 10;
+}
+mp_exp_t getRecursePrec_asin(mp_exp_t cutoffPrec, mp_prec_t prec, int considerCutoff) {
+  UNUSED_PARAM(considerCutoff);
+  UNUSED_PARAM(cutoffPrec);
+  /* Fine everywhere but around +/- 1 */
+  return prec + 10;
+}
+mp_exp_t getRecursePrec_acos(mp_exp_t cutoffPrec, mp_prec_t prec, int considerCutoff) {
+  /* Fine everywhere but around + 1 */
+  if (considerCutoff) return cutoffPrec;
+  return prec + 10;
+}
+mp_exp_t getRecursePrec_atan(mp_exp_t cutoffPrec, mp_prec_t prec, int considerCutoff) {
+  UNUSED_PARAM(considerCutoff);
+  UNUSED_PARAM(cutoffPrec);
+  /* Fine everywhere */
+  return prec;
+}
+mp_exp_t getRecursePrec_sinh(mp_exp_t cutoffPrec, mp_prec_t prec, int considerCutoff) {
+  UNUSED_PARAM(considerCutoff);
+  UNUSED_PARAM(cutoffPrec);
+  /* Range: double precision range */
+  return prec + 12;
+}
+mp_exp_t getRecursePrec_cosh(mp_exp_t cutoffPrec, mp_prec_t prec, int considerCutoff) {
+  UNUSED_PARAM(considerCutoff);
+  UNUSED_PARAM(cutoffPrec);
+  /* Range: double precision range */
+  return prec + 12;
+}
+mp_exp_t getRecursePrec_tanh(mp_exp_t cutoffPrec, mp_prec_t prec, int considerCutoff) {
+  UNUSED_PARAM(considerCutoff);
+  UNUSED_PARAM(cutoffPrec);
+  /* When x is large, very difficult function */
+  return prec + 50;
+}
+mp_exp_t getRecursePrec_asinh(mp_exp_t cutoffPrec, mp_prec_t prec, int considerCutoff) {
+  UNUSED_PARAM(considerCutoff);
+  UNUSED_PARAM(cutoffPrec);
+  /* Fine everywhere */
+  return prec;
+}
+mp_exp_t getRecursePrec_acosh(mp_exp_t cutoffPrec, mp_prec_t prec, int considerCutoff) {
+  UNUSED_PARAM(considerCutoff);
+  UNUSED_PARAM(cutoffPrec);
+  /* Fine everywhere but around + 1 */
+  return prec + 10;
+}
+mp_exp_t getRecursePrec_atanh(mp_exp_t cutoffPrec, mp_prec_t prec, int considerCutoff) {
+  UNUSED_PARAM(considerCutoff);
+  UNUSED_PARAM(cutoffPrec);
+  /* Fine everywhere but around +/- 1 */
+  return prec + 10;
+}
+mp_exp_t getRecursePrec_erf(mp_exp_t cutoffPrec, mp_prec_t prec, int considerCutoff) {
+  UNUSED_PARAM(considerCutoff);
+  UNUSED_PARAM(cutoffPrec);
+  /* Fine everywhere */
+  return prec;
+}
+mp_exp_t getRecursePrec_erfc(mp_exp_t cutoffPrec, mp_prec_t prec, int considerCutoff) {
+  UNUSED_PARAM(considerCutoff);
+  UNUSED_PARAM(cutoffPrec);
+  /* Fine everywhere in negative range, okay up to x = 100 */
+  return prec + 15;
+}
+mp_exp_t getRecursePrec_log1p(mp_exp_t cutoffPrec, mp_prec_t prec, int considerCutoff) {
+  UNUSED_PARAM(considerCutoff);
+  UNUSED_PARAM(cutoffPrec);
+  /* Fine everywhere but around - 1 */
+  return prec + 10;
+}
+mp_exp_t getRecursePrec_expm1(mp_exp_t cutoffPrec, mp_prec_t prec, int considerCutoff) {
+  UNUSED_PARAM(considerCutoff);
+  UNUSED_PARAM(cutoffPrec);
+  /* Range: double precision range */
+  return prec + 12;
+}
 
 
 
@@ -2761,6 +2963,9 @@ baseFunction basefun_sqrt_obj = {
   .onlyZeroIsZero = 1,
   .doesNotVanish = 0,
   .monotonicity = INCREASING,
+  .faithEvaluationOptimizedSupported = 1,
+  .getRecurseCutoff = getRecurseCutoff_sqrt,
+  .getRecursePrec = getRecursePrec_sqrt,
   .baseAutodiff = sqrt_diff,
   .interval_eval = sollya_mpfi_sqrt,
   .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_sqrt),
@@ -2780,6 +2985,9 @@ baseFunction basefun_exp_obj = {
   .onlyZeroIsZero = 0,
   .doesNotVanish = 1,
   .monotonicity = INCREASING,
+  .faithEvaluationOptimizedSupported = 1,
+  .getRecurseCutoff = getRecurseCutoff_nonZeroWellConditioned,
+  .getRecursePrec = getRecursePrec_exp,
   .baseAutodiff = exp_diff,
   .interval_eval = sollya_mpfi_exp,
   .point_eval =  (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_exp),
@@ -2799,6 +3007,9 @@ baseFunction basefun_log_obj = {
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = INCREASING,
+  .faithEvaluationOptimizedSupported = 1,
+  .getRecurseCutoff = getRecurseCutoff_default,
+  .getRecursePrec = getRecursePrec_log,
   .baseAutodiff = log_diff,
   .interval_eval = sollya_mpfi_log,
   .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_log),
@@ -2818,6 +3029,9 @@ baseFunction basefun_log2_obj = {
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = INCREASING,
+  .faithEvaluationOptimizedSupported = 1,
+  .getRecurseCutoff = getRecurseCutoff_default,
+  .getRecursePrec = getRecursePrec_log2,
   .baseAutodiff = log2_diff,
   .interval_eval = sollya_mpfi_log2,
   .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_log2),
@@ -2837,6 +3051,9 @@ baseFunction basefun_log10_obj = {
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = INCREASING,
+  .faithEvaluationOptimizedSupported = 1,
+  .getRecurseCutoff = getRecurseCutoff_default,
+  .getRecursePrec = getRecursePrec_log10,
   .baseAutodiff = log10_diff,
   .interval_eval = sollya_mpfi_log10,
   .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_log10),
@@ -2856,6 +3073,9 @@ baseFunction basefun_sin_obj = {
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = MONOTONICITY_NONE,
+  .faithEvaluationOptimizedSupported = 1,
+  .getRecurseCutoff = getRecurseCutoff_linearContractive,
+  .getRecursePrec = getRecursePrec_sin,
   .baseAutodiff = sin_diff,
   .interval_eval = sollya_mpfi_sin,
   .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_sin),
@@ -2875,6 +3095,9 @@ baseFunction basefun_cos_obj = {
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = MONOTONICITY_NONE,
+  .faithEvaluationOptimizedSupported = 1,
+  .getRecurseCutoff = getRecurseCutoff_cos,
+  .getRecursePrec = getRecursePrec_cos,
   .baseAutodiff = cos_diff,
   .interval_eval = sollya_mpfi_cos,
   .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_cos),
@@ -2894,6 +3117,9 @@ baseFunction basefun_tan_obj = {
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = MONOTONICITY_NONE,
+  .faithEvaluationOptimizedSupported = 1,
+  .getRecurseCutoff = getRecurseCutoff_linearNotContractive,
+  .getRecursePrec = getRecursePrec_tan,
   .baseAutodiff = tan_diff,
   .interval_eval = sollya_mpfi_tan,
   .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_tan),
@@ -2913,6 +3139,9 @@ baseFunction basefun_asin_obj = {
   .onlyZeroIsZero = 1,
   .doesNotVanish = 0,
   .monotonicity = INCREASING,
+  .faithEvaluationOptimizedSupported = 1,
+  .getRecurseCutoff = getRecurseCutoff_linearNotContractive,
+  .getRecursePrec = getRecursePrec_asin,
   .baseAutodiff = asin_diff,
   .interval_eval = sollya_mpfi_asin,
   .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_asin),
@@ -2932,6 +3161,9 @@ baseFunction basefun_acos_obj = {
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = DECREASING,
+  .faithEvaluationOptimizedSupported = 1,
+  .getRecurseCutoff = getRecurseCutoff_nonZeroWellConditioned,
+  .getRecursePrec = getRecursePrec_acos,
   .baseAutodiff = acos_diff,
   .interval_eval = sollya_mpfi_acos,
   .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_acos),
@@ -2951,6 +3183,9 @@ baseFunction basefun_atan_obj = {
   .onlyZeroIsZero = 1,
   .doesNotVanish = 0,
   .monotonicity = INCREASING,
+  .faithEvaluationOptimizedSupported = 1,
+  .getRecurseCutoff = getRecurseCutoff_linearContractive,
+  .getRecursePrec = getRecursePrec_atan,
   .baseAutodiff = atan_diff,
   .interval_eval = sollya_mpfi_atan,
   .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_atan),
@@ -2970,6 +3205,9 @@ baseFunction basefun_sinh_obj = {
   .onlyZeroIsZero = 1,
   .doesNotVanish = 0,
   .monotonicity = INCREASING,
+  .faithEvaluationOptimizedSupported = 1,
+  .getRecurseCutoff = getRecurseCutoff_linearNotContractive,
+  .getRecursePrec = getRecursePrec_sinh,
   .baseAutodiff = sinh_diff,
   .interval_eval = sollya_mpfi_sinh,
   .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_sinh),
@@ -2989,6 +3227,9 @@ baseFunction basefun_cosh_obj = {
   .onlyZeroIsZero = 0,
   .doesNotVanish = 1,
   .monotonicity = MONOTONICITY_NONE,
+  .faithEvaluationOptimizedSupported = 1,
+  .getRecurseCutoff = getRecurseCutoff_cosh,
+  .getRecursePrec = getRecursePrec_cosh,
   .baseAutodiff = cosh_diff,
   .interval_eval = sollya_mpfi_cosh,
   .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_cosh),
@@ -3008,6 +3249,9 @@ baseFunction basefun_tanh_obj = {
   .onlyZeroIsZero = 1,
   .doesNotVanish = 0,
   .monotonicity = INCREASING,
+  .faithEvaluationOptimizedSupported = 1,
+  .getRecurseCutoff = getRecurseCutoff_linearContractive,
+  .getRecursePrec = getRecursePrec_tanh,
   .baseAutodiff = tanh_diff,
   .interval_eval = sollya_mpfi_tanh,
   .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_tanh),
@@ -3027,6 +3271,9 @@ baseFunction basefun_asinh_obj = {
   .onlyZeroIsZero = 1,
   .doesNotVanish = 0,
   .monotonicity = INCREASING,
+  .faithEvaluationOptimizedSupported = 1,
+  .getRecurseCutoff = getRecurseCutoff_linearContractive,
+  .getRecursePrec = getRecursePrec_asinh,
   .baseAutodiff = asinh_diff,
   .interval_eval = sollya_mpfi_asinh,
   .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_asinh),
@@ -3046,6 +3293,9 @@ baseFunction basefun_acosh_obj = {
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = INCREASING,
+  .faithEvaluationOptimizedSupported = 1,
+  .getRecurseCutoff = getRecurseCutoff_acosh,
+  .getRecursePrec = getRecursePrec_acosh,
   .baseAutodiff = acosh_diff,
   .interval_eval = sollya_mpfi_acosh,
   .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_acosh),
@@ -3065,6 +3315,9 @@ baseFunction basefun_atanh_obj = {
   .onlyZeroIsZero = 1,
   .doesNotVanish = 0,
   .monotonicity = INCREASING,
+  .faithEvaluationOptimizedSupported = 1,
+  .getRecurseCutoff = getRecurseCutoff_linearNotContractive,
+  .getRecursePrec = getRecursePrec_atanh,
   .baseAutodiff = atanh_diff,
   .interval_eval = sollya_mpfi_atanh,
   .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_atanh),
@@ -3084,6 +3337,9 @@ baseFunction basefun_abs_obj = {
   .onlyZeroIsZero = 1,
   .doesNotVanish = 0,
   .monotonicity = MONOTONICITY_NONE,
+  .faithEvaluationOptimizedSupported = 0,
+  .getRecurseCutoff = getRecurseCutoff_linearContractive, /* Simply transmit the cutoff unchanged */
+  .getRecursePrec = getRecursePrec_default,
   .baseAutodiff = abs_diff,
   .interval_eval = sollya_mpfi_abs,
   .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_abs),
@@ -3103,6 +3359,9 @@ baseFunction basefun_erf_obj = {
   .onlyZeroIsZero = 1,
   .doesNotVanish = 0,
   .monotonicity = INCREASING,
+  .faithEvaluationOptimizedSupported = 1,
+  .getRecurseCutoff = getRecurseCutoff_linearNotContractive, /* Zero at zero, first Taylor coefficient less than 2, series has alternating sign */
+  .getRecursePrec = getRecursePrec_erf,
   .baseAutodiff = erf_diff,
   .interval_eval = sollya_mpfi_erf,
   .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_erf),
@@ -3122,6 +3381,9 @@ baseFunction basefun_erfc_obj = {
   .onlyZeroIsZero = 0,
   .doesNotVanish = 1,
   .monotonicity = DECREASING,
+  .faithEvaluationOptimizedSupported = 1,
+  .getRecurseCutoff = getRecurseCutoff_nonZeroWellConditioned,
+  .getRecursePrec = getRecursePrec_erfc,
   .baseAutodiff = erfc_diff,
   .interval_eval = sollya_mpfi_erfc,
   .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_erfc),
@@ -3141,6 +3403,9 @@ baseFunction basefun_log1p_obj = {
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = INCREASING,
+  .faithEvaluationOptimizedSupported = 1,
+  .getRecurseCutoff = getRecurseCutoff_linearContractive,
+  .getRecursePrec = getRecursePrec_log1p,
   .baseAutodiff = log1p_diff,
   .interval_eval = sollya_mpfi_log1p,
   .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_log1p),
@@ -3160,6 +3425,9 @@ baseFunction basefun_expm1_obj = {
   .onlyZeroIsZero = 1,
   .doesNotVanish = 0,
   .monotonicity = INCREASING,
+  .faithEvaluationOptimizedSupported = 1,
+  .getRecurseCutoff = getRecurseCutoff_linearNotContractive,
+  .getRecursePrec = getRecursePrec_expm1,
   .baseAutodiff = expm1_diff,
   .interval_eval = sollya_mpfi_expm1,
   .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_expm1),
@@ -3179,6 +3447,9 @@ baseFunction basefun_double_obj = {
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = NONDECREASING,
+  .faithEvaluationOptimizedSupported = 0,
+  .getRecurseCutoff = getRecurseCutoff_default, /* could do something smarter */
+  .getRecursePrec = getRecursePrec_default,
   .baseAutodiff = double_diff,
   .interval_eval = sollya_mpfi_round_to_double,
   .point_eval = double_point_eval,
@@ -3198,6 +3469,9 @@ baseFunction basefun_single_obj = {
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = NONDECREASING,
+  .faithEvaluationOptimizedSupported = 0,
+  .getRecurseCutoff = getRecurseCutoff_default, /* could do something smarter */
+  .getRecursePrec = getRecursePrec_default,
   .baseAutodiff = single_diff,
   .interval_eval = sollya_mpfi_round_to_single,
   .point_eval = single_point_eval,
@@ -3217,6 +3491,9 @@ baseFunction basefun_halfprecision_obj = {
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = NONDECREASING,
+  .faithEvaluationOptimizedSupported = 0,
+  .getRecurseCutoff = getRecurseCutoff_default, /* could do something smarter */
+  .getRecursePrec = getRecursePrec_default,
   .baseAutodiff = halfprecision_diff,
   .interval_eval = sollya_mpfi_round_to_halfprecision,
   .point_eval = halfprecision_point_eval,
@@ -3236,6 +3513,9 @@ baseFunction basefun_quad_obj = {
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = NONDECREASING,
+  .faithEvaluationOptimizedSupported = 0,
+  .getRecurseCutoff = getRecurseCutoff_default, /* could do something smarter */
+  .getRecursePrec = getRecursePrec_default,
   .baseAutodiff = quad_diff,
   .interval_eval = sollya_mpfi_round_to_quad,
   .point_eval = quad_point_eval,
@@ -3255,6 +3535,9 @@ baseFunction basefun_doubledouble_obj = {
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = NONDECREASING,
+  .faithEvaluationOptimizedSupported = 0,
+  .getRecurseCutoff = getRecurseCutoff_default, /* could do something smarter */
+  .getRecursePrec = getRecursePrec_default,
   .baseAutodiff = doubledouble_diff,
   .interval_eval = sollya_mpfi_round_to_doubledouble,
   .point_eval = doubledouble_point_eval,
@@ -3274,6 +3557,9 @@ baseFunction basefun_tripledouble_obj = {
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = NONDECREASING,
+  .faithEvaluationOptimizedSupported = 0,
+  .getRecurseCutoff = getRecurseCutoff_default, /* could do something smarter */
+  .getRecursePrec = getRecursePrec_default,
   .baseAutodiff = tripledouble_diff,
   .interval_eval = sollya_mpfi_round_to_tripledouble,
   .point_eval = tripledouble_point_eval,
@@ -3293,6 +3579,9 @@ baseFunction basefun_doubleextended_obj = {
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = NONDECREASING,
+  .faithEvaluationOptimizedSupported = 0,
+  .getRecurseCutoff = getRecurseCutoff_default, /* could do something smarter */
+  .getRecursePrec = getRecursePrec_default,
   .baseAutodiff = doubleextended_diff,
   .interval_eval = sollya_mpfi_round_to_doubleextended,
   .point_eval = doubleextended_point_eval,
@@ -3312,6 +3601,9 @@ baseFunction basefun_ceil_obj = {
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = NONDECREASING,
+  .faithEvaluationOptimizedSupported = 0,
+  .getRecurseCutoff = getRecurseCutoff_default, /* could do something smarter */
+  .getRecursePrec = getRecursePrec_default,
   .baseAutodiff = ceil_diff,
   .interval_eval = sollya_mpfi_ceil,
   .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_rint_ceil),
@@ -3330,6 +3622,9 @@ baseFunction basefun_floor_obj = {
   .isDefinedEverywhere = 1,
   .doesNotVanish = 0,
   .monotonicity = NONDECREASING,
+  .faithEvaluationOptimizedSupported = 0,
+  .getRecurseCutoff = getRecurseCutoff_default, /* could do something smarter */
+  .getRecursePrec = getRecursePrec_default,
   .baseAutodiff = floor_diff,
   .onlyZeroIsZero = 0,
   .interval_eval = sollya_mpfi_floor,
@@ -3350,6 +3645,9 @@ baseFunction basefun_nearestint_obj = {
   .onlyZeroIsZero = 0,
   .doesNotVanish = 0,
   .monotonicity = NONDECREASING,
+  .faithEvaluationOptimizedSupported = 0,
+  .getRecurseCutoff = getRecurseCutoff_default, /* could do something smarter */
+  .getRecursePrec = getRecursePrec_default,
   .baseAutodiff = nearestint_diff,
   .interval_eval = sollya_mpfi_nearestint,
   .point_eval = sollya_mpfr_rint_nearestint,

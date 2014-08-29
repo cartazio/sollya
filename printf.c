@@ -433,6 +433,10 @@ static inline int sollyaInternalBaseSnFprintf(FILE *fd, int useFd, char *str, si
   mpfr_t tempMpfr;
   sollya_mpfi_t tempMpfi;
 
+  /* Make compiler happy */
+  prec = 12;
+  /* End of compiler happiness */
+
   buf = (char *) safeCalloc(strlen(format) + 1, sizeof(char));
 
   currBuf = buf;

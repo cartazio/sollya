@@ -699,7 +699,7 @@ int sturm_mpfi(int *n, mpq_t *pMpq, int p_degree, sollya_mpfi_t x, mp_prec_t pre
 }
 
 
-int getNrRoots(mpfr_t res, node *f, sollya_mpfi_t range, mp_prec_t precision) {
+int getNrRoots(mpfr_t res, node *f, sollya_mpfi_t range, mp_prec_t precision, int silent) {
   sollya_mpfi_t x;
   int degree,i,nr;
   node **coefficients;
@@ -787,12 +787,16 @@ int getNrRoots(mpfr_t res, node *f, sollya_mpfi_t range, mp_prec_t precision) {
   if (deg >= 0) {
     resMpfi = sturm_mpfi(&nr, qCoefficients, deg,x,precision);
     if (!resMpfi) {
-      printMessage(1,SOLLYA_MSG_STURM_USING_SLOWER_ALGORITHM_ON_RATIONALS,"Warning: using slower GMP MPQ version\n");
+      if (!silent) {
+	printMessage(1,SOLLYA_MSG_STURM_USING_SLOWER_ALGORITHM_ON_RATIONALS,"Warning: using slower GMP MPQ version\n");
+      }
       sturm_mpq(&nr, qCoefficients, deg,x);
     }
     mpfr_set_si(res,nr,GMP_RNDN);
   } else {
-    printMessage(1,SOLLYA_MSG_STURM_POLY_IS_ZERO_POLY,"Warning: the given polynomial is the zero polynomial. Its number of zeros is infinite.\n");
+    if (!silent) {
+      printMessage(1,SOLLYA_MSG_STURM_POLY_IS_ZERO_POLY,"Warning: the given polynomial is the zero polynomial. Its number of zeros is infinite.\n");
+    }
     mpfr_set_inf(res,1);
   }
 

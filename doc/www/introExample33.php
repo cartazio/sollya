@@ -30,6 +30,6 @@
 &nbsp;&nbsp;&nbsp;false<br>
 &nbsp;&nbsp;&nbsp;&gt; X = NaN;<br>
 &nbsp;&nbsp;&nbsp;&gt; !(X == X);<br>
-&nbsp;&nbsp;&nbsp;true<br>
+&nbsp;&nbsp;&nbsp;false<br>
 &nbsp;&nbsp;&nbsp;&gt; <br>
 </div>

@@ -262,6 +262,7 @@ void miniyyerror(void *myScanner, const char *message) {
 %token  DIFFTOKEN "diff"
 %token  DIRTYSIMPLIFYTOKEN "dirtysimplify"
 %token  REMEZTOKEN "remez"
+%token  ANNOTATEFUNCTIONTOKEN "annotatefunction"
 %token  BASHEVALUATETOKEN "bashevaluate"
 %token  GETSUPPRESSEDMESSAGESTOKEN "getsuppressedmessages"
 %token  FPMINIMAXTOKEN "fpminimax"
@@ -1637,6 +1638,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | REMEZTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thinglist RPARTOKEN
                           {
 			    $$ = makeRemez(addElement(addElement($7, $5), $3));
+			  }
+                      | ANNOTATEFUNCTIONTOKEN LPARTOKEN thing COMMATOKEN thing COMMATOKEN thing COMMATOKEN thinglist RPARTOKEN
+                          {
+			    $$ = makeAnnotateFunction(addElement(addElement(addElement($9, $7), $5), $3));
 			  }
                       | BINDTOKEN LPARTOKEN thing COMMATOKEN IDENTIFIERTOKEN COMMATOKEN thing RPARTOKEN
                           {
