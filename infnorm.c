@@ -1319,7 +1319,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
     }
   }
 
-  if ((theo == NULL) && noExcludes) {
+  if ((theo == NULL) && noExcludes && (!(sollya_mpfi_has_nan(x) || sollya_mpfi_has_infinity(x)))) {
     switch (tree->nodeType) {
     case VARIABLE:
       sollya_mpfi_set(result, x);
