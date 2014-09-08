@@ -126,6 +126,8 @@ void freeEvaluationHook(eval_hook_t **hookPtr) {
 int evaluateWithEvaluationHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, eval_hook_t *hook) {
   eval_hook_t *curr;
 
+  if (hook == NULL) return 0;
+
   for (curr=hook;curr!=NULL;curr=curr->nextHook) {
     if (curr->evaluateHook(y,x,prec,curr->data)) {
       return 1;
