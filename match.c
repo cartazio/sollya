@@ -1,6 +1,6 @@
 /*
 
-  Copyright 2011-2012 by
+  Copyright 2011-2014 by
 
   Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
   UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.
@@ -53,6 +53,19 @@
 #include "assignment.h"
 #include <string.h>
 #include <stdlib.h>
+
+/* A small wrapper around evaluateThing to be sure that the returned
+   object has no memory references 
+*/
+node *evaluateThingDeepCopy(node *thing) {
+  node *tempNode, *res;
+
+  tempNode = evaluateThing(thing);
+  res = deepCopyThing(tempNode);
+  freeThing(tempNode);
+
+  return res;
+}
 
 /* Declare tryMatch immediately as it is recursively used almost
    everywhere */
@@ -913,7 +926,7 @@ int tryMatchPrepend(chain **associations, node *thingToMatch, node *possibleMatc
   okay = tryMatch(&headAssoc, (node *) (accessThruMemRef(thingToMatch)->arguments->value), accessThruMemRef(possibleMatcher)->child1);
   if (okay) {
     tempNode = makeTail(copyThing(thingToMatch));
-    tailList = evaluateThing(tempNode);
+    tailList = evaluateThingDeepCopy(tempNode);
     freeThing(tempNode);
     tailAssoc = NULL;
     okay = tryMatch(&tailAssoc, tailList, accessThruMemRef(possibleMatcher)->child2);
@@ -1351,10 +1364,10 @@ int tryCutPostfixList(chain **associations, node **restList, node *mainList, nod
 	} else {
 	  if (myAssociations != NULL) freeChain(myAssociations, freeEntryOnVoid);
 	  tempNode = makeAppend(possibleRest, makeHead(copyThing(myMainList)));
-	  possibleRest = evaluateThing(tempNode);
+	  possibleRest = evaluateThingDeepCopy(tempNode);
 	  freeThing(tempNode);
 	  tempNode = makeTail(myMainList);
-	  myMainList = evaluateThing(tempNode);
+	  myMainList = evaluateThingDeepCopy(tempNode);
 	  freeThing(tempNode);
 	}
       }
@@ -1392,10 +1405,10 @@ int tryCutPrefixList(chain **associations, node **restList, node *mainList, node
       myRestList = copyThing(mainList);
       for (i=0; i<lenPrefix; i++) {
         tempNode = makeAppend(possibleMatchingPrefix, makeHead(copyThing(myRestList)));
-        possibleMatchingPrefix = evaluateThing(tempNode);
+        possibleMatchingPrefix = evaluateThingDeepCopy(tempNode);
         freeThing(tempNode);
         tempNode = makeTail(myRestList);
-        myRestList = evaluateThing(tempNode);
+        myRestList = evaluateThingDeepCopy(tempNode);
         freeThing(tempNode);
       }
       okay = tryMatch(associations, possibleMatchingPrefix, prefix);
