@@ -58,7 +58,8 @@ int addEvaluationHook(eval_hook_t **hookPtr,
 		      int (*evaluateFunc)(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, void *), 
 		      void (*freeFunc)(void *),
 		      int (*compareFunc)(void *, void *),
-		      void *(*copyFunc)(void *)) {
+		      void *(*copyFunc)(void *),
+		      int (*composeFunc)(eval_hook_t **, void *, node *)) {
   eval_hook_t *newHook, *curr;
 
   /* Check if this hook has already been installed. If yes, deallocate
@@ -67,7 +68,9 @@ int addEvaluationHook(eval_hook_t **hookPtr,
   for (curr=*hookPtr;curr!=NULL;curr=curr->nextHook) {
     if (((curr->evaluateHook == evaluateFunc) &&
 	 (curr->freeHook == freeFunc) &&
-	 (curr->compareHook == compareFunc)) &&
+	 (curr->compareHook == compareFunc) &&
+	 (curr->copyHook == copyFunc) &&
+	 (curr->composeHook == composeFunc)) &&
 	curr->compareHook(curr->data, data)) {
       freeFunc(data);
       return 0;
@@ -84,6 +87,7 @@ int addEvaluationHook(eval_hook_t **hookPtr,
   newHook->freeHook = freeFunc;
   newHook->compareHook = compareFunc;
   newHook->copyHook = copyFunc;
+  newHook->composeHook = composeFunc;
   newHook->nextHook = *hookPtr;
 
   /* Assign the new hook */
@@ -104,10 +108,16 @@ int addEvaluationHookFromCopy(eval_hook_t **newHookPtr, eval_hook_t *hook) {
 			  curr->evaluateHook,
 			  curr->freeHook,
 			  curr->compareHook,
-			  curr->copyHook);
+			  curr->copyHook,
+			  curr->composeHook);
     res = res || r;
   }
   return res;
+}
+
+int addEvaluationHookFromComposition(eval_hook_t **newHookPtr, eval_hook_t *hook, node *t) {
+  if (hook == NULL) return 0;  
+  return hook->composeHook(newHookPtr, hook->data, t);
 }
 
 void freeEvaluationHook(eval_hook_t **hookPtr) {
@@ -214,6 +224,11 @@ void *copyNodeEvalHook(void *data) {
 
   hook = (node_eval_hook_t *) data;
   return (void *) createNodeEvalHook(hook->func, hook->domain, hook->delta, hook->t);
+}
+
+int composeNodeEvalHook(eval_hook_t **hookPtr, void *data, node *g) {
+  /* TODO */
+  return 0;
 }
 
 int compareNodeEvalHook(void *data1, void *data2) {
@@ -433,6 +448,10 @@ void *copyPolyEvalHook(void *data) {
   return (void *) newPolyEvalHook;
 }
 
+int composePolyEvalHook(eval_hook_t **hookPtr, void *data, node *g) {
+  /* TODO */
+  return 0;
+}
 
 int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void *data) {
   poly_eval_hook_t *hook;
@@ -717,7 +736,7 @@ int addPolyEvaluationHook(eval_hook_t **hookPtr, node *func, sollya_mpfi_t dom, 
   
   if (coeffsOkay && (!(sollya_mpfi_has_nan(globalDelta) || sollya_mpfi_has_infinity(globalDelta)))) {
     okay = addEvaluationHook(hookPtr, (void *) createPolyEvalHook(degree, evaluatedCoeffs, dom, globalDelta, t),
-			     evaluatePolyEvalHook, freePolyEvalHook, comparePolyEvalHook, copyPolyEvalHook); 
+			     evaluatePolyEvalHook, freePolyEvalHook, comparePolyEvalHook, copyPolyEvalHook, composePolyEvalHook); 
   } else {
     okay = 0;
   }
@@ -734,7 +753,7 @@ int addPolyEvaluationHook(eval_hook_t **hookPtr, node *func, sollya_mpfi_t dom, 
 int addNodeEvaluationHook(eval_hook_t **hookPtr, node *func, sollya_mpfi_t dom, sollya_mpfi_t delta, sollya_mpfi_t t, mp_prec_t prec) {
   UNUSED_PARAM(prec);
   return addEvaluationHook(hookPtr, (void *) createNodeEvalHook(func, dom, delta, t), 
-			   evaluateNodeEvalHook, freeNodeEvalHook, compareNodeEvalHook, copyNodeEvalHook); 
+			   evaluateNodeEvalHook, freeNodeEvalHook, compareNodeEvalHook, copyNodeEvalHook, composeNodeEvalHook); 
 }
 
 int chooseAndAddEvaluationHook(eval_hook_t **hookPtr, node *func, sollya_mpfi_t dom, sollya_mpfi_t delta, sollya_mpfi_t t, mp_prec_t prec) {
@@ -764,5 +783,111 @@ int copyFunctionAndChooseAndAddEvaluationHook(node **copyPtr, node *orig, node *
   return okay;
 }
 
+composition_eval_hook_t *createCompositionEvalHook(eval_hook_t *f, node *g) {
+  composition_eval_hook_t *newCompositionEvalHook;
 
+  newCompositionEvalHook = (composition_eval_hook_t *) safeMalloc(sizeof(composition_eval_hook_t));
+  newCompositionEvalHook->reusedVarTInit = 0;
+  newCompositionEvalHook->f = NULL;
+  addEvaluationHookFromCopy(&(newCompositionEvalHook->f), f);
+  newCompositionEvalHook->g = copyThing(g);
+  return newCompositionEvalHook;
+}
 
+int evaluateCompositionEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void *data) {
+  composition_eval_hook_t * hook;
+  mp_prec_t p;
+  int res;
+  sollya_mpfi_t t;
+
+  hook = (composition_eval_hook_t *) data;
+
+  if (sollya_mpfi_has_nan(x)) return 0;
+  if (sollya_mpfi_has_infinity(x)) return 0;
+
+  p = sollya_mpfi_get_prec(y) + 10; 
+  if (prec > p) p = prec;
+
+  if (hook->reusedVarTInit) { 
+    sollya_mpfi_set_prec(hook->reusedVarT, p); 
+  } else {
+    sollya_mpfi_init2(hook->reusedVarT, p); 
+    hook->reusedVarTInit = 1;
+  }
+
+  evaluateInterval(hook->reusedVarT, hook->g, NULL, x);
+  if (sollya_mpfi_has_nan(hook->reusedVarT) || 
+      sollya_mpfi_has_infinity(hook->reusedVarT)) {
+    return 0;
+  }
+
+  res = evaluateWithEvaluationHook(y, hook->reusedVarT, prec, hook->f);
+  sollya_mpfi_clear(t);
+
+  return res;
+}
+
+void freeCompositionEvalHook(void *data) {
+  composition_eval_hook_t *hook;
+
+  hook = (composition_eval_hook_t *) data;
+  if (hook->reusedVarTInit) sollya_mpfi_clear(hook->reusedVarT);
+  freeThing(hook->g);
+  freeEvaluationHook(&(hook->f));
+  safeFree(hook);
+}
+
+int compareCompositionEvalHook(void *data1, void *data2) {
+  composition_eval_hook_t *hook1, *hook2;
+  eval_hook_t *curr1, *curr2;
+  int found;
+
+  hook1 = (composition_eval_hook_t *) data1;
+  hook2 = (composition_eval_hook_t *) data2;
+
+  for (curr1=hook1->f;curr1!=NULL;curr1=curr1->nextHook) {
+    found = 0;
+    for (curr2=hook2->f;(!found) && (curr2!=NULL);curr2=curr2->nextHook) {
+      if (((curr2->evaluateHook == curr1->evaluateHook) &&
+	   (curr2->freeHook == curr1->freeHook) &&
+	   (curr2->compareHook == curr1->compareHook) &&
+	   (curr2->copyHook == curr1->copyHook) &&
+	   (curr2->composeHook == curr1->composeHook)) &&
+	  curr2->compareHook(curr2->data, curr1->data)) {
+	found = 1;
+      }
+    }
+    if (!found) return 0;
+  }
+  if (!isEqualThing(hook1->g, hook2->g)) return 0;
+
+  return 1;
+}
+
+void *copyCompositionEvalHook(void *data) {
+  composition_eval_hook_t *hook;
+
+  hook = (composition_eval_hook_t *) data;
+  return (void *) createCompositionEvalHook(hook->f, hook->g);
+}
+
+int composeCompositionEvalHook(eval_hook_t **hookPtr, void *data, node *g) {
+  composition_eval_hook_t *hook;
+  node *h;
+  int okay;
+
+  hook = (composition_eval_hook_t *) data;
+  
+  h = substitute(hook->g, g);
+  
+  okay = addEvaluationHook(hookPtr, (void *) createCompositionEvalHook(hook->f, h),
+			   evaluateCompositionEvalHook, 
+			   freeCompositionEvalHook, 
+			   compareCompositionEvalHook, 
+			   copyCompositionEvalHook, 
+			   composeCompositionEvalHook);
+
+  freeThing(h);
+
+  return okay;
+}

@@ -12168,6 +12168,10 @@ node *substituteInner(node* tree, node *t, int doNotEvaluate, int maySimplify) {
   if (tree->nodeType == MEMREF) {
     copy = addMemRef(substituteInner(getMemRefChild(tree), t, 1, maySimplify));
 
+    if ((copy->nodeType == MEMREF) && (tree->evaluationHook != NULL)) {
+      addEvaluationHookFromComposition(&(copy->evaluationHook), tree->evaluationHook, t);
+    }
+
     if (haveAPrioriBoundForConstantExpr) {
       if (copy->nodeType == MEMREF) {
 	if (copy->arguments == NULL) {
