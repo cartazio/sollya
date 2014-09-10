@@ -660,20 +660,34 @@ int addPolyEvaluationHook(eval_hook_t **hookPtr, node *func, sollya_mpfi_t dom, 
   node **coeffs;
   mpfr_t *evaluatedCoeffs;
   sollya_mpfi_t globalDelta, c, shiftedDom;
-  mp_prec_t p;
+  mp_prec_t p, evalPrec, pp;
+  mp_exp_t maxExp;
   
   if (!isPolynomial(func)) return 0;
 
   getCoefficients(&degree, &coeffs, func);
   evaluatedCoeffs = (mpfr_t *) safeCalloc(degree+1,sizeof(mpfr_t));
-  sollya_mpfi_init2(globalDelta, (sollya_mpfi_get_prec(delta) > prec ? sollya_mpfi_get_prec(delta) : prec));
+  evalPrec = prec;
+  if (!(sollya_mpfi_is_zero(delta) ||
+	sollya_mpfi_has_nan(delta) ||
+	sollya_mpfi_has_infinity(delta))) {
+    maxExp = sollya_mpfi_max_exp(delta);
+    if (maxExp < 0) {
+      pp = -maxExp;
+      if ((pp > evalPrec) && (pp < 4 * evalPrec)) {
+	evalPrec = pp;
+	if (evalPrec < 12) evalPrec = 12;
+      }
+    }
+  }
+  sollya_mpfi_init2(globalDelta, (sollya_mpfi_get_prec(delta) > evalPrec ? sollya_mpfi_get_prec(delta) : evalPrec));
   p = prec;
   if (sollya_mpfi_get_prec(dom) > p) p = sollya_mpfi_get_prec(dom);
   if (sollya_mpfi_get_prec(t) > p) p = sollya_mpfi_get_prec(t);
   sollya_mpfi_init2(shiftedDom, p);
   sollya_mpfi_sub(shiftedDom, dom, t);
   sollya_mpfi_set_si(globalDelta, 0);
-  sollya_mpfi_init2(c, prec + 5);
+  sollya_mpfi_init2(c, evalPrec + 5);
   coeffsOkay = 1;
   for (i=degree;i>=0;i--) {
     if ((coeffs[i] != NULL) && (accessThruMemRef(coeffs[i])->nodeType == CONSTANT)) {
@@ -682,7 +696,7 @@ int addPolyEvaluationHook(eval_hook_t **hookPtr, node *func, sollya_mpfi_t dom, 
       sollya_mpfi_set_si(c, 0);
       freeThing(coeffs[i]);
     } else {
-      mpfr_init2(evaluatedCoeffs[i],prec);
+      mpfr_init2(evaluatedCoeffs[i],evalPrec);
       if (coeffs[i] == NULL) {
 	sollya_mpfi_set_si(c, 0);
       } else {
