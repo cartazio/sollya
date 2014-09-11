@@ -311,8 +311,8 @@ int performListPrependOnEntry(chain *symTbl, char *ident, node *tree) {
 	      newNode->argArray = NULL;
 	      newNode->argArraySize = 0;
 	      newNode->argArrayAllocSize = 0;
-	      ((entry *) curr->value)->value = newNode;
 	      newNode = addMemRef(newNode);
+	      ((entry *) curr->value)->value = newNode;
 	      if (newChecked && (newNode->nodeType == MEMREF)) {
 		newNode->isCorrectlyTyped = 1;
 	      }

@@ -3017,6 +3017,13 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
       res = copyTree(tree);
       tree->simplifyCacheDoesNotSimplify = 1;
     } else {
+      if (((tree->nodeType == MEMREF) && 
+	   (tree->evaluationHook != NULL)) &&
+	  ((res->nodeType == MEMREF) && 
+	   (res->evaluationHook == NULL))) {
+	res->isCorrectlyTyped = tree->isCorrectlyTyped;
+	addEvaluationHookFromCopy(&(res->evaluationHook), tree->evaluationHook);
+      }
       if (tree->simplifyCache == NULL) {
 	if (res->nodeType == MEMREF) {
 	  tree->simplifyCache = copyTree(res);
@@ -6441,7 +6448,7 @@ node* simplifyTreeInnerst(node *tree);
 node* simplifyTreeInner(node *tree) {
   node *res;
 
-  res = simplifyTreeInnerst(tree);
+  res = addMemRef(simplifyTreeInnerst(tree));
 
   if ((tree != NULL) && (res != NULL) &&
       (tree->nodeType == MEMREF) && 
@@ -6450,8 +6457,8 @@ node* simplifyTreeInner(node *tree) {
     free_memory(res);
     res = copyTree(tree);
   }
-
-  return addMemRef(res);
+  
+  return res;
 }
 
 node* simplifyTreeInnerst(node *tree) {
@@ -7258,7 +7265,7 @@ node* simplifyAllButDivisionInnerst(node *tree);
 node* simplifyAllButDivisionInner(node *tree) {
   node *res;
 
-  res = simplifyAllButDivisionInnerst(tree);
+  res = addMemRef(simplifyAllButDivisionInnerst(tree));
 
   if ((tree != NULL) && (res != NULL) &&
       (tree->nodeType == MEMREF) && 
@@ -7266,8 +7273,8 @@ node* simplifyAllButDivisionInner(node *tree) {
     free_memory(res);
     res = copyTree(tree);
   }
-
-  return addMemRef(res);
+  
+  return res;
 }
 
 node* simplifyAllButDivisionInnerst(node *tree) {
@@ -11515,7 +11522,7 @@ node* horner(node *tree) {
     }
   }
 
-  res = hornerInner(tree);
+  res = addMemRef(hornerInner(tree));
 
   if ((tree != NULL) && (res != NULL) && (tree != res) &&
       (tree->nodeType == MEMREF) &&
@@ -11523,8 +11530,16 @@ node* horner(node *tree) {
     free_memory(res);
     res = copyTree(tree);
   }
+  
+  if (((tree->nodeType == MEMREF) && 
+       (tree->evaluationHook != NULL)) &&
+      ((res->nodeType == MEMREF) && 
+       (res->evaluationHook == NULL))) {
+    res->isCorrectlyTyped = tree->isCorrectlyTyped;
+    addEvaluationHookFromCopy(&(res->evaluationHook), tree->evaluationHook);
+  }
 
-  return addMemRef(res);
+  return res;
 }
 
 node* hornerInner(node *tree) {
