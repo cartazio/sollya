@@ -3023,6 +3023,9 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
 	   (res->evaluationHook == NULL))) {
 	res->isCorrectlyTyped = tree->isCorrectlyTyped;
 	addEvaluationHookFromCopy(&(res->evaluationHook), tree->evaluationHook);
+	if ((res->derivCache == NULL) && (tree->derivCache != NULL)) {
+	  res->derivCache = copyTree(tree->derivCache); 
+	}
       }
       if (tree->simplifyCache == NULL) {
 	if (res->nodeType == MEMREF) {
