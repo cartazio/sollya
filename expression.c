@@ -12170,6 +12170,15 @@ node *substituteInner(node* tree, node *t, int doNotEvaluate, int maySimplify) {
 
     if ((copy->nodeType == MEMREF) && (tree->evaluationHook != NULL)) {
       addEvaluationHookFromComposition(&(copy->evaluationHook), tree->evaluationHook, t);
+
+      if (((copy->derivCache == NULL) && 
+	   ((tree->derivCache != NULL) &&
+	    ((tree->derivCache->nodeType == MEMREF) &&
+	     (tree->derivCache->evaluationHook != NULL)))) && 
+	  (!isConstant(copy))) {
+	copy->derivCache = addMemRef(makeMul(addMemRef(substituteInner(tree->derivCache, t, 1, maySimplify)),
+					     addMemRef(differentiate(t))));
+      }
     }
 
     if (haveAPrioriBoundForConstantExpr) {

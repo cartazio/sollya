@@ -116,8 +116,15 @@ int addEvaluationHookFromCopy(eval_hook_t **newHookPtr, eval_hook_t *hook) {
 }
 
 int addEvaluationHookFromComposition(eval_hook_t **newHookPtr, eval_hook_t *hook, node *t) {
-  if (hook == NULL) return 0;  
-  return hook->composeHook(newHookPtr, hook->data, t);
+  int res, r;
+  eval_hook_t *curr;
+
+  res = 0;
+  for (curr=hook; curr != NULL; curr=curr->nextHook) {
+    r = curr->composeHook(newHookPtr, curr->data, t);
+    res = res || r;
+  }
+  return res;
 }
 
 void freeEvaluationHook(eval_hook_t **hookPtr) {
@@ -227,8 +234,30 @@ void *copyNodeEvalHook(void *data) {
 }
 
 int composeNodeEvalHook(eval_hook_t **hookPtr, void *data, node *g) {
-  /* TODO */
-  return 0;
+  node_eval_hook_t *hook;
+  eval_hook_t *f;
+  int okay;
+
+  hook = (node_eval_hook_t *) data;
+  
+  f = NULL;
+  okay = addEvaluationHook(&f, copyNodeEvalHook(data),
+			   evaluateNodeEvalHook, 
+			   freeNodeEvalHook, 
+			   compareNodeEvalHook, 
+			   copyNodeEvalHook, 
+			   composeNodeEvalHook);
+  if (okay) {
+    okay = addEvaluationHook(hookPtr, (void *) createCompositionEvalHook(f, g),
+			     evaluateCompositionEvalHook, 
+			     freeCompositionEvalHook, 
+			     compareCompositionEvalHook, 
+			     copyCompositionEvalHook, 
+			     composeCompositionEvalHook);
+    freeEvaluationHook(&f);
+  }
+
+  return okay;
 }
 
 int compareNodeEvalHook(void *data1, void *data2) {
@@ -449,8 +478,30 @@ void *copyPolyEvalHook(void *data) {
 }
 
 int composePolyEvalHook(eval_hook_t **hookPtr, void *data, node *g) {
-  /* TODO */
-  return 0;
+  poly_eval_hook_t *hook;
+  eval_hook_t *f;
+  int okay;
+
+  hook = (poly_eval_hook_t *) data;
+  
+  f = NULL;
+  okay = addEvaluationHook(&f, copyPolyEvalHook(data),
+			   evaluatePolyEvalHook, 
+			   freePolyEvalHook, 
+			   comparePolyEvalHook, 
+			   copyPolyEvalHook, 
+			   composePolyEvalHook);
+  if (okay) {
+    okay = addEvaluationHook(hookPtr, (void *) createCompositionEvalHook(f, g),
+			     evaluateCompositionEvalHook, 
+			     freeCompositionEvalHook, 
+			     compareCompositionEvalHook, 
+			     copyCompositionEvalHook, 
+			     composeCompositionEvalHook);
+    freeEvaluationHook(&f);
+  }
+
+  return okay;
 }
 
 int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void *data) {
@@ -798,7 +849,6 @@ int evaluateCompositionEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec
   composition_eval_hook_t * hook;
   mp_prec_t p;
   int res;
-  sollya_mpfi_t t;
 
   hook = (composition_eval_hook_t *) data;
 
@@ -822,7 +872,6 @@ int evaluateCompositionEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec
   }
 
   res = evaluateWithEvaluationHook(y, hook->reusedVarT, prec, hook->f);
-  sollya_mpfi_clear(t);
 
   return res;
 }
