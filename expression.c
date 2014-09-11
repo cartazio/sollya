@@ -11540,6 +11540,9 @@ node* horner(node *tree) {
        (res->evaluationHook == NULL))) {
     res->isCorrectlyTyped = tree->isCorrectlyTyped;
     addEvaluationHookFromCopy(&(res->evaluationHook), tree->evaluationHook);
+    if ((res->derivCache == NULL) && (tree->derivCache != NULL)) {
+      res->derivCache = copyTree(tree->derivCache); 
+    }
   }
 
   return res;
