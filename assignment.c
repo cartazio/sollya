@@ -312,6 +312,9 @@ int performListPrependOnEntry(chain *symTbl, char *ident, node *tree) {
 	      newNode->argArraySize = 0;
 	      newNode->argArrayAllocSize = 0;
 	      newNode = addMemRef(newNode);
+	      /* We might want to re-use the re-usable memref'ed parts
+		 of the original expression here 
+	      */
 	      ((entry *) curr->value)->value = newNode;
 	      if (newChecked && (newNode->nodeType == MEMREF)) {
 		newNode->isCorrectlyTyped = 1;
@@ -430,6 +433,9 @@ int performListTailOnEntry(chain *symTbl, char *ident) {
 	      newNode->argArraySize = 0;
 	      newNode->argArrayAllocSize = 0;
 	      newNode = addMemRef(newNode);
+	      /* We might want to re-use the re-usable memref'ed parts
+		 of the original expression here 
+	      */
 	      if (oldChecked && (newNode->nodeType == MEMREF)) {
 		newNode->isCorrectlyTyped = 1;
 	      }
