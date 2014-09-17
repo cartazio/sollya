@@ -301,6 +301,7 @@ node *getSubpolynomial(node *poly, chain *monomials, int fillDegrees, mp_prec_t 
 node *makeCanonical(node *func, mp_prec_t prec);
 char *sprintTree(node *tree);
 char *sprintValue(mpfr_t *value);
+char *sPrintHexadecimal(mpfr_t x);
 void printBinary(mpfr_t x);
 int isHorner(node *tree);
 int isCanonical(node *tree);

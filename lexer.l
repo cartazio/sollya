@@ -403,6 +403,7 @@ WITH            "with"
 
 RENAME          "rename"
 BIND            "bind"
+OBJECTNAME      "objectname"
 
 LENGTH          "length"
 
@@ -801,6 +802,7 @@ NOP             "nop"
 {WRITE}           			    { newTokenLexed(); return WRITETOKEN; }
 {ASCIIPLOT}       			    { newTokenLexed(); return ASCIIPLOTTOKEN; }
 {RENAME}         			    { newTokenLexed(); return RENAMETOKEN; }
+{OBJECTNAME}         			    { newTokenLexed(); return OBJECTNAMETOKEN; }
 {BIND}         			            { newTokenLexed(); return BINDTOKEN; }
 
 {INFNORM}         			    { newTokenLexed(); return INFNORMTOKEN; }

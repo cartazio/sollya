@@ -139,6 +139,20 @@ chain *removeEntry(chain *symTbl, char *name, void (*f) (void *)) {
   return symTbl;
 }
 
+char *getEntryName(chain *symTbl, void *value, int (*f)(void *, void *)) {
+  char *res;
+  chain *curr;
+
+  for (curr=symTbl;curr!=NULL;curr=curr->next) {
+    if (f(value, ((entry *) (curr->value))->value)) {
+      res = safeCalloc(strlen(((entry *) (curr->value))->name) + 1, sizeof(char));
+      strcpy(res, ((entry *) (curr->value))->name);
+      return res;
+    }
+  }
+
+  return NULL;
+}
 
 void freeSymbolTable(chain *symTbl, void (*f) (void *)) {
   if (symTbl != NULL) {
@@ -164,6 +178,18 @@ void freeDeclaredSymbolTable(chain *declSymTbl, void (*f) (void *)) {
   }
 
   freeChain(declSymTbl, freeNothing);
+}
+
+char *getEntryDeclaredName(chain *declSymTbl, void *value, int (*f)(void *, void *)) {
+  chain *curr;
+  char *res;
+
+  for (curr=declSymTbl;curr!=NULL;curr=curr->next) {
+    res = getEntryName((chain *) (curr->value), value, f);
+    if (res != NULL) return res;
+  }
+
+  return NULL;
 }
 
 chain *pushFrame(chain *declSymTbl) {

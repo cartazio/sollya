@@ -1758,6 +1758,14 @@ sollya_obj_t sollya_lib_length(sollya_obj_t obj1) {
   return evaluatedThing;
 }
 
+sollya_obj_t sollya_lib_objectname(sollya_obj_t obj1) {
+  node *thingToEvaluate, *evaluatedThing;
+  thingToEvaluate = makeObjectName(copyThing(obj1));
+  evaluatedThing = evaluateThing(thingToEvaluate);
+  freeThing(thingToEvaluate);
+  return evaluatedThing;
+}
+
 sollya_obj_t sollya_lib_get_prec() {
   node *thingToEvaluate, *evaluatedThing;
   thingToEvaluate = makePrecDeref();

@@ -314,6 +314,7 @@ int parserCheckEof() {
 %token  ROUNDTOFORMATTOKEN "round"
 %token  EVALUATETOKEN "evaluate"
 %token  LENGTHTOKEN "length"
+%token  OBJECTNAMETOKEN "objectname"
 %token  INFTOKEN "inf"
 %token  MIDTOKEN "mid"
 %token  SUPTOKEN "sup"
@@ -2056,6 +2057,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | LENGTHTOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeLength($3);
+			  }
+                      | OBJECTNAMETOKEN LPARTOKEN thing RPARTOKEN
+                          {
+			    $$ = makeObjectName($3);
 			  }
 ;
 
@@ -3859,6 +3864,17 @@ help:                   CONSTANTTOKEN
 			    outputMode(); sollyaPrintf("Length of a list: length(list).\n");
 #if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
 #warning "No help text for LENGTH"
+#endif
+#endif
+                          }
+                      | OBJECTNAMETOKEN
+                          {
+#ifdef HELP_OBJECTNAME_TEXT
+			    outputMode(); sollyaPrintf(HELP_OBJECTNAME_TEXT);
+#else
+			    outputMode(); sollyaPrintf("Name of an object: objectname(obj).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for OBJECTNAME"
 #endif
 #endif
                           }

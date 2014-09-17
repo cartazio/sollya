@@ -296,7 +296,7 @@ extern void endBuffer(void);
 #define CHEBYSHEVFORM 277
 /* Attention: #define MEMREF 278 is used elsewhere */
 #define ANNOTATEFUNCTION 279
-
+#define OBJECTNAME 280
 
 int executeCommand(node *);
 
@@ -504,6 +504,7 @@ node *makeMantissa(node *thing);
 node *makeExponent(node *thing);
 node *makePrecision(node *thing);
 node *makeLength(node *thing);
+node *makeObjectName(node *thing);
 node *makePrecDeref();
 node *makePointsDeref();
 node *makeDiamDeref();

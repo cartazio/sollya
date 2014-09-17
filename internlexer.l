@@ -400,6 +400,7 @@ MATCH           "match"
 WITH            "with"
 
 RENAME          "rename"
+OBJECTNAME      "objectname"
 BIND            "bind"
 
 LENGTH          "length"
@@ -717,6 +718,7 @@ NOP             "nop"
 {WRITE}           			    {  return WRITETOKEN; }
 {ASCIIPLOT}       			    {  return ASCIIPLOTTOKEN; }
 {RENAME}         			    {  return RENAMETOKEN; }
+{OBJECTNAME}         			    {  return OBJECTNAMETOKEN; }
 {BIND}         			            {  return BINDTOKEN; }
 
 

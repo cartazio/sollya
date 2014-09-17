@@ -398,6 +398,7 @@ MATCH           "match"
 WITH            "with"
 
 RENAME          "rename"
+OBJECTNAME      "objectname"
 BIND            "bind"
 
 LENGTH          "length"
@@ -727,6 +728,7 @@ NOP             "nop"
 {WRITE}           			    {  miniparserCharactersRead += yyleng; return WRITETOKEN; }
 {ASCIIPLOT}       			    {  miniparserCharactersRead += yyleng; return ASCIIPLOTTOKEN; }
 {RENAME}         			    {  miniparserCharactersRead += yyleng; return RENAMETOKEN; }
+{OBJECTNAME}         			    {  miniparserCharactersRead += yyleng; return OBJECTNAMETOKEN; }
 {BIND}         			            {  miniparserCharactersRead += yyleng; return BINDTOKEN; }
 
 

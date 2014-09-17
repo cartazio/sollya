@@ -295,6 +295,7 @@ extern FILE *internyyget_in(void *scanner);
 %token  ROUNDTOFORMATTOKEN "round"
 %token  EVALUATETOKEN "evaluate"
 %token  LENGTHTOKEN "length"
+%token  OBJECTNAMETOKEN "objectname"
 %token  INFTOKEN "inf"
 %token  MIDTOKEN "mid"
 %token  SUPTOKEN "sup"
@@ -1990,6 +1991,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | LENGTHTOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeLength($3);
+			  }
+                      | OBJECTNAMETOKEN LPARTOKEN thing RPARTOKEN
+                          {
+			    $$ = makeObjectName($3);
 			  }
 ;
 

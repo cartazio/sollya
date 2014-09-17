@@ -489,6 +489,7 @@ extern "C" {
   sollya_obj_t sollya_lib_floor(sollya_obj_t);
   sollya_obj_t sollya_lib_nearestint(sollya_obj_t);
   sollya_obj_t sollya_lib_length(sollya_obj_t);
+  sollya_obj_t sollya_lib_objectname(sollya_obj_t);
   sollya_obj_t sollya_lib_get_prec();
   sollya_obj_t sollya_lib_get_points();
   sollya_obj_t sollya_lib_get_diam();
