@@ -659,10 +659,25 @@ void libraryConstantToInterval(sollya_mpfi_t res, node *tree) {
 }
 
 int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, mpfr_t b, mpfr_t start, mp_prec_t prec) {
-  mpfr_t x, x2, temp1, temp2, am, bm;
+  mpfr_t x, x2, temp1, temp2, am, bm, tempX, tempY;
   unsigned long int n=1;
   int okay, lucky, hasZero, i, freeTrees;
   node *myTree, *myDiffTree;
+
+  if (mpfr_sgn(a) * mpfr_sgn(b) <= 0) {
+    mpfr_init2(tempX, 12);
+    mpfr_init2(tempY, 12);
+    mpfr_set_si(tempX, 0, GMP_RNDN);
+    evaluate(tempY, tree, tempX, prec);
+    if (mpfr_zero_p(temp1)) {
+      mpfr_set(res,tempY,GMP_RNDN);
+      mpfr_clear(tempY);
+      mpfr_clear(tempX);
+      return 1;
+    }
+    mpfr_clear(tempY);
+    mpfr_clear(tempX);
+  }
 
   freeTrees = 0;
   if (accessThruMemRef(tree)->nodeType == DIV) {
@@ -798,146 +813,6 @@ int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, 
   return okay;
 }
 
-int newtonMPFRWithStartPointFaithful(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, mpfr_t b, mpfr_t start, mp_prec_t prec) {
-  mpfr_t x, x2, temp1, temp2, am, bm;
-  unsigned long int n=1;
-  int okay, lucky, hasZero, i, freeTrees;
-  node *myTree, *myDiffTree;
-
-  freeTrees = 0;
-  if (accessThruMemRef(tree)->nodeType == DIV) {
-    freeTrees = 1;
-    myTree = copyTree(accessThruMemRef(tree)->child1);
-    myDiffTree = differentiate(myTree);
-  } else {
-    myTree = tree;
-    myDiffTree = diff_tree;
-  }
-
-  mpfr_init2(x,prec);
-  mpfr_init2(x2,prec);
-  mpfr_init2(temp1,prec);
-  mpfr_init2(temp2,prec);
-  mpfr_init2(am,prec/2);
-  mpfr_init2(bm,prec/2);
-  mpfr_set(am,a,GMP_RNDN);
-  mpfr_nextbelow(am);
-  mpfr_nextbelow(am);
-  mpfr_set(bm,b,GMP_RNDN);
-  mpfr_nextabove(am);
-  mpfr_nextabove(bm);
-
-  okay = 0;
-
-  if (mpfr_sgn(a) != mpfr_sgn(b)) {
-    mpfr_set_d(x,0.0,GMP_RNDN);
-    evaluateFaithful(temp1, myTree, x, prec);
-    if (mpfr_zero_p(temp1)) {
-      mpfr_set(res,x,GMP_RNDN);
-      okay = 1;
-    }
-  }
-
-  if (!okay) {
-    evaluateFaithful(temp1, myTree, a, prec);
-    if (mpfr_zero_p(temp1)) {
-      mpfr_set(res,a,GMP_RNDN);
-      okay = 1;
-    } else {
-      evaluateFaithful(temp2, myTree, b, prec);
-      if (mpfr_zero_p(temp2)) {
-	mpfr_set(res,b,GMP_RNDN);
-	okay = 1;
-      } else {
-
-	mpfr_mul(temp1,temp1,temp2,GMP_RNDN);
-	hasZero = (mpfr_sgn(temp1) <= 0);
-
-	mpfr_set(x,start,GMP_RNDN);
-	lucky = 0;
-
-	i = 5000;
-	while((n<=(unsigned long int) prec+25) && (mpfr_cmp(am,x) <= 0) && (mpfr_cmp(x,bm) <= 0) && (i > 0)) {
-	  evaluateFaithful(temp1, myTree, x, prec);
-	  if (mpfr_zero_p(temp1)) {
-	    lucky = 1;
-	    break;
-	  }
-	  evaluate(temp2, myDiffTree, x, prec);
-	  mpfr_div(temp1, temp1, temp2, GMP_RNDN);
-	  mpfr_sub(x2, x, temp1, GMP_RNDN);
-	  if (mpfr_cmp(x2,x) == 0) break;
-	  if (mpfr_zero_p(x) || mpfr_zero_p(x2)) {
-	    n *= 2;
-	  } else {
-	    if (mpfr_get_exp(x) == mpfr_get_exp(x2)) {
-	      n *= 2;
-	    } else {
-	      i--;
-	    }
-	  }
-	  mpfr_set(x,x2,GMP_RNDN);
-	}
-
-	if (mpfr_cmp(x,a) < 0) {
-	  mpfr_set(res,a,GMP_RNDN);
-	  if (hasZero) {
-	    okay = 1;
-	  } else {
-	    evaluateFaithful(temp1, myTree, x, prec);
-	    evaluateFaithful(temp2, myDiffTree, x, prec);
-	    mpfr_div(temp1, temp1, temp2, GMP_RNDN);
-	    mpfr_sub(x, x, temp1, GMP_RNDN);
-	    if (mpfr_cmp(x,a) >= 0) {
-	      okay = 1;
-	    } else {
-	      okay = 0;
-	    }
-	  }
-	} else {
-	  if (mpfr_cmp(b,x) < 0) {
-	    mpfr_set(res,b,GMP_RNDN);
-	    if (hasZero) {
-	      okay = 1;
-	    } else {
-	      evaluateFaithful(temp1, myTree, x, prec);
-	      evaluateFaithful(temp2, myDiffTree, x, prec);
-	      mpfr_div(temp1, temp1, temp2, GMP_RNDN);
-	      mpfr_sub(x, x, temp1, GMP_RNDN);
-	      if (mpfr_cmp(b,x) >= 0) {
-		okay = 1;
-	      } else {
-		okay = 0;
-	      }
-	    }
-	  } else {
-	    mpfr_set(res,x,GMP_RNDN);
-	    if (!lucky) {
-	      evaluateFaithful(temp1, myTree, x, prec);
-	      evaluateFaithful(temp2, myDiffTree, x, prec);
-	      mpfr_div(temp1, temp1, temp2, GMP_RNDN);
-	      mpfr_abs(temp1,temp1,GMP_RNDN);
-	      mpfr_abs(x,x,GMP_RNDN);
-	      mpfr_div_ui(x,x,1,GMP_RNDN);
-	      okay = (mpfr_cmp(temp1,x) <= 0);
-	    } else {
-	      okay = 1;
-	    }
-	  }
-	}
-      }
-    }
-  }
-
-  if (freeTrees) {
-    free_memory(myTree);
-    free_memory(myDiffTree);
-  }
-
-  mpfr_clear(x); mpfr_clear(temp1); mpfr_clear(temp2); mpfr_clear(x2); mpfr_clear(am); mpfr_clear(bm);
-  return okay;
-}
-
 int newtonMPFR(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, mpfr_t b, mp_prec_t prec) {
   mpfr_t start;
   int result;
@@ -947,21 +822,6 @@ int newtonMPFR(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, mpfr_t b, mp_p
   mpfr_div_2ui(start,start,1,GMP_RNDN);
 
   result = newtonMPFRWithStartPoint(res, tree, diff_tree, a, b, start, prec);
-
-  mpfr_clear(start);
-
-  return result;
-}
-
-int newtonMPFRFaithful(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, mpfr_t b, mp_prec_t prec) {
-  mpfr_t start;
-  int result;
-
-  mpfr_init2(start,prec);
-  mpfr_add(start,a,b,GMP_RNDN);
-  mpfr_div_2ui(start,start,1,GMP_RNDN);
-
-  result = newtonMPFRWithStartPointFaithful(res, tree, diff_tree, a, b, start, prec);
 
   mpfr_clear(start);
 
