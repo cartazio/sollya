@@ -8028,12 +8028,25 @@ node *simplifyAllButDivision(node *tree) {
 
 void evaluate(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
   mpfr_t stack1, stack2, myResult;
-  sollya_mpfi_t stackI;
+  sollya_mpfi_t stackI, X, Y;
 
   if (tree->nodeType == MEMREF) {
     if (tree->polynomialRepresentation != NULL) {
       polynomialEvalMpfr(result, tree->polynomialRepresentation, x);
       return;
+    }
+    if (tree->evaluationHook != NULL) {
+      sollya_mpfi_init2(X,mpfr_get_prec(x));
+      sollya_mpfi_set_fr(X, x);
+      sollya_mpfi_init2(Y,mpfr_get_prec(result));
+      if (evaluateWithEvaluationHook(Y, X, prec, tree->evaluationHook)) {
+	sollya_mpfi_mid(result, Y);
+	sollya_mpfi_clear(X);
+	sollya_mpfi_clear(Y);
+	return;
+      }
+      sollya_mpfi_clear(X);
+      sollya_mpfi_clear(Y);
     }
     evaluate(result, getMemRefChild(tree), x, prec);
     return;
