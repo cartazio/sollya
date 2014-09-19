@@ -658,6 +658,36 @@ void libraryConstantToInterval(sollya_mpfi_t res, node *tree) {
   return;
 }
 
+void evaluateNewtonMPFRWithStartPoint(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec, mpfr_t a, mpfr_t b) {
+  mp_prec_t p;
+  mpfr_t myX;
+
+  if ((mpfr_number_p(x) && 
+       mpfr_number_p(a) &&
+       mpfr_number_p(b)) && 
+      ((mpfr_cmp(a, x) <= 0) && 
+       (mpfr_cmp(x, b) <= 0))) {
+    evaluate(result, tree, x, prec);
+  } 
+
+  p = mpfr_get_prec(a);
+  if (mpfr_get_prec(b) > p) p = mpfr_get_prec(b);
+  if (mpfr_get_prec(x) > p) p = mpfr_get_prec(x);
+  mpfr_init2(myX, p);
+  if (mpfr_cmp(x, a) < 0) {
+    mpfr_set(myX, a, GMP_RNDN);
+  } else {
+    if (mpfr_cmp(b, x) < 0) {
+      mpfr_set(myX, b, GMP_RNDN);
+    } else {
+      mpfr_set(myX, x, GMP_RNDN);
+    }
+  }
+
+  evaluate(result, tree, myX, prec);
+  mpfr_clear(myX);
+}
+
 int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, mpfr_t b, mpfr_t start, mp_prec_t prec) {
   mpfr_t x, x2, temp1, temp2, am, bm, tempX, tempY;
   unsigned long int n=1;
@@ -668,7 +698,7 @@ int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, 
     mpfr_init2(tempX, 12);
     mpfr_init2(tempY, 12);
     mpfr_set_si(tempX, 0, GMP_RNDN);
-    evaluate(tempY, tree, tempX, prec);
+    evaluateNewtonMPFRWithStartPoint(tempY, tree, tempX, prec, a, b);
     if (mpfr_zero_p(temp1)) {
       mpfr_set(res,tempY,GMP_RNDN);
       mpfr_clear(tempY);
@@ -706,7 +736,7 @@ int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, 
 
   if (mpfr_sgn(a) != mpfr_sgn(b)) {
     mpfr_set_d(x,0.0,GMP_RNDN);
-    evaluate(temp1, myTree, x, prec);
+    evaluateNewtonMPFRWithStartPoint(temp1, myTree, x, prec, a, b);
     if (mpfr_zero_p(temp1)) {
       mpfr_set(res,x,GMP_RNDN);
       okay = 1;
@@ -714,12 +744,12 @@ int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, 
   }
 
   if (!okay) {
-    evaluate(temp1, myTree, a, prec);
+    evaluateNewtonMPFRWithStartPoint(temp1, myTree, a, prec, a, b);
     if (mpfr_zero_p(temp1)) {
       mpfr_set(res,a,GMP_RNDN);
       okay = 1;
     } else {
-      evaluate(temp2, myTree, b, prec);
+      evaluateNewtonMPFRWithStartPoint(temp2, myTree, b, prec, a, b);
       if (mpfr_zero_p(temp2)) {
 	mpfr_set(res,b,GMP_RNDN);
 	okay = 1;
@@ -733,12 +763,12 @@ int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, 
 
 	i = 5000;
 	while((n<=(unsigned long int) prec+25) && (mpfr_cmp(am,x) <= 0) && (mpfr_cmp(x,bm) <= 0) && (i > 0)) {
-	  evaluate(temp1, myTree, x, prec);
+	  evaluateNewtonMPFRWithStartPoint(temp1, myTree, x, prec, a, b);
 	  if (mpfr_zero_p(temp1)) {
 	    lucky = 1;
 	    break;
 	  }
-	  evaluate(temp2, myDiffTree, x, prec);
+	  evaluateNewtonMPFRWithStartPoint(temp2, myDiffTree, x, prec, a, b);
 	  mpfr_div(temp1, temp1, temp2, GMP_RNDN);
 	  mpfr_sub(x2, x, temp1, GMP_RNDN);
 	  if (mpfr_cmp(x2,x) == 0) break;
@@ -759,8 +789,8 @@ int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, 
 	  if (hasZero) {
 	    okay = 1;
 	  } else {
-	    evaluate(temp1, myTree, x, prec);
-	    evaluate(temp2, myDiffTree, x, prec);
+	    evaluateNewtonMPFRWithStartPoint(temp1, myTree, x, prec, a, b);
+	    evaluateNewtonMPFRWithStartPoint(temp2, myDiffTree, x, prec, a, b);
 	    mpfr_div(temp1, temp1, temp2, GMP_RNDN);
 	    mpfr_sub(x, x, temp1, GMP_RNDN);
 	    if (mpfr_cmp(x,a) >= 0) {
@@ -775,8 +805,8 @@ int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, 
 	    if (hasZero) {
 	      okay = 1;
 	    } else {
-	      evaluate(temp1, myTree, x, prec);
-	      evaluate(temp2, myDiffTree, x, prec);
+	      evaluateNewtonMPFRWithStartPoint(temp1, myTree, x, prec, a, b);
+	      evaluateNewtonMPFRWithStartPoint(temp2, myDiffTree, x, prec, a, b);
 	      mpfr_div(temp1, temp1, temp2, GMP_RNDN);
 	      mpfr_sub(x, x, temp1, GMP_RNDN);
 	      if (mpfr_cmp(b,x) >= 0) {
@@ -788,8 +818,8 @@ int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, 
 	  } else {
 	    mpfr_set(res,x,GMP_RNDN);
 	    if (!lucky) {
-	      evaluate(temp1, myTree, x, prec);
-	      evaluate(temp2, myDiffTree, x, prec);
+	      evaluateNewtonMPFRWithStartPoint(temp1, myTree, x, prec, a, b);
+	      evaluateNewtonMPFRWithStartPoint(temp2, myDiffTree, x, prec, a, b);
 	      mpfr_div(temp1, temp1, temp2, GMP_RNDN);
 	      mpfr_abs(temp1,temp1,GMP_RNDN);
 	      mpfr_abs(x,x,GMP_RNDN);
