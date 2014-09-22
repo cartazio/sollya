@@ -20038,8 +20038,44 @@ node *performBind(node *proc, char *ident, node *thing) {
 }
 
 char *getObjectNameInner(node *thing) {
-  /* TODO */
-  return NULL;
+  char *res;
+  node *otherThing;
+  int didCopy, sameThing;
+
+  /* Look for a symbol that corresponds to the given object */
+  res = getEntryName(symbolTable, declaredSymbolTable, (void *) thing, isEqualThingOnVoid);
+  
+  /* We didn't find any symbol to check for */
+  if (res == NULL) 
+    return NULL;
+
+  /* We found a possible symbol. Check if it doesn't get shadowed by
+     something else.
+  */
+  didCopy = 0;
+  otherThing = getThingFromTable(res, 0, &didCopy);
+  if (otherThing == NULL) {
+    /* This case should never happen. Just be conservative. */
+    safeFree(res);
+    return NULL;
+  }
+  
+  /* Check if we just found the same thing */
+  sameThing = isEqualThing(thing, otherThing);
+
+  /* Free the memory for the other thing, if we need to free it. */
+  if (didCopy) {
+    freeThing(otherThing);
+  }
+  
+  /* If we didn't find the same thing, the thing is bound but shadowed. */
+  if (!sameThing) {
+    safeFree(res);
+    return NULL;
+  }
+
+  /* The thing is bound to the identifier in res and not shadowed */
+  return res;
 }
 
 char *getObjectName(node *thing) {

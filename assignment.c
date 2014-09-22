@@ -139,20 +139,6 @@ chain *removeEntry(chain *symTbl, char *name, void (*f) (void *)) {
   return symTbl;
 }
 
-char *getEntryName(chain *symTbl, void *value, int (*f)(void *, void *)) {
-  char *res;
-  chain *curr;
-
-  for (curr=symTbl;curr!=NULL;curr=curr->next) {
-    if (f(value, ((entry *) (curr->value))->value)) {
-      res = safeCalloc(strlen(((entry *) (curr->value))->name) + 1, sizeof(char));
-      strcpy(res, ((entry *) (curr->value))->name);
-      return res;
-    }
-  }
-
-  return NULL;
-}
 
 void freeSymbolTable(chain *symTbl, void (*f) (void *)) {
   if (symTbl != NULL) {
@@ -180,22 +166,70 @@ void freeDeclaredSymbolTable(chain *declSymTbl, void (*f) (void *)) {
   freeChain(declSymTbl, freeNothing);
 }
 
-char *getEntryDeclaredName(chain *declSymTbl, void *value, int (*f)(void *, void *)) {
-  chain *curr;
+char *getEntryName(chain *symTbl, chain *declSymTbl, void *value, int (*f)(void *, void *)) {
+  chain *curr, *currFrame, *currDecl, *currFrameAbove, *currDeclAbove;
+  int shadowed;
   char *res;
 
-  for (curr=declSymTbl;curr!=NULL;curr=curr->next) {
-    res = getEntryName((chain *) (curr->value), value, f);
-    if (res != NULL) return res;
+  /* Go over global symbol table first, for each hit check if the
+     identifier isn't shadowed by the declared symbol table. 
+  */
+  for (curr=symTbl;curr!=NULL;curr=curr->next) {
+    if (f(value, ((entry *) (curr->value))->value)) {
+      /* We have a hit. Check if its name isn't shadowed */
+      shadowed = 0;
+      for (currFrame=declSymTbl;((currFrame!=NULL)&&(!shadowed));currFrame=currFrame->next) {
+	for (currDecl=((chain *) (currFrame->value));((currDecl!=NULL)&&(!shadowed));currDecl=currDecl->next) {
+	  if (strcmp(((entry *) (curr->value))->name, ((entry *) (currDecl->value))->name) == 0) {
+	    shadowed = 1;
+	  }
+	}
+      }
+      if (!shadowed) {
+	res = (char *) safeCalloc(strlen(((entry *) (curr->value))->name) + 1, sizeof(char));
+	strcpy(res, ((entry *) (curr->value))->name);
+	return res;
+      }
+    }
   }
 
+  /* Now go over the declared symbol table, frame by frame. For each
+     hit check if the identifier isn't shadowed by an identifier in an
+     above frame of the declared symbol table.
+  */
+  for (currFrame=declSymTbl;currFrame!=NULL;currFrame=currFrame->next) {
+    for (currDecl=((chain *)(currFrame->value));currDecl!=NULL;currDecl=currDecl->next) {
+      if (f(value, ((entry *) (currDecl->value))->value)) {
+	/* We have a hit. Check if its name isn't shadowed in a frame
+	   above. 
+	*/
+	shadowed = 0;
+	for (currFrameAbove=declSymTbl;
+	     ((currFrameAbove!=NULL) &&
+	      (currFrameAbove!=currFrame) &&
+	      (!shadowed));
+	     currFrameAbove=currFrameAbove->next) {
+	  for (currDeclAbove=((chain *) (currFrameAbove->value));((currDeclAbove!=NULL)&&(!shadowed));currDeclAbove=currDeclAbove->next) {
+	    if (strcmp(((entry *) (currDecl->value))->name, ((entry *) (currDeclAbove->value))->name) == 0) {
+	      shadowed = 1;
+	    }
+	  }
+	}
+	if (!shadowed) {
+	  res = (char *) safeCalloc(strlen(((entry *) (currDecl->value))->name) + 1, sizeof(char));
+	  strcpy(res, ((entry *) (currDecl->value))->name);
+	  return res;
+	}
+      }
+    }
+  }
+
+  /* We didn't find anything or everything we found was shadowed. */
   return NULL;
 }
 
 chain *pushFrame(chain *declSymTbl) {
-
   return addElement(declSymTbl, NULL);
-
 }
 
 chain *popFrame(chain *declSymTbl, void (*f) (void *)) {
