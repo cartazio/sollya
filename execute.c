@@ -17938,6 +17938,46 @@ void backtracePopFrame() {
   safeFree(temp);
 }
 
+node *getBacktrace() {
+  chain *frames, *curr;
+  node *res, *frameStruct, *argumentsNode;
+  char *tempString;
+  entry *structEntry;
+  chain *assoclist;
+  
+  if (backtraceStack == NULL) {
+    return makeEmptyList();
+  }
+
+  frames = NULL;
+  for (curr=backtraceStack;curr!=NULL;curr=curr->next) {
+    structEntry = (entry *) safeMalloc(sizeof(entry));
+    tempString = "proc";
+    structEntry->name = (char *) safeCalloc(strlen(tempString)+1,sizeof(char));
+    strcpy(structEntry->name,tempString);
+    structEntry->value = addMemRef(copyThing(((backtrace_frame_t) (curr->value))->procedure));
+    assoclist = addElement(NULL,(void *) structEntry);
+    structEntry = (entry *) safeMalloc(sizeof(entry));
+    if (((backtrace_frame_t) (curr->value))->arguments == NULL) {
+      argumentsNode = addMemRef(makeEmptyList());
+    } else {
+      argumentsNode = addMemRef(makeList(copyChainWithoutReversal(((backtrace_frame_t) (curr->value))->arguments, 
+								  copyThingOnVoid)));
+    }
+    tempString = "arguments";
+    structEntry->name = (char *) safeCalloc(strlen(tempString)+1,sizeof(char));
+    strcpy(structEntry->name,tempString);
+    structEntry->value = argumentsNode;
+    assoclist = addElement(assoclist,(void *) structEntry);
+    frameStruct = addMemRef(makeStructure(assoclist));
+    frames = addElement(frames, frameStruct);
+  }
+  
+  res = makeList(copyChain(frames, copyThingOnVoid));
+  freeChain(frames, freeThingOnVoid);
+  return res;
+}
+
 int executeProcedureInner(node **resultThing, node *proc, chain *args, int elliptic) {
   int result, res, noError;
   chain *curr, *curr2;
