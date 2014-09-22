@@ -128,6 +128,11 @@ void freeDoNothing(void *ptr) {
   return;
 }
 
+typedef struct __backtrace_frame_struct_t * backtrace_frame_t;
+struct __backtrace_frame_struct_t {
+  node *procedure;
+  chain *arguments;
+};
 
 /* Performs a fast check if a < b or a > b
 //
@@ -17895,16 +17900,42 @@ int executeMatch(node **result, node *thingToMatch, node **matchers, node **code
   return okay;
 }
 
-void freeBacktraceStack(chain *stack) {
-  /* TODO */
+void freeBacktraceStack() {
+  freeChain(backtraceStack, safeFree);
 }
 
 void backtracePushFrame(node *procedure, chain *args) {
-  /* TODO */
+  backtrace_frame_t frame;
+
+  frame = (backtrace_frame_t) safeMalloc(sizeof(struct __backtrace_frame_struct_t));
+  frame->procedure = procedure;
+
+  if (accessThruMemRef(procedure)->nodeType == PROCILLIM) {
+    frame->arguments = args;
+  } else {
+    if ((args != NULL) && 
+	(args->next == NULL) &&
+	(isUnit((node *) (args->value)))) {
+      frame->arguments = NULL;
+    } else {
+      frame->arguments = args;
+    }
+  }
+
+  backtraceStack = addElement(backtraceStack, frame);
 }
 
 void backtracePopFrame() {
-  /* TODO */
+  chain *temp;
+
+  if (backtraceStack == NULL) 
+    return;
+
+  temp = backtraceStack;
+  backtraceStack = backtraceStack->next;
+
+  safeFree(temp->value);
+  safeFree(temp);
 }
 
 int executeProcedureInner(node **resultThing, node *proc, chain *args, int elliptic) {

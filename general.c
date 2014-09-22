@@ -1133,7 +1133,7 @@ void freeTool() {
   freeSymbolTable(symbolTable, freeThingOnVoid);
   symbolTable = NULL;
   freeDeclaredSymbolTable(declaredSymbolTable, freeThingOnVoid);
-  freeBacktraceStack(backtraceStack);
+  freeBacktraceStack();
   freeFunctionSpecialVariables();
   freeGlobalReusedMPFIVars();
   freeGlobalReusedMPFRVars();
@@ -1238,7 +1238,7 @@ void restartTool() {
   freeSymbolTable(symbolTable, freeThingOnVoid);
   symbolTable = NULL;
   freeDeclaredSymbolTable(declaredSymbolTable, freeThingOnVoid);
-  freeBacktraceStack(backtraceStack);
+  freeBacktraceStack();
   freeFunctionSpecialVariables();
   freeGlobalReusedMPFIVars();
   freeGlobalReusedMPFRVars();
@@ -1575,7 +1575,7 @@ int finalizeLibraryMode() {
   freeSymbolTable(symbolTable, freeThingOnVoid);
   symbolTable = NULL;
   freeDeclaredSymbolTable(declaredSymbolTable, freeThingOnVoid);
-  freeBacktraceStack(backtraceStack);
+  freeBacktraceStack();
   freeFunctionSpecialVariables();
   freeGlobalReusedMPFIVars();
   freeGlobalReusedMPFRVars();
@@ -1984,7 +1984,7 @@ int general(int argc, char *argv[]) {
 	}
 	if (backtraceStack != NULL) {
 	  if (!frameCorruptionPrinted) printMessage(1,SOLLYA_MSG_FRAME_STACK_HAS_BEEN_CORRUPTED,"Warning: a preceeding command interruption corrupted the variable frame stack.\n");
-	  freeBacktraceStack(backtraceStack);
+	  freeBacktraceStack();
 	  backtraceStack = NULL;
 	}
 	initSignalHandler();
@@ -2059,7 +2059,7 @@ int general(int argc, char *argv[]) {
 	    else
 	      printMessage(2,SOLLYA_MSG_RELEASING_FRAME_STACK,"Information: releasing the variable frame stack.\n");
 	  }
-	  freeBacktraceStack(backtraceStack);
+	  freeBacktraceStack();
 	}
 	backtraceStack = NULL;
 	if (timeStack != NULL) {
