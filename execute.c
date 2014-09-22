@@ -17895,6 +17895,13 @@ int executeMatch(node **result, node *thingToMatch, node **matchers, node **code
   return okay;
 }
 
+void backtracePushFrame(node *procedure, chain *args) {
+  /* TODO */
+}
+
+void backtracePopFrame() {
+  /* TODO */
+}
 
 int executeProcedureInner(node **resultThing, node *proc, chain *args, int elliptic) {
   int result, res, noError;
@@ -18043,9 +18050,9 @@ int executeProcedure(node **resultThing, node *proc, chain *args, int elliptic) 
   int res;
 
   pushTimeCounter();
-
+  backtracePushFrame(proc, args);
   res = executeProcedureInner(resultThing, proc, args, elliptic);
-
+  backtracePopFrame();
   popTimeCounter("executing a procedure");
 
   return res;
