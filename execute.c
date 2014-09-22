@@ -17895,6 +17895,10 @@ int executeMatch(node **result, node *thingToMatch, node **matchers, node **code
   return okay;
 }
 
+void freeBacktraceStack(chain *stack) {
+  /* TODO */
+}
+
 void backtracePushFrame(node *procedure, chain *args) {
   /* TODO */
 }

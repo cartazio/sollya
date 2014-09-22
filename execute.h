@@ -577,4 +577,7 @@ int symbolNameAlreadyUsed(char *);
 int tryRepresentAsPolynomial(node *);
 int tryRepresentAsPolynomialNoConstants(node *);
 
+void freeBacktraceStack(chain *);
+
+
 #endif /* ifdef EXECUTE_H*/

@@ -146,6 +146,7 @@ extern node *tempNode;
 extern int tempInteger;
 extern chain *symbolTable;
 extern chain *declaredSymbolTable;
+extern chain *backtraceStack;
 extern mpfr_t statediam;
 extern node *parsedThingIntern;
 extern int *tempIntPtr;
