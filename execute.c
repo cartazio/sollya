@@ -17982,7 +17982,7 @@ node *getBacktrace() {
   frames = NULL;
   for (curr=backtraceStack;curr!=NULL;curr=curr->next) {
     structEntry = (entry *) safeMalloc(sizeof(entry));
-    tempString = "proc";
+    tempString = "called_proc";
     structEntry->name = (char *) safeCalloc(strlen(tempString)+1,sizeof(char));
     strcpy(structEntry->name,tempString);
     structEntry->value = addMemRef(copyThing(((backtrace_frame_t) (curr->value))->procedure));
@@ -17994,7 +17994,7 @@ node *getBacktrace() {
       argumentsNode = addMemRef(makeList(copyChainWithoutReversal(((backtrace_frame_t) (curr->value))->arguments, 
 								  copyThingOnVoid)));
     }
-    tempString = "arguments";
+    tempString = "passed_args";
     structEntry->name = (char *) safeCalloc(strlen(tempString)+1,sizeof(char));
     strcpy(structEntry->name,tempString);
     structEntry->value = argumentsNode;
