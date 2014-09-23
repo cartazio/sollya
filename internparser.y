@@ -273,6 +273,7 @@ extern FILE *internyyget_in(void *scanner);
 %token  ANNOTATEFUNCTIONTOKEN "annotatefunction"
 %token  BASHEVALUATETOKEN "bashevaluate"
 %token  GETSUPPRESSEDMESSAGESTOKEN "getsuppressedmessages"
+%token  GETBACKTRACETOKEN "getbacktrace"
 %token  FPMINIMAXTOKEN "fpminimax"
 %token  HORNERTOKEN "horner"
 %token  EXPANDTOKEN "expand"
@@ -1630,6 +1631,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | GETSUPPRESSEDMESSAGESTOKEN LPARTOKEN RPARTOKEN
                           {
 			    $$ = makeGetSuppressedMessages();
+			  }
+                      | GETBACKTRACETOKEN LPARTOKEN RPARTOKEN
+                          {
+			    $$ = makeGetBacktrace();
 			  }
                       | BASHEVALUATETOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
                           {

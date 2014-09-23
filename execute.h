@@ -297,6 +297,7 @@ extern void endBuffer(void);
 /* Attention: #define MEMREF 278 is used elsewhere */
 #define ANNOTATEFUNCTION 279
 #define OBJECTNAME 280
+#define GETBACKTRACE 281
 
 int executeCommand(node *);
 
@@ -450,6 +451,7 @@ node *makeEvalConst(node *thing);
 node *makeDiff(node *thing);
 node *makeBashevaluate(chain *thinglist);
 node *makeGetSuppressedMessages();
+node *makeGetBacktrace();
 node *makeDirtysimplify(node *thing);
 node *makeSimplifySafe(node *thing);
 node *makeRemez(chain *thinglist);

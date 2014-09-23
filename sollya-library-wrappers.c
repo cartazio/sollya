@@ -960,6 +960,14 @@ sollya_obj_t sollya_lib_getsuppressedmessages() {
   return evaluatedThing;
 }
 
+sollya_obj_t sollya_lib_getbacktrace() {
+  node *thingToEvaluate, *evaluatedThing;
+  thingToEvaluate = makeGetBacktrace();
+  evaluatedThing = evaluateThing(thingToEvaluate);
+  freeThing(thingToEvaluate);
+  return evaluatedThing;
+}
+
 sollya_obj_t sollya_lib_remez(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3, ...) {
   node *thingToEvaluate, *evaluatedThing;
   MAKE_THINGLIST_DECLS(thinglist);

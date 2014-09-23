@@ -309,6 +309,7 @@ PRINTEXPANSION  "printexpansion"
 BASHEXECUTE     "bashexecute"
 BASHEVALUATE    "bashevaluate"
 GETSUPPRESSEDMESSAGES "getsuppressedmessages"
+GETBACKTRACE    "getbacktrace"
 EXTERNALPLOT    "externalplot"
 PERTURB         "perturb"
 
@@ -724,6 +725,7 @@ NOP             "nop"
 {BASHEXECUTE}     			    {  miniparserCharactersRead += yyleng; return BASHEXECUTETOKEN; }
 {BASHEVALUATE}     			    {  miniparserCharactersRead += yyleng; return BASHEVALUATETOKEN; }
 {GETSUPPRESSEDMESSAGES}     		    {  miniparserCharactersRead += yyleng; return GETSUPPRESSEDMESSAGESTOKEN; }
+{GETBACKTRACE}         		            {  miniparserCharactersRead += yyleng; return GETBACKTRACETOKEN; }
 {EXTERNALPLOT}    			    {  miniparserCharactersRead += yyleng; return EXTERNALPLOTTOKEN; }
 {WRITE}           			    {  miniparserCharactersRead += yyleng; return WRITETOKEN; }
 {ASCIIPLOT}       			    {  miniparserCharactersRead += yyleng; return ASCIIPLOTTOKEN; }

@@ -1043,6 +1043,8 @@ node *copyThingInner(node *tree) {
     break;
   case GETSUPPRESSEDMESSAGES:
     break;
+  case GETBACKTRACE:
+    break;
   case DIRTYSIMPLIFY:
     copy->child1 = copyThingInner(tree->child1);
     break;
@@ -1933,6 +1935,8 @@ node *deepCopyThing(node *tree) {
     break;
   case GETSUPPRESSEDMESSAGES:
     break;
+  case GETBACKTRACE:
+    break;
   case DIRTYSIMPLIFY:
     copy->child1 = deepCopyThing(tree->child1);
     break;
@@ -2346,6 +2350,7 @@ node *tryFindMemRefOccurrence(node *subtree, node *tree) {
   case EMPTYLIST:
   case ELLIPTIC:
   case GETSUPPRESSEDMESSAGES:
+  case GETBACKTRACE:
   case EXTERNALPROCEDUREUSAGE:
   case PRECDEREF:
   case POINTSDEREF:
@@ -3247,6 +3252,8 @@ node *copyThingWithMemRefReuseInner(node *tree, node *reuse, int *didReuse) {
     break;
   case GETSUPPRESSEDMESSAGES:
     break;
+  case GETBACKTRACE:
+    break;
   case DIRTYSIMPLIFY:
     copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     break;
@@ -4123,6 +4130,9 @@ char *getTimingStringForThing(node *tree) {
     break;
   case GETSUPPRESSEDMESSAGES:
     constString = "getting the list of suppressed messages";
+    break;
+  case GETBACKTRACE:
+    constString = "getting a backtrace of the procedure calling stack";
     break;
   case DIRTYSIMPLIFY:
     constString = "simplifying with floating-point evaluation";
@@ -7299,6 +7309,9 @@ char *sRawPrintThingInner(node *tree, int forceDyadic) {
     break;
   case GETSUPPRESSEDMESSAGES:
     res = newString("getsuppressedmessages()");
+    break;
+  case GETBACKTRACE:
+    res = newString("getbacktrace()");
     break;
   case DIRTYSIMPLIFY:
     res = concatAndFree(newString("dirtysimplify("),
@@ -13992,6 +14005,16 @@ node *makeGetSuppressedMessages() {
 
 }
 
+node *makeGetBacktrace() {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = GETBACKTRACE;
+
+  return res;
+
+}
+
 node *makeRevert(node *thing) {
   node *res;
 
@@ -15182,6 +15205,9 @@ void freeThing(node *tree) {
   case GETSUPPRESSEDMESSAGES:
     safeFree(tree);
     break;
+  case GETBACKTRACE:
+    safeFree(tree);
+    break;
   case DIRTYSIMPLIFY:
     freeThing(tree->child1);
     safeFree(tree);
@@ -16158,6 +16184,8 @@ int isEqualThing(node *tree, node *tree2) {
     break;
   case GETSUPPRESSEDMESSAGES:
     break;
+  case GETBACKTRACE:
+    break;
   case DIRTYSIMPLIFY:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     break;
@@ -17033,6 +17061,8 @@ int isEqualThingNoPoly(node *tree, node *tree2) {
     if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
     break;
   case GETSUPPRESSEDMESSAGES:
+    break;
+  case GETBACKTRACE:
     break;
   case DIRTYSIMPLIFY:
     if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
@@ -18809,6 +18839,7 @@ int variableUsePreventsPreevaluation(node *tree) {
   case SUPPRESSWARNINGSDEREF:
   case HOPITALRECURSDEREF:
   case GETSUPPRESSEDMESSAGES:
+  case GETBACKTRACE:
     return 0;
     break;
   case ADD:
@@ -19785,6 +19816,8 @@ node *preevaluateMatcher(node *tree) {
     copy->arguments = copyChainWithoutReversal(tree->arguments, preevaluateMatcherOnVoid);
     break;
   case GETSUPPRESSEDMESSAGES:
+    break;
+  case GETBACKTRACE:
     break;
   case MATCH:
     copy->child1 = preevaluateMatcher(tree->child1);
@@ -26689,6 +26722,15 @@ node *evaluateThingInnerst(node *tree) {
     if (timingString != NULL) popTimeCounter(timingString);
     freeThing(copy);
     copy = tempNode;
+    break;
+  case GETBACKTRACE:
+    if (timingString != NULL) pushTimeCounter();
+    tempNode = getBacktrace();
+    if (tempNode != NULL) {
+      freeThing(copy);
+      copy = addMemRef(tempNode);
+    }
+    if (timingString != NULL) popTimeCounter(timingString);
     break;
   case REVERT:
     copy->child1 = evaluateThingInner(tree->child1);

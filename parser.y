@@ -292,6 +292,7 @@ int parserCheckEof() {
 %token  ANNOTATEFUNCTIONTOKEN "annotatefunction"
 %token  BASHEVALUATETOKEN "bashevaluate"
 %token  GETSUPPRESSEDMESSAGESTOKEN "getsuppressedmessages"
+%token  GETBACKTRACETOKEN "getbacktrace"
 %token  FPMINIMAXTOKEN "fpminimax"
 %token  HORNERTOKEN "horner"
 %token  EXPANDTOKEN "expand"
@@ -1700,6 +1701,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | GETSUPPRESSEDMESSAGESTOKEN LPARTOKEN RPARTOKEN
                           {
 			    $$ = makeGetSuppressedMessages();
+			  }
+                      | GETBACKTRACETOKEN LPARTOKEN RPARTOKEN
+                          {
+			    $$ = makeGetBacktrace();
 			  }
                       | BASHEVALUATETOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
                           {
@@ -3581,6 +3586,17 @@ help:                   CONSTANTTOKEN
 #endif
 #endif
                           }
+                      | GETBACKTRACETOKEN
+                          {
+#ifdef HELP_GETBACKTRACE_TEXT
+			    outputMode(); sollyaPrintf(HELP_GETBACKTRACE_TEXT);
+#else
+			    outputMode(); sollyaPrintf("Get a backtrace of the procedure calling stack.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for GETBACKTRACE"
+#endif
+#endif
+                          }
                       | DIRTYSIMPLIFYTOKEN
                           {
 #ifdef HELP_DIRTYSIMPLIFY_TEXT
@@ -4676,6 +4692,7 @@ help:                   CONSTANTTOKEN
 			    sollyaPrintf("- fullparentheses\n");
 			    sollyaPrintf("- function\n");
 			    sollyaPrintf("- getsuppressedmessages\n");
+			    sollyaPrintf("- getbacktrace\n");
 			    sollyaPrintf("- guessdegree\n");
 			    sollyaPrintf("- head\n");
 			    sollyaPrintf("- hexadecimal\n");
@@ -4710,6 +4727,7 @@ help:                   CONSTANTTOKEN
 			    sollyaPrintf("- nop\n");
 			    sollyaPrintf("- numerator\n");
 			    sollyaPrintf("- object\n");
+			    sollyaPrintf("- objectname\n");
 			    sollyaPrintf("- of\n");
 			    sollyaPrintf("- off\n");
 			    sollyaPrintf("- on\n");

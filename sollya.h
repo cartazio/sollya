@@ -397,6 +397,7 @@ extern "C" {
   sollya_obj_t sollya_lib_bashevaluate(sollya_obj_t, ...);
   sollya_obj_t sollya_lib_v_bashevaluate(sollya_obj_t, va_list);
   sollya_obj_t sollya_lib_getsuppressedmessages();
+  sollya_obj_t sollya_lib_getbacktrace();
   sollya_obj_t sollya_lib_remez(sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
   sollya_obj_t sollya_lib_v_remez(sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
   sollya_obj_t sollya_lib_annotatefunction(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
