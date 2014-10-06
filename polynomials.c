@@ -1965,7 +1965,7 @@ static inline constant_t constantFromCopy(constant_t c) {
 }
 
 static inline constant_t constantFromExpression(node *c) {
-  node *simplified;
+  node *simplified, *copy;
   mpq_t rational;
   constant_t res;
   
@@ -1992,6 +1992,12 @@ static inline constant_t constantFromExpression(node *c) {
     res = constantFromMpfr(*(accessThruMemRef(simplified)->value));
     freeThing(simplified);
     return res;
+  }
+  if (simplified == c) {
+    copy = addMemRef(copyThing(accessThruMemRef(simplified)));
+    tryCopyTreeAnnotations(copy, simplified);
+    freeThing(simplified);
+    simplified = copy;
   }
   
   res = __constantAllocate();
@@ -4031,6 +4037,26 @@ static inline constant_t constantRound(constant_t c, mp_prec_t prec) {
   return res;
 }
 
+static inline int constantReferencesExpression(constant_t c, node *expr) {
+  /* Handle stupid input */
+  if (c == NULL) return 0;
+
+  /* Evaluation depending on the representation type */
+  switch (c->type) {
+  case EXPRESSION:
+    if (c->value.expr == expr) return 1;
+    if (accessThruMemRef(c->value.expr) == expr) return 1;
+    return 0;
+    break;
+  case INTEGER:
+  case MPFR:
+  case SCALEDMPQ: 
+    return 0;
+    break;
+  }
+
+  return 0;
+}
 
 /* End of part for constants */
 
@@ -6759,6 +6785,25 @@ static inline unsigned int sparsePolynomialGetReferenceCount(sparse_polynomial_t
   return p->refCount;
 }
 
+static inline int sparsePolynomialReferencesExpression(sparse_polynomial_t p, node *expr) {
+  unsigned int i;
+  
+  /* Handle stupid input */
+  if (p == NULL) return 0;
+
+  /* Handle the case when the polynomial has no monomials */
+  if (p->monomialCount == 0u) return 0;
+
+  /* Go over all monomials and check the constants */
+  for (i=0u;i<p->monomialCount;i++) {
+    if (constantReferencesExpression(p->coeffs[i], expr)) return 1;
+    if (constantReferencesExpression(p->monomialDegrees[i], expr)) return 1;
+  }
+  if (constantReferencesExpression(p->deg, expr)) return 1;
+
+  /* The expression has nowhere been found */
+  return 0;
+}
 
 /* End of part for sparse polynomials */
 
@@ -8614,11 +8659,12 @@ polynomial_t polynomialDeriv(polynomial_t p) {
   return __polynomialBuildFromSparse(sparsePolynomialDeriv(p->value.sparse));
 }
 
-int polynomialFromExpression(polynomial_t *r, node *p) {
+static inline int __polynomialFromExpressionInner(polynomial_t *r, node *p, node *t) {
   polynomial_t a, b, quot, rest, zero;
   sparse_polynomial_t sr;
   int res;
   constant_t c;
+  node *pp;
 
   /* Handle stupid inputs */
   if (p == NULL) return 0;  
@@ -8630,8 +8676,8 @@ int polynomialFromExpression(polynomial_t *r, node *p) {
       *r = polynomialFromCopy(p->polynomialRepresentation);
       return 1;
     }
-    res = polynomialFromExpression(r, getMemRefChild(p));
-    if (res && (p->polynomialRepresentation == NULL)) {
+    res = __polynomialFromExpressionInner(r, getMemRefChild(p), p);
+    if (res && (p->polynomialRepresentation == NULL) && (!polynomialReferencesExpression(*r, p))) {
       p->polynomialRepresentation = polynomialFromCopy(*r);
     }
     return res;
@@ -8645,7 +8691,7 @@ int polynomialFromExpression(polynomial_t *r, node *p) {
     return 1;
     break;
   case NEG:
-    if (!polynomialFromExpression(&a, p->child1)) 
+    if (!__polynomialFromExpressionInner(&a, p->child1, NULL)) 
       break;
     *r = polynomialNeg(a);
     polynomialFree(a);
@@ -8656,9 +8702,9 @@ int polynomialFromExpression(polynomial_t *r, node *p) {
   case MUL:
   case DIV:
   case POW:
-    if (!polynomialFromExpression(&a, p->child1)) 
+    if (!__polynomialFromExpressionInner(&a, p->child1, NULL)) 
       break;
-    if (!polynomialFromExpression(&b, p->child2)) {
+    if (!__polynomialFromExpressionInner(&b, p->child2, NULL)) {
       polynomialFree(a);
       break;
     }
@@ -8714,8 +8760,13 @@ int polynomialFromExpression(polynomial_t *r, node *p) {
   /* Here, the expression contains some other basic function. It can
      be a polynomial only if it is a constant expression.
   */
-  if (isConstant(p)) {
-    if (!__sparsePolynomialFromConstantExpression(&sr, p)) return 0;
+  if (t != NULL) {
+    pp = t;
+  } else {
+    pp = p;
+  }
+  if (isConstant(pp)) {
+    if (!__sparsePolynomialFromConstantExpression(&sr, pp)) return 0;
     *r = __polynomialBuildFromSparse(sr);
     return 1;
   }
@@ -8723,11 +8774,16 @@ int polynomialFromExpression(polynomial_t *r, node *p) {
   return 0;
 }
 
-int polynomialFromExpressionOnlyRealCoeffs(polynomial_t *r, node *p) {
+int polynomialFromExpression(polynomial_t *r, node *p) {
+  return __polynomialFromExpressionInner(r, p, NULL);
+}
+
+static inline int __polynomialFromExpressionOnlyRealCoeffsInner(polynomial_t *r, node *p, node *t) {
   polynomial_t a, b, quot, rest, zero;
   sparse_polynomial_t sr;
   int res;
   constant_t c;
+  node *pp;
 
   /* Handle stupid inputs */
   if (p == NULL) return 0;  
@@ -8739,8 +8795,8 @@ int polynomialFromExpressionOnlyRealCoeffs(polynomial_t *r, node *p) {
       *r = polynomialFromCopy(p->polynomialRepresentation);
       return 1;
     }
-    res = polynomialFromExpressionOnlyRealCoeffs(r, getMemRefChild(p));
-    if (res && (p->polynomialRepresentation == NULL)) {
+    res = __polynomialFromExpressionOnlyRealCoeffsInner(r, getMemRefChild(p), p);
+    if (res && (p->polynomialRepresentation == NULL) && (!polynomialReferencesExpression(*r, p))) {
       p->polynomialRepresentation = polynomialFromCopy(*r);
     }
     return res;
@@ -8758,7 +8814,7 @@ int polynomialFromExpressionOnlyRealCoeffs(polynomial_t *r, node *p) {
     }
     break;
   case NEG:
-    if (!polynomialFromExpressionOnlyRealCoeffs(&a, p->child1)) 
+    if (!__polynomialFromExpressionOnlyRealCoeffsInner(&a, p->child1, NULL)) 
       break;
     *r = polynomialNeg(a);
     polynomialFree(a);
@@ -8769,9 +8825,9 @@ int polynomialFromExpressionOnlyRealCoeffs(polynomial_t *r, node *p) {
   case MUL:
   case DIV:
   case POW:
-    if (!polynomialFromExpressionOnlyRealCoeffs(&a, p->child1)) 
+    if (!__polynomialFromExpressionOnlyRealCoeffsInner(&a, p->child1, NULL))
       break;
-    if (!polynomialFromExpressionOnlyRealCoeffs(&b, p->child2)) {
+    if (!__polynomialFromExpressionOnlyRealCoeffsInner(&b, p->child2, NULL)) {
       polynomialFree(a);
       break;
     }
@@ -8828,13 +8884,22 @@ int polynomialFromExpressionOnlyRealCoeffs(polynomial_t *r, node *p) {
   /* Here, the expression contains some other basic function. It can
      be a polynomial only if it is a constant expression.
   */
-  if (isConstant(p)) {
-    if (!__sparsePolynomialFromConstantExpressionOnlyRealCoeffs(&sr, p)) return 0;
+  if (t != NULL) {
+    pp = t;
+  } else {
+    pp = p;
+  }
+  if (isConstant(pp)) {
+    if (!__sparsePolynomialFromConstantExpressionOnlyRealCoeffs(&sr, pp)) return 0;
     *r = __polynomialBuildFromSparse(sr);
     return 1;
   }
 
   return 0;
+}
+
+int polynomialFromExpressionOnlyRealCoeffs(polynomial_t *r, node *p) {
+  return __polynomialFromExpressionOnlyRealCoeffsInner(r, p, NULL);
 }
 
 polynomial_t polynomialPowUnsignedInt(polynomial_t p, unsigned int n) {
@@ -9281,3 +9346,32 @@ static inline sparse_polynomial_t __polynomialGetSparsePolynomial(polynomial_t p
   return sparsePolynomialFromCopy(p->value.sparse);
 }
 
+int polynomialReferencesExpression(polynomial_t p, node *expr) {
+
+  /* Handle stupid input */
+  if (p == NULL) return 0;
+
+  /* Handle the problem recursively */
+  switch (p->type) {
+  case SPARSE:
+    return sparsePolynomialReferencesExpression(p->value.sparse, expr);
+    break;
+  case ADDITION:
+  case SUBTRACTION:
+  case MULTIPLICATION:
+  case COMPOSITION:
+    if (polynomialReferencesExpression(p->value.pair.g, expr)) return 1;
+    if (polynomialReferencesExpression(p->value.pair.h, expr)) return 1;
+    return 0;
+    break;
+  case NEGATE:
+    return polynomialReferencesExpression(p->value.g, expr);
+    break;
+  case POWER:
+    if (constantReferencesExpression(p->value.powering.c, expr)) return 1;
+    if (polynomialReferencesExpression(p->value.powering.g, expr)) return 1;
+    return 0;
+    break;
+  }
+  return 0;
+}

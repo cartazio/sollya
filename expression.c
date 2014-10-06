@@ -79,6 +79,7 @@ static inline void copyTreeAnnotations(node *new, node *old) {
   if (old == NULL) return;
   if (new->nodeType != MEMREF) return;
   if (old->nodeType != MEMREF) return;
+  if (new == old) return;
   new->isCorrectlyTyped = old->isCorrectlyTyped;
   if ((old->derivCache != NULL) && (new->derivCache == NULL)) {
     new->derivCache = copyThing(old->derivCache);
@@ -96,6 +97,10 @@ static inline void copyTreeAnnotations(node *new, node *old) {
     new->simplifyCacheDoesNotSimplify = old->simplifyCacheDoesNotSimplify;
   }
   addEvaluationHookFromCopy(&(new->evaluationHook), old->evaluationHook);
+}
+
+void tryCopyTreeAnnotations(node *newTree, node *oldTree) {
+  copyTreeAnnotations(newTree, oldTree);
 }
 
 int isSyntacticallyEqualCheap(node *tree1, node *tree2);

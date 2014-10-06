@@ -124,4 +124,8 @@ polynomial_t polynomialRoundDyadic(polynomial_t, mp_prec_t);
 polynomial_t polynomialRoundRational(polynomial_t, mp_prec_t);
 polynomial_t polynomialRound(polynomial_t, mp_prec_t);
 
+/* A function to prevent memory reference loops */
+int polynomialReferencesExpression(polynomial_t, struct nodeStruct *);
+
+
 #endif /* ifdef POLYNOMIALS_H*/
