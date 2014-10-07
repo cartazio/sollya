@@ -1537,6 +1537,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
   mpfr_t zero_mpfr, var1, var2, var3, computedQuality, infinityNorm;
   node *temp_tree;
   node *temp_tree2;
+  node *temp_tree_simplified;
   node *poly;
   node *res;
   chain *curr;
@@ -1955,7 +1956,10 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
       /* temporary check until I patch the algorithm in order to handle
          correctly cases when the error oscillates too much
       */
-      temp_tree = addMemRef(makeSub(makeMul(copyTree(poly), copyTree(w)), copyTree(f)));
+      temp_tree = addMemRef(makeSub(addMemRef(makeMul(copyTree(poly), copyTree(w))), copyTree(f)));
+      temp_tree_simplified = simplifyTreeErrorfree(temp_tree);
+      free_memory(temp_tree);
+      temp_tree = temp_tree_simplified;
       uncertifiedInfnorm(infinityNorm, temp_tree, u, v, getToolPoints(), quality_prec);
       free_memory(temp_tree);
       /* end of the temporary check */

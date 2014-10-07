@@ -3947,7 +3947,7 @@ static inline void constantEvalMpfi(sollya_mpfi_t rop, constant_t c) {
     sollya_mpfi_set_si(rop, c->value.integer);
     break;
   case EXPRESSION:
-    evaluateConstantExpressionToSharpInterval(rop, c->value.expr);
+    evaluateConstantExpressionToInterval(rop, c->value.expr);
     break;
   case MPFR:
     sollya_mpfi_set_fr(rop, c->value.mpfr);
