@@ -1051,6 +1051,49 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
     rightTheo = NULL;
   }
 
+  if ((theo == NULL) &&
+      noExcludes) {
+    switch (tree->nodeType) {
+    case MUL:
+    case DIV:
+      if ((tree->child1->nodeType == MEMREF) &&
+	  (tree->child2->nodeType == MEMREF)) {
+	if ((tree->child1->evalCacheX != NULL) &&
+	    (tree->child1->evalCacheY != NULL) &&
+	    (tree->child2->evalCacheX != NULL) &&
+	    (tree->child2->evalCacheY != NULL)) {
+	  if (sollya_mpfi_equal_p(*(tree->child1->evalCacheX), x) && 
+	      sollya_mpfi_equal_p(*(tree->child2->evalCacheX), x)) {
+	    switch (tree->nodeType) {
+	    case MUL:
+	      if ((sollya_mpfi_is_zero(*(tree->child1->evalCacheY)) ||
+		   sollya_mpfi_is_zero(*(tree->child2->evalCacheY))) && 
+		  (!(sollya_mpfi_has_infinity(*(tree->child1->evalCacheY)) ||
+		     sollya_mpfi_has_infinity(*(tree->child2->evalCacheY)) ||
+		     sollya_mpfi_has_nan(*(tree->child1->evalCacheY)) ||
+		     sollya_mpfi_has_nan(*(tree->child2->evalCacheY))))) {
+		sollya_mpfi_set_si(result, 0);
+		return NULL;	
+	      }
+	      break;
+	    case DIV:
+	      if ((sollya_mpfi_is_zero(*(tree->child1->evalCacheY)) &&
+		   (!sollya_mpfi_has_zero(*(tree->child2->evalCacheY)))) && 
+		  (!(sollya_mpfi_has_infinity(*(tree->child1->evalCacheY)) ||
+		     sollya_mpfi_has_infinity(*(tree->child2->evalCacheY)) ||
+		     sollya_mpfi_has_nan(*(tree->child1->evalCacheY)) ||
+		     sollya_mpfi_has_nan(*(tree->child2->evalCacheY))))) {
+		sollya_mpfi_set_si(result, 0);
+		return NULL;	
+	      }
+	      break;
+	    }
+	  }
+	}
+      }
+    }
+  }
+
   if ((theo == NULL) && 
       noExcludes &&
       (sollya_mpfi_get_prec(result) >= prec)) {
@@ -1859,7 +1902,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
 	sollya_mpfi_get_left(xl,x);
 	sollya_mpfi_get_right(xr,x);
 
-	if (mpfr_cmp(xl,xr) != 0) {
+	if ((mpfr_cmp(xl,xr) != 0) || ((mpfr_sgn(xl) == 0) && (mpfr_sgn(xr) == 0))) {
 
 	  printMessage(12,SOLLYA_MSG_DIFFERENTIATING_FOR_HOPITALS_RULE,"Information: Differentiating while evaluating for Hopital's rule.\n");
 	  derivDenominator = differentiate(tree->child2);
@@ -7477,6 +7520,25 @@ int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *fu
 		sollya_mpfi_mid(resUp,yI);
 		mpfr_set(resDown, resUp, GMP_RNDN); /* exact, same precision */
 		okay = 2;
+	      }
+	    }
+	  }
+	}
+      }
+    } else {
+      if (accessThruMemRef(func)->nodeType == DIV) {
+	if ((accessThruMemRef(func)->child1->nodeType == MEMREF) && 
+	    (accessThruMemRef(func)->child2->nodeType == MEMREF)) {
+	  if ((accessThruMemRef(func)->child1->evalCacheX != NULL) && 
+	      (accessThruMemRef(func)->child1->evalCacheY != NULL) &&
+	      (accessThruMemRef(func)->child2->evalCacheX != NULL) && 
+	      (accessThruMemRef(func)->child2->evalCacheY != NULL)) {
+	    if (sollya_mpfi_is_point_and_real(xI) && 
+		sollya_mpfi_equal_p(*(accessThruMemRef(func)->child1->evalCacheX), xI) && 
+		sollya_mpfi_equal_p(*(accessThruMemRef(func)->child2->evalCacheX), xI)) {
+	      if (sollya_mpfi_is_zero(*(accessThruMemRef(func)->child1->evalCacheY)) && 
+		  sollya_mpfi_is_zero(*(accessThruMemRef(func)->child2->evalCacheY))) {
+		break;
 	      }
 	    }
 	  }
