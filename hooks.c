@@ -895,6 +895,9 @@ composition_eval_hook_t *createCompositionEvalHook(eval_hook_t *f, node *g) {
 
   newCompositionEvalHook = (composition_eval_hook_t *) safeMalloc(sizeof(composition_eval_hook_t));
   newCompositionEvalHook->reusedVarTInit = 0;
+  newCompositionEvalHook->reusedVarTAInit = 0;
+  newCompositionEvalHook->reusedVarTBInit = 0;
+  newCompositionEvalHook->reusedVarTempInit = 0;
   newCompositionEvalHook->f = NULL;
   addEvaluationHookFromCopy(&(newCompositionEvalHook->f), f);
   newCompositionEvalHook->g = copyThing(g);
@@ -903,8 +906,8 @@ composition_eval_hook_t *createCompositionEvalHook(eval_hook_t *f, node *g) {
 
 int evaluateCompositionEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void *data) {
   composition_eval_hook_t * hook;
-  mp_prec_t p;
-  int res;
+  mp_prec_t p, pX;
+  int res, resA, resB;
 
   hook = (composition_eval_hook_t *) data;
 
@@ -912,6 +915,8 @@ int evaluateCompositionEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec
   if (sollya_mpfi_has_infinity(x)) return 0;
 
   p = sollya_mpfi_get_prec(y) + 10; 
+  pX = sollya_mpfi_get_prec(x) + 10;
+  if (pX > p) p = pX;
   if (prec > p) p = prec;
 
   if (hook->reusedVarTInit) { 
@@ -929,6 +934,49 @@ int evaluateCompositionEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec
 
   res = evaluateWithEvaluationHook(y, hook->reusedVarT, prec, hook->f);
 
+  if ((!res) && (!sollya_mpfi_is_point_and_real(hook->reusedVarT))) {
+    if (hook->reusedVarTAInit) { 
+      sollya_mpfi_set_prec(hook->reusedVarTA, sollya_mpfi_get_prec(hook->reusedVarT)); 
+    } else {
+      sollya_mpfi_init2(hook->reusedVarTA, sollya_mpfi_get_prec(hook->reusedVarT)); 
+      hook->reusedVarTAInit = 1;
+    }
+    if (hook->reusedVarTBInit) { 
+      sollya_mpfi_set_prec(hook->reusedVarTB, sollya_mpfi_get_prec(y)); 
+    } else {
+      sollya_mpfi_init2(hook->reusedVarTB, sollya_mpfi_get_prec(y)); 
+      hook->reusedVarTBInit = 1;
+    }
+    if (hook->reusedVarTempInit) { 
+      mpfr_set_prec(hook->reusedVarTemp, sollya_mpfi_get_prec(hook->reusedVarT)); 
+    } else {
+      mpfr_init2(hook->reusedVarTemp, sollya_mpfi_get_prec(hook->reusedVarT)); 
+      hook->reusedVarTempInit = 1;
+    }
+    sollya_mpfi_get_left(hook->reusedVarTemp, hook->reusedVarT);
+    sollya_mpfi_set_fr(hook->reusedVarTA, hook->reusedVarTemp);
+    resA = evaluateWithEvaluationHook(hook->reusedVarTB, hook->reusedVarTA, prec, hook->f);
+    if (resA) {
+      sollya_mpfi_get_right(hook->reusedVarTemp, hook->reusedVarT);
+      sollya_mpfi_set_fr(hook->reusedVarTA, hook->reusedVarTemp);
+      resB = evaluateWithEvaluationHook(hook->reusedVarTB, hook->reusedVarTA, prec, hook->f);
+      if (resB) {
+	/* We can use the hook for f to evaluate f at each end-point of t, but not over t. 
+	   This probably means that f has a zero in t. However, t is just an approximation
+	   and with a finer t we might do the whole evaluation.
+	*/
+	p *= 8;
+	sollya_mpfi_set_prec(hook->reusedVarT, p); 
+	evaluateInterval(hook->reusedVarT, hook->g, NULL, x);
+	if (sollya_mpfi_has_nan(hook->reusedVarT) || 
+	    sollya_mpfi_has_infinity(hook->reusedVarT)) {
+	  return 0;
+	}
+	res = evaluateWithEvaluationHook(y, hook->reusedVarT, prec, hook->f);
+      }
+    }
+  }
+
   return res;
 }
 
@@ -937,6 +985,9 @@ void freeCompositionEvalHook(void *data) {
 
   hook = (composition_eval_hook_t *) data;
   if (hook->reusedVarTInit) sollya_mpfi_clear(hook->reusedVarT);
+  if (hook->reusedVarTAInit) sollya_mpfi_clear(hook->reusedVarTA);
+  if (hook->reusedVarTBInit) sollya_mpfi_clear(hook->reusedVarTB);
+  if (hook->reusedVarTempInit) mpfr_clear(hook->reusedVarTemp);
   freeThing(hook->g);
   freeEvaluationHook(&(hook->f));
   safeFree(hook);

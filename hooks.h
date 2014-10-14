@@ -156,7 +156,13 @@ struct __composition_eval_hook_t_struct {
   eval_hook_t *f;
   struct nodeStruct *g;
   sollya_mpfi_t reusedVarT;
+  sollya_mpfi_t reusedVarTA;
+  sollya_mpfi_t reusedVarTB;
+  mpfr_t reusedVarTemp;
   int reusedVarTInit;
+  int reusedVarTAInit;
+  int reusedVarTBInit;
+  int reusedVarTempInit;
 };
 
 composition_eval_hook_t *createCompositionEvalHook(eval_hook_t *, struct nodeStruct *);
