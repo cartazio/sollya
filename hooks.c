@@ -279,8 +279,8 @@ int evaluatePolyEvalHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, void *);
 poly_eval_hook_t *createPolyEvalHook(int degree, mpfr_t *coeffs, sollya_mpfi_t dom, sollya_mpfi_t delta, sollya_mpfi_t t) {
   poly_eval_hook_t *newPolyEvalHook;
   mpfr_t *derivCoeffs;
-  int i, derivPolyCoeffsOkay;
-  node *derivPoly;
+  int i, derivPolyCoeffsOkay, coeffsOkay;
+  node *derivPoly, *poly;
   sollya_mpfi_t X, Y;
   mpfr_t ymax, deltamax;
   mpfr_t nbRoots;
@@ -318,7 +318,7 @@ poly_eval_hook_t *createPolyEvalHook(int degree, mpfr_t *coeffs, sollya_mpfi_t d
   }
 
   /* Try to precompute information on whether the polynomial is monotone over the whole interval */
-  newPolyEvalHook->polynomialIsMonotone = 0; 
+  newPolyEvalHook->polynomialIsMonotone = 0;
   if (degree >= 1) {
     derivCoeffs = (mpfr_t *) safeCalloc(degree, sizeof(mpfr_t));
     derivPolyCoeffsOkay = 1;
@@ -364,6 +364,54 @@ poly_eval_hook_t *createPolyEvalHook(int degree, mpfr_t *coeffs, sollya_mpfi_t d
     freeThing(derivPoly);
   } else {
     if (degree == 0) newPolyEvalHook->polynomialIsMonotone = 1;
+  }
+
+  /* Try to precompute information on whether the polynomial has a zero in the interval 
+
+     Do not consider zeros at zero when t is zero.
+
+  */
+  newPolyEvalHook->polynomialHasZero = 0;
+  if ((degree >= 0) && 
+      (!(sollya_mpfi_is_zero(t) && mpfr_zero_p(coeffs[0])))) {
+    if (degree >= 1) {
+      coeffsOkay = 1;
+      maxPrec = sollya_mpfi_get_prec(dom);
+      if (sollya_mpfi_get_prec(t) > maxPrec) maxPrec = sollya_mpfi_get_prec(t);
+      for (i=0;i<=degree;i++) {
+	coeffsOkay = coeffsOkay && mpfr_number_p(coeffs[i]);
+	if (mpfr_get_prec(coeffs[i]) > maxPrec) maxPrec = mpfr_get_prec(coeffs[i]);
+      }
+      if (coeffsOkay) {
+	poly = makePolynomial(coeffs, degree);
+	sollya_mpfi_init2(X, 
+			  (sollya_mpfi_get_prec(dom) > sollya_mpfi_get_prec(t) ? 
+			   sollya_mpfi_get_prec(dom) : sollya_mpfi_get_prec(t)));
+	sollya_mpfi_init2(Y, sollya_mpfi_get_prec(X));
+	sollya_mpfi_sub(X, dom, t);
+	evaluateInterval(Y, poly, NULL, X);
+	if (sollya_mpfi_has_nan(Y) ||
+	    sollya_mpfi_has_infinity(Y) ||
+	    sollya_mpfi_has_zero(Y)) {
+	  mpfr_init2(nbRoots, 8 * sizeof(int) + 5);
+	  if (getNrRoots(nbRoots, poly, X, maxPrec, 1)) {
+	    if (mpfr_number_p(nbRoots) && (!mpfr_zero_p(nbRoots))) {
+	      newPolyEvalHook->polynomialHasZero = 1; 
+	    }
+	  }
+	  mpfr_clear(nbRoots);
+	}
+	sollya_mpfi_clear(X);
+	sollya_mpfi_clear(Y);
+	freeThing(poly);
+      }
+    } else {
+      if (degree == 0) {
+	if (mpfr_number_p(coeffs[0]) && mpfr_zero_p(coeffs[0])) {
+	  newPolyEvalHook->polynomialHasZero = 1;
+	}
+      }
+    }
   }
 
   /* Precompute information on whether we have an exact representation
@@ -469,6 +517,7 @@ void *copyPolyEvalHook(void *data) {
   
   /* Copy the precomputed stuff */
   newPolyEvalHook->polynomialIsMonotone = hook->polynomialIsMonotone; 
+  newPolyEvalHook->polynomialHasZero = hook->polynomialHasZero; 
   newPolyEvalHook->exactRepresentation = hook->exactRepresentation;
   newPolyEvalHook->maxPrecKnown = hook->maxPrecKnown;
   newPolyEvalHook->maxPrec = hook->maxPrec;
@@ -518,6 +567,13 @@ int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void 
   pY = sollya_mpfi_get_prec(y); 
   pX = sollya_mpfi_get_prec(x); 
   p = pY + 10;
+  if (hook->polynomialHasZero) {
+    if (hook->maxPrecKnown) {
+      p = (hook->maxPrec + 10 > p ? hook->maxPrec + 10 : p);
+    } else {
+      p *= 2;
+    }
+  }
   if (prec > p) p = prec;
 
   if ((!(hook->exactRepresentation)) &&
