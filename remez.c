@@ -618,14 +618,16 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
     iterator->nodeType = SUB;
     temp = safeMalloc(sizeof(node));
     temp->nodeType = VARIABLE;
-    iterator->child1 = temp;
+    iterator->child1 = addMemRef(temp);
 
     temp = safeMalloc(sizeof(node));
     temp->nodeType = DIV;
     temp->child1 = copyTree(f);
     temp->child2 = copyTree(f_diff);
-    iterator->child2 = temp;
+    iterator->child2 = addMemRef(temp);
 
+    iterator = addMemRef(iterator);
+    
     temp = simplifyTreeErrorfree(iterator);
     free_memory(iterator);
     iterator = temp;
@@ -883,6 +885,7 @@ void single_step_remez(mpfr_t newx, mpfr_t err_newx, mpfr_t *x,
 	temp_tree->nodeType = MUL;
 	temp_tree->child1 = copyTree(monomials_tree[j-1]);
 	temp_tree->child2 = copyTree(w);
+	temp_tree = addMemRef(temp_tree);
 
 	temp_tree2 = simplifyTreeErrorfree(temp_tree);
 	free_memory(temp_tree);
@@ -915,6 +918,7 @@ void single_step_remez(mpfr_t newx, mpfr_t err_newx, mpfr_t *x,
       temp_tree->nodeType = MUL;
       temp_tree->child1 = copyTree(monomials_tree[j-1]);
       temp_tree->child2 = copyTree(w);
+      temp_tree = addMemRef(temp_tree);
 
       temp_tree2 = simplifyTreeErrorfree(temp_tree);
       free_memory(temp_tree);
@@ -1238,8 +1242,9 @@ int qualityOfError(mpfr_t computedQuality, mpfr_t infinityNorm, mpfr_t *x,
   temp1->nodeType = MUL;
   temp1->child1 = copyTree(poly);
   temp1->child2 = copyTree(w);
-  error->child1 = temp1;
+  error->child1 = addMemRef(temp1);
   error->child2 = copyTree(f);
+  error = addMemRef(error);
 
   temp1 = simplifyTreeErrorfree(error);
   free_memory(error);
@@ -1765,6 +1770,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 	    temp_tree->nodeType = MUL;
 	    temp_tree->child1 = copyTree(monomials_tree[j-1]);
 	    temp_tree->child2 = copyTree(w);
+	    temp_tree = addMemRef(temp_tree);
 
 	    temp_tree2 = simplifyTreeErrorfree(temp_tree);
 	    free_memory(temp_tree);
@@ -2180,6 +2186,7 @@ mpfr_t *remezMatrix(node *w, mpfr_t *x, node **monomials_tree, int n, mp_prec_t 
 	temp_tree->nodeType = MUL;
 	temp_tree->child1 = copyTree(monomials_tree[j-1]);
 	temp_tree->child2 = copyTree(w);
+	temp_tree = addMemRef(temp_tree);
 
 	temp_tree2 = simplifyTreeErrorfree(temp_tree);
 	free_memory(temp_tree);
