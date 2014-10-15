@@ -149,9 +149,9 @@ int evaluateWithEvaluationHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec,
 
   for (curr=hook;curr!=NULL;curr=curr->nextHook) {
     if (curr->gettingUsed <= 0) {
-      curr->gettingUsed++;
+      curr->gettingUsed = 1;
       res = curr->evaluateHook(y,x,prec,mayEvaluateExpressions,curr->data);
-      curr->gettingUsed--;
+      curr->gettingUsed = 0;
     } else {
       res = 0;
     }
