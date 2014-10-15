@@ -83,6 +83,7 @@ int addEvaluationHook(eval_hook_t **hookPtr,
   */
   newHook = (eval_hook_t *) safeMalloc(sizeof(eval_hook_t));
   newHook->data = data;
+  newHook->gettingUsed = 0;
   newHook->evaluateHook = evaluateFunc;
   newHook->freeHook = freeFunc;
   newHook->compareHook = compareFunc;
@@ -142,11 +143,19 @@ void freeEvaluationHook(eval_hook_t **hookPtr) {
 
 int evaluateWithEvaluationHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, int mayEvaluateExpressions, eval_hook_t *hook) {
   eval_hook_t *curr;
+  int res;
 
   if (hook == NULL) return 0;
 
   for (curr=hook;curr!=NULL;curr=curr->nextHook) {
-    if (curr->evaluateHook(y,x,prec,mayEvaluateExpressions,curr->data)) {
+    if (curr->gettingUsed <= 0) {
+      curr->gettingUsed++;
+      res = curr->evaluateHook(y,x,prec,mayEvaluateExpressions,curr->data);
+      curr->gettingUsed--;
+    } else {
+      res = 0;
+    }
+    if (res) {
       return 1;
     }
   }
@@ -560,6 +569,8 @@ int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, int m
   mp_prec_t p, pY, pX;
   int okay, i, polynomialIsMonotone;
 
+  UNUSED_PARAM(mayEvaluateExpressions);
+
   hook = (poly_eval_hook_t *) data;
 
   if (sollya_mpfi_has_nan(x)) return 0;
@@ -928,11 +939,7 @@ int evaluateCompositionEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec
     hook->reusedVarTInit = 1;
   }
 
-  if (mayEvaluateExpressions) {
-    evaluateInterval(hook->reusedVarT, hook->g, NULL, x);
-  } else {
-    evaluateIntervalWithoutHooks(hook->reusedVarT, hook->g, NULL, x);
-  }
+  evaluateInterval(hook->reusedVarT, hook->g, NULL, x);
   if (sollya_mpfi_has_nan(hook->reusedVarT) || 
       sollya_mpfi_has_infinity(hook->reusedVarT)) {
     return 0;
@@ -973,11 +980,7 @@ int evaluateCompositionEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec
 	*/
 	p *= 8;
 	sollya_mpfi_set_prec(hook->reusedVarT, p); 
-	if (mayEvaluateExpressions) {
-	  evaluateInterval(hook->reusedVarT, hook->g, NULL, x);
-	} else {
-	  evaluateIntervalWithoutHooks(hook->reusedVarT, hook->g, NULL, x);
-	}
+	evaluateInterval(hook->reusedVarT, hook->g, NULL, x);
 	if (sollya_mpfi_has_nan(hook->reusedVarT) || 
 	    sollya_mpfi_has_infinity(hook->reusedVarT)) {
 	  return 0;

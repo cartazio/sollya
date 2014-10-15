@@ -12141,6 +12141,7 @@ node *substituteInner(node* tree, node *t, int doNotEvaluate, int maySimplify) {
   int haveAPrioriBoundForConstantExpr;
   mp_prec_t *precPtr;
   sollya_mpfi_t *intervalPtr;
+  node *tempDerivCache;
 
   // sollyaPrintf("tree = %b;\ntree->nodeType = %d;\nt = %b;\nt->nodeType = %d;\n", tree, tree->nodeType, t, t->nodeType);
 
@@ -12226,8 +12227,10 @@ node *substituteInner(node* tree, node *t, int doNotEvaluate, int maySimplify) {
 	    ((tree->derivCache->nodeType == MEMREF) &&
 	     (tree->derivCache->evaluationHook != NULL)))) && 
 	  (!isConstant(copy))) {
-	copy->derivCache = addMemRef(makeMul(addMemRef(substituteInner(tree->derivCache, t, 1, maySimplify)),
-					     addMemRef(differentiate(t))));
+	tempDerivCache = addMemRef(makeMul(addMemRef(substituteInner(tree->derivCache, t, 1, maySimplify)),
+					   addMemRef(differentiate(t))));
+	copy->derivCache = simplifyTreeErrorfree(tempDerivCache);
+	free_memory(tempDerivCache);
       }
     }
 
