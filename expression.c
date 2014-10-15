@@ -12127,6 +12127,77 @@ node *substitute(node* tree, node *t) {
   return substituteEnhanced(tree, t, 1);
 }
 
+int treeContainsHooks(node *tree) {
+
+  if (tree == NULL) return 0;
+  if (tree->nodeType == MEMREF) {
+    if (tree->evaluationHook != NULL) return 1;
+    if ((tree->child1 == NULL) && 
+	(tree->polynomialRepresentation != NULL)) return 0;
+    return treeContainsHooks(getMemRefChild(tree));
+  }
+
+  switch (tree->nodeType) {
+  case VARIABLE:
+  case CONSTANT:
+  case PI_CONST:
+  case LIBRARYCONSTANT:
+    return 0;
+    break;
+  case ADD:
+  case SUB:
+  case MUL:
+  case DIV:
+  case POW:
+    if (treeContainsHooks(tree->child1)) return 1;
+    if (treeContainsHooks(tree->child2)) return 1;
+    return 0;
+    break;
+  case SQRT:
+  case EXP:
+  case LOG:
+  case LOG_2:
+  case LOG_10:
+  case SIN:
+  case COS:
+  case TAN:
+  case ASIN:
+  case ACOS:
+  case ATAN:
+  case SINH:
+  case COSH:
+  case TANH:
+  case ASINH:
+  case ACOSH:
+  case ATANH:
+  case NEG:
+  case ABS:
+  case DOUBLE:
+  case SINGLE:
+  case QUAD:
+  case HALFPRECISION:
+  case DOUBLEDOUBLE:
+  case TRIPLEDOUBLE:
+  case ERF:
+  case ERFC:
+  case LOG_1P:
+  case EXP_M1:
+  case DOUBLEEXTENDED:
+  case LIBRARYFUNCTION:
+  case PROCEDUREFUNCTION:
+  case CEIL:
+  case FLOOR:
+  case NEARESTINT:
+    return treeContainsHooks(tree->child1);
+    break;
+  default:
+    sollyaFprintf(stderr,"Error: treeContainsHooks: unknown identifier in the tree\n");
+    exit(1);
+  }
+  
+  return 0;
+}
+
 node *substituteInner(node* tree, node *t, int doNotEvaluate, int maySimplify) {
   node *copy;
   mpfr_t *value;
@@ -12225,7 +12296,7 @@ node *substituteInner(node* tree, node *t, int doNotEvaluate, int maySimplify) {
       if (((copy->derivCache == NULL) && 
 	   ((tree->derivCache != NULL) &&
 	    ((tree->derivCache->nodeType == MEMREF) &&
-	     (tree->derivCache->evaluationHook != NULL)))) && 
+	     (treeContainsHooks(tree->derivCache))))) && 
 	  (!isConstant(copy))) {
 	tempDerivCache = addMemRef(makeMul(addMemRef(substituteInner(tree->derivCache, t, 1, maySimplify)),
 					   addMemRef(differentiate(t))));
