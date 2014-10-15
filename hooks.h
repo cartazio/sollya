@@ -63,7 +63,7 @@ struct nodeStruct;
 typedef struct __eval_hook_t_struct eval_hook_t;
 struct __eval_hook_t_struct {
   void *data;
-  int (*evaluateHook)(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, void *);
+  int (*evaluateHook)(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, int, void *);
   void (*freeHook)(void *);
   int (*compareHook)(void *, void *);
   void *(*copyHook)(void *);
@@ -73,7 +73,7 @@ struct __eval_hook_t_struct {
 
 int addEvaluationHook(eval_hook_t **, 
 		      void *, 
-		      int (*)(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, void *), 
+		      int (*)(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, int, void *), 
 		      void (*)(void *),
 		      int (*)(void *, void *),
 		      void *(*)(void *),
@@ -85,7 +85,7 @@ int addEvaluationHookFromComposition(eval_hook_t **, eval_hook_t *, struct nodeS
 
 void freeEvaluationHook(eval_hook_t **);
 
-int evaluateWithEvaluationHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, eval_hook_t *);
+int evaluateWithEvaluationHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, int, eval_hook_t *);
 
 
 
@@ -100,7 +100,7 @@ struct __node_eval_hook_t_struct {
 };
 
 node_eval_hook_t *createNodeEvalHook(struct nodeStruct *, sollya_mpfi_t, sollya_mpfi_t, sollya_mpfi_t);
-int evaluateNodeEvalHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, void *);
+int evaluateNodeEvalHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, int, void *);
 void freeNodeEvalHook(void *);
 int compareNodeEvalHook(void *, void *);
 void *copyNodeEvalHook(void *);
@@ -143,7 +143,7 @@ struct __poly_eval_hook_t_struct {
 };
 
 poly_eval_hook_t *createPolyEvalHook(int, mpfr_t *, sollya_mpfi_t, sollya_mpfi_t, sollya_mpfi_t);
-int evaluatePolyEvalHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, void *);
+int evaluatePolyEvalHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, int, void *);
 void freePolyEvalHook(void *);
 int comparePolyEvalHook(void *, void *);
 void *copyPolyEvalHook(void *);
@@ -166,7 +166,7 @@ struct __composition_eval_hook_t_struct {
 };
 
 composition_eval_hook_t *createCompositionEvalHook(eval_hook_t *, struct nodeStruct *);
-int evaluateCompositionEvalHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, void *);
+int evaluateCompositionEvalHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, int, void *);
 void freeCompositionEvalHook(void *);
 int compareCompositionEvalHook(void *, void *);
 void *copyCompositionEvalHook(void *);

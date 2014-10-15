@@ -667,7 +667,11 @@ void evaluateNewtonMPFRWithStartPoint(mpfr_t result, node *tree, mpfr_t x, mp_pr
        mpfr_number_p(b)) && 
       ((mpfr_cmp(a, x) <= 0) && 
        (mpfr_cmp(x, b) <= 0))) {
-    evaluate(result, tree, x, prec);
+    if (useHooks) {
+      evaluate(result, tree, x, prec);
+    } else {
+      evaluateWithoutHooks(result, tree, x, prec);
+    }
   } 
 
   p = mpfr_get_prec(a);
@@ -954,7 +958,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
       if (!(sollya_mpfi_has_nan(result) || sollya_mpfi_has_infinity(result))) return NULL;
     }
 
-    if ((useHooks) && (evaluateWithEvaluationHook(result, x, prec, tree->evaluationHook))) {
+    if (evaluateWithEvaluationHook(result, x, prec, useHooks, tree->evaluationHook)) {
       excludes = NULL;
     } else {
       if (tree->polynomialRepresentation != NULL) {
@@ -2533,7 +2537,7 @@ chain* evaluateITaylor(sollya_mpfi_t result, node *func, node *deriv, sollya_mpf
   
   if ((func->nodeType == MEMREF) &&
       (func->evaluationHook != NULL) &&
-      evaluateWithEvaluationHook(result, x, prec, func->evaluationHook)) {
+      evaluateWithEvaluationHook(result, x, prec, useHooks, func->evaluationHook)) {
     excludes = NULL;
   } else {
     excludes = evaluateITaylorInner(result, func, deriv, x, prec, recurse, theo, noExcludes, fastAddSub, workForThin, cutoff, useHooks);
@@ -3960,7 +3964,7 @@ void evaluateConstantExpressionToInterval(sollya_mpfi_t y, node *func) {
   sollya_mpfi_init2(x,12);
   sollya_mpfi_set_si(x,1);
 
-  evaluateInterval(y, func, NULL, x);
+  evaluateIntervalWithoutHooks(y, func, NULL, x);
 
   sollya_mpfi_clear(x);
 }
@@ -6721,7 +6725,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedHooks(mpfr_t y, eval_hoo
   X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(x));
   
   sollya_mpfi_set_fr(*X, x);
-  hookRes = evaluateWithEvaluationHook(*Y, *X, prec, hook);
+  hookRes = evaluateWithEvaluationHook(*Y, *X, prec, 0, hook);
   if (!hookRes) {
     clearChosenMpfiPtr(X, &v_X);
     clearChosenMpfiPtr(Y, &v_Y);
