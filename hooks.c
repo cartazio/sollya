@@ -190,7 +190,7 @@ int evaluateNodeEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void 
   sollya_mpfi_init2(myY, p);
   sollya_mpfi_init2(redX, (p > pX ? p : pX));
   sollya_mpfi_sub(redX, x, hook->t);
-  evaluateInterval(myY, hook->func, NULL, redX);
+  evaluateIntervalWithoutHooks(myY, hook->func, NULL, redX);
 
   okay = 0;
   sollya_mpfi_init2(myYRnd, pY + 5);

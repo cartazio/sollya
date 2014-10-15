@@ -8031,7 +8031,7 @@ node *simplifyAllButDivision(node *tree) {
 }
 
 
-void evaluate(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
+void evaluateInner(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec, int useHooks) {
   mpfr_t stack1, stack2, myResult;
   sollya_mpfi_t stackI, X, Y;
 
@@ -8040,7 +8040,7 @@ void evaluate(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
       polynomialEvalMpfr(result, tree->polynomialRepresentation, x);
       return;
     }
-    if (tree->evaluationHook != NULL) {
+    if (useHooks && (tree->evaluationHook != NULL)) {
       sollya_mpfi_init2(X,mpfr_get_prec(x));
       sollya_mpfi_set_fr(X, x);
       sollya_mpfi_init2(Y,mpfr_get_prec(result));
@@ -8057,7 +8057,7 @@ void evaluate(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
       sollya_mpfi_clear(X);
       sollya_mpfi_clear(Y);
     }
-    evaluate(result, getMemRefChild(tree), x, prec);
+    evaluateInner(result, getMemRefChild(tree), x, prec, useHooks);
     return;
   }
 
@@ -8072,189 +8072,189 @@ void evaluate(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
     mpfr_set(result, *(tree->value), GMP_RNDN);
     break;
   case ADD:
-    evaluate(stack1, tree->child1, x, prec);
-    evaluate(stack2, tree->child2, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
+    evaluateInner(stack2, tree->child2, x, prec, useHooks);
     mpfr_add(result, stack1, stack2, GMP_RNDN);
     break;
   case SUB:
-    evaluate(stack1, tree->child1, x, prec);
-    evaluate(stack2, tree->child2, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
+    evaluateInner(stack2, tree->child2, x, prec, useHooks);
     mpfr_sub(result, stack1, stack2, GMP_RNDN);
     break;
   case MUL:
-    evaluate(stack1, tree->child1, x, prec);
-    evaluate(stack2, tree->child2, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
+    evaluateInner(stack2, tree->child2, x, prec, useHooks);
     mpfr_mul(result, stack1, stack2, GMP_RNDN);
     break;
   case DIV:
-    evaluate(stack1, tree->child1, x, prec);
-    evaluate(stack2, tree->child2, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
+    evaluateInner(stack2, tree->child2, x, prec, useHooks);
     mpfr_div(result, stack1, stack2, GMP_RNDN);
     break;
   case SQRT:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_sqrt(result, stack1, GMP_RNDN);
     break;
   case EXP:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_exp(result, stack1, GMP_RNDN);
     break;
   case LOG:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_log(result, stack1, GMP_RNDN);
     break;
   case LOG_2:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_log2(result, stack1, GMP_RNDN);
     break;
   case LOG_10:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_log10(result, stack1, GMP_RNDN);
     break;
   case SIN:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_sin(result, stack1, GMP_RNDN);
     break;
   case COS:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_cos(result, stack1, GMP_RNDN);
     break;
   case TAN:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_tan(result, stack1, GMP_RNDN);
     break;
   case ASIN:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_asin(result, stack1, GMP_RNDN);
     break;
   case ACOS:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_acos(result, stack1, GMP_RNDN);
     break;
   case ATAN:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_atan(result, stack1, GMP_RNDN);
     break;
   case SINH:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_sinh(result, stack1, GMP_RNDN);
     break;
   case COSH:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_cosh(result, stack1, GMP_RNDN);
     break;
   case TANH:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_tanh(result, stack1, GMP_RNDN);
     break;
   case ASINH:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_asinh(result, stack1, GMP_RNDN);
     break;
   case ACOSH:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_acosh(result, stack1, GMP_RNDN);
     break;
   case ATANH:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_atanh(result, stack1, GMP_RNDN);
     break;
   case POW:
-    evaluate(stack1, tree->child1, x, prec);
-    evaluate(stack2, tree->child2, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
+    evaluateInner(stack2, tree->child2, x, prec, useHooks);
     mpfr_pow(result, stack1, stack2, GMP_RNDN);
     break;
   case NEG:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_neg(result, stack1, GMP_RNDN);
     break;
   case ABS:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_abs(result, stack1, GMP_RNDN);
     break;
   case DOUBLE:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_init2(myResult, ((mpfr_get_prec(result) > 64)? mpfr_get_prec(result) : 64));
     mpfr_round_to_double(myResult, stack1);
     mpfr_set(result, myResult, GMP_RNDN);
     mpfr_clear(myResult);
     break;
   case SINGLE:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_init2(myResult, ((mpfr_get_prec(result) > 64)? mpfr_get_prec(result) : 64));
     mpfr_round_to_single(myResult, stack1);
     mpfr_set(result, myResult, GMP_RNDN);
     mpfr_clear(myResult);
     break;
   case QUAD:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_init2(myResult, ((mpfr_get_prec(result) > 128)? mpfr_get_prec(result) : 128));
     mpfr_round_to_single(myResult, stack1);
     mpfr_set(result, myResult, GMP_RNDN);
     mpfr_clear(myResult);
     break;
   case HALFPRECISION:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_init2(myResult, ((mpfr_get_prec(result) > 64)? mpfr_get_prec(result) : 64));
     mpfr_round_to_single(myResult, stack1);
     mpfr_set(result, myResult, GMP_RNDN);
     mpfr_clear(myResult);
     break;
   case DOUBLEDOUBLE:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_init2(myResult, ((mpfr_get_prec(result) > 129)? mpfr_get_prec(result) : 129));
     mpfr_round_to_single(myResult, stack1);
     mpfr_set(result, myResult, GMP_RNDN);
     mpfr_clear(myResult);
     break;
   case TRIPLEDOUBLE:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_init2(myResult, ((mpfr_get_prec(result) > 200)? mpfr_get_prec(result) : 200));
     mpfr_round_to_single(myResult, stack1);
     mpfr_set(result, myResult, GMP_RNDN);
     mpfr_clear(myResult);
     break;
   case ERF:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_erf(result, stack1, GMP_RNDN);
     break;
   case ERFC:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_erfc(result, stack1, GMP_RNDN);
     break;
   case LOG_1P:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_log1p(result, stack1, GMP_RNDN);
     break;
   case EXP_M1:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_expm1(result, stack1, GMP_RNDN);
     break;
   case DOUBLEEXTENDED:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_init2(myResult, ((mpfr_get_prec(result) > 128)? mpfr_get_prec(result) : 128));
     mpfr_round_to_single(myResult, stack1);
     mpfr_set(result, myResult, GMP_RNDN);
     mpfr_clear(myResult);
     break;
   case LIBRARYFUNCTION:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_from_mpfi(result, stack1, tree->libFunDeriv, tree->libFun->code);
     break;
   case PROCEDUREFUNCTION:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     computeFunctionWithProcedureMpfr(result, tree->child2, stack1, (unsigned int) tree->libFunDeriv);
     break;
   case CEIL:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_ceil(result, stack1);
     break;
   case FLOOR:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     mpfr_floor(result, stack1);
     break;
   case NEARESTINT:
-    evaluate(stack1, tree->child1, x, prec);
+    evaluateInner(stack1, tree->child1, x, prec, useHooks);
     sollya_mpfr_rint_nearestint(result, stack1, GMP_RNDN);
     break;
   case PI_CONST:
@@ -8266,7 +8266,7 @@ void evaluate(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
     sollya_mpfi_get_fr(result, stackI);
     sollya_mpfi_clear(stackI);
   default:
-    sollyaFprintf(stderr,"Error: evaluate: unknown identifier in the tree\n");
+    sollyaFprintf(stderr,"Error: evaluateInner: unknown identifier in the tree\n");
     exit(1);
   }
 
@@ -8274,6 +8274,13 @@ void evaluate(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
   return;
 }
 
+void evaluate(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
+  evaluateInner(result, tree, x, prec, 1);
+}
+
+void evaluateWithoutHooks(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
+  evaluateInner(result, tree, x, prec, 0);
+}
 
 int arity(node *tree) {
   switch (tree->nodeType) {

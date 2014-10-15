@@ -76,6 +76,7 @@ void uncertifiedInfnorm(mpfr_t result, node *tree, mpfr_t a, mpfr_t b, unsigned 
 void evaluateRangeFunction(rangetype yrange, node *func, rangetype xrange, mp_prec_t prec);
 void evaluateRangeFunctionFast(rangetype yrange, node *func, node *deriv, rangetype xrange, mp_prec_t prec);
 void evaluateInterval(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x);
+void evaluateIntervalWithoutHooks(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x);
 void fprintInterval(FILE *fd, sollya_mpfi_t interval);
 void printInterval(sollya_mpfi_t interval);
 char *sprintInterval(sollya_mpfi_t interval);
@@ -94,7 +95,7 @@ int evaluateFaithfulAtConstantExpression(mpfr_t result, node *func, node *deriv,
 void evaluateConstantExpressionToInterval(sollya_mpfi_t y, node *func);
 void evaluateConstantExpressionToSharpInterval(sollya_mpfi_t y, node *func);
 
-int newtonMPFR(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, mpfr_t b, mp_prec_t prec);
+int newtonMPFR(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, mpfr_t b, mp_prec_t prec, int useHooks);
 int evaluateSign(int *s, node *rawFunc);
 int evaluateSignFast(int *s, node *constFunc);
 int compareConstant(int *cmp, node *func1, node *func2, node *difference, int doNotEval);
