@@ -184,6 +184,7 @@ void *safeMalloc (size_t size);
 void *safeRealloc (void *ptr, size_t size);
 void safeFree(void *ptr);
 int printMessage(int verb, int msgNum, const char *format, ...);
+int messageHasEnoughVerbosityAndIsNotSuppressed(int verb, int msgNum);
 int sollyaVfprintf(FILE *fd, const char *format, va_list varlist);
 int sollyaPrintf(const char *format, ...);
 int sollyaFprintf(FILE *fd, const char *format, ...);

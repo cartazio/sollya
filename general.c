@@ -797,6 +797,30 @@ int uninstallMessageCallback() {
   return 1;
 }
 
+int messageHasEnoughVerbosityAndIsNotSuppressed(int verb, int msgNum) {
+  int suppressed; 
+  
+  if ((verb >= 0) && (verbosity < verb)) return 0;
+  /* Check if message suppression is activated for that message */
+  suppressed = 0;
+  if ((suppressedMessages != NULL) &&
+      (verb >= 0) &&
+      (msgNum != SOLLYA_MSG_NO_MSG)) {
+    if (msgNum != SOLLYA_MSG_CONTINUATION) {
+      suppressed = getBitInBitfield(suppressedMessages, msgNum);
+    } else {
+      if (lastMessageSuppressedResult == -1) {
+	suppressed = 0;
+      } else {
+	suppressed = lastMessageSuppressedResult;
+      }
+    }
+  }
+  if ((verb >= 0) && suppressed && (msgNum != SOLLYA_MSG_NO_MSG)) return 0;
+
+  return 1;
+}
+
 int printMessageInner(int verb, int msgNum, const char *format, va_list varlist) {
   int oldColor;
   int res, suppressed;
