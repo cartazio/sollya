@@ -17486,7 +17486,7 @@ int tryRepresentAsPolynomial(node *tree) {
   return 1;
 }
 
-node *evaluateThing(node *tree) {
+node *evaluateThingNoHookHandling(node *tree) {
   node *evaluated, *tempNode;
   int okay;
 
@@ -17546,6 +17546,25 @@ node *evaluateThing(node *tree) {
   return evaluated;
 }
 
+node *evaluateThing(node *tree) {
+  node *res;
+
+  res = evaluateThingNoHookHandling(tree);
+  
+  if (tree == NULL) return res;
+  if (res == NULL) return res;
+  if (tree->nodeType != MEMREF) return res;
+  if (res->nodeType != MEMREF) return res;
+  if (res == tree) return res;
+  if (!isPureTree(res)) return res;
+  if (!isPureTree(tree)) return res;
+  if (!treeContainsHooks(tree)) return res;
+  if (treeContainsHooks(res)) return res;
+  
+  res = rewriteThingWithMemRefReuse(res, tree);
+
+  return res;
+}
 
 int evaluateFormatsListForFPminimax(chain **res, node *list, int n, int mode) {
   chain *result=NULL;

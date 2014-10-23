@@ -265,6 +265,7 @@ int evaluateConstantExpression(mpfr_t result, node *tree, mp_prec_t prec);
 void evaluate(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec);
 void printValue(mpfr_t *value);
 node* copyTree(node *tree);
+int treeContainsHooks(node *tree);
 node* horner(node *tree);
 int getDegree(node *tree);
 int getDegreeSilent(node *tree);
