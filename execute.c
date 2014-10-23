@@ -6905,7 +6905,7 @@ char *sRawPrintThingInner(node *tree, int forceDyadic) {
     res = concatAndFree(res, newString("!"));
     break;
   case POINTSSTILLASSIGN:
-    res = newString("diam = ");
+    res = newString("points = ");
     res = concatAndFree(res, sRawPrintThingInner(tree->child1, forceDyadic));
     res = concatAndFree(res, newString("!"));
     break;

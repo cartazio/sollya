@@ -307,6 +307,7 @@ void *copyThingOnVoid(void *);
 void freeThing(node *);
 void rawPrintThing(node *);
 void freeThingOnVoid(void *);
+node *rewriteThingWithMemRefReuse(node *, node *);
 
 node *makeCommandList(chain *thinglist);
 node *makeWhile(node *thing1, node *thing2);

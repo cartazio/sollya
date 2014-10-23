@@ -2998,7 +2998,7 @@ int containsOnlyRealNumbers(node * tree) {
  
 node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational);
 
-node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
+node* simplifyTreeErrorfreeInnerNoHookHandling(node *tree, int rec, int doRational) {
   node *res;
 
   if ((tree != NULL) &&
@@ -3058,6 +3058,22 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
 	} 
       }
     }
+  }
+
+  return res;
+}
+
+node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
+  node *res;
+
+  res = simplifyTreeErrorfreeInnerNoHookHandling(tree, rec, doRational);
+
+  if ((res != tree) &&
+      (tree->nodeType == MEMREF) &&
+      (res->nodeType == MEMREF) &&
+      treeContainsHooks(tree) &&
+      (!treeContainsHooks(res))) {
+    res = rewriteThingWithMemRefReuse(res, tree);
   }
 
   return res;
