@@ -17486,7 +17486,7 @@ int tryRepresentAsPolynomial(node *tree) {
   return 1;
 }
 
-node *evaluateThingNoHookHandling(node *tree) {
+node *evaluateThing(node *tree) {
   node *evaluated, *tempNode;
   int okay;
 
@@ -17544,26 +17544,6 @@ node *evaluateThingNoHookHandling(node *tree) {
   }
 
   return evaluated;
-}
-
-node *evaluateThing(node *tree) {
-  node *res;
-
-  res = evaluateThingNoHookHandling(tree);
-  
-  if (tree == NULL) return res;
-  if (res == NULL) return res;
-  if (tree->nodeType != MEMREF) return res;
-  if (res->nodeType != MEMREF) return res;
-  if (res == tree) return res;
-  if (!isPureTree(res)) return res;
-  if (!isPureTree(tree)) return res;
-  if (!treeContainsHooks(tree)) return res;
-  if (treeContainsHooks(res)) return res;
-  
-  res = rewriteThingWithMemRefReuse(res, tree);
-
-  return res;
 }
 
 int evaluateFormatsListForFPminimax(chain **res, node *list, int n, int mode) {
@@ -20657,17 +20637,28 @@ node *evaluateThingInner(node *tree) {
     return addMemRef(copyThing(tree));
   }
 
-  res = evaluateThingInnerst(tree);
+  res = addMemRef(evaluateThingInnerst(tree));
 
   if ((tree != NULL) && (res != NULL) &&
       (tree->nodeType == MEMREF) &&
-      (tree != res) && 
-      isEqualThing(tree,res)) {
-    freeThing(res);
-    res = copyThing(tree);
+      (tree != res)) {
+    if (isEqualThing(tree,res)) {
+      freeThing(res);
+      res = copyThing(tree);
+    } else {
+      if (res->nodeType == MEMREF) {
+	if (isPureTree(tree) &&
+	    isPureTree(res)) {
+	  if (treeContainsHooks(tree) &&
+	      (!treeContainsHooks(res))) {
+	    res = addMemRef(rewriteThingWithMemRefReuse(res, tree));
+	  }
+	}
+      }
+    }
   }
 
-  return addMemRef(res);
+  return res;
 }
 
 node *evaluateThingInnerst(node *tree) {
@@ -24895,7 +24886,7 @@ node *evaluateThingInnerst(node *tree) {
     }
     break;
   case SIMPLIFYSAFE:
-    copy->child1 = evaluateThingInner(tree->child1);
+    copy->child1 = evaluateThing(tree->child1);
     if (isPureTree(copy->child1)) {
       if (timingString != NULL) pushTimeCounter();
       tempNode = simplifyTreeErrorfree(copy->child1);
