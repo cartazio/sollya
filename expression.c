@@ -3074,13 +3074,14 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
       treeContainsHooks(tree) &&
       (!treeContainsHooks(res))) {
     res = rewriteThingWithMemRefReuse(res, tree);
-    if ((res != tree) &&
-	(tree->nodeType == MEMREF) &&
-	(res->nodeType == MEMREF)) {
-      copyTreeAnnotations(res, tree); 
-    }
   }
-  
+
+  if ((res != tree) &&
+      (tree->nodeType == MEMREF) &&
+      (res->nodeType == MEMREF)) {
+    copyTreeAnnotations(res, tree); 
+  }
+
   return res;
 }
 
