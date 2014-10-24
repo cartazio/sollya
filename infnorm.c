@@ -658,7 +658,7 @@ void libraryConstantToInterval(sollya_mpfi_t res, node *tree) {
   return;
 }
 
-void evaluateNewtonMPFRWithStartPoint(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec, mpfr_t a, mpfr_t b, int useHooks) {
+void evaluateNewtonMPFRWithStartPoint(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec, mpfr_t a, mpfr_t b) {
   mp_prec_t p;
   mpfr_t myX;
 
@@ -667,11 +667,7 @@ void evaluateNewtonMPFRWithStartPoint(mpfr_t result, node *tree, mpfr_t x, mp_pr
        mpfr_number_p(b)) && 
       ((mpfr_cmp(a, x) <= 0) && 
        (mpfr_cmp(x, b) <= 0))) {
-    if (useHooks) {
-      evaluate(result, tree, x, prec);
-    } else {
-      evaluateWithoutHooks(result, tree, x, prec);
-    }
+    evaluate(result, tree, x, prec);
   } 
 
   p = mpfr_get_prec(a);
@@ -688,15 +684,11 @@ void evaluateNewtonMPFRWithStartPoint(mpfr_t result, node *tree, mpfr_t x, mp_pr
     }
   }
 
-  if (useHooks) {
-    evaluate(result, tree, myX, prec);
-  } else {
-    evaluateWithoutHooks(result, tree, myX, prec);
-  }
+  evaluate(result, tree, myX, prec);
   mpfr_clear(myX);
 }
 
-int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, mpfr_t b, mpfr_t start, mp_prec_t prec, int useHooks) {
+int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, mpfr_t b, mpfr_t start, mp_prec_t prec) {
   mpfr_t x, x2, temp1, temp2, am, bm, tempX, tempY;
   unsigned long int n=1;
   int okay, lucky, hasZero, i, freeTrees;
@@ -706,7 +698,7 @@ int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, 
     mpfr_init2(tempX, 12);
     mpfr_init2(tempY, 12);
     mpfr_set_si(tempX, 0, GMP_RNDN);
-    evaluateNewtonMPFRWithStartPoint(tempY, tree, tempX, prec, a, b, useHooks);
+    evaluateNewtonMPFRWithStartPoint(tempY, tree, tempX, prec, a, b);
     if (mpfr_zero_p(temp1)) {
       mpfr_set(res,tempY,GMP_RNDN);
       mpfr_clear(tempY);
@@ -744,7 +736,7 @@ int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, 
 
   if (mpfr_sgn(a) != mpfr_sgn(b)) {
     mpfr_set_d(x,0.0,GMP_RNDN);
-    evaluateNewtonMPFRWithStartPoint(temp1, myTree, x, prec, a, b, useHooks);
+    evaluateNewtonMPFRWithStartPoint(temp1, myTree, x, prec, a, b);
     if (mpfr_zero_p(temp1)) {
       mpfr_set(res,x,GMP_RNDN);
       okay = 1;
@@ -752,12 +744,12 @@ int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, 
   }
 
   if (!okay) {
-    evaluateNewtonMPFRWithStartPoint(temp1, myTree, a, prec, a, b, useHooks);
+    evaluateNewtonMPFRWithStartPoint(temp1, myTree, a, prec, a, b);
     if (mpfr_zero_p(temp1)) {
       mpfr_set(res,a,GMP_RNDN);
       okay = 1;
     } else {
-      evaluateNewtonMPFRWithStartPoint(temp2, myTree, b, prec, a, b, useHooks);
+      evaluateNewtonMPFRWithStartPoint(temp2, myTree, b, prec, a, b);
       if (mpfr_zero_p(temp2)) {
 	mpfr_set(res,b,GMP_RNDN);
 	okay = 1;
@@ -771,12 +763,12 @@ int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, 
 
 	i = 5000;
 	while((n<=(unsigned long int) prec+25) && (mpfr_cmp(am,x) <= 0) && (mpfr_cmp(x,bm) <= 0) && (i > 0)) {
-	  evaluateNewtonMPFRWithStartPoint(temp1, myTree, x, prec, a, b, useHooks);
+	  evaluateNewtonMPFRWithStartPoint(temp1, myTree, x, prec, a, b);
 	  if (mpfr_zero_p(temp1)) {
 	    lucky = 1;
 	    break;
 	  }
-	  evaluateNewtonMPFRWithStartPoint(temp2, myDiffTree, x, prec, a, b, useHooks);
+	  evaluateNewtonMPFRWithStartPoint(temp2, myDiffTree, x, prec, a, b);
 	  mpfr_div(temp1, temp1, temp2, GMP_RNDN);
 	  mpfr_sub(x2, x, temp1, GMP_RNDN);
 	  if (mpfr_cmp(x2,x) == 0) break;
@@ -797,8 +789,8 @@ int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, 
 	  if (hasZero) {
 	    okay = 1;
 	  } else {
-	    evaluateNewtonMPFRWithStartPoint(temp1, myTree, x, prec, a, b, useHooks);
-	    evaluateNewtonMPFRWithStartPoint(temp2, myDiffTree, x, prec, a, b, useHooks);
+	    evaluateNewtonMPFRWithStartPoint(temp1, myTree, x, prec, a, b);
+	    evaluateNewtonMPFRWithStartPoint(temp2, myDiffTree, x, prec, a, b);
 	    mpfr_div(temp1, temp1, temp2, GMP_RNDN);
 	    mpfr_sub(x, x, temp1, GMP_RNDN);
 	    if (mpfr_cmp(x,a) >= 0) {
@@ -813,8 +805,8 @@ int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, 
 	    if (hasZero) {
 	      okay = 1;
 	    } else {
-	      evaluateNewtonMPFRWithStartPoint(temp1, myTree, x, prec, a, b, useHooks);
-	      evaluateNewtonMPFRWithStartPoint(temp2, myDiffTree, x, prec, a, b, useHooks);
+	      evaluateNewtonMPFRWithStartPoint(temp1, myTree, x, prec, a, b);
+	      evaluateNewtonMPFRWithStartPoint(temp2, myDiffTree, x, prec, a, b);
 	      mpfr_div(temp1, temp1, temp2, GMP_RNDN);
 	      mpfr_sub(x, x, temp1, GMP_RNDN);
 	      if (mpfr_cmp(b,x) >= 0) {
@@ -826,8 +818,8 @@ int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, 
 	  } else {
 	    mpfr_set(res,x,GMP_RNDN);
 	    if (!lucky) {
-	      evaluateNewtonMPFRWithStartPoint(temp1, myTree, x, prec, a, b, useHooks);
-	      evaluateNewtonMPFRWithStartPoint(temp2, myDiffTree, x, prec, a, b, useHooks);
+	      evaluateNewtonMPFRWithStartPoint(temp1, myTree, x, prec, a, b);
+	      evaluateNewtonMPFRWithStartPoint(temp2, myDiffTree, x, prec, a, b);
 	      mpfr_div(temp1, temp1, temp2, GMP_RNDN);
 	      mpfr_abs(temp1,temp1,GMP_RNDN);
 	      mpfr_abs(x,x,GMP_RNDN);
@@ -851,7 +843,7 @@ int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, 
   return okay;
 }
 
-int newtonMPFR(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, mpfr_t b, mp_prec_t prec, int useHooks) {
+int newtonMPFR(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, mpfr_t b, mp_prec_t prec) {
   mpfr_t start;
   int result;
 
@@ -859,7 +851,7 @@ int newtonMPFR(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, mpfr_t b, mp_p
   mpfr_add(start,a,b,GMP_RNDN);
   mpfr_div_2ui(start,start,1,GMP_RNDN);
 
-  result = newtonMPFRWithStartPoint(res, tree, diff_tree, a, b, start, prec, useHooks);
+  result = newtonMPFRWithStartPoint(res, tree, diff_tree, a, b, start, prec);
 
   mpfr_clear(start);
 
@@ -914,7 +906,7 @@ static inline void clearChosenMpfiPtr(sollya_mpfi_t *ptr, sollya_mpfi_t *localPt
   returnReusedGlobalMPIVars(1);
 }
 
-chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t prec, int simplifiesA, int simplifiesB, mpfr_t *hopitalPoint, exprBoundTheo *theo, int noExcludes, int fastAddSub, int workForThinArg, mp_exp_t *cutoff, int useHooks) {
+chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t prec, int simplifiesA, int simplifiesB, mpfr_t *hopitalPoint, exprBoundTheo *theo, int noExcludes, int fastAddSub, int workForThinArg, mp_exp_t *cutoff) {
   sollya_mpfi_t stack1, stack2, tempI, tempI2;
   sollya_mpfi_t stack3, zI, numeratorInZI, denominatorInZI, newExcludeTemp, xMXZ, temp1, temp2, tempA, tempB;
   sollya_mpfi_t *newExclude;
@@ -941,7 +933,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
   workForThin = workForThinArg;
 
   if (tree->nodeType == MEMREF) {
-    if ((theo != NULL) || (!noExcludes)) return evaluateI(result, getMemRefChild(tree), x, prec, simplifiesA, simplifiesB, hopitalPoint, theo, noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    if ((theo != NULL) || (!noExcludes)) return evaluateI(result, getMemRefChild(tree), x, prec, simplifiesA, simplifiesB, hopitalPoint, theo, noExcludes, fastAddSub, workForThin, cutoff);
 
     if ((tree->arguments != NULL) &&
 	(*((mp_prec_t *) tree->arguments->value) >= prec)) {
@@ -958,14 +950,14 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
       if (!(sollya_mpfi_has_nan(result) || sollya_mpfi_has_infinity(result))) return NULL;
     }
 
-    if (evaluateWithEvaluationHook(result, x, prec, useHooks, tree->evaluationHook)) {
+    if (evaluateWithEvaluationHook(result, x, prec, tree->evaluationHook)) {
       excludes = NULL;
     } else {
       if (tree->polynomialRepresentation != NULL) {
 	polynomialEvalMpfi(result, tree->polynomialRepresentation, x);
 	excludes = NULL;
       } else {
-	excludes = evaluateI(result, getMemRefChild(tree), x, prec, simplifiesA, simplifiesB, hopitalPoint, theo, noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+	excludes = evaluateI(result, getMemRefChild(tree), x, prec, simplifiesA, simplifiesB, hopitalPoint, theo, noExcludes, fastAddSub, workForThin, cutoff);
       }
     }
 
@@ -1151,7 +1143,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
     case CEIL:
     case FLOOR:
     case NEARESTINT:
-      evaluateI(result, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, NULL, 1, fastAddSub, workForThin, cutoff, useHooks);      
+      evaluateI(result, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, NULL, 1, fastAddSub, workForThin, cutoff);      
       switch (tree->nodeType) {
       case SQRT:
 	sollya_mpfi_sqrt(result, result);
@@ -1309,7 +1301,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
     case NEARESTINT:
       reusedVars = getReusedGlobalMPFIVars(1, prec);
       if (reusedVars == NULL) break;
-      evaluateI(reusedVars[0], tree->child1, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub, workForThin, cutoff, useHooks);
+      evaluateI(reusedVars[0], tree->child1, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub, workForThin, cutoff);
       if (sollya_mpfi_has_nan(reusedVars[0]) ||
 	  sollya_mpfi_has_infinity(reusedVars[0])) {
 	returnReusedGlobalMPIVars(1);
@@ -1428,8 +1420,8 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
     case POW:
       reusedVars = getReusedGlobalMPFIVars(2, prec);
       if (reusedVars != NULL) {
-	evaluateI(reusedVars[0], tree->child1, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub, workForThin, cutoff, useHooks);
-	evaluateI(reusedVars[1], tree->child2, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub, workForThin, cutoff, useHooks);
+	evaluateI(reusedVars[0], tree->child1, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub, workForThin, cutoff);
+	evaluateI(reusedVars[1], tree->child2, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub, workForThin, cutoff);
 	if (sollya_mpfi_has_nan(reusedVars[0]) ||
 	    sollya_mpfi_has_infinity(reusedVars[0]) ||
 	    sollya_mpfi_has_nan(reusedVars[1]) ||
@@ -1456,8 +1448,8 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
       } else {
 	sollya_mpfi_init2(stack1, prec);
 	sollya_mpfi_init2(stack2, prec);
-	evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub, workForThin, cutoff, useHooks);
-	evaluateI(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub, workForThin, cutoff, useHooks);
+	evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub, workForThin, cutoff);
+	evaluateI(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub, workForThin, cutoff);
 	if (sollya_mpfi_has_nan(stack1) ||
 	    sollya_mpfi_has_infinity(stack1) ||
 	    sollya_mpfi_has_nan(stack2) ||
@@ -1512,8 +1504,8 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
     excludes = NULL;
     break;
   case ADD:
-    leftExcludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
-    rightExcludes = evaluateI(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, rightTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    leftExcludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
+    rightExcludes = evaluateI(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, rightTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_add(stack3, stack1, stack2);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
@@ -1557,16 +1549,16 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
       sollya_mpfi_mid(z,x);
       sollya_mpfi_set_fr(zI,z);
 
-      leftExcludesConstant = evaluateI(leftConstantTerm, tree->child1, zI, prec, simplifiesA-1, simplifiesB, NULL, leftTheoConstant,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
-      rightExcludesConstant = evaluateI(rightConstantTerm, tree->child2, zI, prec, simplifiesA-1, simplifiesB, NULL, rightTheoConstant,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+      leftExcludesConstant = evaluateI(leftConstantTerm, tree->child1, zI, prec, simplifiesA-1, simplifiesB, NULL, leftTheoConstant,noExcludes, fastAddSub, workForThin, cutoff);
+      rightExcludesConstant = evaluateI(rightConstantTerm, tree->child2, zI, prec, simplifiesA-1, simplifiesB, NULL, rightTheoConstant,noExcludes, fastAddSub, workForThin, cutoff);
 
       printMessage(12,SOLLYA_MSG_DIFFERENTIATING_FOR_DECORRELATION,"Information: Differentiating while evaluating for decorrelation.\n");
 
       derivLeft = differentiate(tree->child1);
       derivRight = differentiate(tree->child2);
 
-      leftExcludesLinear = evaluateI(leftLinearTerm, derivLeft, x, prec, simplifiesA-1, simplifiesB, NULL, leftTheoLinear,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
-      rightExcludesLinear = evaluateI(rightLinearTerm, derivRight, x, prec, simplifiesA-1, simplifiesB, NULL, rightTheoLinear,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+      leftExcludesLinear = evaluateI(leftLinearTerm, derivLeft, x, prec, simplifiesA-1, simplifiesB, NULL, leftTheoLinear,noExcludes, fastAddSub, workForThin, cutoff);
+      rightExcludesLinear = evaluateI(rightLinearTerm, derivRight, x, prec, simplifiesA-1, simplifiesB, NULL, rightTheoLinear,noExcludes, fastAddSub, workForThin, cutoff);
 
       sollya_mpfi_add(tempA,leftConstantTerm,rightConstantTerm);
       sollya_mpfi_add(tempB,leftLinearTerm,rightLinearTerm);
@@ -1651,8 +1643,8 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
     }
     break;
   case SUB:
-    leftExcludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
-    rightExcludes = evaluateI(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, rightTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    leftExcludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
+    rightExcludes = evaluateI(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, rightTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_sub(stack3, stack1, stack2);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
@@ -1697,16 +1689,16 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
       sollya_mpfi_mid(z,x);
       sollya_mpfi_set_fr(zI,z);
 
-      leftExcludesConstant = evaluateI(leftConstantTerm, tree->child1, zI, prec, simplifiesA-1, simplifiesB, NULL, leftTheoConstant,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
-      rightExcludesConstant = evaluateI(rightConstantTerm, tree->child2, zI, prec, simplifiesA-1, simplifiesB, NULL, rightTheoConstant,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+      leftExcludesConstant = evaluateI(leftConstantTerm, tree->child1, zI, prec, simplifiesA-1, simplifiesB, NULL, leftTheoConstant,noExcludes, fastAddSub, workForThin, cutoff);
+      rightExcludesConstant = evaluateI(rightConstantTerm, tree->child2, zI, prec, simplifiesA-1, simplifiesB, NULL, rightTheoConstant,noExcludes, fastAddSub, workForThin, cutoff);
 
       printMessage(12,SOLLYA_MSG_DIFFERENTIATING_FOR_DECORRELATION,"Information: Differentiating while evaluating for decorrelation.\n");
 
       derivLeft = differentiate(tree->child1);
       derivRight = differentiate(tree->child2);
 
-      leftExcludesLinear = evaluateI(leftLinearTerm, derivLeft, x, prec, simplifiesA-1, simplifiesB, NULL, leftTheoLinear,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
-      rightExcludesLinear = evaluateI(rightLinearTerm, derivRight, x, prec, simplifiesA-1, simplifiesB, NULL, rightTheoLinear,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+      leftExcludesLinear = evaluateI(leftLinearTerm, derivLeft, x, prec, simplifiesA-1, simplifiesB, NULL, leftTheoLinear,noExcludes, fastAddSub, workForThin, cutoff);
+      rightExcludesLinear = evaluateI(rightLinearTerm, derivRight, x, prec, simplifiesA-1, simplifiesB, NULL, rightTheoLinear,noExcludes, fastAddSub, workForThin, cutoff);
 
       sollya_mpfi_sub(tempA,leftConstantTerm,rightConstantTerm);
       sollya_mpfi_sub(tempB,leftLinearTerm,rightLinearTerm);
@@ -1791,8 +1783,8 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
     }
     break;
   case MUL:
-    leftExcludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
-    rightExcludes = evaluateI(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, rightTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    leftExcludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
+    rightExcludes = evaluateI(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, rightTheo,noExcludes, fastAddSub, workForThin, cutoff);
     if (xIsPoint &&
 	(theo == NULL) && 
 	((sollya_mpfi_has_infinity(stack1) && sollya_mpfi_is_zero(stack2)) ||
@@ -1811,7 +1803,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
 				 copyTree(accessThruMemRef(tC1)->child2)));
 	freeChain(leftExcludes,freeMpfiPtr);
 	freeChain(rightExcludes,freeMpfiPtr);
-	excludes = evaluateI(stack3, temp, x, prec, simplifiesA, simplifiesB, NULL, theo, noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+	excludes = evaluateI(stack3, temp, x, prec, simplifiesA, simplifiesB, NULL, theo, noExcludes, fastAddSub, workForThin, cutoff);
 	free_memory(temp);
       } else {
 	/* There's nothing we can do */
@@ -1832,8 +1824,8 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
     }
     break;
   case DIV:
-    leftExcludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
-    rightExcludes = evaluateI(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, rightTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    leftExcludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
+    rightExcludes = evaluateI(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, rightTheo,noExcludes, fastAddSub, workForThin, cutoff);
 
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
@@ -1873,8 +1865,8 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
 	  rightTheoLinear = NULL;
 	}
 
-	leftExcludes = evaluateI(stack1, derivNumerator, x, prec, simplifiesA, simplifiesB-1, NULL, leftTheoLinear,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
-	rightExcludes = evaluateI(stack2, derivDenominator, x, prec, simplifiesA, simplifiesB-1, NULL, rightTheoLinear,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+	leftExcludes = evaluateI(stack1, derivNumerator, x, prec, simplifiesA, simplifiesB-1, NULL, leftTheoLinear,noExcludes, fastAddSub, workForThin, cutoff);
+	rightExcludes = evaluateI(stack2, derivDenominator, x, prec, simplifiesA, simplifiesB-1, NULL, rightTheoLinear,noExcludes, fastAddSub, workForThin, cutoff);
 
 	free_memory(derivNumerator);
 	free_memory(derivDenominator);
@@ -1917,7 +1909,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
 
 	  if ((simplifiesB == (hopitalrecursions + 1)) || (hopitalPoint == NULL)){
 	    mpfr_init2(z,prec);
-	    newtonMPFR(z,tree->child2,derivDenominator,xl,xr,prec,useHooks);
+	    newtonMPFR(z,tree->child2,derivDenominator,xl,xr,prec);
 	    newHopitalPoint = &z;
 	  } else {
 	    mpfr_init2(z,mpfr_get_prec(*hopitalPoint));
@@ -1939,8 +1931,8 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
 	      rightTheoConstant = NULL;
 	    }
 
-	    t1 = evaluateI(numeratorInZI, tree->child1, zI, prec, simplifiesA, simplifiesB-1, newHopitalPoint, leftTheoConstant,1, fastAddSub, workForThin, cutoff, useHooks);
-	    t2 = evaluateI(denominatorInZI, tree->child2, zI, prec, simplifiesA, simplifiesB-1, newHopitalPoint, rightTheoConstant,1, fastAddSub, workForThin, cutoff, useHooks);
+	    t1 = evaluateI(numeratorInZI, tree->child1, zI, prec, simplifiesA, simplifiesB-1, newHopitalPoint, leftTheoConstant,1, fastAddSub, workForThin, cutoff);
+	    t2 = evaluateI(denominatorInZI, tree->child2, zI, prec, simplifiesA, simplifiesB-1, newHopitalPoint, rightTheoConstant,1, fastAddSub, workForThin, cutoff);
 
 	    freeChain(t1,freeMpfiPtr);
 	    freeChain(t2,freeMpfiPtr);
@@ -1996,7 +1988,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
 		printMessage(8,SOLLYA_MSG_RECURSION_ON_USE_OF_HOPITALS_RULE,"Information: recursion on use of Hopital's rule\n");
 	      }
 
-	      excludes = evaluateI(stack3, tempNode, x, prec, simplifiesA, simplifiesB-1, newHopitalPoint, leftTheoLinear,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+	      excludes = evaluateI(stack3, tempNode, x, prec, simplifiesA, simplifiesB-1, newHopitalPoint, leftTheoLinear,noExcludes, fastAddSub, workForThin, cutoff);
 
 	      if (internalTheo != NULL) sollya_mpfi_set(*(internalTheo->boundLeftLinear),stack3);
 
@@ -2012,7 +2004,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
 
 	      if ((simplifiesB == (hopitalrecursions + 1)) || (hopitalPoint == NULL)) {
 		mpfr_init2(z2,prec);
-		newtonMPFR(z2,tree->child1,derivNumerator,xl,xr,prec,useHooks);
+		newtonMPFR(z2,tree->child1,derivNumerator,xl,xr,prec);
 		newHopitalPoint = &z2;
 	      } else {
 		mpfr_init2(z2,mpfr_get_prec(*hopitalPoint));
@@ -2031,8 +2023,8 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
 		  rightTheoConstant = NULL;
 		}
 
-		t1 = evaluateI(numeratorInZI, tree->child1, zI, prec, simplifiesA, simplifiesB-1, newHopitalPoint, leftTheoConstant,1, fastAddSub, workForThin, cutoff, useHooks);
-		t2 = evaluateI(denominatorInZI, tree->child2, zI, prec, simplifiesA, simplifiesB-1, newHopitalPoint, rightTheoConstant,1, fastAddSub, workForThin, cutoff, useHooks);
+		t1 = evaluateI(numeratorInZI, tree->child1, zI, prec, simplifiesA, simplifiesB-1, newHopitalPoint, leftTheoConstant,1, fastAddSub, workForThin, cutoff);
+		t2 = evaluateI(denominatorInZI, tree->child2, zI, prec, simplifiesA, simplifiesB-1, newHopitalPoint, rightTheoConstant,1, fastAddSub, workForThin, cutoff);
 
 		freeChain(t1,freeMpfiPtr);
 		freeChain(t2,freeMpfiPtr);
@@ -2084,7 +2076,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
 		    printMessage(8,SOLLYA_MSG_RECURSION_ON_USE_OF_HOPITALS_RULE,"Information: recursion on use of Hopital's rule\n");
 		  }
 
-		  excludes = evaluateI(stack3, tempNode, x, prec, simplifiesA, simplifiesB-1, newHopitalPoint, leftTheoLinear,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+		  excludes = evaluateI(stack3, tempNode, x, prec, simplifiesA, simplifiesB-1, newHopitalPoint, leftTheoLinear,noExcludes, fastAddSub, workForThin, cutoff);
 
 		  if (internalTheo != NULL) sollya_mpfi_set(*(internalTheo->boundLeftLinear),stack3);
 
@@ -2151,127 +2143,127 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
     }
     break;
   case SQRT:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_sqrt(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case EXP:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_exp(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case LOG:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_log(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case LOG_2:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_log2(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case LOG_10:
-    evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_log10(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case SIN:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_sin(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case COS:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_cos(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case TAN:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_tan(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case ASIN:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_asin(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case ACOS:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_acos(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case ATAN:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_atan(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case SINH:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_sinh(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case COSH:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_cosh(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case TANH:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_tanh(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case ASINH:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_asinh(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case ACOSH:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_acosh(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case ATANH:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_atanh(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case POW:
-    leftExcludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
-    rightExcludes = evaluateI(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, rightTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    leftExcludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
+    rightExcludes = evaluateI(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, rightTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_pow(stack3, stack1, stack2);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
@@ -2280,98 +2272,98 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
     excludes = concatChains(leftExcludes,rightExcludes);
     break;
   case NEG:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_neg(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case ABS:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_abs(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case DOUBLE:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_round_to_double(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case SINGLE:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_round_to_single(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case HALFPRECISION:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_round_to_halfprecision(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case QUAD:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_round_to_quad(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case DOUBLEDOUBLE:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_round_to_doubledouble(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case TRIPLEDOUBLE:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_round_to_tripledouble(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case ERF:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_erf(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case ERFC:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_erfc(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case LOG_1P:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_log1p(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case EXP_M1:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_expm1(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case DOUBLEEXTENDED:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_round_to_doubleextended(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case LIBRARYFUNCTION:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     mpfi_init2(tempI, sollya_mpfi_get_prec(stack3));
     tree->libFun->code(tempI, stack1, tree->libFunDeriv);
     sollya_init_and_convert_interval(tempI2, tempI);
@@ -2383,28 +2375,28 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
     }
     break;
   case PROCEDUREFUNCTION:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     computeFunctionWithProcedure(stack3, tree->child2, stack1, (unsigned int) tree->libFunDeriv);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case CEIL:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_ceil(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case FLOOR:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_floor(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case NEARESTINT:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_nearestint(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
@@ -2440,9 +2432,9 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
   return excludes;
 }
 
-chain* evaluateITaylor(sollya_mpfi_t result, node *func, node *deriv, sollya_mpfi_t x, mp_prec_t prec, int recurse, exprBoundTheo *theo, int noExcludes, int fastAddSub, int workForThin, mp_exp_t *cutoff, int useHooks);
+chain* evaluateITaylor(sollya_mpfi_t result, node *func, node *deriv, sollya_mpfi_t x, mp_prec_t prec, int recurse, exprBoundTheo *theo, int noExcludes, int fastAddSub, int workForThin, mp_exp_t *cutoff);
 
-chain* evaluateITaylorOnDiv(sollya_mpfi_t result, node *func, sollya_mpfi_t x, mp_prec_t prec, int recurse, exprBoundTheo *theo, int noExcludes, int fastAddSub, int workForThin, mp_exp_t *cutoff, int useHooks) {
+chain* evaluateITaylorOnDiv(sollya_mpfi_t result, node *func, sollya_mpfi_t x, mp_prec_t prec, int recurse, exprBoundTheo *theo, int noExcludes, int fastAddSub, int workForThin, mp_exp_t *cutoff) {
   node *numerator, *denominator, *derivNumerator, *derivDenominator;
   chain *excludes, *numeratorExcludes, *denominatorExcludes;
   exprBoundTheo *numeratorTheo, *denominatorTheo;
@@ -2468,8 +2460,8 @@ chain* evaluateITaylorOnDiv(sollya_mpfi_t result, node *func, sollya_mpfi_t x, m
       denominatorTheo = NULL;
     }
 
-    numeratorExcludes = evaluateITaylor(resultNumerator, numerator, derivNumerator, x, prec, recurse, numeratorTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
-    denominatorExcludes = evaluateITaylor(resultDenominator, denominator, derivDenominator, x, prec, recurse, denominatorTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    numeratorExcludes = evaluateITaylor(resultNumerator, numerator, derivNumerator, x, prec, recurse, numeratorTheo,noExcludes, fastAddSub, workForThin, cutoff);
+    denominatorExcludes = evaluateITaylor(resultDenominator, denominator, derivDenominator, x, prec, recurse, denominatorTheo,noExcludes, fastAddSub, workForThin, cutoff);
     excludes = concatChains(numeratorExcludes,denominatorExcludes);
     sollya_mpfi_div(resultIndirect, resultNumerator, resultDenominator);
     if (sollya_mpfi_bounded_p(resultIndirect)) {
@@ -2498,7 +2490,7 @@ chain* evaluateITaylorOnDiv(sollya_mpfi_t result, node *func, sollya_mpfi_t x, m
 	freeExprBoundTheo(numeratorTheo);
 	freeExprBoundTheo(denominatorTheo);
       }
-      excludes = evaluateI(result, func, x, prec, 0, hopitalrecursions+1, NULL, theo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+      excludes = evaluateI(result, func, x, prec, 0, hopitalrecursions+1, NULL, theo,noExcludes, fastAddSub, workForThin, cutoff);
       sollya_mpfi_nan_normalize(result);
     }
 
@@ -2511,22 +2503,22 @@ chain* evaluateITaylorOnDiv(sollya_mpfi_t result, node *func, sollya_mpfi_t x, m
     return excludes;
   }
   else {
-    excludes = evaluateI(result, func, x, prec, 0, hopitalrecursions+1, NULL, theo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(result, func, x, prec, 0, hopitalrecursions+1, NULL, theo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_nan_normalize(result);
     mpfr_clear(tempNaN);
     return excludes;
   }
 }
 
-chain* evaluateITaylorInner(sollya_mpfi_t, node *, node *, sollya_mpfi_t, mp_prec_t, int, exprBoundTheo *, int, int, int, mp_exp_t *, int);
+chain* evaluateITaylorInner(sollya_mpfi_t, node *, node *, sollya_mpfi_t, mp_prec_t, int, exprBoundTheo *, int, int, int, mp_exp_t *);
 
-chain* evaluateITaylor(sollya_mpfi_t result, node *func, node *deriv, sollya_mpfi_t x, mp_prec_t prec, int recurse, exprBoundTheo *theo, int noExcludes, int fastAddSub, int workForThin, mp_exp_t *cutoff, int useHooks) {
+chain* evaluateITaylor(sollya_mpfi_t result, node *func, node *deriv, sollya_mpfi_t x, mp_prec_t prec, int recurse, exprBoundTheo *theo, int noExcludes, int fastAddSub, int workForThin, mp_exp_t *cutoff) {
   chain *excludes;
   mp_prec_t *precPtr;
   sollya_mpfi_t *intervalPtr;
   sollya_mpfi_t tempInterval;
 
-  if ((theo != NULL) || (!noExcludes)) return evaluateITaylorInner(result, func, deriv, x, prec, recurse, theo, noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+  if ((theo != NULL) || (!noExcludes)) return evaluateITaylorInner(result, func, deriv, x, prec, recurse, theo, noExcludes, fastAddSub, workForThin, cutoff);
 
   if ((func->nodeType == MEMREF) &&
       (func->arguments != NULL) &&
@@ -2537,10 +2529,10 @@ chain* evaluateITaylor(sollya_mpfi_t result, node *func, node *deriv, sollya_mpf
   
   if ((func->nodeType == MEMREF) &&
       (func->evaluationHook != NULL) &&
-      evaluateWithEvaluationHook(result, x, prec, useHooks, func->evaluationHook)) {
+      evaluateWithEvaluationHook(result, x, prec, func->evaluationHook)) {
     excludes = NULL;
   } else {
-    excludes = evaluateITaylorInner(result, func, deriv, x, prec, recurse, theo, noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateITaylorInner(result, func, deriv, x, prec, recurse, theo, noExcludes, fastAddSub, workForThin, cutoff);
   }
 
   if ((excludes == NULL) && (func->nodeType == MEMREF) && (!(sollya_mpfi_has_nan(result) || sollya_mpfi_has_infinity(result)))) {
@@ -2568,7 +2560,7 @@ chain* evaluateITaylor(sollya_mpfi_t result, node *func, node *deriv, sollya_mpf
   return excludes;
 }
 
-chain* evaluateITaylorInner(sollya_mpfi_t result, node *func, node *deriv, sollya_mpfi_t x, mp_prec_t prec, int recurse, exprBoundTheo *theo, int noExcludes, int fastAddSub, int workForThin, mp_exp_t *cutoff, int useHooks) {
+chain* evaluateITaylorInner(sollya_mpfi_t result, node *func, node *deriv, sollya_mpfi_t x, mp_prec_t prec, int recurse, exprBoundTheo *theo, int noExcludes, int fastAddSub, int workForThin, mp_exp_t *cutoff) {
   mpfr_t xZ, rTl, rTr, leftX, rightX;
   sollya_mpfi_t xZI, xZI2, constantTerm, linearTerm, resultTaylor, resultDirect, temp, temp2;
   chain *excludes, *directExcludes, *taylorExcludes, *taylorExcludesLinear, *taylorExcludesConstant;
@@ -2585,7 +2577,7 @@ chain* evaluateITaylorInner(sollya_mpfi_t result, node *func, node *deriv, solly
     else
       printMessage(25,SOLLYA_MSG_NO_TAYLOR_EVALUATION_AS_NO_DERIVATIVE_GIVEN,"Warning: no Taylor evaluation is possible because no derivative has been given.\n");
 
-    excludes = evaluateI(result, func, x, prec, 1, hopitalrecursions+1, NULL, theo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    excludes = evaluateI(result, func, x, prec, 1, hopitalrecursions+1, NULL, theo,noExcludes, fastAddSub, workForThin, cutoff);
     sollya_mpfi_nan_normalize(result);
 
     return excludes;
@@ -2653,14 +2645,14 @@ chain* evaluateITaylorInner(sollya_mpfi_t result, node *func, node *deriv, solly
       printMessage(1,SOLLYA_MSG_CONTINUATION,"as great that it contains more than %d nodes.\n",DIFFSIZE);
       printMessage(1,SOLLYA_MSG_CONTINUATION,"Will now stop recursive Taylor evaluation on this expression.\n");
       printMessage(2,SOLLYA_MSG_CONTINUATION,"Information: the size of the derivative is %d, we had %d recursion(s) left.\n",size,recurse-1);
-      taylorExcludesLinear = evaluateI(linearTerm, deriv, x, prec, 1, hopitalrecursions+1, NULL, linearTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+      taylorExcludesLinear = evaluateI(linearTerm, deriv, x, prec, 1, hopitalrecursions+1, NULL, linearTheo,noExcludes, fastAddSub, workForThin, cutoff);
     } else {
-      taylorExcludesLinear = evaluateITaylor(linearTerm, deriv, nextderiv, x, prec, recurse - 1, linearTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+      taylorExcludesLinear = evaluateITaylor(linearTerm, deriv, nextderiv, x, prec, recurse - 1, linearTheo,noExcludes, fastAddSub, workForThin, cutoff);
     }
 
     free_memory(nextderiv);
   } else {
-    taylorExcludesLinear = evaluateI(linearTerm, deriv, x, prec, 1, hopitalrecursions+1, NULL, linearTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    taylorExcludesLinear = evaluateI(linearTerm, deriv, x, prec, 1, hopitalrecursions+1, NULL, linearTheo,noExcludes, fastAddSub, workForThin, cutoff);
   }
 
   if ((sollya_mpfi_is_nonneg(linearTerm) || sollya_mpfi_is_nonpos(linearTerm)) && sollya_mpfi_bounded_p(linearTerm)) {
@@ -2674,8 +2666,8 @@ chain* evaluateITaylorInner(sollya_mpfi_t result, node *func, node *deriv, solly
     sollya_mpfi_set_fr(xZI,leftX);
     sollya_mpfi_set_fr(xZI2,rightX);
 
-    directExcludes = evaluateI(resultDirect, func, xZI, prec, 0, hopitalrecursions+1, NULL, directTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
-    taylorExcludesConstant = evaluateI(constantTerm, func, xZI2, prec, 1, hopitalrecursions+1, NULL, constantTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    directExcludes = evaluateI(resultDirect, func, xZI, prec, 0, hopitalrecursions+1, NULL, directTheo,noExcludes, fastAddSub, workForThin, cutoff);
+    taylorExcludesConstant = evaluateI(constantTerm, func, xZI2, prec, 1, hopitalrecursions+1, NULL, constantTheo,noExcludes, fastAddSub, workForThin, cutoff);
 
     sollya_mpfi_union(result,resultDirect,constantTerm);
 
@@ -2706,7 +2698,7 @@ chain* evaluateITaylorInner(sollya_mpfi_t result, node *func, node *deriv, solly
 
   } else {
 
-    taylorExcludesConstant = evaluateI(constantTerm, func, xZI, prec, 1, hopitalrecursions+1, NULL, constantTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+    taylorExcludesConstant = evaluateI(constantTerm, func, xZI, prec, 1, hopitalrecursions+1, NULL, constantTheo,noExcludes, fastAddSub, workForThin, cutoff);
 
     sollya_mpfi_sub(temp, x, xZI);
     sollya_mpfi_mul(temp2, temp, linearTerm);
@@ -2714,9 +2706,9 @@ chain* evaluateITaylorInner(sollya_mpfi_t result, node *func, node *deriv, solly
     taylorExcludes = concatChains(taylorExcludesConstant, taylorExcludesLinear);
 
     if (deriv != NULL)
-      directExcludes = evaluateITaylorOnDiv(resultDirect, func, x, prec, recurse, directTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+      directExcludes = evaluateITaylorOnDiv(resultDirect, func, x, prec, recurse, directTheo,noExcludes, fastAddSub, workForThin, cutoff);
     else
-      directExcludes = evaluateI(resultDirect, func, x, prec, 0, hopitalrecursions+1, NULL, directTheo,noExcludes, fastAddSub, workForThin, cutoff, useHooks);
+      directExcludes = evaluateI(resultDirect, func, x, prec, 0, hopitalrecursions+1, NULL, directTheo,noExcludes, fastAddSub, workForThin, cutoff);
 
     sollya_mpfi_get_left(rTl,resultTaylor);
     sollya_mpfi_get_right(rTr,resultTaylor);
@@ -2832,7 +2824,7 @@ chain *findZerosUnsimplified(node *func, node *deriv, sollya_mpfi_t range, mp_pr
     if (theo != NULL) freeExprBoundTheo(theo);
   } else {
     sollya_mpfi_init2(y,prec);
-    excludes = evaluateITaylor(y, func, deriv, range, prec, taylorrecursions, theo,1,0,0,NULL,1);
+    excludes = evaluateITaylor(y, func, deriv, range, prec, taylorrecursions, theo,1,0,0,NULL);
     freeChain(excludes,freeMpfiPtr);
     if (!sollya_mpfi_bounded_p(y)) {
       printMessage(1,SOLLYA_MSG_NAN_OR_INF_ON_DERIVATIVE,"Warning: during zero-search the derivative of the function evaluated to NaN or Inf in the interval %w.\nThe function might not be continuously differentiable in this interval.\n",range);
@@ -3312,12 +3304,12 @@ void infnormI(sollya_mpfi_t infnormval, node *func, node *deriv,
   sollya_mpfi_set_fr(rInterv,r);
   sollya_mpfi_set_fr(lInterv,l);
 
-  excludes = evaluateITaylor(evalFuncOnInterval, func, deriv, lInterv, prec, taylorrecursions, evalLeftBound,0,0,0,NULL,1);
+  excludes = evaluateITaylor(evalFuncOnInterval, func, deriv, lInterv, prec, taylorrecursions, evalLeftBound,0,0,0,NULL);
   sollya_mpfi_get_left(outerLeft,evalFuncOnInterval);
   sollya_mpfi_get_right(outerRight,evalFuncOnInterval);
   mpfr_set(innerLeft,outerRight,GMP_RNDU);
   mpfr_set(innerRight,outerLeft,GMP_RNDD);
-  excludesTemp = evaluateITaylor(evalFuncOnInterval, func, deriv, rInterv, prec, taylorrecursions, evalRightBound,0,0,0,NULL,1);
+  excludesTemp = evaluateITaylor(evalFuncOnInterval, func, deriv, rInterv, prec, taylorrecursions, evalRightBound,0,0,0,NULL);
   excludes = concatChains(excludes,excludesTemp);
   sollya_mpfi_get_left(tl,evalFuncOnInterval);
   sollya_mpfi_get_right(tr,evalFuncOnInterval);
@@ -3355,7 +3347,7 @@ void infnormI(sollya_mpfi_t infnormval, node *func, node *deriv,
       currZeroTheo = NULL;
     }
     currInterval = ((sollya_mpfi_t *) (curr->value));
-    excludesTemp = evaluateITaylor(evalFuncOnInterval, func, deriv, *currInterval, prec, taylorrecursions, currZeroTheo,0,0,0,NULL,1);
+    excludesTemp = evaluateITaylor(evalFuncOnInterval, func, deriv, *currInterval, prec, taylorrecursions, currZeroTheo,0,0,0,NULL);
 
     excludes = concatChains(excludes,excludesTemp);
     sollya_mpfi_get_left(tl,evalFuncOnInterval);
@@ -3802,7 +3794,7 @@ rangetype infnorm(node *func, rangetype range, chain *excludes,
 
     derivDenominatorDeriv = differentiate(denominatorDeriv);
 
-    newtonWorked = newtonMPFR(z, denominatorDeriv, derivDenominatorDeriv, *(range.a), *(range.b), prec, 1);
+    newtonWorked = newtonMPFR(z, denominatorDeriv, derivDenominatorDeriv, *(range.a), *(range.b), prec);
 
     if (newtonWorked && mpfr_number_p(z)) {
       evaluate(ya,numeratorDeriv,z,prec);
@@ -3911,7 +3903,7 @@ void evaluateRangeFunctionFast(rangetype yrange, node *func, node *deriv, ranget
   sollya_mpfi_init2(y,prec);
   sollya_mpfi_interv_fr(x,*(xrange.a),*(xrange.b));
 
-  tempChain = evaluateITaylor(y, func, deriv, x, prec, taylorrecursions, NULL, 1,0,0,NULL,1);
+  tempChain = evaluateITaylor(y, func, deriv, x, prec, taylorrecursions, NULL, 1,0,0,NULL);
 
   sollya_mpfi_get_left(*(yrange.a),y);
   sollya_mpfi_get_right(*(yrange.b),y);
@@ -3929,18 +3921,7 @@ void evaluateInterval(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x)
   /* We need more precision in the first steps to get the precision in the end. */
   prec += 10;
 
-  evaluateITaylor(y, func, deriv, x, prec, taylorrecursions, NULL, 1,0,0,NULL,1);
-}
-
-void evaluateIntervalWithoutHooks(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x) {
-  mp_prec_t prec;
-
-  prec = sollya_mpfi_get_prec(y);
-
-  /* We need more precision in the first steps to get the precision in the end. */
-  prec += 10;
-
-  evaluateITaylor(y, func, deriv, x, prec, taylorrecursions, NULL, 1,0,0,NULL,0);
+  evaluateITaylor(y, func, deriv, x, prec, taylorrecursions, NULL, 1,0,0,NULL);
 }
 
 void evaluateIntervalInternalFast(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x, int adaptPrecision, mp_exp_t *cutoff) {
@@ -3951,7 +3932,7 @@ void evaluateIntervalInternalFast(sollya_mpfi_t y, node *func, node *deriv, soll
   /* We need more precision in the first steps to get the precision in the end. */
   prec += 10;
 
-  evaluateITaylor(y, func, deriv, x, prec, taylorrecursions, NULL, 1,1,adaptPrecision,cutoff,1);
+  evaluateITaylor(y, func, deriv, x, prec, taylorrecursions, NULL, 1,1,adaptPrecision,cutoff);
 }
 
 void evaluateConstantExpressionToInterval(sollya_mpfi_t y, node *func) {
@@ -3964,7 +3945,7 @@ void evaluateConstantExpressionToInterval(sollya_mpfi_t y, node *func) {
   sollya_mpfi_init2(x,12);
   sollya_mpfi_set_si(x,1);
 
-  evaluateIntervalWithoutHooks(y, func, NULL, x);
+  evaluateInterval(y, func, NULL, x);
 
   sollya_mpfi_clear(x);
 }
@@ -4181,7 +4162,7 @@ int checkInfnormI(node *func, node *deriv, sollya_mpfi_t infnormval, sollya_mpfi
 
   sollya_mpfi_init2(evaluateOnRange,prec);
 
-  tempChain = evaluateITaylor(evaluateOnRange, func, deriv, range, prec, taylorrecursions, NULL, 1,0,0,NULL,1);
+  tempChain = evaluateITaylor(evaluateOnRange, func, deriv, range, prec, taylorrecursions, NULL, 1,0,0,NULL);
 
   freeChain(tempChain,freeMpfiPtr);
 
@@ -4353,7 +4334,7 @@ chain* findZerosByNewton(node *func, mpfr_t a, mpfr_t b, mp_prec_t prec) {
       mpfr_add(bp,ap,step,GMP_RNDN);
       sollya_mpfr_min(bp,bp,b,GMP_RNDU);
 
-      newtonOkay = newtonMPFR(resNewtonStep, func, deriv, ap, bp, prec, 1);
+      newtonOkay = newtonMPFR(resNewtonStep, func, deriv, ap, bp, prec);
 
       if (newtonOkay) {
 	newZero = (mpfr_t *) safeMalloc(sizeof(mpfr_t));
@@ -4926,7 +4907,7 @@ int accurateInfnorm(mpfr_t result, node *func, rangetype range, chain *excludes,
 
     derivDenominatorDeriv = differentiate(denominatorDeriv);
 
-    newtonWorked = newtonMPFR(z, denominatorDeriv, derivDenominatorDeriv, *(range.a), *(range.b), prec, 1);
+    newtonWorked = newtonMPFR(z, denominatorDeriv, derivDenominatorDeriv, *(range.a), *(range.b), prec);
 
     if (newtonWorked && mpfr_number_p(z)) {
       evaluate(ya,numeratorDeriv,z,prec);
@@ -6725,7 +6706,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedHooks(mpfr_t y, eval_hoo
   X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(x));
   
   sollya_mpfi_set_fr(*X, x);
-  hookRes = evaluateWithEvaluationHook(*Y, *X, prec, 0, hook);
+  hookRes = evaluateWithEvaluationHook(*Y, *X, prec, hook);
   if (!hookRes) {
     clearChosenMpfiPtr(X, &v_X);
     clearChosenMpfiPtr(Y, &v_Y);

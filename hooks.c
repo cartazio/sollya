@@ -55,7 +55,7 @@
 
 int addEvaluationHook(eval_hook_t **hookPtr, 
 		      void *data, 
-		      int (*evaluateFunc)(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, int, void *), 
+		      int (*evaluateFunc)(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, void *), 
 		      void (*freeFunc)(void *),
 		      int (*compareFunc)(void *, void *),
 		      void *(*copyFunc)(void *),
@@ -141,7 +141,7 @@ void freeEvaluationHook(eval_hook_t **hookPtr) {
   *hookPtr = NULL;
 }
 
-int evaluateWithEvaluationHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, int mayEvaluateExpressions, eval_hook_t *hook) {
+int evaluateWithEvaluationHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, eval_hook_t *hook) {
   eval_hook_t *curr;
   int res;
 
@@ -150,7 +150,7 @@ int evaluateWithEvaluationHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec,
   for (curr=hook;curr!=NULL;curr=curr->nextHook) {
     if (curr->gettingUsed <= 0) {
       curr->gettingUsed = 1;
-      res = curr->evaluateHook(y,x,prec,mayEvaluateExpressions,curr->data);
+      res = curr->evaluateHook(y,x,prec,curr->data);
       curr->gettingUsed = 0;
     } else {
       res = 0;
@@ -179,13 +179,11 @@ node_eval_hook_t *createNodeEvalHook(node *func, sollya_mpfi_t dom, sollya_mpfi_
 }
 
 
-int evaluateNodeEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, int mayEvaluateExpressions, void *data) {
+int evaluateNodeEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void *data) {
   node_eval_hook_t *hook;
   mp_prec_t p, pY, pX;
   sollya_mpfi_t myY, myYRnd, myYRndWithDelta, redX;
   int okay;
-
-  if (!mayEvaluateExpressions) return 0;
 
   hook = (node_eval_hook_t *) data;
 
@@ -201,7 +199,7 @@ int evaluateNodeEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, int m
   sollya_mpfi_init2(myY, p);
   sollya_mpfi_init2(redX, (p > pX ? p : pX));
   sollya_mpfi_sub(redX, x, hook->t);
-  evaluateIntervalWithoutHooks(myY, hook->func, NULL, redX);
+  evaluateInterval(myY, hook->func, NULL, redX);
 
   okay = 0;
   sollya_mpfi_init2(myYRnd, pY + 5);
@@ -285,7 +283,7 @@ int compareNodeEvalHook(void *data1, void *data2) {
   return 1;
 }
 
-int evaluatePolyEvalHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, int, void *);
+int evaluatePolyEvalHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, void *);
 
 poly_eval_hook_t *createPolyEvalHook(int degree, mpfr_t *coeffs, sollya_mpfi_t dom, sollya_mpfi_t delta, sollya_mpfi_t t) {
   poly_eval_hook_t *newPolyEvalHook;
@@ -447,7 +445,7 @@ poly_eval_hook_t *createPolyEvalHook(int degree, mpfr_t *coeffs, sollya_mpfi_t d
     if (!(sollya_mpfi_has_nan(newPolyEvalHook->delta) ||
 	  sollya_mpfi_has_infinity(newPolyEvalHook->delta))) {
       sollya_mpfi_init2(Y, 12);
-      if (evaluatePolyEvalHook(Y, dom, 15, 1, (void *) newPolyEvalHook)) {
+      if (evaluatePolyEvalHook(Y, dom, 15, (void *) newPolyEvalHook)) {
 	if (!(sollya_mpfi_has_nan(Y) || 
 	      sollya_mpfi_has_infinity(Y))) {
 	  sollya_mpfi_abs(Y, Y);
@@ -564,12 +562,10 @@ int composePolyEvalHook(eval_hook_t **hookPtr, void *data, node *g) {
   return okay;
 }
 
-int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, int mayEvaluateExpressions, void *data) {
+int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void *data) {
   poly_eval_hook_t *hook;
   mp_prec_t p, pY, pX;
   int okay, i, polynomialIsMonotone;
-
-  UNUSED_PARAM(mayEvaluateExpressions);
 
   hook = (poly_eval_hook_t *) data;
 
@@ -917,7 +913,7 @@ composition_eval_hook_t *createCompositionEvalHook(eval_hook_t *f, node *g) {
   return newCompositionEvalHook;
 }
 
-int evaluateCompositionEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, int mayEvaluateExpressions, void *data) {
+int evaluateCompositionEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void *data) {
   composition_eval_hook_t * hook;
   mp_prec_t p, pX;
   int res, resA, resB;
@@ -945,7 +941,7 @@ int evaluateCompositionEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec
     return 0;
   }
 
-  res = evaluateWithEvaluationHook(y, hook->reusedVarT, prec, mayEvaluateExpressions, hook->f);
+  res = evaluateWithEvaluationHook(y, hook->reusedVarT, prec, hook->f);
 
   if ((!res) && (!sollya_mpfi_is_point_and_real(hook->reusedVarT))) {
     if (hook->reusedVarTAInit) { 
@@ -968,11 +964,11 @@ int evaluateCompositionEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec
     }
     sollya_mpfi_get_left(hook->reusedVarTemp, hook->reusedVarT);
     sollya_mpfi_set_fr(hook->reusedVarTA, hook->reusedVarTemp);
-    resA = evaluateWithEvaluationHook(hook->reusedVarTB, hook->reusedVarTA, prec, mayEvaluateExpressions, hook->f);
+    resA = evaluateWithEvaluationHook(hook->reusedVarTB, hook->reusedVarTA, prec, hook->f);
     if (resA) {
       sollya_mpfi_get_right(hook->reusedVarTemp, hook->reusedVarT);
       sollya_mpfi_set_fr(hook->reusedVarTA, hook->reusedVarTemp);
-      resB = evaluateWithEvaluationHook(hook->reusedVarTB, hook->reusedVarTA, prec, mayEvaluateExpressions, hook->f);
+      resB = evaluateWithEvaluationHook(hook->reusedVarTB, hook->reusedVarTA, prec, hook->f);
       if (resB) {
 	/* We can use the hook for f to evaluate f at each end-point of t, but not over t. 
 	   This probably means that f has a zero in t. However, t is just an approximation
@@ -985,7 +981,7 @@ int evaluateCompositionEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec
 	    sollya_mpfi_has_infinity(hook->reusedVarT)) {
 	  return 0;
 	}
-	res = evaluateWithEvaluationHook(y, hook->reusedVarT, prec, mayEvaluateExpressions, hook->f);
+	res = evaluateWithEvaluationHook(y, hook->reusedVarT, prec, hook->f);
       }
     }
   }
