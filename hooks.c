@@ -562,7 +562,7 @@ int composePolyEvalHook(eval_hook_t **hookPtr, void *data, node *g) {
   return okay;
 }
 
-int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void *data) {
+static inline int evaluatePolyEvalHookInner(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void *data) {
   poly_eval_hook_t *hook;
   mp_prec_t p, pY, pX;
   int okay, i, polynomialIsMonotone;
@@ -744,6 +744,15 @@ int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void 
   if (okay) sollya_mpfi_set(y, hook->reusedVarMyYRndWithDelta);
 
   return okay;
+}
+
+int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void *data) {
+  int res;
+
+  res = evaluatePolyEvalHookInner(y, x, prec, data);
+
+  
+  return res;
 }
 
 void freePolyEvalHook(void *data) {
