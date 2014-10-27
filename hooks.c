@@ -191,14 +191,27 @@ int evaluateNodeEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void 
   if (sollya_mpfi_has_infinity(x)) return 0;
   if (!sollya_mpfi_is_inside(x, hook->domain)) return 0;
   
+  if (sollya_mpfi_is_zero(hook->t) && 
+      sollya_mpfi_is_zero(hook->delta)) {
+    evaluateInterval(y, hook->func, NULL, x);
+    return 1;
+  }
+
   pY = sollya_mpfi_get_prec(y); 
   pX = sollya_mpfi_get_prec(x); 
   p = pY + 10;
   if (prec > p) p = prec;
 
-  sollya_mpfi_init2(myY, p);
   sollya_mpfi_init2(redX, (p > pX ? p : pX));
   sollya_mpfi_sub(redX, x, hook->t);
+
+  if (sollya_mpfi_is_zero(hook->delta)) {
+    evaluateInterval(y, hook->func, NULL, redX);
+    sollya_mpfi_clear(redX);
+    return 1;
+  }
+
+  sollya_mpfi_init2(myY, p);
   evaluateInterval(myY, hook->func, NULL, redX);
 
   okay = 0;
@@ -882,7 +895,7 @@ int addNodeEvaluationHook(eval_hook_t **hookPtr, node *func, sollya_mpfi_t dom, 
 }
 
 int chooseAndAddEvaluationHook(eval_hook_t **hookPtr, node *func, sollya_mpfi_t dom, sollya_mpfi_t delta, sollya_mpfi_t t, mp_prec_t prec) {
-  if (isPolynomial(func)) return addPolyEvaluationHook(hookPtr, func, dom, delta, t, prec);
+  if (isPolynomial(func) && (!isConstant(func))) return addPolyEvaluationHook(hookPtr, func, dom, delta, t, prec);
   return addNodeEvaluationHook(hookPtr, func, dom, delta, t, prec);
 }
 
