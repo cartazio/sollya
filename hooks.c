@@ -1047,12 +1047,14 @@ void *copyCompositionEvalHook(void *data) {
 
 int composeCompositionEvalHook(eval_hook_t **hookPtr, void *data, node *g) {
   composition_eval_hook_t *hook;
-  node *h;
+  node *h, *temp;
   int okay;
 
   hook = (composition_eval_hook_t *) data;
   
-  h = substitute(hook->g, g);
+  temp = substitute(hook->g, g);
+  h = simplifyTreeErrorfree(temp);
+  free_memory(temp);
   
   okay = addEvaluationHook(hookPtr, (void *) createCompositionEvalHook(hook->f, h),
 			   evaluateCompositionEvalHook, 
