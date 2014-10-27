@@ -4357,163 +4357,163 @@ sollya_obj_t sollya_lib_v_build_end_elliptic_list(va_list varlist) {
 }
 
 sollya_obj_t sollya_lib_build_function_free_variable() {
-  return makeVariable();
+  return addMemRef(makeVariable());
 }
 
 sollya_obj_t sollya_lib_build_function_add(sollya_obj_t obj1, sollya_obj_t obj2) {
-  return makeAdd(obj1,obj2);
+  return addMemRef(makeAdd(obj1,obj2));
 }
 
 sollya_obj_t sollya_lib_build_function_sub(sollya_obj_t obj1, sollya_obj_t obj2) {
-  return makeSub(obj1,obj2);
+  return addMemRef(makeSub(obj1,obj2));
 }
 
 sollya_obj_t sollya_lib_build_function_mul(sollya_obj_t obj1, sollya_obj_t obj2) {
-  return makeMul(obj1,obj2);
+  return addMemRef(makeMul(obj1,obj2));
 }
 
 sollya_obj_t sollya_lib_build_function_div(sollya_obj_t obj1, sollya_obj_t obj2) {
-  return makeDiv(obj1,obj2);
+  return addMemRef(makeDiv(obj1,obj2));
 }
 
 sollya_obj_t sollya_lib_build_function_sqrt(sollya_obj_t obj1) {
-  return makeSqrt(obj1);
+  return addMemRef(makeSqrt(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_exp(sollya_obj_t obj1) {
-  return makeExp(obj1);
+  return addMemRef(makeExp(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_log(sollya_obj_t obj1) {
-  return makeLog(obj1);
+  return addMemRef(makeLog(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_log2(sollya_obj_t obj1) {
-  return makeLog2(obj1);
+  return addMemRef(makeLog2(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_log10(sollya_obj_t obj1) {
-  return makeLog10(obj1);
+  return addMemRef(makeLog10(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_sin(sollya_obj_t obj1) {
-  return makeSin(obj1);
+  return addMemRef(makeSin(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_cos(sollya_obj_t obj1) {
-  return makeCos(obj1);
+  return addMemRef(makeCos(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_tan(sollya_obj_t obj1) {
-  return makeTan(obj1);
+  return addMemRef(makeTan(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_asin(sollya_obj_t obj1) {
-  return makeAsin(obj1);
+  return addMemRef(makeAsin(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_acos(sollya_obj_t obj1) {
-  return makeAcos(obj1);
+  return addMemRef(makeAcos(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_atan(sollya_obj_t obj1) {
-  return makeAtan(obj1);
+  return addMemRef(makeAtan(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_pow(sollya_obj_t obj1, sollya_obj_t obj2) {
-  return makePow(obj1, obj2);
+  return addMemRef(makePow(obj1, obj2));
 }
 
 sollya_obj_t sollya_lib_build_function_neg(sollya_obj_t obj1) {
-  return makeNeg(obj1);
+  return addMemRef(makeNeg(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_abs(sollya_obj_t obj1) {
-  return makeAbs(obj1);
+  return addMemRef(makeAbs(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_double(sollya_obj_t obj1) {
-  return makeDouble(obj1);
+  return addMemRef(makeDouble(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_single(sollya_obj_t obj1) {
-  return makeSingle(obj1);
+  return addMemRef(makeSingle(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_quad(sollya_obj_t obj1) {
-  return makeQuad(obj1);
+  return addMemRef(makeQuad(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_halfprecision(sollya_obj_t obj1) {
-  return makeHalfPrecision(obj1);
+  return addMemRef(makeHalfPrecision(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_double_double(sollya_obj_t obj1) {
-  return makeDoubledouble(obj1);
+  return addMemRef(makeDoubledouble(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_triple_double(sollya_obj_t obj1) {
-  return makeTripledouble(obj1);
+  return addMemRef(makeTripledouble(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_erf(sollya_obj_t obj1) {
-  return makeErf(obj1);
+  return addMemRef(makeErf(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_erfc(sollya_obj_t obj1) {
-  return makeErfc(obj1);
+  return addMemRef(makeErfc(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_log1p(sollya_obj_t obj1) {
-  return makeLog1p(obj1);
+  return addMemRef(makeLog1p(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_expm1(sollya_obj_t obj1) {
-  return makeExpm1(obj1);
+  return addMemRef(makeExpm1(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_doubleextended(sollya_obj_t obj1) {
-  return makeDoubleextended(obj1);
+  return addMemRef(makeDoubleextended(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_ceil(sollya_obj_t obj1) {
-  return makeCeil(obj1);
+  return addMemRef(makeCeil(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_floor(sollya_obj_t obj1) {
-  return makeFloor(obj1);
+  return addMemRef(makeFloor(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_nearestint(sollya_obj_t obj1) {
-  return makeNearestInt(obj1);
+  return addMemRef(makeNearestInt(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_sinh(sollya_obj_t obj1) {
-  return makeSinh(obj1);
+  return addMemRef(makeSinh(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_cosh(sollya_obj_t obj1) {
-  return makeCosh(obj1);
+  return addMemRef(makeCosh(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_tanh(sollya_obj_t obj1) {
-  return makeTanh(obj1);
+  return addMemRef(makeTanh(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_asinh(sollya_obj_t obj1) {
-  return makeAsinh(obj1);
+  return addMemRef(makeAsinh(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_acosh(sollya_obj_t obj1) {
-  return makeAcosh(obj1);
+  return addMemRef(makeAcosh(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_atanh(sollya_obj_t obj1) {
-  return makeAtanh(obj1);
+  return addMemRef(makeAtanh(obj1));
 }
 
 sollya_obj_t sollya_lib_build_function_pi() {
-  return makePi();
+  return addMemRef(makePi());
 }
 
 sollya_obj_t sollya_lib_build_function_libraryconstant(char *name, void (*func)(mpfr_t, mp_prec_t)) {
@@ -4525,7 +4525,7 @@ sollya_obj_t sollya_lib_build_function_libraryconstant(char *name, void (*func)(
   res->nodeType = LIBRARYCONSTANT;
   res->libFun = libFunc;
 
-  return res;
+  return addMemRef(res);
 }
 
 sollya_obj_t sollya_lib_build_function_libraryfunction(sollya_obj_t obj1, char *name, int (*func)(mpfi_t, mpfi_t, int)) {
@@ -4539,7 +4539,7 @@ sollya_obj_t sollya_lib_build_function_libraryfunction(sollya_obj_t obj1, char *
   res->libFunDeriv = 0;
   res->child1 = obj1;
 
-  return res;
+  return addMemRef(res);
 }
 
 sollya_obj_t sollya_lib_build_function_procedurefunction(sollya_obj_t obj1, sollya_obj_t obj2) {
@@ -4549,7 +4549,7 @@ sollya_obj_t sollya_lib_build_function_procedurefunction(sollya_obj_t obj1, soll
   res->libFunDeriv = 0;
   res->child1 = obj1;
   res->child2 = obj2;
-  return res;
+  return addMemRef(res);
 }
 
 
@@ -4750,6 +4750,6 @@ sollya_obj_t sollya_lib_build_function(sollya_base_function_t func, ...) {
 
   va_end(varlist);
 
-  return res;
+  return addMemRef(res);
 }
 

@@ -5458,9 +5458,17 @@ node* differentiateUnsimplifiedInner(node *tree) {
   mpfr_t *mpfr_temp;
   node *temp_node, *temp_node2, *temp_node3, *f_diff, *g_diff, *f_copy, *g_copy, *g_copy2, *h_copy;
   node *temp_node4, *f_copy2, *temp_node5;
+  node *temp;
   int deg;
 
   if (tree->nodeType == MEMREF) {
+    if (tree->polynomialRepresentation != NULL) {
+      temp = addMemRefEvenOnNull(NULL);
+      if (temp != NULL) {
+	temp->polynomialRepresentation = polynomialDeriv(tree->polynomialRepresentation);
+	return temp;
+      }
+    }
     return addMemRef(differentiateUnsimplifiedInner(getMemRefChild(tree)));
   }
 
@@ -10756,6 +10764,44 @@ void computePowerOfPolynomialCoefficients(int *degreeRes, node ***coeffRes,
   }
 }
 
+int getCoefficientsInnerAlternate(int *degree, node ***coefficients, node *poly) {
+  polynomial_t polynomial;
+  int deg;
+  unsigned int myDegree, t, k;
+  node **myCoeffs;
+
+  if (poly == NULL) return 0;
+  if (!polynomialFromExpressionOnlyRealCoeffs(&polynomial, poly)) {
+    return 0;
+  }
+  
+  if (polynomialGetCoefficients(&myCoeffs, &myDegree, polynomial)) {
+    deg = myDegree;
+    t = deg;
+    if ((deg >= 0) && (t == myDegree)) {
+      for (k=0u;k<=myDegree;k++) {
+	if ((accessThruMemRef(myCoeffs[k])->nodeType == CONSTANT) &&
+	    mpfr_zero_p(*(accessThruMemRef(myCoeffs[k])->value))) {
+	  free_memory(myCoeffs[k]);
+	  myCoeffs[k] = NULL;
+	}
+      }
+      *coefficients = myCoeffs;
+      *degree = deg;
+      polynomialFree(polynomial);
+      return 1;
+    } else {
+      for (k=0u;k<=myDegree;k++) {
+	free_memory(myCoeffs[k]);
+      }
+      safeFree(myCoeffs);
+    }
+  }
+
+  polynomialFree(polynomial);
+
+  return 0;
+}
 
 void getCoefficientsInner(int *degree, node ***coefficients, node *poly) {
   node *temp, *temp2, *temp3, *temp4;
@@ -10763,6 +10809,10 @@ void getCoefficientsInner(int *degree, node ***coefficients, node *poly) {
   node **coefficients1, **coefficients2;
   int degree1, degree2;
   mpfr_t y;
+
+  if (getCoefficientsInnerAlternate(degree, coefficients, poly)) {
+    return;
+  }
 
   if (poly->nodeType == MEMREF) {
     getCoefficients(degree, coefficients, getMemRefChild(poly));
@@ -10960,7 +11010,6 @@ void getCoefficients(int *degree, node ***coefficients, node *poly) {
   node **myCoeffs;
 
   if (poly->nodeType == MEMREF) {
-    
     if (poly->polynomialRepresentation == NULL) {
       tryRepresentAsPolynomial(poly);
     }
@@ -11623,7 +11672,17 @@ node *differentiatePolynomialHornerUnsafe(node *tree) {
   mpfr_t *value;
   mp_prec_t prec;
 
+  copy = NULL;
+
   getCoefficients(&degree,&monomials,tree);
+
+  if (degree == 0) {
+    for (i=0;i<=degree;i++) {
+      free_memory(monomials[i]);
+    }
+    safeFree(monomials);
+    return addMemRef(makeConstantInt(0));
+  }
 
   if (monomials[0] != NULL) free_memory(monomials[0]);
 
@@ -11731,6 +11790,10 @@ node *differentiatePolynomialHornerUnsafe(node *tree) {
   }
   safeFree(monomials);
 
+  if (copy == NULL) {
+    copy = addMemRef(makeConstantInt(0));
+  }
+
   return copy;
 }
 
@@ -11739,6 +11802,8 @@ node *differentiatePolynomialUnsafe(node *tree) {
   int degree, i;
   node **monomials;
   mpfr_t *value;
+
+  copy = NULL;
 
   if (isHorner(tree)) {
     printMessage(25,SOLLYA_MSG_DIFFERENTIATION_USES_SPECIAL_ALGO_FOR_HORNER,"Information: differentiating a polynomial in Horner form uses a special algorithm.\n");
@@ -11896,6 +11961,10 @@ node *differentiatePolynomialUnsafe(node *tree) {
       if (monomials[i] != NULL) free_memory(monomials[i]);
     }
     safeFree(monomials);
+  }
+
+  if (copy == NULL) {
+    copy = addMemRef(makeConstantInt(0));
   }
 
   return copy;
