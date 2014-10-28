@@ -3924,6 +3924,10 @@ void evaluateInterval(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x)
   evaluateITaylor(y, func, deriv, x, prec, taylorrecursions, NULL, 1,0,0,NULL);
 }
 
+void evaluateIntervalPlain(sollya_mpfi_t y, node *func, sollya_mpfi_t x) {
+  evaluateITaylor(y, func, NULL, x, sollya_mpfi_get_prec(y), taylorrecursions, NULL, 1,0,0,NULL);
+}
+
 void evaluateIntervalInternalFast(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x, int adaptPrecision, mp_exp_t *cutoff) {
   mp_prec_t prec;
 

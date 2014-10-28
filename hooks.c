@@ -193,7 +193,7 @@ int evaluateNodeEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void 
   
   if (sollya_mpfi_is_zero(hook->t) && 
       sollya_mpfi_is_zero(hook->delta)) {
-    evaluateInterval(y, hook->func, NULL, x);
+    evaluateIntervalPlain(y, hook->func, x);
     return 1;
   }
 
@@ -206,13 +206,13 @@ int evaluateNodeEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void 
   sollya_mpfi_sub(redX, x, hook->t);
 
   if (sollya_mpfi_is_zero(hook->delta)) {
-    evaluateInterval(y, hook->func, NULL, redX);
+    evaluateIntervalPlain(y, hook->func, redX);
     sollya_mpfi_clear(redX);
     return 1;
   }
 
   sollya_mpfi_init2(myY, pY + 10);
-  evaluateInterval(myY, hook->func, NULL, redX);
+  evaluateIntervalPlain(myY, hook->func, redX);
 
   okay = 0;
   sollya_mpfi_init2(myYRnd, pY + 5);

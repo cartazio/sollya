@@ -76,6 +76,7 @@ void uncertifiedInfnorm(mpfr_t result, node *tree, mpfr_t a, mpfr_t b, unsigned 
 void evaluateRangeFunction(rangetype yrange, node *func, rangetype xrange, mp_prec_t prec);
 void evaluateRangeFunctionFast(rangetype yrange, node *func, node *deriv, rangetype xrange, mp_prec_t prec);
 void evaluateInterval(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x);
+void evaluateIntervalPlain(sollya_mpfi_t y, node *func, sollya_mpfi_t x);
 void fprintInterval(FILE *fd, sollya_mpfi_t interval);
 void printInterval(sollya_mpfi_t interval);
 char *sprintInterval(sollya_mpfi_t interval);
