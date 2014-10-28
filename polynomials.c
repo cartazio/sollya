@@ -2060,6 +2060,10 @@ static inline int constantIsZero(constant_t a, int defVal) {
 	a->isZero.cached = 1;
 	a->isZero.res = 1;	
 	return a->isZero.res;
+      } else {
+	a->isZero.cached = 1;
+	a->isZero.res = 0;	
+	return a->isZero.res;
       }
     }
     return defVal;
@@ -5197,7 +5201,7 @@ static inline void sparsePolynomialDiv(sparse_polynomial_t *quot, sparse_polynom
       sparsePolynomialFree(recprPB);
     } else {
       *quot = sparsePolynomialFromIntConstant(0);
-      *rest = sparsePolynomialFromCopy(b);
+      *rest = sparsePolynomialFromCopy(a);
     }
     constantFree(bc);
     return;

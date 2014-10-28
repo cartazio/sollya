@@ -17465,10 +17465,11 @@ int tryRepresentAsPolynomialNoConstants(node *tree) {
   if (!polynomialFromExpressionOnlyRealCoeffs(&p, tree)) return 0;
   if ((tree->polynomialRepresentation == NULL) && (!polynomialReferencesExpression(p, tree))) {
     tree->polynomialRepresentation = p;
+    return 1;
   } else {
     polynomialFree(p);
   }
-  return 1;
+  return 0;
 }
 
 int tryRepresentAsPolynomial(node *tree) {
@@ -17480,10 +17481,11 @@ int tryRepresentAsPolynomial(node *tree) {
   if (!polynomialFromExpressionOnlyRealCoeffs(&p, tree)) return 0;
   if ((tree->polynomialRepresentation == NULL) && (!polynomialReferencesExpression(p, tree))) {
     tree->polynomialRepresentation = p;
+    return 1;
   } else {
     polynomialFree(p);
   }
-  return 1;
+  return 0;
 }
 
 node *evaluateThing(node *tree) {
