@@ -6707,7 +6707,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedHooks(mpfr_t y, eval_hoo
   if (prec < minPrec) prec = minPrec;
   __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, prec);
   
-  Y = chooseAndInitMpfiPtr(&v_Y, mpfr_get_prec(y) + 2);
+  Y = chooseAndInitMpfiPtr(&v_Y, mpfr_get_prec(y) + 5);
   X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(x));
   
   sollya_mpfi_set_fr(*X, x);
