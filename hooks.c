@@ -55,7 +55,7 @@
 
 int addEvaluationHook(eval_hook_t **hookPtr, 
 		      void *data, 
-		      int (*evaluateFunc)(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, void *), 
+		      int (*evaluateFunc)(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, int, void *), 
 		      void (*freeFunc)(void *),
 		      int (*compareFunc)(void *, void *),
 		      void *(*copyFunc)(void *),
@@ -141,7 +141,7 @@ void freeEvaluationHook(eval_hook_t **hookPtr) {
   *hookPtr = NULL;
 }
 
-int evaluateWithEvaluationHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, eval_hook_t *hook) {
+int evaluateWithEvaluationHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, int tight, eval_hook_t *hook) {
   eval_hook_t *curr;
   int res;
 
@@ -150,7 +150,7 @@ int evaluateWithEvaluationHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec,
   for (curr=hook;curr!=NULL;curr=curr->nextHook) {
     if (curr->gettingUsed <= 0) {
       curr->gettingUsed = 1;
-      res = curr->evaluateHook(y,x,prec,curr->data);
+      res = curr->evaluateHook(y,x,prec,tight,curr->data);
       curr->gettingUsed = 0;
     } else {
       res = 0;
@@ -179,7 +179,7 @@ node_eval_hook_t *createNodeEvalHook(node *func, sollya_mpfi_t dom, sollya_mpfi_
 }
 
 
-int evaluateNodeEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void *data) {
+int evaluateNodeEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, int tight, void *data) {
   node_eval_hook_t *hook;
   mp_prec_t p, pY, pX;
   sollya_mpfi_t myY, myYRnd, myYRndWithDelta, redX;
@@ -213,6 +213,13 @@ int evaluateNodeEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void 
 
   sollya_mpfi_init2(myY, pY + 10);
   evaluateIntervalPlain(myY, hook->func, redX);
+
+  if (!tight) {
+    sollya_mpfi_add(y, myY, hook->delta);
+    sollya_mpfi_clear(myY);
+    sollya_mpfi_clear(redX);
+    return 1;
+  }
 
   okay = 0;
   sollya_mpfi_init2(myYRnd, pY + 5);
@@ -296,7 +303,7 @@ int compareNodeEvalHook(void *data1, void *data2) {
   return 1;
 }
 
-int evaluatePolyEvalHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, void *);
+int evaluatePolyEvalHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, int, void *);
 
 poly_eval_hook_t *createPolyEvalHook(int degree, mpfr_t *coeffs, sollya_mpfi_t dom, sollya_mpfi_t delta, sollya_mpfi_t t) {
   poly_eval_hook_t *newPolyEvalHook;
@@ -458,7 +465,7 @@ poly_eval_hook_t *createPolyEvalHook(int degree, mpfr_t *coeffs, sollya_mpfi_t d
     if (!(sollya_mpfi_has_nan(newPolyEvalHook->delta) ||
 	  sollya_mpfi_has_infinity(newPolyEvalHook->delta))) {
       sollya_mpfi_init2(Y, 12);
-      if (evaluatePolyEvalHook(Y, dom, 15, (void *) newPolyEvalHook)) {
+      if (evaluatePolyEvalHook(Y, dom, 15, 0, (void *) newPolyEvalHook)) {
 	if (!(sollya_mpfi_has_nan(Y) || 
 	      sollya_mpfi_has_infinity(Y))) {
 	  sollya_mpfi_abs(Y, Y);
@@ -575,7 +582,7 @@ int composePolyEvalHook(eval_hook_t **hookPtr, void *data, node *g) {
   return okay;
 }
 
-static inline int evaluatePolyEvalHookInner(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void *data) {
+int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, int tight, void *data) {
   poly_eval_hook_t *hook;
   mp_prec_t p, pY, pX;
   int okay, i, polynomialIsMonotone;
@@ -694,29 +701,34 @@ static inline int evaluatePolyEvalHookInner(sollya_mpfi_t y, sollya_mpfi_t x, mp
       }      
       sollya_mpfi_union(hook->reusedVarMyY, hook->reusedVarMyY, hook->reusedVarMyYB);
 
-      okay = 0;
-      if (hook->reusedVarMyYRndInit) { 
-	sollya_mpfi_set_prec(hook->reusedVarMyYRnd, pY + 5); 
+      if (tight) {
+	okay = 0;
+	if (hook->reusedVarMyYRndInit) { 
+	  sollya_mpfi_set_prec(hook->reusedVarMyYRnd, pY + 5); 
+	} else {
+	  sollya_mpfi_init2(hook->reusedVarMyYRnd, pY + 5); 
+	  hook->reusedVarMyYRndInit = 1;
+	}
+	if (hook->reusedVarMyYRndWithDeltaInit) { 
+	  sollya_mpfi_set_prec(hook->reusedVarMyYRndWithDelta, pY + 5); 
+	} else {
+	  sollya_mpfi_init2(hook->reusedVarMyYRndWithDelta, pY + 5); 
+	  hook->reusedVarMyYRndWithDeltaInit = 1;
+	}
+	sollya_mpfi_set(hook->reusedVarMyYRnd, hook->reusedVarMyY);
+	sollya_mpfi_blow_1ulp(hook->reusedVarMyYRnd);
+	sollya_mpfi_add(hook->reusedVarMyYRndWithDelta, hook->reusedVarMyY, hook->delta);
+	
+	if (sollya_mpfi_is_inside(hook->reusedVarMyYRndWithDelta, hook->reusedVarMyYRnd) && 
+	    (!(sollya_mpfi_has_nan(hook->reusedVarMyYRndWithDelta) || 
+	       (sollya_mpfi_has_infinity(hook->reusedVarMyYRndWithDelta) && 
+		(!sollya_mpfi_is_infinity(hook->reusedVarMyYRndWithDelta)))))) okay = 1;
+	
+	if (okay) sollya_mpfi_set(y, hook->reusedVarMyYRndWithDelta);
       } else {
-	sollya_mpfi_init2(hook->reusedVarMyYRnd, pY + 5); 
-	hook->reusedVarMyYRndInit = 1;
+	sollya_mpfi_add(y, hook->reusedVarMyY, hook->delta);
+	okay = 1;
       }
-      if (hook->reusedVarMyYRndWithDeltaInit) { 
-	sollya_mpfi_set_prec(hook->reusedVarMyYRndWithDelta, pY + 5); 
-      } else {
-	sollya_mpfi_init2(hook->reusedVarMyYRndWithDelta, pY + 5); 
-	hook->reusedVarMyYRndWithDeltaInit = 1;
-      }
-      sollya_mpfi_set(hook->reusedVarMyYRnd, hook->reusedVarMyY);
-      sollya_mpfi_blow_1ulp(hook->reusedVarMyYRnd);
-      sollya_mpfi_add(hook->reusedVarMyYRndWithDelta, hook->reusedVarMyY, hook->delta);
-
-      if (sollya_mpfi_is_inside(hook->reusedVarMyYRndWithDelta, hook->reusedVarMyYRnd) && 
-	  (!(sollya_mpfi_has_nan(hook->reusedVarMyYRndWithDelta) || 
-	     (sollya_mpfi_has_infinity(hook->reusedVarMyYRndWithDelta) && 
-	      (!sollya_mpfi_is_infinity(hook->reusedVarMyYRndWithDelta)))))) okay = 1;
-  
-      if (okay) sollya_mpfi_set(y, hook->reusedVarMyYRndWithDelta);
 
       return okay;
     }
@@ -730,42 +742,38 @@ static inline int evaluatePolyEvalHookInner(sollya_mpfi_t y, sollya_mpfi_t x, mp
     sollya_mpfi_add_fr(hook->reusedVarMyY, hook->reusedVarMyY, hook->coefficients[i]);
   }
   
-  okay = 0;
-  if (hook->reusedVarMyYRndInit) { 
-    sollya_mpfi_set_prec(hook->reusedVarMyYRnd, pY + 5); 
-  } else {
-    sollya_mpfi_init2(hook->reusedVarMyYRnd, pY + 5); 
-    hook->reusedVarMyYRndInit = 1;
-  }
-  if (hook->reusedVarMyYRndWithDeltaInit) { 
-    sollya_mpfi_set_prec(hook->reusedVarMyYRndWithDelta, pY + 5); 
-  } else {
-    sollya_mpfi_init2(hook->reusedVarMyYRndWithDelta, pY + 5); 
-    hook->reusedVarMyYRndWithDeltaInit = 1;
-  }
+  if (tight) {
+    okay = 0;
+    if (hook->reusedVarMyYRndInit) { 
+      sollya_mpfi_set_prec(hook->reusedVarMyYRnd, pY + 5); 
+    } else {
+      sollya_mpfi_init2(hook->reusedVarMyYRnd, pY + 5); 
+      hook->reusedVarMyYRndInit = 1;
+    }
+    if (hook->reusedVarMyYRndWithDeltaInit) { 
+      sollya_mpfi_set_prec(hook->reusedVarMyYRndWithDelta, pY + 5); 
+    } else {
+      sollya_mpfi_init2(hook->reusedVarMyYRndWithDelta, pY + 5); 
+      hook->reusedVarMyYRndWithDeltaInit = 1;
+    }
 
-  sollya_mpfi_set(hook->reusedVarMyYRnd, hook->reusedVarMyY);
+    sollya_mpfi_set(hook->reusedVarMyYRnd, hook->reusedVarMyY);
 
-  sollya_mpfi_blow_1ulp(hook->reusedVarMyYRnd);
-  sollya_mpfi_add(hook->reusedVarMyYRndWithDelta, hook->reusedVarMyY, hook->delta);
+    sollya_mpfi_blow_1ulp(hook->reusedVarMyYRnd);
+    sollya_mpfi_add(hook->reusedVarMyYRndWithDelta, hook->reusedVarMyY, hook->delta);
 
-  if (sollya_mpfi_is_inside(hook->reusedVarMyYRndWithDelta, hook->reusedVarMyYRnd) && 
-      (!(sollya_mpfi_has_nan(hook->reusedVarMyYRndWithDelta) || 
-	 (sollya_mpfi_has_infinity(hook->reusedVarMyYRndWithDelta) && 
-	  (!sollya_mpfi_is_infinity(hook->reusedVarMyYRndWithDelta)))))) okay = 1;
+    if (sollya_mpfi_is_inside(hook->reusedVarMyYRndWithDelta, hook->reusedVarMyYRnd) && 
+	(!(sollya_mpfi_has_nan(hook->reusedVarMyYRndWithDelta) || 
+	   (sollya_mpfi_has_infinity(hook->reusedVarMyYRndWithDelta) && 
+	    (!sollya_mpfi_is_infinity(hook->reusedVarMyYRndWithDelta)))))) okay = 1;
   
-  if (okay) sollya_mpfi_set(y, hook->reusedVarMyYRndWithDelta);
+    if (okay) sollya_mpfi_set(y, hook->reusedVarMyYRndWithDelta);
+  } else {
+    sollya_mpfi_add(y, hook->reusedVarMyY, hook->delta);
+    okay = 1;
+  }
 
   return okay;
-}
-
-int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void *data) {
-  int res;
-
-  res = evaluatePolyEvalHookInner(y, x, prec, data);
-
-  
-  return res;
 }
 
 void freePolyEvalHook(void *data) {
@@ -935,7 +943,7 @@ composition_eval_hook_t *createCompositionEvalHook(eval_hook_t *f, node *g) {
   return newCompositionEvalHook;
 }
 
-int evaluateCompositionEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, void *data) {
+int evaluateCompositionEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, int tight, void *data) {
   composition_eval_hook_t * hook;
   mp_prec_t p, pX;
   int res, resA, resB;
@@ -963,7 +971,7 @@ int evaluateCompositionEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec
     return 0;
   }
 
-  res = evaluateWithEvaluationHook(y, hook->reusedVarT, prec, hook->f);
+  res = evaluateWithEvaluationHook(y, hook->reusedVarT, prec, tight, hook->f);
 
   if ((!res) && (!sollya_mpfi_is_point_and_real(hook->reusedVarT))) {
     if (hook->reusedVarTAInit) { 
@@ -986,11 +994,11 @@ int evaluateCompositionEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec
     }
     sollya_mpfi_get_left(hook->reusedVarTemp, hook->reusedVarT);
     sollya_mpfi_set_fr(hook->reusedVarTA, hook->reusedVarTemp);
-    resA = evaluateWithEvaluationHook(hook->reusedVarTB, hook->reusedVarTA, prec, hook->f);
+    resA = evaluateWithEvaluationHook(hook->reusedVarTB, hook->reusedVarTA, prec, tight, hook->f);
     if (resA) {
       sollya_mpfi_get_right(hook->reusedVarTemp, hook->reusedVarT);
       sollya_mpfi_set_fr(hook->reusedVarTA, hook->reusedVarTemp);
-      resB = evaluateWithEvaluationHook(hook->reusedVarTB, hook->reusedVarTA, prec, hook->f);
+      resB = evaluateWithEvaluationHook(hook->reusedVarTB, hook->reusedVarTA, prec, tight, hook->f);
       if (resB) {
 	/* We can use the hook for f to evaluate f at each end-point of t, but not over t. 
 	   This probably means that f has a zero in t. However, t is just an approximation
@@ -1003,7 +1011,7 @@ int evaluateCompositionEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec
 	    sollya_mpfi_has_infinity(hook->reusedVarT)) {
 	  return 0;
 	}
-	res = evaluateWithEvaluationHook(y, hook->reusedVarT, prec, hook->f);
+	res = evaluateWithEvaluationHook(y, hook->reusedVarT, prec, tight, hook->f);
       }
     }
   }

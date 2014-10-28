@@ -52,7 +52,6 @@ h(0.25) =
 The precision has been set to 72 bits.
 h(0.25) = 
 Using procedure function exponential
-Using procedure function exponential
 1.2840254166877414840735
 The precision has been set to 24 bits.
 h(0) = 
@@ -63,9 +62,6 @@ evaluate(h,[-0.25;0.25]) =
 [0.7788007;1.2840254]
 The precision has been set to 72 bits.
 evaluate(h,[-0.25;0.25]) = 
-Using procedure function exponential
-Using procedure function exponential
-Using procedure function exponential
 [0.778800783071404868245;1.2840254166877414840735]
 The precision has been set to 24 bits.
 q = 

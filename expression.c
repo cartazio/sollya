@@ -8074,7 +8074,7 @@ void evaluate(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
       sollya_mpfi_init2(X,mpfr_get_prec(x));
       sollya_mpfi_set_fr(X, x);
       sollya_mpfi_init2(Y,mpfr_get_prec(result));
-      if (evaluateWithEvaluationHook(Y, X, prec, tree->evaluationHook)) {
+      if (evaluateWithEvaluationHook(Y, X, prec, 1, tree->evaluationHook)) {
 	if (sollya_mpfi_has_zero(Y)) {
 	  mpfr_set_si(result, 0, GMP_RNDN);
 	} else {
