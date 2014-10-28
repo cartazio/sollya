@@ -5085,7 +5085,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
   sollya_mpfi_t *X, *Y, *Z;
   int zeroG, zeroH;
   mp_exp_t expBeforeCancel, expAfterCancel; 
-  mp_prec_t lostPrec, newPrecCutoff;
+  mp_prec_t lostPrec, newPrecCutoff, precG, precH;
 
   /* Make compiler happy */
   X = NULL;
@@ -5107,10 +5107,10 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
   }
   recCutoffG = recCutoff;
   recCutoffH = recCutoff;
+  precG = prec;
+  precH = prec;
 
-  gy = chooseAndInitMpfrPtr(&v_gy, prec);
-  hy = chooseAndInitMpfrPtr(&v_hy, prec);
-  
+  gy = chooseAndInitMpfrPtr(&v_gy, precG);
   recMaxPrecUsedG = 0;
   resG = __tryFaithEvaluationOptimizedDoIt(*gy, g, x, recCutoffG, minPrec, &recMaxPrecUsedG);
   switch (resG) {
@@ -5128,6 +5128,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
   default:
     break;
   }
+  hy = chooseAndInitMpfrPtr(&v_hy, precH);
   recMaxPrecUsedH = 0;
   resH = __tryFaithEvaluationOptimizedDoIt(*hy, h, x, recCutoffH, minPrec, &recMaxPrecUsedH);
   if (resG == POINT_EVAL_FAILURE) {
@@ -6702,7 +6703,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedHooks(mpfr_t y, eval_hoo
   if (prec < minPrec) prec = minPrec;
   __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, prec);
   
-  Y = chooseAndInitMpfiPtr(&v_Y, mpfr_get_prec(y) + 5);
+  Y = chooseAndInitMpfiPtr(&v_Y, mpfr_get_prec(y) + 2);
   X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(x));
   
   sollya_mpfi_set_fr(*X, x);
