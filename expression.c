@@ -99,6 +99,22 @@ static inline void copyTreeAnnotations(node *new, node *old) {
   addEvaluationHookFromCopy(&(new->evaluationHook), old->evaluationHook);
 }
 
+static inline void copyTreeAnnotationsNoSimplifications(node *new, node *old) {
+  if (new == NULL) return;
+  if (old == NULL) return;
+  if (new->nodeType != MEMREF) return;
+  if (old->nodeType != MEMREF) return;
+  if (new == old) return;
+  new->isCorrectlyTyped = old->isCorrectlyTyped;
+  if ((old->derivCache != NULL) && (new->derivCache == NULL)) {
+    new->derivCache = copyThing(old->derivCache);
+  } 
+  if ((old->derivUnsimplCache != NULL) && (new->derivUnsimplCache == NULL)) {
+    new->derivUnsimplCache = copyThing(old->derivUnsimplCache);
+  } 
+  addEvaluationHookFromCopy(&(new->evaluationHook), old->evaluationHook);
+}
+
 void tryCopyTreeAnnotations(node *newTree, node *oldTree) {
   copyTreeAnnotations(newTree, oldTree);
 }
@@ -3079,7 +3095,7 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
   if ((res != tree) &&
       (tree->nodeType == MEMREF) &&
       (res->nodeType == MEMREF)) {
-    copyTreeAnnotations(res, tree); 
+    copyTreeAnnotationsNoSimplifications(res, tree); 
   }
 
   return res;
@@ -3436,7 +3452,7 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
       res = addMemRefEvenOnNull(NULL);
       if (res != NULL) {
 	res->polynomialRepresentation = polynomialFromCopy(tree->polynomialRepresentation);
-	copyTreeAnnotations(res, tree);
+	copyTreeAnnotationsNoSimplifications(res, tree);
 	return res;
       }
     }
@@ -11291,7 +11307,7 @@ node* hornerUnsimplified(node *tree) {
       res = addMemRefEvenOnNull(NULL);
       if (res != NULL) {
 	res->polynomialRepresentation = polynomialHornerize(tree->polynomialRepresentation);
-	copyTreeAnnotations(res, tree);
+	copyTreeAnnotationsNoSimplifications(res, tree);
 	return res;
       }
     }
@@ -11611,7 +11627,7 @@ node* horner(node *tree) {
       res = addMemRefEvenOnNull(NULL);
       if (res != NULL) {
 	res->polynomialRepresentation = polynomialHornerize(tree->polynomialRepresentation);
-	copyTreeAnnotations(res, tree);
+	copyTreeAnnotationsNoSimplifications(res, tree);
 	return res;
       }
     }
@@ -13811,7 +13827,7 @@ node *makeCanonical(node *tree, mp_prec_t prec) {
       res = addMemRefEvenOnNull(NULL);
       if (res != NULL) {
 	res->polynomialRepresentation = polynomialCanonicalize(tree->polynomialRepresentation);
-	copyTreeAnnotations(res, tree);
+	copyTreeAnnotationsNoSimplifications(res, tree);
 	return res;
       }
     }
