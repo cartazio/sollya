@@ -54,31 +54,39 @@
 #include <mpfr.h>
 #include "mpfi-compat.h"
 
+/* We need to know the nodeStruct structure */
+
+struct nodeStruct;
 
 /* General framework for evaluation hooks */
 
 typedef struct __eval_hook_t_struct eval_hook_t;
 struct __eval_hook_t_struct {
   void *data;
-  int (*evaluateHook)(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, void *);
+  int gettingUsed;
+  int (*evaluateHook)(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, int, void *);
   void (*freeHook)(void *);
   int (*compareHook)(void *, void *);
   void *(*copyHook)(void *);
+  int (*composeHook)(eval_hook_t **, void *, struct nodeStruct *);
   eval_hook_t *nextHook;
 };
 
 int addEvaluationHook(eval_hook_t **, 
 		      void *, 
-		      int (*)(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, void *), 
+		      int (*)(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, int, void *), 
 		      void (*)(void *),
 		      int (*)(void *, void *),
-		      void *(*)(void *));
+		      void *(*)(void *),
+		      int (*)(eval_hook_t **, void *, struct nodeStruct *));
 
 int addEvaluationHookFromCopy(eval_hook_t **, eval_hook_t *);
 
+int addEvaluationHookFromComposition(eval_hook_t **, eval_hook_t *, struct nodeStruct *);
+
 void freeEvaluationHook(eval_hook_t **);
 
-int evaluateWithEvaluationHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, eval_hook_t *);
+int evaluateWithEvaluationHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, int, eval_hook_t *);
 
 
 
@@ -93,11 +101,11 @@ struct __node_eval_hook_t_struct {
 };
 
 node_eval_hook_t *createNodeEvalHook(struct nodeStruct *, sollya_mpfi_t, sollya_mpfi_t, sollya_mpfi_t);
-int evaluateNodeEvalHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, void *);
+int evaluateNodeEvalHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, int, void *);
 void freeNodeEvalHook(void *);
 int compareNodeEvalHook(void *, void *);
 void *copyNodeEvalHook(void *);
-
+int composeNodeEvalHook(eval_hook_t **, void *, struct nodeStruct *);
 
 /* Polynomial replacement function evaluation hooks */
 
@@ -108,6 +116,7 @@ struct __poly_eval_hook_t_struct {
   sollya_mpfi_t t;
   int degree;
   int polynomialIsMonotone;
+  int polynomialHasZero;
   int maxPrecKnown;
   mp_prec_t maxPrec;
   int exactRepresentation;
@@ -135,10 +144,34 @@ struct __poly_eval_hook_t_struct {
 };
 
 poly_eval_hook_t *createPolyEvalHook(int, mpfr_t *, sollya_mpfi_t, sollya_mpfi_t, sollya_mpfi_t);
-int evaluatePolyEvalHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, void *);
+int evaluatePolyEvalHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, int, void *);
 void freePolyEvalHook(void *);
 int comparePolyEvalHook(void *, void *);
 void *copyPolyEvalHook(void *);
+int composePolyEvalHook(eval_hook_t **, void *, struct nodeStruct *);
+
+/* Composition evaluation hooks */
+
+typedef struct __composition_eval_hook_t_struct composition_eval_hook_t;
+struct __composition_eval_hook_t_struct {
+  eval_hook_t *f;
+  struct nodeStruct *g;
+  sollya_mpfi_t reusedVarT;
+  sollya_mpfi_t reusedVarTA;
+  sollya_mpfi_t reusedVarTB;
+  mpfr_t reusedVarTemp;
+  int reusedVarTInit;
+  int reusedVarTAInit;
+  int reusedVarTBInit;
+  int reusedVarTempInit;
+};
+
+composition_eval_hook_t *createCompositionEvalHook(eval_hook_t *, struct nodeStruct *);
+int evaluateCompositionEvalHook(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, int, void *);
+void freeCompositionEvalHook(void *);
+int compareCompositionEvalHook(void *, void *);
+void *copyCompositionEvalHook(void *);
+int composeCompositionEvalHook(eval_hook_t **, void *, struct nodeStruct *);
 
 /* Helper functions that install either a general or a polynomial replacement hook */
 

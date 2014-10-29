@@ -159,6 +159,7 @@ int lastMessageSuppressedResult = -1;
 
 chain *symbolTable = NULL;
 chain *declaredSymbolTable = NULL;
+chain *backtraceStack = NULL;
 
 int oldrlwrapcompatible = 0;
 
@@ -796,6 +797,30 @@ int uninstallMessageCallback() {
   return 1;
 }
 
+int messageHasEnoughVerbosityAndIsNotSuppressed(int verb, int msgNum) {
+  int suppressed; 
+  
+  if ((verb >= 0) && (verbosity < verb)) return 0;
+  /* Check if message suppression is activated for that message */
+  suppressed = 0;
+  if ((suppressedMessages != NULL) &&
+      (verb >= 0) &&
+      (msgNum != SOLLYA_MSG_NO_MSG)) {
+    if (msgNum != SOLLYA_MSG_CONTINUATION) {
+      suppressed = getBitInBitfield(suppressedMessages, msgNum);
+    } else {
+      if (lastMessageSuppressedResult == -1) {
+	suppressed = 0;
+      } else {
+	suppressed = lastMessageSuppressedResult;
+      }
+    }
+  }
+  if ((verb >= 0) && suppressed && (msgNum != SOLLYA_MSG_NO_MSG)) return 0;
+
+  return 1;
+}
+
 int printMessageInner(int verb, int msgNum, const char *format, va_list varlist) {
   int oldColor;
   int res, suppressed;
@@ -1132,10 +1157,12 @@ void freeTool() {
   freeSymbolTable(symbolTable, freeThingOnVoid);
   symbolTable = NULL;
   freeDeclaredSymbolTable(declaredSymbolTable, freeThingOnVoid);
+  freeBacktraceStack();
   freeFunctionSpecialVariables();
   freeGlobalReusedMPFIVars();
   freeGlobalReusedMPFRVars();
   declaredSymbolTable = NULL;
+  backtraceStack = NULL;
   mpfr_clear(statediam);
   safeFree(temporyDirectory); temporyDirectory = NULL;
   safeFree(uniqueIdentifier); uniqueIdentifier = NULL;
@@ -1176,6 +1203,7 @@ void initToolDefaults() {
   hopitalrecursions = DEFAULTHOPITALRECURSIONS;
   symbolTable = NULL;
   declaredSymbolTable = NULL;
+  backtraceStack = NULL;
   mpfr_init2(statediam,10);
   mpfr_set_d(statediam,DEFAULTDIAM,GMP_RNDN);
   __firstTryEvaluateFaithfulWithCutOffFastInternalImplementation_vars_used = 0;
@@ -1234,10 +1262,12 @@ void restartTool() {
   freeSymbolTable(symbolTable, freeThingOnVoid);
   symbolTable = NULL;
   freeDeclaredSymbolTable(declaredSymbolTable, freeThingOnVoid);
+  freeBacktraceStack();
   freeFunctionSpecialVariables();
   freeGlobalReusedMPFIVars();
   freeGlobalReusedMPFRVars();
   declaredSymbolTable = NULL;
+  backtraceStack = NULL;
   freeFunctionLibraries();
   freeConstantLibraries();
   freeProcLibraries();
@@ -1569,10 +1599,12 @@ int finalizeLibraryMode() {
   freeSymbolTable(symbolTable, freeThingOnVoid);
   symbolTable = NULL;
   freeDeclaredSymbolTable(declaredSymbolTable, freeThingOnVoid);
+  freeBacktraceStack();
   freeFunctionSpecialVariables();
   freeGlobalReusedMPFIVars();
   freeGlobalReusedMPFRVars();
   declaredSymbolTable = NULL;
+  backtraceStack = NULL;
   mpfr_clear(statediam);
   safeFree(temporyDirectory); temporyDirectory = NULL;
   safeFree(uniqueIdentifier); uniqueIdentifier = NULL;
@@ -1733,6 +1765,7 @@ int general(int argc, char *argv[]) {
   char **temp;
   int k;
   int sollyaOptions;
+  int frameCorruptionPrinted;
 
   messageCallback = NULL;
   libraryMode = 0;
@@ -1966,10 +1999,17 @@ int general(int argc, char *argv[]) {
       lastHandledSignal = 0;
       if (!setjmp(recoverEnvironment)) {
 	recoverEnvironmentReady = 1;
+	frameCorruptionPrinted = 0;
 	if (declaredSymbolTable != NULL) {
 	  printMessage(1,SOLLYA_MSG_FRAME_STACK_HAS_BEEN_CORRUPTED,"Warning: a preceeding command interruption corrupted the variable frame stack.\n");
+	  frameCorruptionPrinted = 1;
 	  freeDeclaredSymbolTable(declaredSymbolTable, freeThingOnVoid);
 	  declaredSymbolTable = NULL;
+	}
+	if (backtraceStack != NULL) {
+	  if (!frameCorruptionPrinted) printMessage(1,SOLLYA_MSG_FRAME_STACK_HAS_BEEN_CORRUPTED,"Warning: a preceeding command interruption corrupted the variable frame stack.\n");
+	  freeBacktraceStack();
+	  backtraceStack = NULL;
 	}
 	initSignalHandler();
 	numberBacktrace = 1;
@@ -2026,14 +2066,26 @@ int general(int argc, char *argv[]) {
 	  printMessage(1,SOLLYA_MSG_COMMAND_NOT_EXECUTABLE,"Warning: the last command could not be executed. May leak memory.\n");
           considerDyingOnError();
         }
+	frameCorruptionPrinted = 0;
 	if (declaredSymbolTable != NULL) {
 	  if (!handlingCtrlC)
 	    printMessage(1,SOLLYA_MSG_RELEASING_FRAME_STACK,"Warning: releasing the variable frame stack.\n");
 	  else
 	    printMessage(2,SOLLYA_MSG_RELEASING_FRAME_STACK,"Information: releasing the variable frame stack.\n");
+	  frameCorruptionPrinted = 1;
 	  freeDeclaredSymbolTable(declaredSymbolTable, freeThingOnVoid);
 	}
 	declaredSymbolTable = NULL;
+	if (backtraceStack != NULL) {
+	  if (!frameCorruptionPrinted) {
+	    if (!handlingCtrlC)
+	      printMessage(1,SOLLYA_MSG_RELEASING_FRAME_STACK,"Warning: releasing the variable frame stack.\n");
+	    else
+	      printMessage(2,SOLLYA_MSG_RELEASING_FRAME_STACK,"Information: releasing the variable frame stack.\n");
+	  }
+	  freeBacktraceStack();
+	}
+	backtraceStack = NULL;
 	if (timeStack != NULL) {
 	  printMessage(2,SOLLYA_MSG_TIMING_STACK_HAS_BEEN_CORRUPTED,"Information: corrupted timing stack. Releasing the stack.\n");
 	  freeCounter();

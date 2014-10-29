@@ -311,6 +311,7 @@ PRINTEXPANSION  "printexpansion"
 BASHEXECUTE     "bashexecute"
 BASHEVALUATE    "bashevaluate"
 GETSUPPRESSEDMESSAGES "getsuppressedmessages"
+GETBACKTRACE    "getbacktrace"
 EXTERNALPLOT    "externalplot"
 PERTURB         "perturb"
 
@@ -400,6 +401,7 @@ MATCH           "match"
 WITH            "with"
 
 RENAME          "rename"
+OBJECTNAME      "objectname"
 BIND            "bind"
 
 LENGTH          "length"
@@ -713,10 +715,12 @@ NOP             "nop"
 {BASHEXECUTE}     			    {  return BASHEXECUTETOKEN; }
 {BASHEVALUATE}     			    {  return BASHEVALUATETOKEN; }
 {GETSUPPRESSEDMESSAGES}     		    {  return GETSUPPRESSEDMESSAGESTOKEN; }
+{GETBACKTRACE}     		            {  return GETBACKTRACETOKEN; }
 {EXTERNALPLOT}    			    {  return EXTERNALPLOTTOKEN; }
 {WRITE}           			    {  return WRITETOKEN; }
 {ASCIIPLOT}       			    {  return ASCIIPLOTTOKEN; }
 {RENAME}         			    {  return RENAMETOKEN; }
+{OBJECTNAME}         			    {  return OBJECTNAMETOKEN; }
 {BIND}         			            {  return BINDTOKEN; }
 
 

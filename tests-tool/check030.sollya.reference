@@ -1,43 +1,35 @@
 h = exp(x), h(3) = 
 Using procedure function exponential
-Using procedure function exponential
 2.00855369231876677409285296545817178969879078385544e1
 h = exp(x), h(3) = 
 2.00855369231876677409285296545817178969879078385544e1
 h = exp(x), h(2) = 
-Using procedure function exponential
 Using procedure function exponential
 7.3890560989306502272304274605750078131803155705518
 h = exp(x), h(6) = 
 4.03428793492735122608387180543388279605899897357128e2
 f = exp(x), f(3) = 
 Using procedure function exponential
-Using procedure function exponential
 2.00855369231876677409285296545817178969879078385544e1
 f = exp(x), f(3) = 
 2.00855369231876677409285296545817178969879078385544e1
 f = exp(x), f(2) = 
-Using procedure function exponential
 Using procedure function exponential
 7.3890560989306502272304274605750078131803155705518
 f = exp(x), f(6) = 
 4.03428793492735122608387180543388279605899897357128e2
 t = exp(x), t(3) = 
 Using procedure function exponential
-Using procedure function exponential
 2.00855369231876677409285296545817178969879078385544e1
 t = exp(x), t(2) = 
-Using procedure function exponential
 Using procedure function exponential
 7.3890560989306502272304274605750078131803155705518
 hp = exp(x), hp(2) = 
 7.3890560989306502272304274605750078131803155705518
 hp = exp(x), hp(3) = 
 Using procedure function exponential
-Using procedure function exponential
 2.00855369231876677409285296545817178969879078385544e1
 q = exp(x), q(4) = 
-Using procedure function exponential
 Using procedure function exponential
 5.45981500331442390781102612028608784027907370386137e1
 The tool has been restarted.
@@ -60,7 +52,6 @@ h(0.25) =
 The precision has been set to 72 bits.
 h(0.25) = 
 Using procedure function exponential
-Using procedure function exponential
 1.2840254166877414840735
 The precision has been set to 24 bits.
 h(0) = 
@@ -71,7 +62,31 @@ evaluate(h,[-0.25;0.25]) =
 [0.7788007;1.2840254]
 The precision has been set to 72 bits.
 evaluate(h,[-0.25;0.25]) = 
-Using procedure function exponential
-Using procedure function exponential
-Using procedure function exponential
 [0.778800783071404868245;1.2840254166877414840735]
+The precision has been set to 24 bits.
+q = 
+sin(0.5 * (function(proc(X, n, p)
+{
+var res, oldPrec;
+oldPrec = prec;
+prec = p!;
+"Using procedure function exponential";
+res = exp(X);
+prec = oldPrec!;
+return res;
+}))(-1 + x))
+q(1.25) = 
+0.59880858
+The precision has been set to 36 bits.
+q(133/100) = 
+0.64075715182
+The precision has been set to 165 bits.
+q(1.25) = 
+Using procedure function exponential
+Using procedure function exponential
+0.59880861547946331000832206558954188255903073392375
+The precision has been set to 24 bits.
+0.5141829
+0.5339534
+0.51445007
+0.6412912

@@ -242,6 +242,7 @@ int evaluateConstantExpression(mpfr_t result, node *tree, mp_prec_t prec);
 void evaluate(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec);
 void printValue(mpfr_t *value);
 node* copyTree(node *tree);
+int treeContainsHooks(node *tree);
 node* horner(node *tree);
 int getDegree(node *tree);
 int getDegreeSilent(node *tree);
@@ -254,7 +255,7 @@ int isNotUniformlyZero(node *tree);
 int isNotUniformlyInfinite(node *tree);
 int getNumeratorDenominator(node **numerator, node **denominator, node *tree);
 node *substitute(node* tree, node *t);
-node *substituteEnhanced(node* tree, node *t, int maySimplify);
+node *substituteEnhanced(node* tree, node *t, int doNotEvaluate, int maySimplify);
 void composePolynomials(node **, chain **, node *, node *, mp_prec_t);
 int readDyadic(mpfr_t res, char *c);
 int readHexadecimal(mpfr_t res, char *c);
@@ -278,6 +279,7 @@ node *getSubpolynomial(node *poly, chain *monomials, int fillDegrees, mp_prec_t 
 node *makeCanonical(node *func, mp_prec_t prec);
 char *sprintTree(node *tree);
 char *sprintValue(mpfr_t *value);
+char *sPrintHexadecimal(mpfr_t x);
 void printBinary(mpfr_t x);
 int isHorner(node *tree);
 int isCanonical(node *tree);
@@ -296,6 +298,8 @@ int mpfr_to_mpq( mpq_t y, mpfr_t x);
 int mpfr_to_mpz( mpz_t y, mpfr_t x);
 mp_prec_t getMpzPrecision(mpz_t x);
 int containsOnlyRealNumbers(node * tree);
+void tryCopyTreeAnnotations(node *newTree, node *oldTree);
+
 
 node *makeVariable();
 node *makeConstant(mpfr_t x);

@@ -296,7 +296,8 @@ extern void endBuffer(void);
 #define CHEBYSHEVFORM 277
 /* Attention: #define MEMREF 278 is used elsewhere */
 #define ANNOTATEFUNCTION 279
-
+#define OBJECTNAME 280
+#define GETBACKTRACE 281
 
 int executeCommand(node *);
 
@@ -306,6 +307,7 @@ void *copyThingOnVoid(void *);
 void freeThing(node *);
 void rawPrintThing(node *);
 void freeThingOnVoid(void *);
+node *rewriteThingWithMemRefReuse(node *, node *);
 
 node *makeCommandList(chain *thinglist);
 node *makeWhile(node *thing1, node *thing2);
@@ -450,6 +452,7 @@ node *makeEvalConst(node *thing);
 node *makeDiff(node *thing);
 node *makeBashevaluate(chain *thinglist);
 node *makeGetSuppressedMessages();
+node *makeGetBacktrace();
 node *makeDirtysimplify(node *thing);
 node *makeSimplifySafe(node *thing);
 node *makeRemez(chain *thinglist);
@@ -504,6 +507,7 @@ node *makeMantissa(node *thing);
 node *makeExponent(node *thing);
 node *makePrecision(node *thing);
 node *makeLength(node *thing);
+node *makeObjectName(node *thing);
 node *makePrecDeref();
 node *makePointsDeref();
 node *makeDiamDeref();
@@ -575,5 +579,8 @@ int symbolNameAlreadyUsed(char *);
 
 int tryRepresentAsPolynomial(node *);
 int tryRepresentAsPolynomialNoConstants(node *);
+
+void freeBacktraceStack();
+
 
 #endif /* ifdef EXECUTE_H*/

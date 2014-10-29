@@ -658,151 +658,56 @@ void libraryConstantToInterval(sollya_mpfi_t res, node *tree) {
   return;
 }
 
-int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, mpfr_t b, mpfr_t start, mp_prec_t prec) {
-  mpfr_t x, x2, temp1, temp2, am, bm;
-  unsigned long int n=1;
-  int okay, lucky, hasZero, i, freeTrees;
-  node *myTree, *myDiffTree;
+void evaluateNewtonMPFRWithStartPoint(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec, mpfr_t a, mpfr_t b) {
+  mp_prec_t p;
+  mpfr_t myX;
 
-  freeTrees = 0;
-  if (accessThruMemRef(tree)->nodeType == DIV) {
-    freeTrees = 1;
-    myTree = copyTree(accessThruMemRef(tree)->child1);
-    myDiffTree = differentiate(myTree);
+  if ((mpfr_number_p(x) && 
+       mpfr_number_p(a) &&
+       mpfr_number_p(b)) && 
+      ((mpfr_cmp(a, x) <= 0) && 
+       (mpfr_cmp(x, b) <= 0))) {
+    evaluate(result, tree, x, prec);
+  } 
+
+  p = mpfr_get_prec(a);
+  if (mpfr_get_prec(b) > p) p = mpfr_get_prec(b);
+  if (mpfr_get_prec(x) > p) p = mpfr_get_prec(x);
+  mpfr_init2(myX, p);
+  if (mpfr_cmp(x, a) < 0) {
+    mpfr_set(myX, a, GMP_RNDN);
   } else {
-    myTree = tree;
-    myDiffTree = diff_tree;
-  }
-
-  mpfr_init2(x,prec);
-  mpfr_init2(x2,prec);
-  mpfr_init2(temp1,prec);
-  mpfr_init2(temp2,prec);
-  mpfr_init2(am,prec/2);
-  mpfr_init2(bm,prec/2);
-  mpfr_set(am,a,GMP_RNDN);
-  mpfr_nextbelow(am);
-  mpfr_nextbelow(am);
-  mpfr_set(bm,b,GMP_RNDN);
-  mpfr_nextabove(am);
-  mpfr_nextabove(bm);
-
-  okay = 0;
-
-  if (mpfr_sgn(a) != mpfr_sgn(b)) {
-    mpfr_set_d(x,0.0,GMP_RNDN);
-    evaluate(temp1, myTree, x, prec);
-    if (mpfr_zero_p(temp1)) {
-      mpfr_set(res,x,GMP_RNDN);
-      okay = 1;
-    }
-  }
-
-  if (!okay) {
-    evaluate(temp1, myTree, a, prec);
-    if (mpfr_zero_p(temp1)) {
-      mpfr_set(res,a,GMP_RNDN);
-      okay = 1;
+    if (mpfr_cmp(b, x) < 0) {
+      mpfr_set(myX, b, GMP_RNDN);
     } else {
-      evaluate(temp2, myTree, b, prec);
-      if (mpfr_zero_p(temp2)) {
-	mpfr_set(res,b,GMP_RNDN);
-	okay = 1;
-      } else {
-
-	mpfr_mul(temp1,temp1,temp2,GMP_RNDN);
-	hasZero = (mpfr_sgn(temp1) <= 0);
-
-	mpfr_set(x,start,GMP_RNDN);
-	lucky = 0;
-
-	i = 5000;
-	while((n<=(unsigned long int) prec+25) && (mpfr_cmp(am,x) <= 0) && (mpfr_cmp(x,bm) <= 0) && (i > 0)) {
-	  evaluate(temp1, myTree, x, prec);
-	  if (mpfr_zero_p(temp1)) {
-	    lucky = 1;
-	    break;
-	  }
-	  evaluate(temp2, myDiffTree, x, prec);
-	  mpfr_div(temp1, temp1, temp2, GMP_RNDN);
-	  mpfr_sub(x2, x, temp1, GMP_RNDN);
-	  if (mpfr_cmp(x2,x) == 0) break;
-	  if (mpfr_zero_p(x) || mpfr_zero_p(x2)) {
-	    n *= 2;
-	  } else {
-	    if (mpfr_get_exp(x) == mpfr_get_exp(x2)) {
-	      n *= 2;
-	    } else {
-	      i--;
-	    }
-	  }
-	  mpfr_set(x,x2,GMP_RNDN);
-	}
-
-	if (mpfr_cmp(x,a) < 0) {
-	  mpfr_set(res,a,GMP_RNDN);
-	  if (hasZero) {
-	    okay = 1;
-	  } else {
-	    evaluate(temp1, myTree, x, prec);
-	    evaluate(temp2, myDiffTree, x, prec);
-	    mpfr_div(temp1, temp1, temp2, GMP_RNDN);
-	    mpfr_sub(x, x, temp1, GMP_RNDN);
-	    if (mpfr_cmp(x,a) >= 0) {
-	      okay = 1;
-	    } else {
-	      okay = 0;
-	    }
-	  }
-	} else {
-	  if (mpfr_cmp(b,x) < 0) {
-	    mpfr_set(res,b,GMP_RNDN);
-	    if (hasZero) {
-	      okay = 1;
-	    } else {
-	      evaluate(temp1, myTree, x, prec);
-	      evaluate(temp2, myDiffTree, x, prec);
-	      mpfr_div(temp1, temp1, temp2, GMP_RNDN);
-	      mpfr_sub(x, x, temp1, GMP_RNDN);
-	      if (mpfr_cmp(b,x) >= 0) {
-		okay = 1;
-	      } else {
-		okay = 0;
-	      }
-	    }
-	  } else {
-	    mpfr_set(res,x,GMP_RNDN);
-	    if (!lucky) {
-	      evaluate(temp1, myTree, x, prec);
-	      evaluate(temp2, myDiffTree, x, prec);
-	      mpfr_div(temp1, temp1, temp2, GMP_RNDN);
-	      mpfr_abs(temp1,temp1,GMP_RNDN);
-	      mpfr_abs(x,x,GMP_RNDN);
-	      mpfr_div_ui(x,x,1,GMP_RNDN);
-	      okay = (mpfr_cmp(temp1,x) <= 0);
-	    } else {
-	      okay = 1;
-	    }
-	  }
-	}
-      }
+      mpfr_set(myX, x, GMP_RNDN);
     }
   }
 
-  if (freeTrees) {
-    free_memory(myTree);
-    free_memory(myDiffTree);
-  }
-
-  mpfr_clear(x); mpfr_clear(temp1); mpfr_clear(temp2); mpfr_clear(x2); mpfr_clear(am); mpfr_clear(bm);
-  return okay;
+  evaluate(result, tree, myX, prec);
+  mpfr_clear(myX);
 }
 
-int newtonMPFRWithStartPointFaithful(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, mpfr_t b, mpfr_t start, mp_prec_t prec) {
-  mpfr_t x, x2, temp1, temp2, am, bm;
+int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, mpfr_t b, mpfr_t start, mp_prec_t prec) {
+  mpfr_t x, x2, temp1, temp2, am, bm, tempX, tempY;
   unsigned long int n=1;
   int okay, lucky, hasZero, i, freeTrees;
   node *myTree, *myDiffTree;
+
+  if (mpfr_sgn(a) * mpfr_sgn(b) <= 0) {
+    mpfr_init2(tempX, 12);
+    mpfr_init2(tempY, 12);
+    mpfr_set_si(tempX, 0, GMP_RNDN);
+    evaluateNewtonMPFRWithStartPoint(tempY, tree, tempX, prec, a, b);
+    if (mpfr_zero_p(temp1)) {
+      mpfr_set(res,tempY,GMP_RNDN);
+      mpfr_clear(tempY);
+      mpfr_clear(tempX);
+      return 1;
+    }
+    mpfr_clear(tempY);
+    mpfr_clear(tempX);
+  }
 
   freeTrees = 0;
   if (accessThruMemRef(tree)->nodeType == DIV) {
@@ -831,7 +736,7 @@ int newtonMPFRWithStartPointFaithful(mpfr_t res, node *tree, node *diff_tree, mp
 
   if (mpfr_sgn(a) != mpfr_sgn(b)) {
     mpfr_set_d(x,0.0,GMP_RNDN);
-    evaluateFaithful(temp1, myTree, x, prec);
+    evaluateNewtonMPFRWithStartPoint(temp1, myTree, x, prec, a, b);
     if (mpfr_zero_p(temp1)) {
       mpfr_set(res,x,GMP_RNDN);
       okay = 1;
@@ -839,12 +744,12 @@ int newtonMPFRWithStartPointFaithful(mpfr_t res, node *tree, node *diff_tree, mp
   }
 
   if (!okay) {
-    evaluateFaithful(temp1, myTree, a, prec);
+    evaluateNewtonMPFRWithStartPoint(temp1, myTree, a, prec, a, b);
     if (mpfr_zero_p(temp1)) {
       mpfr_set(res,a,GMP_RNDN);
       okay = 1;
     } else {
-      evaluateFaithful(temp2, myTree, b, prec);
+      evaluateNewtonMPFRWithStartPoint(temp2, myTree, b, prec, a, b);
       if (mpfr_zero_p(temp2)) {
 	mpfr_set(res,b,GMP_RNDN);
 	okay = 1;
@@ -858,12 +763,12 @@ int newtonMPFRWithStartPointFaithful(mpfr_t res, node *tree, node *diff_tree, mp
 
 	i = 5000;
 	while((n<=(unsigned long int) prec+25) && (mpfr_cmp(am,x) <= 0) && (mpfr_cmp(x,bm) <= 0) && (i > 0)) {
-	  evaluateFaithful(temp1, myTree, x, prec);
+	  evaluateNewtonMPFRWithStartPoint(temp1, myTree, x, prec, a, b);
 	  if (mpfr_zero_p(temp1)) {
 	    lucky = 1;
 	    break;
 	  }
-	  evaluate(temp2, myDiffTree, x, prec);
+	  evaluateNewtonMPFRWithStartPoint(temp2, myDiffTree, x, prec, a, b);
 	  mpfr_div(temp1, temp1, temp2, GMP_RNDN);
 	  mpfr_sub(x2, x, temp1, GMP_RNDN);
 	  if (mpfr_cmp(x2,x) == 0) break;
@@ -884,8 +789,8 @@ int newtonMPFRWithStartPointFaithful(mpfr_t res, node *tree, node *diff_tree, mp
 	  if (hasZero) {
 	    okay = 1;
 	  } else {
-	    evaluateFaithful(temp1, myTree, x, prec);
-	    evaluateFaithful(temp2, myDiffTree, x, prec);
+	    evaluateNewtonMPFRWithStartPoint(temp1, myTree, x, prec, a, b);
+	    evaluateNewtonMPFRWithStartPoint(temp2, myDiffTree, x, prec, a, b);
 	    mpfr_div(temp1, temp1, temp2, GMP_RNDN);
 	    mpfr_sub(x, x, temp1, GMP_RNDN);
 	    if (mpfr_cmp(x,a) >= 0) {
@@ -900,8 +805,8 @@ int newtonMPFRWithStartPointFaithful(mpfr_t res, node *tree, node *diff_tree, mp
 	    if (hasZero) {
 	      okay = 1;
 	    } else {
-	      evaluateFaithful(temp1, myTree, x, prec);
-	      evaluateFaithful(temp2, myDiffTree, x, prec);
+	      evaluateNewtonMPFRWithStartPoint(temp1, myTree, x, prec, a, b);
+	      evaluateNewtonMPFRWithStartPoint(temp2, myDiffTree, x, prec, a, b);
 	      mpfr_div(temp1, temp1, temp2, GMP_RNDN);
 	      mpfr_sub(x, x, temp1, GMP_RNDN);
 	      if (mpfr_cmp(b,x) >= 0) {
@@ -913,8 +818,8 @@ int newtonMPFRWithStartPointFaithful(mpfr_t res, node *tree, node *diff_tree, mp
 	  } else {
 	    mpfr_set(res,x,GMP_RNDN);
 	    if (!lucky) {
-	      evaluateFaithful(temp1, myTree, x, prec);
-	      evaluateFaithful(temp2, myDiffTree, x, prec);
+	      evaluateNewtonMPFRWithStartPoint(temp1, myTree, x, prec, a, b);
+	      evaluateNewtonMPFRWithStartPoint(temp2, myDiffTree, x, prec, a, b);
 	      mpfr_div(temp1, temp1, temp2, GMP_RNDN);
 	      mpfr_abs(temp1,temp1,GMP_RNDN);
 	      mpfr_abs(x,x,GMP_RNDN);
@@ -947,21 +852,6 @@ int newtonMPFR(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, mpfr_t b, mp_p
   mpfr_div_2ui(start,start,1,GMP_RNDN);
 
   result = newtonMPFRWithStartPoint(res, tree, diff_tree, a, b, start, prec);
-
-  mpfr_clear(start);
-
-  return result;
-}
-
-int newtonMPFRFaithful(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, mpfr_t b, mp_prec_t prec) {
-  mpfr_t start;
-  int result;
-
-  mpfr_init2(start,prec);
-  mpfr_add(start,a,b,GMP_RNDN);
-  mpfr_div_2ui(start,start,1,GMP_RNDN);
-
-  result = newtonMPFRWithStartPointFaithful(res, tree, diff_tree, a, b, start, prec);
 
   mpfr_clear(start);
 
@@ -1060,14 +950,18 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
       if (!(sollya_mpfi_has_nan(result) || sollya_mpfi_has_infinity(result))) return NULL;
     }
 
-    if (evaluateWithEvaluationHook(result, x, prec, tree->evaluationHook)) {
+    if (evaluateWithEvaluationHook(result, x, prec, 1, tree->evaluationHook)) {
       excludes = NULL;
     } else {
-      if (tree->polynomialRepresentation != NULL) {
-	polynomialEvalMpfi(result, tree->polynomialRepresentation, x);
+      if (evaluateWithEvaluationHook(result, x, prec, 0, tree->evaluationHook)) {
 	excludes = NULL;
       } else {
-	excludes = evaluateI(result, getMemRefChild(tree), x, prec, simplifiesA, simplifiesB, hopitalPoint, theo, noExcludes, fastAddSub, workForThin, cutoff);
+	if (tree->polynomialRepresentation != NULL) {
+	  polynomialEvalMpfi(result, tree->polynomialRepresentation, x);
+	  excludes = NULL;
+	} else {
+	  excludes = evaluateI(result, getMemRefChild(tree), x, prec, simplifiesA, simplifiesB, hopitalPoint, theo, noExcludes, fastAddSub, workForThin, cutoff);
+	}
       }
     }
 
@@ -1161,6 +1055,49 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
     rightTheo = NULL;
   }
 
+  if ((theo == NULL) &&
+      noExcludes) {
+    switch (tree->nodeType) {
+    case MUL:
+    case DIV:
+      if ((tree->child1->nodeType == MEMREF) &&
+	  (tree->child2->nodeType == MEMREF)) {
+	if ((tree->child1->evalCacheX != NULL) &&
+	    (tree->child1->evalCacheY != NULL) &&
+	    (tree->child2->evalCacheX != NULL) &&
+	    (tree->child2->evalCacheY != NULL)) {
+	  if (sollya_mpfi_equal_p(*(tree->child1->evalCacheX), x) && 
+	      sollya_mpfi_equal_p(*(tree->child2->evalCacheX), x)) {
+	    switch (tree->nodeType) {
+	    case MUL:
+	      if ((sollya_mpfi_is_zero(*(tree->child1->evalCacheY)) ||
+		   sollya_mpfi_is_zero(*(tree->child2->evalCacheY))) && 
+		  (!(sollya_mpfi_has_infinity(*(tree->child1->evalCacheY)) ||
+		     sollya_mpfi_has_infinity(*(tree->child2->evalCacheY)) ||
+		     sollya_mpfi_has_nan(*(tree->child1->evalCacheY)) ||
+		     sollya_mpfi_has_nan(*(tree->child2->evalCacheY))))) {
+		sollya_mpfi_set_si(result, 0);
+		return NULL;	
+	      }
+	      break;
+	    case DIV:
+	      if ((sollya_mpfi_is_zero(*(tree->child1->evalCacheY)) &&
+		   (!sollya_mpfi_has_zero(*(tree->child2->evalCacheY)))) && 
+		  (!(sollya_mpfi_has_infinity(*(tree->child1->evalCacheY)) ||
+		     sollya_mpfi_has_infinity(*(tree->child2->evalCacheY)) ||
+		     sollya_mpfi_has_nan(*(tree->child1->evalCacheY)) ||
+		     sollya_mpfi_has_nan(*(tree->child2->evalCacheY))))) {
+		sollya_mpfi_set_si(result, 0);
+		return NULL;	
+	      }
+	      break;
+	    }
+	  }
+	}
+      }
+    }
+  }
+
   if ((theo == NULL) && 
       noExcludes &&
       (sollya_mpfi_get_prec(result) >= prec)) {
@@ -1192,7 +1129,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
     }
   }
 
-  if ((theo == NULL) && noExcludes) {
+  if ((theo == NULL) && noExcludes && (!(sollya_mpfi_has_nan(x) || sollya_mpfi_has_infinity(x)))) {
     switch (tree->nodeType) {
     case VARIABLE:
       sollya_mpfi_set(result, x);
@@ -1723,7 +1660,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
 	sollya_mpfi_get_left(xl,x);
 	sollya_mpfi_get_right(xr,x);
 
-	if (mpfr_cmp(xl,xr) != 0) {
+	if ((mpfr_cmp(xl,xr) != 0) || ((mpfr_sgn(xl) == 0) && (mpfr_sgn(xr) == 0))) {
 
 	  printMessage(12,SOLLYA_MSG_DIFFERENTIATING_FOR_HOPITALS_RULE,"Information: Differentiating while evaluating for Hopital's rule.\n");
 	  derivDenominator = differentiate(tree->child2);
@@ -2133,10 +2070,16 @@ chain* evaluateITaylor(sollya_mpfi_t result, node *func, node *deriv, sollya_mpf
   
   if ((func->nodeType == MEMREF) &&
       (func->evaluationHook != NULL) &&
-      evaluateWithEvaluationHook(result, x, prec, func->evaluationHook)) {
+      evaluateWithEvaluationHook(result, x, prec, 1, func->evaluationHook)) {
     excludes = NULL;
   } else {
-    excludes = evaluateITaylorInner(result, func, deriv, x, prec, recurse, theo, noExcludes, fastAddSub, workForThin, cutoff);
+    if ((func->nodeType == MEMREF) &&
+	(func->evaluationHook != NULL) &&
+	evaluateWithEvaluationHook(result, x, prec, 0, func->evaluationHook)) {
+      excludes = NULL;
+    } else {
+      excludes = evaluateITaylorInner(result, func, deriv, x, prec, recurse, theo, noExcludes, fastAddSub, workForThin, cutoff);
+    }
   }
 
   if ((excludes == NULL) && (func->nodeType == MEMREF) && (!(sollya_mpfi_has_nan(result) || sollya_mpfi_has_infinity(result)))) {
@@ -3528,6 +3471,10 @@ void evaluateInterval(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x)
   evaluateITaylor(y, func, deriv, x, prec, taylorrecursions, NULL, 1,0,0,NULL);
 }
 
+void evaluateIntervalPlain(sollya_mpfi_t y, node *func, sollya_mpfi_t x) {
+  evaluateITaylor(y, func, NULL, x, sollya_mpfi_get_prec(y), taylorrecursions, NULL, 1,0,0,NULL);
+}
+
 void evaluateIntervalInternalFast(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x, int adaptPrecision, mp_exp_t *cutoff) {
   mp_prec_t prec;
 
@@ -4596,7 +4543,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
   sollya_mpfi_t *X, *Y, *Z;
   int zeroG, zeroH;
   mp_exp_t expBeforeCancel, expAfterCancel; 
-  mp_prec_t lostPrec, newPrecCutoff;
+  mp_prec_t lostPrec, newPrecCutoff, precG, precH;
 
   /* Make compiler happy */
   X = NULL;
@@ -4618,10 +4565,10 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
   }
   recCutoffG = recCutoff;
   recCutoffH = recCutoff;
+  precG = prec;
+  precH = prec;
 
-  gy = chooseAndInitMpfrPtr(&v_gy, prec);
-  hy = chooseAndInitMpfrPtr(&v_hy, prec);
-  
+  gy = chooseAndInitMpfrPtr(&v_gy, precG);
   recMaxPrecUsedG = 0;
   resG = __tryFaithEvaluationOptimizedDoIt(*gy, g, x, recCutoffG, minPrec, &recMaxPrecUsedG);
   switch (resG) {
@@ -4639,6 +4586,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
   default:
     break;
   }
+  hy = chooseAndInitMpfrPtr(&v_hy, precH);
   recMaxPrecUsedH = 0;
   resH = __tryFaithEvaluationOptimizedDoIt(*hy, h, x, recCutoffH, minPrec, &recMaxPrecUsedH);
   if (resG == POINT_EVAL_FAILURE) {
@@ -5848,7 +5796,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedHooks(mpfr_t y, eval_hoo
   X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(x));
   
   sollya_mpfi_set_fr(*X, x);
-  hookRes = evaluateWithEvaluationHook(*Y, *X, prec, hook);
+  hookRes = evaluateWithEvaluationHook(*Y, *X, prec, 0, hook);
   if (!hookRes) {
     clearChosenMpfiPtr(X, &v_X);
     clearChosenMpfiPtr(Y, &v_Y);
@@ -6645,6 +6593,25 @@ int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t result, node *fu
 		sollya_mpfi_mid(resUp,yI);
 		mpfr_set(resDown, resUp, GMP_RNDN); /* exact, same precision */
 		okay = 2;
+	      }
+	    }
+	  }
+	}
+      }
+    } else {
+      if (accessThruMemRef(func)->nodeType == DIV) {
+	if ((accessThruMemRef(func)->child1->nodeType == MEMREF) && 
+	    (accessThruMemRef(func)->child2->nodeType == MEMREF)) {
+	  if ((accessThruMemRef(func)->child1->evalCacheX != NULL) && 
+	      (accessThruMemRef(func)->child1->evalCacheY != NULL) &&
+	      (accessThruMemRef(func)->child2->evalCacheX != NULL) && 
+	      (accessThruMemRef(func)->child2->evalCacheY != NULL)) {
+	    if (sollya_mpfi_is_point_and_real(xI) && 
+		sollya_mpfi_equal_p(*(accessThruMemRef(func)->child1->evalCacheX), xI) && 
+		sollya_mpfi_equal_p(*(accessThruMemRef(func)->child2->evalCacheX), xI)) {
+	      if (sollya_mpfi_is_zero(*(accessThruMemRef(func)->child1->evalCacheY)) && 
+		  sollya_mpfi_is_zero(*(accessThruMemRef(func)->child2->evalCacheY))) {
+		break;
 	      }
 	    }
 	  }

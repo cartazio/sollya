@@ -293,6 +293,7 @@ int parserCheckEof() {
 %token  ANNOTATEFUNCTIONTOKEN "annotatefunction"
 %token  BASHEVALUATETOKEN "bashevaluate"
 %token  GETSUPPRESSEDMESSAGESTOKEN "getsuppressedmessages"
+%token  GETBACKTRACETOKEN "getbacktrace"
 %token  FPMINIMAXTOKEN "fpminimax"
 %token  HORNERTOKEN "horner"
 %token  EXPANDTOKEN "expand"
@@ -315,6 +316,7 @@ int parserCheckEof() {
 %token  ROUNDTOFORMATTOKEN "round"
 %token  EVALUATETOKEN "evaluate"
 %token  LENGTHTOKEN "length"
+%token  OBJECTNAMETOKEN "objectname"
 %token  INFTOKEN "inf"
 %token  MIDTOKEN "mid"
 %token  SUPTOKEN "sup"
@@ -1701,6 +1703,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeGetSuppressedMessages();
 			  }
+                      | GETBACKTRACETOKEN LPARTOKEN RPARTOKEN
+                          {
+			    $$ = makeGetBacktrace();
+			  }
                       | BASHEVALUATETOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
                           {
 			    $$ = makeBashevaluate(addElement(addElement(NULL,$5),$3));
@@ -2057,6 +2063,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | LENGTHTOKEN LPARTOKEN thing RPARTOKEN
                           {
 			    $$ = makeLength($3);
+			  }
+                      | OBJECTNAMETOKEN LPARTOKEN thing RPARTOKEN
+                          {
+			    $$ = makeObjectName($3);
 			  }
 ;
 
@@ -3577,6 +3587,17 @@ help:                   CONSTANTTOKEN
 #endif
 #endif
                           }
+                      | GETBACKTRACETOKEN
+                          {
+#ifdef HELP_GETBACKTRACE_TEXT
+			    outputMode(); sollyaPrintf(HELP_GETBACKTRACE_TEXT);
+#else
+			    outputMode(); sollyaPrintf("Get a backtrace of the procedure calling stack.\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for GETBACKTRACE"
+#endif
+#endif
+                          }
                       | DIRTYSIMPLIFYTOKEN
                           {
 #ifdef HELP_DIRTYSIMPLIFY_TEXT
@@ -3860,6 +3881,17 @@ help:                   CONSTANTTOKEN
 			    outputMode(); sollyaPrintf("Length of a list: length(list).\n");
 #if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
 #warning "No help text for LENGTH"
+#endif
+#endif
+                          }
+                      | OBJECTNAMETOKEN
+                          {
+#ifdef HELP_OBJECTNAME_TEXT
+			    outputMode(); sollyaPrintf(HELP_OBJECTNAME_TEXT);
+#else
+			    outputMode(); sollyaPrintf("Name of an object: objectname(obj).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for OBJECTNAME"
 #endif
 #endif
                           }
@@ -4661,6 +4693,7 @@ help:                   CONSTANTTOKEN
 			    sollyaPrintf("- fullparentheses\n");
 			    sollyaPrintf("- function\n");
 			    sollyaPrintf("- getsuppressedmessages\n");
+			    sollyaPrintf("- getbacktrace\n");
 			    sollyaPrintf("- guessdegree\n");
 			    sollyaPrintf("- head\n");
 			    sollyaPrintf("- hexadecimal\n");
@@ -4695,6 +4728,7 @@ help:                   CONSTANTTOKEN
 			    sollyaPrintf("- nop\n");
 			    sollyaPrintf("- numerator\n");
 			    sollyaPrintf("- object\n");
+			    sollyaPrintf("- objectname\n");
 			    sollyaPrintf("- of\n");
 			    sollyaPrintf("- off\n");
 			    sollyaPrintf("- on\n");

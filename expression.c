@@ -79,6 +79,7 @@ static inline void copyTreeAnnotations(node *new, node *old) {
   if (old == NULL) return;
   if (new->nodeType != MEMREF) return;
   if (old->nodeType != MEMREF) return;
+  if (new == old) return;
   new->isCorrectlyTyped = old->isCorrectlyTyped;
   if ((old->derivCache != NULL) && (new->derivCache == NULL)) {
     new->derivCache = copyThing(old->derivCache);
@@ -96,6 +97,26 @@ static inline void copyTreeAnnotations(node *new, node *old) {
     new->simplifyCacheDoesNotSimplify = old->simplifyCacheDoesNotSimplify;
   }
   addEvaluationHookFromCopy(&(new->evaluationHook), old->evaluationHook);
+}
+
+static inline void copyTreeAnnotationsNoSimplifications(node *new, node *old) {
+  if (new == NULL) return;
+  if (old == NULL) return;
+  if (new->nodeType != MEMREF) return;
+  if (old->nodeType != MEMREF) return;
+  if (new == old) return;
+  new->isCorrectlyTyped = old->isCorrectlyTyped;
+  if ((old->derivCache != NULL) && (new->derivCache == NULL)) {
+    new->derivCache = copyThing(old->derivCache);
+  } 
+  if ((old->derivUnsimplCache != NULL) && (new->derivUnsimplCache == NULL)) {
+    new->derivUnsimplCache = copyThing(old->derivUnsimplCache);
+  } 
+  addEvaluationHookFromCopy(&(new->evaluationHook), old->evaluationHook);
+}
+
+void tryCopyTreeAnnotations(node *newTree, node *oldTree) {
+  copyTreeAnnotations(newTree, oldTree);
 }
 
 int isSyntacticallyEqualCheap(node *tree1, node *tree2);
@@ -2128,7 +2149,7 @@ int containsOnlyRealNumbers(node * tree) {
  
 node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational);
 
-node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
+node* simplifyTreeErrorfreeInnerNoHookHandling(node *tree, int rec, int doRational) {
   node *res;
 
   if ((tree != NULL) &&
@@ -2152,6 +2173,16 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
       res = copyTree(tree);
       tree->simplifyCacheDoesNotSimplify = 1;
     } else {
+      if (((tree->nodeType == MEMREF) && 
+	   (tree->evaluationHook != NULL)) &&
+	  ((res->nodeType == MEMREF) && 
+	   (res->evaluationHook == NULL))) {
+	res->isCorrectlyTyped = tree->isCorrectlyTyped;
+	addEvaluationHookFromCopy(&(res->evaluationHook), tree->evaluationHook);
+	if ((res->derivCache == NULL) && (tree->derivCache != NULL)) {
+	  res->derivCache = copyTree(tree->derivCache); 
+	}
+      }
       if (tree->simplifyCache == NULL) {
 	if (res->nodeType == MEMREF) {
 	  tree->simplifyCache = copyTree(res);
@@ -2178,6 +2209,28 @@ node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
 	} 
       }
     }
+  }
+
+  return res;
+}
+
+node* simplifyTreeErrorfreeInner(node *tree, int rec, int doRational) {
+  node *res;
+
+  res = simplifyTreeErrorfreeInnerNoHookHandling(tree, rec, doRational);
+
+  if ((res != tree) &&
+      (tree->nodeType == MEMREF) &&
+      (res->nodeType == MEMREF) &&
+      treeContainsHooks(tree) &&
+      (!treeContainsHooks(res))) {
+    res = rewriteThingWithMemRefReuse(res, tree);
+  }
+
+  if ((res != tree) &&
+      (tree->nodeType == MEMREF) &&
+      (res->nodeType == MEMREF)) {
+    copyTreeAnnotationsNoSimplifications(res, tree); 
   }
 
   return res;
@@ -2508,7 +2561,7 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
       res = addMemRefEvenOnNull(NULL);
       if (res != NULL) {
 	res->polynomialRepresentation = polynomialFromCopy(tree->polynomialRepresentation);
-	copyTreeAnnotations(res, tree);
+	copyTreeAnnotationsNoSimplifications(res, tree);
 	return res;
       }
     }
@@ -3358,9 +3411,17 @@ node* differentiateUnsimplifiedInner(node *tree) {
   mpfr_t *mpfr_temp;
   node *temp_node, *temp_node2, *temp_node3, *f_diff, *g_diff, *f_copy, *g_copy, *g_copy2;
   node *temp_node4, *f_copy2;
+  node *temp;
   int deg;
 
   if (tree->nodeType == MEMREF) {
+    if (tree->polynomialRepresentation != NULL) {
+      temp = addMemRefEvenOnNull(NULL);
+      if (temp != NULL) {
+	temp->polynomialRepresentation = polynomialDeriv(tree->polynomialRepresentation);
+	return temp;
+      }
+    }
     return addMemRef(differentiateUnsimplifiedInner(getMemRefChild(tree)));
   }
 
@@ -3664,7 +3725,7 @@ node* simplifyTreeInnerst(node *tree);
 node* simplifyTreeInner(node *tree) {
   node *res;
 
-  res = simplifyTreeInnerst(tree);
+  res = addMemRef(simplifyTreeInnerst(tree));
 
   if ((tree != NULL) && (res != NULL) &&
       (tree->nodeType == MEMREF) && 
@@ -3673,8 +3734,8 @@ node* simplifyTreeInner(node *tree) {
     free_memory(res);
     res = copyTree(tree);
   }
-
-  return addMemRef(res);
+  
+  return res;
 }
 
 node* simplifyTreeInnerst(node *tree) {
@@ -4017,7 +4078,7 @@ node* simplifyAllButDivisionInnerst(node *tree);
 node* simplifyAllButDivisionInner(node *tree) {
   node *res;
 
-  res = simplifyAllButDivisionInnerst(tree);
+  res = addMemRef(simplifyAllButDivisionInnerst(tree));
 
   if ((tree != NULL) && (res != NULL) &&
       (tree->nodeType == MEMREF) && 
@@ -4025,8 +4086,8 @@ node* simplifyAllButDivisionInner(node *tree) {
     free_memory(res);
     res = copyTree(tree);
   }
-
-  return addMemRef(res);
+  
+  return res;
 }
 
 node* simplifyAllButDivisionInnerst(node *tree) {
@@ -4313,12 +4374,29 @@ node *simplifyAllButDivision(node *tree) {
 
 void evaluate(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
   mpfr_t stack1, stack2;
-  sollya_mpfi_t stackI;
+  sollya_mpfi_t stackI, X, Y;
 
   if (tree->nodeType == MEMREF) {
     if (tree->polynomialRepresentation != NULL) {
       polynomialEvalMpfr(result, tree->polynomialRepresentation, x);
       return;
+    }
+    if (tree->evaluationHook != NULL) {
+      sollya_mpfi_init2(X,mpfr_get_prec(x));
+      sollya_mpfi_set_fr(X, x);
+      sollya_mpfi_init2(Y,mpfr_get_prec(result));
+      if (evaluateWithEvaluationHook(Y, X, prec, 1, tree->evaluationHook)) {
+	if (sollya_mpfi_has_zero(Y)) {
+	  mpfr_set_si(result, 0, GMP_RNDN);
+	} else {
+	  sollya_mpfi_mid(result, Y);
+	}
+	sollya_mpfi_clear(X);
+	sollya_mpfi_clear(Y);
+	return;
+      }
+      sollya_mpfi_clear(X);
+      sollya_mpfi_clear(Y);
     }
     evaluate(result, getMemRefChild(tree), x, prec);
     return;
@@ -4391,7 +4469,6 @@ void evaluate(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
   mpfr_clear(stack1); mpfr_clear(stack2);
   return;
 }
-
 
 int arity(node *tree) {
   switch (tree->nodeType) {
@@ -6419,6 +6496,44 @@ void computePowerOfPolynomialCoefficients(int *degreeRes, node ***coeffRes,
   }
 }
 
+int getCoefficientsInnerAlternate(int *degree, node ***coefficients, node *poly) {
+  polynomial_t polynomial;
+  int deg;
+  unsigned int myDegree, t, k;
+  node **myCoeffs;
+
+  if (poly == NULL) return 0;
+  if (!polynomialFromExpressionOnlyRealCoeffs(&polynomial, poly)) {
+    return 0;
+  }
+  
+  if (polynomialGetCoefficients(&myCoeffs, &myDegree, polynomial)) {
+    deg = myDegree;
+    t = deg;
+    if ((deg >= 0) && (t == myDegree)) {
+      for (k=0u;k<=myDegree;k++) {
+	if ((accessThruMemRef(myCoeffs[k])->nodeType == CONSTANT) &&
+	    mpfr_zero_p(*(accessThruMemRef(myCoeffs[k])->value))) {
+	  free_memory(myCoeffs[k]);
+	  myCoeffs[k] = NULL;
+	}
+      }
+      *coefficients = myCoeffs;
+      *degree = deg;
+      polynomialFree(polynomial);
+      return 1;
+    } else {
+      for (k=0u;k<=myDegree;k++) {
+	free_memory(myCoeffs[k]);
+      }
+      safeFree(myCoeffs);
+    }
+  }
+
+  polynomialFree(polynomial);
+
+  return 0;
+}
 
 void getCoefficientsInner(int *degree, node ***coefficients, node *poly) {
   node *temp, *temp2, *temp3, *temp4;
@@ -6426,6 +6541,10 @@ void getCoefficientsInner(int *degree, node ***coefficients, node *poly) {
   node **coefficients1, **coefficients2;
   int degree1, degree2;
   mpfr_t y;
+
+  if (getCoefficientsInnerAlternate(degree, coefficients, poly)) {
+    return;
+  }
 
   if (poly->nodeType == MEMREF) {
     getCoefficients(degree, coefficients, getMemRefChild(poly));
@@ -6623,7 +6742,6 @@ void getCoefficients(int *degree, node ***coefficients, node *poly) {
   node **myCoeffs;
 
   if (poly->nodeType == MEMREF) {
-    
     if (poly->polynomialRepresentation == NULL) {
       tryRepresentAsPolynomial(poly);
     }
@@ -6905,7 +7023,7 @@ node* hornerUnsimplified(node *tree) {
       res = addMemRefEvenOnNull(NULL);
       if (res != NULL) {
 	res->polynomialRepresentation = polynomialHornerize(tree->polynomialRepresentation);
-	copyTreeAnnotations(res, tree);
+	copyTreeAnnotationsNoSimplifications(res, tree);
 	return res;
       }
     }
@@ -7071,13 +7189,13 @@ node* horner(node *tree) {
       res = addMemRefEvenOnNull(NULL);
       if (res != NULL) {
 	res->polynomialRepresentation = polynomialHornerize(tree->polynomialRepresentation);
-	copyTreeAnnotations(res, tree);
+	copyTreeAnnotationsNoSimplifications(res, tree);
 	return res;
       }
     }
   }
 
-  res = hornerInner(tree);
+  res = addMemRef(hornerInner(tree));
 
   if ((tree != NULL) && (res != NULL) && (tree != res) &&
       (tree->nodeType == MEMREF) &&
@@ -7085,8 +7203,19 @@ node* horner(node *tree) {
     free_memory(res);
     res = copyTree(tree);
   }
+  
+  if (((tree->nodeType == MEMREF) && 
+       (tree->evaluationHook != NULL)) &&
+      ((res->nodeType == MEMREF) && 
+       (res->evaluationHook == NULL))) {
+    res->isCorrectlyTyped = tree->isCorrectlyTyped;
+    addEvaluationHookFromCopy(&(res->evaluationHook), tree->evaluationHook);
+    if ((res->derivCache == NULL) && (tree->derivCache != NULL)) {
+      res->derivCache = copyTree(tree->derivCache); 
+    }
+  }
 
-  return addMemRef(res);
+  return res;
 }
 
 node* hornerInner(node *tree) {
@@ -7121,7 +7250,17 @@ node *differentiatePolynomialHornerUnsafe(node *tree) {
   mpfr_t *value;
   mp_prec_t prec;
 
+  copy = NULL;
+
   getCoefficients(&degree,&monomials,tree);
+
+  if (degree == 0) {
+    for (i=0;i<=degree;i++) {
+      free_memory(monomials[i]);
+    }
+    safeFree(monomials);
+    return addMemRef(makeConstantInt(0));
+  }
 
   if (monomials[0] != NULL) free_memory(monomials[0]);
 
@@ -7229,6 +7368,10 @@ node *differentiatePolynomialHornerUnsafe(node *tree) {
   }
   safeFree(monomials);
 
+  if (copy == NULL) {
+    copy = addMemRef(makeConstantInt(0));
+  }
+
   return copy;
 }
 
@@ -7237,6 +7380,8 @@ node *differentiatePolynomialUnsafe(node *tree) {
   int degree, i;
   node **monomials;
   mpfr_t *value;
+
+  copy = NULL;
 
   if (isHorner(tree)) {
     printMessage(25,SOLLYA_MSG_DIFFERENTIATION_USES_SPECIAL_ALGO_FOR_HORNER,"Information: differentiating a polynomial in Horner form uses a special algorithm.\n");
@@ -7394,6 +7539,10 @@ node *differentiatePolynomialUnsafe(node *tree) {
       if (monomials[i] != NULL) free_memory(monomials[i]);
     }
     safeFree(monomials);
+  }
+
+  if (copy == NULL) {
+    copy = addMemRef(makeConstantInt(0));
   }
 
   return copy;
@@ -7607,7 +7756,7 @@ node *substitutePolynomialUnsafe(node *p, node *q) {
 
 node *substituteInner(node* tree, node *t, int doNotEvaluate, int maySimplify);
 
-node *substituteEnhanced(node* tree, node *t, int maySimplify) {
+node *substituteEnhanced(node* tree, node *t, int doNotEvaluate, int maySimplify) {
   node *res;
 
   if (maySimplify) {
@@ -7632,11 +7781,51 @@ node *substituteEnhanced(node* tree, node *t, int maySimplify) {
     }
   }
 
-  return substituteInner(tree, t, 0, maySimplify);
+  return substituteInner(tree, t, doNotEvaluate, maySimplify);
 }
 
 node *substitute(node* tree, node *t) {
-  return substituteEnhanced(tree, t, 1);
+  return substituteEnhanced(tree, t, 0, 1);
+}
+
+int treeContainsHooks(node *tree) {
+
+  if (tree == NULL) return 0;
+  if (tree->nodeType == MEMREF) {
+    if (tree->evaluationHook != NULL) return 1;
+    if ((tree->child1 == NULL) && 
+	(tree->polynomialRepresentation != NULL)) return 0;
+    return treeContainsHooks(getMemRefChild(tree));
+  }
+
+  switch (tree->nodeType) {
+  case VARIABLE:
+  case CONSTANT:
+  case PI_CONST:
+  case LIBRARYCONSTANT:
+    return 0;
+    break;
+  case ADD:
+  case SUB:
+  case MUL:
+  case DIV:
+  case POW:
+    if (treeContainsHooks(tree->child1)) return 1;
+    if (treeContainsHooks(tree->child2)) return 1;
+    return 0;
+    break;
+  case UNARY_BASE_FUNC:
+  case NEG:
+  case LIBRARYFUNCTION:
+  case PROCEDUREFUNCTION:
+    return treeContainsHooks(tree->child1);
+    break;
+  default:
+    sollyaFprintf(stderr,"Error: treeContainsHooks: unknown identifier in the tree\n");
+    exit(1);
+  }
+  
+  return 0;
 }
 
 node *substituteInner(node* tree, node *t, int doNotEvaluate, int maySimplify) {
@@ -7653,6 +7842,7 @@ node *substituteInner(node* tree, node *t, int doNotEvaluate, int maySimplify) {
   int haveAPrioriBoundForConstantExpr;
   mp_prec_t *precPtr;
   sollya_mpfi_t *intervalPtr;
+  node *tempDerivCache;
 
   // sollyaPrintf("tree = %b;\ntree->nodeType = %d;\nt = %b;\nt->nodeType = %d;\n", tree, tree->nodeType, t, t->nodeType);
 
@@ -7730,6 +7920,21 @@ node *substituteInner(node* tree, node *t, int doNotEvaluate, int maySimplify) {
   if (tree->nodeType == MEMREF) {
     copy = addMemRef(substituteInner(getMemRefChild(tree), t, 1, maySimplify));
 
+    if ((copy->nodeType == MEMREF) && (tree->evaluationHook != NULL)) {
+      addEvaluationHookFromComposition(&(copy->evaluationHook), tree->evaluationHook, t);
+
+      if (((copy->derivCache == NULL) && 
+	   ((tree->derivCache != NULL) &&
+	    ((tree->derivCache->nodeType == MEMREF) &&
+	     (treeContainsHooks(tree->derivCache))))) && 
+	  (!isConstant(copy))) {
+	tempDerivCache = addMemRef(makeMul(addMemRef(substituteInner(tree->derivCache, t, 1, maySimplify)),
+					   addMemRef(differentiate(t))));
+	copy->derivCache = simplifyTreeErrorfree(tempDerivCache);
+	free_memory(tempDerivCache);
+      }
+    }
+
     if (haveAPrioriBoundForConstantExpr) {
       if (copy->nodeType == MEMREF) {
 	if (copy->arguments == NULL) {
@@ -7765,57 +7970,57 @@ node *substituteInner(node* tree, node *t, int doNotEvaluate, int maySimplify) {
   case ADD:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = ADD;
-    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
-    copy->child2 = substituteEnhanced(tree->child2,t,maySimplify);
+    copy->child1 = substituteEnhanced(tree->child1,t,doNotEvaluate,maySimplify);
+    copy->child2 = substituteEnhanced(tree->child2,t,doNotEvaluate,maySimplify);
     break;
   case SUB:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = SUB;
-    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
-    copy->child2 = substituteEnhanced(tree->child2,t,maySimplify);
+    copy->child1 = substituteEnhanced(tree->child1,t,doNotEvaluate,maySimplify);
+    copy->child2 = substituteEnhanced(tree->child2,t,doNotEvaluate,maySimplify);
     break;
   case MUL:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = MUL;
-    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
-    copy->child2 = substituteEnhanced(tree->child2,t,maySimplify);
+    copy->child1 = substituteEnhanced(tree->child1,t,doNotEvaluate,maySimplify);
+    copy->child2 = substituteEnhanced(tree->child2,t,doNotEvaluate,maySimplify);
     break;
   case DIV:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = DIV;
-    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
-    copy->child2 = substituteEnhanced(tree->child2,t,maySimplify);
+    copy->child1 = substituteEnhanced(tree->child1,t,doNotEvaluate,maySimplify);
+    copy->child2 = substituteEnhanced(tree->child2,t,doNotEvaluate,maySimplify);
     break;
   case UNARY_BASE_FUNC:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = UNARY_BASE_FUNC;
     copy->baseFun = tree->baseFun;
-    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
-    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
+    copy->child1 = substituteEnhanced(tree->child1,t,doNotEvaluate,maySimplify);
+
     break;
   case NEG:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = NEG;
-    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
+    copy->child1 = substituteEnhanced(tree->child1,t,doNotEvaluate,maySimplify);
     break;
   case POW:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = POW;
-    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
-    copy->child2 = substituteEnhanced(tree->child2,t,maySimplify);
+    copy->child1 = substituteEnhanced(tree->child1,t,doNotEvaluate,maySimplify);
+    copy->child2 = substituteEnhanced(tree->child2,t,doNotEvaluate,maySimplify);
     break;
   case LIBRARYFUNCTION:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = LIBRARYFUNCTION;
     copy->libFun = tree->libFun;
     copy->libFunDeriv = tree->libFunDeriv;
-    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
+    copy->child1 = substituteEnhanced(tree->child1,t,doNotEvaluate,maySimplify);
     break;
   case PROCEDUREFUNCTION:
     copy = (node*) safeMalloc(sizeof(node));
     copy->nodeType = PROCEDUREFUNCTION;
     copy->libFunDeriv = tree->libFunDeriv;
-    copy->child1 = substituteEnhanced(tree->child1,t,maySimplify);
+    copy->child1 = substituteEnhanced(tree->child1,t,doNotEvaluate,maySimplify);
     copy->child2 = copyThing(tree->child2);
     break;
   case PI_CONST:
@@ -8969,7 +9174,7 @@ node *makeCanonical(node *tree, mp_prec_t prec) {
       res = addMemRefEvenOnNull(NULL);
       if (res != NULL) {
 	res->polynomialRepresentation = polynomialCanonicalize(tree->polynomialRepresentation);
-	copyTreeAnnotations(res, tree);
+	copyTreeAnnotationsNoSimplifications(res, tree);
 	return res;
       }
     }

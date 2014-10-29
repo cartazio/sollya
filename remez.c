@@ -618,14 +618,16 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
     iterator->nodeType = SUB;
     temp = safeMalloc(sizeof(node));
     temp->nodeType = VARIABLE;
-    iterator->child1 = temp;
+    iterator->child1 = addMemRef(temp);
 
     temp = safeMalloc(sizeof(node));
     temp->nodeType = DIV;
     temp->child1 = copyTree(f);
     temp->child2 = copyTree(f_diff);
-    iterator->child2 = temp;
+    iterator->child2 = addMemRef(temp);
 
+    iterator = addMemRef(iterator);
+    
     temp = simplifyTreeErrorfree(iterator);
     free_memory(iterator);
     iterator = temp;
@@ -883,6 +885,7 @@ void single_step_remez(mpfr_t newx, mpfr_t err_newx, mpfr_t *x,
 	temp_tree->nodeType = MUL;
 	temp_tree->child1 = copyTree(monomials_tree[j-1]);
 	temp_tree->child2 = copyTree(w);
+	temp_tree = addMemRef(temp_tree);
 
 	temp_tree2 = simplifyTreeErrorfree(temp_tree);
 	free_memory(temp_tree);
@@ -915,6 +918,7 @@ void single_step_remez(mpfr_t newx, mpfr_t err_newx, mpfr_t *x,
       temp_tree->nodeType = MUL;
       temp_tree->child1 = copyTree(monomials_tree[j-1]);
       temp_tree->child2 = copyTree(w);
+      temp_tree = addMemRef(temp_tree);
 
       temp_tree2 = simplifyTreeErrorfree(temp_tree);
       free_memory(temp_tree);
@@ -1238,8 +1242,9 @@ int qualityOfError(mpfr_t computedQuality, mpfr_t infinityNorm, mpfr_t *x,
   temp1->nodeType = MUL;
   temp1->child1 = copyTree(poly);
   temp1->child2 = copyTree(w);
-  error->child1 = temp1;
+  error->child1 = addMemRef(temp1);
   error->child2 = copyTree(f);
+  error = addMemRef(error);
 
   temp1 = simplifyTreeErrorfree(error);
   free_memory(error);
@@ -1537,6 +1542,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
   mpfr_t zero_mpfr, var1, var2, var3, computedQuality, infinityNorm;
   node *temp_tree;
   node *temp_tree2;
+  node *temp_tree_simplified;
   node *poly;
   node *res;
   chain *curr;
@@ -1764,6 +1770,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 	    temp_tree->nodeType = MUL;
 	    temp_tree->child1 = copyTree(monomials_tree[j-1]);
 	    temp_tree->child2 = copyTree(w);
+	    temp_tree = addMemRef(temp_tree);
 
 	    temp_tree2 = simplifyTreeErrorfree(temp_tree);
 	    free_memory(temp_tree);
@@ -1955,7 +1962,10 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
       /* temporary check until I patch the algorithm in order to handle
          correctly cases when the error oscillates too much
       */
-      temp_tree = addMemRef(makeSub(makeMul(copyTree(poly), copyTree(w)), copyTree(f)));
+      temp_tree = addMemRef(makeSub(addMemRef(makeMul(copyTree(poly), copyTree(w))), copyTree(f)));
+      temp_tree_simplified = simplifyTreeErrorfree(temp_tree);
+      free_memory(temp_tree);
+      temp_tree = temp_tree_simplified;
       uncertifiedInfnorm(infinityNorm, temp_tree, u, v, getToolPoints(), quality_prec);
       free_memory(temp_tree);
       /* end of the temporary check */
@@ -2176,6 +2186,7 @@ mpfr_t *remezMatrix(node *w, mpfr_t *x, node **monomials_tree, int n, mp_prec_t 
 	temp_tree->nodeType = MUL;
 	temp_tree->child1 = copyTree(monomials_tree[j-1]);
 	temp_tree->child2 = copyTree(w);
+	temp_tree = addMemRef(temp_tree);
 
 	temp_tree2 = simplifyTreeErrorfree(temp_tree);
 	free_memory(temp_tree);
@@ -2320,16 +2331,18 @@ rangetype guessDegree(node *func, node *weight, mpfr_t a, mpfr_t b, mpfr_t eps, 
 
   mpfr_init2(h, prec);
 
-  prec_tmp = (mpfr_get_prec(a)>mpfr_get_prec(b))?(mpfr_get_prec(a)):(mpfr_get_prec(b));
-  sollya_mpfi_init2(tmp1, prec_tmp);
-  sollya_mpfi_init2(tmp2, prec);
-  sollya_mpfi_interv_fr(tmp1, a, b);
-  evaluateInterval(tmp2, weight, NULL, tmp1);
-  if (sollya_mpfi_has_infinity(tmp2)) {
+  if (messageHasEnoughVerbosityAndIsNotSuppressed(1, SOLLYA_MSG_GUESSDEGREE_POSSIBLE_SINGULAR_WEIGHT)) {
+    prec_tmp = (mpfr_get_prec(a)>mpfr_get_prec(b))?(mpfr_get_prec(a)):(mpfr_get_prec(b));
+    sollya_mpfi_init2(tmp1, prec_tmp);
+    sollya_mpfi_init2(tmp2, 12);
+    sollya_mpfi_interv_fr(tmp1, a, b);
+    evaluateInterval(tmp2, weight, NULL, tmp1);
+    if (sollya_mpfi_has_infinity(tmp2)) {
       printMessage(1, SOLLYA_MSG_GUESSDEGREE_POSSIBLE_SINGULAR_WEIGHT, "Warning: guessdegree: the weight function might not be continuous over the given interval.\nThis is not allowed but it is the user's responsability to check it.\nNo other test will be performed, but be aware that the command is allowed to return anything in this case.\n");
+    }
+    sollya_mpfi_clear(tmp1);
+    sollya_mpfi_clear(tmp2);
   }
-  sollya_mpfi_clear(tmp1);
-  sollya_mpfi_clear(tmp2);
 
   /* n reprensents the number of unknowns: n=1 corresponds to degree 0 */
   /* bound represents the maximal value allowed for n. If we do not find a
