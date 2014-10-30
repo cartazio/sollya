@@ -84,6 +84,7 @@ int addEvaluationHook(eval_hook_t **hookPtr,
   newHook = (eval_hook_t *) safeMalloc(sizeof(eval_hook_t));
   newHook->data = data;
   newHook->gettingUsed = 0;
+  newHook->reuseMPFIInit = 0;
   newHook->evaluateHook = evaluateFunc;
   newHook->freeHook = freeFunc;
   newHook->compareHook = compareFunc;
@@ -135,6 +136,10 @@ void freeEvaluationHook(eval_hook_t **hookPtr) {
   while (curr != NULL) {
     next = curr->nextHook;
     curr->freeHook(curr->data);
+    if (curr->reuseMPFIInit) {
+      sollya_mpfi_clear(curr->reuseMPFI);
+      curr->reuseMPFIInit = 0;
+    }
     safeFree(curr);
     curr = next;
   }
@@ -143,24 +148,51 @@ void freeEvaluationHook(eval_hook_t **hookPtr) {
 
 int evaluateWithEvaluationHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, int tight, eval_hook_t *hook) {
   eval_hook_t *curr;
-  int res;
+  int res, resCurr;
 
   if (hook == NULL) return 0;
 
+  if (tight) {
+    /* Tight evaluation */
+    for (curr=hook;curr!=NULL;curr=curr->nextHook) {
+      if (curr->gettingUsed <= 0) {
+	curr->gettingUsed = 1;
+	res = curr->evaluateHook(y,x,prec,tight,curr->data);
+	curr->gettingUsed = 0;
+	if (res) return 1;
+      } 
+    }
+    return 0;
+  }
+
+  /* Loose evaluation */
+  res = 0;
   for (curr=hook;curr!=NULL;curr=curr->nextHook) {
     if (curr->gettingUsed <= 0) {
       curr->gettingUsed = 1;
-      res = curr->evaluateHook(y,x,prec,tight,curr->data);
+      if (curr->reuseMPFIInit) {
+	sollya_mpfi_set_prec(curr->reuseMPFI, sollya_mpfi_get_prec(y));
+      } else {
+	sollya_mpfi_init2(curr->reuseMPFI, sollya_mpfi_get_prec(y));
+	curr->reuseMPFIInit = 1;
+      }
+      resCurr = curr->evaluateHook(curr->reuseMPFI,x,prec,tight,curr->data);
+      if (resCurr) {
+	if (res) {
+	  sollya_mpfi_intersect(y, y, curr->reuseMPFI);
+	  if (sollya_mpfi_is_empty(y)) {
+	    res = 0;
+	  }
+	} else {
+	  res = 1;
+	  sollya_mpfi_set(y, curr->reuseMPFI);
+	}
+      }
       curr->gettingUsed = 0;
-    } else {
-      res = 0;
-    }
-    if (res) {
-      return 1;
-    }
+    } 
   }
-  
-  return 0;
+
+  return res;
 }
 
 node_eval_hook_t *createNodeEvalHook(node *func, sollya_mpfi_t dom, sollya_mpfi_t delta, sollya_mpfi_t t) {
@@ -607,6 +639,7 @@ int evaluatePolyEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, int t
 
   if ((!(hook->exactRepresentation)) &&
       hook->maxPrecKnown &&
+      tight &&
       (hook->maxPrec < pY)) {
     return 0;
   }
@@ -953,7 +986,7 @@ int evaluateCompositionEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec
   if (sollya_mpfi_has_nan(x)) return 0;
   if (sollya_mpfi_has_infinity(x)) return 0;
 
-  p = sollya_mpfi_get_prec(y) + 10; 
+  p = sollya_mpfi_get_prec(y) + 30; 
   pX = sollya_mpfi_get_prec(x) + 10;
   if (pX > p) p = pX;
   if (prec > p) p = prec;

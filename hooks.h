@@ -64,6 +64,8 @@ typedef struct __eval_hook_t_struct eval_hook_t;
 struct __eval_hook_t_struct {
   void *data;
   int gettingUsed;
+  int reuseMPFIInit;
+  sollya_mpfi_t reuseMPFI;
   int (*evaluateHook)(sollya_mpfi_t, sollya_mpfi_t, mp_prec_t, int, void *);
   void (*freeHook)(void *);
   int (*compareHook)(void *, void *);
