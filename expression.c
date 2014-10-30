@@ -3456,7 +3456,9 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
 	return res;
       }
     }
-    return addMemRef(simplifyTreeErrorfreeInner(getMemRefChild(tree), rec, doRational));
+    res = addMemRef(simplifyTreeErrorfreeInner(getMemRefChild(tree), rec, doRational));
+    copyTreeAnnotationsNoSimplifications(res, tree);
+    return res;
   }
 
   if ((tree->nodeType == CONSTANT) && (mpfr_nan_p(*(tree->value)))) return copyTree(tree);
@@ -11311,7 +11313,9 @@ node* hornerUnsimplified(node *tree) {
 	return res;
       }
     }
-    return addMemRef(hornerUnsimplified(getMemRefChild(tree)));
+    res = addMemRef(hornerUnsimplified(getMemRefChild(tree)));
+    copyTreeAnnotationsNoSimplifications(res, tree);
+    return res;
   }
 
   if (isPolynomial(tree)) return hornerPolynomial(tree);
@@ -13831,7 +13835,9 @@ node *makeCanonical(node *tree, mp_prec_t prec) {
 	return res;
       }
     }
-    return addMemRef(makeCanonical(getMemRefChild(tree), prec));
+    res = addMemRef(makeCanonical(getMemRefChild(tree), prec));
+    copyTreeAnnotationsNoSimplifications(res, tree);
+    return res;
   }
 
   if (isCanonical(tree)) {
