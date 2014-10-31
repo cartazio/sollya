@@ -1178,3 +1178,46 @@ int sollya_mpfi_fr_in_interval(mpfr_t op1, sollya_mpfi_t op2) {
   return (mpfr_lessequal_p(&(op2->left), op1) && 
 	  mpfr_lessequal_p(op1, &(op2->right)));
 }
+
+int sollya_mpfi_enclosure_accurate_enough(sollya_mpfi_t op1, mp_prec_t op2) {
+  mp_exp_t eA, eB;
+  mp_prec_t p;
+  mpfr_t diam, temp;
+  int res;
+
+  if (sollya_mpfi_has_nan_opt(op1)) return 0;
+  if (sollya_mpfi_is_empty_opt(op1)) return 0;
+  if (sollya_mpfi_has_infinity(op1)) return 0;
+  if (sollya_mpfi_has_zero(op1)) return 0;
+  if (op2 <= 2) return 0;
+
+  /* HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
+  */
+  eA = mpfr_get_exp(&(op1->left));
+  eB = mpfr_get_exp(&(op1->right));
+  
+  /* If there is a whole binade between the endpoints a and b, there
+     is no accuracy 
+  */
+  if ((eB - eA) > 1) return 0;
+
+  /* Compute the difference between the endpoints and compute 2^(-op2)
+     * a, where a is the left endpoint 
+  */
+  p = mpfr_get_prec(&(op1->left));
+  if (mpfr_get_prec(&(op1->right)) > p) p = mpfr_get_prec(&(op1->right));
+  mpfr_init2(diam, p + 2);
+  mpfr_init2(temp, p);
+  mpfr_sub(diam, &(op1->right), &(op1->left), GMP_RNDN); /* exact, Sterbenz */
+  mpfr_mul_2si(temp, &(op1->left), -op2, GMP_RNDN); /* exact, same precision */
+  
+  /* We got enough precision iff |b - a| <= 2^(-prec) * |a|, where a
+     is the left endpoint, b the right one and prec = op2 
+  */
+  res = (mpfr_cmpabs(diam, temp) <= 0);
+  mpfr_clear(temp);
+  mpfr_clear(diam);
+
+  return res;
+}

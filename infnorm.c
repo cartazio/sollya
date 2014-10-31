@@ -6700,7 +6700,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedPolynomialRepresentation
   return res;
 }
 
-static inline point_eval_t __tryFaithEvaluationOptimizedHooks(mpfr_t y, eval_hook_t *hook, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_prec_t *maxPrecUsed) { 
+static inline point_eval_t __tryFaithEvaluationOptimizedHooksInner(mpfr_t y, eval_hook_t *hook, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_prec_t *maxPrecUsed, int tight, mp_prec_t extraPrec, int *hookWorked) { 
   sollya_mpfi_t v_Y, v_X;
   sollya_mpfi_t *Y, *X;
   mp_prec_t prec;
@@ -6710,24 +6710,29 @@ static inline point_eval_t __tryFaithEvaluationOptimizedHooks(mpfr_t y, eval_hoo
   int tern1, tern2;
   int hookRes;
 
+  *hookWorked = 0;
+
   if (hook == NULL) return POINT_EVAL_FAILURE;
 
   prec = mpfr_get_prec(y) + 20;
   prec = prec + (prec >> 1);
   if (prec < minPrec) prec = minPrec;
+  prec += extraPrec;
   __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, prec);
   
-  Y = chooseAndInitMpfiPtr(&v_Y, mpfr_get_prec(y) + 20);
+  Y = chooseAndInitMpfiPtr(&v_Y, mpfr_get_prec(y) + 20 + extraPrec);
   X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(x));
   
   sollya_mpfi_set_fr(*X, x);
-  hookRes = evaluateWithEvaluationHook(*Y, *X, prec, 0, hook);
+  hookRes = evaluateWithEvaluationHook(*Y, *X, prec, tight, hook);
   if (!hookRes) {
     clearChosenMpfiPtr(X, &v_X);
     clearChosenMpfiPtr(Y, &v_Y);
     return POINT_EVAL_FAILURE;
   }
   
+  *hookWorked = 1;
+
   t = chooseAndInitMpfrPtr(&v_t, mpfr_get_prec(y));
   /* HACK ALERT: For performance reasons, we will access the internals
      of an mpfi_t !!!
@@ -6782,6 +6787,61 @@ static inline point_eval_t __tryFaithEvaluationOptimizedHooks(mpfr_t y, eval_hoo
   clearChosenMpfiPtr(X, &v_X);
   clearChosenMpfiPtr(Y, &v_Y);
 
+  return res;
+}
+
+static inline point_eval_t __tryFaithEvaluationOptimizedHooks(mpfr_t y, eval_hook_t *hook, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_prec_t *maxPrecUsed) { 
+  int hookWorked;
+  point_eval_t res;
+  mp_prec_t extraPrec;
+
+  if (hook == NULL) return POINT_EVAL_FAILURE;
+
+  extraPrec = 0;
+  hookWorked = 0;
+  res = __tryFaithEvaluationOptimizedHooksInner(y, hook, x, cutoff, minPrec, maxPrecUsed, 1, extraPrec, &hookWorked);
+  if (res != POINT_EVAL_FAILURE) return res;
+
+  extraPrec = 0;
+  hookWorked = 0;
+  res = __tryFaithEvaluationOptimizedHooksInner(y, hook, x, cutoff, minPrec, maxPrecUsed, 0, extraPrec, &hookWorked);
+  if (res != POINT_EVAL_FAILURE) return res;
+  if (!hookWorked) return res;
+
+  extraPrec = 10;
+  hookWorked = 0;
+  res = __tryFaithEvaluationOptimizedHooksInner(y, hook, x, cutoff, minPrec, maxPrecUsed, 0, extraPrec, &hookWorked);
+  if (res != POINT_EVAL_FAILURE) return res;
+  if (!hookWorked) return res;
+
+  extraPrec = 20;
+  hookWorked = 0;
+  res = __tryFaithEvaluationOptimizedHooksInner(y, hook, x, cutoff, minPrec, maxPrecUsed, 0, extraPrec, &hookWorked);
+  if (res != POINT_EVAL_FAILURE) return res;
+  if (!hookWorked) return res;
+
+  extraPrec = 40;
+  hookWorked = 0;
+  res = __tryFaithEvaluationOptimizedHooksInner(y, hook, x, cutoff, minPrec, maxPrecUsed, 0, extraPrec, &hookWorked);
+  if (res != POINT_EVAL_FAILURE) return res;
+  if (!hookWorked) return res;
+
+  extraPrec = 60;
+  hookWorked = 0;
+  res = __tryFaithEvaluationOptimizedHooksInner(y, hook, x, cutoff, minPrec, maxPrecUsed, 0, extraPrec, &hookWorked);
+  if (res != POINT_EVAL_FAILURE) return res;
+  if (!hookWorked) return res;
+
+  extraPrec = mpfr_get_prec(y) + 10;
+  if (extraPrec < 80) extraPrec = 80;
+  while (extraPrec < 512 * mpfr_get_prec(y)) {
+    hookWorked = 0;
+    res = __tryFaithEvaluationOptimizedHooksInner(y, hook, x, cutoff, minPrec, maxPrecUsed, 0, extraPrec, &hookWorked);
+    if (res != POINT_EVAL_FAILURE) return res;
+    if (!hookWorked) return res;
+    extraPrec += ((extraPrec >> 2) > 10 ? (extraPrec >> 2) : 10);
+  }
+  
   return res;
 }
 

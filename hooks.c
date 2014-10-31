@@ -1006,6 +1006,60 @@ int evaluateCompositionEvalHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec
 
   res = evaluateWithEvaluationHook(y, hook->reusedVarT, prec, tight, hook->f);
 
+  if (sollya_mpfi_is_point_and_real(x) && 
+      (!sollya_mpfi_is_point_and_real(hook->reusedVarT))) {
+    if (!res) {
+      p *= 3;
+      sollya_mpfi_set_prec(hook->reusedVarT, p); 
+      evaluateInterval(hook->reusedVarT, hook->g, NULL, x);
+      if (sollya_mpfi_has_nan(hook->reusedVarT) || 
+	  sollya_mpfi_has_infinity(hook->reusedVarT)) {
+	return res;
+      }
+      res = evaluateWithEvaluationHook(y, hook->reusedVarT, prec, tight, hook->f);
+    } else {
+      if (!tight) {
+	if (sollya_mpfi_has_zero(y)) {
+	  if (sollya_mpfi_has_zero(hook->reusedVarT) || 
+	      (sollya_mpfi_get_prec(y) <= (12 + 10))) {
+	    p *= 3;
+	    sollya_mpfi_set_prec(hook->reusedVarT, p); 
+	    evaluateInterval(hook->reusedVarT, hook->g, NULL, x);
+	    if (sollya_mpfi_has_nan(hook->reusedVarT) || 
+		sollya_mpfi_has_infinity(hook->reusedVarT)) {
+	      return res;
+	    }
+	    res = evaluateWithEvaluationHook(y, hook->reusedVarT, prec, tight, hook->f);
+	  } else {
+	    /* t has no zero, the precision of y is at least 12 + 10 bits. */
+	    if (!sollya_mpfi_enclosure_accurate_enough(hook->reusedVarT, sollya_mpfi_get_prec(y) - 10)) {
+	      p *= 3;
+	      sollya_mpfi_set_prec(hook->reusedVarT, p); 
+	      evaluateInterval(hook->reusedVarT, hook->g, NULL, x);
+	      if (sollya_mpfi_has_nan(hook->reusedVarT) || 
+		  sollya_mpfi_has_infinity(hook->reusedVarT)) {
+		return res;
+	      }
+	      res = evaluateWithEvaluationHook(y, hook->reusedVarT, prec, tight, hook->f);
+	    }
+	  }
+	} else {
+	  /* y has no zero, the precision of y is at least 12 + 10 bits. */
+	  if (!sollya_mpfi_enclosure_accurate_enough(y, sollya_mpfi_get_prec(y) - 10)) {
+	    p *= 3;
+	    sollya_mpfi_set_prec(hook->reusedVarT, p); 
+	    evaluateInterval(hook->reusedVarT, hook->g, NULL, x);
+	    if (sollya_mpfi_has_nan(hook->reusedVarT) || 
+		sollya_mpfi_has_infinity(hook->reusedVarT)) {
+	      return res;
+	    }
+	    res = evaluateWithEvaluationHook(y, hook->reusedVarT, prec, tight, hook->f);
+	  }
+	}
+      }
+    }
+  }
+
   if ((!res) && (!sollya_mpfi_is_point_and_real(hook->reusedVarT))) {
     if (hook->reusedVarTAInit) { 
       sollya_mpfi_set_prec(hook->reusedVarTA, sollya_mpfi_get_prec(hook->reusedVarT)); 
