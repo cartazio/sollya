@@ -6837,7 +6837,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedHooks(mpfr_t y, eval_hoo
 
   extraPrec = mpfr_get_prec(y) + 10;
   if (extraPrec < 80) extraPrec = 80;
-  while (extraPrec < 512 * mpfr_get_prec(y)) {
+  while (extraPrec <= 5 * mpfr_get_prec(y)) {
     hookWorked = 0;
     res = __tryFaithEvaluationOptimizedHooksInner(y, hook, x, cutoff, minPrec, maxPrecUsed, 0, extraPrec, &hookWorked);
     if (res != POINT_EVAL_FAILURE) return res;
