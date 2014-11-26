@@ -5775,7 +5775,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedPolynomialRepresentation
   return res;
 }
 
-static inline point_eval_t __tryFaithEvaluationOptimizedHooks(mpfr_t y, eval_hook_t *hook, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_prec_t *maxPrecUsed) { 
+static inline point_eval_t __tryFaithEvaluationOptimizedHooksInner(mpfr_t y, eval_hook_t *hook, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_prec_t *maxPrecUsed, int tight, mp_prec_t extraPrec, int *hookWorked) { 
   sollya_mpfi_t v_Y, v_X;
   sollya_mpfi_t *Y, *X;
   mp_prec_t prec;
@@ -5785,24 +5785,29 @@ static inline point_eval_t __tryFaithEvaluationOptimizedHooks(mpfr_t y, eval_hoo
   int tern1, tern2;
   int hookRes;
 
+  *hookWorked = 0;
+
   if (hook == NULL) return POINT_EVAL_FAILURE;
 
-  prec = mpfr_get_prec(y) + 10;
+  prec = mpfr_get_prec(y) + 20;
   prec = prec + (prec >> 1);
   if (prec < minPrec) prec = minPrec;
+  prec += extraPrec;
   __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, prec);
   
-  Y = chooseAndInitMpfiPtr(&v_Y, mpfr_get_prec(y) + 5);
+  Y = chooseAndInitMpfiPtr(&v_Y, (tight ? (mpfr_get_prec(y) + 10 + extraPrec) : ((prec > (mpfr_get_prec(y) + 10 + extraPrec)) ? prec : (mpfr_get_prec(y) + 10 + extraPrec))));
   X = chooseAndInitMpfiPtr(&v_X, mpfr_get_prec(x));
   
   sollya_mpfi_set_fr(*X, x);
-  hookRes = evaluateWithEvaluationHook(*Y, *X, prec, 0, hook);
+  hookRes = evaluateWithEvaluationHook(*Y, *X, prec, tight, hook);
   if (!hookRes) {
     clearChosenMpfiPtr(X, &v_X);
     clearChosenMpfiPtr(Y, &v_Y);
     return POINT_EVAL_FAILURE;
   }
   
+  *hookWorked = 1;
+
   t = chooseAndInitMpfrPtr(&v_t, mpfr_get_prec(y));
   /* HACK ALERT: For performance reasons, we will access the internals
      of an mpfi_t !!!
@@ -5857,6 +5862,64 @@ static inline point_eval_t __tryFaithEvaluationOptimizedHooks(mpfr_t y, eval_hoo
   clearChosenMpfiPtr(X, &v_X);
   clearChosenMpfiPtr(Y, &v_Y);
 
+  return res;
+}
+
+static inline point_eval_t __tryFaithEvaluationOptimizedHooks(mpfr_t y, eval_hook_t *hook, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_prec_t *maxPrecUsed, int *hookGivesSomeAccuracy) { 
+  int hookWorked;
+  point_eval_t res;
+  mp_prec_t extraPrec;
+
+  *hookGivesSomeAccuracy = 0;
+
+  if (hook == NULL) return POINT_EVAL_FAILURE;
+
+  extraPrec = 0;
+  hookWorked = 0;
+  res = __tryFaithEvaluationOptimizedHooksInner(y, hook, x, cutoff, minPrec, maxPrecUsed, 1, extraPrec, &hookWorked);
+  if (res != POINT_EVAL_FAILURE) return res;
+
+  extraPrec = 0;
+  hookWorked = 0;
+  res = __tryFaithEvaluationOptimizedHooksInner(y, hook, x, cutoff, minPrec, maxPrecUsed, 0, extraPrec, &hookWorked);
+  if (res != POINT_EVAL_FAILURE) return res;
+  if (!hookWorked) return res;
+  *hookGivesSomeAccuracy = 1;
+
+  extraPrec = 10;
+  hookWorked = 0;
+  res = __tryFaithEvaluationOptimizedHooksInner(y, hook, x, cutoff, minPrec, maxPrecUsed, 0, extraPrec, &hookWorked);
+  if (res != POINT_EVAL_FAILURE) return res;
+  if (!hookWorked) return res;
+
+  extraPrec = 20;
+  hookWorked = 0;
+  res = __tryFaithEvaluationOptimizedHooksInner(y, hook, x, cutoff, minPrec, maxPrecUsed, 0, extraPrec, &hookWorked);
+  if (res != POINT_EVAL_FAILURE) return res;
+  if (!hookWorked) return res;
+
+  extraPrec = 40;
+  hookWorked = 0;
+  res = __tryFaithEvaluationOptimizedHooksInner(y, hook, x, cutoff, minPrec, maxPrecUsed, 0, extraPrec, &hookWorked);
+  if (res != POINT_EVAL_FAILURE) return res;
+  if (!hookWorked) return res;
+
+  extraPrec = 60;
+  hookWorked = 0;
+  res = __tryFaithEvaluationOptimizedHooksInner(y, hook, x, cutoff, minPrec, maxPrecUsed, 0, extraPrec, &hookWorked);
+  if (res != POINT_EVAL_FAILURE) return res;
+  if (!hookWorked) return res;
+
+  extraPrec = mpfr_get_prec(y) + 10;
+  if (extraPrec < 80) extraPrec = 80;
+  while (extraPrec <= 5 * mpfr_get_prec(y)) {
+    hookWorked = 0;
+    res = __tryFaithEvaluationOptimizedHooksInner(y, hook, x, cutoff, minPrec, maxPrecUsed, 0, extraPrec, &hookWorked);
+    if (res != POINT_EVAL_FAILURE) return res;
+    if (!hookWorked) return res;
+    extraPrec += ((extraPrec >> 2) > 10 ? (extraPrec >> 2) : 10);
+  }
+  
   return res;
 }
 
@@ -5963,6 +6026,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedDeducedLowerPrecResult(m
 
 static inline point_eval_t __tryFaithEvaluationOptimizedDoIt(mpfr_t y, node *f, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_prec_t *maxPrecUsed) { 
   point_eval_t res;
+  int hookGivesSomeAccuracy;
 
   switch (f->nodeType) {
   case MEMREF:
@@ -5986,7 +6050,9 @@ static inline point_eval_t __tryFaithEvaluationOptimizedDoIt(mpfr_t y, node *f, 
     if ((f->polynomialRepresentation != NULL) && (f->child1 == NULL)) {
       res = __tryFaithEvaluationOptimizedPolynomialRepresentation(y, f->polynomialRepresentation, x, cutoff, minPrec, maxPrecUsed);
     } else {
-      res = __tryFaithEvaluationOptimizedHooks(y, f->evaluationHook, x, cutoff, minPrec, maxPrecUsed);
+      hookGivesSomeAccuracy = 0;
+      res = __tryFaithEvaluationOptimizedHooks(y, f->evaluationHook, x, cutoff, minPrec, maxPrecUsed, &hookGivesSomeAccuracy);
+      if (hookGivesSomeAccuracy) return res;
       if (res == POINT_EVAL_FAILURE) {
 	res = __tryFaithEvaluationOptimizedDoIt(y, getMemRefChild(f), x, cutoff, minPrec, maxPrecUsed);
       }

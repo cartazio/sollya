@@ -168,6 +168,7 @@ int sollya_mpfi_is_quasi_point_and_real(sollya_mpfi_t op);
 int sollya_mpfi_equal_p(sollya_mpfi_t op1, sollya_mpfi_t op2);
 mp_exp_t sollya_mpfi_max_exp(sollya_mpfi_t op);
 int sollya_mpfi_fr_in_interval(mpfr_t op1, sollya_mpfi_t op2);
+int sollya_mpfi_enclosure_accurate_enough(sollya_mpfi_t op1, mp_prec_t op2);
 
 #endif /* ifdef MPFI_COMPAT_H */
 
