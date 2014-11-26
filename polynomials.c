@@ -355,6 +355,8 @@ static inline int scaledMpqIsDyadic(mp_exp_t E, mpq_t a) {
   mpq_t aa;
   int res;
 
+  UNUSED_PARAM(E);
+
   /* 0 is a dyadic */
   if (mpq_sgn(a) == 0) return 1;
 
