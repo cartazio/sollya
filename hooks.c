@@ -300,11 +300,8 @@ void *copyNodeEvalHook(void *data) {
 }
 
 int composeNodeEvalHook(eval_hook_t **hookPtr, void *data, node *g) {
-  node_eval_hook_t *hook;
   eval_hook_t *f;
   int okay;
-
-  hook = (node_eval_hook_t *) data;
   
   f = NULL;
   okay = addEvaluationHook(&f, copyNodeEvalHook(data),
@@ -593,11 +590,8 @@ void *copyPolyEvalHook(void *data) {
 }
 
 int composePolyEvalHook(eval_hook_t **hookPtr, void *data, node *g) {
-  poly_eval_hook_t *hook;
   eval_hook_t *f;
   int okay;
-
-  hook = (poly_eval_hook_t *) data;
   
   f = NULL;
   okay = addEvaluationHook(&f, copyPolyEvalHook(data),

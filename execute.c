@@ -16462,6 +16462,8 @@ int isEqualThing(node *tree, node *tree2) {
   return 1;
 }
 
+int isEqualThingNoPoly(node *tree, node *tree2);
+
 int isEqualThingNoPolyOnVoid(void *tree, void *tree2) {
   return isEqualThingNoPoly((node *) tree, (node *) tree2);
 }
