@@ -1621,7 +1621,7 @@ int finalizeLibraryMode() {
   return 1;
 }
 
-double sollya_mpfr_get_d(mpfr_t op, mpfr_rnd_t rnd) {
+double sollya_mpfr_get_d(mpfr_srcptr op, mpfr_rnd_t rnd) {
   union {
     uint64_t i;
     double d;

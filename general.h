@@ -255,7 +255,7 @@ int getRoundingWarnings();
 void setRoundingWarnings(int);
 int getRationalMode();
 void setRationalMode(int);
-double sollya_mpfr_get_d(mpfr_t, mpfr_rnd_t);
+double sollya_mpfr_get_d(mpfr_srcptr, mpfr_rnd_t);
 sollya_mpfi_t *getReusedGlobalMPFIVars(unsigned int, mp_prec_t);
 void returnReusedGlobalMPIVars(unsigned int);
 mpfr_t *getReusedGlobalMPFRVars(unsigned int, mp_prec_t);

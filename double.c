@@ -161,7 +161,7 @@ int round_to_format(mpfr_t rop, mpfr_t op, int prec, mp_rnd_t mode) {
 
 
 
-int mpfr_round_to_double(mpfr_t rop, mpfr_t op) {
+int mpfr_round_to_double(mpfr_t rop, mpfr_srcptr op) {
   double d;
   int res;
 
@@ -218,7 +218,7 @@ int mpfr_round_to_prec(mpfr_t rop, mpfr_t op, mp_prec_t prec) {
 }
 
 
-int mpfr_round_to_doubledouble(mpfr_t rop, mpfr_t op) {
+int mpfr_round_to_doubledouble(mpfr_t rop, mpfr_srcptr op) {
   double d;
   mpfr_t accu, temp, rest;
   mp_prec_t prec;
@@ -331,7 +331,7 @@ int mpfr_round_to_doubledouble_mode(mpfr_t rop, mpfr_t op, mp_rnd_t mode) {
 }
 
 
-int mpfr_round_to_tripledouble(mpfr_t rop, mpfr_t op) {
+int mpfr_round_to_tripledouble(mpfr_t rop, mpfr_srcptr op) {
   double d;
   mpfr_t accu, temp, rest;
   mp_prec_t prec;
@@ -1587,7 +1587,7 @@ node *rationalApprox(mpfr_t x, int n) {
   return tree;
 }
 
-int mpfr_round_to_ieee_format(mpfr_t rop, mpfr_t op, mp_prec_t prec, unsigned int width, mp_rnd_t mode) {
+int mpfr_round_to_ieee_format(mpfr_t rop, mpfr_srcptr op, mp_prec_t prec, unsigned int width, mp_rnd_t mode) {
   int res;
   mpfr_t result;
   unsigned int exponent;
@@ -1745,7 +1745,7 @@ int mpfr_round_to_ieee_format(mpfr_t rop, mpfr_t op, mp_prec_t prec, unsigned in
   return res;
 }
 
-int mpfr_round_to_single(mpfr_t rop, mpfr_t x) {
+int mpfr_round_to_single(mpfr_t rop, mpfr_srcptr x) {
   return mpfr_round_to_ieee_format(rop, x, 24, 8, GMP_RNDN);
 }
 
@@ -1753,11 +1753,11 @@ int mpfr_round_to_single_mode(mpfr_t rop, mpfr_t x, mp_rnd_t mode) {
   return mpfr_round_to_ieee_format(rop, x, 24, 8, mode);
 }
 
-int mpfr_round_to_quad(mpfr_t rop, mpfr_t x) {
+int mpfr_round_to_quad(mpfr_t rop, mpfr_srcptr x) {
   return mpfr_round_to_ieee_format(rop, x, 113, 15, GMP_RNDN);
 }
 
-int mpfr_round_to_halfprecision(mpfr_t rop, mpfr_t x) {
+int mpfr_round_to_halfprecision(mpfr_t rop, mpfr_srcptr x) {
   return mpfr_round_to_ieee_format(rop, x, 11, 5, GMP_RNDN);
 }
 
@@ -1769,7 +1769,7 @@ int mpfr_round_to_halfprecision_mode(mpfr_t rop, mpfr_t x, mp_rnd_t mode) {
   return mpfr_round_to_ieee_format(rop, x, 11, 5, mode);
 }
 
-int mpfr_round_to_doubleextended(mpfr_t rop, mpfr_t op) {
+int mpfr_round_to_doubleextended(mpfr_t rop, mpfr_srcptr op) {
   return mpfr_round_to_ieee_format(rop, op, 64, 15, GMP_RNDN);
 }
 
@@ -1777,7 +1777,7 @@ int mpfr_round_to_doubleextended_mode(mpfr_t rop, mpfr_t op, mp_rnd_t mode) {
   return mpfr_round_to_ieee_format(rop, op, 64, 15, mode);
 }
 
-int sollya_mpfr_rint_nearestint(mpfr_t rop, mpfr_t op, mpfr_rnd_t rnd) {
+int sollya_mpfr_rint_nearestint(mpfr_t rop, mpfr_srcptr op, mpfr_rnd_t rnd) {
   mpfr_t temp;
   int res;
 

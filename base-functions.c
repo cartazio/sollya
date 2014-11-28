@@ -2632,6 +2632,7 @@ int floor_evalsign(int *sign, node *c) {
 int nearestint_evalsign(int *sign, node *c) {
   int okay, s, okayA, signA, okayB, signB;
   node *tempNode;
+  tempNode = NULL;
   okay = 0;
   okayA = evaluateSign(&signA, c);
   if (okayA) {
@@ -2656,7 +2657,7 @@ int nearestint_evalsign(int *sign, node *c) {
     else if ( (signA > 0) && (signB > 0) ) s = 1;
     else s = 0;
   }
-  free_memory(tempNode);
+  if (tempNode != NULL) free_memory(tempNode);
   if (okay) *sign = s;
   return okay;
 }
@@ -2670,7 +2671,7 @@ int nearestint_evalsign(int *sign, node *c) {
 /*                                                                            */
 /******************************************************************************/
 
-int double_point_eval(mpfr_t res, mpfr_t x, mp_rnd_t rnd) {
+int double_point_eval(mpfr_ptr res, mpfr_srcptr x, mp_rnd_t rnd) {
   mpfr_t myResult;
   int r;
   mpfr_init2(myResult, ((mpfr_get_prec(res) > 64)? mpfr_get_prec(res) : 64));
@@ -2680,7 +2681,7 @@ int double_point_eval(mpfr_t res, mpfr_t x, mp_rnd_t rnd) {
   return r;
 }
 
-int single_point_eval(mpfr_t res, mpfr_t x, mp_rnd_t rnd) {
+int single_point_eval(mpfr_ptr res, mpfr_srcptr x, mp_rnd_t rnd) {
   mpfr_t myResult;
   int r;
   mpfr_init2(myResult, ((mpfr_get_prec(res) > 64)? mpfr_get_prec(res) : 64));
@@ -2690,7 +2691,7 @@ int single_point_eval(mpfr_t res, mpfr_t x, mp_rnd_t rnd) {
   return r;
 }
 
-int quad_point_eval(mpfr_t res, mpfr_t x, mp_rnd_t rnd) {
+int quad_point_eval(mpfr_ptr res, mpfr_srcptr x, mp_rnd_t rnd) {
   mpfr_t myResult;
   int r;
   mpfr_init2(myResult, ((mpfr_get_prec(res) > 128)? mpfr_get_prec(res) : 128));
@@ -2700,7 +2701,7 @@ int quad_point_eval(mpfr_t res, mpfr_t x, mp_rnd_t rnd) {
   return r;
 }
 
-int halfprecision_point_eval(mpfr_t res, mpfr_t x, mp_rnd_t rnd) {
+int halfprecision_point_eval(mpfr_ptr res, mpfr_srcptr x, mp_rnd_t rnd) {
   mpfr_t myResult;
   int r;
   mpfr_init2(myResult, ((mpfr_get_prec(res) > 64)? mpfr_get_prec(res) : 64));
@@ -2710,7 +2711,7 @@ int halfprecision_point_eval(mpfr_t res, mpfr_t x, mp_rnd_t rnd) {
   return r;
 }
 
-int doubledouble_point_eval(mpfr_t res, mpfr_t x, mp_rnd_t rnd) {
+int doubledouble_point_eval(mpfr_ptr res, mpfr_srcptr x, mp_rnd_t rnd) {
   mpfr_t myResult;
   int r;
   mpfr_init2(myResult, ((mpfr_get_prec(res) > 129)? mpfr_get_prec(res) : 129));
@@ -2720,7 +2721,7 @@ int doubledouble_point_eval(mpfr_t res, mpfr_t x, mp_rnd_t rnd) {
   return r;
 }
 
-int tripledouble_point_eval(mpfr_t res, mpfr_t x, mp_rnd_t rnd) {
+int tripledouble_point_eval(mpfr_ptr res, mpfr_srcptr x, mp_rnd_t rnd) {
   mpfr_t myResult;
   int r;
   mpfr_init2(myResult, ((mpfr_get_prec(res) > 200)? mpfr_get_prec(res) : 200));
@@ -2730,7 +2731,7 @@ int tripledouble_point_eval(mpfr_t res, mpfr_t x, mp_rnd_t rnd) {
   return r;
 }
 
-int doubleextended_point_eval(mpfr_t res, mpfr_t x, mp_rnd_t rnd) {
+int doubleextended_point_eval(mpfr_ptr res, mpfr_srcptr x, mp_rnd_t rnd) {
   mpfr_t myResult;
   int r;
   mpfr_init2(myResult, ((mpfr_get_prec(res) > 128)? mpfr_get_prec(res) : 128));
@@ -2968,7 +2969,7 @@ baseFunction basefun_sqrt_obj = {
   .getRecursePrec = getRecursePrec_sqrt,
   .baseAutodiff = sqrt_diff,
   .interval_eval = sollya_mpfi_sqrt,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_sqrt),
+  .point_eval = mpfr_sqrt,
   .diff_expr = sqrt_diff_expr,
   .simplify = simplify_sqrt,
   .evalsign = sqrt_evalsign
@@ -2990,7 +2991,7 @@ baseFunction basefun_exp_obj = {
   .getRecursePrec = getRecursePrec_exp,
   .baseAutodiff = exp_diff,
   .interval_eval = sollya_mpfi_exp,
-  .point_eval =  (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_exp),
+  .point_eval =  mpfr_exp,
   .diff_expr = exp_diff_expr,
   .simplify = simplify_exp,
   .evalsign = exp_evalsign
@@ -3012,7 +3013,7 @@ baseFunction basefun_log_obj = {
   .getRecursePrec = getRecursePrec_log,
   .baseAutodiff = log_diff,
   .interval_eval = sollya_mpfi_log,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_log),
+  .point_eval = mpfr_log,
   .diff_expr = log_diff_expr,
   .simplify = simplify_log,
   .evalsign = log_evalsign
@@ -3034,7 +3035,7 @@ baseFunction basefun_log2_obj = {
   .getRecursePrec = getRecursePrec_log2,
   .baseAutodiff = log2_diff,
   .interval_eval = sollya_mpfi_log2,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_log2),
+  .point_eval = mpfr_log2,
   .diff_expr = log2_diff_expr,
   .simplify = simplify_log2,
   .evalsign = log2_evalsign
@@ -3056,7 +3057,7 @@ baseFunction basefun_log10_obj = {
   .getRecursePrec = getRecursePrec_log10,
   .baseAutodiff = log10_diff,
   .interval_eval = sollya_mpfi_log10,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_log10),
+  .point_eval = mpfr_log10,
   .diff_expr = log10_diff_expr,
   .simplify = simplify_log10,
   .evalsign = log10_evalsign
@@ -3078,7 +3079,7 @@ baseFunction basefun_sin_obj = {
   .getRecursePrec = getRecursePrec_sin,
   .baseAutodiff = sin_diff,
   .interval_eval = sollya_mpfi_sin,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_sin),
+  .point_eval = mpfr_sin,
   .diff_expr = sin_diff_expr,
   .simplify = simplify_sin,
   .evalsign = sin_evalsign
@@ -3100,7 +3101,7 @@ baseFunction basefun_cos_obj = {
   .getRecursePrec = getRecursePrec_cos,
   .baseAutodiff = cos_diff,
   .interval_eval = sollya_mpfi_cos,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_cos),
+  .point_eval = mpfr_cos,
   .diff_expr = cos_diff_expr,
   .simplify = simplify_cos,
   .evalsign = cos_evalsign
@@ -3122,7 +3123,7 @@ baseFunction basefun_tan_obj = {
   .getRecursePrec = getRecursePrec_tan,
   .baseAutodiff = tan_diff,
   .interval_eval = sollya_mpfi_tan,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_tan),
+  .point_eval = mpfr_tan,
   .diff_expr = tan_diff_expr,
   .simplify = simplify_tan,
   .evalsign = tan_evalsign
@@ -3144,7 +3145,7 @@ baseFunction basefun_asin_obj = {
   .getRecursePrec = getRecursePrec_asin,
   .baseAutodiff = asin_diff,
   .interval_eval = sollya_mpfi_asin,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_asin),
+  .point_eval = mpfr_asin,
   .diff_expr = asin_diff_expr,
   .simplify = simplify_asin,
   .evalsign = asin_evalsign
@@ -3166,7 +3167,7 @@ baseFunction basefun_acos_obj = {
   .getRecursePrec = getRecursePrec_acos,
   .baseAutodiff = acos_diff,
   .interval_eval = sollya_mpfi_acos,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_acos),
+  .point_eval = mpfr_acos,
   .diff_expr = acos_diff_expr,
   .simplify = simplify_acos,
   .evalsign = acos_evalsign
@@ -3188,7 +3189,7 @@ baseFunction basefun_atan_obj = {
   .getRecursePrec = getRecursePrec_atan,
   .baseAutodiff = atan_diff,
   .interval_eval = sollya_mpfi_atan,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_atan),
+  .point_eval = mpfr_atan,
   .diff_expr = atan_diff_expr,
   .simplify = simplify_atan,
   .evalsign = atan_evalsign
@@ -3210,7 +3211,7 @@ baseFunction basefun_sinh_obj = {
   .getRecursePrec = getRecursePrec_sinh,
   .baseAutodiff = sinh_diff,
   .interval_eval = sollya_mpfi_sinh,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_sinh),
+  .point_eval = mpfr_sinh,
   .diff_expr = sinh_diff_expr,
   .simplify = simplify_sinh,
   .evalsign = sinh_evalsign
@@ -3232,7 +3233,7 @@ baseFunction basefun_cosh_obj = {
   .getRecursePrec = getRecursePrec_cosh,
   .baseAutodiff = cosh_diff,
   .interval_eval = sollya_mpfi_cosh,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_cosh),
+  .point_eval = mpfr_cosh,
   .diff_expr = cosh_diff_expr,
   .simplify = simplify_cosh,
   .evalsign = cosh_evalsign
@@ -3254,7 +3255,7 @@ baseFunction basefun_tanh_obj = {
   .getRecursePrec = getRecursePrec_tanh,
   .baseAutodiff = tanh_diff,
   .interval_eval = sollya_mpfi_tanh,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_tanh),
+  .point_eval = mpfr_tanh,
   .diff_expr = tanh_diff_expr,
   .simplify = simplify_tanh,
   .evalsign = tanh_evalsign
@@ -3276,7 +3277,7 @@ baseFunction basefun_asinh_obj = {
   .getRecursePrec = getRecursePrec_asinh,
   .baseAutodiff = asinh_diff,
   .interval_eval = sollya_mpfi_asinh,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_asinh),
+  .point_eval = mpfr_asinh,
   .diff_expr = asinh_diff_expr,
   .simplify = simplify_asinh,
   .evalsign = asinh_evalsign
@@ -3298,7 +3299,7 @@ baseFunction basefun_acosh_obj = {
   .getRecursePrec = getRecursePrec_acosh,
   .baseAutodiff = acosh_diff,
   .interval_eval = sollya_mpfi_acosh,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_acosh),
+  .point_eval = mpfr_acosh,
   .diff_expr = acosh_diff_expr,
   .simplify = simplify_acosh,
   .evalsign = acosh_evalsign
@@ -3320,7 +3321,7 @@ baseFunction basefun_atanh_obj = {
   .getRecursePrec = getRecursePrec_atanh,
   .baseAutodiff = atanh_diff,
   .interval_eval = sollya_mpfi_atanh,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_atanh),
+  .point_eval = mpfr_atanh,
   .diff_expr = atanh_diff_expr,
   .simplify = simplify_atanh,
   .evalsign = atanh_evalsign
@@ -3342,7 +3343,7 @@ baseFunction basefun_abs_obj = {
   .getRecursePrec = getRecursePrec_default,
   .baseAutodiff = abs_diff,
   .interval_eval = sollya_mpfi_abs,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_abs),
+  .point_eval = mpfr_abs,
   .diff_expr = abs_diff_expr,
   .simplify = simplify_abs,
   .evalsign = abs_evalsign
@@ -3364,7 +3365,7 @@ baseFunction basefun_erf_obj = {
   .getRecursePrec = getRecursePrec_erf,
   .baseAutodiff = erf_diff,
   .interval_eval = sollya_mpfi_erf,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_erf),
+  .point_eval = mpfr_erf,
   .diff_expr = erf_diff_expr,
   .simplify = simplify_erf,
   .evalsign = erf_evalsign
@@ -3386,7 +3387,7 @@ baseFunction basefun_erfc_obj = {
   .getRecursePrec = getRecursePrec_erfc,
   .baseAutodiff = erfc_diff,
   .interval_eval = sollya_mpfi_erfc,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_erfc),
+  .point_eval = mpfr_erfc,
   .diff_expr = erfc_diff_expr,
   .simplify = simplify_erfc,
   .evalsign = erfc_evalsign
@@ -3408,7 +3409,7 @@ baseFunction basefun_log1p_obj = {
   .getRecursePrec = getRecursePrec_log1p,
   .baseAutodiff = log1p_diff,
   .interval_eval = sollya_mpfi_log1p,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_log1p),
+  .point_eval = mpfr_log1p,
   .diff_expr = log1p_diff_expr,
   .simplify = simplify_log1p,
   .evalsign = log1p_evalsign
@@ -3430,7 +3431,7 @@ baseFunction basefun_expm1_obj = {
   .getRecursePrec = getRecursePrec_expm1,
   .baseAutodiff = expm1_diff,
   .interval_eval = sollya_mpfi_expm1,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_expm1),
+  .point_eval = mpfr_expm1,
   .diff_expr = expm1_diff_expr,
   .simplify = simplify_expm1,
   .evalsign = expm1_evalsign
@@ -3606,7 +3607,7 @@ baseFunction basefun_ceil_obj = {
   .getRecursePrec = getRecursePrec_default,
   .baseAutodiff = ceil_diff,
   .interval_eval = sollya_mpfi_ceil,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_rint_ceil),
+  .point_eval = mpfr_rint_ceil,
   .diff_expr = ceil_diff_expr,
   .simplify = simplify_ceil,
   .evalsign = ceil_evalsign
@@ -3628,7 +3629,7 @@ baseFunction basefun_floor_obj = {
   .baseAutodiff = floor_diff,
   .onlyZeroIsZero = 0,
   .interval_eval = sollya_mpfi_floor,
-  .point_eval = (int (*)(mpfr_t, mpfr_t, mp_rnd_t))(mpfr_rint_floor),
+  .point_eval = mpfr_rint_floor,
   .diff_expr = floor_diff_expr,
   .simplify = simplify_floor,
   .evalsign = floor_evalsign

@@ -120,7 +120,7 @@ struct baseFunctionStruct
   mp_exp_t (*getRecursePrec)(mp_exp_t cutoff, mp_prec_t prec, int considerCutoff);  /* Supposing one desires to evaluate f(c) with accuracy 2^(-prec), allowing a cutoff of 2^(-cutoff), this function returns a guess on what precision should be used in the evaluation of c */
   void (*baseAutodiff)(sollya_mpfi_t *, sollya_mpfi_t, int, int *); /* Computes the vector of the f^(k)(x0)/k!, k=0..n. The last parameter is a silent parameter */
   int (*interval_eval)(sollya_mpfi_t, sollya_mpfi_t); /* Performs an interval evaluation ``à la'' mpfi */
-  int (*point_eval)(mpfr_t, mpfr_t, mp_rnd_t); /* Performs an evaluation ``à la'' mpfr */
+  int (*point_eval)(mpfr_ptr, mpfr_srcptr, mp_rnd_t); /* Performs an evaluation ``à la'' mpfr */
   node *(*diff_expr)(node *); /* If g if the argument, returns a tree representing diff(f o g) */
   node *(*simplify)(node *); /* If g is the argument (supposed already simplified as much as possible), returns a tree representing a simplification
                                 (without introducing errors) of f(g).

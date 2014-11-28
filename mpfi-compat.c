@@ -62,6 +62,7 @@
 #include "mpfi-compat.h"
 #include "general.h"
 #include "sollya-messaging.h"
+#include "double.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -1221,3 +1222,681 @@ int sollya_mpfi_enclosure_accurate_enough(sollya_mpfi_t op1, mp_prec_t op2) {
 
   return res;
 }
+
+int sollya_mpfr_max(mpfr_t z, mpfr_t x, mpfr_t y, mp_rnd_t rnd) {
+  int res = 2;
+  if (mpfr_nan_p(x) || mpfr_nan_p(y)) mpfr_set_nan(z);
+  else res = mpfr_max(z, x, y, rnd);
+  return res;
+}
+
+int sollya_mpfr_min(mpfr_t z, mpfr_t x, mpfr_t y, mp_rnd_t rnd) {
+  int res = 2;
+  if (mpfr_nan_p(x) || mpfr_nan_p(y)) mpfr_set_nan(z);
+  else res = mpfr_min(z, x, y, rnd);
+  return res;
+}
+
+int sollya_mpfi_pow_ulong(sollya_mpfi_t z, sollya_mpfi_t x, unsigned long t) {
+  int resLeft, resRight, res;
+
+  /* Check for NaN. The case Inf will be handled by MPFR.
+
+     HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
+  */
+  if (mpfr_nan_p(&(x->left)) ||
+      mpfr_nan_p(&(x->right))) {
+    return sollya_mpfi_set_nan_opt(z);
+  }
+
+  /* Empty interval x */
+  if (sollya_mpfi_is_empty_opt(x)) {
+    return sollya_mpfi_set_empty_opt(z);
+  }
+
+  /* Handle the case when t is zero */
+  if (t == 0ul) {
+    if (sollya_mpfi_is_infinity(x)) {
+      return sollya_mpfi_set_nan_opt(z);
+    } 
+    mpfr_set_si(&(z->left),1,GMP_RNDD); /* exact */
+    mpfr_set_si(&(z->right),1,GMP_RNDU); /* exact */
+    return MPFI_FLAGS_BOTH_ENDPOINTS_EXACT;
+  }
+
+  /* If t is odd, x^t is a monotone increasing function
+
+     We return [RD(inf(x)^t);RU(sup(x)^t)]
+
+  */
+  if ((t & 1ul) != 0ul) {
+    /* HACK ALERT: For performance reasons, we will access the internals
+       of an mpfi_t !!!
+    */
+    resLeft = mpfr_pow_ui(&(z->left),&(x->left),t,GMP_RNDD);
+    resRight = mpfr_pow_ui(&(z->right),&(x->right),t,GMP_RNDU);
+    if ((resLeft == 0) && (resRight == 0)) {
+      /* both exact */
+      res = MPFI_FLAGS_BOTH_ENDPOINTS_EXACT;
+    } else {
+      if (resLeft == 0) {
+	/* left exact, right not exact */
+	res = MPFI_FLAGS_RIGHT_ENDPOINT_INEXACT;
+      } else {
+	if (resRight == 0) {
+	  /* right exact, left not exact */
+	  res = MPFI_FLAGS_LEFT_ENDPOINT_INEXACT;
+	} else {
+	  /* right not exact, left not exact */
+	  res = MPFI_FLAGS_BOTH_ENDPOINTS_INEXACT;
+	}
+      }
+    }
+    return res;
+  }
+
+  /* Here, t is even. This means x^t is monotone decreasing for x < 0
+     and monotone increasing for x > 0.
+
+     So we must distinguish two main cases:
+
+     * if 0 in the interior of x, we must return [0; RU(max(-inf(x),sup(x))^t)]
+     * otherwise, see below.
+
+  */
+  /* HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
+  */
+  if (mpfr_sgn(&(x->left)) * mpfr_sgn(&(x->right)) < 0) {
+    /* HACK ALERT: For performance reasons, we will access the internals
+       of an mpfi_t !!!
+    */
+    if (mpfr_cmpabs(&(x->left), &(x->right)) >= 0) {
+      /* In this case, max(-inf(x),sup(x)) = -inf(x) */
+      /* HACK ALERT: For performance reasons, we will access the internals
+	 of an mpfi_t !!!
+      */
+      resRight = mpfr_pow_ui(&(z->right),&(x->left),t,GMP_RNDU);
+    } else {
+      /* In this case, max(-inf(x),sup(x)) = sup(x) */
+      /* HACK ALERT: For performance reasons, we will access the internals
+	 of an mpfi_t !!!
+      */
+      resRight = mpfr_pow_ui(&(z->right),&(x->right),t,GMP_RNDU);
+    }
+    /* HACK ALERT: For performance reasons, we will access the internals
+       of an mpfi_t !!!
+    */
+    mpfr_set_ui(&(z->left),0u,GMP_RNDN); /* exact */
+    if (resRight == 0) {
+      res = MPFI_FLAGS_BOTH_ENDPOINTS_EXACT;
+    } else {
+      res = MPFI_FLAGS_RIGHT_ENDPOINT_INEXACT;
+    }
+    return res;
+  }
+
+  /* Here, t is even and 0 not in the interior of x
+
+     In this case, we have two subcases:
+
+     * If inf(x) >= 0, we must return [RD(inf(x)^t);RU(sup(x)^t)]
+     * Otherwise,      we must return [RD(sup(x)^t);RU(inf(x)^t)]
+
+  */
+  /* HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
+  */
+  if (mpfr_sgn(&(x->left)) >= 0) {
+    /* We return [RD(inf(x)^t);RU(sup(x)^t)] */
+    /* HACK ALERT: For performance reasons, we will access the internals
+       of an mpfi_t !!!
+    */
+    resLeft = mpfr_pow_ui(&(z->left),&(x->left),t,GMP_RNDD);
+    resRight = mpfr_pow_ui(&(z->right),&(x->right),t,GMP_RNDU);
+    if ((resLeft == 0) && (resRight == 0)) {
+      /* both exact */
+      res = MPFI_FLAGS_BOTH_ENDPOINTS_EXACT;
+    } else {
+      if (resLeft == 0) {
+	/* left exact, right not exact */
+	res = MPFI_FLAGS_RIGHT_ENDPOINT_INEXACT;
+      } else {
+	if (resRight == 0) {
+	  /* right exact, left not exact */
+	  res = MPFI_FLAGS_LEFT_ENDPOINT_INEXACT;
+	} else {
+	  /* right not exact, left not exact */
+	  res = MPFI_FLAGS_BOTH_ENDPOINTS_INEXACT;
+	}
+      }
+    }
+    return res;
+  }
+
+  /* Here, t is even, 0 not in x and inf(x) <= 0
+
+     We return [RD(sup(x)^t);RU(inf(x)^t)]
+
+  */
+  resLeft = mpfr_pow_ui(&(z->right),&(x->right),t,GMP_RNDD);
+  resRight = mpfr_pow_ui(&(z->left),&(x->left),t,GMP_RNDU);
+  mpfr_swap(&(z->left), &(z->right));
+
+  if ((resLeft == 0) && (resRight == 0)) {
+    /* both exact */
+    res = MPFI_FLAGS_BOTH_ENDPOINTS_EXACT;
+  } else {
+    if (resLeft == 0) {
+      /* left exact, right not exact */
+      res = MPFI_FLAGS_RIGHT_ENDPOINT_INEXACT;
+    } else {
+      if (resRight == 0) {
+	/* right exact, left not exact */
+	res = MPFI_FLAGS_LEFT_ENDPOINT_INEXACT;
+      } else {
+	/* right not exact, left not exact */
+	res = MPFI_FLAGS_BOTH_ENDPOINTS_INEXACT;
+      }
+    }
+  }
+  return res;
+}
+
+/* This is a dirty heuristic that produces pessimistic results
+   (indication may be "inexact" even though the result is exact) 
+*/
+static inline int __sollya_mpfi_combine_result(int resFirst, int resSecond) {
+  if (resFirst != MPFI_FLAGS_BOTH_ENDPOINTS_EXACT) return MPFI_FLAGS_BOTH_ENDPOINTS_INEXACT;
+  return resSecond;
+}
+
+int sollya_mpfi_pow(sollya_mpfi_t z, sollya_mpfi_t x, sollya_mpfi_t y) {
+  mpfr_t l,r,lx,rx;
+  mp_prec_t prec, precx;
+  int must_divide;
+  sollya_mpfi_t res;
+  unsigned long t;
+  int resA, resB;
+
+  if (sollya_mpfi_has_nan(x) ||sollya_mpfi_has_nan(y)) { 
+    return sollya_mpfi_set_nan_opt(z);
+  }
+  if (sollya_mpfi_is_empty(x) || sollya_mpfi_is_empty(y)) { 
+    return sollya_mpfi_set_empty(z);
+  }
+
+  /* The following if and possible call to sollya_mpfi_pow_uint is
+     a performance optimization for common (all practical?) cases of input.
+  */
+  /* HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
+  */
+  if (mpfr_equal_p(&(y->left), &(y->right)) &&
+      mpfr_integer_p(&(y->left)) &&
+      (mpfr_sgn(&(y->left)) >= 0) &&
+      mpfr_fits_ulong_p(&(y->left), GMP_RNDN)
+      ) {
+    t = mpfr_get_ui(&(y->left), GMP_RNDN); /* exact */
+    return sollya_mpfi_pow_ulong(z, x, t);
+  }
+
+  /* Same case when y is a negative integer */
+  if (mpfr_equal_p(&(y->left), &(y->right)) &&
+      mpfr_integer_p(&(y->left)) &&
+      (mpfr_sgn(&(y->left)) < 0) &&
+      mpfr_fits_slong_p(&(y->left), GMP_RNDN)
+      ) {
+    t = -mpfr_get_si(&(y->left), GMP_RNDN); /* exact */
+    prec = sollya_mpfi_get_prec(z);
+    sollya_mpfi_prec_round(z, prec + 10);
+    resA = sollya_mpfi_pow_ulong(z, x, t);
+    resB = sollya_mpfi_inv(z, z);
+    resA = __sollya_mpfi_combine_result(resA, resB);
+    resB = sollya_mpfi_prec_round(z, prec);
+    resA = __sollya_mpfi_combine_result(resA, resB);
+    return resA;
+  }
+
+  prec = sollya_mpfi_get_prec(y);
+  mpfr_init2(l,prec); sollya_mpfi_get_left(l,y);
+  mpfr_init2(r,prec); sollya_mpfi_get_right(r,y);
+
+  sollya_mpfi_init2(res,sollya_mpfi_get_prec(z) + 64 + 2); /* 64 because we know that the MPFR exponent width is less than 64 */
+
+  /* Case x^k, k an integer */
+  if ((mpfr_cmp(l,r) == 0) && (mpfr_integer_p(l))) {
+    if (mpfr_zero_p(l)) { /* Case k=0 -> 1 except if x=+/-Inf */
+                          /* Note, if x contains an infinity, but is not equal to infinity,
+                             we return 1 also, by continuity */
+      if (sollya_mpfi_is_infinity(x)) resA = sollya_mpfi_set_nan(z);
+      else resA = sollya_mpfi_set_d(z,1.0);
+
+      mpfr_clear(l); mpfr_clear(r); sollya_mpfi_clear(res);
+      return resA;
+    } else {
+      precx = sollya_mpfi_get_prec(x);
+      if (sollya_mpfi_get_prec(res) > precx)
+        precx = sollya_mpfi_get_prec(res);
+
+      mpfr_init2(lx,precx);
+      mpfr_init2(rx,precx);
+
+      sollya_mpfi_get_right(rx,x);
+      sollya_mpfi_get_left(lx,x);
+
+      if (mpfr_sgn(l) < 0) {
+	must_divide = 1;
+	mpfr_neg(l,l,GMP_RNDN);
+      } else {
+	must_divide = 0;
+      }
+
+      mpfr_div_2ui(r,l,1,GMP_RNDN);
+      if (sollya_mpfi_is_nonneg(x) || (!mpfr_integer_p(r))) { /* x-> x^k is increasing monotonic when x>=0
+                                                                 or when k is odd */
+        mpfr_pow(lx,lx,l,GMP_RNDD);
+        mpfr_pow(rx,rx,l,GMP_RNDU);
+        sollya_mpfi_interv_fr(res,lx,rx);
+      }
+      else if (sollya_mpfi_is_nonpos(x)) { /* x^k is decreasing when x<=0 and k is even */
+        mpfr_pow(rx,rx,l,GMP_RNDD);
+        mpfr_pow(lx,lx,l,GMP_RNDU);
+        sollya_mpfi_interv_fr(res,rx,lx);
+      }
+      else { /* when x contains 0 and k is even, return [0, max(lx^k, rx^k)] */
+        mpfr_pow(lx,lx,l,GMP_RNDU);
+        mpfr_pow(rx,rx,l,GMP_RNDU);
+        sollya_mpfr_max(rx,lx,rx,GMP_RNDU);
+        mpfr_set_d(lx,0.0,GMP_RNDD);
+        sollya_mpfi_interv_fr(res,lx,rx);
+      }
+
+      if (must_divide) sollya_mpfi_inv(res,res);
+
+      mpfr_clear(lx);
+      mpfr_clear(rx);
+    }
+    /* Pessimistic result */
+    resA = MPFI_FLAGS_BOTH_ENDPOINTS_INEXACT;
+  } else {
+    resA = sollya_mpfi_log(res,x);
+    resB = sollya_mpfi_mul(res,res,y);
+    resA = __sollya_mpfi_combine_result(resA, resB);
+    resB = sollya_mpfi_exp(res,res);
+    resA = __sollya_mpfi_combine_result(resA, resB);
+  }
+  mpfr_clear(l);
+  mpfr_clear(r);
+  sollya_mpfi_set(z,res);
+  sollya_mpfi_clear(res);
+
+  return resA;
+}
+
+
+int sollya_mpfi_round_to_double(sollya_mpfi_t rop, sollya_mpfi_t op) {
+  mpfr_t l,r, lres, rres;
+  mp_prec_t prec, p, pp;
+  int res;
+
+  prec = sollya_mpfi_get_prec(op) + 10;
+  pp = sollya_mpfi_get_prec(rop);
+  p = prec;
+  if (pp > p) p = pp;
+  if (64 > p) p = 64;
+  mpfr_init2(l,prec);
+  mpfr_init2(r,prec);
+  mpfr_init2(lres,p);
+  mpfr_init2(rres,p);
+
+  sollya_mpfi_get_left(l,op);
+  sollya_mpfi_get_right(r,op);
+
+  mpfr_round_to_double(lres,l);
+  mpfr_round_to_double(rres,r);
+
+  res = sollya_mpfi_interv_fr(rop,lres,rres);
+
+  mpfr_clear(l);
+  mpfr_clear(r);
+  mpfr_clear(lres);
+  mpfr_clear(rres);
+
+  return res;
+}
+
+
+int sollya_mpfi_round_to_single(sollya_mpfi_t rop, sollya_mpfi_t op) {
+  mpfr_t l,r, lres, rres;
+  mp_prec_t prec, p, pp;
+  int res;
+
+  prec = sollya_mpfi_get_prec(op) + 10;
+  pp = sollya_mpfi_get_prec(rop);
+  p = prec;
+  if (pp > p) p = pp;
+  if (64 > p) p = 64;
+  mpfr_init2(l,prec);
+  mpfr_init2(r,prec);
+  mpfr_init2(lres,p);
+  mpfr_init2(rres,p);
+
+  sollya_mpfi_get_left(l,op);
+  sollya_mpfi_get_right(r,op);
+
+  mpfr_round_to_single(lres,l);
+  mpfr_round_to_single(rres,r);
+
+  res = sollya_mpfi_interv_fr(rop,lres,rres);
+
+  mpfr_clear(l);
+  mpfr_clear(r);
+  mpfr_clear(lres);
+  mpfr_clear(rres);
+
+  return res;
+}
+
+int sollya_mpfi_round_to_quad(sollya_mpfi_t rop, sollya_mpfi_t op) {
+  mpfr_t l,r, lres, rres;
+  mp_prec_t prec, p, pp;
+  int res;
+
+  prec = sollya_mpfi_get_prec(op) + 10;
+  pp = sollya_mpfi_get_prec(rop);
+  p = prec;
+  if (pp > p) p = pp;
+  if (128 > p) p = 128;
+  mpfr_init2(l,prec);
+  mpfr_init2(r,prec);
+  mpfr_init2(lres,p);
+  mpfr_init2(rres,p);
+
+  sollya_mpfi_get_left(l,op);
+  sollya_mpfi_get_right(r,op);
+
+  mpfr_round_to_quad(lres,l);
+  mpfr_round_to_quad(rres,r);
+
+  res = sollya_mpfi_interv_fr(rop,lres,rres);
+
+  mpfr_clear(l);
+  mpfr_clear(r);
+  mpfr_clear(lres);
+  mpfr_clear(rres);
+
+  return res;
+}
+
+int sollya_mpfi_round_to_halfprecision(sollya_mpfi_t rop, sollya_mpfi_t op) {
+  mpfr_t l,r, lres, rres;
+  mp_prec_t prec, p, pp;
+  int res;
+
+  prec = sollya_mpfi_get_prec(op) + 10;
+  pp = sollya_mpfi_get_prec(rop);
+  p = prec;
+  if (pp > p) p = pp;
+  if (64 > p) p = 64;
+  mpfr_init2(l,prec);
+  mpfr_init2(r,prec);
+  mpfr_init2(lres,p);
+  mpfr_init2(rres,p);
+
+  sollya_mpfi_get_left(l,op);
+  sollya_mpfi_get_right(r,op);
+
+  mpfr_round_to_halfprecision(lres,l);
+  mpfr_round_to_halfprecision(rres,r);
+
+  res = sollya_mpfi_interv_fr(rop,lres,rres);
+
+  mpfr_clear(l);
+  mpfr_clear(r);
+  mpfr_clear(lres);
+  mpfr_clear(rres);
+
+  return res;
+}
+
+int sollya_mpfi_round_to_doubledouble(sollya_mpfi_t rop, sollya_mpfi_t op) {
+  mpfr_t l,r, lres, rres;
+  mp_prec_t prec, p, pp;
+  int res;
+
+  prec = sollya_mpfi_get_prec(op) + 10;
+  pp = sollya_mpfi_get_prec(rop);
+  p = prec;
+  if (pp > p) p = pp;
+  if (129 > p) p = 129;
+  mpfr_init2(l,prec);
+  mpfr_init2(r,prec);
+  mpfr_init2(lres,p);
+  mpfr_init2(rres,p);
+
+  sollya_mpfi_get_left(l,op);
+  sollya_mpfi_get_right(r,op);
+
+  mpfr_round_to_doubledouble(lres,l);
+  mpfr_round_to_doubledouble(rres,r);
+
+  res = sollya_mpfi_interv_fr(rop,lres,rres);
+
+  mpfr_clear(l);
+  mpfr_clear(r);
+  mpfr_clear(lres);
+  mpfr_clear(rres);
+
+  return res;
+}
+
+int sollya_mpfi_round_to_tripledouble(sollya_mpfi_t rop, sollya_mpfi_t op) {
+  mpfr_t l,r, lres, rres;
+  mp_prec_t prec, p, pp;
+  int res;
+
+  prec = sollya_mpfi_get_prec(op) + 10;
+  pp = sollya_mpfi_get_prec(rop);
+  p = prec;
+  if (pp > p) p = pp;
+  if (200 > p) p = 200;
+  mpfr_init2(l,prec);
+  mpfr_init2(r,prec);
+  mpfr_init2(lres,p);
+  mpfr_init2(rres,p);
+
+  sollya_mpfi_get_left(l,op);
+  sollya_mpfi_get_right(r,op);
+
+  mpfr_round_to_tripledouble(lres,l);
+  mpfr_round_to_tripledouble(rres,r);
+
+  res = sollya_mpfi_interv_fr(rop,lres,rres);
+
+  mpfr_clear(l);
+  mpfr_clear(r);
+  mpfr_clear(lres);
+  mpfr_clear(rres);
+
+  return res;
+}
+
+int sollya_mpfi_round_to_doubleextended(sollya_mpfi_t rop, sollya_mpfi_t op) {
+  mpfr_t l,r, lres, rres;
+  mp_prec_t prec, p, pp;
+  int res;
+
+  prec = sollya_mpfi_get_prec(op) + 10;
+  pp = sollya_mpfi_get_prec(rop);
+  p = prec;
+  if (pp > p) p = pp;
+  if (128 > p) p = 128;
+  mpfr_init2(l,prec);
+  mpfr_init2(r,prec);
+  mpfr_init2(lres,p);
+  mpfr_init2(rres,p);
+
+  sollya_mpfi_get_left(l,op);
+  sollya_mpfi_get_right(r,op);
+
+  mpfr_round_to_doubleextended(lres,l);
+  mpfr_round_to_doubleextended(rres,r);
+
+  res = sollya_mpfi_interv_fr(rop,lres,rres);
+
+  mpfr_clear(l);
+  mpfr_clear(r);
+  mpfr_clear(lres);
+  mpfr_clear(rres);
+
+  return res;
+}
+
+
+int sollya_mpfi_erf(sollya_mpfi_t rop, sollya_mpfi_t op) {
+  int res, resLeft, resRight;
+
+  if (sollya_mpfi_is_empty_opt(op)) return sollya_mpfi_set_empty_opt(rop);
+
+  /* HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
+  */
+  resLeft = mpfr_erf(&(rop->left), &(op->left), GMP_RNDD);
+  resRight = mpfr_erf(&(rop->right), &(op->right), GMP_RNDU);
+
+  if ((resLeft == 0) && (resRight == 0)) {
+    /* both exact */
+    res = MPFI_FLAGS_BOTH_ENDPOINTS_EXACT;
+  } else {
+    if (resLeft == 0) {
+      /* left exact, right not exact */
+      res = MPFI_FLAGS_RIGHT_ENDPOINT_INEXACT;
+    } else {
+      if (resRight == 0) {
+	/* right exact, left not exact */
+	res = MPFI_FLAGS_LEFT_ENDPOINT_INEXACT;
+      } else {
+	/* right not exact, left not exact */
+	res = MPFI_FLAGS_BOTH_ENDPOINTS_INEXACT;
+      }
+    }
+  }
+
+  sollya_mpfi_nan_normalize_opt(rop);
+  return res;
+}
+
+int sollya_mpfi_erfc(sollya_mpfi_t rop, sollya_mpfi_t op) {
+  int res, resLeft, resRight;
+
+  if (sollya_mpfi_is_empty_opt(op)) return sollya_mpfi_set_empty_opt(rop);
+
+  /* HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
+  */
+  resLeft = mpfr_erfc(&(rop->left), &(op->right), GMP_RNDD);
+  resRight = mpfr_erfc(&(rop->right), &(op->left), GMP_RNDU);
+
+  if ((resLeft == 0) && (resRight == 0)) {
+    /* both exact */
+    res = MPFI_FLAGS_BOTH_ENDPOINTS_EXACT;
+  } else {
+    if (resLeft == 0) {
+      /* left exact, right not exact */
+      res = MPFI_FLAGS_RIGHT_ENDPOINT_INEXACT;
+    } else {
+      if (resRight == 0) {
+	/* right exact, left not exact */
+	res = MPFI_FLAGS_LEFT_ENDPOINT_INEXACT;
+      } else {
+	/* right not exact, left not exact */
+	res = MPFI_FLAGS_BOTH_ENDPOINTS_INEXACT;
+      }
+    }
+  }
+
+  sollya_mpfi_nan_normalize_opt(rop);
+  return res;
+}
+
+int sollya_mpfi_ceil(sollya_mpfi_t rop, sollya_mpfi_t op) {
+  mpfr_t opl, opr, ropl, ropr;
+  int res;
+
+  mpfr_init2(opl,sollya_mpfi_get_prec(op));
+  mpfr_init2(opr,sollya_mpfi_get_prec(op));
+
+  mpfr_init2(ropl,sollya_mpfi_get_prec(rop));
+  mpfr_init2(ropr,sollya_mpfi_get_prec(rop));
+
+  sollya_mpfi_get_left(opl,op);
+  sollya_mpfi_get_right(opr,op);
+
+  mpfr_rint_ceil(ropl,opl,GMP_RNDD);
+  mpfr_rint_ceil(ropr,opr,GMP_RNDU);
+
+  res = sollya_mpfi_interv_fr(rop,ropl,ropr);
+
+  mpfr_clear(opl);
+  mpfr_clear(opr);
+  mpfr_clear(ropl);
+  mpfr_clear(ropr);
+
+  return res;
+}
+
+int sollya_mpfi_floor(sollya_mpfi_t rop, sollya_mpfi_t op) {
+  mpfr_t opl, opr, ropl, ropr;
+  int res;
+
+  mpfr_init2(opl,sollya_mpfi_get_prec(op));
+  mpfr_init2(opr,sollya_mpfi_get_prec(op));
+
+  mpfr_init2(ropl,sollya_mpfi_get_prec(rop));
+  mpfr_init2(ropr,sollya_mpfi_get_prec(rop));
+
+  sollya_mpfi_get_left(opl,op);
+  sollya_mpfi_get_right(opr,op);
+
+  mpfr_rint_floor(ropl,opl,GMP_RNDD);
+  mpfr_rint_floor(ropr,opr,GMP_RNDU);
+
+  res = sollya_mpfi_interv_fr(rop,ropl,ropr);
+
+  mpfr_clear(opl);
+  mpfr_clear(opr);
+  mpfr_clear(ropl);
+  mpfr_clear(ropr);
+
+  return res;
+}
+
+int sollya_mpfi_nearestint(sollya_mpfi_t rop, sollya_mpfi_t op) {
+  mpfr_t opl, opr, ropl, ropr;
+  int res;
+
+  mpfr_init2(opl,sollya_mpfi_get_prec(op));
+  mpfr_init2(opr,sollya_mpfi_get_prec(op));
+
+  mpfr_init2(ropl,sollya_mpfi_get_prec(rop));
+  mpfr_init2(ropr,sollya_mpfi_get_prec(rop));
+
+  sollya_mpfi_get_left(opl,op);
+  sollya_mpfi_get_right(opr,op);
+
+  sollya_mpfr_rint_nearestint(ropl,opl,GMP_RNDD);
+  sollya_mpfr_rint_nearestint(ropr,opr,GMP_RNDU);
+
+  res = sollya_mpfi_interv_fr(rop,ropl,ropr);
+
+  mpfr_clear(opl);
+  mpfr_clear(opr);
+  mpfr_clear(ropl);
+  mpfr_clear(ropr);
+
+  return res;
+}
+
+

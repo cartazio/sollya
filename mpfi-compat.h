@@ -169,6 +169,23 @@ int sollya_mpfi_equal_p(sollya_mpfi_t op1, sollya_mpfi_t op2);
 mp_exp_t sollya_mpfi_max_exp(sollya_mpfi_t op);
 int sollya_mpfi_fr_in_interval(mpfr_t op1, sollya_mpfi_t op2);
 int sollya_mpfi_enclosure_accurate_enough(sollya_mpfi_t op1, mp_prec_t op2);
+int sollya_mpfi_pow_ulong(sollya_mpfi_t z, sollya_mpfi_t x, unsigned long t);
+int sollya_mpfi_pow(sollya_mpfi_t z, sollya_mpfi_t x, sollya_mpfi_t y);
+int sollya_mpfi_round_to_double(sollya_mpfi_t rop, sollya_mpfi_t op);
+int sollya_mpfi_round_to_single(sollya_mpfi_t rop, sollya_mpfi_t op);
+int sollya_mpfi_round_to_quad(sollya_mpfi_t rop, sollya_mpfi_t op);
+int sollya_mpfi_round_to_halfprecision(sollya_mpfi_t rop, sollya_mpfi_t op);
+int sollya_mpfi_round_to_doubledouble(sollya_mpfi_t rop, sollya_mpfi_t op);
+int sollya_mpfi_round_to_tripledouble(sollya_mpfi_t rop, sollya_mpfi_t op);
+int sollya_mpfi_round_to_doubleextended(sollya_mpfi_t rop, sollya_mpfi_t op);
+int sollya_mpfi_erf(sollya_mpfi_t rop, sollya_mpfi_t op);
+int sollya_mpfi_erfc(sollya_mpfi_t rop, sollya_mpfi_t op);
+int sollya_mpfi_ceil(sollya_mpfi_t rop, sollya_mpfi_t op);
+int sollya_mpfi_floor(sollya_mpfi_t rop, sollya_mpfi_t op);
+int sollya_mpfi_nearestint(sollya_mpfi_t rop, sollya_mpfi_t op);
+
+int sollya_mpfr_max(mpfr_t z, mpfr_t x, mpfr_t y, mp_rnd_t rnd);
+int sollya_mpfr_min(mpfr_t z, mpfr_t x, mpfr_t y, mp_rnd_t rnd);
 
 #endif /* ifdef MPFI_COMPAT_H */
 
