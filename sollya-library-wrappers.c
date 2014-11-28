@@ -392,6 +392,13 @@ void sollya_lib_asciiplot(sollya_obj_t obj1, sollya_obj_t obj2) {
   freeThing(thingToExecute);
 }
 
+void sollya_lib_execute(sollya_obj_t obj1) {
+  node *thingToExecute;
+  thingToExecute = makeExecute(copyThing(obj1));
+  executeCommand(thingToExecute);
+  freeThing(thingToExecute);
+}
+
 void sollya_lib_printxml(sollya_obj_t obj1) {
   node *thingToExecute;
   thingToExecute = makePrintXml(copyThing(obj1));

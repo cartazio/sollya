@@ -329,6 +329,7 @@ extern "C" {
   void sollya_lib_externalplot(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
   void sollya_lib_v_externalplot(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
   void sollya_lib_asciiplot(sollya_obj_t, sollya_obj_t);
+  void sollya_lib_execute(sollya_obj_t);
   void sollya_lib_printxml(sollya_obj_t);
   void sollya_lib_printxml_newfile(sollya_obj_t, sollya_obj_t);
   void sollya_lib_printxml_appendfile(sollya_obj_t, sollya_obj_t);
