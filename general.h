@@ -221,7 +221,9 @@ int initializeLibraryMode(void *(*)(size_t),
 			  void *(*)(void *, size_t),
 			  void (*)(void*),
 			  void *(*)(void *, size_t, size_t),
-			  void (*)(void *, size_t));
+			  void (*)(void *, size_t),
+			  int,
+			  char **);
 int finalizeLibraryMode();
 mp_prec_t getToolPrecision();
 void setToolPrecision(mp_prec_t prec);

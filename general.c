@@ -1535,8 +1535,11 @@ int initializeLibraryMode(void *(*myActualMalloc)(size_t),
 			  void *(*myActualRealloc)(void *, size_t),
 			  void (*myActualFree)(void*),
 			  void *(*myActualReallocWithSize)(void *, size_t, size_t),
-			  void (*myActualFreeWithSize)(void *, size_t)) {
+			  void (*myActualFreeWithSize)(void *, size_t),
+			  int argc,
+			  char **argv) {
   void *ptr;
+  int k, allArgsOkay;
   libraryMode = 1;
   if (myActualMalloc != NULL) actualMalloc = myActualMalloc;
   if (myActualCalloc != NULL) actualCalloc = myActualCalloc;
@@ -1554,6 +1557,19 @@ int initializeLibraryMode(void *(*myActualMalloc)(size_t),
   warnFile = NULL;
   eliminatePromptBackup = 1;
   wrap_mp_set_memory_functions(safeMalloc,actualReallocWithSize,actualFreeWithSize);
+  if ((argc >= 1) && (argv != NULL)) {
+    for (k=0,allArgsOkay = 1;(k<argc)&&allArgsOkay;k++) {
+      allArgsOkay = allArgsOkay && (argv[k] != NULL);
+    }
+    if (allArgsOkay) {
+      argsArgc = argc;
+      argsArgv = (char **) safeCalloc(argsArgc, sizeof(char *));
+      for (k=0;k<argsArgc;k++) {
+	argsArgv[k] = (char *) safeCalloc(strlen(argv[k])+1,sizeof(char));
+	strcpy(argsArgv[k], argv[k]);
+      }
+    }
+  }
   initToolDefaults();
   handlingCtrlC = 0;
   lastHandledSignal = 0;
@@ -1569,6 +1585,14 @@ int initializeLibraryMode(void *(*myActualMalloc)(size_t),
 }
 
 int finalizeLibraryMode() {
+  int k;
+  if (argsArgv != NULL) {
+    for (k=0;k<argsArgc;k++) {
+      safeFree(argsArgv[k]);
+    }
+    safeFree(argsArgv);
+    argsArgv = NULL;
+  }
   if(variablename != NULL) safeFree(variablename);
   variablename = NULL;
   if(newReadFilename != NULL) safeFree(newReadFilename);
@@ -2108,6 +2132,7 @@ int general(int argc, char *argv[]) {
       safeFree(argsArgv[k]);
     }
     safeFree(argsArgv);
+    argsArgv = NULL;
   }
   
   if (!eliminatePromptBackup) sollyaPrintf("\n");
