@@ -882,6 +882,61 @@ sollya_obj_t sollya_lib_v_apply(sollya_obj_t obj1, sollya_obj_t obj2, va_list va
   return evaluatedThing;
 }
 
+sollya_obj_t sollya_lib_execute_procedure(sollya_obj_t obj1, ...) {
+  node *thingToEvaluate, *evaluatedThing;
+  va_list varlist;
+  chain *thinglist, *curr;
+  node *elem;
+
+  va_start(varlist,obj1);
+  elem = va_arg(varlist,node *);
+  if (elem == NULL) {
+    thinglist = addElement(NULL,makeUnit());
+  } else {
+    thinglist = (chain *) safeMalloc(sizeof(chain));
+    thinglist->value = copyThing(elem);
+    thinglist->next = NULL;
+    curr = thinglist;
+    while ((elem = va_arg(varlist,node *)) != NULL) {
+      curr->next = (chain *) safeMalloc(sizeof(chain));
+      curr = curr->next;
+      curr->value = copyThing(elem);
+      curr->next = NULL;
+    }
+  }
+  va_end(varlist);
+  thingToEvaluate = makeApply(copyThing(obj1),thinglist);
+  evaluatedThing = evaluateThing(thingToEvaluate);
+  freeThing(thingToEvaluate);
+  return evaluatedThing;
+}
+
+sollya_obj_t sollya_lib_v_execute_procedure(sollya_obj_t obj1, va_list varlist) {
+  node *thingToEvaluate, *evaluatedThing;
+  chain *thinglist, *curr;
+  node *elem;
+
+  elem = va_arg(varlist,node *);
+  if (elem == NULL) {
+    thinglist = addElement(NULL,makeUnit());
+  } else {
+    thinglist = (chain *) safeMalloc(sizeof(chain));
+    thinglist->value = copyThing(elem);
+    thinglist->next = NULL;
+    curr = thinglist;
+    while ((elem = va_arg(varlist,node *)) != NULL) {
+      curr->next = (chain *) safeMalloc(sizeof(chain));
+      curr = curr->next;
+      curr->value = copyThing(elem);
+      curr->next = NULL;
+    }
+  }
+  thingToEvaluate = makeApply(copyThing(obj1),thinglist);
+  evaluatedThing = evaluateThing(thingToEvaluate);
+  freeThing(thingToEvaluate);
+  return evaluatedThing;
+}
+
 sollya_obj_t sollya_lib_approx(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   thingToEvaluate = makeEvalConst(copyThing(obj1));

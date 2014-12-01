@@ -559,6 +559,10 @@ extern "C" {
   /* A function to parse expressions and evaluate them */
   sollya_obj_t sollya_lib_parse_string(const char *);
 
+  /* Functions to execute Sollya procedures with library calls */
+  sollya_obj_t sollya_lib_execute_procedure(sollya_obj_t, ...);
+  sollya_obj_t sollya_lib_v_execute_procedure(sollya_obj_t, va_list);
+
   /* Functions to convert from constants to Sollya objects */
   /* There is no specific constructor for NaN and +/-Inf: they
      can be created through a call to sollya_lib_constant_from_double
