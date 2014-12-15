@@ -622,6 +622,7 @@ extern "C" {
   int sollya_lib_obj_is_string(sollya_obj_t);
   int sollya_lib_obj_is_error(sollya_obj_t);
   int sollya_lib_obj_is_structure(sollya_obj_t);
+  int sollya_lib_obj_is_procedure(sollya_obj_t);
 
   /* Functions to decompose Sollya objects that represent mathematical
      functions.

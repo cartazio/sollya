@@ -3625,6 +3625,10 @@ int sollya_lib_obj_is_structure(sollya_obj_t obj1) {
   return isStructure(obj1);
 }
 
+int sollya_lib_obj_is_procedure(sollya_obj_t obj1) {
+  return isProcedure(obj1);
+}
+
 int sollya_lib_get_structure_elements(char ***identifiers, sollya_obj_t **objects, int *num, sollya_obj_t obj1) {
   chain *curr;
   int i;

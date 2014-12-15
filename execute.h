@@ -564,6 +564,7 @@ int isPureFinalEllipticList(node *);
 int isPureList(node *);
 int isEmptyList(node *);
 int isStructure(node *tree);
+int isProcedure(node *tree);
 int isError(node *);
 int evaluateThingToConstant(mpfr_t result, node *tree, mpfr_t *defaultVal, int silent, int superSilent);
 int evaluateThingToRange(mpfr_t a, mpfr_t b, node *tree);
