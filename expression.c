@@ -11974,7 +11974,11 @@ node *differentiatePolynomialUnsafe(node *tree) {
 	copy = temp2;
       }
     } else {
-      copy = copyTree(monomials[1]);
+      if (degree >= 1) {
+	copy = copyTree(monomials[1]);
+      } else {
+	copy = addMemRef(makeConstantInt(0));
+      }
     }
 
     for (i=0;i<=degree;i++) {
