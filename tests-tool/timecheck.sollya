@@ -31,14 +31,14 @@ i := i + 1;
 
 /* Test #4 */
 i;
-t = time(p = horner((x - (x + 3)^2)^17)/yardstick;
-if (t in 9.429931640625e-2 * variance) then "Okay" else round(t,12,RN);
+t = time(p = horner((x - (x + 3)^2)^17))/yardstick;
+if (t in 2.712249755859375e-3 * variance) then "Okay" else round(t,12,RN);
 i := i + 1;
 
 /* Test #5 */
 i;
-t = time(h = (diff(horner((x - (x + 3)^2)^17))(0))/yardstick;
-if (t in 9.429931640625e-2 * variance) then "Okay" else round(t,12,RN);
+t = time(h = (diff(horner((x - (x + 3)^2)^17)))(0))/yardstick;
+if (t in 6.71446323394775390625e-5 * variance) then "Okay" else round(t,12,RN);
 i := i + 1;
 
 /* Test #6 */

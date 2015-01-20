@@ -11197,6 +11197,7 @@ node* dividePolynomialByPowerOfVariableUnsafe(node *tree, int alpha) {
       if (monomials[i] != NULL) free_memory(monomials[i]);
     }
     safeFree(monomials);
+    free_memory(simplified);
     return makeConstantInt(0);
   }
 

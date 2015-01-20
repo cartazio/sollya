@@ -699,7 +699,7 @@ int newtonMPFRWithStartPoint(mpfr_t res, node *tree, node *diff_tree, mpfr_t a, 
     mpfr_init2(tempY, 12);
     mpfr_set_si(tempX, 0, GMP_RNDN);
     evaluateNewtonMPFRWithStartPoint(tempY, tree, tempX, prec, a, b);
-    if (mpfr_zero_p(temp1)) {
+    if (mpfr_zero_p(tempY)) {
       mpfr_set(res,tempY,GMP_RNDN);
       mpfr_clear(tempY);
       mpfr_clear(tempX);
@@ -2111,6 +2111,7 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
 		}
 	      } else {
 
+		free_memory(derivNumerator);
 		mpfr_clear(z2);
 
 		if (!noExcludes) {
@@ -6286,7 +6287,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedUnivariateImpreciseArg(m
   case LIBRARYFUNCTION:
     mpfi_init2(temp, sollya_mpfi_get_prec(*Y));
     g->libFun->code(temp, *X, g->libFunDeriv);
-    sollya_init_and_convert_interval(*Y, temp);
+    mpfi_to_sollya_mpfi(*Y, temp);
     mpfi_clear(temp);
     break;
   case PROCEDUREFUNCTION:
