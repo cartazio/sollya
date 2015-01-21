@@ -151,6 +151,7 @@ struct nodeStruct
   int simplifyCacheDoesNotSimplify;
   int simplifyCacheRationalMode;
   node *simplifyCache;
+  node *hornerCache;
   int isCorrectlyTyped;
   eval_hook_t *evaluationHook;
   polynomial_t polynomialRepresentation;
@@ -217,6 +218,7 @@ static inline node* addMemRefEvenOnNull(node *tree) {
   res->simplifyCacheDoesNotSimplify = -1;
   res->simplifyCacheRationalMode = -1;
   res->simplifyCache = NULL;
+  res->hornerCache = NULL;
   res->isCorrectlyTyped = 0;
   res->evaluationHook = NULL;
   res->polynomialRepresentation = NULL;

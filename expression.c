@@ -11616,7 +11616,7 @@ int isHorner(node *tree) {
 
 node* hornerInner(node *);
 
-node* horner(node *tree) {
+node* hornerWork(node *tree) {
   node *res;
   polynomial_t p;
 
@@ -11647,6 +11647,37 @@ node* horner(node *tree) {
     res = copyTree(tree);
   }
   
+  if (((tree->nodeType == MEMREF) && 
+       (tree->evaluationHook != NULL)) &&
+      ((res->nodeType == MEMREF) && 
+       (res->evaluationHook == NULL))) {
+    res->isCorrectlyTyped = tree->isCorrectlyTyped;
+    addEvaluationHookFromCopy(&(res->evaluationHook), tree->evaluationHook);
+    if ((res->derivCache == NULL) && (tree->derivCache != NULL)) {
+      res->derivCache = copyTree(tree->derivCache); 
+    }
+  }
+
+  return res;
+}
+
+node* horner(node *tree) {
+  node *res;
+
+  if (tree->nodeType == MEMREF) {
+    if (tree->hornerCache != NULL) {
+      res = copyTree(tree->hornerCache);
+    } else {
+      res = hornerWork(tree);
+      if ((tree->hornerCache != NULL) &&
+	  (res->nodeType == MEMREF)) {
+	tree->hornerCache = copyTree(res);
+      }
+    }
+  } else {
+    res = hornerWork(tree);
+  }
+
   if (((tree->nodeType == MEMREF) && 
        (tree->evaluationHook != NULL)) &&
       ((res->nodeType == MEMREF) && 
