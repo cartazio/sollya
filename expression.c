@@ -2109,7 +2109,7 @@ char *sprintTree(node *tree) {
     break;
   case NEARESTINT:
     buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 12, sizeof(char));
+    buffer = (char *) safeCalloc(strlen(buffer1) + 14, sizeof(char));
     sprintf(buffer,"nearestint(%s)",buffer1);
     break;
   case PI_CONST:
