@@ -14400,6 +14400,10 @@ void freeThing(node *tree) {
 	freeThing(tree->simplifyCache);
 	tree->simplifyCache = NULL;
       }
+      if (tree->hornerCache != NULL) {
+	freeThing(tree->hornerCache);
+	tree->hornerCache = NULL;
+      }
       if (tree->derivCache != NULL) {
 	freeThing(tree->derivCache);
 	tree->derivCache = NULL;

@@ -2109,7 +2109,7 @@ char *sprintTree(node *tree) {
     break;
   case NEARESTINT:
     buffer1 = sprintTree(tree->child1);
-    buffer = (char *) safeCalloc(strlen(buffer1) + 12, sizeof(char));
+    buffer = (char *) safeCalloc(strlen(buffer1) + 14, sizeof(char));
     sprintf(buffer,"nearestint(%s)",buffer1);
     break;
   case PI_CONST:
@@ -11197,6 +11197,7 @@ node* dividePolynomialByPowerOfVariableUnsafe(node *tree, int alpha) {
       if (monomials[i] != NULL) free_memory(monomials[i]);
     }
     safeFree(monomials);
+    free_memory(simplified);
     return makeConstantInt(0);
   }
 
@@ -11615,7 +11616,7 @@ int isHorner(node *tree) {
 
 node* hornerInner(node *);
 
-node* horner(node *tree) {
+node* hornerWork(node *tree) {
   node *res;
   polynomial_t p;
 
@@ -11646,6 +11647,37 @@ node* horner(node *tree) {
     res = copyTree(tree);
   }
   
+  if (((tree->nodeType == MEMREF) && 
+       (tree->evaluationHook != NULL)) &&
+      ((res->nodeType == MEMREF) && 
+       (res->evaluationHook == NULL))) {
+    res->isCorrectlyTyped = tree->isCorrectlyTyped;
+    addEvaluationHookFromCopy(&(res->evaluationHook), tree->evaluationHook);
+    if ((res->derivCache == NULL) && (tree->derivCache != NULL)) {
+      res->derivCache = copyTree(tree->derivCache); 
+    }
+  }
+
+  return res;
+}
+
+node* horner(node *tree) {
+  node *res;
+
+  if (tree->nodeType == MEMREF) {
+    if (tree->hornerCache != NULL) {
+      res = copyTree(tree->hornerCache);
+    } else {
+      res = hornerWork(tree);
+      if ((tree->hornerCache != NULL) &&
+	  (res->nodeType == MEMREF)) {
+	tree->hornerCache = copyTree(res);
+      }
+    }
+  } else {
+    res = hornerWork(tree);
+  }
+
   if (((tree->nodeType == MEMREF) && 
        (tree->evaluationHook != NULL)) &&
       ((res->nodeType == MEMREF) && 
@@ -11974,7 +12006,11 @@ node *differentiatePolynomialUnsafe(node *tree) {
 	copy = temp2;
       }
     } else {
-      copy = copyTree(monomials[1]);
+      if (degree >= 1) {
+	copy = copyTree(monomials[1]);
+      } else {
+	copy = addMemRef(makeConstantInt(0));
+      }
     }
 
     for (i=0;i<=degree;i++) {

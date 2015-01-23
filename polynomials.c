@@ -1989,6 +1989,7 @@ static inline constant_t constantFromExpression(node *c) {
     mpq_clear(rational);
     return res;
   }
+  mpq_clear(rational);
   simplified = simplifyRationalErrorfree(c);
   if (accessThruMemRef(simplified)->nodeType == CONSTANT) {
     res = constantFromMpfr(*(accessThruMemRef(simplified)->value));
@@ -5241,6 +5242,7 @@ static inline void sparsePolynomialDiv(sparse_polynomial_t *quot, sparse_polynom
     t2 = sparsePolynomialSub(rt,t1);
     sparsePolynomialFree(t1);
     sparsePolynomialFree(rt);
+    sparsePolynomialFree(qp);
     sparsePolynomialFree(r);
     r = t2;
   }
@@ -6970,6 +6972,7 @@ static inline void __polynomialSparsify(polynomial_t p) {
       exit(1);
     }
     polynomialFree(p->value.powering.g);
+    constantFree(p->value.powering.c);
     p->value.sparse = sp;
     break;
   }
@@ -8876,8 +8879,7 @@ static inline int __polynomialFromExpressionOnlyRealCoeffsInner(polynomial_t *r,
       polynomialFree(rest);
       polynomialFree(zero);
       break;
-    case POW:
-      
+    case POW:      
       res = polynomialPow(r, a, b);
       break;
     }
@@ -9004,6 +9006,7 @@ int polynomialPow(polynomial_t *r, polynomial_t p, polynomial_t q) {
       if (!constantIsGreater(n, two14, 1)) {
 	if (sparsePolynomialPowConstant(&sp, p->value.sparse, n)) {
 	  constantFree(n);
+	  constantFree(two14);
 	  *r = __polynomialBuildFromSparse(sp);
 	  return 1;
 	}
