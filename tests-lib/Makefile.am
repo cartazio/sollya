@@ -110,6 +110,8 @@ terfc.c \
 terror.c \
 tevaluate_function_at_constant_expression.c \
 tevaluate_function_at_point.c \
+texecute.c \
+texecute_procedure.c \
 texp.c \
 texpand.c \
 texpm1.c \
@@ -160,7 +162,9 @@ thonorcoeffprec.c \
 thorner.c \
 timplementpoly.c \
 tinf.c \
+tinit_with_arguments.c \
 tinit_with_custom_memory_functions.c \
+tinit_with_custom_memory_functions_with_arguments.c \
 tint_list_ops.c \
 tintegral.c \
 tinterval_list_ops.c \
@@ -308,6 +312,7 @@ tv_annotatefunction.c \
 tv_build_end_elliptic_list.c \
 tv_build_list.c \
 tv_decompose_function.c \
+tv_execute_procedure.c \
 tv_fpminimax.c \
 tv_get_subfunctions.c \
 tv_implementpoly.c \
