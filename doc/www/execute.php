@@ -4,6 +4,10 @@
 <span class="smallDescription">executes the content of a file 
 </span> 
 </div> 
+<div class="divLibraryName"> 
+<h2 class="libraryname">Library name:</h2> 
+<span class="commandline type">void sollya_lib_execute(sollya_obj_t)</span> 
+</div> 
 <div class="divUsage"> 
 <h2 class="category">Usage: </h2> 
 <span class="commandline"><?php linkTo("command","execute","execute");?>(<span class="arg">filename</span>) : <span class="type">string</span> -&gt; <span class="type">void</span></span> 

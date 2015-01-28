@@ -3,6 +3,7 @@
 
 #CALLING $COMMAND(<filename>)
 #TYPE $STRING_TYPE -> $VOID_TYPE
+#LIBRARYNAME void sollya_lib_execute(sollya_obj_t)
 
 #PARAMETERS <filename> is a string representing a file name
 
