@@ -1,0 +1,18 @@
+a = 1, b = 2
+Coucou
+l = [|1, 2, 3|]
+proc1 = proc(a, b)
+{
+"a = ", a, ", b = ", b;
+return (a) + (b);
+}, args = 1, 2: result = 3
+proc2 = proc()
+{
+write("Coucou\n");
+return void;
+}: result = void
+proc3 = proc(l = ...)
+{
+"l = ", l;
+return exp(_x_);
+}, args = 1, 2, 3: result = exp(_x_)
