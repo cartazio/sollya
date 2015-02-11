@@ -8,7 +8,6 @@ int callback(sollya_msg_t msg, void *data) {
 
 int main(void) {
   char *argv[] = { "5", "Hello world", "exp(x)", "", "Coucou" };
-  int argc = 5;
   sollya_obj_t temp;
 
   sollya_lib_init();
@@ -20,7 +19,7 @@ int main(void) {
 
   sollya_lib_close();
 
-  sollya_lib_init_with_arguments(argc, argv);
+  sollya_lib_init_with_arguments(sizeof(argv)/sizeof(argv[0]), argv);
   sollya_lib_install_msg_callback(callback, NULL);
 
   temp = sollya_lib_parse_string("__argv");
