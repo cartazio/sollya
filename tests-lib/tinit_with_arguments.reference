@@ -1,0 +1,2 @@
+__argv = [| |]
+__argv = [|"5", "Hello world", "exp(x)", "", "Coucou"|]
