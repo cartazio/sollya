@@ -824,6 +824,7 @@ following examples:
 <?php include("introExample30.php"); ?>
 <p>
 <h1>7 - Functional language elements: procedures and pattern matching</h1>
+<a name="sec:procedures"></a>
 <h2>7.1 - Procedures</h2>
 <p>
 <span class="sollya">Sollya</span> has some elements of functional languages. In order to 
@@ -1116,7 +1117,7 @@ The header file of the <span class="sollya">Sollya</span> library is <code>solly
 The library provides a virtual <span class="sollya">Sollya</span> session that is perfectly similar to an interactive session: global variables such as <code>verbosity</code>, <code>prec</code>, <code>display</code>, <code>midpointmode</code>, etc. are maintained and affect the behavior of the library, warning messages are displayed when something is not exact, etc. Please notice that the <span class="sollya">Sollya</span> library currently is <strong>not</strong> re-entrant and can only be opened once. A process using the library must hence not be multi-threaded and is limited to one single virtual <span class="sollya">Sollya</span> session.
 
 <p>
-In order to get started with the <span class="sollya">Sollya</span> library, the first thing to do is hence to initialize this virtual session. This is performed with the <code>sollya_lib_init</code> function. Accordingly, one should close the session at the end of the program (which has the effect of releasing all the memory used by <span class="sollya">Sollya</span>). Please notice that <span class="sollya">Sollya</span> uses its own allocation functions and registers them to <code>GMP</code> using the custom allocation functions provided by <code>GMP</code>. Particular precautions should hence be taken when using the <span class="sollya">Sollya</span> library in a program that also registers its own functions to <code>GMP</code>: in that case <code>sollya_lib_init_with_custom_memory_functions</code> should be used instead of <code>sollya_lib_init</code> for initializing the library. This is discussed in <a href="#customMemoryFunctions">a specific section.</a>
+In order to get started with the <span class="sollya">Sollya</span> library, the first thing to do is hence to initialize this virtual session. This is performed with the <code>sollya_lib_init</code> function. Accordingly, one should close the session at the end of the program (which has the effect of releasing all the memory used by <span class="sollya">Sollya</span>). Please notice that <span class="sollya">Sollya</span> uses its own allocation functions and registers them to <code>GMP</code> using the custom allocation functions provided by <code>GMP</code>. Particular precautions should hence be taken when using the <span class="sollya">Sollya</span> library in a program that also registers its own functions to <code>GMP</code>: in that case <code>sollya_lib_init_with_custom_memory_functions</code> should be used instead of <code>sollya_lib_init</code> for initializing the library. This is discussed in <a href="#customMemoryFunctions">a specific section.</a> In addition, variants of the <code>sollya_lib_init</code> function exist that allow the predefined <span class="sollya">Sollya</span> variable <code>__argv</code> (see Section <a href="#variables">Variables</a>) to be set upon library startup. These variants are discussed in Section <a href="#sec:libInitArgs">Passing arguments upon <span class="sollya">Sollya</span> library initialization</a>.
 <p>
 In the usual case when <span class="sollya">Sollya</span> is used in a program that does not register allocation functions to&nbsp;<code>GMP</code>, a minimal file using the library is hence the following.
 
@@ -1499,6 +1500,7 @@ Functions are provided that allow the user to test the type of a <span class="so
       <tr> <td align="left"><code>sollya_lib_obj_is_list(obj)</code> </td></tr>
       <tr> <td align="left"><code>sollya_lib_obj_is_end_elliptic_list(obj)</code> </td></tr>
       <tr> <td align="left"><code>sollya_lib_obj_is_structure(obj)</code> </td></tr>
+      <tr> <td align="left"><code>sollya_lib_obj_is_procedure(obj)</code> </td></tr>
       <tr style="border-bottom: 1px solid black;"> <td align="left"><code>sollya_lib_obj_is_error(obj)</code></td></tr>
       <tr> <td style="padding-top: 5px;" align="left"><code>sollya_lib_is_on(obj)</code></td></tr>
       <tr> <td align="left"><code>sollya_lib_is_off(obj)</code> </td></tr>
@@ -1812,14 +1814,44 @@ In the interactive tool, it is also possible to write <code>f(a)</code> when <co
 <p>
 This function returns a boolean integer: false means failure (i.e., <code>f</code> is not a functional expression), in which case <code>res</code> is left unchanged, and true means success, in which case <code>res</code> contains the result of the evaluation. The function might succeed, and yet <code>res</code> might contain something useless such as an unbounded interval or even [NaN, NaN] (this happens for instance when <code>a</code> contains points that lie in the interior of the complement of the definition domain of <code>f</code>). It is the user's responsibility to check afterwards whether the computed interval is bounded, unbounded or NaN.
 
-<h2>10.14 - Name of the free variable</h2>
+<h2>10.14 - Executing <span class="sollya">Sollya</span> procedures</h2>
+Objects representing procedures written in <span class="sollya">Sollya</span> language (see also
+Section~\ref{procedures}) can be created using the <span class="sollya">Sollya</span> library
+functions <code>sollya_lib_parse_string</code> and <code>sollya_lib_parse</code>
+or thru execution of a <span class="sollya">Sollya</span> script using <code>sollya_lib_execute</code>.
+<p>
+In order to execute such procedure objects on arguments, available as
+<span class="sollya">Sollya</span> objects, too, the functions 
+<ul>
+  <li><code>sollya_obj_t sollya_lib_execute_procedure(sollya_obj_t proc, ...)</code> and </li>
+  <li><code>sollya_obj_t sollya_lib_v_execute_procedure(sollya_obj_t proc, va_list arglist)</li>
+</ul>
+may be used. These functions apply the given procedure <code>proc</code> on
+the following arguments (or the elements in the argument list
+<code>arglist</code>). If no argument is needed to execute the procedure,
+the variadic argument list shall immediately be terminated using
+<code>NULL</code>; otherwise the argument list shall be terminated with an
+extra <code>NULL</code> argument. An arity test is performed by <span class="sollya">Sollya</span>
+before the procedure is executed: if the arity of the given procedure
+does not correspond to the actual number of given arguments (and the
+<span class="sollya">Sollya</span> procedure is not variadic), an error object is returned
+instead of the procedure's result. 
+<p>
+When the functions are used to execute procedures that return a
+<span class="sollya">Sollya</span> object, the object is returned by the function. When the
+procedure does not use the <span class="sollya">Sollya</span> <code>return</code> statement or returns
+the <span class="sollya">Sollya</span> <code>void</code> object, a <span class="sollya">Sollya</span> <code>void</code> object is
+returned. The user should not forget to deallocate that <code>void</code>
+object. 
+
+<h2>10.15 - Name of the free variable</h2>
 <p>
 The default name for the free variable is the same in the library and in the interactive tool: it is <code>_x_</code>. In the interactive tool, this name is automatically changed at the first use of an undefined symbol. Accordingly in library mode, if an object is defined by <code>sollya_lib_parse_string</code> with an expression containing an undefined symbol, that symbol will become the free variable name if it has not already been changed before. But what if one does not use <code>sollya_lib_parse_string</code> (because it is not efficient) but one wants to change the name of the free variable? The name can be changed with <code>sollya_lib_name_free_variable("some_name")</code>.
 <p>
 It is possible to get the current name of the free variable with <code>sollya_lib_get_free_variable_name()</code>. This function returns a <code>char *</code> containing the current name of the free variable. Please note that this <code>char *</code> is dynamically allocated on the heap and should be cleared after its use with <code>sollya_lib_free()</code> (see below).
 
 <a name="library_commands_and_functions"></a>
-<h2>10.15 - Commands and functions</h2>
+<h2>10.16 - Commands and functions</h2>
 <p>
 Besides some exceptions, every command and every function available in the <span class="sollya">Sollya</span> interactive tool has its equivalent (with a very close syntax) in the library. Section&nbsp;<a href="#commandsAndFunctions">List of available commands</a> of the present documentation gives the library syntax as well as the interactive tool syntax of each commands and functions. The same information is available within the interactive tool by typing <code>help some_command</code>. So if one knows the name of a command or function in the interactive tool, it is easy to recover its library name and signature.
 <p>
@@ -1860,7 +1892,7 @@ void my_function(sollya_obj_t f, sollya_obj_t I, ...) {<br>
 
 <p>
 <a name="callbacks"></a>
-<h2>10.16 - Warning messages in library mode</h2>
+<h2>10.17 - Warning messages in library mode</h2>
 <p>
 The philosophy of <span class="sollya">Sollya</span> is &ldquo;whenever something is not exact, explicitly warn about that&rdquo;. This is a nice feature since this ensures that the user always perfectly knows the degree of confidence they can have in a result (is it exact? or only faithful? or even purely numerical, without any warranty?) However, it is sometimes desirable to hide some (or all) of these messages. This is especially true in library mode where messages coming from <span class="sollya">Sollya</span> are intermingled with the messages of the main program. The library hence provides a specific mechanism to catch all messages emitted by the <span class="sollya">Sollya</span> core and handle each of them specifically: installation of a callback for messages.
 <p>
@@ -1960,7 +1992,7 @@ is a continuation message, otherwise (zero integer value), the message is a new 
 in second argument results in undefined behavior.
 
 <a name="customMemoryFunctions"></a>
-<h2>10.17 - Using <span class="sollya">Sollya</span> in a program that has its own allocation functions</h2>
+<h2>10.18 - Using <span class="sollya">Sollya</span> in a program that has its own allocation functions</h2>
 <p>
 <span class="sollya">Sollya</span> uses its own allocation functions: as a consequence, pointers that have been allocated by <span class="sollya">Sollya</span> functions must be freed using <code>sollya_lib_free</code> instead of the usual <code>free</code> function. Another consequence is that <span class="sollya">Sollya</span> registers its own allocation functions to the <code>GMP</code> library, using the mechanism provided by <code>GMP</code>, so that <code>GMP</code> also uses <span class="sollya">Sollya</span> allocation functions behind the scene, when the user performs a call to, e.g., <code>mpz_init</code>, <code>mpfr_init2</code>, etc.
 <p>
@@ -1996,5 +2028,36 @@ Of course, even if the user registers <code>custom_malloc</code>, <code>custom_f
   <li> <code>void *sollya_lib_realloc(void *, size_t)</code>.</li>
 </ul>
 <p>No access to the overloaded version of <code>custom_realloc_with_size</code> and <code>custom_free_with_size</code> is provided, but if the user really wants to retrieve them, they can do it with <code>mp_get_memory_functions</code> since they are registered to <code>GMP</code>.
+
+<p><a name="sec:libInitArgs"></a>
+<h3>10.19 - Passing arguments upon <span class="sollya">Sollya</span> library initialization</h3>
+
+As explained in Section \ref{variables}, in an interactive <span class="sollya">Sollya</span>
+session the predefined variable <code>__argv</code> gets set to a list of
+character strings passed to <span class="sollya">Sollya</span> as shell arguments. Certain
+<span class="sollya">Sollya</span> scripts may depend on this variable to be set; their execution
+with <code>sollya_lib_execute</code> function in the <span class="sollya">Sollya</span> library hence
+requires a similar setting of the <code>__argv</code> variable. This can be
+achieved with one of the following functions, which replace the usual
+<code>sollya_lib_init</code> call:
+<ul>
+<li>
+  <code>int sollya_lib_init_with_arguments(int argc, char **argv)</code>:
+  initialize the <span class="sollya">Sollya</span> library and set <code>__argv</code> to the list
+  formed by the <code>argc</code> character strings contained in the
+  <code>argv</code> array,</li>
+<li> <code>int sollya_lib_init_with_custom_memory_functions_with_arguments(</code><br>
+<code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void *(*custom_malloc)(size_t),                            </code><br>
+<code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void *(*custom_calloc)(size_t, size_t),                    </code><br>
+<code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void *(*custom_realloc)(void *, size_t),                   </code><br>
+<code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void (*custom_free)(void *),                               </code><br>
+<code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void *(*custom_realloc_with_size)(void *, size_t, size_t), </code><br>
+<code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void (*custom_free_with_size)(void *, size_t),             </code><br>
+<code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int argc, char **argv)</code>: 
+initialize the <span class="sollya">Sollya</span> library, using custom memory allocation
+functions as described in Section \ref{customMemoryFunctions}, and
+set <code>__argv</code> to the list formed by the <code>argc</code> character
+strings contained in the <code>argv</code> array.</li>
+</ul>
 
 </body>
