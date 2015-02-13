@@ -79,7 +79,7 @@ has at most 53 bits of mantissa. It does not imply that it is an
 IEEE-754 double. 
 </li><li>By default, the list of formats is interpreted as a list of floating-point 
 formats. This may be changed by passing <?php linkTo("command","fixed","fixed");?> as an optional argument (see 
-below). Let us take an example: <?php linkTo("command","fpminimax","fpminimax");?>(f, 2, [107, DD, 53], [0;1]). 
+below). Let us take an example: <?php linkTo("command","fpminimax","fpminimax");?>(f, 2, [|107, DD, 53|], [0;1]). 
 Here the optional argument is missing (we could have set it to <?php linkTo("command","floating","floating");?>). 
 Thus, <?php linkTo("command","fpminimax","fpminimax");?> will search for a polynomial of degree 2 with a constant 
 coefficient that is a 107 bits floating-point number, etc.<br> 
@@ -87,7 +87,7 @@ Currently, <?php linkTo("command","doubledouble","doubledouble");?> is just a sy
 synonym for 161. This behavior may change in the future (taking into 
 account the fact that some double-doubles are not representable with 
 107 bits).<br> 
-Second example: <?php linkTo("command","fpminimax","fpminimax");?>(f, 2, [25, 18, 30], [0;1], <?php linkTo("command","fixed","fixed");?>). 
+Second example: <?php linkTo("command","fpminimax","fpminimax");?>(f, 2, [|25, 18, 30|], [0;1], <?php linkTo("command","fixed","fixed");?>). 
 In this case, <?php linkTo("command","fpminimax","fpminimax");?> will search for a polynomial of degree 2 with a 
 constant coefficient of the form m/2^25 where m is an 
 integer. In other words, it is a fixed-point number with 25 bits after 
@@ -167,7 +167,7 @@ currently <?php linkTo("command","fpminimax","fpminimax");?> has to be run with 
 <h2 class="category">Example 1: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; P = fpminimax(cos(x),6,[|DD, DD, D...|],[-1b-5;1b-5]);<br> 
 &nbsp;&nbsp;&nbsp;&gt; printexpansion(P);<br> 
-&nbsp;&nbsp;&nbsp;(0x3ff0000000000000 + 0xbc09fda15e029b00) + x * ((0x3af9eb57163024a8 + 0x37942c2f3f3e3839) + x * (0xbfdfffffffffff98 + x * (0xbbd1693f9c028849 + x * (0x3fa5555555145337 + x * (0x3c7a25f610ad9ebc + x * 0xbf56c138142da5b0)))))<br> 
+&nbsp;&nbsp;&nbsp;(0x3ff0000000000000 + 0xbc09fda20235c100) + x * ((0x3b29ecd485d34781 + 0xb7c1cbc971529754) + x * (0xbfdfffffffffff98 + x * (0xbbfa6e0b3183cb0d + x * (0x3fa5555555145337 + x * (0x3ca3540480618939 + x * 0xbf56c138142d8c3b)))))<br> 
 </div> 
 <div class="divExample"> 
 <h2 class="category">Example 2: </h2> 
@@ -192,11 +192,11 @@ currently <?php linkTo("command","fpminimax","fpminimax");?> has to be run with 
 &nbsp;&nbsp;&nbsp;&gt; P2 = fpminimax(f, 5, [|D...|], listpoints, absolute, default, default, pstar);<br> 
 &nbsp;&nbsp;&nbsp;&gt; P3 = fpminimax(f, 5, [|D, D, D, 24...|], listpoints, absolute, default, default, pstar);<br> 
 &nbsp;&nbsp;&nbsp;&gt; print("Error of pstar: ", dirtyinfnorm(f-pstar, [-1b-7; 1b-7]));<br> 
-&nbsp;&nbsp;&nbsp;Error of pstar:&nbsp;&nbsp;7.9048441259903026332577436001060063099817726177425e-16<br> 
+&nbsp;&nbsp;&nbsp;Error of pstar:&nbsp;&nbsp;7.9048441305459735102879831325718747183089581485922e-16<br> 
 &nbsp;&nbsp;&nbsp;&gt; print("Error of P1:&nbsp;&nbsp;&nbsp;&nbsp;", dirtyinfnorm(f-P1, [-1b-7; 1b-7]));<br> 
-&nbsp;&nbsp;&nbsp;Error of P1:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.9048441259903026580081299123420463921479618202064e-16<br> 
+&nbsp;&nbsp;&nbsp;Error of P1:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.9048441305459735159848647089192667442047469404883e-16<br> 
 &nbsp;&nbsp;&nbsp;&gt; print("Error of P2:&nbsp;&nbsp;&nbsp;&nbsp;", dirtyinfnorm(f-P2, [-1b-7; 1b-7]));<br> 
-&nbsp;&nbsp;&nbsp;Error of P2:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;8.2477144579950871737109573536791331686347620955984e-16<br> 
+&nbsp;&nbsp;&nbsp;Error of P2:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;8.2477144579950871061147021597406077993657714575238e-16<br> 
 &nbsp;&nbsp;&nbsp;&gt; print("Error of P3:&nbsp;&nbsp;&nbsp;&nbsp;", dirtyinfnorm(f-P3, [-1b-7; 1b-7]));<br> 
 &nbsp;&nbsp;&nbsp;Error of P3:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.08454277156993282593701156841863009789063333951055e-15<br> 
 </div> 
@@ -207,7 +207,7 @@ currently <?php linkTo("command","fpminimax","fpminimax");?> has to be run with 
 &nbsp;&nbsp;&nbsp;&gt; p = fpminimax(g, L, [|D...|], [-1/16;1/16],absolute);<br> 
 &nbsp;&nbsp;&nbsp;&gt; display = powers!;<br> 
 &nbsp;&nbsp;&nbsp;&gt; p;<br> 
-&nbsp;&nbsp;&nbsp;-3267884797436153 * 2^(-54) * sin(x^3) + 5247089102535885 * 2^(-53) * (cos(x) - 1) + -8159095033730771 * 2^(-54) * sin(x) + 6243315658446641 * 2^(-53) * exp(x)<br> 
+&nbsp;&nbsp;&nbsp;-6535769594871261 * 2^(-55) * sin(x^3) + 5247089102535871 * 2^(-53) * (cos(x) - 1) + -8159095033730773 * 2^(-54) * sin(x) + 6243315658446641 * 2^(-53) * exp(x)<br> 
 </div> 
 <div class="divExample"> 
 <h2 class="category">Example 6: </h2> 
@@ -218,7 +218,7 @@ currently <?php linkTo("command","fpminimax","fpminimax");?> has to be run with 
 &nbsp;&nbsp;&nbsp;&gt; PCheb = fpminimax(g, T, [|DD,DE...|], [-1/16;1/16],absolute);<br> 
 &nbsp;&nbsp;&nbsp;&gt; display = dyadic!;<br> 
 &nbsp;&nbsp;&nbsp;&gt; print(PCheb);<br> 
-&nbsp;&nbsp;&nbsp;8733930098894247371b-98 * (9 * x + -120 * x^3 + 432 * x^5 + -576 * x^7 + 256 * x^9) + 15750497046710770365b-94 * (1 + -32 * x^2 + 160 * x^4 + -256 * x^6 + 128 * x^8) + 6467380330985872933b-88 * (-7 * x + 56 * x^3 + -112 * x^5 + 64 * x^7) + 9342762606926218927b-84 * (-1 + 18 * x^2 + -48 * x^4 + 32 * x^6) + 11814521367456461131b-80 * (5 * x + -20 * x^3 + 16 * x^5) + 6405479474328570593b-75 * (1 + -8 * x^2 + 8 * x^4) + 11584457324781949889b-72 * (-3 * x + 4 * x^3) + 16779705312447201161b-69 * (-1 + 2 * x^2) + 18265014280997359319b-66 * x + 117054497448175143902009975397253b-107<br> 
+&nbsp;&nbsp;&nbsp;17467860179204885735b-99 * (9 * x + -120 * x^3 + 432 * x^5 + -576 * x^7 + 256 * x^9) + 7875248523371081439b-93 * (1 + -32 * x^2 + 160 * x^4 + -256 * x^6 + 128 * x^8) + 12934760661809036231b-89 * (-7 * x + 56 * x^3 + -112 * x^5 + 64 * x^7) + 9342762606926463323b-84 * (-1 + 18 * x^2 + -48 * x^4 + 32 * x^6) + 5907260683727596799b-79 * (5 * x + -20 * x^3 + 16 * x^5) + 12810958948657144519b-76 * (1 + -8 * x^2 + 8 * x^4) + 5792228662390969179b-71 * (-3 * x + 4 * x^3) + 16779705312447201213b-69 * (-1 + 2 * x^2) + 18265014280997359049b-66 * x + 117054497448175143910939038333811b-107<br> 
 </div> 
 </div> 
 <div class="divSeeAlso"> 

@@ -85,7 +85,7 @@ IEEE-754 double.
 #DESCRIPTION
 By default, the list of formats is interpreted as a list of floating-point
 formats. This may be changed by passing $FIXED as an optional argument (see
-below). Let us take an example: $COMMAND(f, 2, [107, DD, 53], [0;1]).
+below). Let us take an example: $COMMAND(§§f, 2, [|107, DD, 53|], [0;1]§$f$,$2$, $[|107,$ DD, $53|]$, $[0;1]$§§).
 Here the optional argument is missing (we could have set it to $FLOATING).
 Thus, $COMMAND will search for a polynomial of degree 2 with a constant
 coefficient that is a 107 bits floating-point number, etc.§§ §\\§§
@@ -93,7 +93,7 @@ Currently, $DOUBLEDOUBLE is just a synonym for 107 and $TRIPLEDOUBLE a
 synonym for 161. This behavior may change in the future (taking into
 account the fact that some double-doubles are not representable with
 107 bits).§§ §\\§§
-Second example: $COMMAND(f, 2, [25, 18, 30], [0;1], $FIXED).
+Second example: $COMMAND(§§f, 2, [|25, 18, 30|], [0;1], $FIXED§$f$, $2$, $[|25,\,18,\,30|]$, $[0;1]$, $FIXED§§).
 In this case, $COMMAND will search for a polynomial of degree 2 with a
 constant coefficient of the form §§m/2^25§$m/2^{25}$§§ where §§m§$m$§§ is an
 integer. In other words, it is a fixed-point number with 25 bits after
