@@ -80,19 +80,6 @@
 
 void printInterval(sollya_mpfi_t interval);
 
-int sollya_mpfi_equal_p(sollya_mpfi_t r1, sollya_mpfi_t r2) {
-  mpfr_t x1, x2;
-  int test = 0;
-  mpfr_init2(x1, sollya_mpfi_get_prec(r1));
-  mpfr_init2(x2, sollya_mpfi_get_prec(r2));
-
-  sollya_mpfi_get_left(x1, r1); sollya_mpfi_get_left(x2, r2); test = mpfr_equal_p(x1, x2);
-  sollya_mpfi_get_right(x1, r1); sollya_mpfi_get_right(x2, r2); test = test && mpfr_equal_p(x1, x2);
-
-  mpfr_clear(x1); mpfr_clear(x2);
-  return test;
-}
-
 int sollya_mpfr_max(mpfr_t z, mpfr_t x, mpfr_t y, mp_rnd_t rnd) {
   int res = 2;
   if (mpfr_nan_p(x) || mpfr_nan_p(y)) mpfr_set_nan(z);
