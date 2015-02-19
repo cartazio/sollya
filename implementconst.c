@@ -662,7 +662,7 @@ int ceil_log2n(int p) {
 }
 
 /* Returns the maximal exponent of a number among those contained in x */
-mp_exp_t sollya_mpfi_max_exp(sollya_mpfi_t x) {
+static mp_exp_t sollya_mpfi_max_exp_implementconstant(sollya_mpfi_t x) {
   mpfr_t u,v;
   mp_exp_t Eu, Ev, E;
   mp_prec_t prec;
@@ -758,7 +758,7 @@ int unaryFunctionCase(int nodeType, node *cste, char *functionName, int gamma0, 
   evaluateInterval(tmp, deriv, NULL, a);
   sollya_mpfi_mul(v, u, tmp);
 
-  gamma = 2+sollya_mpfi_max_exp(v)-1;
+  gamma = 2+sollya_mpfi_max_exp_implementconstant(v)-1;
   do {
     gamma++;
     mpfr_set_ui(beta, 1, GMP_RNDU);
@@ -770,7 +770,7 @@ int unaryFunctionCase(int nodeType, node *cste, char *functionName, int gamma0, 
     sollya_mpfi_mul(tmp, a, tmp);
     evaluateInterval(tmp, deriv, NULL, tmp);
     sollya_mpfi_mul(v, u, tmp);
-  } while (gamma < 2+sollya_mpfi_max_exp(v));
+  } while (gamma < 2+sollya_mpfi_max_exp_implementconstant(v));
 
   counter = program->counter;
   incrementProgramCounter(program);
