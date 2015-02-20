@@ -60,6 +60,8 @@ int main(void) {
   void (*gmp_free_after)(void *, size_t);
   sollya_obj_t a[NB_OF_TESTS], b[NB_OF_TESTS], c[NB_OF_TESTS];
   int i;
+  char *argv[] = { "5", "Hello world", "exp(x)", "", "Coucou" };
+  sollya_obj_t temp;
 
   /* Test #1 */
 
@@ -72,7 +74,7 @@ int main(void) {
   myReallocWithSizeUsed = 0;
   myFreeWithSizeUsed = 0;
 
-  sollya_lib_init_with_custom_memory_functions(myMalloc, myCalloc, myRealloc, myFree, myReallocWithSize, myFreeWithSize);
+  sollya_lib_init_with_custom_memory_functions_with_arguments(myMalloc, myCalloc, myRealloc, myFree, myReallocWithSize, myFreeWithSize, sizeof(argv)/sizeof(argv[0]), argv);
   sollya_lib_install_msg_callback(callback, NULL);
 
   /* Just do some stuff to use the memory functions */
@@ -119,6 +121,10 @@ int main(void) {
     sollya_lib_clear_obj(b[i]);
     sollya_lib_clear_obj(c[i]);
   }
+
+  temp = sollya_lib_parse_string("__argv");
+  sollya_lib_printf("__argv = %b\n", temp);
+  sollya_lib_clear_obj(temp);
 
   /* End of just doing stuff */
 
@@ -164,7 +170,7 @@ int main(void) {
   myReallocWithSizeUsed = 0;
   myFreeWithSizeUsed = 0;
 
-  sollya_lib_init_with_custom_memory_functions(myMalloc, myCalloc, myRealloc, myFree, NULL, NULL);
+  sollya_lib_init_with_custom_memory_functions_with_arguments(myMalloc, myCalloc, myRealloc, myFree, NULL, NULL, sizeof(argv)/sizeof(argv[0]), argv);
   sollya_lib_install_msg_callback(callback, NULL);
 
   /* Just do some stuff to use the memory functions */
@@ -211,6 +217,10 @@ int main(void) {
     sollya_lib_clear_obj(b[i]);
     sollya_lib_clear_obj(c[i]);
   }
+
+  temp = sollya_lib_parse_string("__argv");
+  sollya_lib_printf("__argv = %b\n", temp);
+  sollya_lib_clear_obj(temp);
 
   /* End of just doing stuff */
 
