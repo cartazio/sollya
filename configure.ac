@@ -82,105 +82,149 @@ FPLLLVERSIONSTRING=""
 
 AC_ARG_WITH(gmp-include,
             [  --with-gmp-include=DIR  GMP include directory ],
-            AM_CPPFLAGS="$AM_CPPFLAGS -I$withval")
+            [if test "x$withval" != "xyes" -a "x$withval" != "x"
+             then
+               AM_CPPFLAGS="$AM_CPPFLAGS -I$withval"
+             fi])
 AC_ARG_WITH(gmp-lib,
             [  --with-gmp-lib=DIR      GMP lib directory ],
-            [
+            [if test "x$withval" != "xyes" -a "x$withval" != "x"
+             then
                AM_LDFLAGS="$AM_LDFLAGS -L$withval"
                SO_LIB_PATH="${SO_LIB_PATH:+$SO_LIB_PATH:}$withval"
+             fi
             ])
 AC_ARG_WITH(gmp,
             [  --with-gmp=DIR          GMP install directory ],
-            [
+            [if test "x$withval" != "xyes" -a "x$withval" != "x"
+             then
                AM_CPPFLAGS="$AM_CPPFLAGS -I$withval/include"
                AM_LDFLAGS="$AM_LDFLAGS -L$withval/lib"
                SO_LIB_PATH="${SO_LIB_PATH:+$SO_LIB_PATH:}$withval/lib"
+             fi
             ])
 
 
 AC_ARG_WITH(mpfr-include,
             [  --with-mpfr-include=DIR  MPFR include directory ],
-            AM_CPPFLAGS="$AM_CPPFLAGS -I$withval")
+            [if test "x$withval" != "xyes" -a "x$withval" != "x"
+             then
+               AM_CPPFLAGS="$AM_CPPFLAGS -I$withval"
+	     fi])
 AC_ARG_WITH(mpfr-lib,
             [  --with-mpfr-lib=DIR      MPFR lib directory ],
-            [
+            [if test "x$withval" != "xyes" -a "x$withval" != "x"
+             then
                AM_LDFLAGS="$AM_LDFLAGS -L$withval"
                SO_LIB_PATH="${SO_LIB_PATH:+$SO_LIB_PATH:}$withval"
+	     fi
             ])
 AC_ARG_WITH(mpfr,
             [  --with-mpfr=DIR          MPFR install directory ],
-            [
+            [if test "x$withval" != "xyes" -a "x$withval" != "x"
+             then
                AM_CPPFLAGS="$AM_CPPFLAGS -I$withval/include"
                AM_LDFLAGS="$AM_LDFLAGS -L$withval/lib"
                SO_LIB_PATH="${SO_LIB_PATH:+$SO_LIB_PATH:}$withval/lib"
+	     fi
             ])
 
 
 AC_ARG_WITH(fplll-include,
             [  --with-fplll-include=DIR  fplll include directory ],
-            [  AM_CPPFLAGS="$AM_CPPFLAGS -I$withval"
+            [if test "x$withval" != "xyes" -a "x$withval" != "x"
+             then
+	       AM_CPPFLAGS="$AM_CPPFLAGS -I$withval"
                FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING--with-fplll-include given as '$withval',"
+	     fi
             ])
 AC_ARG_WITH(fplll-lib,
             [  --with-fplll-lib=DIR      fplll lib directory ],
-            [
+            [if test "x$withval" != "xyes" -a "x$withval" != "x"
+             then
                AM_LDFLAGS="$AM_LDFLAGS -L$withval"
                SO_LIB_PATH="${SO_LIB_PATH:+$SO_LIB_PATH:}$withval"
                FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING--with-fplll-lib given as '$withval',"
+	     fi
             ])
 AC_ARG_WITH(fplll,
             [  --with-fplll=DIR          fplll install directory ],
-            [
+            [if test "x$withval" != "xyes" -a "x$withval" != "x"
+             then
                AM_CPPFLAGS="$AM_CPPFLAGS -I$withval/include"
                AM_LDFLAGS="$AM_LDFLAGS -L$withval/lib"
                SO_LIB_PATH="${SO_LIB_PATH:+$SO_LIB_PATH:}$withval/lib"
                FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING--with-fplll given as '$withval',"
+	     fi
             ])
 
 
 AC_ARG_WITH(z-include,
             [  --with-z-include=DIR  z include directory ],
-            AM_CPPFLAGS="$AM_CPPFLAGS -I$withval")
+            [if test "x$withval" != "xyes" -a "x$withval" != "x"
+             then
+               AM_CPPFLAGS="$AM_CPPFLAGS -I$withval"
+	     fi])
 AC_ARG_WITH(z-lib,
             [  --with-z-lib=DIR      z lib directory ],
-            AM_LDFLAGS="$AM_LDFLAGS -L$withval")
+            [if test "x$withval" != "xyes" -a "x$withval" != "x"
+             then
+	       AM_LDFLAGS="$AM_LDFLAGS -L$withval"
+	     fi])
 AC_ARG_WITH(z,
             [  --with-z=DIR          z install directory ],
-            [
+            [if test "x$withval" != "xyes" -a "x$withval" != "x"
+             then
                AM_CPPFLAGS="$AM_CPPFLAGS -I$withval/include"
                AM_LDFLAGS="$AM_LDFLAGS -L$withval/lib"
+	     fi
             ])
 
 
 AC_ARG_WITH(iconv-include,
             [  --with-iconv-include=DIR  iconv include directory ],
-            AM_CPPFLAGS="$AM_CPPFLAGS -I$withval")
+            [if test "x$withval" != "xyes" -a "x$withval" != "x"
+             then
+	       AM_CPPFLAGS="$AM_CPPFLAGS -I$withval"
+	     fi])
 AC_ARG_WITH(iconv-lib,
             [  --with-iconv-lib=DIR      iconv lib directory ],
-            AM_LDFLAGS="$AM_LDFLAGS -L$withval")
+            [if test "x$withval" != "xyes" -a "x$withval" != "x"
+             then
+	       AM_LDFLAGS="$AM_LDFLAGS -L$withval"
+	     fi])
 AC_ARG_WITH(iconv,
             [  --with-iconv=DIR          iconv install directory ],
-            [
-              AM_CPPFLAGS="$AM_CPPFLAGS -I$withval/include"
-              AM_LDFLAGS="$AM_LDFLAGS -L$withval/lib"
-            ])
+            [if test "x$withval" != "xyes" -a "x$withval" != "x"
+             then
+               AM_CPPFLAGS="$AM_CPPFLAGS -I$withval/include"
+               AM_LDFLAGS="$AM_LDFLAGS -L$withval/lib"
+             fi
+	    ])
 
 
 AC_ARG_WITH(mpfi-include,
             [  --with-mpfi-include=DIR  MPFI include directory ],
-            AM_CPPFLAGS="$AM_CPPFLAGS -I$withval")
+            [if test "x$withval" != "xyes" -a "x$withval" != "x"
+             then
+	       AM_CPPFLAGS="$AM_CPPFLAGS -I$withval"
+	     fi])
 AC_ARG_WITH(mpfi-lib,
             [  --with-mpfi-lib=DIR      MPFI lib directory ],
-            [
+            [if test "x$withval" != "xyes" -a "x$withval" != "x"
+             then
                AM_LDFLAGS="$AM_LDFLAGS -L$withval"
                SO_LIB_PATH="${SO_LIB_PATH:+$SO_LIB_PATH:}$withval"
+	     fi
             ])
 AC_ARG_WITH(mpfi,
             [  --with-mpfi=DIR          MPFI install directory ],
-            [
+            [if test "x$withval" != "xyes" -a "x$withval" != "x"
+             then
                AM_CPPFLAGS="$AM_CPPFLAGS -I$withval/include"
                AM_LDFLAGS="$AM_LDFLAGS -L$withval/lib"
                SO_LIB_PATH="${SO_LIB_PATH:+$SO_LIB_PATH:}$withval/lib"
+	     fi
             ])
 
 
@@ -188,24 +232,31 @@ XML2INCLUDEGIVEN=""
 XML2LIBGIVEN=""
 AC_ARG_WITH(xml2-include,
             [  --with-xml2-include=DIR  XML2 include directory ],
-            [  AM_CPPFLAGS="$AM_CPPFLAGS -I$withval -I$withval/libxml2"
+            [if test "x$withval" != "xyes" -a "x$withval" != "x"
+             then
+	       AM_CPPFLAGS="$AM_CPPFLAGS -I$withval -I$withval/libxml2"
                XML2INCLUDEGIVEN=1
+	     fi
             ])
 AC_ARG_WITH(xml2-lib,
             [  --with-xml2-lib=DIR      XML2 lib directory ],
-            [
+            [if test "x$withval" != "xyes" -a "x$withval" != "x"
+             then
                AM_LDFLAGS="$AM_LDFLAGS -L$withval"
                SO_LIB_PATH="${SO_LIB_PATH:+$SO_LIB_PATH:}$withval"
                XML2LIBGIVEN=1
+	     fi
             ])
 AC_ARG_WITH(xml2,
             [  --with-xml2=DIR          XML2 install directory ],
-            [
+            [if test "x$withval" != "xyes" -a "x$withval" != "x"
+             then
                AM_CPPFLAGS="$AM_CPPFLAGS -I$withval/include -I$withval/include/libxml2"
                AM_LDFLAGS="$AM_LDFLAGS -L$withval/lib"
                SO_LIB_PATH="${SO_LIB_PATH:+$SO_LIB_PATH:}$withval/lib"
                XML2INCLUDEGIVEN=1
                XML2LIBGIVEN=1
+	     fi
             ])
 
 
@@ -213,9 +264,11 @@ AC_ARG_WITH(xml2,
 XML2CONFIGGIVEN=""
 AC_ARG_WITH(xml2-config,
             [  --with-xml2-config=executable XML2 config tool ],
-            [
+            [if test "x$withval" != "xyes" -a "x$withval" != "x"
+             then
                XML2CONFIG="$withval"
                XML2CONFIGGIVEN=1
+	     fi
             ])
 
 if test "x$XML2CONFIGGIVEN" = "x"
