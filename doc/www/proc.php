@@ -51,8 +51,8 @@ through <span class="arg">formal parameter n</span>, it is checked whether the n
 actual parameters corresponds to the number of formal parameters. If 
 the procedure was defined using the syntax for a procedure with an 
 arbitrary number of parameters by giving a <span class="arg">formal list parameter</span>, 
-the number of actual arguments is not checked but only a list &lt;formal 
-list parameter&gt; of appropriate length is built up. Type checks are 
+the number of actual arguments is not checked but only a list 
+<span class="arg">formal list parameter</span> of appropriate length is built up. Type checks are 
 further performed upon execution of each statement in <span class="arg">procedure body</span> 
 and upon evaluation of the expression <span class="arg">expression</span> to be returned. 
 <br><br> 
