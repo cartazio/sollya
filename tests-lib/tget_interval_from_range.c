@@ -5,7 +5,7 @@ int callback(sollya_msg_t m, void *data) {
 
   int id = sollya_lib_get_msg_id(m);
   switch(id) {
-  case SOLLYA_MSG_FAITHFUL_ROUNDING_FOR_EXPR_THAT_SHOULD_BE_CONST:
+  case SOLLYA_MSG_SAFE_ROUNDING_FOR_EXPR_THAT_SHOULD_BE_CONST:
     return 0;
   default:
     printf("Unexpected warning message number %d\n", id);

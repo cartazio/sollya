@@ -24643,7 +24643,7 @@ node *evaluateThingInnerst(node *tree) {
 	isPureTree(copy->child2)) {
       if (timingString != NULL) pushTimeCounter();
       mpfr_init2(a,tools_precision + 5);
-      resA = evaluateThingToConstant(a,copy->child1,NULL,0,0);
+      resA = evaluateThingToConstant(a,copy->child1,NULL,1,1);
       if(resA) {
 	mpfr_init2(b,tools_precision + 5);
         if (isSyntacticallyEqual(copy->child1,copy->child2)) {
@@ -24651,7 +24651,7 @@ node *evaluateThingInnerst(node *tree) {
           mpfr_set_prec(b,mpfr_get_prec(a));
           mpfr_set(b,a,GMP_RNDN);
         } else {
-          resB = evaluateThingToConstant(b,copy->child2,NULL,0,0);
+          resB = evaluateThingToConstant(b,copy->child2,NULL,1,1);
         }
 	if(resB) {
 	  if ((resA == 3) || (resB == 3)) {
@@ -24713,6 +24713,23 @@ node *evaluateThingInnerst(node *tree) {
 	      printMessage(1,SOLLYA_MSG_ONLY_ONE_ENDPOINT_OF_RANGE_IS_NAN,"Warning: one bound of a range is NaN while the other is not. Will normalize the range to have two NaN endpoints.\n");
 	      mpfr_set_nan(*(accessThruMemRef(copy->child1)->value));
 	      mpfr_set_nan(*(accessThruMemRef(copy->child2)->value));
+	    } else {
+	      if ((resA != 2) || (resB != 2)) {
+		if (resA != 2) {
+		  pTemp = mpfr_get_prec(a);
+		  if (resB != 2) {
+		    if (mpfr_get_prec(b) < pTemp) {
+		      pTemp = mpfr_get_prec(b);
+		    } 
+		  } 
+		} else {
+		  pTemp = mpfr_get_prec(b);
+		}
+		if (!noRoundingWarnings) {
+		  printMessage(1,SOLLYA_MSG_SAFE_ROUNDING_FOR_EXPR_THAT_SHOULD_BE_CONST,"Warning: at least one of the given expressions is not a constant but requires evaluation.\n");
+		  printMessage(1,SOLLYA_MSG_CONTINUATION,"Evaluation is guaranteed to ensure the inclusion property. The approximate result is at least %d bit accurate.\n", pTemp);
+		}
+	      }
 	    }
 	  } else {
 	    if (resA != 2) {
@@ -24735,6 +24752,23 @@ node *evaluateThingInnerst(node *tree) {
 	      printMessage(1,SOLLYA_MSG_ONLY_ONE_ENDPOINT_OF_RANGE_IS_NAN,"Warning: one bound of a range is NaN while the other is not. Will normalize the range to have two NaN endpoints.\n");
 	      mpfr_set_nan(*(accessThruMemRef(copy->child1)->value));
 	      mpfr_set_nan(*(accessThruMemRef(copy->child2)->value));
+	    } else {
+	      if ((resA != 2) || (resB != 2)) {
+		if (resA != 2) {
+		  pTemp = mpfr_get_prec(a);
+		  if (resB != 2) {
+		    if (mpfr_get_prec(b) < pTemp) {
+		      pTemp = mpfr_get_prec(b);
+		    } 
+		  } 
+		} else {
+		  pTemp = mpfr_get_prec(b);
+		}
+		if (!noRoundingWarnings) {
+		  printMessage(1,SOLLYA_MSG_SAFE_ROUNDING_FOR_EXPR_THAT_SHOULD_BE_CONST,"Warning: at least one of the given expressions is not a constant but requires evaluation.\n");
+		  printMessage(1,SOLLYA_MSG_CONTINUATION,"Evaluation is guaranteed to ensure the inclusion property. The approximate result is at least %d bit accurate.\n", pTemp);
+		}
+	      }
 	    }
 	  }
 	}

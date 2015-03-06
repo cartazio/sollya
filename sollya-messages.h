@@ -1,6 +1,6 @@
 /*
 
-  Copyright 2012-2013 by
+  Copyright 2012-2015 by
 
   Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
   UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France,
@@ -525,5 +525,6 @@
 #define SOLLYA_MSG_ANNOTATION_COULD_NOT_BE_SET_UP                  454
 #define SOLLYA_MSG_GENERIC_SOLLYA_LIBRARY_MSG                      455
 #define SOLLYA_MSG_GUESSDEGREE_POSSIBLE_SINGULAR_WEIGHT            456
+#define SOLLYA_MSG_SAFE_ROUNDING_FOR_EXPR_THAT_SHOULD_BE_CONST     457
 
 #endif /* ifdef SOLLYA_MESSAGES_H*/
