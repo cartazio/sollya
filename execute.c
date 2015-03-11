@@ -4567,10 +4567,10 @@ int isExtendedPureTree(node *tree) {
     return 1;
     break;
   case APPLY:
-    if (tree->child1->nodeType != VARIABLE) {
+    if (accessThruMemRef(tree->child1)->nodeType != VARIABLE) {
       if (variablename == NULL) return 0;
-      if (tree->child1->nodeType != TABLEACCESS) return 0;
-      if (strcmp(variablename,tree->child1->string)) return 0;
+      if (accessThruMemRef(tree->child1)->nodeType != TABLEACCESS) return 0;
+      if (strcmp(variablename,accessThruMemRef(tree->child1)->string)) return 0;
     }
     if (tree->arguments == NULL) return 0;
     if (tree->arguments->next != NULL) return 0;
@@ -4728,21 +4728,21 @@ int isString(node *);
 int isMatchableConcat(node *tree) {
   if (tree->nodeType == MEMREF) return isMatchableConcat(getMemRefChild(tree));
   if (tree->nodeType != CONCAT) return 0;
-  if (((tree->child1->nodeType == TABLEACCESS) || (tree->child1->nodeType == DEFAULT)) &&
-      ((tree->child2->nodeType == TABLEACCESS) || (tree->child2->nodeType == DEFAULT))) return 0;
+  if (((accessThruMemRef(tree->child1)->nodeType == TABLEACCESS) || (accessThruMemRef(tree->child1)->nodeType == DEFAULT)) &&
+      ((accessThruMemRef(tree->child2)->nodeType == TABLEACCESS) || (accessThruMemRef(tree->child2)->nodeType == DEFAULT))) return 0;
 
   if (((isMatchableList(tree->child1) && (!isPureFinalEllipticList(tree->child1))) ||
-       (tree->child1->nodeType == TABLEACCESS) || (tree->child1->nodeType == DEFAULT) || isString(tree->child1) ||
+       (accessThruMemRef(tree->child1)->nodeType == TABLEACCESS) || (accessThruMemRef(tree->child1)->nodeType == DEFAULT) || isString(tree->child1) ||
        isMatchablePrepend(tree->child1) || isMatchableAppend(tree->child1) ||
        isMatchableConcat(tree->child1)) &&
       (isMatchableList(tree->child2) ||
-       (tree->child2->nodeType == TABLEACCESS) || (tree->child2->nodeType == DEFAULT) || isString(tree->child2) ||
+       (accessThruMemRef(tree->child2)->nodeType == TABLEACCESS) || (accessThruMemRef(tree->child2)->nodeType == DEFAULT) || isString(tree->child2) ||
        isMatchablePrepend(tree->child2) || isMatchableAppend(tree->child2) ||
        isMatchableConcat(tree->child2))) {
     if (isString(tree->child1) &&
-	(!((tree->child2->nodeType == TABLEACCESS) || (tree->child2->nodeType == DEFAULT) || isString(tree->child2) || isMatchableConcat(tree->child2)))) return 0;
+	(!((accessThruMemRef(tree->child2)->nodeType == TABLEACCESS) || (accessThruMemRef(tree->child2)->nodeType == DEFAULT) || isString(tree->child2) || isMatchableConcat(tree->child2)))) return 0;
     if (isString(tree->child2) &&
-	(!((tree->child1->nodeType == TABLEACCESS) || (tree->child1->nodeType == DEFAULT) || isString(tree->child1) || isMatchableConcat(tree->child1)))) return 0;
+	(!((accessThruMemRef(tree->child1)->nodeType == TABLEACCESS) || (accessThruMemRef(tree->child1)->nodeType == DEFAULT) || isString(tree->child1) || isMatchableConcat(tree->child1)))) return 0;
     return 1;
   }
   return 0;
@@ -4753,7 +4753,7 @@ int isMatchablePrepend(node *tree) {
   if (tree->nodeType != PREPEND) return 0;
   if (isMatchable(tree->child1) &&
       (isMatchableList(tree->child2) ||
-       (tree->child2->nodeType == TABLEACCESS) ||
+       (accessThruMemRef(tree->child2)->nodeType == TABLEACCESS) ||
        isMatchablePrepend(tree->child2) ||
        isMatchableAppend(tree->child2) ||
        isMatchableConcat(tree->child2))) return 1;
@@ -4765,7 +4765,7 @@ int isMatchableAppend(node *tree) {
   if (tree->nodeType != APPEND) return 0;
   if (isMatchable(tree->child2) &&
       ((isMatchableList(tree->child1) && (!isPureFinalEllipticList(tree->child1))) ||
-       (tree->child1->nodeType == TABLEACCESS) ||
+       (accessThruMemRef(tree->child1)->nodeType == TABLEACCESS) ||
        isMatchablePrepend(tree->child1) ||
        isMatchableAppend(tree->child1) ||
        isMatchableConcat(tree->child1))) return 1;
@@ -4788,12 +4788,12 @@ int isMatchable(node *tree) {
   if (isExtendedPureTree(tree)) return 1;
   if (isCorrectlyTypedBaseSymbol(tree)) return 1;
   if ((tree->nodeType == RANGE) &&
-      ((tree->child1->nodeType == CONSTANT) ||
-       (tree->child1->nodeType == TABLEACCESS) ||
-       (tree->child1->nodeType == DEFAULT)) &&
-      ((tree->child2->nodeType == CONSTANT) ||
-       (tree->child2->nodeType == TABLEACCESS) ||
-       (tree->child2->nodeType == DEFAULT))) return 1;
+      ((accessThruMemRef(tree->child1)->nodeType == CONSTANT) ||
+       (accessThruMemRef(tree->child1)->nodeType == TABLEACCESS) ||
+       (accessThruMemRef(tree->child1)->nodeType == DEFAULT)) &&
+      ((accessThruMemRef(tree->child2)->nodeType == CONSTANT) ||
+       (accessThruMemRef(tree->child2)->nodeType == TABLEACCESS) ||
+       (accessThruMemRef(tree->child2)->nodeType == DEFAULT))) return 1;
   if (isMatchableList(tree)) return 1;
   if (isMatchableConcat(tree)) return 1;
   if (isMatchablePrepend(tree)) return 1;
@@ -4885,17 +4885,17 @@ int isPureFinalEllipticList(node *tree) {
 int isRange(node *tree) {
   if (tree->nodeType == MEMREF) return isRange(getMemRefChild(tree));
   if (tree->nodeType != RANGE) return 0;
-  if (tree->child1->nodeType != CONSTANT) return 0;
-  if (tree->child2->nodeType != CONSTANT) return 0;
+  if (accessThruMemRef(tree->child1)->nodeType != CONSTANT) return 0;
+  if (accessThruMemRef(tree->child2)->nodeType != CONSTANT) return 0;
   return 1;
 }
 
 int isRangeNonEmpty(node *tree) {
   if (tree->nodeType == MEMREF) return isRangeNonEmpty(getMemRefChild(tree));
   if (!isRange(tree)) return 0;
-  if (mpfr_nan_p(*(tree->child1->value)) ||
-      mpfr_nan_p(*(tree->child2->value))) return 1;
-  if (mpfr_cmp(*(tree->child1->value),*(tree->child2->value)) > 0) return 0;
+  if (mpfr_nan_p(*(accessThruMemRef(tree->child1)->value)) ||
+      mpfr_nan_p(*(accessThruMemRef(tree->child2)->value))) return 1;
+  if (mpfr_cmp(*(accessThruMemRef(tree->child1)->value),*(accessThruMemRef(tree->child2)->value)) > 0) return 0;
   return 1;
 }
 
@@ -5382,10 +5382,10 @@ int evaluateThingToRange(mpfr_t a, mpfr_t b, node *tree) {
   evaluatedResult = evaluateThing(tree);
 
   if (isRange(evaluatedResult)) {
-    mpfr_set_prec(a,mpfr_get_prec(*((mpfr_t *) (accessThruMemRef(evaluatedResult)->child1->value))));
-    mpfr_set_prec(b,mpfr_get_prec(*((mpfr_t *) (accessThruMemRef(evaluatedResult)->child2->value))));
-    mpfr_set(a,*((mpfr_t *) (accessThruMemRef(evaluatedResult)->child1->value)),GMP_RNDN);
-    mpfr_set(b,*((mpfr_t *) (accessThruMemRef(evaluatedResult)->child2->value)),GMP_RNDN);
+    mpfr_set_prec(a,mpfr_get_prec(*((mpfr_t *) (accessThruMemRef(accessThruMemRef(evaluatedResult)->child1)->value))));
+    mpfr_set_prec(b,mpfr_get_prec(*((mpfr_t *) (accessThruMemRef(accessThruMemRef(evaluatedResult)->child2)->value))));
+    mpfr_set(a,*((mpfr_t *) (accessThruMemRef(accessThruMemRef(evaluatedResult)->child1)->value)),GMP_RNDN);
+    mpfr_set(b,*((mpfr_t *) (accessThruMemRef(accessThruMemRef(evaluatedResult)->child2)->value)),GMP_RNDN);
     freeThing(evaluatedResult);
     return 1;
   }
@@ -5966,22 +5966,22 @@ void printThingWithFullStrings(node *thing) {
   } else {
     if (isRange(thing)) {
       if (midpointMode && (dyadic == 0)) {
-	temp = sprintMidpointMode(*(accessThruMemRef(thing)->child1->value), *(accessThruMemRef(thing)->child2->value));
+	temp = sprintMidpointMode(*(accessThruMemRef(accessThruMemRef(thing)->child1)->value), *(accessThruMemRef(accessThruMemRef(thing)->child2)->value));
 	if (temp != NULL) {
 	  sollyaPrintf("%s",temp);
 	  safeFree(temp);
 	} else {
 	  sollyaPrintf("[");
-	  printValue(accessThruMemRef(thing)->child1->value);
+	  printValue(accessThruMemRef(accessThruMemRef(thing)->child1)->value);
 	  sollyaPrintf(";");
-	  printValue(accessThruMemRef(thing)->child2->value);
+	  printValue(accessThruMemRef(accessThruMemRef(thing)->child2)->value);
 	  sollyaPrintf("]");
 	}
       } else {
 	sollyaPrintf("[");
-	printValue(accessThruMemRef(thing)->child1->value);
+	printValue(accessThruMemRef(accessThruMemRef(thing)->child1)->value);
 	sollyaPrintf(";");
-	printValue(accessThruMemRef(thing)->child2->value);
+	printValue(accessThruMemRef(accessThruMemRef(thing)->child2)->value);
 	sollyaPrintf("]");
       }
     } else {
@@ -6036,22 +6036,22 @@ void printThing(node *thing) {
   } else {
     if (isRange(thing)) {
       if (midpointMode && (dyadic == 0)) {
-	temp = sprintMidpointMode(*(accessThruMemRef(thing)->child1->value), *(accessThruMemRef(thing)->child2->value));
+	temp = sprintMidpointMode(*(accessThruMemRef(accessThruMemRef(thing)->child1)->value), *(accessThruMemRef(accessThruMemRef(thing)->child2)->value));
 	if (temp != NULL) {
 	  sollyaPrintf("%s",temp);
 	  safeFree(temp);
 	} else {
 	  sollyaPrintf("[");
-	  printValue(accessThruMemRef(thing)->child1->value);
+	  printValue(accessThruMemRef(accessThruMemRef(thing)->child1)->value);
 	  sollyaPrintf(";");
-	  printValue(accessThruMemRef(thing)->child2->value);
+	  printValue(accessThruMemRef(accessThruMemRef(thing)->child2)->value);
 	  sollyaPrintf("]");
 	}
       } else {
 	sollyaPrintf("[");
-	printValue(accessThruMemRef(thing)->child1->value);
+	printValue(accessThruMemRef(accessThruMemRef(thing)->child1)->value);
 	sollyaPrintf(";");
-	printValue(accessThruMemRef(thing)->child2->value);
+	printValue(accessThruMemRef(accessThruMemRef(thing)->child2)->value);
 	sollyaPrintf("]");
       }
     } else {
@@ -7806,7 +7806,7 @@ char *sRawPrintThingInner(node *tree, int forceDyadic) {
       curr = curr->next;
     }
     res = concatAndFree(res, newString(")\n{\n"));
-    curr = tree->child1->arguments;
+    curr = accessThruMemRef(tree->child1)->arguments;
     while (curr != NULL) {
       res = concatAndFree(res, sRawPrintThingInner((node *) (curr->value), forceDyadic));
       res = concatAndFree(res, newString(";\n"));
@@ -7830,7 +7830,7 @@ char *sRawPrintThingInner(node *tree, int forceDyadic) {
     curr = tree->arguments;
     res = concatAndFree(res, newString((char *) (curr->value)));
     res = concatAndFree(res, newString(" = ...)\n{\n"));
-    curr = tree->child1->arguments;
+    curr = accessThruMemRef(tree->child1)->arguments;
     while (curr != NULL) {
       res = concatAndFree(res, sRawPrintThingInner((node *) (curr->value), forceDyadic));
       res = concatAndFree(res, newString(";\n"));
@@ -7913,12 +7913,12 @@ char *sPrintThingWithFullStrings(node *thing) {
   } else {
     if (isRange(thing)) {
       if (midpointMode && (dyadic == 0)) {
-	temp = sprintMidpointMode(*(accessThruMemRef(thing)->child1->value), *(accessThruMemRef(thing)->child2->value));
+	temp = sprintMidpointMode(*(accessThruMemRef(accessThruMemRef(thing)->child1)->value), *(accessThruMemRef(accessThruMemRef(thing)->child2)->value));
 	if (temp != NULL) {
 	  return temp;
 	} else {
-	  temp1 = sprintValue(accessThruMemRef(thing)->child1->value);
-	  temp2 = sprintValue(accessThruMemRef(thing)->child2->value);
+	  temp1 = sprintValue(accessThruMemRef(accessThruMemRef(thing)->child1)->value);
+	  temp2 = sprintValue(accessThruMemRef(accessThruMemRef(thing)->child2)->value);
 	  temp = (char *) safeCalloc(strlen(temp1) + strlen(temp2) + 3 + 1, sizeof(char));
 	  sprintf(temp, "[%s;%s]",temp1,temp2);
 	  safeFree(temp1);
@@ -7926,8 +7926,8 @@ char *sPrintThingWithFullStrings(node *thing) {
 	  return temp;
 	}
       } else {
-	temp1 = sprintValue(accessThruMemRef(thing)->child1->value);
-	temp2 = sprintValue(accessThruMemRef(thing)->child2->value);
+	temp1 = sprintValue(accessThruMemRef(accessThruMemRef(thing)->child1)->value);
+	temp2 = sprintValue(accessThruMemRef(accessThruMemRef(thing)->child2)->value);
 	temp = (char *) safeCalloc(strlen(temp1) + strlen(temp2) + 3 + 1, sizeof(char));
 	sprintf(temp, "[%s;%s]",temp1,temp2);
 	safeFree(temp1);
@@ -8005,12 +8005,12 @@ char *sPrintThing(node *thing) {
   } else {
     if (isRange(thing)) {
       if (midpointMode && (dyadic == 0)) {
-	temp = sprintMidpointMode(*(accessThruMemRef(thing)->child1->value), *(accessThruMemRef(thing)->child2->value));
+	temp = sprintMidpointMode(*(accessThruMemRef(accessThruMemRef(thing)->child1)->value), *(accessThruMemRef(accessThruMemRef(thing)->child2)->value));
 	if (temp != NULL) {
 	  return temp;
 	} else {
-	  temp1 = sprintValue(accessThruMemRef(thing)->child1->value);
-	  temp2 = sprintValue(accessThruMemRef(thing)->child2->value);
+	  temp1 = sprintValue(accessThruMemRef(accessThruMemRef(thing)->child1)->value);
+	  temp2 = sprintValue(accessThruMemRef(accessThruMemRef(thing)->child2)->value);
 	  temp = (char *) safeCalloc(strlen(temp1) + strlen(temp2) + 3 + 1, sizeof(char));
 	  sprintf(temp, "[%s;%s]",temp1,temp2);
 	  safeFree(temp1);
@@ -8018,8 +8018,8 @@ char *sPrintThing(node *thing) {
 	  return temp;
 	}
       } else {
-	temp1 = sprintValue(accessThruMemRef(thing)->child1->value);
-	temp2 = sprintValue(accessThruMemRef(thing)->child2->value);
+	temp1 = sprintValue(accessThruMemRef(accessThruMemRef(thing)->child1)->value);
+	temp2 = sprintValue(accessThruMemRef(accessThruMemRef(thing)->child2)->value);
 	temp = (char *) safeCalloc(strlen(temp1) + strlen(temp2) + 3 + 1, sizeof(char));
 	sprintf(temp, "[%s;%s]",temp1,temp2);
 	safeFree(temp1);
@@ -8104,22 +8104,22 @@ void fPrintThingWithFullStrings(FILE *fd, node *thing) {
   } else {
     if (isRange(thing)) {
       if (midpointMode && (dyadic == 0)) {
-	temp = sprintMidpointMode(*(accessThruMemRef(thing)->child1->value), *(accessThruMemRef(thing)->child2->value));
+	temp = sprintMidpointMode(*(accessThruMemRef(accessThruMemRef(thing)->child1)->value), *(accessThruMemRef(accessThruMemRef(thing)->child2)->value));
 	if (temp != NULL) {
 	  sollyaFprintf(fd,"%s",temp);
 	  safeFree(temp);
 	} else {
 	  sollyaFprintf(fd,"[");
-	  fprintValueWithPrintMode(fd,*(accessThruMemRef(thing)->child1->value));
+	  fprintValueWithPrintMode(fd,*(accessThruMemRef(accessThruMemRef(thing)->child1)->value));
 	  sollyaFprintf(fd,";");
-	  fprintValueWithPrintMode(fd,*(accessThruMemRef(thing)->child2->value));
+	  fprintValueWithPrintMode(fd,*(accessThruMemRef(accessThruMemRef(thing)->child2)->value));
 	  sollyaFprintf(fd,"]");
 	}
       } else {
 	sollyaFprintf(fd,"[");
-	fprintValueWithPrintMode(fd,*(accessThruMemRef(thing)->child1->value));
+	fprintValueWithPrintMode(fd,*(accessThruMemRef(accessThruMemRef(thing)->child1)->value));
 	sollyaFprintf(fd,";");
-	fprintValueWithPrintMode(fd,*(accessThruMemRef(thing)->child2->value));
+	fprintValueWithPrintMode(fd,*(accessThruMemRef(accessThruMemRef(thing)->child2)->value));
 	sollyaFprintf(fd,"]");
       }
     } else {
@@ -8174,22 +8174,22 @@ void fPrintThing(FILE *fd, node *thing) {
   } else {
     if (isRange(thing)) {
       if (midpointMode && (dyadic == 0)) {
-	temp = sprintMidpointMode(*(accessThruMemRef(thing)->child1->value), *(accessThruMemRef(thing)->child2->value));
+	temp = sprintMidpointMode(*(accessThruMemRef(accessThruMemRef(thing)->child1)->value), *(accessThruMemRef(accessThruMemRef(thing)->child2)->value));
 	if (temp != NULL) {
 	  sollyaFprintf(fd,"%s",temp);
 	  safeFree(temp);
 	} else {
 	  sollyaFprintf(fd,"[");
-	  fprintValueWithPrintMode(fd,*(accessThruMemRef(thing)->child1->value));
+	  fprintValueWithPrintMode(fd,*(accessThruMemRef(accessThruMemRef(thing)->child1)->value));
 	  sollyaFprintf(fd,";");
-	  fprintValueWithPrintMode(fd,*(accessThruMemRef(thing)->child2->value));
+	  fprintValueWithPrintMode(fd,*(accessThruMemRef(accessThruMemRef(thing)->child2)->value));
 	  sollyaFprintf(fd,"]");
 	}
       } else {
 	sollyaFprintf(fd,"[");
-	fprintValueWithPrintMode(fd,*(accessThruMemRef(thing)->child1->value));
+	fprintValueWithPrintMode(fd,*(accessThruMemRef(accessThruMemRef(thing)->child1)->value));
 	sollyaFprintf(fd,";");
-	fprintValueWithPrintMode(fd,*(accessThruMemRef(thing)->child2->value));
+	fprintValueWithPrintMode(fd,*(accessThruMemRef(accessThruMemRef(thing)->child2)->value));
 	sollyaFprintf(fd,"]");
       }
     } else {
@@ -18031,7 +18031,7 @@ int executeProcedureInner(node **resultThing, node *proc, chain *args, int ellip
     }
   }
 
-  curr = accessThruMemRef(proc)->child1->arguments;
+  curr = accessThruMemRef(accessThruMemRef(proc)->child1)->arguments;
   result = 0;
   while (curr != NULL) {
     if (isQuit((node *) (curr->value)) ||
@@ -18198,7 +18198,7 @@ void computeFunctionWithProcedure(sollya_mpfi_t y, node *proc, sollya_mpfi_t x, 
     if (res) {
       if (resThing != NULL) {
 	if (isRange(resThing)) {
-	  sollya_mpfi_interv_fr_safe(y,*(accessThruMemRef(resThing)->child1->value),*(accessThruMemRef(resThing)->child2->value));
+	  sollya_mpfi_interv_fr_safe(y,*(accessThruMemRef(accessThruMemRef(resThing)->child1)->value),*(accessThruMemRef(accessThruMemRef(resThing)->child2)->value));
 	} else {
 	  sollya_mpfi_set_nan(y);
 	}
@@ -19072,6 +19072,15 @@ int variableUsePreventsPreevaluation(node *tree) {
   return 1;
 }
 
+node *evaluateThingPreevaluateMatcher(node *tree) {
+  node *temp, *res;
+
+  temp = evaluateThing(tree);
+  res = deepCopyThing(temp);
+  freeThing(temp);
+  return res;
+}
+
 node *preevaluateMatcher(node *tree) {
   node *copy, *tempNode2, *tempNode, *tempNodeExtra;
   int rangeEvaluateLeft, rangeEvaluateRight;
@@ -19096,14 +19105,14 @@ node *preevaluateMatcher(node *tree) {
   case HEXADECIMALCONSTANT:
   case BINARYCONSTANT:
     safeFree(copy);
-    copy = evaluateThing(tree);
+    copy = evaluateThingPreevaluateMatcher(tree);
     break;
   case RANGE:
     rangeEvaluateLeft = !variableUsePreventsPreevaluation(tree->child1);
     rangeEvaluateRight = !variableUsePreventsPreevaluation(tree->child2);
     if (rangeEvaluateLeft && rangeEvaluateRight) {
       safeFree(copy);
-      copy = evaluateThing(tree);
+      copy = evaluateThingPreevaluateMatcher(tree);
       if (accessThruMemRef(copy)->nodeType != RANGE) {
 	freeThing(copy);
 	copy = (node *) safeMalloc(sizeof(node));
@@ -19121,7 +19130,7 @@ node *preevaluateMatcher(node *tree) {
 	mpfr_set_inf(infinity,1);
 	tempNode->child2 = makeConstant(infinity);
 	mpfr_clear(infinity);
-	tempNodeExtra = evaluateThing(tempNode);
+	tempNodeExtra = evaluateThingPreevaluateMatcher(tempNode);
 	tempNode2 = deepCopyThing(tempNodeExtra);
 	freeThing(tempNodeExtra);
 	if (tempNode2->nodeType == RANGE) {
@@ -19143,7 +19152,7 @@ node *preevaluateMatcher(node *tree) {
 	  tempNode->child1 = makeConstant(infinity);
 	  tempNode->child2 = copyThing(tree->child2);
 	  mpfr_clear(infinity);
-	  tempNodeExtra = evaluateThing(tempNode);
+	  tempNodeExtra = evaluateThingPreevaluateMatcher(tempNode);
 	  tempNode2 = deepCopyThing(tempNodeExtra);
 	  freeThing(tempNodeExtra);
 	  if (tempNode2->nodeType == RANGE) {
@@ -19171,7 +19180,7 @@ node *preevaluateMatcher(node *tree) {
 	   ((accessThruMemRef(accessThruMemRef(tree->child1)->child1)->nodeType == TABLEACCESS) &&
 	    (!strcmp(variablename,accessThruMemRef(accessThruMemRef(tree->child1)->child1)->string))))) {
 	safeFree(copy);
-	copy = evaluateThing(tree);
+	copy = evaluateThingPreevaluateMatcher(tree);
       } else {
 	copy->child1 = preevaluateMatcher(tree->child1);
       }
