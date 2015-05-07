@@ -83,9 +83,11 @@ extern int fileNumber;
 
 int bashExecute(char *command) {
   int i;
+  deferSignalHandling();
   fflush(NULL);
   i = system(command);
   fflush(NULL);
+  resumeSignalHandling();
   return WEXITSTATUS(i);
 }
 
@@ -109,7 +111,9 @@ char *evaluateStringAsBashCommand(char *command, char *input) {
 
   res = NULL;
   okay = 0;
+  deferSignalHandling();
   fflush(NULL);
+  resumeSignalHandling();
 
   /* Create two unnamed pipes */
   if ((input != NULL) && (pipe(pipesToBash) == -1)) {
@@ -124,7 +128,9 @@ char *evaluateStringAsBashCommand(char *command, char *input) {
       //
       // Flush before forking
       */
+      deferSignalHandling();
       fflush(NULL);
+      resumeSignalHandling();
       if ((pid = fork()) == -1) {
 	/* Error forking */
 	printMessage(1, SOLLYA_MSG_ERROR_WHILE_FORKING, "Warning in bashevaluate: error while forking");
@@ -151,9 +157,11 @@ char *evaluateStringAsBashCommand(char *command, char *input) {
 
 	  /* Execute bash
 	   */
+	  deferSignalHandling();
 	  fflush(NULL);
 	  execlp("sh","sh","-c",command,(char *) NULL);
 	  fflush(NULL);
+	  resumeSignalHandling();
 
 	  _exit(1);
 	} else {
@@ -176,7 +184,9 @@ char *evaluateStringAsBashCommand(char *command, char *input) {
 	    close(pipesToBash[1]);
 	  }
 
+	  deferSignalHandling();
 	  fflush(NULL);
+	  resumeSignalHandling();
 
 	  if (!errorOnInput) {
 	    do {
@@ -254,7 +264,9 @@ char *evaluateStringAsBashCommand(char *command, char *input) {
     res = NULL;
   }
 
+  deferSignalHandling();
   fflush(NULL);
+  resumeSignalHandling();
 
   return res;
 }

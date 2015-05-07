@@ -271,6 +271,14 @@ char **argsArgv = NULL;
 int argsArgc = 0;
 /* End of variables for the prompt-passed arguments */
 
+/* Global variables for sollya_getc and sollya_fread */
+int inside_sollya_getc = 0;
+int inside_sollya_fread = 0;
+int inside_sollya_feof = 0;
+int inside_sollya_ferror = 0;
+int inside_sollya_fwrite = 0;
+/* End of global variables for sollya_getc */
+
 extern int yyparse(void *); 
 extern void yylex_destroy(void *);
 extern int yylex_init(void **);
@@ -283,6 +291,106 @@ extern int parserCheckEof();
 void freeGlobalReusedMPFIVars();
 void freeGlobalReusedMPFRVars();
 void freeTool();
+
+size_t sollya_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *fd) {
+  size_t res;
+
+  deferSignalHandling();
+
+  if (inside_sollya_fwrite) {
+    sollyaFprintf(stderr,"Error: sollya_fwrite called from within sollya_fwrite. Bad things are happening.\n");
+    exit(1);
+  }
+  inside_sollya_fwrite = 1;
+
+  res = fwrite(ptr, size, nmemb, fd);
+
+  inside_sollya_fwrite = 0;
+
+  resumeSignalHandling();
+
+  return res;
+}
+
+size_t sollya_fread(void *ptr, size_t size, size_t nmemb, FILE *fd) {
+  size_t res;
+
+  deferSignalHandling();
+
+  if (inside_sollya_fread) {
+    sollyaFprintf(stderr,"Error: sollya_fread called from within sollya_fread. Bad things are happening.\n");
+    exit(1);
+  }
+  inside_sollya_fread = 1;
+
+  res = fread(ptr, size, nmemb, fd);
+
+  inside_sollya_fread = 0;
+
+  resumeSignalHandling();
+
+  return res;
+}
+
+int sollya_getc(FILE *fd) {
+  int res;
+
+  deferSignalHandling();
+
+  if (inside_sollya_getc) {
+    sollyaFprintf(stderr,"Error: sollya_getc called from within sollya_getc. Bad things are happening.\n");
+    exit(1);
+  }
+  inside_sollya_getc = 1;
+
+  res = getc(fd);
+
+  inside_sollya_getc = 0;
+
+  resumeSignalHandling();
+
+  return res;
+}
+
+int sollya_feof(FILE *fd) {
+  int res;
+
+  deferSignalHandling();
+
+  if (inside_sollya_feof) {
+    sollyaFprintf(stderr,"Error: sollya_feof called from within sollya_feof. Bad things are happening.\n");
+    exit(1);
+  }
+  inside_sollya_feof = 1;
+
+  res = feof(fd);
+
+  inside_sollya_feof = 0;
+
+  resumeSignalHandling();
+
+  return res;
+}
+
+int sollya_ferror(FILE *fd) {
+  int res;
+
+  deferSignalHandling();
+
+  if (inside_sollya_ferror) {
+    sollyaFprintf(stderr,"Error: sollya_ferror called from within sollya_ferror. Bad things are happening.\n");
+    exit(1);
+  }
+  inside_sollya_ferror = 1;
+
+  res = ferror(fd);
+
+  inside_sollya_ferror = 0;
+
+  resumeSignalHandling();
+
+  return res;
+}
 
 void makeToolDie() {
 	freeTool();
@@ -310,9 +418,11 @@ void normalMode() {
   displayColor = 0;
   if (noColor) return;
   if (eliminatePromptBackup) return;
+  deferSignalHandling();
   fflush(NULL);
   printf("\e[0m");
   fflush(NULL);
+  resumeSignalHandling();
 }
 
 void redMode() {
@@ -320,9 +430,11 @@ void redMode() {
   displayColor = 1;
   if (noColor) return;
   if (eliminatePromptBackup) return;
+  deferSignalHandling();
   fflush(NULL);
   printf("\e[0m\e[31m");
   fflush(NULL);
+  resumeSignalHandling();
 }
 
 void blueMode() {
@@ -330,9 +442,11 @@ void blueMode() {
   displayColor = 2;
   if (eliminatePromptBackup) return;
   if (noColor) return;
+  deferSignalHandling();
   fflush(NULL);
   printf("\e[0m\e[34m");
   fflush(NULL);
+  resumeSignalHandling();
 }
 
 void setDisplayColor(int i) {
@@ -369,16 +483,20 @@ void restoreMode() {
 
 void blinkMode() {
   if (eliminatePromptBackup) return;
+  deferSignalHandling();
   fflush(NULL);
   printf("\e[5m");
   fflush(NULL);
+  resumeSignalHandling();
 }
 
 void unblinkMode() {
   if (eliminatePromptBackup) return;
+  deferSignalHandling();
   fflush(NULL);
   printf("\e[25m");
   fflush(NULL);
+  resumeSignalHandling();
 }
 
 
@@ -404,7 +522,9 @@ void *safeCalloc (size_t nmemb, size_t size) {
   mySize = size;
   if (mySize == 0) mySize = 1;
 
+  deferSignalHandling();
   ptr = actualCalloc(myNmemb,mySize);
+  resumeSignalHandling();
   if (ptr == NULL) {
     sollyaFprintf(stderr,"Error: calloc could not succeed. No more memory left.\n");
     exit(1);
@@ -414,10 +534,11 @@ void *safeCalloc (size_t nmemb, size_t size) {
 
 void *safeMalloc (size_t size) {
   void *ptr;
-  if (size == 0)
-    ptr = actualMalloc(1);
-  else
-    ptr = actualMalloc(size);
+  size_t mySize;
+  if (size == 0) mySize = 1; else mySize = size;
+  deferSignalHandling();
+  ptr = actualMalloc(mySize);
+  resumeSignalHandling();  
   if (ptr == NULL) {
     sollyaFprintf(stderr,"Error: malloc could not succeed. No more memory left.\n");
     exit(1);
@@ -427,7 +548,9 @@ void *safeMalloc (size_t size) {
 
 void *safeRealloc (void *ptr, size_t size) {
   void *newPtr;
+  deferSignalHandling();
   newPtr = actualRealloc(ptr,size);
+  resumeSignalHandling();
   if ((size != 0) && (newPtr == NULL)) {
     sollyaFprintf(stderr,"Error: realloc could not succeed. No more memory left.\n");
     exit(1);
@@ -436,7 +559,9 @@ void *safeRealloc (void *ptr, size_t size) {
 }
 
 void safeFree(void *ptr) {
+  deferSignalHandling();
   actualFree(ptr);
+  resumeSignalHandling();
 }
 
 /* The gmp signature for realloc is strange, we have to wrap our function */
@@ -1016,7 +1141,7 @@ char *mpfr_to_binary_str(mpfr_t x) {
     ptr = ptr + prec + 4;
   }
   else ptr = ptr + prec + 3;
-  sprintf(ptr, "%ld", (long)e);
+  sollya_snprintf(ptr, prec+7+4+20, "%ld", (long)e);
 
   return s;
 }
@@ -1096,8 +1221,10 @@ void printPrompt(void) {
   if (readStack != NULL) return;
   parseMode();
   if (oldrlwrapcompatible && (!noColor)) {
-    sollyaPrintf("\e[1A\n");
+    deferSignalHandling();
+    printf("\e[1A\n");
     fflush(NULL);
+    resumeSignalHandling();
   }
   sollyaPrintf("> ");
 }
@@ -1241,7 +1368,7 @@ void initToolDefaults() {
   pidStr = getUniqueId();
   uniqueStr = (char *) safeCalloc(strlen(PACKAGE_STRING) + 1 + strlen(pidStr) + 1 + 8 * sizeof(int) + 1, sizeof(char));
   mySeed = (unsigned int) time(NULL);
-  sprintf(uniqueStr, "%s-%s-%d", PACKAGE_STRING, pidStr, rand_r(&mySeed));
+  sollya_snprintf(uniqueStr, strlen(PACKAGE_STRING) + 1 + strlen(pidStr) + 1 + 8 * sizeof(int) + 1, "%s-%s-%d", PACKAGE_STRING, pidStr, rand_r(&mySeed));
   for (c=uniqueStr;*c!='\0';c++) {
     if ((*c == ' ') || 
 	(*c == '\t') || 
@@ -1289,33 +1416,6 @@ int setNameOfVariable(char *str) {
   variablename = (char *) safeCalloc(strlen(str)+1,sizeof(char));
   strcpy(variablename,str);
   return 1;
-}
-
-void initTool() {
-  struct termios termAttr;
-  yylex_init(&scanner);
-
-  if (tcgetattr(0,&termAttr) == -1) {
-    eliminatePromptBackup = 1;
-  }
-
-  initSignalHandler();
-  blockSignals();
-  wrap_mp_set_memory_functions(safeMalloc,actualReallocWithSize,actualFreeWithSize);
-  initToolDefaults();
-  noColor = 1;
-}
-
-void finishTool() {
-  freeTool();
-  if (inputFileOpened) {
-    fclose(inputFile);
-    inputFileOpened = 0;
-  }
-  if (warnFile != NULL) {
-    fclose(warnFile);
-    warnFile = NULL;
-  }
 }
 
 char *initTempDir() {
@@ -1993,8 +2093,8 @@ int general(int argc, char *argv[]) {
     }
 #endif
   }
-  initSignalHandler();
-  blockSignals();
+  initSignalHandler(eliminatePromptBackup);
+  blockSignals(eliminatePromptBackup);
   wrap_mp_set_memory_functions(safeMalloc,actualReallocWithSize,actualFreeWithSize);
   initToolDefaults();
 
@@ -2050,15 +2150,17 @@ int general(int argc, char *argv[]) {
 	  freeBacktraceStack();
 	  backtraceStack = NULL;
 	}
-	initSignalHandler();
+	initSignalHandler(eliminatePromptBackup);
 	numberBacktrace = 1;
 	if (timeStack != NULL) {
 	  printMessage(4,SOLLYA_MSG_TIMING_STACK_HAS_BEEN_CORRUPTED,"Information: corrupted timing stack. Releasing the stack.\n");
 	  freeCounter();
 	}
         if (flushOutput) {
+	  deferSignalHandling();
           fflush(stdout);
           fflush(stderr);
+	  resumeSignalHandling();
         }
 	libraryMode = 0;
 	pushTimeCounter();
@@ -2069,14 +2171,16 @@ int general(int argc, char *argv[]) {
 	  freeCounter();
 	}
         if (flushOutput) {
+	  deferSignalHandling();
           fflush(stdout);
           fflush(stderr);
+	  resumeSignalHandling();
         }
-	blockSignals();
+	blockSignals(eliminatePromptBackup);
 	recoverEnvironmentReady = 0;
       } else {
 	displayColor = -1; normalMode();
-	blockSignals();
+	blockSignals(eliminatePromptBackup);
 	lastWasError = 1;
 	if (lastHandledSignal != 0) {
 	  switch (lastHandledSignal) {

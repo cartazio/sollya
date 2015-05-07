@@ -58,9 +58,9 @@
 #define HANDLING_SIGFPE  4
 #define HANDLING_SIGPIPE 5
 
-void initSignalHandler();
-void blockSignals();
-void initSignalHandlerCounted();
+void initSignalHandler(int nointeract);
+void blockSignals(int nointeract);
+void initSignalHandlerCounted(int nointeract);
 void blockSignalsCounted();
 void deferSignalHandling();
 void resumeSignalHandling();

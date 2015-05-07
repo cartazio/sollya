@@ -400,7 +400,7 @@ char *readFileIntoString(FILE *fd) {
   newString = NULL;
 
   while (1) {
-    readChars = fread(readBuf,sizeof(char),READBUFFERSIZE,fd);
+    readChars = sollya_fread(readBuf,sizeof(char),READBUFFERSIZE,fd);
     for (i=0;i<readChars;i=i+sizeof(char)) {
       if (readBuf[i] == 0) readBuf[i] = '?';
     }

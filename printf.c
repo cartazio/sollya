@@ -67,6 +67,7 @@
 #include "infnorm.h"
 #include "execute.h"
 #include "sturm.h"
+#include "signalhandling.h"
 
 /* Some flag constants used only in this file */
 #define SOLLYA_PRINTF_IMPL_FLAG_ALTERNATE_FORM          1
@@ -76,6 +77,10 @@
 #define SOLLYA_PRINTF_IMPL_FLAG_POSITIVE_GET_PLUS      16
 #define SOLLYA_PRINTF_IMPL_FLAG_GROUP_THOUSANDS        32
 #define SOLLYA_PRINTF_IMPL_FLAG_ALTERNATE_DIGITS       64
+
+/* Size of a static buffer */
+#define SOLLYA_PRINTF_STATIC_BUF_SIZE 1024
+
 
 /* Remark: we don't really know how large the maximum precision could
    ever be and if we should apply some modulo behavior. Anyway, we
@@ -346,7 +351,9 @@ static inline int specialSnFprintf(FILE *fd, int useFd, char *str, size_t size, 
 
   if (useFd) {
     va_start(varlist, format);
+    deferSignalHandling();
     res = vfprintf(fd, format, varlist);
+    resumeSignalHandling();
     va_end(varlist);
     return res;
   }
@@ -365,12 +372,18 @@ static inline int specialSnFprintf(FILE *fd, int useFd, char *str, size_t size, 
 
   if (useSize) {
     if (actualSize >= 1) {
+      deferSignalHandling();
       res = vsnprintf(actualStr, actualSize, format, varlist);
+      resumeSignalHandling();
     } else {
+      deferSignalHandling();
       res = vsnprintf(actualStr, 0, format, varlist);
+      resumeSignalHandling();
     }
   } else {
+    deferSignalHandling();
     res = vsprintf(str + offset, format, varlist);
+    resumeSignalHandling();
   }
 
   va_end(varlist);
@@ -381,6 +394,7 @@ static inline int specialSnFprintf(FILE *fd, int useFd, char *str, size_t size, 
 static inline int sollyaInternalBaseSnFprintf(FILE *fd, int useFd, char *str, size_t size, int useSize, const char *format, va_list varlist) {
   int res = 0;
   char *buf;
+  char staticBuf[SOLLYA_PRINTF_STATIC_BUF_SIZE];
   const char *currFormat;
   char *currBuf;
   char *dotBuf, *percentBuf, *percentEndBuf;
@@ -432,12 +446,19 @@ static inline int sollyaInternalBaseSnFprintf(FILE *fd, int useFd, char *str, si
   mp_prec_t prec;
   mpfr_t tempMpfr;
   sollya_mpfi_t tempMpfi;
+  size_t frmtLen;
 
   /* Make compiler happy */
   prec = 12;
   /* End of compiler happiness */
 
-  buf = (char *) safeCalloc(strlen(format) + 1, sizeof(char));
+  frmtLen = strlen(format);
+  if (frmtLen + 1 > SOLLYA_PRINTF_STATIC_BUF_SIZE) {
+    buf = (char *) safeCalloc(frmtLen + 1, sizeof(char));
+  } else {
+    buf = staticBuf;
+    memset(buf, '\0', frmtLen + 1 + 7);
+  }
 
   currBuf = buf;
   *currBuf = '\0';
@@ -1903,7 +1924,9 @@ static inline int sollyaInternalBaseSnFprintf(FILE *fd, int useFd, char *str, si
     }
   }
 
-  safeFree(buf);
+  if (buf != staticBuf) {
+    safeFree(buf);
+  }
   return res;
 }
 

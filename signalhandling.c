@@ -68,6 +68,8 @@ int deferredMode = 0;
 int deferredSignal = 0;
 int deferredSignalIsDeferred = 0;
 
+int deferredCount = 0;
+
 int sollyaFprintf(FILE *fd, const char *format, ...);
 
 void signalHandler(int i) {
@@ -109,14 +111,20 @@ void signalHandler(int i) {
   }
 }
 
-void deferSignalHandling() {
+static inline void deferSignalHandlingInner() {
   if (deferredMode) return;
   deferredMode = 1;
   deferredSignal = 0;
   deferredSignalIsDeferred = 0;
 }
 
-void resumeSignalHandling() {
+void deferSignalHandling() {
+  deferredCount++;
+  if (deferredCount > 0) 
+    deferSignalHandlingInner();
+}
+
+static inline void resumeSignalHandlingInner() {
   if (!deferredMode) return;
   deferredMode = 0;
   if (!deferredSignalIsDeferred) return;
@@ -125,7 +133,13 @@ void resumeSignalHandling() {
   deferredSignal = 0;
 }
 
-void initSignalHandler() {
+void resumeSignalHandling() {
+  deferredCount--;
+  if (deferredCount <= 0) 
+    resumeSignalHandlingInner();
+}
+
+void initSignalHandler(int nointeract) {
   sigset_t mask;
   struct sigaction action;
 
@@ -136,19 +150,19 @@ void initSignalHandler() {
   action.sa_handler = signalHandler;
   action.sa_flags = 0;
   sigemptyset(&(action.sa_mask));
-  sigaddset(&(action.sa_mask),SIGINT);
+  if (!nointeract) sigaddset(&(action.sa_mask),SIGINT);
   sigaddset(&(action.sa_mask),SIGSEGV);
   sigaddset(&(action.sa_mask),SIGBUS);
   sigaddset(&(action.sa_mask),SIGFPE);
   sigaddset(&(action.sa_mask),SIGPIPE);
-  sigaction(SIGINT, &action, NULL);
+  if (!nointeract) sigaction(SIGINT, &action, NULL);
   sigaction(SIGSEGV, &action, NULL);
   sigaction(SIGBUS, &action, NULL);
   sigaction(SIGFPE, &action, NULL);
   sigaction(SIGPIPE, &action, NULL);
 
   sigemptyset(&mask);
-  sigaddset(&mask,SIGINT);
+  if (!nointeract) sigaddset(&mask,SIGINT);
   sigaddset(&mask,SIGSEGV);
   sigaddset(&mask,SIGBUS);
   sigaddset(&mask,SIGFPE);
@@ -156,7 +170,7 @@ void initSignalHandler() {
   sigprocmask(SIG_UNBLOCK, &mask, NULL);
 }
 
-void blockSignals() {
+void blockSignals(int nointeract) {
   sigset_t mask;
 
   blockedSignalCounter = 0;
@@ -164,7 +178,7 @@ void blockSignals() {
   if (libraryMode) return;
 
   sigemptyset(&mask);
-  sigaddset(&mask,SIGINT);
+  if (!nointeract) sigaddset(&mask,SIGINT);
   sigaddset(&mask,SIGSEGV);
   sigaddset(&mask,SIGBUS);
   sigaddset(&mask,SIGFPE);
@@ -172,15 +186,15 @@ void blockSignals() {
   sigprocmask(SIG_BLOCK, &mask, NULL);
 }
 
-void initSignalHandlerCounted() {
+void initSignalHandlerCounted(int nointeract) {
   blockedSignalCounter--;
   if (blockedSignalCounter < 0) blockedSignalCounter = 0;
-  if (blockedSignalCounter == 0) initSignalHandler();
+  if (blockedSignalCounter == 0) initSignalHandler(nointeract);
 }
 
-void blockSignalsCounted() {
+void blockSignalsCounted(int nointeract) {
   if (blockedSignalCounter < 0) blockedSignalCounter = 0;
-  if (blockedSignalCounter == 0) blockSignals();
+  if (blockedSignalCounter == 0) blockSignals(nointeract);
   blockedSignalCounter++;
 }
 

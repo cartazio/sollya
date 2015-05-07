@@ -88,6 +88,19 @@ extern void parserFree(void *);
 #define fprintf UNUSED_PARAM(yyscanner); sollyaFprintf
 /* End of fprintf mess */
 
+/* Mess with getc... and fread to use sollya_getc, sollya_feof, sollya_ferror, sollya_fwrite and sollya_fread instead. */
+#undef  getc
+#undef  fread
+#undef  feof
+#undef  ferror
+#undef  fwrite
+#define getc sollya_getc
+#define fread sollya_fread
+#define feof sollya_feof
+#define ferror sollya_ferror
+#define fwrite sollya_fwrite
+/* End of getc, feof, ferror, fwrite and fread mess */
+
 %}
 
 %option noyywrap

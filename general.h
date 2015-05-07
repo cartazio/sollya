@@ -66,6 +66,7 @@
 #include "library.h"
 #include <setjmp.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -263,5 +264,12 @@ void returnReusedGlobalMPIVars(unsigned int);
 mpfr_t *getReusedGlobalMPFRVars(unsigned int, mp_prec_t);
 void returnReusedGlobalMPFRVars(unsigned int);
 int sollyaLibPrintmessage(int, int, const char *, va_list);
+int sollya_getc(FILE *);
+int sollya_feof(FILE *);
+int sollya_ferror(FILE *);
+size_t sollya_fread(void *, size_t, size_t, FILE *);
+size_t sollya_fwrite(const void *, size_t, size_t, FILE *);
+
+
 
 #endif /* ifdef GENERAL_H*/
