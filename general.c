@@ -1,6 +1,6 @@
 /*
 
-  Copyright 2007-2013 by
+  Copyright 2007-2015 by
 
   Laboratoire de l'Informatique du Parallelisme,
   UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
@@ -1802,10 +1802,6 @@ int general(int argc, char *argv[]) {
   printMode = PRINT_MODE_LEGACY;
   warnFile = NULL;
 
-  if (tcgetattr(0,&termAttr) == -1) {
-    eliminatePromptBackup = 1;
-  }
-
   argsArgRead = 0;
   argsArgv = NULL;
   argsArgc = 0;
@@ -1824,6 +1820,15 @@ int general(int argc, char *argv[]) {
       strcpy(argsArgv[argsArgc-1], argv[i]);
     } else {
       if (strcmp(argv[i],"--help") == 0) {
+	if ((!inputFileOpened) && (!eliminatePromptBackup)) {
+	  if (tcgetattr(0,&termAttr) == -1) {
+	    eliminatePromptBackup = 1;
+	  } else {
+	    if (tcgetattr(1,&termAttr) == -1) {
+	      eliminatePromptBackup = 1;
+	    }
+	  }
+	} 
 	sollyaPrintf("This is %s connected to ",PACKAGE_STRING);
 	if (eliminatePromptBackup)
 	  sollyaPrintf("a regular file");
@@ -1941,6 +1946,16 @@ int general(int argc, char *argv[]) {
 		      }
     }
   }
+
+  if ((!inputFileOpened) && (!eliminatePromptBackup)) {
+    if (tcgetattr(0,&termAttr) == -1) {
+      eliminatePromptBackup = 1;
+    } else {
+      if (tcgetattr(1,&termAttr) == -1) {
+	eliminatePromptBackup = 1;
+      }
+    }
+  } 
 
   yylex_init(&scanner);
   if (inputFileOpened) {
