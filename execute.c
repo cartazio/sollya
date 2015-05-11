@@ -8480,6 +8480,7 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
   int tern;
   int faithfulRoundingIsExact;
   int marker;
+  int resEval;
 
   faithfulRoundingIsExact = 0;
   shown = 0; shown2 = 0;
@@ -8529,8 +8530,12 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
 	    simplCst = simplifyTreeErrorfree(cst);
 	    if ((accessThruMemRef(simplCst)->nodeType == CONSTANT) &&
 		mpfr_number_p(*(accessThruMemRef(simplCst)->value))) {
-	      if (evaluateFaithful(a,func,*(accessThruMemRef(simplCst)->value),tools_precision)) {
+	      resEval = evaluateFaithful(a,func,*(accessThruMemRef(simplCst)->value),tools_precision);
+	      if (resEval) {
 		faithfulAlreadyKnown = 1;
+		if (resEval == 4) {
+		  faithfulRoundingIsExact = 1;
+		}
 	      }
 	    }
 	    freeThing(simplCst);
