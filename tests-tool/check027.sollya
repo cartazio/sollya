@@ -135,3 +135,10 @@ printsingle( -(1/2)*2^(-149) );
 printsingle( +0 );
 printsingle( -0 );
 
+/*********************************************************************************/
+restart;
+print("=============== Test number 7 ================");
+verbosity = 2;
+roundingwarnings=on;
+p = x+1;
+p(2);

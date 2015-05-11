@@ -154,3 +154,8 @@ Warning: rounding up occurred before printing a value as a single.
 0x80000000
 0x00000000
 0x80000000
+The tool has been restarted.
+=============== Test number 7 ================
+The verbosity level has been set to 2.
+Rounding warning mode has been activated.
+3
