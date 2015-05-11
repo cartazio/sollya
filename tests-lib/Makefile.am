@@ -323,6 +323,8 @@ tvoid.c
 
 EXTRA_DIST = check.proto $(TESTFILES) $(TESTFILES:.c=.reference)
 
+AM_CPPFLAGS = -I$(top_srcdir)
+
 check_PROGRAMS = force_compilation $(TESTFILES:.c=)
 check_LIBRARIES = libraryexample.a # libraryexample.a will be a shared library actually,
                                    # but we do not know how to explain it to automake.
@@ -334,7 +336,7 @@ LDADD = $(top_builddir)/.libs/libsollya.la -lstdc++
 MOSTLYCLEANFILES = $(TESTS) libraryexample.a
 
 libraryexample.$(OBJEXT): libraryexample.c
-	$(CC) $(CFLAGS) $(AM_CPPFLAGS) -fPIC -Wall -c libraryexample.c
+	$(CC) $(CFLAGS) $(AM_CPPFLAGS) -fPIC -Wall -c '$(srcdir)/libraryexample.c'
 
 libraryexample.a: libraryexample.$(OBJEXT)
 	$(CC) $(LDFLAGS) $(AM_LDFLAGS) -shared -o libraryexample.a libraryexample.$(OBJEXT) -lmpfi -lmpfr -lgmp
@@ -350,5 +352,5 @@ $(TESTS): check.proto
 	@echo "Building "$@
 	@echo "#!/bin/sh" > $@
 	@echo "TESTFILES=\""$(@:.sh=)"\"" >> $@
-	@cat check.proto >> $@
+	@cat "$(srcdir)/check.proto" >> $@
 	@chmod +x $@

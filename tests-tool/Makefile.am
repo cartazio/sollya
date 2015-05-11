@@ -13,7 +13,7 @@ force_compilation_SOURCES =
 MOSTLYCLEANFILES = $(TESTS) libraryexample.a
 
 libraryexample.$(OBJEXT): libraryexample.c
-	$(CC) $(CFLAGS) $(AM_CPPFLAGS) -fPIC -Wall -c libraryexample.c
+	$(CC) $(CFLAGS) $(AM_CPPFLAGS) -fPIC -Wall -c '$(srcdir)/libraryexample.c'
 
 libraryexample.a: libraryexample.$(OBJEXT)
 	$(CC) $(LDFLAGS) $(AM_LDFLAGS) -shared -o libraryexample.a libraryexample.$(OBJEXT) -lmpfi -lmpfr -lgmp
@@ -27,7 +27,7 @@ $(TESTS): check.proto
 	@echo "Building "$@
 	@echo "#!/bin/sh" > $@
 	@echo "SOLLYA="$(top_builddir)"/sollya" >> $@
-	@echo "TESTFILES=\""$(@:.sh=.sollya)"\"" >> $@
-	@cat check.proto >> $@
+	@echo "TESTFILES=\"$(srcdir)/"$(@:.sh=.sollya)"\"" >> $@
+	@cat "$(srcdir)/check.proto" >> $@
 	@chmod +x $@
 

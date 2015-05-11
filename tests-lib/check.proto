@@ -1,17 +1,17 @@
 TEST=0
 for i in $TESTFILES
 do
-  if ! test -e $i.reference
+  if ! test -e "${srcdir}/$i.reference"
   then
     if ! test -e $i 
     then 
       echo "Unexpected error: executable $i not found. Are you in the right directory?" >&2
     else 
-      echo "Unexpected error: file $i.reference seems to be missing." >&2
+      echo "Unexpected error: file ${srcdir}/$i.reference seems to be missing." >&2
     fi
     TEST=1
   else
-    if test -s $i.reference
+    if test -s "${srcdir}/$i.reference"
     then
       if ! ./$i > $i.output < /dev/null
       then
@@ -20,7 +20,7 @@ do
         ############################################################
         TEST=1
       else
-        if ! diff $i.output $i.reference > /dev/null
+        if ! diff $i.output "${srcdir}/$i.reference" > /dev/null
         then
           ##################################################################
           ##### $i.reference exists, $i does not return an error code, #####
