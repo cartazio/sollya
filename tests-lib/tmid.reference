@@ -1,13 +1,13 @@
 mid of 2 is 2
 mid of 1 / 3 is 1 / 3
 mid of log(-3) is log(-3)
-mid of @NaN@ is @NaN@
+mid of NaN is NaN
 mid of [1;2] is 1.5
-mid of [@Inf@;@Inf@] is (@Inf@ + @Inf@) / 2
-mid of [1;@Inf@] is (1 + @Inf@) / 2
-mid of [-@Inf@;@Inf@] is (-@Inf@ + @Inf@) / 2
-mid of [-@Inf@;1] is (-@Inf@ + 1) / 2
-mid of [-@Inf@;-@Inf@] is (-@Inf@ + (-@Inf@)) / 2
+mid of [infty;infty] is (infty + infty) / 2
+mid of [1;infty] is (1 + infty) / 2
+mid of [-infty;infty] is (-infty + infty) / 2
+mid of [-infty;1] is (-infty + 1) / 2
+mid of [-infty;-infty] is (-infty + (-infty)) / 2
 The following test produces a typing error
 mid of _x_ is error
 The following test produces a typing error

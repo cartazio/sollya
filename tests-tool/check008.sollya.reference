@@ -3,11 +3,11 @@ The tool has been restarted.
 x^2
 The tool has been restarted.
 =============== Test number 142 ================
-4.1152263374485596707818930041152263374485596707818e-3
+4.1152263374485596707818930041152263374485596707819e-3
 The tool has been restarted.
 =============== Test number 143 ================
 Warning: the given expression is undefined or numerically unstable.
-@NaN@
+NaN
 The tool has been restarted.
 =============== Test number 144 ================
 sin(x)^exp(x) * ((cos(x) * exp(x)) / sin(x) + exp(x) * log(sin(x)))
@@ -72,7 +72,7 @@ Display mode is dyadic numbers in integer-power-of-2 notation.
 33070006991101558613323983488220944360067107133265 * 2^(-165)
 Display mode is decimal numbers.
 Midpoint mode has been deactivated.
-[0.70710678118654752440084436210484903928483593768844;0.70710678118654949743721782517557347782646274417048]
+[0.70710678118654752440084436210484903928483593768845;0.70710678118654949743721782517557347782646274417049]
 Midpoint mode has been activated.
 0.7071067811865~4/5~
 Display mode is dyadic numbers.

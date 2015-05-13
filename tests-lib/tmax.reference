@@ -32,7 +32,7 @@ max([|1, sin((pi) / 3) - sqrt(3) / 2, 0|]) returns 1
 
 max(2,NaN,1) returns 2
 
-max([|2, @NaN@, 1|]) returns 2
+max([|2, NaN, 1|]) returns 2
 
 Warning: the following test involves a NaN
 max(2,log(-17),1) returns 2
@@ -42,7 +42,7 @@ max([|2, log(-17), 1|]) returns 2
 
 max(NaN,1,2) returns 2
 
-max([|@NaN@, 1, 2|]) returns 2
+max([|NaN, 1, 2|]) returns 2
 
 Warning: the following test involves a NaN
 max(log(-17),1,2) returns 2

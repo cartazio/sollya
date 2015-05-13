@@ -7,7 +7,7 @@
 The following test is not certified (both values are probably equal)
 sin((pi) / 3) > sqrt(3) / 2 returns false
 
-sin((pi) / 3) > sqrt(3) / 2 * (1 + 6.22301527786114170714406405378012424059025216872117e-61) returns false
+sin((pi) / 3) > sqrt(3) / 2 * (1 + 6.2230152778611417071440640537801242405902521687212e-61) returns false
 
 sin((pi) / 3) - sqrt(3) / 2 > 1 returns false
 
@@ -38,16 +38,16 @@ The test will rely on pure FP evaluation.
 -(tan((pi) / 2)^2) > 1 returns false
 
 The test will rely on pure FP evaluation.
-@Inf@ > -(tan((pi) / 2)^2) returns true
+infty > -(tan((pi) / 2)^2) returns true
 
 The test will rely on pure FP evaluation.
--(tan((pi) / 2)^2) > @Inf@ returns false
+-(tan((pi) / 2)^2) > infty returns false
 
 The test will rely on pure FP evaluation.
-@Inf@ > tan((pi) / 2)^2 returns true
+infty > tan((pi) / 2)^2 returns true
 
 The test will rely on pure FP evaluation.
-tan((pi) / 2)^2 > @Inf@ returns false
+tan((pi) / 2)^2 > infty returns false
 
 The following expression is not correctly typed.
 error > 17 returns error
@@ -56,11 +56,11 @@ The following expression is not correctly typed.
 error > error returns error
 
 The following expression is not correctly typed.
-@NaN@ > error returns error
+NaN > error returns error
 
-@NaN@ > @NaN@ returns false
+NaN > NaN returns false
 
-@NaN@ > 1 returns false
+NaN > 1 returns false
 
 The following expression is not correctly typed.
 Hello! > Hella! returns error

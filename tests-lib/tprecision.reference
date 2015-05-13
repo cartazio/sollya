@@ -1,6 +1,6 @@
 In order to store the (evaluation to current precision) of the constant 0 in a binary floating-point format, 0 bits of precision are necessary.
-In order to store the (evaluation to current precision) of the constant @NaN@ in a binary floating-point format, @NaN@ bits of precision are necessary.
-In order to store the (evaluation to current precision) of the constant @Inf@ in a binary floating-point format, @Inf@ bits of precision are necessary.
+In order to store the (evaluation to current precision) of the constant NaN in a binary floating-point format, NaN bits of precision are necessary.
+In order to store the (evaluation to current precision) of the constant infty in a binary floating-point format, infty bits of precision are necessary.
 In order to store the (evaluation to current precision) of the constant 1 in a binary floating-point format, 1 bits of precision are necessary.
 In order to store the (evaluation to current precision) of the constant 33b-5 in a binary floating-point format, 6 bits of precision are necessary.
 In order to store the (evaluation to current precision) of the constant 1267650600228229401496703205377b-100 in a binary floating-point format, 101 bits of precision are necessary.

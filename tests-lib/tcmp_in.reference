@@ -22,16 +22,16 @@ e in Hello returns error
 The following expression is not correctly typed.
 1 in H1llo returns error
 Only one endpoint of the interval is NaN. Will replace it by [NaN,NaN]
-[@NaN@;@NaN@] in [2;4] returns false
+[NaN;NaN] in [2;4] returns false
 Only one endpoint of the interval is NaN. Will replace it by [NaN,NaN]
-[@NaN@;@NaN@] in [2;4] returns false
+[NaN;NaN] in [2;4] returns false
 Only one endpoint of the interval is NaN. Will replace it by [NaN,NaN]
-[2;4] in [@NaN@;@NaN@] returns false
+[2;4] in [NaN;NaN] returns false
 Only one endpoint of the interval is NaN. Will replace it by [NaN,NaN]
-[2;4] in [@NaN@;@NaN@] returns false
-Only one endpoint of the interval is NaN. Will replace it by [NaN,NaN]
-Only one endpoint of the interval is NaN. Will replace it by [NaN,NaN]
-[@NaN@;@NaN@] in [@NaN@;@NaN@] returns false
+[2;4] in [NaN;NaN] returns false
 Only one endpoint of the interval is NaN. Will replace it by [NaN,NaN]
 Only one endpoint of the interval is NaN. Will replace it by [NaN,NaN]
-[@NaN@;@NaN@] in [@NaN@;@NaN@] returns false
+[NaN;NaN] in [NaN;NaN] returns false
+Only one endpoint of the interval is NaN. Will replace it by [NaN,NaN]
+Only one endpoint of the interval is NaN. Will replace it by [NaN,NaN]
+[NaN;NaN] in [NaN;NaN] returns false

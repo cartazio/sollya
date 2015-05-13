@@ -32,7 +32,7 @@ min([|-1, sin((pi) / 3) - sqrt(3) / 2, 0|]) returns -1
 
 min(2,NaN,1) returns 1
 
-min([|2, @NaN@, 1|]) returns 1
+min([|2, NaN, 1|]) returns 1
 
 Warning: the following test involves a NaN
 min(2,log(-17),1) returns 1
@@ -42,7 +42,7 @@ min([|2, log(-17), 1|]) returns 1
 
 min(NaN,1,2) returns 1
 
-min([|@NaN@, 1, 2|]) returns 1
+min([|NaN, 1, 2|]) returns 1
 
 Warning: the following test involves a NaN
 min(log(-17),1,2) returns 1

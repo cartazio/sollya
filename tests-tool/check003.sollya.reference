@@ -4,14 +4,14 @@ The tool has been restarted.
 The tool has been restarted.
 =============== Test number 42 ================
 Warning: the given expression is undefined or numerically unstable.
-@NaN@
+NaN
 The tool has been restarted.
 =============== Test number 43 ================
 (exp(x) * cos(x) - sin(x) * exp(x)) / exp(x)^2
 The tool has been restarted.
 =============== Test number 44 ================
 1.0000000000000000000000000000007888609052210118054
-1.0000000000000000000000000000008
+1.000000000000000000000000000000788860905
 The tool has been restarted.
 =============== Test number 45 ================
 1.100110011001100110011001100110011001100110011001100110011001101_2 * 2^(-4)
@@ -19,10 +19,10 @@ The tool has been restarted.
 The tool has been restarted.
 =============== Test number 46 ================
 0
-8.7098098162172166755761954947788722958591037427053e-603
+8.7098098162172166755761954947788722958591037427054e-603
 The tool has been restarted.
 =============== Test number 47 ================
--5.0165576126683320235573270803307570138315616702549e-20
+-5.016557612668332023557327080330757013831561670255e-20
 Warning: at least one of the given expressions or a subexpression is not correctly typed
 or its evaluation has failed because of some error on a side-effect.
 The tool has been restarted.
@@ -74,7 +74,7 @@ The tool has been restarted.
 0.70710678118654752440084436210484903928483593768847
 The tool has been restarted.
 =============== Test number 58 ================
-[-1.72986452514381269516508615031098129542836767991679e-12715;7.5941198201187963145069564314525661706039084390067e-12716]
+[-1.7298645251438126951650861503109812954283676799168e-12715;7.5941198201187963145069564314525661706039084390068e-12716]
 The tool has been restarted.
 =============== Test number 59 ================
 [-5.143390272677254630046998919961912407349224165421e-50;0.70710678118654752440084436210484903928483593768866]

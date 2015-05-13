@@ -53,7 +53,7 @@ The tool has been restarted.
 -4
 The tool has been restarted.
 =============== Test number 243 ================
-1.484131622314453125e2
+148.4131622314453125
 0
 0
 0
@@ -214,8 +214,8 @@ Warning: the tool is unable to decide an inequality test by evaluation even thou
 false
 The tool has been restarted.
 =============== Test number 251 ================
-5.53427734375e1
-5.53427734375e1
+55.3427734375
+55.3427734375
 The tool has been restarted.
 =============== Test number 252 ================
 Warning: using slower GMP MPQ version
@@ -241,17 +241,17 @@ The tool has been restarted.
 { .a = 5, .b = exp(x) }
 5
 exp(x)
-1.48413159102576603421115580040552279623487667593878e2
+148.41315910257660342111558004055227962348766759388
 5
 5 + exp(x)
-sin(x * 3.14159265358979323846264338327950288419716939937508)
+sin(x * 3.1415926535897932384626433832795028841971693993751)
 -0.70710678118654752440084436210484903928483593768847
-{ .e = { .f = { .g = "Salut" } }, .d = sin(x * 3.14159265358979323846264338327950288419716939937508), .a = 5, .b = exp(x) }
+{ .e = { .f = { .g = "Salut" } }, .d = sin(x * 3.1415926535897932384626433832795028841971693993751), .a = 5, .b = exp(x) }
 { .f = { .g = "Salut" } }
 { .f = { .g = "Salut" } }
 Salut and hello
 true
-{ .h = { .a = 17, .n = true }, .e = { .f = { .g = "Salut" } }, .d = sin(x * 3.14159265358979323846264338327950288419716939937508), .a = 5, .b = exp(x) }
+{ .h = { .a = 17, .n = true }, .e = { .f = { .g = "Salut" } }, .d = sin(x * 3.1415926535897932384626433832795028841971693993751), .a = 5, .b = exp(x) }
 { .a = { .b = { .c = "Hallo" } } }
 { .a = { .b = { .c = 17 } } }
 { .a = { .b = "Blub" } }
@@ -272,30 +272,30 @@ The tool has been restarted.
 The verbosity level has been set to 0.
 Test 1: (-3)^(+0) = 1 IEEE 754-2008: 1
 Test 2: 3^(+0) = 1 IEEE 754-2008: 1
-Test 3: NaN^(+0) = @NaN@ IEEE 754-2008: 1
-Test 4: NaN^(-0) = @NaN@ IEEE 754-2008: 1
+Test 3: NaN^(+0) = NaN IEEE 754-2008: 1
+Test 4: NaN^(-0) = NaN IEEE 754-2008: 1
 Test 5: (-infty)^(+0) = 1 IEEE 754-2008: 1
 Test 6: (-infty)^(-0) = 1 IEEE 754-2008: 1
 Test 7: (infty)^(+0) = 1 IEEE 754-2008: 1
 Test 8: (infty)^(-0) = 1 IEEE 754-2008: 1
-Test 9: (+0)^(-5) = @NaN@ IEEE 754-2008: +infty
-Test 10: (-0)^(-5) = @NaN@ IEEE 754-2008: -infty
-Test 11: (+0)^(-4) = @NaN@ IEEE 754-2008: +infty
-Test 12: (-0)^(-4) = @NaN@ IEEE 754-2008: +infty
+Test 9: (+0)^(-5) = NaN IEEE 754-2008: +infty
+Test 10: (-0)^(-5) = NaN IEEE 754-2008: -infty
+Test 11: (+0)^(-4) = NaN IEEE 754-2008: +infty
+Test 12: (-0)^(-4) = NaN IEEE 754-2008: +infty
 Test 13: (+0)^(+5) = 0 IEEE 754-2008: +0
 Test 14: (-0)^(+5) = 0 IEEE 754-2008: -0
 Test 15: (+0)^(+4) = 0 IEEE 754-2008: +0
 Test 16: (-0)^(+4) = 0 IEEE 754-2008: +0
-Test 17: (+0)^(-5.5) = @Inf@ IEEE 754-2008: +infty
-Test 18: (-0)^(-5.5) = @Inf@ IEEE 754-2008: +infty
-Test 19: (+0)^(-4.5) = @Inf@ IEEE 754-2008: +infty
-Test 20: (-0)^(-4.5) = @Inf@ IEEE 754-2008: +infty
+Test 17: (+0)^(-5.5) = infty IEEE 754-2008: +infty
+Test 18: (-0)^(-5.5) = infty IEEE 754-2008: +infty
+Test 19: (+0)^(-4.5) = infty IEEE 754-2008: +infty
+Test 20: (-0)^(-4.5) = infty IEEE 754-2008: +infty
 Test 21: (+0)^(+5.5) = 0 IEEE 754-2008: +0
 Test 22: (-0)^(+5.5) = 0 IEEE 754-2008: +0
 Test 23: (+0)^(+4.5) = 0 IEEE 754-2008: +0
 Test 24: (-0)^(+4.5) = 0 IEEE 754-2008: +0
-Test 25: (+0)^(-infty) = @Inf@ IEEE 754-2008: +infty
-Test 26: (-0)^(-infty) = @Inf@ IEEE 754-2008: +infty
+Test 25: (+0)^(-infty) = infty IEEE 754-2008: +infty
+Test 26: (-0)^(-infty) = infty IEEE 754-2008: +infty
 Test 27: (+0)^(+infty) = 0 IEEE 754-2008: +0
 Test 28: (-0)^(+infty) = 0 IEEE 754-2008: +0
 Test 29: (-1)^(+infty) = 1 IEEE 754-2008: 1
@@ -307,9 +307,9 @@ Test 34: (+1)^(-3.5) = 1 IEEE 754-2008: 1
 Test 35: (+1)^(-4) = 1 IEEE 754-2008: 1
 Test 36: (+1)^(-3.5) = 1 IEEE 754-2008: 1
 Test 37: (-1)^(-3) = -1 IEEE 754-2008: -1
-Test 38: (-1)^(-3.5) = @NaN@ IEEE 754-2008: NaN
+Test 38: (-1)^(-3.5) = NaN IEEE 754-2008: NaN
 Test 39: (-1)^(-4) = 1 IEEE 754-2008: 1
-Test 40: (-1)^(-4.5) = @NaN@ IEEE 754-2008: NaN
+Test 40: (-1)^(-4.5) = NaN IEEE 754-2008: NaN
 Test 41: (+1)^(+0) = 1 IEEE 754-2008: 1
 Test 42: (+1)^(-0) = 1 IEEE 754-2008: 1
 Test 43: (-1)^(+0) = 1 IEEE 754-2008: 1
@@ -317,59 +317,59 @@ Test 44: (-1)^(-0) = 1 IEEE 754-2008: 1
 Test 45: (+1)^(+2) = 1 IEEE 754-2008: 1
 Test 46: (-1)^(+2) = 1 IEEE 754-2008: 1
 Test 47: (+1)^(+2.5) = 1 IEEE 754-2008: 1
-Test 48: (-1)^(+2.5) = @NaN@ IEEE 754-2008: NaN
+Test 48: (-1)^(+2.5) = NaN IEEE 754-2008: NaN
 Test 49: (+1)^(+infty) = 1 IEEE 754-2008: 1
 Test 50: (+1)^(-infty) = 1 IEEE 754-2008: 1
 Test 51: (-1)^(+infty) = 1 IEEE 754-2008: 1
 Test 52: (-1)^(-infty) = 1 IEEE 754-2008: 1
-Test 53: (+1)^NaN = @NaN@ IEEE 754-2008: 1
-Test 54: (-1)^NaN = @NaN@ IEEE 754-2008: NaN
-Test 55: (-5)^(-5.5) = @NaN@ IEEE 754-2008: NaN
-Test 56: (-5)^(-4.5) = @NaN@ IEEE 754-2008: NaN
-Test 57: (-5)^(+5.5) = @NaN@ IEEE 754-2008: NaN
-Test 58: (-5)^(+4.5) = @NaN@ IEEE 754-2008: NaN
+Test 53: (+1)^NaN = NaN IEEE 754-2008: 1
+Test 54: (-1)^NaN = NaN IEEE 754-2008: NaN
+Test 55: (-5)^(-5.5) = NaN IEEE 754-2008: NaN
+Test 56: (-5)^(-4.5) = NaN IEEE 754-2008: NaN
+Test 57: (-5)^(+5.5) = NaN IEEE 754-2008: NaN
+Test 58: (-5)^(+4.5) = NaN IEEE 754-2008: NaN
 Test 59: (+5)^(-5.5) = 1.4310835055998654057018711479880167906819957501514e-4 IEEE 754-2008: real
-Test 60: (+5)^(-4.5) = 7.1554175279993270285093557399400839534099787507568e-4 IEEE 754-2008: real
-Test 61: (+5)^(+5.5) = 6.9877124296868428012786677147852382357519323737861e3 IEEE 754-2008: real
-Test 62: (+5)^(+4.5) = 1.39754248593736856025573354295704764715038647475718e3 IEEE 754-2008: real
-Test 63: NaN^NaN = @NaN@ IEEE 754-2008: NaN
-Test 64: (+infty)^(+infty) = @Inf@ IEEE 754-2008: +infty
+Test 60: (+5)^(-4.5) = 7.1554175279993270285093557399400839534099787507569e-4 IEEE 754-2008: real
+Test 61: (+5)^(+5.5) = 6987.7124296868428012786677147852382357519323737861 IEEE 754-2008: real
+Test 62: (+5)^(+4.5) = 1397.5424859373685602557335429570476471503864747572 IEEE 754-2008: real
+Test 63: NaN^NaN = NaN IEEE 754-2008: NaN
+Test 64: (+infty)^(+infty) = infty IEEE 754-2008: +infty
 Test 65: (+infty)^(-infty) = 0 IEEE 754-2008: +0
-Test 66: (-infty)^(+infty) = @NaN@ IEEE 754-2008: NaN
+Test 66: (-infty)^(+infty) = NaN IEEE 754-2008: NaN
 Test 67: (-infty)^(-infty) = 0 IEEE 754-2008: NaN
-Test 68: (+infty)^NaN = @NaN@ IEEE 754-2008: NaN
-Test 69: (-infty)^NaN = @NaN@ IEEE 754-2008: NaN
-Test 70: NaN^(+infty) = @NaN@ IEEE 754-2008: NaN
-Test 71: NaN^(-infty) = @NaN@ IEEE 754-2008: NaN
-Test 72: infty = @Inf@
-Test 73: -infty = -@Inf@
+Test 68: (+infty)^NaN = NaN IEEE 754-2008: NaN
+Test 69: (-infty)^NaN = NaN IEEE 754-2008: NaN
+Test 70: NaN^(+infty) = NaN IEEE 754-2008: NaN
+Test 71: NaN^(-infty) = NaN IEEE 754-2008: NaN
+Test 72: infty = infty
+Test 73: -infty = -infty
 Test 74: exp(-infty) = 0
-Test 75: infty^infty = @Inf@
+Test 75: infty^infty = infty
 Test 76: infty^(-infty) = 0
 The tool has been restarted.
 =============== Test number 257 ================
-[@Inf@;@Inf@]  [@Inf@;@Inf@]
-[-@Inf@;-@Inf@]  [-@Inf@;-@Inf@]
-[-@Inf@;-@Inf@]  [-@Inf@;-@Inf@]
-[@Inf@;@Inf@]  [@Inf@;@Inf@]
-[-@Inf@;@Inf@]  [-@Inf@;@Inf@]
-[-@Inf@;@Inf@]  [-@Inf@;@Inf@]
+[infty;infty]  [infty;infty]
+[-infty;-infty]  [-infty;-infty]
+[-infty;-infty]  [-infty;-infty]
+[infty;infty]  [infty;infty]
+[-infty;infty]  [-infty;infty]
+[-infty;infty]  [-infty;infty]
 Warning: one bound of a range is NaN while the other is not. Will normalize the range to have two NaN endpoints.
-[@NaN@;@NaN@]  [@NaN@;@NaN@]
+[NaN;NaN]  [NaN;NaN]
 Warning: one bound of a range is NaN while the other is not. Will normalize the range to have two NaN endpoints.
-[@NaN@;@NaN@]  [@NaN@;@NaN@]
+[NaN;NaN]  [NaN;NaN]
 Warning: the bounds of the given range are in wrong order. Will reverse them.
 [-2;2]
 Warning: the bounds of the given range are in wrong order. Will reverse them.
-[-@Inf@;@Inf@]
+[-infty;infty]
 [1;1]  [1;1]
 [1;1]  [1;1]
-[@NaN@;@NaN@]  [@NaN@;@NaN@]
+[NaN;NaN]  [NaN;NaN]
 [0;0]  [0;0]
-[@Inf@;@Inf@]  [@Inf@;@Inf@]
-[0;@Inf@]  [0;@Inf@]
-[@Inf@;@Inf@]  [@Inf@;@Inf@]
-[1;@Inf@]  [1;@Inf@]
+[infty;infty]  [infty;infty]
+[0;infty]  [0;infty]
+[infty;infty]  [infty;infty]
+[1;infty]  [1;infty]
 [0;2]  [0;2]
 [0;0]  [0;0]
 [0;0]  [0;0]
@@ -391,11 +391,11 @@ The tool has been restarted.
 sin(62)
 Warning: the tool is unable to decide a minimum computation by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.
 17 + log(13) / log(9)
-1.48413159102576603421115580040552279623487667593878e2
+148.41315910257660342111558004055227962348766759388
 17
 2
 2
-1.48413159102576603421115580040552279623487667593878e2
+148.41315910257660342111558004055227962348766759388
 exp(17)
 Warning: the tool is unable to decide a maximum computation by evaluation even though faithful evaluation of the terms has been possible. The terms will be considered to be equal.
 17 + log2(13) / log2(9)

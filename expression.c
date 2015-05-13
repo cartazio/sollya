@@ -700,214 +700,1014 @@ void printHexadecimalValue(mpfr_t x) {
   safeFree(str);
 }
 
-
-
-char *sprintValue(mpfr_t *aValue) {
-  mpfr_t y;
-  char *str, *str2, *str3;
-  mp_exp_t e, expo;
-  int l, i, len;
-  char *buffer, *tempBuf, *finalBuffer;
-  char *tempBufOld;
-  char *str4;
-  mpfr_t temp;
-  mp_prec_t prec2, prec, p, prec3;
-  mpfr_t *value, myValue;
-  char *res;
-  mpfr_t two128;
-
-  p = mpfr_get_prec(*aValue);
-  mpfr_init2(myValue,p);
-  simplifyMpfrPrec(myValue, *aValue);
-  if ((p > tools_precision) && (mpfr_get_prec(myValue) < tools_precision)) {
-    if (tools_precision < p) p = tools_precision;
-    mpfr_set_prec(myValue,p);
-    mpfr_set(myValue,*aValue,GMP_RNDN);
-  }
-  value = &myValue;
-
-  if (dyadic == 4) {
-    res = sPrintHexadecimal(*value);
-    mpfr_clear(myValue);
-    return res;
-  }
-
-  if (dyadic == 3) {
-    res = sPrintBinary(*value);
-    mpfr_clear(myValue);
-    return res;
-  }
-
-  mpfr_init2(two128,12);
-  mpfr_set_ui(two128,2,GMP_RNDN);
-  mpfr_mul_2ui(two128,two128,128,GMP_RNDN);
-
-  prec = mpfr_get_prec(*value);
-
-  if (mpfr_number_p(*value)) {
-    prec2 = prec;
-    while (prec2 >= tools_precision) {
-      mpfr_init2(temp,prec2);
-      mpfr_set(temp,*value,GMP_RNDN);
-      if (mpfr_cmp(temp,*value) != 0) {
-	mpfr_clear(temp);
-	prec2++;
-	break;
-      }
-      mpfr_clear(temp);
-      prec2--;
-    }
-    if (prec2 > prec) prec2 = prec;
-    if (prec2 < tools_precision) prec2 = tools_precision;
-    prec = prec2;
-  }
-  prec3 = prec;
-  if (mpfr_get_prec(*value) > prec3) prec3 = mpfr_get_prec(*value);
-  buffer = safeCalloc(3 * prec3 + 7 + (sizeof(mp_exp_t) * 4) + 1, sizeof(char));
-  tempBuf = buffer;
-  mpfr_init2(y,prec);
-
-  if (mpfr_zero_p(*value) ||
-      (mpfr_number_p(*value) &&
-       mpfr_integer_p(*value) &&
-       (mpfr_cmpabs(*value,two128) < 0))) {
-    if (mpfr_zero_p(*value)) {
-      tempBuf += sprintf(tempBuf,"0");
-    } else {
-      mpfr_set(y,*value,GMP_RNDN);
-      if (mpfr_sgn(y) < 0) {
-        tempBuf += sprintf(tempBuf,"-"); mpfr_neg(y,y,GMP_RNDN);
-      }
-      str = mpfr_get_str(NULL,&e,10,0,y,GMP_RNDN);
-      len = strlen(str);
-      if (len >= e) {
-        for (i=0;i<e;i++) {
-          *tempBuf = str[i];
-          tempBuf++;
-        }
-      } else {
-        for (i=0;i<len;i++) {
-          *tempBuf = str[i];
-          tempBuf++;
-        }
-        for (i=0;i<e-len;i++) {
-          *tempBuf = '0';
-          tempBuf++;
-        }
-      }
-      mpfr_free_str(str);
-    }
-  } else {
-    mpfr_set(y,*value,GMP_RNDN);
-    if (mpfr_sgn(y) < 0) {
-      tempBuf += sprintf(tempBuf,"-"); mpfr_neg(y,y,GMP_RNDN);
-    }
-    if ((dyadic == 1) || (dyadic == 2)) {
-      if (!mpfr_number_p(*value)) {
-	str = mpfr_get_str(NULL,&e,10,0,y,GMP_RNDN);
-	tempBuf += sprintf(tempBuf,"%s",str);
-      } else {
-	expo = mpfr_get_exp(y);
-	if (mpfr_set_exp(y,prec)) {
-	  printMessage(1,SOLLYA_MSG_OUT_OF_CURRENT_EXPONENT_RANGE,"\nWarning: %d is not in the current exponent range of a variable. Values displayed may be wrong.\n",(int)(prec));
-	}
-	expo -= prec;
-	while (mpfr_integer_p(y)) {
-	  mpfr_div_2ui(y,y,1,GMP_RNDN);
-	  expo += 1;
-	}
-	expo--;
-	if (mpfr_mul_2ui(y,y,1,GMP_RNDN) != 0) {
-	  if (!noRoundingWarnings) {
-	    printMessage(1,SOLLYA_MSG_INADVERTED_ROUNDING_WHILE_DISPLAYING,"\nWarning: rounding occurred during displaying a value. Values displayed may be wrong.\n");
-	  }
-	}
-	str = mpfr_get_str(NULL,&e,10,0,y,GMP_RNDN);
-	str2 = (char *) safeCalloc(strlen(str)+1,sizeof(char));
-	strncpy(str2,str,e);
-	if (dyadic == 1) {
-	  if (expo != 0) {
-	    tempBuf += sprintf(tempBuf,"%sb%d",str2,(int)expo);
-	  } else {
-	    tempBuf += sprintf(tempBuf,"%s",str2);
-	  }
-	} else {
-	  if (expo != 0) {
-	    tempBuf += sprintf(tempBuf,"%s * 2^(%d)",str2,(int)expo);
-	  } else {
-	    tempBuf += sprintf(tempBuf,"%s",str2);
-	  }
-	}
-	safeFree(str2);
-      }
-      mpfr_free_str(str);
-    } else {
-      str = mpfr_get_str(NULL,&e,10,0,y,GMP_RNDN);
-      if (mpfr_number_p(*value)) {
-	str3 = (char *) safeCalloc(strlen(str)+1,sizeof(char));
-	removeTrailingZeros(str3,str);
-	if (e == 0) {
-	  tempBufOld = tempBuf;
-	  str4 = (char *) safeCalloc(strlen(str3)+1,sizeof(char));
-	  mpfr_init2(temp,prec);
-	  for (i=0;i<(int)strlen(str3);i++) {
-	    str4[i] = str3[i];
-	    tempBuf = tempBufOld;
-	    tempBuf += sprintf(tempBuf,"0.%s",str4);
-	    mpfr_set_str(temp,buffer,10,GMP_RNDN);
-	    if (mpfr_cmp(temp,*value) == 0) break;
-	  }
-	  safeFree(str4);
-	  mpfr_clear(temp);
-	} else {
-	  l = strlen(str3);
-	  if ((e > 0) && (l <= e) && (e <= 16)) {
-	    tempBuf += sprintf(tempBuf,"%s",str3);
-	    for (i=l;i<e;i++) tempBuf += sprintf(tempBuf,"0");
-	  } else {
-	    tempBufOld = tempBuf;
-	    str4 = (char *) safeCalloc(strlen(str3)+1,sizeof(char));
-	    mpfr_init2(temp,prec);
-	    for (i=0;i<(int)strlen(str3);i++) {
-	      str4[i] = str3[i];
-	      tempBuf = tempBufOld;
-	      if (e-1 == 0) {
-		if (strlen(str4) > 1) {
-		  tempBuf += sprintf(tempBuf,"%c.%s",*str4,str4+1);
-		} else {
-		  tempBuf += sprintf(tempBuf,"%c",*str4);
-		}
-	      } else {
-		if (strlen(str4) > 1) {
-		  tempBuf += sprintf(tempBuf,"%c.%se%d",*str4,str4+1,(int)e-1);
-		} else {
-		  tempBuf += sprintf(tempBuf,"%ce%d",*str4,(int)e-1);
-		}
-	      }
-	      mpfr_set_str(temp,buffer,10,GMP_RNDN);
-	      if (mpfr_cmp(temp,*value) == 0) break;
-	    }
-	    safeFree(str4);
-	    mpfr_clear(temp);
-	  }
-	}
-	safeFree(str3);
-      } else {
-	tempBuf += sprintf(tempBuf,"%s",str);
-      }
-      mpfr_free_str(str);
-    }
-  }
-  mpfr_clear(y);
-
-  finalBuffer = (char *) safeCalloc(strlen(buffer)+1,sizeof(char));
-  sprintf(finalBuffer,"%s",buffer);
-  safeFree(buffer);
-  mpfr_clear(myValue);
-  mpfr_clear(two128);
-  return finalBuffer;
+static inline int __sprintfValue_sprintf(char *str, const char *format, ...) {
+  va_list varlist;
+  int res;
+  va_start(varlist, format);
+  deferSignalHandling();
+  res = vsprintf(str, format, varlist);
+  resumeSignalHandling();
+  va_end(varlist);
+  return res;
 }
 
+static inline void __sprintfValue_init_value(mpfr_t x, mpfr_t *valPtr) {
+  int ternary;
+
+  /* Check if input is NaN or Inf */
+  if (!mpfr_number_p(*valPtr)) {
+    mpfr_init2(x, mpfr_get_prec(*valPtr));
+    mpfr_set(x, *valPtr, GMP_RNDN);
+    return;
+  }
+
+  /* Here the input is a real number */
+  mpfr_init2(x, tools_precision);
+  ternary = mpfr_set(x, *valPtr, GMP_RNDN);
+  if ((ternary == 0) && (mpfr_number_p(x))) {
+    /* The number holds on tools_precision bits */
+    return;
+  }
+  
+  /* The number does not hold on tools_precision bits, so use its own
+     precision 
+  */
+  mpfr_set_prec(x, mpfr_get_prec(*valPtr));
+  mpfr_set(x, *valPtr, GMP_RNDN); /* exact */
+}
+
+static inline char *__sprintfValue_print_special(mpfr_t x) {
+  char *res;
+
+  /* Display zero */
+  if (mpfr_zero_p(x)) {
+    res = safeCalloc(strlen("0") + 1, sizeof(char));
+    strcpy(res, "0");
+    return res;
+  }
+
+  /* Display NaN */
+  if (mpfr_nan_p(x)) {
+    res = safeCalloc(strlen("NaN") + 1, sizeof(char));
+    strcpy(res, "NaN");
+    return res;
+  }
+  
+  /* Display +/- Infinity */
+  if (mpfr_inf_p(x)) {
+    if (mpfr_sgn(x) < 0) {
+      /* Display -infty */
+      res = safeCalloc(strlen("-infty") + 1, sizeof(char));
+      strcpy(res, "-infty");
+    } else {
+      /* Display infty */
+      res = safeCalloc(strlen("infty") + 1, sizeof(char));
+      strcpy(res, "infty");
+    }
+    return res;
+  }
+  
+  /* Returning NULL on purpose for unhandled cases */
+  return NULL;
+}
+
+static inline int __sprintfValue_is_small_integer(mpfr_t x) {
+  if (!mpfr_number_p(x)) return 0;
+  if (mpfr_zero_p(x)) return 0;
+  if (!mpfr_integer_p(x)) return 0;
+  return (mpfr_get_exp(x) <= 128);
+}
+
+static inline char *__sprintfValue_print_integer(mpfr_t x) {
+  mpz_t z;
+  char *res;
+
+  /* Return NULL on purpose for unhandled cases */
+  if (!mpfr_number_p(x)) return NULL;
+  if (!mpfr_integer_p(x)) return NULL;
+  
+  /* x is an integer, convert it to MPZ */
+  mpz_init(z);
+  mpfr_get_z(z, x, GMP_RNDN); /* exact */
+  
+  /* Allocate output memory */
+  res = safeCalloc(mpz_sizeinbase(z, 10) + 2 + 1, sizeof(char));
+  mpz_get_str(res, 10, z);
+
+  /* Clear temporary */
+  mpz_clear(z);
+
+  /* Return the result */
+  return res;
+}
+
+static inline char *__sprintfValue_print_dyadic(mpfr_t x) {
+  mpfr_exp_t E;
+  mpz_t m;
+  int s;
+  mp_bitcnt_t zerosRight;
+  char *res;
+  char *curr;
+  long long int tmp;
+  mpfr_exp_t Et;
+  
+  /* Return NULL on purpose for unhandled cases */
+  if (!mpfr_number_p(x)) return NULL;
+
+  /* Handle the case of zero */
+  if (mpfr_zero_p(x)) {
+    res = safeCalloc(strlen("0") + 1, sizeof(char));
+    strcpy(res, "0");
+    return res;    
+  }
+
+  /* Here the input is a non-zero real number 
+
+     Decompose x into (-1)^s * 2^E * m
+
+  */
+  mpz_init(m);
+  E = mpfr_get_z_2exp(m, x);
+  s = 0;
+  if (mpz_sgn(m) < 0) {
+    mpz_neg(m,m);
+    s = 1;
+  }
+  zerosRight = mpz_scan1(m, 0);
+  mpz_fdiv_q_2exp(m, m, zerosRight);
+  E += zerosRight;
+  
+  /* Here, we have x = (-1)^s * 2^E * m 
+
+     where m = 2 * k + 1, k in Z 
+
+  */
+  if (E == ((mpfr_exp_t) 0)) {
+    /* We have no exponent to display */
+    res = safeCalloc(mpz_sizeinbase(m, 10) + 2 + 1 + 1, sizeof(char));
+    if (s) {
+      res[0] = '-';
+      curr = res + 1;
+    } else {
+      curr = res;
+    }
+    mpz_get_str(curr, 10, m);
+  } else {
+    /* We have the exponent to display */
+    res = safeCalloc(mpz_sizeinbase(m, 10) + 2 + 1 + 1 + sizeof(mpfr_exp_t) * 8 + 1 + 1, sizeof(char));
+    if (s) {
+      res[0] = '-';
+      curr = res + 1;
+    } else {
+      curr = res;
+    }
+    mpz_get_str(curr, 10, m);
+    curr = res + strlen(res);
+    curr[0] = 'b';
+    curr++;
+    if (sizeof(mpfr_exp_t) <= sizeof(int)) {
+      __sprintfValue_sprintf(curr, "%d", (int) E);
+    } else {
+      if (sizeof(mpfr_exp_t) <= sizeof(long int)) {
+	__sprintfValue_sprintf(curr, "%ld", (long int) E);
+      } else {
+	if (sizeof(mpfr_exp_t) <= sizeof(long long int)) {
+	  __sprintfValue_sprintf(curr, "%lld", (long long int) E);
+	} else {
+	  tmp = (long long int) E;
+	  Et = (mpfr_exp_t) tmp;
+	  if (E == Et) {
+	    __sprintfValue_sprintf(curr, "%lld", tmp);
+	  } else {
+	    sollyaFprintf(stderr,"Error: __sprintfValue_print_dyadic: mpfr_exp_t variable too large to be displayed.\n");
+	    exit(1);
+	  }
+	}
+      }
+    }
+  }
+
+  /* Free temporary variable */
+  mpz_clear(m);
+
+  /* Return the result */
+  return res;
+}
+
+static inline char *__sprintfValue_print_powers(mpfr_t x) {
+  mpfr_exp_t E;
+  mpz_t m;
+  int s;
+  mp_bitcnt_t zerosRight;
+  char *res;
+  char *curr;
+  long long int tmp;
+  mpfr_exp_t Et;
+  
+  /* Return NULL on purpose for unhandled cases */
+  if (!mpfr_number_p(x)) return NULL;
+
+  /* Handle the case of zero */
+  if (mpfr_zero_p(x)) {
+    res = safeCalloc(strlen("0") + 1, sizeof(char));
+    strcpy(res, "0");
+    return res;    
+  }
+
+  /* Here the input is a non-zero real number 
+
+     Decompose x into (-1)^s * 2^E * m
+
+  */
+  mpz_init(m);
+  E = mpfr_get_z_2exp(m, x);
+  s = 0;
+  if (mpz_sgn(m) < 0) {
+    mpz_neg(m,m);
+    s = 1;
+  }
+  zerosRight = mpz_scan1(m, 0);
+  mpz_fdiv_q_2exp(m, m, zerosRight);
+  E += zerosRight;
+  
+  /* Here, we have x = (-1)^s * 2^E * m 
+
+     where m = 2 * k + 1, k in Z 
+
+  */
+  if (E == ((mpfr_exp_t) 0)) {
+    /* We have no exponent to display */
+    res = safeCalloc(mpz_sizeinbase(m, 10) + 2 + 1 + 1, sizeof(char));
+    if (s) {
+      res[0] = '-';
+      curr = res + 1;
+    } else {
+      curr = res;
+    }
+    mpz_get_str(curr, 10, m);
+  } else {
+    /* We have the exponent to display */
+    res = safeCalloc(mpz_sizeinbase(m, 10) + 2 + 1 + 1 + 7 + sizeof(mpfr_exp_t) * 8 + 1 + 1, sizeof(char));
+    if (s) {
+      res[0] = '-';
+      curr = res + 1;
+    } else {
+      curr = res;
+    }
+    mpz_get_str(curr, 10, m);
+    curr = res + strlen(res);
+    if (sizeof(mpfr_exp_t) <= sizeof(int)) {
+      if (E < ((mpfr_exp_t) 0)) {
+	__sprintfValue_sprintf(curr, " * 2^(%d)", (int) E);
+      } else {
+	__sprintfValue_sprintf(curr, " * 2^%d", (int) E);
+      }
+    } else {
+      if (sizeof(mpfr_exp_t) <= sizeof(long int)) {
+	if (E < ((mpfr_exp_t) 0)) {
+	  __sprintfValue_sprintf(curr, " * 2^(%ld)", (long int) E);
+	} else {
+	  __sprintfValue_sprintf(curr, " * 2^%ld", (long int) E);
+	}
+      } else {
+	if (sizeof(mpfr_exp_t) <= sizeof(long long int)) {
+	  if (E < ((mpfr_exp_t) 0)) {
+	    __sprintfValue_sprintf(curr, " * 2^(%lld)", (long long int) E);
+	  } else {
+	    __sprintfValue_sprintf(curr, " * 2^%lld", (long long int) E);
+	  }
+	} else {
+	  tmp = (long long int) E;
+	  Et = (mpfr_exp_t) tmp;
+	  if (E == Et) {
+	    if (E < ((mpfr_exp_t) 0)) {
+	      __sprintfValue_sprintf(curr, " * 2^(%lld)", tmp);
+	    } else {
+	      __sprintfValue_sprintf(curr, " * 2^%lld", tmp);
+	    }
+	  } else {
+	    sollyaFprintf(stderr,"Error: __sprintfValue_print_dyadic: mpfr_exp_t variable too large to be displayed.\n");
+	    exit(1);
+	  }
+	}
+      }
+    }
+  }
+
+  /* Free temporary variable */
+  mpz_clear(m);
+
+  /* Return the result */
+  return res;
+}
+
+static inline mpfr_exp_t __sprintfValue_print_decimal_dec_exponent(mpfr_t x) {
+  mp_prec_t prec;
+  mpfr_t tmp;
+  mpfr_exp_t F;
+  intmax_t Fintmax;
+
+  /* Return dummy value for unhandled cases */
+  if ((!mpfr_number_p(x)) || (mpfr_zero_p(x))) return 0;
+
+  /* Initialize temporary variable */
+  prec = 2 * 8 * sizeof(mpfr_exp_t) + 12;
+  if (2 * 8 * sizeof(intmax_t) + 12 > prec) prec = 2 * 8 * sizeof(intmax_t) + 12;
+  if (mpfr_get_prec(x) > prec) prec = mpfr_get_prec(x);
+  mpfr_init2(tmp, prec);
+  
+  /* Compute absolute value of x */
+  mpfr_abs(tmp, x, GMP_RNDN); /* exact as prec >= prec(x) */
+
+  /* Compute log10(abs(x)) with rounding downwards, precision is
+     enough to avoid double rounding 
+  */
+  mpfr_log10(tmp, tmp, GMP_RNDD);
+  
+  /* Compute floor(log(abs(x))) with rounding downwards */
+  mpfr_rint_floor(tmp, tmp, GMP_RNDD); /* no double rounding possible */
+  
+  /* Get machine integer (intmax_t) representation of that integer */
+  Fintmax = mpfr_get_sj(tmp, GMP_RNDD); /* exact if not overflowing */
+
+  /* Convert to mpfr_exp_t */
+  F = (mpfr_exp_t) Fintmax;
+
+  /* Clear temporary variable */
+  mpfr_clear(tmp);
+
+  /* Return the result */
+  return F;
+}
+
+static inline void __sprintfValue_print_decimal_mul2(mpq_t q, mpfr_exp_t E) {
+  mp_bitcnt_t tmp;
+
+  if (E < ((mpfr_exp_t) 0)) {
+    tmp = (mp_bitcnt_t) (-E);
+    mpz_mul_2exp(mpq_denref(q), mpq_denref(q), tmp);
+  } else {
+    tmp = (mp_bitcnt_t) E;
+    mpz_mul_2exp(mpq_numref(q), mpq_numref(q), tmp);
+  }
+  mpq_canonicalize(q);
+}
+
+static void __sprintfValue_print_decimal_pow5_fallback_pow(mpz_t z, mpz_t b, mp_bitcnt_t E) {
+  unsigned int tmp;
+  mp_bitcnt_t EE, H, L;
+  mpz_t t1, t2;
+
+  tmp = (unsigned int) E;
+  EE = (mp_bitcnt_t) tmp;
+  if (E == EE) {
+    mpz_pow_ui(z,b,tmp);
+    return;
+  } 
+
+  /* This case should actually never happen */
+  H = E >> 14;
+  L = E - (H << 14);
+
+  /* Here we have 
+
+     E = 2^14 * H + L
+
+     and hence
+
+     b^E = b^(2^14 * H + L) = (b^(2^14))^H * b^L
+
+     where we are sure that 2^14 and L will hold on an unsigned int.
+
+  */
+  mpz_init(t1);
+  mpz_init(t2);
+  tmp = (unsigned int) (1 << 14);
+  mpz_pow_ui(t1,b,tmp);
+  __sprintfValue_print_decimal_pow5_fallback_pow(t1, t1, H);
+  tmp = (unsigned int) L;
+  mpz_pow_ui(t2,b,tmp);
+  mpz_mul(z, t1, t2);
+  mpz_clear(t2);
+  mpz_clear(t1);
+}
+
+static inline void __sprintfValue_print_decimal_pow5_fallback(mpz_t z, mp_bitcnt_t E) {
+  mpz_t tmp;
+
+  mpz_init(tmp);
+  mpz_set_si(tmp, 5);
+  __sprintfValue_print_decimal_pow5_fallback_pow(z, tmp, E);
+  mpz_clear(tmp);
+}
+
+static inline void __sprintfValue_print_decimal_pow5(mpz_t z, mp_bitcnt_t E) {
+  unsigned int tmp;
+  mp_bitcnt_t EE;
+
+  tmp = (unsigned int) E;
+  EE = (mp_bitcnt_t) tmp;
+  if (E == EE) {
+    mpz_ui_pow_ui(z,5,tmp);
+    return;
+  } 
+
+  /* Fall-back case that should never happen */
+  __sprintfValue_print_decimal_pow5_fallback(z, E);
+}
+
+static inline void __sprintfValue_print_decimal_mul5(mpq_t q, mpfr_exp_t E) {
+  mpz_t f;
+  mp_bitcnt_t tmp;
+
+  mpz_init(f);
+  if (E < ((mpfr_exp_t) 0)) {
+    tmp = (mp_bitcnt_t) (-E);
+  } else {
+    tmp = (mp_bitcnt_t) E;
+  }
+  __sprintfValue_print_decimal_pow5(f, tmp);
+  if (E < ((mpfr_exp_t) 0)) {
+    mpz_mul(mpq_denref(q), mpq_denref(q), f);
+  } else {
+    mpz_mul(mpq_numref(q), mpq_numref(q), f);
+  }
+  mpz_clear(f);
+  mpq_canonicalize(q);
+}
+
+void sollya_mpq_nearestint(mpq_t rop, mpq_t op) {
+  mpz_t q, r;
+
+  /* Initialize two integer variables */
+  mpz_init(q);
+  mpz_init(r);
+
+  /* Eucliadian division plus correction */
+  mpz_fdiv_qr(q, r, mpq_numref(op), mpq_denref(op));
+  mpz_mul_2exp(r, r, 1);
+
+  /* Now we have
+
+     op = q + 1/2 * r/b
+
+     where b is the denominator of op.
+
+     Hence
+
+     nearestint(op) = q + nearestint(1/2 * r/b)
+
+     We know that abs(1/2 * r/b) < 1 and
+     that r and b have the same sign. 
+
+     Therefore 0 <= 1/2 * r/b < 1
+
+     and 
+
+                              / 1   if r > b
+     nearestint(1/2 * r/b) = |
+                              \ 0   otherwise.
+
+			      
+     So, finally, 
+ 
+                           / 1    if r > b
+     nearestint(op) = q + |
+                           \ 0    otherwise.
+
+  */
+  if (mpz_cmp(r,mpq_denref(op)) > 0) {
+    mpz_add_ui(q, q, (unsigned long int) 1);
+  }
+  
+  /* Here q = nearestint(op).
+
+     Assign q to rop.
+
+  */
+  mpq_set_z(rop, q);
+  mpq_canonicalize(rop);
+
+  /* Clear the temporaries */
+  mpz_clear(r);
+  mpz_clear(q);
+}
+
+static inline char *__sprintfValue_print_decimal(mpfr_t x) {
+  char *res;
+  mpfr_exp_t E, F, G, i, H, Ht, K, D, Kt;
+  mpz_t m, n;
+  int s;
+  mpq_t q;
+  mp_prec_t k;
+  int akFactor;
+  mpq_t ak, bk, deltak, tmp, ten, nr;
+  int mIsEven;
+  char *curr;
+  long long int tmpLongLongInt;
+  size_t mantLen, d;
+  
+  /* Return NULL on purpose for unhandled cases */
+  if (!mpfr_number_p(x)) return NULL;
+
+  /* Handle the case of zero */
+  if (mpfr_zero_p(x)) {
+    res = safeCalloc(strlen("0") + 1, sizeof(char));
+    strcpy(res, "0");
+    return res;    
+  }
+
+  /* Here the input is a non-zero real number 
+
+     Decompose x into (-1)^s * 2^E * m
+
+  */
+  mpz_init(m);
+  E = mpfr_get_z_2exp(m, x);
+  s = 0;
+  if (mpz_sgn(m) < 0) {
+    mpz_neg(m,m);
+    s = 1;
+  }
+
+  /* Compute the decimal exponent 
+
+     F = floor(log10(2^E * m)) = floor(log10(abs(x)))
+
+     We have 
+
+     1 <= 10^-F * 2^E * m < 10.
+
+  */
+  F = __sprintfValue_print_decimal_dec_exponent(x);
+  
+  /* Initialize a mpq_t variable to hold 
+
+      q = 2^E / 10^F = 2^G / 5^F 
+
+      with G = E - F.
+      
+  */
+  G = E - F;
+  mpq_init(q);
+  mpq_set_si(q, 1, (unsigned long int) 1);
+  mpq_canonicalize(q);
+  __sprintfValue_print_decimal_mul2(q, G);
+  __sprintfValue_print_decimal_mul5(q, -F);
+  
+  /* We know that 
+
+     10^(F - k + 1) * nearestint(2^E/10^F * m * 10^(k - 1))
+
+     is the round-to-nearest decimal representation at k digits of
+     our input x (modulo the sign).
+
+     Now let alpha be defined as
+
+              / -0.25    if m is an integer power of 2
+     alpha = |
+              \ -0.5     otherwise
+
+     and let 
+
+     beta = 0.5
+
+     Then 10^(F - k + 1) * nearestint(2^E/10^F * m * 10^(k - 1))
+
+     is the round-to-nearest decimal representation of 2^E * m
+     that will round back to 2^E * m iff
+
+     2^E * (m + alpha) <(=) 10^(F - k + 1) * nearestint(2^E/10^F * m * 10^(k - 1)) <(=) 2^E * (m + beta)
+
+     This is equivalent to 
+
+     a_k <(=) delta_k <(=) b_k          (1) 
+
+     with
+
+     a_k = alpha * 10^(k - 1) * 2^E/10^F,
+     
+     b_k = beta * 10^(k - 1) * 2^E/10^F 
+
+     and
+
+     delta_k = nearestint(2^E/10^F * m * 10^(k - 1)) - 2^E/10^F * m * 10^(k - 1).
+
+     It is clear that 
+
+     a_(k+1) = 10 * a_k
+
+     b_(k+1) = 10 * b_k
+
+     and it can be shown that
+
+     delta_(k+1) = 10 * delta_k - nearestint(10 * delta_k).
+
+     So we can start with some k, say k = 1, and test if
+     the condition (1) above is satisfied (in which case we
+     know that smallest decimal precision k for which the
+     decimal rounding rounds back to binary, recovering x), or
+     increment k and update a_k, b_k and delta_k at low cost.
+
+     We shall start with k = 4 and setup a_k, b_k and delta_k.
+
+     For k = 1, we have 
+
+            / -25/100 * 2^E/10^F    if m is an integer power of 2
+     a_k = |
+            \ -50/100 * 2^E/10^F    otherwise
+
+     and
+
+     b_k = 50/100 * 2^E/10^F.
+
+  */
+  k = 1;
+  mpq_init(ak);
+  mpq_init(bk);
+  mpq_init(deltak);
+  mpq_init(tmp);
+  mpq_init(ten);
+  
+  /* Test if m > 0 is an integer power of 2 
+
+     A positive integer is an integer power of 2 iff its binary
+     representation has only one bit set to one.
+
+  */
+  if (mpz_popcount(m) == ((mp_bitcnt_t) 1)) {
+    akFactor = -25;
+  } else {
+    akFactor = -50;
+  }
+  mpq_set_si(tmp, akFactor, (unsigned long int) 100);
+  mpq_canonicalize(tmp);
+  mpq_mul(ak, q, tmp);
+
+  mpq_set_si(tmp, 50, (unsigned long int) 100);
+  mpq_canonicalize(tmp);
+  mpq_mul(bk, q, tmp);
+  
+  mpq_set_si(tmp, 100, (unsigned long int) 100);
+  mpq_canonicalize(tmp);
+  mpq_mul(deltak, q, tmp);
+  mpq_set_z(tmp, m);
+  mpq_canonicalize(tmp);
+  mpq_mul(deltak, deltak, tmp);
+  sollya_mpq_nearestint(tmp, deltak);
+  mpq_sub(deltak, tmp, deltak);
+
+  /* Now determine if m is even or odd. If m is even, we have to test
+     condition (1) as
+
+     a_k <= delta_k <= b_k
+
+     otherwise we have to test
+
+     a_k < delta_k < b_k.
+
+  */
+  mIsEven = (mpz_tstbit(m, 0) == 0);
+
+  /* Initialize helper variable to 10 */
+  mpq_set_si(ten, 10, (unsigned long int) 1);
+  mpq_canonicalize(ten);
+  
+  /* Loop to determine smallest decimal precision k */
+  while (!(mIsEven ? ((
+		        mpq_cmp(ak, deltak) <= 0
+		      ) && 
+		      (
+		        mpq_cmp(deltak, bk) <= 0
+		      )
+                     ) : 
+                     ((
+		        mpq_cmp(ak, deltak) < 0
+		      ) && 
+		      (
+		        mpq_cmp(deltak, bk) < 0
+		      )
+                     ))) {
+    mpq_mul(ak, ak, ten);
+    mpq_mul(bk, bk, ten);
+    mpq_mul(deltak, deltak, ten);
+    sollya_mpq_nearestint(tmp, deltak);
+    mpq_sub(deltak, deltak, tmp);
+    k++;
+  }
+  
+  /* Here we know the smallest decimal precision k for which the
+     decimal rounding to nearest will round back to binary (with
+     round-to-nearest and the original binary precision), resulting 
+     in the original value of x.
+
+     Now actually compute the decimal rounding:
+
+     10^(F - k + 1) * n 
+
+     with 
+
+     n = nearestint(2^E/10^F * m * 10^(k - 1))
+     
+  */
+  mpq_init(nr);
+  mpz_init(n);
+  mpq_set_z(nr, m);
+  mpq_mul(nr, q, nr);
+  __sprintfValue_print_decimal_mul2(nr, k - 1);
+  __sprintfValue_print_decimal_mul5(nr, k - 1);
+  sollya_mpq_nearestint(nr, nr);
+  mpz_tdiv_q(n, mpq_numref(nr), mpq_denref(nr));
+  
+  /* Now construct the string representation */
+  if (mpz_sgn(n) == 0) {
+    /* In very rare cases 0 might be the shortest rounding. Produce
+       0.0 as output in this case. 
+    */
+    res = safeCalloc(strlen("0.0") + 1, sizeof(char));
+    strcpy(res, "0.0");
+  } else {
+    /* Regular case 
+
+       We start by adjusting the exponent F: in some cases, the
+       mantissa n exceeds 10^k - 1 because of rounding. In this case,
+       n is divisible by 10
+
+    */
+    while (mpz_divisible_ui_p(n, (unsigned long int) 10)) {
+      mpz_divexact_ui(n, n, (unsigned long int) 10);
+      F++;
+    }
+    
+    /* Now check if there is only one mantissa digit or if there are
+       more than that 
+    */
+    if (mpz_cmpabs_ui(n, (unsigned long int) 10) < 0) {
+      /* There is only one mantissa digit. 
+
+	 Now distinguish the case when the corresponding exponent F -
+	 k + 1 is zero or not.
+
+      */
+      if ((F - k + 1) == ((mpfr_exp_t) 0)) {
+	/* There is only one mantissa digit and no exponent to be
+	   displayed. In order to allow for visual differentiation of
+	   this case (where there has been rounding) and an integer,
+	   we display ".0" after the mantissa digit.
+	*/
+	res = safeCalloc(1 + mpz_sizeinbase(n, 10) + 2 + 1 + 2 + 1, sizeof(char));
+	if (s) {
+	  res[0] = '-';
+	  curr = res + 1;
+	} else {
+	  curr = res;
+	}
+	mpz_get_str(curr, 10, n);
+	curr = res + strlen(res);
+	strcpy(curr, ".0");
+      } else {
+	if ((F - k + 1) == ((mpfr_exp_t) -1)) {
+	  /* There is only one mantissa digit to be displayed and the exponent is -1. 
+	     Instead of displaying Xe-1, we display 0.X
+	  */
+	  res = safeCalloc(1 + mpz_sizeinbase(n, 10) + 2 + 1 + 2 + 1, sizeof(char));
+	  if (s) {
+	    res[0] = '-';
+	    curr = res + 1;
+	  } else {
+	    curr = res;
+	  }
+	  strcpy(curr, "0.");
+	  curr = res + strlen(res);
+	  mpz_get_str(curr, 10, n);
+	} else {
+	  /* There is only one mantissa digit but an exponent to be
+	     displayed 
+	  */
+	  res = safeCalloc(1 + mpz_sizeinbase(n, 10) + 2 + 1 + 1 + sizeof(mpfr_exp_t) * 8 + 1 + 1, sizeof(char));
+	  if (s) {
+	    res[0] = '-';
+	    curr = res + 1;
+	  } else {
+	    curr = res;
+	  }
+	  mpz_get_str(curr, 10, n);
+	  curr = res + strlen(res);
+	  H = F - k + 1;
+	  if (sizeof(mpfr_exp_t) <= sizeof(int)) {
+	    __sprintfValue_sprintf(curr, "e%d", (int) H);
+	  } else {
+	    if (sizeof(mpfr_exp_t) <= sizeof(long int)) {
+	      __sprintfValue_sprintf(curr, "e%ld", (long int) H);
+	    } else {
+	      if (sizeof(mpfr_exp_t) <= sizeof(long long int)) {
+		__sprintfValue_sprintf(curr, "e%lld", (long long int) H);
+	      } else {
+		tmpLongLongInt = (long long int) H;
+		Ht = (mpfr_exp_t) tmpLongLongInt;
+		if (H == Ht) {
+		  __sprintfValue_sprintf(curr, "e%lld", tmpLongLongInt);
+		} else {
+		  sollyaFprintf(stderr,"Error: __sprintfValue_print_decimal: mpfr_exp_t variable too large to be displayed.\n");
+		  exit(1);
+		}
+	      }
+	    }
+	  }
+	}
+      }
+    } else {
+      /* There is more than one mantissa digit to be displayed */
+      res = safeCalloc(1 + mpz_sizeinbase(n, 10) + 2 + 1 + 1 + 1 + 1 + 1 + 1 + sizeof(mpfr_exp_t) * 8 + 1 + 1, sizeof(char));
+      if (s) {
+	res[0] = '-';
+	curr = res + 1;
+      } else {
+	curr = res;
+      }
+      mpz_get_str(curr, 10, n);
+      mantLen = strlen(curr);
+
+      /* Place the decimal point *into* the string of digits unless
+	 this makes the exponent field become -1, in which case we
+	 place "0." ahead of the string. 
+      */
+      H = F - k + 1;
+      D = (mpfr_exp_t) (mantLen - ((size_t) 1));
+      K = H + D;
+      if ((((mpfr_exp_t) 0) < K) && (K <= ((mpfr_exp_t) 4))) {
+	K = (mpfr_exp_t) 0;
+      }
+      D = K - H;
+      if (D < ((mpfr_exp_t) 1)) {
+	D = (mpfr_exp_t) 1;
+      }
+      if (D > ((mpfr_exp_t) (mantLen - ((size_t) 1)))) {
+	D = (mpfr_exp_t) (mantLen - ((size_t) 1));
+      }
+      K = H + D;
+      if (K == ((mpfr_exp_t) (-1))) {
+	D++;
+	K = H + D;
+	d = (size_t) D;
+	if (d == mantLen) {
+	  memmove((void *) (((curr + mantLen) - d) + 2), (void *) ((curr + mantLen) - d), d * sizeof(char));
+	  ((curr + mantLen) - d)[0] = '0';
+	  ((curr + mantLen) - d)[1] = '.';
+	  curr += mantLen;
+	  curr += 2;
+	} else {
+	  memmove((void *) (((curr + mantLen) - d) + 1), (void *) ((curr + mantLen) - d), d * sizeof(char));
+	  ((curr + mantLen) - d)[0] = '.';
+	  curr += mantLen;
+	  curr++;
+	}
+      } else {
+	d = (size_t) D;
+	memmove((void *) (((curr + mantLen) - d) + 1), (void *) ((curr + mantLen) - d), d * sizeof(char));
+	((curr + mantLen) - d)[0] = '.';
+	curr += mantLen;
+	curr++;
+      }
+
+      /* Now display the exponent field if it needs to be displayed */
+      if (K != ((mpfr_exp_t) 0)) {
+	if (sizeof(mpfr_exp_t) <= sizeof(int)) {
+	  __sprintfValue_sprintf(curr, "e%d", (int) K);
+	} else {
+	  if (sizeof(mpfr_exp_t) <= sizeof(long int)) {
+	    __sprintfValue_sprintf(curr, "e%ld", (long int) K);
+	  } else {
+	    if (sizeof(mpfr_exp_t) <= sizeof(long long int)) {
+	      __sprintfValue_sprintf(curr, "e%lld", (long long int) K);
+	    } else {
+	      tmpLongLongInt = (long long int) K;
+	      Kt = (mpfr_exp_t) tmpLongLongInt;
+	      if (K == Kt) {
+		__sprintfValue_sprintf(curr, "e%lld", tmpLongLongInt);
+	      } else {
+		sollyaFprintf(stderr,"Error: __sprintfValue_print_decimal: mpfr_exp_t variable too large to be displayed.\n");
+		exit(1);
+	      }
+	    }
+	  }
+	}
+      }
+    }
+  }
+  
+  /* Free temporary variables */
+  mpz_clear(m);
+  mpq_clear(q);
+  mpq_clear(ak);
+  mpq_clear(bk);
+  mpq_clear(deltak);
+  mpq_clear(tmp);
+  mpq_clear(ten);
+  mpq_clear(nr);
+  mpz_clear(n);
+
+  /* Return the result */
+  return res;
+}
+
+
+#define __SPRINTVALUE_DYADIC_DECIMAL      (0)
+#define __SPRINTVALUE_DYADIC_DYADIC       (1)
+#define __SPRINTVALUE_DYADIC_POWERS       (2)
+#define __SPRINTVALUE_DYADIC_BINARY       (3)
+#define __SPRINTVALUE_DYADIC_HEXADECIMAL  (4)
+
+char *sprintValue(mpfr_t *valPtr) {
+  char *res;
+  mpfr_t x;
+
+  /* Initialize our representation x of the value to be displayed */
+  __sprintfValue_init_value(x, valPtr);
+ 
+  /* Display NaNs, infinities and zero */
+  if ((!mpfr_number_p(x)) || (mpfr_zero_p(x))) {
+    /* Use an auxiliary function */
+    res = __sprintfValue_print_special(x);
+
+    /* Clear our representation x of the value to be displayed */
+    mpfr_clear(x);
+
+    /* Return the result */
+    return res;    
+  }
+
+  /* Here the input is a non-zero real number 
+
+     Now, if the display mode is 'binary numbers' or 'hexadecimal
+     numbers' do not use a special code for small integers.
+     
+  */
+  if (dyadic == __SPRINTVALUE_DYADIC_BINARY) {
+    /* Use an auxiliary function */
+    res = sPrintBinary(x);
+
+    /* Clear our representation x of the value to be displayed */
+    mpfr_clear(x);
+
+    /* Return the result */
+    return res;    
+  }
+  if (dyadic == __SPRINTVALUE_DYADIC_HEXADECIMAL) {
+    /* Use an auxiliary function */
+    res = sPrintHexadecimal(x);
+
+    /* Clear our representation x of the value to be displayed */
+    mpfr_clear(x);
+
+    /* Return the result */
+    return res;    
+  }
+
+  /* Here the input is a non-zero real number 
+
+     Continue by checking if the number is an integer that holds on
+     128 bits.
+
+  */
+  if (__sprintfValue_is_small_integer(x)) {
+    /* Use an auxiliary function */
+    res = __sprintfValue_print_integer(x);
+
+    /* Clear our representation x of the value to be displayed */
+    mpfr_clear(x);
+
+    /* Return the result */
+    return res;    
+  }
+
+  /* Here the input is a non-zero real number and the display mode
+     should be taken into account 
+  */
+  switch (dyadic) {
+  case __SPRINTVALUE_DYADIC_HEXADECIMAL:
+    res = sPrintHexadecimal(x);
+    break;
+  case __SPRINTVALUE_DYADIC_BINARY:
+    res = sPrintBinary(x);
+    break;
+  case __SPRINTVALUE_DYADIC_DYADIC:
+    res = __sprintfValue_print_dyadic(x);
+    break;
+  case __SPRINTVALUE_DYADIC_POWERS:
+    res = __sprintfValue_print_powers(x);
+    break;
+  case __SPRINTVALUE_DYADIC_DECIMAL:
+  default:
+    res = __sprintfValue_print_decimal(x);
+  }
+
+  /* Clear our representation x of the value to be displayed */
+  mpfr_clear(x);
+
+  /* Return the result */
+  return res;
+}
 
 void printMpfr(mpfr_t x) {
   mpfr_t tmp;

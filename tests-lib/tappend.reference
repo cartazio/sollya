@@ -15,7 +15,7 @@ sollya_lib_append("[| |]","[|"land", "of", "milk", "and", "honey"|]") yields to 
 -----------------------------------------------------------------------------
 sollya_lib_append("[| |]","Hello ") yields to "[|"Hello "|]"
 -----------------------------------------------------------------------------
-sollya_lib_append("[| |]","1.925e1") yields to "[|1.925e1|]"
+sollya_lib_append("[| |]","19.25") yields to "[|19.25|]"
 -----------------------------------------------------------------------------
 sollya_lib_append("[|1|]","[| |]") yields to "[|1, [| |]|]"
 -----------------------------------------------------------------------------
@@ -33,7 +33,7 @@ sollya_lib_append("[|1|]","[|"land", "of", "milk", "and", "honey"|]") yields to 
 -----------------------------------------------------------------------------
 sollya_lib_append("[|1|]","Hello ") yields to "[|1, "Hello "|]"
 -----------------------------------------------------------------------------
-sollya_lib_append("[|1|]","1.925e1") yields to "[|1, 1.925e1|]"
+sollya_lib_append("[|1|]","19.25") yields to "[|1, 19.25|]"
 -----------------------------------------------------------------------------
 sollya_lib_append("[|1, 2|]","[| |]") yields to "[|1, 2, [| |]|]"
 -----------------------------------------------------------------------------
@@ -51,7 +51,7 @@ sollya_lib_append("[|1, 2|]","[|"land", "of", "milk", "and", "honey"|]") yields 
 -----------------------------------------------------------------------------
 sollya_lib_append("[|1, 2|]","Hello ") yields to "[|1, 2, "Hello "|]"
 -----------------------------------------------------------------------------
-sollya_lib_append("[|1, 2|]","1.925e1") yields to "[|1, 2, 1.925e1|]"
+sollya_lib_append("[|1, 2|]","19.25") yields to "[|1, 2, 19.25|]"
 -----------------------------------------------------------------------------
 Caught the message that a certain expression is not correctly typed.
 sollya_lib_append("[|1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17...|]","[| |]") yields to "error"
@@ -78,7 +78,7 @@ Caught the message that a certain expression is not correctly typed.
 sollya_lib_append("[|1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17...|]","Hello ") yields to "error"
 -----------------------------------------------------------------------------
 Caught the message that a certain expression is not correctly typed.
-sollya_lib_append("[|1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17...|]","1.925e1") yields to "error"
+sollya_lib_append("[|1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17...|]","19.25") yields to "error"
 -----------------------------------------------------------------------------
 sollya_lib_append("[|"Hello"|]","[| |]") yields to "[|"Hello", [| |]|]"
 -----------------------------------------------------------------------------
@@ -96,7 +96,7 @@ sollya_lib_append("[|"Hello"|]","[|"land", "of", "milk", "and", "honey"|]") yiel
 -----------------------------------------------------------------------------
 sollya_lib_append("[|"Hello"|]","Hello ") yields to "[|"Hello", "Hello "|]"
 -----------------------------------------------------------------------------
-sollya_lib_append("[|"Hello"|]","1.925e1") yields to "[|"Hello", 1.925e1|]"
+sollya_lib_append("[|"Hello"|]","19.25") yields to "[|"Hello", 19.25|]"
 -----------------------------------------------------------------------------
 sollya_lib_append("[|"Hello", "World"|]","[| |]") yields to "[|"Hello", "World", [| |]|]"
 -----------------------------------------------------------------------------
@@ -114,7 +114,7 @@ sollya_lib_append("[|"Hello", "World"|]","[|"land", "of", "milk", "and", "honey"
 -----------------------------------------------------------------------------
 sollya_lib_append("[|"Hello", "World"|]","Hello ") yields to "[|"Hello", "World", "Hello "|]"
 -----------------------------------------------------------------------------
-sollya_lib_append("[|"Hello", "World"|]","1.925e1") yields to "[|"Hello", "World", 1.925e1|]"
+sollya_lib_append("[|"Hello", "World"|]","19.25") yields to "[|"Hello", "World", 19.25|]"
 -----------------------------------------------------------------------------
 sollya_lib_append("[|"land", "of", "milk", "and", "honey"|]","[| |]") yields to "[|"land", "of", "milk", "and", "honey", [| |]|]"
 -----------------------------------------------------------------------------
@@ -132,7 +132,7 @@ sollya_lib_append("[|"land", "of", "milk", "and", "honey"|]","[|"land", "of", "m
 -----------------------------------------------------------------------------
 sollya_lib_append("[|"land", "of", "milk", "and", "honey"|]","Hello ") yields to "[|"land", "of", "milk", "and", "honey", "Hello "|]"
 -----------------------------------------------------------------------------
-sollya_lib_append("[|"land", "of", "milk", "and", "honey"|]","1.925e1") yields to "[|"land", "of", "milk", "and", "honey", 1.925e1|]"
+sollya_lib_append("[|"land", "of", "milk", "and", "honey"|]","19.25") yields to "[|"land", "of", "milk", "and", "honey", 19.25|]"
 -----------------------------------------------------------------------------
 Caught the message that a certain expression is not correctly typed.
 sollya_lib_append("Hello ","[| |]") yields to "error"
@@ -159,31 +159,31 @@ Caught the message that a certain expression is not correctly typed.
 sollya_lib_append("Hello ","Hello ") yields to "error"
 -----------------------------------------------------------------------------
 Caught the message that a certain expression is not correctly typed.
-sollya_lib_append("Hello ","1.925e1") yields to "error"
+sollya_lib_append("Hello ","19.25") yields to "error"
 -----------------------------------------------------------------------------
 Caught the message that a certain expression is not correctly typed.
-sollya_lib_append("1.925e1","[| |]") yields to "error"
+sollya_lib_append("19.25","[| |]") yields to "error"
 -----------------------------------------------------------------------------
 Caught the message that a certain expression is not correctly typed.
-sollya_lib_append("1.925e1","[|1|]") yields to "error"
+sollya_lib_append("19.25","[|1|]") yields to "error"
 -----------------------------------------------------------------------------
 Caught the message that a certain expression is not correctly typed.
-sollya_lib_append("1.925e1","[|1, 2|]") yields to "error"
+sollya_lib_append("19.25","[|1, 2|]") yields to "error"
 -----------------------------------------------------------------------------
 Caught the message that a certain expression is not correctly typed.
-sollya_lib_append("1.925e1","[|1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17...|]") yields to "error"
+sollya_lib_append("19.25","[|1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17...|]") yields to "error"
 -----------------------------------------------------------------------------
 Caught the message that a certain expression is not correctly typed.
-sollya_lib_append("1.925e1","[|"Hello"|]") yields to "error"
+sollya_lib_append("19.25","[|"Hello"|]") yields to "error"
 -----------------------------------------------------------------------------
 Caught the message that a certain expression is not correctly typed.
-sollya_lib_append("1.925e1","[|"Hello", "World"|]") yields to "error"
+sollya_lib_append("19.25","[|"Hello", "World"|]") yields to "error"
 -----------------------------------------------------------------------------
 Caught the message that a certain expression is not correctly typed.
-sollya_lib_append("1.925e1","[|"land", "of", "milk", "and", "honey"|]") yields to "error"
+sollya_lib_append("19.25","[|"land", "of", "milk", "and", "honey"|]") yields to "error"
 -----------------------------------------------------------------------------
 Caught the message that a certain expression is not correctly typed.
-sollya_lib_append("1.925e1","Hello ") yields to "error"
+sollya_lib_append("19.25","Hello ") yields to "error"
 -----------------------------------------------------------------------------
 Caught the message that a certain expression is not correctly typed.
-sollya_lib_append("1.925e1","1.925e1") yields to "error"
+sollya_lib_append("19.25","19.25") yields to "error"

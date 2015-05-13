@@ -4,8 +4,8 @@ The supremum norm of x over [-1;1.5] gets approximated with dirtyinfnorm by 1.5
 The supremum norm of x^2 + x - 1 over [-2;1] gets approximated with dirtyinfnorm by 1.25
 The supremum norm of x^2 + x - 1 over [-2;2] gets approximated with dirtyinfnorm by 5
 Caught message: the domain to compute on must be a closed subset of the real numbers.
-The supremum norm of exp(x) over [-@Inf@;2] gets approximated with dirtyinfnorm by @NaN@
+The supremum norm of exp(x) over [-infty;2] gets approximated with dirtyinfnorm by NaN
 Caught message: the domain to compute on must be a closed subset of the real numbers.
-The supremum norm of erf(x) over [-@Inf@;@Inf@] gets approximated with dirtyinfnorm by @NaN@
+The supremum norm of erf(x) over [-infty;infty] gets approximated with dirtyinfnorm by NaN
 Caught message: the domain is reduced to a point.
-The supremum norm of exp(x) over [2;2] gets approximated with dirtyinfnorm by 7.3890560989306502272304274605750078131803155705518
+The supremum norm of exp(x) over [2;2] gets approximated with dirtyinfnorm by 7.3890560989306502272304274605750078131803155705519

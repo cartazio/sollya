@@ -1,7 +1,7 @@
 The tool has been restarted.
 =============== Test number 1 ================
-@NaN@
-@NaN@
+NaN
+NaN
 The tool has been restarted.
 =============== Test number 2 ================
 The verbosity level has been set to 2.
@@ -96,9 +96,9 @@ Warning: Rounding occurred when converting the constant "0.1" to floating-point 
 The inclusion property is nevertheless satisfied.
 The tool has been restarted.
 =============== Test number 5 ================
-[-@Inf@;@Inf@]
-[@NaN@;@NaN@]
-[@NaN@;@NaN@]
+[-infty;infty]
+[NaN;NaN]
+[NaN;NaN]
 0 / 0
 0
 1
@@ -123,7 +123,7 @@ log(x) / log(x)
 0
 (-log(x))^(-1) / (-log(x))^(-1)
 0
-@Inf@ / x - @Inf@ / x
+infty / x - infty / x
 0
 1
 (abs(x) / x + 1) / (abs(x) / x + 1)

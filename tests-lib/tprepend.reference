@@ -17,7 +17,7 @@ Caught the message that a certain expression is not correctly typed.
 sollya_lib_prepend("[| |]","Hello ") yields to "error"
 -----------------------------------------------------------------------------
 Caught the message that a certain expression is not correctly typed.
-sollya_lib_prepend("[| |]","1.925e1") yields to "error"
+sollya_lib_prepend("[| |]","19.25") yields to "error"
 -----------------------------------------------------------------------------
 sollya_lib_prepend("[|1|]","[| |]") yields to "[|[|1|]|]"
 -----------------------------------------------------------------------------
@@ -37,7 +37,7 @@ Caught the message that a certain expression is not correctly typed.
 sollya_lib_prepend("[|1|]","Hello ") yields to "error"
 -----------------------------------------------------------------------------
 Caught the message that a certain expression is not correctly typed.
-sollya_lib_prepend("[|1|]","1.925e1") yields to "error"
+sollya_lib_prepend("[|1|]","19.25") yields to "error"
 -----------------------------------------------------------------------------
 sollya_lib_prepend("[|1, 2|]","[| |]") yields to "[|[|1, 2|]|]"
 -----------------------------------------------------------------------------
@@ -57,7 +57,7 @@ Caught the message that a certain expression is not correctly typed.
 sollya_lib_prepend("[|1, 2|]","Hello ") yields to "error"
 -----------------------------------------------------------------------------
 Caught the message that a certain expression is not correctly typed.
-sollya_lib_prepend("[|1, 2|]","1.925e1") yields to "error"
+sollya_lib_prepend("[|1, 2|]","19.25") yields to "error"
 -----------------------------------------------------------------------------
 sollya_lib_prepend("[|1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17...|]","[| |]") yields to "[|[|1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17...|]|]"
 -----------------------------------------------------------------------------
@@ -77,7 +77,7 @@ Caught the message that a certain expression is not correctly typed.
 sollya_lib_prepend("[|1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17...|]","Hello ") yields to "error"
 -----------------------------------------------------------------------------
 Caught the message that a certain expression is not correctly typed.
-sollya_lib_prepend("[|1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17...|]","1.925e1") yields to "error"
+sollya_lib_prepend("[|1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17...|]","19.25") yields to "error"
 -----------------------------------------------------------------------------
 sollya_lib_prepend("[|"Hello"|]","[| |]") yields to "[|[|"Hello"|]|]"
 -----------------------------------------------------------------------------
@@ -97,7 +97,7 @@ Caught the message that a certain expression is not correctly typed.
 sollya_lib_prepend("[|"Hello"|]","Hello ") yields to "error"
 -----------------------------------------------------------------------------
 Caught the message that a certain expression is not correctly typed.
-sollya_lib_prepend("[|"Hello"|]","1.925e1") yields to "error"
+sollya_lib_prepend("[|"Hello"|]","19.25") yields to "error"
 -----------------------------------------------------------------------------
 sollya_lib_prepend("[|"Hello", "World"|]","[| |]") yields to "[|[|"Hello", "World"|]|]"
 -----------------------------------------------------------------------------
@@ -117,7 +117,7 @@ Caught the message that a certain expression is not correctly typed.
 sollya_lib_prepend("[|"Hello", "World"|]","Hello ") yields to "error"
 -----------------------------------------------------------------------------
 Caught the message that a certain expression is not correctly typed.
-sollya_lib_prepend("[|"Hello", "World"|]","1.925e1") yields to "error"
+sollya_lib_prepend("[|"Hello", "World"|]","19.25") yields to "error"
 -----------------------------------------------------------------------------
 sollya_lib_prepend("[|"land", "of", "milk", "and", "honey"|]","[| |]") yields to "[|[|"land", "of", "milk", "and", "honey"|]|]"
 -----------------------------------------------------------------------------
@@ -137,7 +137,7 @@ Caught the message that a certain expression is not correctly typed.
 sollya_lib_prepend("[|"land", "of", "milk", "and", "honey"|]","Hello ") yields to "error"
 -----------------------------------------------------------------------------
 Caught the message that a certain expression is not correctly typed.
-sollya_lib_prepend("[|"land", "of", "milk", "and", "honey"|]","1.925e1") yields to "error"
+sollya_lib_prepend("[|"land", "of", "milk", "and", "honey"|]","19.25") yields to "error"
 -----------------------------------------------------------------------------
 sollya_lib_prepend("Hello ","[| |]") yields to "[|"Hello "|]"
 -----------------------------------------------------------------------------
@@ -157,24 +157,24 @@ Caught the message that a certain expression is not correctly typed.
 sollya_lib_prepend("Hello ","Hello ") yields to "error"
 -----------------------------------------------------------------------------
 Caught the message that a certain expression is not correctly typed.
-sollya_lib_prepend("Hello ","1.925e1") yields to "error"
+sollya_lib_prepend("Hello ","19.25") yields to "error"
 -----------------------------------------------------------------------------
-sollya_lib_prepend("1.925e1","[| |]") yields to "[|1.925e1|]"
+sollya_lib_prepend("19.25","[| |]") yields to "[|19.25|]"
 -----------------------------------------------------------------------------
-sollya_lib_prepend("1.925e1","[|1|]") yields to "[|1.925e1, 1|]"
+sollya_lib_prepend("19.25","[|1|]") yields to "[|19.25, 1|]"
 -----------------------------------------------------------------------------
-sollya_lib_prepend("1.925e1","[|1, 2|]") yields to "[|1.925e1, 1, 2|]"
+sollya_lib_prepend("19.25","[|1, 2|]") yields to "[|19.25, 1, 2|]"
 -----------------------------------------------------------------------------
-sollya_lib_prepend("1.925e1","[|1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17...|]") yields to "[|1.925e1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17...|]"
+sollya_lib_prepend("19.25","[|1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17...|]") yields to "[|19.25, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17...|]"
 -----------------------------------------------------------------------------
-sollya_lib_prepend("1.925e1","[|"Hello"|]") yields to "[|1.925e1, "Hello"|]"
+sollya_lib_prepend("19.25","[|"Hello"|]") yields to "[|19.25, "Hello"|]"
 -----------------------------------------------------------------------------
-sollya_lib_prepend("1.925e1","[|"Hello", "World"|]") yields to "[|1.925e1, "Hello", "World"|]"
+sollya_lib_prepend("19.25","[|"Hello", "World"|]") yields to "[|19.25, "Hello", "World"|]"
 -----------------------------------------------------------------------------
-sollya_lib_prepend("1.925e1","[|"land", "of", "milk", "and", "honey"|]") yields to "[|1.925e1, "land", "of", "milk", "and", "honey"|]"
------------------------------------------------------------------------------
-Caught the message that a certain expression is not correctly typed.
-sollya_lib_prepend("1.925e1","Hello ") yields to "error"
+sollya_lib_prepend("19.25","[|"land", "of", "milk", "and", "honey"|]") yields to "[|19.25, "land", "of", "milk", "and", "honey"|]"
 -----------------------------------------------------------------------------
 Caught the message that a certain expression is not correctly typed.
-sollya_lib_prepend("1.925e1","1.925e1") yields to "error"
+sollya_lib_prepend("19.25","Hello ") yields to "error"
+-----------------------------------------------------------------------------
+Caught the message that a certain expression is not correctly typed.
+sollya_lib_prepend("19.25","19.25") yields to "error"
