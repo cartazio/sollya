@@ -323,6 +323,10 @@ tvoid.c
 
 EXTRA_DIST = check.proto $(TESTFILES) $(TESTFILES:.c=.reference)
 
+# Notice that the following line will overwrite any previous content in AM_CPPFLAGS
+# This is not a problem as there is currently nothing in this variable and we do not
+# see any reason why it should change soon. Just for the record, more information
+# about this changeset is available in the resolution comments of bug #17197.
 AM_CPPFLAGS = -I$(top_srcdir)
 
 check_PROGRAMS = force_compilation $(TESTFILES:.c=)
