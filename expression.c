@@ -56,6 +56,7 @@
 */
 
 #include <limits.h>
+#include <inttypes.h>
 #include <mpfr.h>
 #include "mpfi-compat.h"
 #include <gmp.h>
