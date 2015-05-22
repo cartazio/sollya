@@ -40,7 +40,7 @@ AC_ARG_ENABLE(legacy-memory-management,
               [ENABLE_LEGACY_MEMORY_MANAGEMENT=yes],
               [ENABLE_LEGACY_MEMORY_MANAGEMENT=no])
 
-if test "x${ENABLE_LEGACY_MEMORY_MANAGEMENT}y" == "xyesy" ; then
+if test "x${ENABLE_LEGACY_MEMORY_MANAGEMENT}y" = "xyesy" ; then
 AC_DEFINE([HAVE_ENABLE_LEGACY_MEMORY_MANAGEMENT],[1],[Enabling legacy memory management w/o reference counting])
 fi
 
@@ -301,7 +301,7 @@ export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}$SO_LIB_PATH"
 # Checks for libraries.
 dlopen_ok="yes"
 AC_CHECK_LIB([c], [dlopen], [], [dlopen_ok="no"])
-if test "x${dlopen_ok}y" == "xnoy" ; then
+if test "x${dlopen_ok}y" = "xnoy" ; then
   AC_CHECK_LIB([dl], [dlopen], [], AC_MSG_ERROR([libdl unusable]))
 fi
 AC_CHECK_LIB([gmp], [__gmpz_init], [true], AC_MSG_ERROR([libgmp unusable]))
@@ -397,7 +397,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[$FPLLL_NORMAL_HEADER]], [[$FPLLL_PROG]])],
               	               ])
                ])
 
-if test "x${FPLLLISREALLIB}y" == "xnoy"
+if test "x${FPLLLISREALLIB}y" = "xnoy"
 then
   AC_MSG_CHECKING([for fplll support, fplll being just a header file])
   AC_LINK_IFELSE([AC_LANG_PROGRAM([[$FPLLL_NORMAL_HEADER]], [[$FPLLL_PROG]])],
@@ -412,14 +412,14 @@ then
                  ])
 fi
 
-if test "x${FPLLLISREALLIB}y" == "xyesy"
+if test "x${FPLLLISREALLIB}y" = "xyesy"
 then
   FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING linkage with -lfplll is compatible. Header file"
 else
   FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING linkage with -lfplll is not compatible. Header file"
 fi
 
-if test "x${FPLLLSPECIALINCLUDE}y" == "xyesy"
+if test "x${FPLLLSPECIALINCLUDE}y" = "xyesy"
 then
   FPLLL_GOOD_HEADER="$FPLLL_SPECIAL_HEADER"
   AC_DEFINE([HAVE_SPECIAL_FPLLL_INCLUDE],[1],[Define for determining a special version of FPLLL])
@@ -445,7 +445,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
                   [],
                   [ADD_LSTDC="no"])
 AC_LANG_POP([C++])
-if test "x${ADD_LSTDC}y" == "xnoy"
+if test "x${ADD_LSTDC}y" = "xnoy"
 then
   LIBS="$OLD_LIBS"
 fi
