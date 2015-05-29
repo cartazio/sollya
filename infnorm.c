@@ -8294,17 +8294,23 @@ int evaluateSign(int *s, node *rawFunc) {
 	break;
       case POW:
 	okayA = evaluateSign(&signA, accessThruMemRef(func)->child1);
-	okayB = evaluateSign(&signB, accessThruMemRef(func)->child1);
+	okayB = evaluateSign(&signB, accessThruMemRef(func)->child2);
 	if (okayA && okayB) {
-	  if (okayB == 0) {
-	    if (okayA != 0) {
-	      okay = 1;
-	      sign = 1;
-	    }
+	  if (signB == 0) {
+	    okay = 1;
+	    sign = 1;
 	  } else {
-	    if (okayA == 0) {
-	      okay = 1;
-	      sign = 0;
+	    if (signA == 0) {
+	      if (signB > 0) {
+		okay = 1;
+		sign = 0;
+	      }
+	    } else {
+	      if ((signA > 0) && 
+		  (signB >= 0)) {
+		okay = 1;
+		sign = 1;
+	      }
 	    }
 	  }
 	}

@@ -3953,7 +3953,7 @@ int isNotUniformlyInfinite(node *tree) {
     }
     sollya_mpfi_clear(y);
     sollya_mpfi_clear(x);
-    return res;
+    if (res) return res;
   }
 
   /* If f is of the form f = g +/- h and both g and h are bounded by a
@@ -4222,6 +4222,61 @@ int canDoSimplificationSubtraction(node *tree) {
  */
 int canDoSimplificationDivision(node *tree) {
   return (isNotUniformlyInfinite(tree) && isNotUniformlyZero(tree));
+}
+
+int isIntegerConstant(node *tree) {
+  mpq_t q;
+  int s;
+
+  if (tree == NULL) return 0;
+  if (!isConstant(tree)) return 0;
+  if (accessThruMemRef(tree)->nodeType == CONSTANT) {
+    return (mpfr_number_p(*(accessThruMemRef(tree)->value)) && mpfr_integer_p(*(accessThruMemRef(tree)->value)));
+  }
+  mpq_init(q);
+  if (tryEvaluateConstantTermToMpq(q, tree)) {
+    if (mpz_divisible_p(mpq_numref(q), mpq_denref(q))) {
+      mpq_clear(q);
+      return 1;
+    } else {
+      mpq_clear(q);
+      return 0;
+    }
+  }
+  mpq_clear(q);
+
+  switch (tree->nodeType) {
+  case MEMREF:
+    return isIntegerConstant(getMemRefChild(tree));
+    break;
+  case NEARESTINT:
+  case FLOOR:
+  case CEIL:
+    if (isNotUniformlyInfinite(tree->child1)) {
+      return 1;
+    }
+    break;
+  case ADD:
+  case SUB:
+  case MUL:
+    if (isIntegerConstant(tree->child1) && 
+	isIntegerConstant(tree->child2)) {
+      return 1;
+    }
+    break;
+  case POW:
+    if (isIntegerConstant(tree->child1) && 
+	isIntegerConstant(tree->child2)) {
+      if (evaluateSign(&s, tree->child2)) {
+	return (s > 0);
+      }
+    }
+    break;
+  default:
+    break;
+  }
+
+  return 0;
 }
 
 node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
@@ -6039,8 +6094,13 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
       simplified->value = value;
       if ((mpfr_rint_ceil(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
 	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = CEIL;
-	simplified->child1 = simplChild1;
+	if (isIntegerConstant(simplChild1)) {
+	  safeFree(simplified);
+	  simplified = simplChild1;
+	} else {
+	  simplified->nodeType = CEIL;
+	  simplified->child1 = simplChild1;
+	}
 	mpfr_clear(*value);
 	safeFree(value);
       } else {
@@ -6071,8 +6131,13 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
           mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
 	  free_memory(simplChild1);
         } else {
-          simplified->nodeType = CEIL;
-          simplified->child1 = simplChild1;
+	  if (isIntegerConstant(simplChild1)) {
+	    safeFree(simplified);
+	    simplified = simplChild1;
+	  } else {
+	    simplified->nodeType = CEIL;
+	    simplified->child1 = simplChild1;
+	  }
         }
         mpfr_clear(*(xrange.a));
         mpfr_clear(*(xrange.b));
@@ -6083,8 +6148,13 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
         safeFree(yrange.a);
         safeFree(yrange.b);
       } else {
-        simplified->nodeType = CEIL;
-        simplified->child1 = simplChild1;
+	if (isIntegerConstant(simplChild1)) {
+	  safeFree(simplified);
+	  simplified = simplChild1;
+	} else {
+	  simplified->nodeType = CEIL;
+	  simplified->child1 = simplChild1;
+	}
       }
     }
     break;
@@ -6098,8 +6168,13 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
       simplified->value = value;
       if ((mpfr_rint_floor(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
 	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = FLOOR;
-	simplified->child1 = simplChild1;
+	if (isIntegerConstant(simplChild1)) {
+	  safeFree(simplified);
+	  simplified = simplChild1;
+	} else {
+	  simplified->nodeType = FLOOR;
+	  simplified->child1 = simplChild1;
+	}
 	mpfr_clear(*value);
 	safeFree(value);
       } else {
@@ -6130,8 +6205,13 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
           mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
 	  free_memory(simplChild1);
         } else {
-          simplified->nodeType = FLOOR;
-          simplified->child1 = simplChild1;
+	  if (isIntegerConstant(simplChild1)) {
+	    safeFree(simplified);
+	    simplified = simplChild1;
+	  } else {
+	    simplified->nodeType = FLOOR;
+	    simplified->child1 = simplChild1;
+	  }
         }
         mpfr_clear(*(xrange.a));
         mpfr_clear(*(xrange.b));
@@ -6142,8 +6222,13 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
         safeFree(yrange.a);
         safeFree(yrange.b);
       } else {
-        simplified->nodeType = FLOOR;
-        simplified->child1 = simplChild1;
+	if (isIntegerConstant(simplChild1)) {
+	  safeFree(simplified);
+	  simplified = simplChild1;
+	} else {
+	  simplified->nodeType = FLOOR;
+	  simplified->child1 = simplChild1;
+	}
       }
     }
     break;
@@ -6157,8 +6242,13 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
       simplified->value = value;
       if ((sollya_mpfr_rint_nearestint(*value, *(accessThruMemRef(simplChild1)->value), GMP_RNDN) != 0) ||
 	  (!mpfr_number_p(*value))) {
-	simplified->nodeType = NEARESTINT;
-	simplified->child1 = simplChild1;
+	if (isIntegerConstant(simplChild1)) {
+	  safeFree(simplified);
+	  simplified = simplChild1;
+	} else {
+	  simplified->nodeType = NEARESTINT;
+	  simplified->child1 = simplChild1;
+	}
 	mpfr_clear(*value);
 	safeFree(value);
       } else {
@@ -6189,8 +6279,13 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
           mpfr_set(*value,*(xrange.a),GMP_RNDN); /* Exact */
 	  free_memory(simplChild1);
         } else {
-          simplified->nodeType = NEARESTINT;
-          simplified->child1 = simplChild1;
+	  if (isIntegerConstant(simplChild1)) {
+	    safeFree(simplified);
+	    simplified = simplChild1;
+	  } else {
+	    simplified->nodeType = NEARESTINT;
+	    simplified->child1 = simplChild1;
+	  }
         }
         mpfr_clear(*(xrange.a));
         mpfr_clear(*(xrange.b));
@@ -6201,8 +6296,13 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
         safeFree(yrange.a);
         safeFree(yrange.b);
       } else {
-        simplified->nodeType = NEARESTINT;
-        simplified->child1 = simplChild1;
+	if (isIntegerConstant(simplChild1)) {
+	  safeFree(simplified);
+	  simplified = simplChild1;
+	} else {
+	  simplified->nodeType = NEARESTINT;
+	  simplified->child1 = simplChild1;
+	}
       }
     }
     break;
@@ -9771,10 +9871,18 @@ int getDegreeMpzVerified(mpz_t res, node *tree) {
   int okay, k, gottaBreak;
   node *tempNode;
 
-  if ((tree->nodeType == MEMREF) &&
-      (tree->polynomialRepresentation != NULL)) {
-    polynomialGetDegree(res, tree->polynomialRepresentation);
-    return 1;
+  if (tree->nodeType == MEMREF) {
+    if (tree->polynomialRepresentation == NULL) {
+      tryRepresentAsPolynomial(tree);
+    }
+    if (tree->polynomialRepresentation != NULL) {
+      polynomialGetDegree(res, tree->polynomialRepresentation);
+      if (mpz_cmp_si(res, -1) == 0) {
+	printMessage(1,SOLLYA_MSG_DEGREE_OF_POLYNOMIAL_LARGER_THAN_MULTIPRECISION_INT,
+		     "Warning: the degree of the given polynomial is larger than the largest multiprecision integer that can be held in memory. The polynomial's degree will be returned as -1.\n");
+      }
+      return 1;
+    }
   }
 
 

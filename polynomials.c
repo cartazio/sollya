@@ -2196,7 +2196,7 @@ static inline int constantIsNonNegativeInteger(constant_t a, int defVal) {
     }
     freeThing(d);
     a->isNonNegativeInteger.cached = 1;
-    a->isNonNegativeInteger.res = !(s == 0);
+    a->isNonNegativeInteger.res = (s == 0);
     return a->isNonNegativeInteger.res;
     break;
   case MPFR:
