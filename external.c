@@ -72,6 +72,7 @@
 #include "infnorm.h"
 #include "general.h"
 #include "printf.h"
+#include "signalhandling.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

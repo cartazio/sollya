@@ -70,6 +70,7 @@
 #include "chain.h"
 #include "execute.h"
 #include "infnorm.h"
+#include "signalhandling.h"
 
 #define MAXDIFFSIMPLSIZE 100
 #define MAXDIFFSIMPLDEGREE 25
@@ -1013,7 +1014,7 @@ static inline mpfr_exp_t __sprintfValue_print_decimal_dec_exponent(mpfr_t x) {
 
   /* Initialize temporary variable */
   prec = 2 * 8 * sizeof(mpfr_exp_t) + 12;
-  if (2 * 8 * sizeof(intmax_t) + 12 > prec) prec = 2 * 8 * sizeof(intmax_t) + 12;
+  if (((mp_prec_t) (2 * 8 * sizeof(intmax_t) + 12)) > prec) prec = 2 * 8 * sizeof(intmax_t) + 12;
   if (mpfr_get_prec(x) > prec) prec = mpfr_get_prec(x);
   mpfr_init2(tmp, prec);
   
@@ -1196,7 +1197,7 @@ void sollya_mpq_nearestint(mpq_t rop, mpq_t op) {
 
 static inline char *__sprintfValue_print_decimal(mpfr_t x) {
   char *res;
-  mpfr_exp_t E, F, G, i, H, Ht, K, D, Kt;
+  mpfr_exp_t E, F, G, H, Ht, K, D, Kt;
   mpz_t m, n;
   int s;
   mpq_t q;
