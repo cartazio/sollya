@@ -73,6 +73,9 @@
 #include "infnorm.h"
 #include "double.h"
 
+/* Internal initialization state */
+
+int __sollya_lib_initialized = 0;
 
 /* Some helper macros */
 
@@ -141,6 +144,9 @@ int sollya_lib_init_with_custom_memory_functions_with_arguments(void *(*myMalloc
 								void (*myFreeWithSize)(void *, size_t),
 								int argc,
 								char **argv) {
+  if (__sollya_lib_initialized < 0) __sollya_lib_initialized = 0;
+  __sollya_lib_initialized++;
+  if (__sollya_lib_initialized > 1) return 0;
   return initializeLibraryMode(myMalloc, myCalloc, myRealloc, myFree, myReallocWithSize, myFreeWithSize, argc, argv);
 }
 
@@ -162,6 +168,9 @@ int sollya_lib_init() {
 }
 
 int sollya_lib_close() {
+  __sollya_lib_initialized--;
+  if (__sollya_lib_initialized < 0) __sollya_lib_initialized = 0;
+  if (__sollya_lib_initialized > 0) return 0;
   return finalizeLibraryMode();
 }
 
