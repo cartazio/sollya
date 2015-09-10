@@ -19,6 +19,8 @@ mpfi-compat.c \
 mpfi-compat.h \
 hooks.c \
 hooks.h \
+hash.c \
+hash.h \
 polynomials.c \
 polynomials.h \
 sollya-messaging.h \
@@ -103,6 +105,8 @@ libsollya_la_SOURCES = \
 sollya.h \
 mpfi-compat.h \
 mpfi-compat.c \
+hash.c \
+hash.h \
 hooks.c \
 hooks.h \
 polynomials.c \
