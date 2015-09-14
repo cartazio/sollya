@@ -4168,6 +4168,134 @@ int sollya_lib_evaluate_function_over_interval(mpfi_t y, sollya_obj_t obj1, mpfi
   return 1;
 }
 
+sollya_obj_t sollya_lib_externalprocedure(sollya_externalprocedure_type_t res_type, sollya_externalprocedure_type_t *arg_types, int arity, char *name, void *func) {
+  libraryProcedure *libProc;
+  int resType;
+  int *argTypes;
+  int i, t;
+  sollya_obj_t unevaluatedExternalProcedure, evaluatedExternalProcedure;
+  
+
+  if (arity < 0) return NULL;
+  
+  switch (res_type) {
+  case SOLLYA_EXTERNALPROC_TYPE_VOID:
+    resType = VOID_TYPE;
+    break;
+  case SOLLYA_EXTERNALPROC_TYPE_CONSTANT:
+    resType = CONSTANT_TYPE;
+    break;
+  case SOLLYA_EXTERNALPROC_TYPE_FUNCTION:
+    resType = FUNCTION_TYPE;
+    break;
+  case SOLLYA_EXTERNALPROC_TYPE_RANGE:
+    resType = RANGE_TYPE;
+    break;
+  case SOLLYA_EXTERNALPROC_TYPE_INTEGER:
+    resType = INTEGER_TYPE;
+    break;
+  case SOLLYA_EXTERNALPROC_TYPE_STRING:
+    resType = STRING_TYPE;
+    break;
+  case SOLLYA_EXTERNALPROC_TYPE_BOOLEAN:
+    resType = BOOLEAN_TYPE;
+    break;
+  case SOLLYA_EXTERNALPROC_TYPE_OBJECT:
+    resType = OBJECT_TYPE;
+    break;
+  case SOLLYA_EXTERNALPROC_TYPE_CONSTANT_LIST:
+    resType = CONSTANT_LIST_TYPE;
+    break;
+  case SOLLYA_EXTERNALPROC_TYPE_FUNCTION_LIST:
+    resType = FUNCTION_LIST_TYPE;
+    break;
+  case SOLLYA_EXTERNALPROC_TYPE_RANGE_LIST:
+    resType = RANGE_LIST_TYPE;
+    break;
+  case SOLLYA_EXTERNALPROC_TYPE_INTEGER_LIST:
+    resType = INTEGER_LIST_TYPE;
+    break;
+  case SOLLYA_EXTERNALPROC_TYPE_STRING_LIST:
+    resType = STRING_LIST_TYPE;
+    break;
+  case SOLLYA_EXTERNALPROC_TYPE_BOOLEAN_LIST:
+    resType = BOOLEAN_LIST_TYPE;
+    break;
+  case SOLLYA_EXTERNALPROC_TYPE_OBJECT_LIST:
+    resType = OBJECT_LIST_TYPE;
+    break;
+  default:
+    return sollya_lib_error();
+  }
+
+  argTypes = safeCalloc(((arity > 0) ? arity : 1), sizeof(int));
+  for (i=0;i<arity;i++) {
+    switch (arg_types[i]) {
+    case SOLLYA_EXTERNALPROC_TYPE_VOID:
+      t = VOID_TYPE;
+      break;
+    case SOLLYA_EXTERNALPROC_TYPE_CONSTANT:
+      t = CONSTANT_TYPE;
+      break;
+    case SOLLYA_EXTERNALPROC_TYPE_FUNCTION:
+      t = FUNCTION_TYPE;
+      break;
+    case SOLLYA_EXTERNALPROC_TYPE_RANGE:
+      t = RANGE_TYPE;
+      break;
+    case SOLLYA_EXTERNALPROC_TYPE_INTEGER:
+      t = INTEGER_TYPE;
+      break;
+    case SOLLYA_EXTERNALPROC_TYPE_STRING:
+      t = STRING_TYPE;
+      break;
+    case SOLLYA_EXTERNALPROC_TYPE_BOOLEAN:
+      t = BOOLEAN_TYPE;
+      break;
+    case SOLLYA_EXTERNALPROC_TYPE_OBJECT:
+      t = OBJECT_TYPE;
+      break;
+    case SOLLYA_EXTERNALPROC_TYPE_CONSTANT_LIST:
+      t = CONSTANT_LIST_TYPE;
+      break;
+    case SOLLYA_EXTERNALPROC_TYPE_FUNCTION_LIST:
+      t = FUNCTION_LIST_TYPE;
+      break;
+    case SOLLYA_EXTERNALPROC_TYPE_RANGE_LIST:
+      t = RANGE_LIST_TYPE;
+      break;
+    case SOLLYA_EXTERNALPROC_TYPE_INTEGER_LIST:
+      t = INTEGER_LIST_TYPE;
+      break;
+    case SOLLYA_EXTERNALPROC_TYPE_STRING_LIST:
+      t = STRING_LIST_TYPE;
+      break;
+    case SOLLYA_EXTERNALPROC_TYPE_BOOLEAN_LIST:
+      t = BOOLEAN_LIST_TYPE;
+      break;
+    case SOLLYA_EXTERNALPROC_TYPE_OBJECT_LIST:
+      t = OBJECT_LIST_TYPE;
+      break;
+    default:
+      safeFree(argTypes);
+      return sollya_lib_error();
+    }
+    argTypes[i] = t;
+  }
+
+  libProc = bindProcedureByPtr(resType, argTypes, arity, name, func);
+
+  safeFree(argTypes);
+  
+  if (libProc == NULL) return sollya_lib_error();
+
+  unevaluatedExternalProcedure = addMemRef(makeExternalProcedureUsage(libProc));
+  evaluatedExternalProcedure = addMemRef(evaluateThing(unevaluatedExternalProcedure));
+  freeThing(unevaluatedExternalProcedure);
+  
+  return evaluatedExternalProcedure;
+}
+
 sollya_obj_t sollya_lib_get_object_list_head(sollya_obj_list_t list) {
   if (list == NULL) return NULL;
   return (sollya_obj_t) (list->value);

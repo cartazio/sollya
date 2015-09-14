@@ -102,6 +102,7 @@
 
 int oldAutoPrint = 0;
 int oldVoidPrint = 0;
+int oldExternalProcedurePrint = 0;
 int printMode = PRINT_MODE_LEGACY;
 FILE *warnFile = NULL;
 char *variablename = NULL;
@@ -1653,6 +1654,7 @@ int initializeLibraryMode(void *(*myActualMalloc)(size_t),
   inputFileOpened = 0;
   flushOutput = 0;
   oldAutoPrint = 0;
+  oldExternalProcedurePrint = 0;
   printMode = PRINT_MODE_LEGACY;
   warnFile = NULL;
   eliminatePromptBackup = 1;
@@ -1899,6 +1901,7 @@ int general(int argc, char *argv[]) {
   inputFileOpened = 0;
   flushOutput = 0;
   oldAutoPrint = 0;
+  oldExternalProcedurePrint = 0;
   printMode = PRINT_MODE_LEGACY;
   warnFile = NULL;
 
@@ -1942,6 +1945,7 @@ int general(int argc, char *argv[]) {
 	sollyaPrintf("--nocolor : do not color the output using ANSI escape sequences\n");
 	sollyaPrintf("--noprompt : do not print a prompt symbol\n");
 	sollyaPrintf("--oldautoprint : print commas between autoprinted elements separated by commas\n");
+	sollyaPrintf("--oldexternalprocprint : print the signature of an external procedure when autoprinting\n");
 	sollyaPrintf("--oldrlwrapcompatible : acheive some compatibilty with old rlwrap versions by emitting wrong ANSI sequences (deprecated)\n");
 	sollyaPrintf("--warninfile[append] <file> : print warning messages into a file instead on the standard output\n");
 	sollyaPrintf("--warnonstderr : print warning messages on error output instead on the standard output\n");
@@ -1960,90 +1964,92 @@ int general(int argc, char *argv[]) {
 	      if (strcmp(argv[i],"--oldrlwrapcompatible") == 0) oldrlwrapcompatible = 1; else
 		if (strcmp(argv[i],"--flush") == 0) flushOutput = 1; else
 		  if (strcmp(argv[i],"--oldautoprint") == 0) oldAutoPrint = 1; else
-		    if (strcmp(argv[i],"--warnonstderr") == 0) {
-		      if (printMode != PRINT_MODE_WARNING_TO_FILE) {
-			printMode = PRINT_MODE_WARNING_TO_STDERR;
-		      } else {
-			sollyaPrintf("Error: only one of the --warnonstderr or --warninfile options can be given.\n");
-			return 1;
-		      }
-		    } else
-		      if ((strcmp(argv[i],"--warninfile") == 0) ||
-			  (strcmp(argv[i],"--warninfileappend") == 0)){
-			if (printMode != PRINT_MODE_WARNING_TO_STDERR) {
-			  if (i+1<argc) {
-			    i++;
-			    if (strcmp(argv[i-1],"--warninfileappend") == 0) {
-			      fd = fopen(argv[i],"a");
-			    } else {
-			      fd = fopen(argv[i],"w");
-			    }
-			    if (fd != NULL) {
-			      warnFile = fd;
-			      fd = NULL;
-			      printMode = PRINT_MODE_WARNING_TO_FILE;
-			    } else {
-			      sollyaPrintf("Error: the file \"%s\" could not be opened for warning display: %s\n",argv[i],strerror(errno));
-			      return 1;
-			    }
-			  } else {
-			    sollyaPrintf("Error: no file argument is given for the --warninfile option.\n");
-			    return 1;
-			  }
+		    if (strcmp(argv[i],"--oldexternalprocprint") == 0) oldExternalProcedurePrint = 1; else
+		      if (strcmp(argv[i],"--warnonstderr") == 0) {
+			if (printMode != PRINT_MODE_WARNING_TO_FILE) {
+			  printMode = PRINT_MODE_WARNING_TO_STDERR;
 			} else {
 			  sollyaPrintf("Error: only one of the --warnonstderr or --warninfile options can be given.\n");
 			  return 1;
 			}
-		      } else {
-			if (strcmp(argv[i],"--donotmodifystacksize") == 0) doNotModifyStackSize = 1; else {
-			  if (!inputFileOpened) {
-			    fd = fopen(argv[i],"r");
-			    if (fd != NULL) {
-			      inputFile = fd;
-			      inputFileOpened = 1;
-			      eliminatePromptBackup = 1;
-			      noColor = 1;
+		      } else
+			if ((strcmp(argv[i],"--warninfile") == 0) ||
+			    (strcmp(argv[i],"--warninfileappend") == 0)){
+			  if (printMode != PRINT_MODE_WARNING_TO_STDERR) {
+			    if (i+1<argc) {
+			      i++;
+			      if (strcmp(argv[i-1],"--warninfileappend") == 0) {
+				fd = fopen(argv[i],"a");
+			      } else {
+				fd = fopen(argv[i],"w");
+			      }
+			      if (fd != NULL) {
+				warnFile = fd;
+				fd = NULL;
+				printMode = PRINT_MODE_WARNING_TO_FILE;
+			      } else {
+				sollyaPrintf("Error: the file \"%s\" could not be opened for warning display: %s\n",argv[i],strerror(errno));
+				return 1;
+			      }
 			    } else {
-			      sollyaPrintf("Error: the file \"%s\" could not be opened: %s\n",argv[i],strerror(errno));
+			      sollyaPrintf("Error: no file argument is given for the --warninfile option.\n");
 			      return 1;
 			    }
 			  } else {
-			    sollyaOptions = 0;
-			    for (k=i;(k<argc)&&(!sollyaOptions);k++) {
-			      if ((strcmp(argv[k], "--args") == 0) ||
-				  (strcmp(argv[k], "--donotmodifystacksize") == 0) ||
-				  (strcmp(argv[k], "--flush") == 0) ||
-				  (strcmp(argv[k], "--help") == 0) ||
-				  (strcmp(argv[k], "--nocolor") == 0) ||
-				  (strcmp(argv[k], "--noprompt") == 0) ||
-				  (strcmp(argv[k], "--oldautoprint") == 0) ||
-				  (strcmp(argv[k], "--oldrlwrapcompatible") == 0) ||
-				  (strcmp(argv[k], "--warninfile") == 0) ||
-				  (strcmp(argv[k], "--warninfileappend") == 0) ||
-				  (strcmp(argv[k], "--warnonstderr") == 0)) {
-				sollyaOptions = 1;
+			    sollyaPrintf("Error: only one of the --warnonstderr or --warninfile options can be given.\n");
+			    return 1;
+			  }
+			} else {
+			  if (strcmp(argv[i],"--donotmodifystacksize") == 0) doNotModifyStackSize = 1; else {
+			    if (!inputFileOpened) {
+			      fd = fopen(argv[i],"r");
+			      if (fd != NULL) {
+				inputFile = fd;
+				inputFileOpened = 1;
+				eliminatePromptBackup = 1;
+				noColor = 1;
+			      } else {
+				sollyaPrintf("Error: the file \"%s\" could not be opened: %s\n",argv[i],strerror(errno));
+				return 1;
 			      }
-			    }
-			    if (sollyaOptions) {
-			      sollyaPrintf("Error: another input file besides \"%s\" has been indicated and opened and the order of options is ambiguous.\n",argv[i]);
-			      return 1;
 			    } else {
-			      argsArgRead = 1;
-			      argsArgc++;
-			      temp = (char **) safeCalloc(argsArgc, sizeof(char *));
-			      if (argsArgc > 1) {
-				for (k=0;k<argsArgc-1;k++) {
-				  temp[k] = argsArgv[k];
+			      sollyaOptions = 0;
+			      for (k=i;(k<argc)&&(!sollyaOptions);k++) {
+				if ((strcmp(argv[k], "--args") == 0) ||
+				    (strcmp(argv[k], "--donotmodifystacksize") == 0) ||
+				    (strcmp(argv[k], "--flush") == 0) ||
+				    (strcmp(argv[k], "--help") == 0) ||
+				    (strcmp(argv[k], "--nocolor") == 0) ||
+				    (strcmp(argv[k], "--noprompt") == 0) ||
+				    (strcmp(argv[k], "--oldautoprint") == 0) ||
+				    (strcmp(argv[k], "--oldexternalprocprint") == 0) ||
+				    (strcmp(argv[k], "--oldrlwrapcompatible") == 0) ||
+				    (strcmp(argv[k], "--warninfile") == 0) ||
+				    (strcmp(argv[k], "--warninfileappend") == 0) ||
+				    (strcmp(argv[k], "--warnonstderr") == 0)) {
+				  sollyaOptions = 1;
 				}
-				safeFree(argsArgv);
 			      }
-			      argsArgv = temp;
-			      argsArgv[argsArgc-1] = (char *) safeCalloc(strlen(argv[i])+1, sizeof(char));
-			      strcpy(argsArgv[argsArgc-1], argv[i]);
+			      if (sollyaOptions) {
+				sollyaPrintf("Error: another input file besides \"%s\" has been indicated and opened and the order of options is ambiguous.\n",argv[i]);
+				return 1;
+			      } else {
+				argsArgRead = 1;
+				argsArgc++;
+				temp = (char **) safeCalloc(argsArgc, sizeof(char *));
+				if (argsArgc > 1) {
+				  for (k=0;k<argsArgc-1;k++) {
+				    temp[k] = argsArgv[k];
+				  }
+				  safeFree(argsArgv);
+				}
+				argsArgv = temp;
+				argsArgv[argsArgc-1] = (char *) safeCalloc(strlen(argv[i])+1, sizeof(char));
+				strcpy(argsArgv[argsArgc-1], argv[i]);
+			      }
 			    }
 			  }
 			}
-		      }
     }
   }
 

@@ -96,6 +96,7 @@
 #include <setjmp.h>
 #include "hooks.h"
 #include "polynomials.h"
+#include "hash.h"
 
 #define READBUFFERSIZE 16000
 
@@ -8353,7 +8354,7 @@ node *getThingFromTable(char *identifier, int doCopy, int *didCopy) {
   return (node *) getEntry(symbolTable, identifier, returnThingOnVoid);
 }
 
-void printExternalProcedureUsage(node *tree) {
+void printExternalProcedureUsageOldStyle(node *tree) {
   chain *curr;
   if (isExternalProcedureUsage(tree)) {
     sollyaPrintf("%s(",accessThruMemRef(tree)->libProc->procedureName);
@@ -8461,6 +8462,12 @@ void printExternalProcedureUsage(node *tree) {
     default:
       sollyaPrintf("unknown type");
     }
+  }
+}
+
+void printExternalProcedureUsage(node *tree) {
+  if (isExternalProcedureUsage(tree)) {
+    sollyaPrintf("%s",accessThruMemRef(tree)->libProc->procedureName);
   }
 }
 
@@ -10401,7 +10408,11 @@ int executeCommandInner(node *tree) {
 	    autoprint(tempNode,0,NULL,NULL);
 	  } else {
 	    outputMode();
-	    printExternalProcedureUsage(tempNode);
+	    if (oldExternalProcedurePrint) {
+	      printExternalProcedureUsageOldStyle(tempNode);
+	    } else {
+	      printExternalProcedureUsage(tempNode);
+	    }
 	  }
 	  sollyaPrintf("\n");
 	}
@@ -10440,10 +10451,15 @@ int executeCommandInner(node *tree) {
 	}
 	if (!autoprintAlreadyDone) {
 	  outputMode();
-	  if (!isExternalProcedureUsage(tempNode))
+	  if (!isExternalProcedureUsage(tempNode)) {
 	    autoprint(tempNode,0,NULL,NULL);
-	  else
-	    printExternalProcedureUsage(tempNode);
+	  } else {
+	    if (oldExternalProcedurePrint) {
+	      printExternalProcedureUsageOldStyle(tempNode);
+	    } else {
+	      printExternalProcedureUsage(tempNode);
+	    }
+	  }
 	  freeThing(tempNode);
 	}
 	if (oldAutoPrint) {

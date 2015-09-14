@@ -55,7 +55,14 @@
 #include <mpfr.h>
 #include "mpfi-compat.h"
 
-
+uint64_t hashChar(char);
+uint64_t hashInt(int);
+uint64_t hashMpfr(mpfr_t);
+uint64_t hashMpfi(sollya_mpfi_t);
+uint64_t hashMpq(mpq_t);
+uint64_t hashString(char *);
+uint64_t hashPointer(void *);
+uint64_t hashCombine(uint64_t, uint64_t);
 
 
 #endif /* ifdef HASH_H*/

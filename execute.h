@@ -543,6 +543,7 @@ node *makeProc(chain *stringlist, node *body, node *returnVal);
 node *makeMatchElement(node *, node *, node *);
 node *makeProcIllim(char *arg, node *body, node *returnVal);
 node *makeApply(node *thing, chain *thinglist);
+node *makeExternalProcedureUsage(libraryProcedure *proc);
 
 node *parseString(char *str);
 

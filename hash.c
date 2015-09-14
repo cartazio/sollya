@@ -51,3 +51,128 @@
 #include <stdlib.h>
 #include "hash.h"
 
+uint64_t hashChar(char x) {
+  char xx;
+  unsigned char X;
+  uint64_t tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8;
+  xx = x;
+  X = *((unsigned char *) &xx);
+  tmp1 = (uint64_t) X;
+  tmp2 = tmp1 << 8;
+  tmp3 = tmp2 << 8;
+  tmp4 = tmp3 << 8;
+  tmp5 = tmp4 << 8;
+  tmp6 = tmp5 << 8;
+  tmp7 = tmp6 << 8;
+  tmp8 = tmp7 << 8;
+  return hashCombine(hashCombine(hashCombine(hashCombine(hashCombine(hashCombine(hashCombine(tmp1, tmp2), tmp3), tmp4), tmp5), tmp6), tmp7), tmp8);
+}
+
+uint64_t hashInt(int x) {
+  int xx;
+  unsigned int X;
+  uint64_t tmp1, tmp2, tmp3, tmp4;
+  xx = x;
+  X = *((unsigned int *) &xx);
+  tmp1 = (uint64_t) X;
+  tmp2 = tmp1 << 16;
+  tmp3 = tmp2 << 16;
+  tmp4 = tmp3 << 16;
+  return hashCombine(hashCombine(hashCombine(tmp1, tmp2), tmp3), tmp4);
+}
+
+uint64_t hashLong(long x) {
+  long xx;
+  unsigned long X;
+  uint64_t tmp1, tmp2, tmp3, tmp4;
+  xx = x;
+  X = *((unsigned long *) &xx);
+  tmp1 = (uint64_t) X;
+  tmp2 = tmp1 << 16;
+  tmp3 = tmp2 << 16;
+  tmp4 = tmp3 << 16;
+  return hashCombine(hashCombine(hashCombine(tmp1, tmp2), tmp3), tmp4);
+}
+
+uint64_t hashDouble(double x) {
+  double xx;
+  uint64_t tmp1;
+
+  xx = x;
+  tmp1 = *((uint64_t *) &xx);
+  tmp1 ^= UINT64_C(0x00ff00ff00ff00ff);
+  return tmp1;
+}
+
+uint64_t hashMpfr(mpfr_t x) {
+  long exp;
+  double mant;
+  uint64_t tmp1, tmp2;
+
+  exp = (long) 0;
+  mant = mpfr_get_d_2exp(&exp, x, GMP_RNDN);
+
+  tmp1 = hashLong(exp);
+  tmp2 = hashDouble(mant);
+  return hashCombine(tmp1, tmp2);
+}
+
+uint64_t hashMpfi(sollya_mpfi_t x) {
+  uint64_t tmp1, tmp2;
+  
+  /* HACK ALERT: For performance reasons, we will access the internals
+     of an mpfi_t !!!
+  */
+  tmp1 = hashMpfr(&(x->left));
+  tmp2 = hashMpfr(&(x->right));
+  return hashCombine(tmp1, tmp2);
+}
+
+uint64_t hashMpz(mpz_t x) {
+  long exp;
+  double mant;
+  uint64_t tmp1, tmp2;
+
+  exp = (long) 0;
+  mant = mpz_get_d_2exp(&exp, x);
+  tmp1 = hashLong(exp);
+  tmp2 = hashDouble(mant);
+  return hashCombine(tmp1, tmp2);
+}
+
+uint64_t hashMpq(mpq_t x) {
+  uint64_t tmp1, tmp2;
+  
+  mpq_canonicalize(x);
+  tmp1 = hashMpz(mpq_numref(x));
+  tmp2 = hashMpz(mpq_denref(x));
+  return hashCombine(tmp1, tmp2);  
+}
+
+uint64_t hashString(char *x) {
+  uint64_t tmp;
+  char *curr;
+  
+  tmp = UINT64_C(0xcafebabedeadbeef);
+  for (curr=x;*curr!='\0';curr++) {
+    tmp = hashCombine(tmp, hashChar(*curr));
+  }
+  return tmp;
+}
+
+uint64_t hashPointer(void *x) {
+  uint64_t tmp1, tmp2, tmp3, tmp4;
+  tmp1 = (uint64_t) x;
+  tmp2 = tmp1 << 16;
+  tmp3 = tmp2 << 16;
+  tmp4 = tmp3 << 16;
+  return hashCombine(hashCombine(hashCombine(tmp1, tmp2), tmp3), tmp4);
+}
+
+uint64_t hashCombine(uint64_t h1, uint64_t h2) {
+  uint64_t tmp;
+  tmp = h1 * h2;
+  tmp ^= UINT64_C(0xff00ff00ff00ff00);
+  return tmp;
+}
+

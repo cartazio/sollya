@@ -112,6 +112,7 @@ tevaluate_function_at_constant_expression.c \
 tevaluate_function_at_point.c \
 texecute.c \
 texecute_procedure.c \
+texternalprocedure.c \
 texp.c \
 texpand.c \
 texpm1.c \

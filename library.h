@@ -116,5 +116,6 @@ void freeConstantLibraries();
 void freeProcLibraries();
 libraryFunction *bindFunctionByPtr(char *suggestedName, int (*func)(mpfi_t, mpfi_t, int));
 libraryFunction *bindConstantFunctionByPtr(char *suggestedName, void (*func)(mpfr_t, mp_prec_t));
+libraryProcedure *bindProcedureByPtr(int resType, int *argTypes, int arity, char *suggestedName, void *func);
 
 #endif /* ifdef LIBRARY_H*/

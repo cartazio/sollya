@@ -62,6 +62,7 @@
 #include "config.h"
 #endif
 
+#include <stdint.h>
 #include <mpfr.h>
 #include <stdio.h>
 #include "chain.h"
@@ -159,6 +160,8 @@ struct nodeStruct
   mpfr_t *pointEvalCacheX, *pointEvalCacheY;
   mp_exp_t pointEvalCacheCutoff;
   point_eval_t pointEvalCacheResultType;
+  uint64_t hash;
+  int hashComputed;
 };
 
 /* HELPER TYPE FOR THE PARSER */
@@ -225,6 +228,7 @@ static inline node* addMemRefEvenOnNull(node *tree) {
   res->memRefChildFromPolynomial = 0;
   res->pointEvalCacheX = NULL;
   res->pointEvalCacheY = NULL;
+  res->hashComputed = 0;
 
   return res;
 }

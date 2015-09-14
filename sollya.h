@@ -1,6 +1,6 @@
 /*
 
-  Copyright 2007-2013 by
+  Copyright 2007-2015 by
 
   Laboratoire de l'Informatique du Parallelisme,
   UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
@@ -222,6 +222,26 @@ extern "C" {
     SOLLYA_BASE_FUNC_TRIPLEDOUBLE
   };
   typedef enum sollya_base_function_enum_t sollya_base_function_t;
+
+  /* Define an enumeration type for the types supported with sollya_lib_externalprocedure */
+  enum sollya_externalprocedure_type_enum_t {
+    SOLLYA_EXTERNALPROC_TYPE_VOID,
+    SOLLYA_EXTERNALPROC_TYPE_CONSTANT,
+    SOLLYA_EXTERNALPROC_TYPE_FUNCTION,
+    SOLLYA_EXTERNALPROC_TYPE_RANGE,
+    SOLLYA_EXTERNALPROC_TYPE_INTEGER,
+    SOLLYA_EXTERNALPROC_TYPE_STRING,
+    SOLLYA_EXTERNALPROC_TYPE_BOOLEAN,
+    SOLLYA_EXTERNALPROC_TYPE_OBJECT,
+    SOLLYA_EXTERNALPROC_TYPE_CONSTANT_LIST,
+    SOLLYA_EXTERNALPROC_TYPE_FUNCTION_LIST,
+    SOLLYA_EXTERNALPROC_TYPE_RANGE_LIST,
+    SOLLYA_EXTERNALPROC_TYPE_INTEGER_LIST,
+    SOLLYA_EXTERNALPROC_TYPE_STRING_LIST,
+    SOLLYA_EXTERNALPROC_TYPE_BOOLEAN_LIST,
+    SOLLYA_EXTERNALPROC_TYPE_OBJECT_LIST
+  };
+  typedef enum sollya_externalprocedure_type_enum_t sollya_externalprocedure_type_t;
 
   /* Initialization and finalization functions */
   int sollya_lib_init();
@@ -555,6 +575,7 @@ extern "C" {
   sollya_obj_t sollya_lib_libraryconstant(char *, void (*)(mpfr_t, mp_prec_t));
   sollya_obj_t sollya_lib_libraryfunction(sollya_obj_t, char *, int (*)(mpfi_t, mpfi_t, int));
   sollya_obj_t sollya_lib_procedurefunction(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_externalprocedure(sollya_externalprocedure_type_t, sollya_externalprocedure_type_t *, int, char *, void *);
 
   /* A function to parse expressions and evaluate them */
   sollya_obj_t sollya_lib_parse_string(const char *);

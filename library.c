@@ -1,6 +1,6 @@
 /*
 
-  Copyright 2007-2013 by
+  Copyright 2007-2015 by
 
   Laboratoire de l'Informatique du Parallelisme,
   UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
@@ -290,6 +290,7 @@ chain *openedProcLibraries = NULL;
 
 chain *globalLibraryFunctions = NULL;
 chain *globalLibraryConstants = NULL;
+chain *globalLibraryProcedures = NULL;
 
 void copyIdentifierSymbols(char *ptr, const char *src) {
   char *currPtr;
@@ -937,7 +938,6 @@ libraryProcedure *bindProcedure(char* libraryName, char *procedureName, chain *s
   return currProc;
 }
 
-
 libraryProcedure *getProcedure(char *procedureName) {
   chain *currLibList, *currProcList;
   libraryProcedure *currProc;
@@ -959,6 +959,101 @@ libraryProcedure *getProcedure(char *procedureName) {
   return NULL;
 }
 
+libraryProcedure *getProcedureByPtr(void *ptr) {
+  chain *currLibList, *currProcList;
+  libraryProcedure *currProc;
+  libraryHandle *currLibHandle;
+
+  currLibList = openedProcLibraries;
+  while (currLibList != NULL) {
+    currLibHandle = (libraryHandle *) currLibList->value;
+    currProcList = currLibHandle->functionList;
+    while (currProcList != NULL) {
+      currProc = (libraryProcedure *) currProcList->value;
+      if (currProc->code == ptr)
+	return currProc;
+      currProcList = currProcList->next;
+    }
+    currLibList = currLibList->next;
+  }
+
+  return NULL;
+}
+
+libraryProcedure *bindProcedureByPtr(int resType, int *argTypes, int arity, char *suggestedName, void *func) {
+  libraryProcedure *res;
+  char *unifiedName, *basename, *filteredBaseName, *filteredSuggestedName;
+  chain *signature, *temp;
+  int i;
+  int *t;
+
+  if (arity < 0) return NULL;
+  if (arity > 1) {
+    for (i=1;i<arity;i++) {
+      if (argTypes[i] == VOID_TYPE)
+	return NULL;
+    }
+  }
+  
+  res = getProcedureByPtr(func);
+  if (res != NULL) return res;
+
+  signature = NULL;
+  t = (int *) safeMalloc(sizeof(int));
+  *t = resType;
+  signature = addElement(signature, t);
+  if (arity == 0) {
+    t = (int *) safeMalloc(sizeof(int));
+    *t = VOID_TYPE;
+    signature = addElement(signature, t);
+  } else {
+    for (i=0;i<arity;i++) {
+      t = (int *) safeMalloc(sizeof(int));
+      *t = argTypes[i];
+      signature = addElement(signature, t);
+    }
+  }
+  temp = copyChain(signature, copyIntPtrOnVoid);
+  freeChain(signature,freeIntPtr);
+  signature = temp;
+  
+  if (suggestedName != NULL) {
+    filteredSuggestedName = filterSymbolName(suggestedName);
+    if (filteredSuggestedName[0] == '\0') {
+      basename = getBaseFunctionName(func, "proc");
+      filteredBaseName = filterSymbolName(basename);
+      safeFree(basename);
+      if (filteredBaseName[0] == '\0') {
+	unifiedName = unifySymbolName("proc");
+      } else {
+	unifiedName = unifySymbolName(filteredBaseName);
+      }
+      safeFree(filteredBaseName);
+    } else {
+      unifiedName = unifySymbolName(filteredSuggestedName);
+    }
+    safeFree(filteredSuggestedName);
+  } else {
+    basename = getBaseFunctionName(func, "proc");
+    filteredBaseName = filterSymbolName(basename);
+    safeFree(basename);
+    if (filteredBaseName[0] == '\0') {
+      unifiedName = unifySymbolName("proc");
+    } else {
+      unifiedName = unifySymbolName(filteredBaseName);
+    }
+    safeFree(filteredBaseName);
+  }
+
+  res = (libraryProcedure *) safeMalloc(sizeof(libraryProcedure));
+  res->procedureName = unifiedName;
+  res->code = func;
+  res->signature = signature;
+
+  globalLibraryProcedures = addElement(globalLibraryProcedures, res);
+
+  return res;
+}
 
 void freeProcLibraries() {
   chain *currLibList, *currProcList, *prevProcList, *prevLibList;
@@ -967,6 +1062,17 @@ void freeProcLibraries() {
   int res;
   int (*myFunction)(void);
 
+  currProcList = globalLibraryProcedures;
+  while (currProcList != NULL) {
+    currProc = (libraryProcedure *) currProcList->value;
+    safeFree(currProc->procedureName);
+    freeChain(currProc->signature,freeIntPtr);
+    safeFree(currProcList->value);
+    prevProcList = currProcList;
+    currProcList = currProcList->next;
+    safeFree(prevProcList);
+  }
+  
   currLibList = openedProcLibraries;
   while (currLibList != NULL) {
     currLibHandle = (libraryHandle *) currLibList->value;

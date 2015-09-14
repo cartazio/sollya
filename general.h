@@ -95,6 +95,7 @@
 
 extern int oldAutoPrint;
 extern int oldVoidPrint;
+extern int oldExternalProcedurePrint;
 extern int printMode;
 extern FILE *warnFile;
 extern char *variablename;
