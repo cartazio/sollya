@@ -679,6 +679,22 @@ extern "C" {
   int sollya_lib_decompose_libraryconstant(void (**)(mpfr_t, mp_prec_t), sollya_obj_t);
   int sollya_lib_decompose_procedurefunction(sollya_obj_t *, int *, sollya_obj_t *, sollya_obj_t);
 
+  /* A function to compute a hash value on Sollya objects 
+
+     The function guarantees that if two objects compare equal,
+     then they have the same hash. 
+
+     This function is actually pretty expensive in cases when 
+     Sollya needs to compute a unique representation before
+     computing the hash.
+
+     The hash value gets cached in most cases; so recomputing
+     should essentially be free.
+
+  */
+  uint64_t sollya_lib_hash(sollya_obj_t);
+
+  
   /* Functions that work on Sollya objects that are structures
 
      The int return value indicates success (zero -> failure, non-zero -> success).

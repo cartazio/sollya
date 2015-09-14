@@ -57,11 +57,13 @@
 
 uint64_t hashChar(char);
 uint64_t hashInt(int);
+uint64_t hashUnsignedInt(unsigned int);
 uint64_t hashMpfr(mpfr_t);
 uint64_t hashMpfi(sollya_mpfi_t);
 uint64_t hashMpq(mpq_t);
 uint64_t hashString(char *);
 uint64_t hashPointer(void *);
+uint64_t hashInt64(int64_t);
 uint64_t hashCombine(uint64_t, uint64_t);
 
 

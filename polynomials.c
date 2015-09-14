@@ -1,6 +1,6 @@
 /*
 
-  Copyright 2014 by
+  Copyright 2014-2015 by
 
   Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
   UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France
@@ -56,15 +56,25 @@
 #include "expression.h"
 #include "polynomials.h"
 #include "printf.h"
+#include "hash.h"
+
 
 /* Helper types */
 
+
+struct __hash_result_struct_t {
+  uint64_t hash;
+  int hasHash;
+};
+typedef struct __hash_result_struct_t hash_result_t;
 
 struct __boolean_result_cache_struct_t {
   int res;
   int cached;
 };
 typedef struct __boolean_result_cache_struct_t boolean_result_cache_t;
+
+
 
 /* Types for constants, sparse polynomials and polynomials */
 
@@ -92,6 +102,7 @@ struct __constant_struct_t {
   boolean_result_cache_t isPositive;
   boolean_result_cache_t isDyadic;
   boolean_result_cache_t isRational;
+  hash_result_t hash;
   union { 
     int integer;
     node *expr;
@@ -105,6 +116,7 @@ struct __sparse_polynomial_struct_t {
   unsigned int refCount;
   constant_t deg;
   unsigned int monomialCount;
+  hash_result_t hash;
   constant_t *coeffs;
   constant_t *monomialDegrees;
 };
@@ -131,6 +143,7 @@ struct __polynomial_struct_t {
   unsigned int refCount;
   polynomial_type_t type;
   polynomial_output_type_t outputType;
+  hash_result_t hash;
   union { 
     sparse_polynomial_t sparse;
     polynomial_t g;
@@ -1822,6 +1835,7 @@ static inline constant_t constantFromMpfr(mpfr_t c) {
   res->isPositive.cached = 0;
   res->isDyadic.cached = 0;
   res->isRational.cached = 0;
+  res->hash.hasHash = 0;
   if (mpfr_is_machine_integer(&intval, c)) {
     res->type = INTEGER;
     res->value.integer = intval;
@@ -1847,6 +1861,7 @@ static inline constant_t constantFromInt(int c) {
   res->isRational.cached = 0;
   res->type = INTEGER;
   res->value.integer = c;
+  res->hash.hasHash = 0;
   
   return res;
 }
@@ -1923,6 +1938,7 @@ static inline constant_t constantFromScaledMpq(mp_exp_t e, mpq_t c) {
   res->isRational.cached = 0;
   res->type = SCALEDMPQ;
   res->value.scaledMpq.expo = expo;
+  res->hash.hasHash = 0;
   mpq_init(res->value.scaledMpq.significand);
   mpq_set_num(res->value.scaledMpq.significand, num);
   mpq_set_den(res->value.scaledMpq.significand, den);
@@ -2013,6 +2029,7 @@ static inline constant_t constantFromExpression(node *c) {
   res->isRational.cached = 0;
   res->type = EXPRESSION;
   res->value.expr = simplified;
+  res->hash.hasHash = 0;
   
   return res;
 }
@@ -4065,6 +4082,44 @@ static inline int constantReferencesExpression(constant_t c, node *expr) {
   return 0;
 }
 
+static inline uint64_t constantHash(constant_t c) {
+  uint64_t hash;
+  
+  /* Handle stupid input */
+  if (c == NULL) return hashPointer(NULL);
+
+  /* Check if the hash has already been computed */
+  if (c->hash.hasHash) {
+    return c->hash.hash;
+  }
+  
+  /* Compute the hash */
+  hash = hashInt((int) (c->type));
+  switch (c->type) {
+  case INTEGER:
+    hash = hashCombine(hash, hashInt(c->value.integer));
+    break;
+  case EXPRESSION:
+    hash = hashCombine(hash, hashThing(c->value.expr));
+    break;
+  case MPFR:
+    hash = hashCombine(hash, hashMpfr(c->value.mpfr));
+    break;
+  case SCALEDMPQ:
+    hash = hashCombine(hash,
+		       hashCombine(hashInt64((int64_t) (c->value.scaledMpq.expo)),
+				   hashMpq(c->value.scaledMpq.significand)));
+    break;
+  }
+
+  /* Cache the result */
+  c->hash.hash = hash;
+  c->hash.hasHash = 1;
+  
+  /* Return the hash */
+  return hash;
+}
+
 /* End of part for constants */
 
 /* Start of part for sparse polynomials */
@@ -4284,6 +4339,7 @@ static inline sparse_polynomial_t sparsePolynomialFromMpfrConstant(mpfr_t c) {
   res->monomialDegrees = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
   res->monomialDegrees[0] = constantFromInt(0);
   res->deg = constantFromCopy(res->monomialDegrees[0]);
+  res->hash.hasHash = 0;
   return res;
 }
 
@@ -4297,6 +4353,7 @@ static inline sparse_polynomial_t sparsePolynomialFromMpzConstant(mpz_t c) {
   res->monomialDegrees = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
   res->monomialDegrees[0] = constantFromInt(0);
   res->deg = constantFromCopy(res->monomialDegrees[0]);
+  res->hash.hasHash = 0;
   return res;
 }
 
@@ -4310,6 +4367,7 @@ static inline sparse_polynomial_t sparsePolynomialFromMpqConstant(mpq_t c) {
   res->monomialDegrees = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
   res->monomialDegrees[0] = constantFromInt(0);
   res->deg = constantFromCopy(res->monomialDegrees[0]);
+  res->hash.hasHash = 0;
   return res;
 }
 
@@ -4323,6 +4381,7 @@ static inline sparse_polynomial_t sparsePolynomialFromConstant(constant_t c) {
   res->monomialDegrees = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
   res->monomialDegrees[0] = constantFromInt(0);
   res->deg = constantFromCopy(res->monomialDegrees[0]);
+  res->hash.hasHash = 0;
   return res;
 }
 
@@ -4336,6 +4395,7 @@ static inline sparse_polynomial_t sparsePolynomialFromIntConstant(int c) {
   res->monomialDegrees = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
   res->monomialDegrees[0] = constantFromInt(0);
   res->deg = constantFromCopy(res->monomialDegrees[0]);
+  res->hash.hasHash = 0;
   return res;
 }
 
@@ -4351,6 +4411,7 @@ static inline int __sparsePolynomialFromConstantExpression(sparse_polynomial_t *
   res->monomialDegrees = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
   res->monomialDegrees[0] = constantFromInt(0);
   res->deg = constantFromCopy(res->monomialDegrees[0]);
+  res->hash.hasHash = 0;
   *r = res;
   return 1;
 }
@@ -4368,6 +4429,7 @@ static inline int __sparsePolynomialFromConstantExpressionOnlyRealCoeffs(sparse_
   res->monomialDegrees = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
   res->monomialDegrees[0] = constantFromInt(0);
   res->deg = constantFromCopy(res->monomialDegrees[0]);
+  res->hash.hasHash = 0;
   *r = res;
   return 1;
 }
@@ -4382,6 +4444,7 @@ static inline sparse_polynomial_t sparsePolynomialFromIdentity() {
   res->monomialDegrees = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
   res->monomialDegrees[0] = constantFromCopy(res->coeffs[0]);
   res->deg = constantFromCopy(res->monomialDegrees[0]);
+  res->hash.hasHash = 0;
   return res;
 }
 
@@ -4393,6 +4456,7 @@ static inline sparse_polynomial_t sparsePolynomialFromMpfrCoefficients(mpfr_t *c
   if (coeffs == NULL) return NULL;
   res = __sparsePolynomialAllocate();
   res->refCount = 1;
+  res->hash.hasHash = 0;
   startSize = deg + 1u;
   if (startSize == 0u) startSize = UINT_MAX;
   res->monomialCount = 0u;
@@ -4444,6 +4508,7 @@ static inline int sparsePolynomialFromConstantExpressionCoefficients(sparse_poly
   }
   res = __sparsePolynomialAllocate();
   res->refCount = 1;
+  res->hash.hasHash = 0;
   startSize = deg + 1u;
   if (startSize == 0u) startSize = UINT_MAX;
   res->monomialCount = 0u;
@@ -4597,6 +4662,7 @@ static inline sparse_polynomial_t sparsePolynomialAdd(sparse_polynomial_t p, spa
   /* General case */
   res = __sparsePolynomialAllocate();
   res->refCount = 1;
+  res->hash.hasHash = 0;
   startSize = p->monomialCount + q->monomialCount;
   if (startSize < p->monomialCount) {
     startSize = UINT_MAX;
@@ -4717,6 +4783,7 @@ static inline sparse_polynomial_t sparsePolynomialSub(sparse_polynomial_t p, spa
   /* General case */
   res = __sparsePolynomialAllocate();
   res->refCount = 1;
+  res->hash.hasHash = 0;
   startSize = p->monomialCount + q->monomialCount;
   if (startSize < p->monomialCount) {
     startSize = UINT_MAX;
@@ -5016,6 +5083,7 @@ static inline sparse_polynomial_t sparsePolynomialMul(sparse_polynomial_t p, spa
   /* Allocate the result polynomial */
   res = __sparsePolynomialAllocate();
   res->refCount = 1;
+  res->hash.hasHash = 0;
   res->coeffs = (constant_t *) safeCalloc(startSize, 
 					  sizeof(constant_t));
   res->monomialDegrees = (constant_t *) safeCalloc(startSize, 
@@ -5068,6 +5136,7 @@ static inline sparse_polynomial_t sparsePolynomialNeg(sparse_polynomial_t p) {
   if (p == NULL) return NULL;
   res = __sparsePolynomialAllocate();
   res->refCount = 1;
+  res->hash.hasHash = 0;
   res->deg = constantFromCopy(p->deg);
   res->monomialCount = p->monomialCount;
   res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
@@ -5154,6 +5223,7 @@ static inline sparse_polynomial_t sparsePolynomialCompose(sparse_polynomial_t p,
   *d = constantFromCopy(p->monomialDegrees[p->monomialCount - 1u]);
   res = __sparsePolynomialAllocate();
   res->refCount = 1;
+  res->hash.hasHash = 0;
   res->monomialCount = p->monomialCount - 1u;
   res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
   res->monomialDegrees = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
@@ -5170,6 +5240,7 @@ static inline sparse_polynomial_t __sparsePolynomialFromMonomial(constant_t c, c
   sparse_polynomial_t res;
   res = __sparsePolynomialAllocate();
   res->refCount = 1;
+  res->hash.hasHash = 0;
   res->monomialCount = 1;
   res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
   res->coeffs[0] = constantFromCopy(c);
@@ -5289,6 +5360,7 @@ static inline void __sparsePolynomialCutIntoHalves(sparse_polynomial_t *r, spars
   /* Form polynomial p */
   res = __sparsePolynomialAllocate();
   res->refCount = 1;
+  res->hash.hasHash = 0;
   res->monomialCount = monomialCount1;
   res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
   res->monomialDegrees = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
@@ -5303,6 +5375,7 @@ static inline void __sparsePolynomialCutIntoHalves(sparse_polynomial_t *r, spars
   /* Form polynomial q */
   res = __sparsePolynomialAllocate();
   res->refCount = 1;
+  res->hash.hasHash = 0;
   res->monomialCount = monomialCount2;
   res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
   res->monomialDegrees = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
@@ -5333,6 +5406,7 @@ static inline sparse_polynomial_t __sparsePolynomialPowUnsignedIntAlternate(spar
     nC = constantFromUnsignedInt(n);
     res = __sparsePolynomialAllocate();
     res->refCount = 1;
+    res->hash.hasHash = 0;
     res->monomialCount = 1;
     res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
     res->coeffs[0] = constantPow(p->coeffs[0],nC);
@@ -5395,6 +5469,7 @@ static inline sparse_polynomial_t sparsePolynomialPowUnsignedInt(sparse_polynomi
     nC = constantFromUnsignedInt(n);
     res = __sparsePolynomialAllocate();
     res->refCount = 1;
+    res->hash.hasHash = 0;
     res->monomialCount = 1;
     res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
     res->coeffs[0] = constantPow(p->coeffs[0],nC);
@@ -5461,6 +5536,7 @@ static inline int sparsePolynomialPowConstant(sparse_polynomial_t *r, sparse_pol
   if (p->monomialCount == 1u) {
     res = __sparsePolynomialAllocate();
     res->refCount = 1;
+    res->hash.hasHash = 0;
     res->monomialCount = 1;
     res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
     res->coeffs[0] = constantPow(p->coeffs[0],n);
@@ -5564,6 +5640,7 @@ static inline sparse_polynomial_t sparsePolynomialDeriv(sparse_polynomial_t p) {
   /* Handle the general case */
   res = __sparsePolynomialAllocate();
   res->refCount = 1;
+  res->hash.hasHash = 0;
   res->coeffs = (constant_t *) safeCalloc(p->monomialCount, sizeof(constant_t));
   res->monomialDegrees = (constant_t *) safeCalloc(p->monomialCount, sizeof(constant_t));
   one = constantFromInt(1);
@@ -6628,6 +6705,7 @@ static inline sparse_polynomial_t sparsePolynomialRoundDyadic(sparse_polynomial_
   */ 
   res = __sparsePolynomialAllocate();
   res->refCount = 1;
+  res->hash.hasHash = 0;
   res->monomialCount = 0u;
   startSize = p->monomialCount;
   res->coeffs = (constant_t *) safeCalloc(startSize, sizeof(constant_t));
@@ -6688,6 +6766,7 @@ static inline sparse_polynomial_t sparsePolynomialRoundRational(sparse_polynomia
   */ 
   res = __sparsePolynomialAllocate();
   res->refCount = 1;
+  res->hash.hasHash = 0;
   res->monomialCount = 0u;
   startSize = p->monomialCount;
   res->coeffs = (constant_t *) safeCalloc(startSize, sizeof(constant_t));
@@ -6748,6 +6827,7 @@ static inline sparse_polynomial_t sparsePolynomialRound(sparse_polynomial_t p, m
   */ 
   res = __sparsePolynomialAllocate();
   res->refCount = 1;
+  res->hash.hasHash = 0;
   res->monomialCount = 0u;
   startSize = p->monomialCount;
   res->coeffs = (constant_t *) safeCalloc(startSize, sizeof(constant_t));
@@ -6813,6 +6893,34 @@ static inline int sparsePolynomialReferencesExpression(sparse_polynomial_t p, no
   return 0;
 }
 
+static inline uint64_t sparsePolynomialHash(sparse_polynomial_t p) {
+  uint64_t hash;
+  unsigned int i;
+  
+  /* Handle stupid input */
+  if (p == NULL) return hashPointer(NULL);
+
+  /* Check if the hash has already been computed */
+  if (p->hash.hasHash) {
+    return p->hash.hash;
+  }
+  
+  /* Compute the hash */
+  hash = hashUnsignedInt(p->monomialCount);
+  hash = hashCombine(hash, constantHash(p->deg));
+  for (i=0u;i<p->monomialCount;i++) {
+    hash = hashCombine(hash, constantHash(p->coeffs[i]));
+    hash = hashCombine(hash, constantHash(p->monomialDegrees[i]));
+  }
+
+  /* Cache the result */
+  p->hash.hash = hash;
+  p->hash.hasHash = 1;
+  
+  /* Return the hash */
+  return hash;
+}
+
 /* End of part for sparse polynomials */
 
 /* Start of part for general (composed) polynomials */
@@ -6839,6 +6947,7 @@ static inline polynomial_t __polynomialBuildFromSparse(sparse_polynomial_t p) {
   res->type = SPARSE;
   res->outputType = ANY_FORM;
   res->value.sparse = p;
+  res->hash.hasHash = 0;
 
   /* Return the newly built polynomial */
   return res;
@@ -6996,6 +7105,7 @@ static inline polynomial_t __polynomialExecuteCompositionCompose(polynomial_t p,
     __polynomialSparsify(q);
     res = __polynomialAllocate();
     res->refCount = 1u;
+    res->hash.hasHash = 0;
     res->outputType = ANY_FORM;
     res->value.sparse = sparsePolynomialCompose(p->value.sparse,  
 						q->value.sparse);
@@ -7006,6 +7116,7 @@ static inline polynomial_t __polynomialExecuteCompositionCompose(polynomial_t p,
   case MULTIPLICATION:
     res = __polynomialAllocate();
     res->refCount = 1u;
+    res->hash.hasHash = 0;
     res->outputType = ANY_FORM;
     res->type = p->type;
     res->value.pair.g = __polynomialExecuteCompositionCompose(p->value.pair.g, q);
@@ -7019,6 +7130,7 @@ static inline polynomial_t __polynomialExecuteCompositionCompose(polynomial_t p,
   case NEGATE:
     res = __polynomialAllocate();
     res->refCount = 1u;
+    res->hash.hasHash = 0;
     res->outputType = ANY_FORM;
     res->type = NEGATE;
     res->value.g = __polynomialExecuteCompositionCompose(p->value.g, q);
@@ -7026,6 +7138,7 @@ static inline polynomial_t __polynomialExecuteCompositionCompose(polynomial_t p,
   case POWER:
     res = __polynomialAllocate();
     res->refCount = 1u;
+    res->hash.hasHash = 0;
     res->outputType = ANY_FORM;
     res->type = POWER;
     res->value.powering.g = __polynomialExecuteCompositionCompose(p->value.powering.g, q);
@@ -7605,6 +7718,7 @@ polynomial_t polynomialHornerize(polynomial_t p) {
   */
   res = __polynomialAllocate();
   res->refCount = 1u;
+  res->hash.hasHash = 0;
   res->type = p->type;
   res->outputType = HORNER_FORM;
   switch (p->type) {
@@ -7645,6 +7759,7 @@ polynomial_t polynomialCanonicalize(polynomial_t p) {
   */
   res = __polynomialAllocate();
   res->refCount = 1u;
+  res->hash.hasHash = 0;
   res->type = p->type;
   res->outputType = CANONICAL_FORM;
   switch (p->type) {
@@ -8355,6 +8470,7 @@ polynomial_t polynomialAdd(polynomial_t p, polynomial_t q) {
   /* General case: construct the addition polynomial */
   res = __polynomialAllocate();
   res->refCount = 1u;
+  res->hash.hasHash = 0;
   res->type = ADDITION;
   res->outputType = ANY_FORM;
   res->value.pair.g = polynomialFromCopy(p);
@@ -8390,6 +8506,7 @@ polynomial_t polynomialSub(polynomial_t p, polynomial_t q) {
   /* General case: construct the addition polynomial */
   res = __polynomialAllocate();
   res->refCount = 1u;
+  res->hash.hasHash = 0;
   res->type = SUBTRACTION;
   res->outputType = ANY_FORM;
   res->value.pair.g = polynomialFromCopy(p);
@@ -8437,6 +8554,7 @@ polynomial_t polynomialMul(polynomial_t p, polynomial_t q) {
   /* General case: construct the multiplication polynomial */
   res = __polynomialAllocate();
   res->refCount = 1u;
+  res->hash.hasHash = 0;
   res->type = MULTIPLICATION;
   res->outputType = ANY_FORM;
   res->value.pair.g = polynomialFromCopy(p);
@@ -8460,6 +8578,7 @@ polynomial_t polynomialNeg(polynomial_t p) {
   case SUBTRACTION:
     res = __polynomialAllocate();
     res->refCount = 1u;
+    res->hash.hasHash = 0;
     res->type = SUBTRACTION;
     res->outputType = ANY_FORM;
     res->value.pair.g = polynomialFromCopy(p->value.pair.h);
@@ -8476,6 +8595,7 @@ polynomial_t polynomialNeg(polynomial_t p) {
   /* General case: construct the negation polynomial */
   res = __polynomialAllocate();
   res->refCount = 1u;
+  res->hash.hasHash = 0;
   res->type = NEGATE;
   res->outputType = ANY_FORM;
   res->value.g = polynomialFromCopy(p);
@@ -8498,6 +8618,7 @@ polynomial_t polynomialCompose(polynomial_t p, polynomial_t q) {
   if (__polynomialIsConstantCheap(q)) {
     res = __polynomialAllocate();
     res->refCount = 1u;
+    res->hash.hasHash = 0;
     res->type = COMPOSITION;
     res->outputType = ANY_FORM;
     res->value.pair.g = polynomialFromCopy(p);
@@ -8527,6 +8648,7 @@ polynomial_t polynomialCompose(polynomial_t p, polynomial_t q) {
   if (p->type == POWER) {
     res = __polynomialAllocate();
     res->refCount = 1u;
+    res->hash.hasHash = 0;
     res->type = POWER;
     res->outputType = ANY_FORM;
     res->value.powering.g = polynomialCompose(p->value.powering.g, q);
@@ -8580,6 +8702,7 @@ polynomial_t polynomialCompose(polynomial_t p, polynomial_t q) {
     case POWER:
       res = __polynomialAllocate();
       res->refCount = 1u;
+      res->hash.hasHash = 0;
       res->type = POWER;
       res->outputType = ANY_FORM;
       res->value.powering.g = polynomialCompose(p->value.powering.g, q);
@@ -8594,6 +8717,7 @@ polynomial_t polynomialCompose(polynomial_t p, polynomial_t q) {
   /* General case: construct the composed polynomial */
   res = __polynomialAllocate();
   res->refCount = 1u;
+  res->hash.hasHash = 0;
   res->type = COMPOSITION;
   res->outputType = ANY_FORM;
   res->value.pair.g = polynomialFromCopy(p);
@@ -8624,6 +8748,7 @@ polynomial_t polynomialDeriv(polynomial_t p) {
   case SUBTRACTION:
     res = __polynomialAllocate();
     res->refCount = 1u;
+    res->hash.hasHash = 0;
     res->type = p->type;
     res->outputType = ANY_FORM;
     res->value.pair.g = polynomialDeriv(p->value.pair.h);
@@ -8633,6 +8758,7 @@ polynomial_t polynomialDeriv(polynomial_t p) {
   case NEGATE:
     res = __polynomialAllocate();
     res->refCount = 1u;
+    res->hash.hasHash = 0;
     res->type = NEGATE;
     res->outputType = ANY_FORM;
     res->value.g = polynomialDeriv(p->value.g);
@@ -8644,11 +8770,13 @@ polynomial_t polynomialDeriv(polynomial_t p) {
       one = constantFromInt(1);
       res = __polynomialAllocate();
       res->refCount = 1u;
+      res->hash.hasHash = 0;
       res->type = MULTIPLICATION;
       res->outputType = ANY_FORM;
       res->value.pair.g = __polynomialFromConstant(p->value.powering.c);
       res->value.pair.h = __polynomialAllocate();
       res->value.pair.h->refCount = 1u;
+      res->value.pair.h->hash.hasHash = 0;
       res->value.pair.h->type = POWER;
       res->value.pair.h->outputType = ANY_FORM;
       res->value.pair.h->value.powering.g = polynomialFromCopy(p->value.powering.g);
@@ -8938,6 +9066,7 @@ polynomial_t polynomialPowUnsignedInt(polynomial_t p, unsigned int n) {
   /* General case: construct the powering polynomial */  
   res = __polynomialAllocate();
   res->refCount = 1u;
+  res->hash.hasHash = 0;
   res->type = POWER;
   res->outputType = ANY_FORM;
   res->value.powering.g = polynomialFromCopy(p);
@@ -9018,6 +9147,7 @@ int polynomialPow(polynomial_t *r, polynomial_t p, polynomial_t q) {
   /* General case: construct the powering polynomial */
   res = __polynomialAllocate();
   res->refCount = 1u;
+  res->hash.hasHash = 0;
   res->type = POWER;
   res->outputType = ANY_FORM;
   res->value.powering.g = polynomialFromCopy(p);
@@ -9145,6 +9275,7 @@ static inline polynomial_t __polynomialRoundDyadicAnyForm(polynomial_t p, mp_pre
   */
   res = __polynomialAllocate();
   res->refCount = 1u;
+  res->hash.hasHash = 0;
   res->type = p->type;
   res->outputType = ANY_FORM;
   switch (p->type) {
@@ -9216,6 +9347,7 @@ static inline polynomial_t __polynomialRoundRationalAnyForm(polynomial_t p, mp_p
   */
   res = __polynomialAllocate();
   res->refCount = 1u;
+  res->hash.hasHash = 0;
   res->type = p->type;
   res->outputType = ANY_FORM;
   switch (p->type) {
@@ -9287,6 +9419,7 @@ static inline polynomial_t __polynomialRoundAnyForm(polynomial_t p, mp_prec_t pr
   */
   res = __polynomialAllocate();
   res->refCount = 1u;
+  res->hash.hasHash = 0;
   res->type = p->type;
   res->outputType = ANY_FORM;
   switch (p->type) {
@@ -9383,4 +9516,27 @@ int polynomialReferencesExpression(polynomial_t p, node *expr) {
     break;
   }
   return 0;
+}
+
+uint64_t polynomialHash(polynomial_t p) {
+  uint64_t hash;
+  
+  /* Handle stupid input */
+  if (p == NULL) return hashPointer(NULL);
+
+  /* Check if the hash has already been computed */
+  if (p->hash.hasHash) {
+    return p->hash.hash;
+  }
+  
+  /* Sparsify the polynomial and return a copy */
+  __polynomialSparsify(p);
+  hash = sparsePolynomialHash(p->value.sparse);
+
+  /* Cache the result */
+  p->hash.hash = hash;
+  p->hash.hasHash = 1;
+  
+  /* Return the hash */
+  return hash;
 }

@@ -1,6 +1,6 @@
 /*
 
-  Copyright 2006-2013 by
+  Copyright 2006-2015 by
 
   Laboratoire de l'Informatique du Parallelisme,
   UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
@@ -155,6 +155,7 @@ void free_memory(node *tree) {
   if (tree == NULL) return;
   freeThing(tree);
 }
+
 
 void fprintHeadFunction(FILE *fd,node *tree, char *x, char *y) {
   int i;

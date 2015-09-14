@@ -1,0 +1,18 @@
+When I add 9 to 8, I get 17
+The hash for "17" is 0xff10ff10ff10ff10
+The hash for "17" is 0xff10ff10ff10ff10
+The hash for "42" is 0xff2bff2bff2bff2b
+The hash for "25" is 0xff18ff18ff18ff18
+The hash for "17" is 0xff10ff10ff10ff10
+The hash for "1 + 17 * x + 136 * x^2 + 680 * x^3 + 2380 * x^4 + 6188 * x^5 + 12376 * x^6 + 19448 * x^7 + 24310 * x^8 + 24310 * x^9 + 19448 * x^10 + 12376 * x^11 + 6188 * x^12 + 2380 * x^13 + 680 * x^14 + 136 * x^15 + 17 * x^16 + x^17" is 0xff02ff02ff02ff02
+The hash for "(1 + x)^17" is 0xff02ff02ff02ff02
+The hash for "(1 + x)^42" is 0x3f1f545ad77200f0
+The hash for "17" is 0xff10ff10ff10ff10
+The hash for "proc(a, b)
+{
+"When I add ", b, " to ", a, ", I get ", (a) + (b);
+return (a) + (b);
+}" is 0xdef6aeb6caa5aae7
+The hash for "8" is 0xff09ff09ff09ff09
+The hash for "9" is 0xff08ff08ff08ff08
+The hash for "17" is 0xff10ff10ff10ff10

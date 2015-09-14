@@ -582,6 +582,8 @@ int symbolNameAlreadyUsed(char *);
 int tryRepresentAsPolynomial(node *);
 int tryRepresentAsPolynomialNoConstants(node *);
 
+uint64_t hashThing(node *);
+
 void freeBacktraceStack();
 
 

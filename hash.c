@@ -81,6 +81,28 @@ uint64_t hashInt(int x) {
   return hashCombine(hashCombine(hashCombine(tmp1, tmp2), tmp3), tmp4);
 }
 
+uint64_t hashUnsignedInt(unsigned int x) {
+  unsigned int X;
+  uint64_t tmp1, tmp2, tmp3, tmp4;
+  X = x;
+  tmp1 = (uint64_t) X;
+  tmp2 = tmp1 << 16;
+  tmp3 = tmp2 << 16;
+  tmp4 = tmp3 << 16;
+  return hashCombine(hashCombine(hashCombine(tmp1, tmp2), tmp3), tmp4);
+}
+
+uint64_t hashInt64(int64_t x) {
+  int64_t xx;
+  uint64_t X;
+  uint64_t tmp1;
+  xx = x;
+  X = *((uint64_t *) &xx);
+  tmp1 = X;
+  tmp1 ^= UINT64_C(0x0f0f0f0f0f0f0f0f);
+  return tmp1;
+}
+
 uint64_t hashLong(long x) {
   long xx;
   unsigned long X;
@@ -171,7 +193,7 @@ uint64_t hashPointer(void *x) {
 
 uint64_t hashCombine(uint64_t h1, uint64_t h2) {
   uint64_t tmp;
-  tmp = h1 * h2;
+  tmp = h1 ^ h2;
   tmp ^= UINT64_C(0xff00ff00ff00ff00);
   return tmp;
 }
