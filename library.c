@@ -319,18 +319,26 @@ void copyIdentifierSymbols(char *ptr, const char *src) {
   }
 }
 
-char *getBaseFunctionName(void *func, const char *base) {
+char *getBaseFunctionName(void *func, const char *base, int hasData, void *data) {
   char *myFuncName, *funcName;
 #if (defined(HAVE_DLADDR) && (HAVE_DLADDR) && defined(HAVE_DL_INFO_TYPE) && (HAVE_DL_INFO_TYPE))
   int errorOccurred;
   Dl_info myInfo;
+  char *temp;
   errorOccurred = 0;
   if (dladdr(func, &myInfo) != 0) {
     if ((myInfo.dli_sname != NULL) && (myInfo.dli_saddr != NULL)) {
       if (myInfo.dli_saddr == func) {
 	if (strlen(myInfo.dli_sname) > 0) {
-	  myFuncName = (char *) safeCalloc(strlen(myInfo.dli_sname) + 1, sizeof(char));
-	  copyIdentifierSymbols(myFuncName, myInfo.dli_sname);
+	  temp = (char *) safeCalloc(strlen(myInfo.dli_sname) + 8 * sizeof(void *) + 1 + 1, sizeof(char));
+	  if (hasData) {
+	    sprintf(temp, "%s_%p", myInfo.dli_sname, data);
+	  } else {
+	    sprintf(temp, "%s", myInfo.dli_sname);
+	  }
+	  myFuncName = (char *) safeCalloc(strlen(myInfo.dli_sname) + 8 * sizeof(void *) + 1 + 1, sizeof(char));
+	  copyIdentifierSymbols(myFuncName, temp);
+	  safeFree(temp);
 	} else {
 	  errorOccurred = 1;
 	}
@@ -344,11 +352,11 @@ char *getBaseFunctionName(void *func, const char *base) {
     errorOccurred = 1;
   }
   if (errorOccurred) {
-    myFuncName = (char *) safeCalloc(strlen(base) + 3 + 8 * sizeof(void *) + 1,sizeof(char));
+    myFuncName = (char *) safeCalloc(strlen(base) + 3 + 8 * sizeof(void *) + 1 + 8 * sizeof(void *) + 1,sizeof(char));
     sprintf(myFuncName, "%s_%p", base, func);
   }
 #else
-  myFuncName = (char *) safeCalloc(strlen(base) + 3 + 8 * sizeof(void *) + 1,sizeof(char));
+  myFuncName = (char *) safeCalloc(strlen(base) + 3 + 8 * sizeof(void *) + 1 + 8 * sizeof(void *) + 1,sizeof(char));
   sprintf(myFuncName, "%s_%p", base, func);
 #endif
   funcName = (char *) safeCalloc(strlen(myFuncName)+1,sizeof(char));
@@ -547,7 +555,9 @@ libraryFunction *bindFunction(char* libraryName, char *functionName) {
   currFunct = (libraryFunction *) safeMalloc(sizeof(libraryFunction));
   currFunct->functionName = (char *) safeCalloc(strlen(functionName)+1,sizeof(char));
   strcpy(currFunct->functionName,functionName);
-  currFunct->code = myFunction;
+  currFunct->code = (void *) myFunction;
+  currFunct->hasData = 0;
+  currFunct->data = NULL;
 
   libHandle->functionList = addElement(libHandle->functionList,currFunct);
 
@@ -581,14 +591,14 @@ libraryFunction *getFunction(char *functionName) {
   return NULL;
 }
 
-libraryFunction *getFunctionByPtr(int (*func)(mpfi_t, mpfi_t, int)) {
+libraryFunction *getFunctionByPtr(void *func, int hasData, void *data) {
   chain *currLibList, *currFunList;
   libraryFunction *currFunct;
   libraryHandle *currLibHandle;
 
   for (currFunList=globalLibraryFunctions;currFunList!=NULL;currFunList=currFunList->next) {
     currFunct = (libraryFunction *) currFunList->value;
-    if (currFunct->code == func)
+    if ((currFunct->code == func) && ((!(currFunct->hasData && hasData)) || (currFunct->data == data)))
       return currFunct;
   }
 
@@ -598,7 +608,7 @@ libraryFunction *getFunctionByPtr(int (*func)(mpfi_t, mpfi_t, int)) {
     currFunList = currLibHandle->functionList;
     while (currFunList != NULL) {
       currFunct = (libraryFunction *) currFunList->value;
-      if (currFunct->code == func)
+      if ((currFunct->code == func) && ((!(currFunct->hasData && hasData)) || (currFunct->data == data)))
         return currFunct;
       currFunList = currFunList->next;
     }
@@ -608,17 +618,17 @@ libraryFunction *getFunctionByPtr(int (*func)(mpfi_t, mpfi_t, int)) {
   return NULL;
 }
 
-libraryFunction *bindFunctionByPtr(char *suggestedName, int (*func)(mpfi_t, mpfi_t, int)) {
+static libraryFunction *__bindFunctionByPtrImpl(char *suggestedName, void *func, int hasData, void *data) {
   libraryFunction *res;
   char *unifiedName, *basename, *filteredSuggestedName, *filteredBaseName;
 
-  res = getFunctionByPtr(func);
+  res = getFunctionByPtr(func, hasData, data);
   if (res != NULL) return res;
 
   if (suggestedName != NULL) {
     filteredSuggestedName = filterSymbolName(suggestedName);
     if (filteredSuggestedName[0] == '\0') {
-      basename = getBaseFunctionName(func, "func");
+      basename = getBaseFunctionName(func, "func", hasData, data);
       filteredBaseName = filterSymbolName(basename);
       safeFree(basename);
       if (filteredBaseName[0] == '\0') {
@@ -632,7 +642,7 @@ libraryFunction *bindFunctionByPtr(char *suggestedName, int (*func)(mpfi_t, mpfi
     }
     safeFree(filteredSuggestedName);
   } else {
-    basename = getBaseFunctionName(func, "func");
+    basename = getBaseFunctionName(func, "func", hasData, data);
     filteredBaseName = filterSymbolName(basename);
     safeFree(basename);
     if (filteredBaseName[0] == '\0') {
@@ -646,10 +656,20 @@ libraryFunction *bindFunctionByPtr(char *suggestedName, int (*func)(mpfi_t, mpfi
   res = (libraryFunction *) safeMalloc(sizeof(libraryFunction));
   res->functionName = unifiedName;
   res->code = func;
+  res->hasData = hasData;
+  res->data = data;
 
   globalLibraryFunctions = addElement(globalLibraryFunctions, res);
 
   return res;
+}
+
+libraryFunction *bindFunctionByPtr(char *suggestedName, int (*func)(mpfi_t, mpfi_t, int)) {
+  return __bindFunctionByPtrImpl(suggestedName, ((void *) func), 0, NULL);
+}
+
+libraryFunction *bindFunctionByPtrWithData(char *suggestedName, int (*func)(mpfi_t, mpfi_t, int, void *), void *data) {
+  return __bindFunctionByPtrImpl(suggestedName, ((void *) func), 1, data);
 }
 
 void freeFunctionLibraries() {
@@ -742,7 +762,9 @@ libraryFunction *bindConstantFunction(char* libraryName, char *functionName) {
   currFunct = (libraryFunction *) safeMalloc(sizeof(libraryFunction));
   currFunct->functionName = (char *) safeCalloc(strlen(functionName)+1,sizeof(char));
   strcpy(currFunct->functionName,functionName);
-  currFunct->constant_code = myFunction;
+  currFunct->code = (void *) myFunction;
+  currFunct->hasData = 0;
+  currFunct->data = NULL;
 
   libHandle->functionList = addElement(libHandle->functionList,currFunct);
 
@@ -776,14 +798,14 @@ libraryFunction *getConstantFunction(char *functionName) {
   return NULL;
 }
 
-libraryFunction *getConstantFunctionByPtr(void (*func)(mpfr_t, mp_prec_t)) {
+libraryFunction *getConstantFunctionByPtr(void *func, int hasData, void *data) {
   chain *currLibList, *currFunList;
   libraryFunction *currFunct;
   libraryHandle *currLibHandle;
 
   for (currFunList=globalLibraryConstants;currFunList!=NULL;currFunList=currFunList->next) {
     currFunct = (libraryFunction *) currFunList->value;
-    if (currFunct->constant_code == func)
+    if ((currFunct->code == func) && ((!(currFunct->hasData && hasData)) || (currFunct->data == data)))
       return currFunct;
   }
 
@@ -793,7 +815,7 @@ libraryFunction *getConstantFunctionByPtr(void (*func)(mpfr_t, mp_prec_t)) {
     currFunList = currLibHandle->functionList;
     while (currFunList != NULL) {
       currFunct = (libraryFunction *) currFunList->value;
-      if (currFunct->constant_code == func)
+      if ((currFunct->code == func) && ((!(currFunct->hasData && hasData)) || (currFunct->data == data)))
         return currFunct;
       currFunList = currFunList->next;
     }
@@ -803,17 +825,17 @@ libraryFunction *getConstantFunctionByPtr(void (*func)(mpfr_t, mp_prec_t)) {
   return NULL;
 }
 
-libraryFunction *bindConstantFunctionByPtr(char *suggestedName, void (*func)(mpfr_t, mp_prec_t)) {
+static libraryFunction *__bindConstantFunctionByPtrImpl(char *suggestedName, void *func, int hasData, void *data) {
   libraryFunction *res;
   char *unifiedName, *basename, *filteredBaseName, *filteredSuggestedName;
 
-  res = getConstantFunctionByPtr(func);
+  res = getConstantFunctionByPtr(func, hasData, data);
   if (res != NULL) return res;
 
   if (suggestedName != NULL) {
     filteredSuggestedName = filterSymbolName(suggestedName);
     if (filteredSuggestedName[0] == '\0') {
-      basename = getBaseFunctionName(func, "const");
+      basename = getBaseFunctionName(func, "const", hasData, data);
       filteredBaseName = filterSymbolName(basename);
       safeFree(basename);
       if (filteredBaseName[0] == '\0') {
@@ -827,7 +849,7 @@ libraryFunction *bindConstantFunctionByPtr(char *suggestedName, void (*func)(mpf
     }
     safeFree(filteredSuggestedName);
   } else {
-    basename = getBaseFunctionName(func, "const");
+    basename = getBaseFunctionName(func, "const", hasData, data);
     filteredBaseName = filterSymbolName(basename);
     safeFree(basename);
     if (filteredBaseName[0] == '\0') {
@@ -840,11 +862,21 @@ libraryFunction *bindConstantFunctionByPtr(char *suggestedName, void (*func)(mpf
 
   res = (libraryFunction *) safeMalloc(sizeof(libraryFunction));
   res->functionName = unifiedName;
-  res->constant_code = func;
+  res->code = func;
+  res->hasData = hasData;
+  res->data = data;
 
   globalLibraryConstants = addElement(globalLibraryConstants, res);
 
   return res;
+}
+
+libraryFunction *bindConstantFunctionByPtr(char *suggestedName, void (*func)(mpfr_t, mp_prec_t)) {
+  return __bindConstantFunctionByPtrImpl(suggestedName, ((void *) func), 0, NULL);
+}
+
+libraryFunction *bindConstantFunctionByPtrWithData(char *suggestedName, void (*func)(mpfr_t, mp_prec_t, void *), void *data) {
+  return __bindConstantFunctionByPtrImpl(suggestedName, ((void *) func), 1, data);
 }
 
 void freeConstantLibraries() {
@@ -931,6 +963,8 @@ libraryProcedure *bindProcedure(char* libraryName, char *procedureName, chain *s
   strcpy(currProc->procedureName,procedureName);
   currProc->code = myFunction;
   currProc->signature = copyChainWithoutReversal(signature, copyIntPtrOnVoid);
+  currProc->hasData = 0;
+  currProc->data = NULL;
 
 
   libHandle->functionList = addElement(libHandle->functionList,currProc);
@@ -942,6 +976,12 @@ libraryProcedure *getProcedure(char *procedureName) {
   chain *currLibList, *currProcList;
   libraryProcedure *currProc;
   libraryHandle *currLibHandle;
+
+  for (currProcList=globalLibraryProcedures;currProcList!=NULL;currProcList=currProcList->next) {
+    currProc = (libraryProcedure *) currProcList->value;
+    if (strcmp(currProc->procedureName,procedureName) == 0)
+      return currProc;
+  }
 
   currLibList = openedProcLibraries;
   while (currLibList != NULL) {
@@ -959,10 +999,16 @@ libraryProcedure *getProcedure(char *procedureName) {
   return NULL;
 }
 
-libraryProcedure *getProcedureByPtr(void *ptr) {
+libraryProcedure *getProcedureByPtr(void *ptr, int hasData, void *data) {
   chain *currLibList, *currProcList;
   libraryProcedure *currProc;
   libraryHandle *currLibHandle;
+
+  for (currProcList=globalLibraryProcedures;currProcList!=NULL;currProcList=currProcList->next) {
+    currProc = (libraryProcedure *) currProcList->value;
+    if ((currProc->code == ptr) && ((!(currProc->hasData && hasData)) || (currProc->data == data)))
+      return currProc;
+  }
 
   currLibList = openedProcLibraries;
   while (currLibList != NULL) {
@@ -970,7 +1016,7 @@ libraryProcedure *getProcedureByPtr(void *ptr) {
     currProcList = currLibHandle->functionList;
     while (currProcList != NULL) {
       currProc = (libraryProcedure *) currProcList->value;
-      if (currProc->code == ptr)
+      if ((currProc->code == ptr) && ((!(currProc->hasData && hasData)) || (currProc->data == data)))
 	return currProc;
       currProcList = currProcList->next;
     }
@@ -980,7 +1026,7 @@ libraryProcedure *getProcedureByPtr(void *ptr) {
   return NULL;
 }
 
-libraryProcedure *bindProcedureByPtr(int resType, int *argTypes, int arity, char *suggestedName, void *func) {
+static libraryProcedure *__bindProcedureByPtrImpl(int resType, int *argTypes, int arity, char *suggestedName, void *func, int hasData, void *data) {
   libraryProcedure *res;
   char *unifiedName, *basename, *filteredBaseName, *filteredSuggestedName;
   chain *signature, *temp;
@@ -995,7 +1041,7 @@ libraryProcedure *bindProcedureByPtr(int resType, int *argTypes, int arity, char
     }
   }
   
-  res = getProcedureByPtr(func);
+  res = getProcedureByPtr(func, hasData, data);
   if (res != NULL) return res;
 
   signature = NULL;
@@ -1020,7 +1066,7 @@ libraryProcedure *bindProcedureByPtr(int resType, int *argTypes, int arity, char
   if (suggestedName != NULL) {
     filteredSuggestedName = filterSymbolName(suggestedName);
     if (filteredSuggestedName[0] == '\0') {
-      basename = getBaseFunctionName(func, "proc");
+      basename = getBaseFunctionName(func, "proc", hasData, data);
       filteredBaseName = filterSymbolName(basename);
       safeFree(basename);
       if (filteredBaseName[0] == '\0') {
@@ -1034,7 +1080,7 @@ libraryProcedure *bindProcedureByPtr(int resType, int *argTypes, int arity, char
     }
     safeFree(filteredSuggestedName);
   } else {
-    basename = getBaseFunctionName(func, "proc");
+    basename = getBaseFunctionName(func, "proc", hasData, data);
     filteredBaseName = filterSymbolName(basename);
     safeFree(basename);
     if (filteredBaseName[0] == '\0') {
@@ -1049,10 +1095,20 @@ libraryProcedure *bindProcedureByPtr(int resType, int *argTypes, int arity, char
   res->procedureName = unifiedName;
   res->code = func;
   res->signature = signature;
+  res->hasData = hasData;
+  res->data = data;
 
   globalLibraryProcedures = addElement(globalLibraryProcedures, res);
 
   return res;
+}
+
+libraryProcedure *bindProcedureByPtr(int resType, int *argTypes, int arity, char *suggestedName, void *func) {
+  return __bindProcedureByPtrImpl(resType, argTypes, arity, suggestedName, func, 0, NULL);
+}
+
+libraryProcedure *bindProcedureByPtrWithData(int resType, int *argTypes, int arity, char *suggestedName, void *func, void *data) {
+  return __bindProcedureByPtrImpl(resType, argTypes, arity, suggestedName, func, 1, data);
 }
 
 void freeProcLibraries() {

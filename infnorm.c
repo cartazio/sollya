@@ -630,7 +630,11 @@ void libraryConstantToInterval(sollya_mpfi_t res, node *tree) {
   mp_prec_t prec = sollya_mpfi_get_prec(res);
 
   mpfr_init2(approx, prec + 20); /* some guard bits may avoid reinit in tree->libFun */
-  accessThruMemRef(tree)->libFun->constant_code(approx, prec);
+  if (accessThruMemRef(tree)->libFun->hasData) {
+    ((void (*)(mpfr_t, mp_prec_t, void *)) (accessThruMemRef(tree)->libFun->code))(approx, prec, accessThruMemRef(tree)->libFun->data);
+  } else {
+    ((void (*)(mpfr_t, mp_prec_t)) (accessThruMemRef(tree)->libFun->code))(approx, prec);
+  }
   mpfr_init2(lbound, prec-2);
   mpfr_init2(rbound, prec-2);
   mpfr_set(lbound, approx, GMP_RNDD);
@@ -2357,7 +2361,11 @@ chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t pr
   case LIBRARYFUNCTION:
     excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, cutoff);
     mpfi_init2(tempI, sollya_mpfi_get_prec(stack3));
-    tree->libFun->code(tempI, stack1, tree->libFunDeriv);
+    if (tree->libFun->hasData) {
+      ((int (*)(mpfi_t, mpfi_t, int, void *)) (tree->libFun->code))(tempI, stack1, tree->libFunDeriv, tree->libFun->data);
+    } else {
+      ((int (*)(mpfi_t, mpfi_t, int)) (tree->libFun->code))(tempI, stack1, tree->libFunDeriv);
+    }
     sollya_init_and_convert_interval(tempI2, tempI);
     sollya_mpfi_set(stack3, tempI2);
     sollya_mpfi_clear(tempI2);
@@ -6273,7 +6281,11 @@ static inline point_eval_t __tryFaithEvaluationOptimizedUnivariateImpreciseArg(m
     break;
   case LIBRARYFUNCTION:
     mpfi_init2(temp, sollya_mpfi_get_prec(*Y));
-    g->libFun->code(temp, *X, g->libFunDeriv);
+    if (g->libFun->hasData) {
+      ((int (*)(mpfi_t, mpfi_t, int, void *)) (g->libFun->code))(temp, *X, g->libFunDeriv, g->libFun->data);
+    } else {
+      ((int (*)(mpfi_t, mpfi_t, int)) (g->libFun->code))(temp, *X, g->libFunDeriv);
+    }
     mpfi_to_sollya_mpfi(*Y, temp);
     mpfi_clear(temp);
     break;

@@ -13,12 +13,22 @@ int successor(int *res, void **args) {
   return 1;
 }
 
+int successor_bis(int *res, void **args) {
+  *res = successor_impl(*((int *) (args[0])));
+  return 1;
+}
+
 int strange_impl(char *str, int i, mpfr_t v) {
   sollya_lib_printf(">>>%s<<<>>>%d<<<>>>%v<<<\n", str, i, v);
   return (i == 17);
 }
 
 int strange(int *res, void **args) {
+  *res = strange_impl(((char *) (args[0])), *((int *) (args[1])), *((mpfr_t *) (args[2])));
+  return 1;
+}
+
+int strange_bis(int *res, void **args) {
   *res = strange_impl(((char *) (args[0])), *((int *) (args[1])), *((mpfr_t *) (args[2])));
   return 1;
 }
@@ -39,7 +49,7 @@ int main(void) {
   sollya_lib_printf("%b\n", f[2]);
 
   argTypes[0] = SOLLYA_EXTERNALPROC_TYPE_INTEGER;
-  f[3] = sollya_lib_externalprocedure(SOLLYA_EXTERNALPROC_TYPE_INTEGER, argTypes, 1, NULL, successor);
+  f[3] = sollya_lib_externalprocedure(SOLLYA_EXTERNALPROC_TYPE_INTEGER, argTypes, 1, NULL, successor_bis);
   sollya_lib_printf("%b\n", f[3]);
   sollya_lib_autoprint(f[3], NULL);
   f[4] = SOLLYA_CONST_SI64(16);
@@ -61,7 +71,7 @@ int main(void) {
   argTypes[0] = SOLLYA_EXTERNALPROC_TYPE_STRING;
   argTypes[1] = SOLLYA_EXTERNALPROC_TYPE_INTEGER;
   argTypes[2] = SOLLYA_EXTERNALPROC_TYPE_CONSTANT;
-  f[6] = sollya_lib_externalprocedure(SOLLYA_EXTERNALPROC_TYPE_BOOLEAN, argTypes, 3, NULL, strange);
+  f[6] = sollya_lib_externalprocedure(SOLLYA_EXTERNALPROC_TYPE_BOOLEAN, argTypes, 3, NULL, strange_bis);
   sollya_lib_printf("%b\n", f[6]);
   sollya_lib_autoprint(f[6], NULL);
   f[7] = sollya_lib_string("Coucou");

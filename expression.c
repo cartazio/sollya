@@ -151,6 +151,24 @@ void mpfr_from_mpfi(mpfr_t rop, mpfr_t op, int n, int (*mpfifun)(sollya_mpfi_t, 
   sollya_mpfi_clear(ropItemp);
 }
 
+void mpfr_from_mpfi_data(mpfr_t rop, mpfr_t op, int n, int (*mpfifun)(sollya_mpfi_t, sollya_mpfi_t, int, void *), void *data) {
+  sollya_mpfi_t opI, ropI, ropItemp;
+
+  sollya_mpfi_init2(opI,mpfr_get_prec(op));
+  sollya_mpfi_init2(ropItemp,mpfr_get_prec(rop)+2);
+  sollya_mpfi_set_fr(opI,op);
+
+  mpfifun(ropItemp,opI,n,data);
+  sollya_init_and_convert_interval(ropI, ropItemp);
+
+  sollya_mpfi_mid(rop,ropI);
+
+  sollya_mpfi_clear(opI);
+  sollya_mpfi_clear(ropI);
+  sollya_mpfi_clear(ropItemp);
+}
+
+
 void free_memory(node *tree) {
   if (tree == NULL) return;
   freeThing(tree);
@@ -8121,7 +8139,11 @@ node* simplifyTreeInnerst(node *tree) {
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_from_mpfi(*value, *(accessThruMemRef(simplChild1)->value), tree->libFunDeriv, tree->libFun->code);
+      if (tree->libFun->hasData) {
+	mpfr_from_mpfi_data(*value, *(accessThruMemRef(simplChild1)->value), tree->libFunDeriv, tree->libFun->code, tree->libFun->data);
+      } else {
+	mpfr_from_mpfi(*value, *(accessThruMemRef(simplChild1)->value), tree->libFunDeriv, tree->libFun->code);
+      }
       free_memory(simplChild1);
     } else {
       simplified->nodeType = LIBRARYFUNCTION;
@@ -8864,7 +8886,11 @@ node* simplifyAllButDivisionInnerst(node *tree) {
       value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*value,tools_precision);
       simplified->value = value;
-      mpfr_from_mpfi(*value, *(accessThruMemRef(simplChild1)->value), tree->libFunDeriv, tree->libFun->code);
+      if (tree->libFun->hasData) {
+	mpfr_from_mpfi_data(*value, *(accessThruMemRef(simplChild1)->value), tree->libFunDeriv, tree->libFun->code, tree->libFun->data);
+      } else {
+	mpfr_from_mpfi(*value, *(accessThruMemRef(simplChild1)->value), tree->libFunDeriv, tree->libFun->code);
+      }
       free_memory(simplChild1);
     } else {
       simplified->nodeType = LIBRARYFUNCTION;
@@ -9190,7 +9216,11 @@ void evaluate(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
     break;
   case LIBRARYFUNCTION:
     evaluate(stack1, tree->child1, x, prec);
-    mpfr_from_mpfi(result, stack1, tree->libFunDeriv, tree->libFun->code);
+    if (tree->libFun->hasData) {
+      mpfr_from_mpfi_data(result, stack1, tree->libFunDeriv, tree->libFun->code, tree->libFun->data);
+    } else {
+      mpfr_from_mpfi(result, stack1, tree->libFunDeriv, tree->libFun->code);
+    }
     break;
   case PROCEDUREFUNCTION:
     evaluate(stack1, tree->child1, x, prec);
