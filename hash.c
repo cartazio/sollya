@@ -51,82 +51,194 @@
 #include <stdlib.h>
 #include "hash.h"
 
-uint64_t hashChar(char x) {
+static inline uint64_t __rotateLeft(uint64_t x, unsigned int k) {
+  unsigned int s, r;
+  uint64_t tmp1, tmp2, tmp3;
+
+  s = k & ((unsigned int) 63);
+  if (s == ((unsigned int) 0)) return x;
+  r = 64 - s;
+  tmp1 = x;
+  tmp1 <<= s;
+  tmp2 = x;
+  tmp2 >>= r;
+  tmp3 = tmp1 | tmp2;
+  return tmp3;
+}
+
+static inline uint64_t __hashCombine_internal(uint64_t h1, uint64_t h2) {
+  uint64_t tmp1, tmp2;
+  tmp1 = h1 ^ h2;
+  tmp2 = __rotateLeft(tmp1, 17);
+  return tmp1;
+}
+
+static inline uint64_t __hashUint64_internal(uint64_t x) {
+  uint64_t tmp1, tmp2;
+  tmp1 = x ^ UINT64_C(0xcafebabedeadbeef);
+  tmp2 = __rotateLeft(tmp1, 13);
+  return tmp2;
+}
+
+static inline uint64_t __hashUint8_internal(uint8_t x) {
+  uint64_t tmp1, tmp2;
+  tmp1 = (uint64_t) x;
+  tmp2 = tmp1; tmp1 <<= 8;
+  tmp2 |= tmp1; tmp1 <<= 8;
+  tmp2 |= tmp1; tmp1 <<= 8;
+  tmp2 |= tmp1; tmp1 <<= 8;
+  tmp2 |= tmp1; tmp1 <<= 8;
+  tmp2 |= tmp1; tmp1 <<= 8;
+  tmp2 |= tmp1; tmp1 <<= 8;
+  tmp2 |= tmp1;
+  return __hashUint64_internal(tmp2);
+}
+
+static inline uint64_t __hashUint16_internal(uint16_t x) {
+  uint64_t tmp1, tmp2;
+  tmp1 = (uint64_t) x;
+  tmp2 = tmp1; tmp1 <<= 16;
+  tmp2 |= tmp1; tmp1 <<= 16;
+  tmp2 |= tmp1; tmp1 <<= 16;
+  tmp2 |= tmp1;
+  return __hashUint64_internal(tmp2);
+}
+
+static inline uint64_t __hashUint32_internal(uint32_t x) {
+  uint64_t tmp1, tmp2;
+  tmp1 = (uint64_t) x;
+  tmp2 = tmp1; tmp1 <<= 32;
+  tmp2 |= tmp1;
+  return __hashUint64_internal(tmp2);
+}
+
+static inline uint64_t __hashUnsignedChar_internal(unsigned char x) {
+  uint8_t tmp1;
+  uint16_t tmp2;
+  uint32_t tmp3;
+  uint64_t tmp4;
+  if (sizeof(uint8_t) >= sizeof(unsigned char)) {
+    tmp1 = (uint8_t) x;
+    return __hashUint8_internal(tmp1);
+  }
+  if (sizeof(uint16_t) >= sizeof(unsigned char)) {
+    tmp2 = (uint16_t) x;
+    return __hashUint16_internal(tmp2);
+  }
+  if (sizeof(uint32_t) >= sizeof(unsigned char)) {
+    tmp3 = (uint32_t) x;
+    return __hashUint32_internal(tmp3);
+  }
+  tmp4 = (uint64_t) x;
+  return __hashUint64_internal(tmp4);
+}
+
+static inline uint64_t __hashUnsignedInt_internal(unsigned int x) {
+  uint8_t tmp1;
+  uint16_t tmp2;
+  uint32_t tmp3;
+  uint64_t tmp4;
+  if (sizeof(uint8_t) >= sizeof(unsigned int)) {
+    tmp1 = (uint8_t) x;
+    return __hashUint8_internal(tmp1);
+  }
+  if (sizeof(uint16_t) >= sizeof(unsigned int)) {
+    tmp2 = (uint16_t) x;
+    return __hashUint16_internal(tmp2);
+  }
+  if (sizeof(uint32_t) >= sizeof(unsigned int)) {
+    tmp3 = (uint32_t) x;
+    return __hashUint32_internal(tmp3);
+  }
+  tmp4 = (uint64_t) x;
+  return __hashUint64_internal(tmp4);
+}
+
+static inline uint64_t __hashUnsignedLong_internal(unsigned long x) {
+  uint8_t tmp1;
+  uint16_t tmp2;
+  uint32_t tmp3;
+  uint64_t tmp4;
+  if (sizeof(uint8_t) >= sizeof(unsigned long)) {
+    tmp1 = (uint8_t) x;
+    return __hashUint8_internal(tmp1);
+  }
+  if (sizeof(uint16_t) >= sizeof(unsigned long)) {
+    tmp2 = (uint16_t) x;
+    return __hashUint16_internal(tmp2);
+  }
+  if (sizeof(uint32_t) >= sizeof(unsigned long)) {
+    tmp3 = (uint32_t) x;
+    return __hashUint32_internal(tmp3);
+  }
+  tmp4 = (uint64_t) x;
+  return __hashUint64_internal(tmp4);
+}
+
+static inline uint64_t __hashPointer_internal(void *x) {
+  uintptr_t X;
+  uint8_t tmp1;
+  uint16_t tmp2;
+  uint32_t tmp3;
+  uint64_t tmp4;
+  X = (uintptr_t) x;
+  if (sizeof(uint8_t) >= sizeof(uintptr_t)) {
+    tmp1 = (uint8_t) X;
+    return __hashUint8_internal(tmp1);
+  }
+  if (sizeof(uint16_t) >= sizeof(uintptr_t)) {
+    tmp2 = (uint16_t) X;
+    return __hashUint16_internal(tmp2);
+  }
+  if (sizeof(uint32_t) >= sizeof(uintptr_t)) {
+    tmp3 = (uint32_t) X;
+    return __hashUint32_internal(tmp3);
+  }
+  tmp4 = (uint64_t) X;
+  return __hashUint64_internal(tmp4);
+}
+
+static inline uint64_t __hashChar_internal(char x) {
   char xx;
-  unsigned char X;
-  uint64_t tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8;
+  unsigned char tmp;
   xx = x;
-  X = *((unsigned char *) &xx);
-  tmp1 = (uint64_t) X;
-  tmp2 = tmp1 << 8;
-  tmp3 = tmp2 << 8;
-  tmp4 = tmp3 << 8;
-  tmp5 = tmp4 << 8;
-  tmp6 = tmp5 << 8;
-  tmp7 = tmp6 << 8;
-  tmp8 = tmp7 << 8;
-  return hashCombine(hashCombine(hashCombine(hashCombine(hashCombine(hashCombine(hashCombine(tmp1, tmp2), tmp3), tmp4), tmp5), tmp6), tmp7), tmp8);
+  tmp = *((unsigned char *) &xx);
+  return __hashUnsignedChar_internal(tmp);
 }
 
-uint64_t hashInt(int x) {
+static inline uint64_t __hashInt_internal(int x) {
   int xx;
-  unsigned int X;
-  uint64_t tmp1, tmp2, tmp3, tmp4;
+  unsigned int tmp;
   xx = x;
-  X = *((unsigned int *) &xx);
-  tmp1 = (uint64_t) X;
-  tmp2 = tmp1 << 16;
-  tmp3 = tmp2 << 16;
-  tmp4 = tmp3 << 16;
-  return hashCombine(hashCombine(hashCombine(tmp1, tmp2), tmp3), tmp4);
+  tmp = *((unsigned int *) &xx);
+  return __hashUnsignedInt_internal(tmp);
 }
 
-uint64_t hashUnsignedInt(unsigned int x) {
-  unsigned int X;
-  uint64_t tmp1, tmp2, tmp3, tmp4;
-  X = x;
-  tmp1 = (uint64_t) X;
-  tmp2 = tmp1 << 16;
-  tmp3 = tmp2 << 16;
-  tmp4 = tmp3 << 16;
-  return hashCombine(hashCombine(hashCombine(tmp1, tmp2), tmp3), tmp4);
-}
-
-uint64_t hashInt64(int64_t x) {
+static inline uint64_t __hashInt64_internal(int64_t x) {
   int64_t xx;
-  uint64_t X;
-  uint64_t tmp1;
+  uint64_t tmp;
   xx = x;
-  X = *((uint64_t *) &xx);
-  tmp1 = X;
-  tmp1 ^= UINT64_C(0x0f0f0f0f0f0f0f0f);
-  return tmp1;
+  tmp = *((uint64_t *) &xx);
+  return __hashUint64_internal(tmp);
 }
 
-uint64_t hashLong(long x) {
+static inline uint64_t __hashLong_internal(long x) {
   long xx;
-  unsigned long X;
-  uint64_t tmp1, tmp2, tmp3, tmp4;
+  unsigned long tmp;
   xx = x;
-  X = *((unsigned long *) &xx);
-  tmp1 = (uint64_t) X;
-  tmp2 = tmp1 << 16;
-  tmp3 = tmp2 << 16;
-  tmp4 = tmp3 << 16;
-  return hashCombine(hashCombine(hashCombine(tmp1, tmp2), tmp3), tmp4);
+  tmp = *((unsigned long *) &xx);
+  return __hashUnsignedLong_internal(tmp);
 }
 
-uint64_t hashDouble(double x) {
+static inline uint64_t __hashDouble_internal(double x) {
   double xx;
-  uint64_t tmp1;
-
+  uint64_t tmp;
   xx = x;
-  tmp1 = *((uint64_t *) &xx);
-  tmp1 ^= UINT64_C(0x00ff00ff00ff00ff);
-  return tmp1;
+  tmp = *((uint64_t *) &xx);
+  return __hashUint64_internal(tmp);
 }
 
-uint64_t hashMpfr(mpfr_t x) {
+static inline uint64_t __hashMpfr_internal(mpfr_t x) {
   long exp;
   double mant;
   uint64_t tmp1, tmp2;
@@ -134,67 +246,112 @@ uint64_t hashMpfr(mpfr_t x) {
   exp = (long) 0;
   mant = mpfr_get_d_2exp(&exp, x, GMP_RNDN);
 
-  tmp1 = hashLong(exp);
-  tmp2 = hashDouble(mant);
-  return hashCombine(tmp1, tmp2);
+  tmp1 = __hashLong_internal(exp);
+  tmp2 = __hashDouble_internal(mant);
+  return __hashCombine_internal(tmp1, tmp2);
 }
 
-uint64_t hashMpfi(sollya_mpfi_t x) {
+static inline uint64_t __hashMpfi_internal(sollya_mpfi_t x) {
   uint64_t tmp1, tmp2;
   
   /* HACK ALERT: For performance reasons, we will access the internals
      of an mpfi_t !!!
   */
-  tmp1 = hashMpfr(&(x->left));
-  tmp2 = hashMpfr(&(x->right));
-  return hashCombine(tmp1, tmp2);
+  tmp1 = __hashMpfr_internal(&(x->left));
+  tmp2 = __hashMpfr_internal(&(x->right));
+  return __hashCombine_internal(tmp1, tmp2);
 }
 
-uint64_t hashMpz(mpz_t x) {
+static inline uint64_t __hashMpz_internal(mpz_t x) {
   long exp;
   double mant;
   uint64_t tmp1, tmp2;
 
   exp = (long) 0;
   mant = mpz_get_d_2exp(&exp, x);
-  tmp1 = hashLong(exp);
-  tmp2 = hashDouble(mant);
-  return hashCombine(tmp1, tmp2);
+  tmp1 = __hashLong_internal(exp);
+  tmp2 = __hashDouble_internal(mant);
+  return __hashCombine_internal(tmp1, tmp2);
 }
 
-uint64_t hashMpq(mpq_t x) {
+static inline uint64_t __hashMpq_internal(mpq_t x) {
   uint64_t tmp1, tmp2;
   
   mpq_canonicalize(x);
-  tmp1 = hashMpz(mpq_numref(x));
-  tmp2 = hashMpz(mpq_denref(x));
-  return hashCombine(tmp1, tmp2);  
+  tmp1 = __hashMpz_internal(mpq_numref(x));
+  tmp2 = __hashMpz_internal(mpq_denref(x));
+  return __hashCombine_internal(tmp1, tmp2);  
 }
 
-uint64_t hashString(char *x) {
+static inline uint64_t __hashString_internal(char *x) {
   uint64_t tmp;
   char *curr;
   
-  tmp = UINT64_C(0xcafebabedeadbeef);
+  tmp = UINT64_C(0);
   for (curr=x;*curr!='\0';curr++) {
-    tmp = hashCombine(tmp, hashChar(*curr));
+    tmp = __hashCombine_internal(tmp, __hashChar_internal(*curr));
   }
   return tmp;
 }
 
-uint64_t hashPointer(void *x) {
-  uint64_t tmp1, tmp2, tmp3, tmp4;
-  tmp1 = (uint64_t) x;
-  tmp2 = tmp1 << 16;
-  tmp3 = tmp2 << 16;
-  tmp4 = tmp3 << 16;
-  return hashCombine(hashCombine(hashCombine(tmp1, tmp2), tmp3), tmp4);
+uint64_t hashCombine(uint64_t h1, uint64_t h2) {
+  uint64_t res;
+  res = __hashCombine_internal(h1, h2);
+  return res;
 }
 
-uint64_t hashCombine(uint64_t h1, uint64_t h2) {
-  uint64_t tmp;
-  tmp = h1 ^ h2;
-  tmp ^= UINT64_C(0xff00ff00ff00ff00);
-  return tmp;
+uint64_t hashMpfr(mpfr_t x) {
+  uint64_t res;
+  res = __hashMpfr_internal(x);
+  return res;
 }
+
+uint64_t hashMpfi(sollya_mpfi_t x) {
+  uint64_t res;
+  res = __hashMpfi_internal(x);
+  return res;
+}
+
+uint64_t hashMpq(mpq_t x) {
+  uint64_t res;
+  res = __hashMpq_internal(x);
+  return res;
+}
+
+uint64_t hashString(char *x) {
+  uint64_t res;
+  res = __hashString_internal(x);
+  return res;
+}
+
+uint64_t hashChar(char x) {
+  uint64_t res;
+  res = __hashChar_internal(x);
+  return res;
+}
+
+uint64_t hashInt(int x) {
+  uint64_t res;
+  res = __hashInt_internal(x);
+  return res;
+}
+
+uint64_t hashUnsignedInt(unsigned int x) {
+  uint64_t res;
+  res = __hashUnsignedInt_internal(x);
+  return res;
+}
+
+uint64_t hashInt64(int64_t x) {
+  uint64_t res;
+  res = __hashInt64_internal(x);
+  return res;
+}
+
+uint64_t hashPointer(void *x) {
+  uint64_t res;
+  res = __hashPointer_internal(x);
+  return res;
+}
+
 

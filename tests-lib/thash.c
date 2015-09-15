@@ -2,11 +2,13 @@
 #include <mpfr.h>
 #include <mpfi.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 
 int main(void) {
   sollya_obj_t f[13];
-  int i;
+  int i, j;
+  uint64_t h1, h2;
 
   sollya_lib_init();
 
@@ -23,9 +25,31 @@ int main(void) {
   f[10] = SOLLYA_CONST_SI64(8);
   f[11] = SOLLYA_CONST_SI64(9);
   f[12] = sollya_lib_apply(f[9], f[10], f[11], NULL);
-  
+
+  sollya_lib_printf("Objects:\n");
   for (i=0;i<=12;i++) {
-    sollya_lib_printf("The hash for \"%b\" is 0x%016llx\n", f[i], (unsigned long long int) sollya_lib_hash(f[i]));
+    sollya_lib_printf("%02d: %b\n", i, f[i]);
+  }
+  sollya_lib_printf("\n");
+  
+  sollya_lib_printf("Hash equality table:\n");
+  sollya_lib_printf("-- ");
+  for (j=0;j<=12;j++) {
+    sollya_lib_printf("%02d ",j);
+  }
+  sollya_lib_printf("\n");
+  for (i=0;i<=12;i++) {
+    h1 = sollya_lib_hash(f[i]);
+    sollya_lib_printf("%02d ", i);
+    for (j=0;j<=12;j++) {
+      h2 = sollya_lib_hash(f[j]);
+      if (h1 == h2) {
+	sollya_lib_printf(" * ");
+      } else {
+	sollya_lib_printf("   ");
+      }
+    }
+    sollya_lib_printf("\n");
   }
 
   for(i=0;i<=12;i++) sollya_lib_clear_obj(f[i]);
