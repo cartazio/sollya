@@ -117,3 +117,6 @@ Check that mpfr_urandom has the expected behavior (either one of the old 32-bit 
 =============== Check remez #44 ================
 The tool has been restarted.
 Check that mpfr_urandom has the expected behavior (either one of the old 32-bit or 64-bit behavior), or the new one. OK
+=============== Check remez #45 ================
+The tool has been restarted.
+x * (0.99999997706398021980715459797779647141679456433707 + x^2 * (-0.166664006746570514158546054322176593044356948093385 + x^2 * 8.2874569417324383463094007372672020915882156767645e-3))
