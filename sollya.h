@@ -681,10 +681,12 @@ extern "C" {
   */
   int sollya_lib_decompose_libraryfunction(int (**)(mpfi_t, mpfi_t, int), int *, sollya_obj_t *, sollya_obj_t);
   int sollya_lib_decompose_libraryconstant(void (**)(mpfr_t, mp_prec_t), sollya_obj_t);
-  int sollya_lib_decompose_procedurefunction(sollya_obj_t *, int *, sollya_obj_t *, sollya_obj_t);
+  int sollya_lib_decompose_externalprocedure(sollya_externalprocedure_type_t *, sollya_externalprocedure_type_t **, int *, void **, sollya_obj_t);
   int sollya_lib_decompose_libraryfunction_with_data(int (**)(mpfi_t, mpfi_t, int, void *), int *, sollya_obj_t *, void **, sollya_obj_t);
   int sollya_lib_decompose_libraryconstant_with_data(void (**)(mpfr_t, mp_prec_t, void *), void **, sollya_obj_t);
-
+  int sollya_lib_decompose_externalprocedure_with_data(sollya_externalprocedure_type_t *, sollya_externalprocedure_type_t **, int *, void **, void **, sollya_obj_t);
+  int sollya_lib_decompose_procedurefunction(sollya_obj_t *, int *, sollya_obj_t *, sollya_obj_t);
+  
   /* A function to compute a hash value on Sollya objects 
 
      The function guarantees that if two objects compare equal,

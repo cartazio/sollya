@@ -1,6 +1,6 @@
 /*
 
-  Copyright 2011-2013 by
+  Copyright 2011-2015 by
 
   Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
   UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France,
@@ -3535,6 +3535,281 @@ int sollya_lib_decompose_libraryconstant_with_data(void (**func)(mpfr_t, mp_prec
   
   *func = (void (*)(mpfr_t, mp_prec_t, void *)) (obj->libFun->code);
   *data = obj->libFun->data;
+
+  return 1;
+}
+
+int sollya_lib_decompose_externalprocedure(sollya_externalprocedure_type_t *resType, sollya_externalprocedure_type_t **argTypes, int *arity, void **func, sollya_obj_t obj) {
+  sollya_externalprocedure_type_t myResType;
+  sollya_externalprocedure_type_t *myArgTypes;
+  sollya_externalprocedure_type_t t;
+  chain *curr;
+  int myArity;
+  int i;
+  
+  if (obj->nodeType == MEMREF) return sollya_lib_decompose_externalprocedure(resType, argTypes, arity, func, getMemRefChild(obj));
+
+  if (obj->nodeType != EXTERNALPROCEDUREUSAGE) return 0;
+  if (obj->libProc->hasData) return 0;
+  if (obj->libProc->signature == NULL) return 0;
+  if (obj->libProc->signature->next == NULL) return 0;
+
+  switch (*((int *) (obj->libProc->signature->value))) {
+    case VOID_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_VOID;
+      break;
+    case CONSTANT_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_CONSTANT;
+      break;
+    case FUNCTION_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_FUNCTION;
+      break;
+    case OBJECT_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_OBJECT;
+      break;
+    case RANGE_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_RANGE;
+      break;
+    case INTEGER_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_INTEGER;
+      break;
+    case STRING_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_STRING;
+      break;
+    case BOOLEAN_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_BOOLEAN;
+      break;
+    case CONSTANT_LIST_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_CONSTANT_LIST;
+      break;
+    case FUNCTION_LIST_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_FUNCTION_LIST;
+      break;
+    case OBJECT_LIST_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_OBJECT_LIST;
+      break;
+    case RANGE_LIST_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_RANGE_LIST;
+      break;
+    case INTEGER_LIST_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_INTEGER_LIST;
+      break;
+    case STRING_LIST_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_STRING_LIST;
+      break;
+    case BOOLEAN_LIST_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_BOOLEAN_LIST;
+      break;
+    default:
+      return 0;
+  }
+
+  if ((*((int *) (obj->libProc->signature->next->value))) == VOID_TYPE) {
+    myArity = 0;
+    myArgTypes = NULL;
+  } else {
+    myArity = lengthChain(obj->libProc->signature->next);
+    myArgTypes = (sollya_externalprocedure_type_t *) safeCalloc(myArity, sizeof(sollya_externalprocedure_type_t));
+    
+    for (curr=obj->libProc->signature->next,i=0;curr!=NULL;curr=curr->next,i++) {
+      switch (*((int *) (curr->value))) {
+      case VOID_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_VOID;
+	break;
+      case CONSTANT_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_CONSTANT;
+	break;
+      case FUNCTION_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_FUNCTION;
+	break;
+      case OBJECT_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_OBJECT;
+	break;
+      case RANGE_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_RANGE;
+	break;
+      case INTEGER_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_INTEGER;
+	break;
+      case STRING_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_STRING;
+	break;
+      case BOOLEAN_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_BOOLEAN;
+	break;
+      case CONSTANT_LIST_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_CONSTANT_LIST;
+	break;
+      case FUNCTION_LIST_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_FUNCTION_LIST;
+	break;
+      case OBJECT_LIST_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_OBJECT_LIST;
+	break;
+      case RANGE_LIST_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_RANGE_LIST;
+	break;
+      case INTEGER_LIST_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_INTEGER_LIST;
+	break;
+      case STRING_LIST_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_STRING_LIST;
+	break;
+      case BOOLEAN_LIST_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_BOOLEAN_LIST;
+	break;
+      default:
+	safeFree(myArgTypes);
+	return 0;
+      }
+      myArgTypes[i] = t;
+    }
+  }
+  
+  *func = obj->libProc->code;
+  *resType = myResType;
+  *arity = myArity;
+  if (myArity != 0) {
+    *argTypes = myArgTypes;
+  }
+
+  return 1;
+}
+
+int sollya_lib_decompose_externalprocedure_with_data(sollya_externalprocedure_type_t *resType, sollya_externalprocedure_type_t **argTypes, int *arity, void **func, void **data, sollya_obj_t obj) {
+  sollya_externalprocedure_type_t myResType;
+  sollya_externalprocedure_type_t *myArgTypes;
+  sollya_externalprocedure_type_t t;
+  chain *curr;
+  int myArity;
+  int i;
+  
+  if (obj->nodeType == MEMREF) return sollya_lib_decompose_externalprocedure_with_data(resType, argTypes, arity, func, data, getMemRefChild(obj));
+
+  if (obj->nodeType != EXTERNALPROCEDUREUSAGE) return 0;
+  if (!(obj->libProc->hasData)) return 0;
+  if (obj->libProc->signature == NULL) return 0;
+  if (obj->libProc->signature->next == NULL) return 0;
+
+  switch (*((int *) (obj->libProc->signature->value))) {
+    case VOID_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_VOID;
+      break;
+    case CONSTANT_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_CONSTANT;
+      break;
+    case FUNCTION_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_FUNCTION;
+      break;
+    case OBJECT_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_OBJECT;
+      break;
+    case RANGE_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_RANGE;
+      break;
+    case INTEGER_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_INTEGER;
+      break;
+    case STRING_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_STRING;
+      break;
+    case BOOLEAN_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_BOOLEAN;
+      break;
+    case CONSTANT_LIST_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_CONSTANT_LIST;
+      break;
+    case FUNCTION_LIST_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_FUNCTION_LIST;
+      break;
+    case OBJECT_LIST_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_OBJECT_LIST;
+      break;
+    case RANGE_LIST_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_RANGE_LIST;
+      break;
+    case INTEGER_LIST_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_INTEGER_LIST;
+      break;
+    case STRING_LIST_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_STRING_LIST;
+      break;
+    case BOOLEAN_LIST_TYPE:
+      myResType = SOLLYA_EXTERNALPROC_TYPE_BOOLEAN_LIST;
+      break;
+    default:
+      return 0;
+  }
+
+  if ((*((int *) (obj->libProc->signature->next->value))) == VOID_TYPE) {
+    myArity = 0;
+    myArgTypes = NULL;
+  } else {
+    myArity = lengthChain(obj->libProc->signature->next);
+    myArgTypes = (sollya_externalprocedure_type_t *) safeCalloc(myArity, sizeof(sollya_externalprocedure_type_t));
+    
+    for (curr=obj->libProc->signature->next,i=0;curr!=NULL;curr=curr->next,i++) {
+      switch (*((int *) (curr->value))) {
+      case VOID_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_VOID;
+	break;
+      case CONSTANT_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_CONSTANT;
+	break;
+      case FUNCTION_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_FUNCTION;
+	break;
+      case OBJECT_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_OBJECT;
+	break;
+      case RANGE_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_RANGE;
+	break;
+      case INTEGER_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_INTEGER;
+	break;
+      case STRING_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_STRING;
+	break;
+      case BOOLEAN_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_BOOLEAN;
+	break;
+      case CONSTANT_LIST_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_CONSTANT_LIST;
+	break;
+      case FUNCTION_LIST_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_FUNCTION_LIST;
+	break;
+      case OBJECT_LIST_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_OBJECT_LIST;
+	break;
+      case RANGE_LIST_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_RANGE_LIST;
+	break;
+      case INTEGER_LIST_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_INTEGER_LIST;
+	break;
+      case STRING_LIST_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_STRING_LIST;
+	break;
+      case BOOLEAN_LIST_TYPE:
+	t = SOLLYA_EXTERNALPROC_TYPE_BOOLEAN_LIST;
+	break;
+      default:
+	safeFree(myArgTypes);
+	return 0;
+      }
+      myArgTypes[i] = t;
+    }
+  }
+  
+  *func = obj->libProc->code;
+  *data = obj->libProc->data;
+  *resType = myResType;
+  *arity = myArity;
+  if (myArity != 0) {
+    *argTypes = myArgTypes;
+  }
 
   return 1;
 }
