@@ -606,7 +606,7 @@ The constant $\pi$ is available through the keyword \key{pi} as a $0$-ary functi
 
 \input{introExample19}
 
-The reader may wish to see Sections \ref{lablibrary} and \ref{labfunction} for ways of dynamically adding other base functions to Sollya.
+The reader may wish to see Sections \ref{lablibrary} and \ref{labfunction} for ways of dynamically adding other base functions to \sollya.
 
 \subsection{Strings}
 Anything written between quotes is interpreted as a string. The infix operator \com{@} concatenates two strings. To get the length of a string, use the \com{length} function. You can access the $i$-th character of a string using brackets (see the example below). There is no character type in \sollya: the $i$-th character of a string is returned as a string itself.
@@ -1747,22 +1747,22 @@ Functions are provided to allow the user to retrieve further information from li
 \begin{itemize}
 \item \verb|int sollya_lib_decompose_libraryfunction(int (**f)(mpfi_t, mpfi_t, int),|\\
 \phantom{\texttt{int sollya\_lib\_decompose\_libraryfunction( }}\verb|int *deriv, sollya_obj_t *e,|\\
-\phantom{\texttt{int sollya\_lib\_decompose\_libraryfunction( }}\verb|sollya_obj_t g)|:\\ assume that \verb|g| represents an expression $f_0(f_1)$ where $f_0$ is a library function. Then, $f_0$ is the $n$-th derivative (for some $n$) of a function provided within Sollya via an external C function \verb|int func(mpfi_t, mpfi_t, int)|.\\
-As a result of a call to \verb|sollya_lib_decompose_libraryfunction|, the value $n$ is stored at the address referred to by \verb|deriv|, a pointer to \verb|func| is stored at the address referred to by \verb|f| and a Sollya object representing $f_1$ is stored at the address referred to by \verb|e|. Please notice that the object stored in \verb|e| must manually be cleared once it becomes useless. Upon success, a boolean integer representing true is returned. If \verb|g| is not a library function object, nothing happens and false is returned.
+\phantom{\texttt{int sollya\_lib\_decompose\_libraryfunction( }}\verb|sollya_obj_t g)|:\\ assume that \verb|g| represents an expression $f_0(f_1)$ where $f_0$ is a library function. Then, $f_0$ is the $n$-th derivative (for some $n$) of a function provided within \sollya via an external C function \verb|int func(mpfi_t, mpfi_t, int)|.\\
+As a result of a call to \verb|sollya_lib_decompose_libraryfunction|, the value $n$ is stored at the address referred to by \verb|deriv|, a pointer to \verb|func| is stored at the address referred to by \verb|f| and a \sollya object representing $f_1$ is stored at the address referred to by \verb|e|. Please notice that the object stored in \verb|e| must manually be cleared once it becomes useless. Upon success, a boolean integer representing true is returned. If \verb|g| is not a library function object, nothing happens and false is returned.
 \item \verb|int sollya_lib_decompose_libraryfunction_with_data(|\\
 \phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|int (**f)(mpfi_t, mpfi_t, int, void *),|\\
 \phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|int *deriv, sollya_obj_t *e, void **data|\\
 \phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|sollya_obj_t g)|:\\ works exactly as the previous function but additionnally returns a pointer to the \verb|void *| data field that had been provided when the library function was created.
 \item \verb|int sollya_lib_decompose_procedurefunction(sollya_obj_t *f, int *deriv,|\\
 \phantom{\texttt{int sollya\_lib\_decompose\_procedurefunction( }}\verb|sollya_obj_t *e, sollya_obj_t g)|:\\
-assume that \verb|g| represents an expression $f_0(f_1)$ where $f_0$ is a procedure function. Then, $f_0$ is the $n$-th derivative (for some $n$) of a function provided within Sollya via a procedure \verb|proc(X, n, p) {...}|.\\
-As a result of a call to \verb|sollya_lib_decompose_procedurefunction|, the value $n$ is stored at the address referred to by \verb|deriv|, a Sollya object representing the procedure is stored at the address referred to by \verb|f|, a Sollya object representing $f_1$ is stored at the address referred to by \verb|e|. Please notice that the objects stored in \verb|f| and \verb|e| must manually be cleared once they become useless. Upon success, a boolean integer representing true is returned. If \verb|g| is not a procedure function object, nothing happens and false is returned.
+assume that \verb|g| represents an expression $f_0(f_1)$ where $f_0$ is a procedure function. Then, $f_0$ is the $n$-th derivative (for some $n$) of a function provided within \sollya via a procedure \verb|proc(X, n, p) {...}|.\\
+As a result of a call to \verb|sollya_lib_decompose_procedurefunction|, the value $n$ is stored at the address referred to by \verb|deriv|, a \sollya object representing the procedure is stored at the address referred to by \verb|f|, a \sollya object representing $f_1$ is stored at the address referred to by \verb|e|. Please notice that the objects stored in \verb|f| and \verb|e| must manually be cleared once they become useless. Upon success, a boolean integer representing true is returned. If \verb|g| is not a procedure function object, nothing happens and false is returned.
 \item \verb|int sollya_lib_decompose_libraryconstant(void (**f)(mpfr_t, mp_prec_t),|\\
 \phantom{\texttt{int sollya\_lib\_decompose\_libraryconstant( }}\verb|sollya_obj_t c)|:\\
 assume that \verb|c| is a constant provided via an external C function \verb|void func(mpfr_t, mp_prec_t)|. As a result of a call to \verb|sollya_lib_decompose_libraryconstant|, a pointer to \verb|func| is stored at the address referred to by \verb|f| and a boolean integer representing true is returned. Otherwise, nothing happens and false is returned.
 \item \verb|int sollya_lib_decompose_libraryconstant_with_data(|\\
 \phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|void (**f)(mpfr_t, mp_prec_t, void *),|\\
-\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|void **data|\\
+\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|void **data,|\\
 \phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|sollya_obj_t c)|:\\
 works exactly as the previous function but additionnally returns a pointer to the \verb|void *| data field that had been provided when the library constant was created.
 \item \verb|int sollya_lib_decompose_externalprocedure(sollya_externalprocedure_type_t *res,|\\
