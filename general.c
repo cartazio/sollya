@@ -577,7 +577,23 @@ void wrapSafeFree(void *ptr, size_t size) {
   safeFree(ptr);
 }
 
-/* Wrap the GMP mp_set_memory_functions function into one that not
+/* Wrap the GMP mp_set_memory_functions and mp_get_memory_functions
+   once in order to enable opportunities for different memory
+   management at a later point.
+*/
+void sollya_mp_set_memory_functions(void *(*alloc_func_ptr) (size_t),
+				    void *(*realloc_func_ptr) (void *, size_t, size_t),
+				    void (*free_func_ptr) (void *, size_t)) {
+  mp_set_memory_functions(alloc_func_ptr, realloc_func_ptr, free_func_ptr);
+}
+
+void sollya_mp_get_memory_functions(void *(**alloc_func_ptr) (size_t),
+				    void *(**realloc_func_ptr) (void *, size_t, size_t),
+				    void (**free_func_ptr) (void *, size_t)) {
+  mp_get_memory_functions(alloc_func_ptr, realloc_func_ptr, free_func_ptr);
+}
+
+/* Wrap the sollya_mp_set_memory_functions function into one that not
    only installs the functions but also stores the old values into the
    global backup variables. Do nothing if the backup function pointers
    are not NULL (i.e. if they have already been set.)
@@ -591,8 +607,8 @@ void wrap_mp_set_memory_functions(void *(*alloc_func_ptr) (size_t),
     return;
   }
 
-  mp_get_memory_functions(&oldGMPMalloc,&oldGMPRealloc,&oldGMPFree);
-  mp_set_memory_functions(alloc_func_ptr, realloc_func_ptr, free_func_ptr);
+  sollya_mp_get_memory_functions(&oldGMPMalloc,&oldGMPRealloc,&oldGMPFree);
+  sollya_mp_set_memory_functions(alloc_func_ptr, realloc_func_ptr, free_func_ptr);
 }
 
 /* Provide memory management functions for the parsers
@@ -1736,7 +1752,7 @@ int finalizeLibraryMode() {
   safeFree(uniqueIdentifier); uniqueIdentifier = NULL;
   mpfr_free_cache();
   uninstallMessageCallback();
-  mp_set_memory_functions(oldGMPMalloc,oldGMPRealloc,oldGMPFree);
+  sollya_mp_set_memory_functions(oldGMPMalloc,oldGMPRealloc,oldGMPFree);
   actualCalloc = calloc;
   actualMalloc = malloc;
   actualFree = free;
@@ -2272,7 +2288,7 @@ int general(int argc, char *argv[]) {
     warnFile = NULL;
   }
 
-  mp_set_memory_functions(oldGMPMalloc,oldGMPRealloc,oldGMPFree);
+  sollya_mp_set_memory_functions(oldGMPMalloc,oldGMPRealloc,oldGMPFree);
 
   if (lastWasError) {
     if (lastCorrectlyExecuted) {
