@@ -37,6 +37,8 @@ int main(void) {
   sollya_obj_t f[11];
   sollya_externalprocedure_type_t argTypes[3];
   int i;
+  char str1[1024];
+  char str2[1024];
 
   sollya_lib_init();
 
@@ -50,8 +52,13 @@ int main(void) {
 
   argTypes[0] = SOLLYA_EXTERNALPROC_TYPE_INTEGER;
   f[3] = sollya_lib_externalprocedure(SOLLYA_EXTERNALPROC_TYPE_INTEGER, argTypes, 1, NULL, successor_bis);
-  sollya_lib_printf("%b\n", f[3]);
-  sollya_lib_autoprint(f[3], NULL);
+  sollya_lib_sprintf(str1, "%b", f[3]);
+  sollya_lib_sprintf(str2, "proc_%p\n", successor_bis);
+  if ((strcmp(str1, str2) == 0) || (strcmp(str1, "successor_bis") == 0)) {
+    sollya_lib_printf("The behavior when no name is suggested is conform to the semantic\n");
+  } else {
+    sollya_lib_printf("FAILURE: the external procedure prints as \"%s\"\n",str1);
+  }
   f[4] = SOLLYA_CONST_SI64(16);
   f[5] = sollya_lib_apply(f[3], f[4], NULL);
   sollya_lib_printf("%b\n", f[5]);
@@ -72,8 +79,13 @@ int main(void) {
   argTypes[1] = SOLLYA_EXTERNALPROC_TYPE_INTEGER;
   argTypes[2] = SOLLYA_EXTERNALPROC_TYPE_CONSTANT;
   f[6] = sollya_lib_externalprocedure(SOLLYA_EXTERNALPROC_TYPE_BOOLEAN, argTypes, 3, NULL, strange_bis);
-  sollya_lib_printf("%b\n", f[6]);
-  sollya_lib_autoprint(f[6], NULL);
+  sollya_lib_sprintf(str1, "%b", f[6]);
+  sollya_lib_sprintf(str2, "proc_%p\n", strange_bis);
+  if ((strcmp(str1, str2) == 0) || (strcmp(str1, "strange_bis") == 0)) {
+    sollya_lib_printf("The behavior when no name is suggested is conform to the semantic\n");
+  } else {
+    sollya_lib_printf("FAILURE: the external procedure prints as \"%s\"\n",str1);
+  }
   f[7] = sollya_lib_string("Coucou");
   f[8] = SOLLYA_CONST_SI64(42);
   f[9] = SOLLYA_EXP(SOLLYA_CONST_SI64(1));
