@@ -1,4 +1,5 @@
 #include <mpfi.h>
+#include <time.h>
 
 int myownlog(mpfi_t result, mpfi_t x, int n) {
   if(n==0) {
@@ -81,4 +82,24 @@ void euler_gamma(mpfr_t res, mp_prec_t prec) {
   mpfr_const_euler(res, GMP_RNDN);
   return;
 }
+
+int funny_impl(char *str, int i, mpfr_t v) {
+  sollya_lib_printf(">>>%s<<<>>>%d<<<>>>%v<<<\n", str, i, v);
+  return (i == 17);
+}
+
+int funny(int *res, void **args) {
+  *res = funny_impl(((char *) (args[0])), *((int *) (args[1])), *((mpfr_t *) (args[2])));
+  return 1;
+}
+
+int zeit_impl() {
+  return (int) time(NULL);
+}
+
+int zeit(int *res) {
+  *res = zeit_impl();
+  return 1;
+}
+
 

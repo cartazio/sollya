@@ -85,6 +85,7 @@ tcos.c \
 tcosh.c \
 tcreate_structure.c \
 tdecimal.c \
+tdecompose_externalprocedure.c \
 tdecompose_function.c \
 tdecompose_libraryconstant.c \
 tdecompose_libraryfunction.c \
