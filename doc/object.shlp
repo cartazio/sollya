@@ -3,6 +3,8 @@
 #CALLING $COMMAND
 #TYPE $TYPE_TYPE
 
+#LIBRARYNAME SOLLYA_EXTERNALPROC_TYPE_OBJECT
+
 #DESCRIPTION 
 $COMMAND represents the $SOLLYA object type for declarations
 of external procedures $EXTERNALPROC.

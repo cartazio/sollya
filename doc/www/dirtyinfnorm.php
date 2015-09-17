@@ -57,10 +57,10 @@ and t be the value of variable <?php linkTo("command","prec","prec");?>.
 &nbsp;&nbsp;&nbsp;1.45856<br> 
 &nbsp;&nbsp;&nbsp;&gt; prec=40!;<br> 
 &nbsp;&nbsp;&nbsp;&gt; dirtyinfnorm(exp(cos(x))*sin(x),[0;5]);<br> 
-&nbsp;&nbsp;&nbsp;1.458528537135<br> 
+&nbsp;&nbsp;&nbsp;1.458528537136<br> 
 &nbsp;&nbsp;&nbsp;&gt; prec=100!;<br> 
 &nbsp;&nbsp;&nbsp;&gt; dirtyinfnorm(exp(cos(x))*sin(x),[0;5]);<br> 
-&nbsp;&nbsp;&nbsp;1.458528537136237644438147455024<br> 
+&nbsp;&nbsp;&nbsp;1.458528537136237644438147455025<br> 
 &nbsp;&nbsp;&nbsp;&gt; prec=200!;<br> 
 &nbsp;&nbsp;&nbsp;&gt; dirtyinfnorm(exp(cos(x))*sin(x),[0;5]);<br> 
 &nbsp;&nbsp;&nbsp;1.458528537136237644438147455023841718299214087993682374094153<br> 
@@ -68,7 +68,7 @@ and t be the value of variable <?php linkTo("command","prec","prec");?>.
 <div class="divExample"> 
 <h2 class="category">Example 3: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; dirtyinfnorm(x^2, [log(0);log(1)]);<br> 
-&nbsp;&nbsp;&nbsp;@NaN@<br> 
+&nbsp;&nbsp;&nbsp;NaN<br> 
 </div> 
 </div> 
 <div class="divSeeAlso"> 

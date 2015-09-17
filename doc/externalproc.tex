@@ -2,6 +2,13 @@
 \label{labexternalproc}
 \noindent Name: \textbf{externalproc}\\
 \phantom{aaa}binds an external code to a \sollya procedure\\[0.2cm]
+\noindent Library names:\\
+\verb|     sollya_obj_t sollya_lib_externalprocedure(sollya_externalprocedure_type_t, |\\
+\verb|                                               sollya_externalprocedure_type_t *,|\\
+\verb|                                               int, char *, void *);|\\
+\verb|     sollya_obj_t sollya_lib_externalprocedure_with_data(sollya_externalprocedure_type_t, |\\
+\verb|                                                         sollya_externalprocedure_type_t *,|\\
+\verb|                                                         int, char *, void *, void *);|\\[0.2cm]
 \noindent Usage: 
 \begin{center}
 \textbf{externalproc}(\emph{identifier}, \emph{filename}, \emph{argumenttype} \texttt{->} \emph{resulttype}) : (\textsf{identifier type}, \textsf{string}, \textsf{type type}, \textsf{type type}) $\rightarrow$ \textsf{void}\\
@@ -140,7 +147,7 @@ Parameters:
 
 > externalproc(foo, "./externalprocexample", (integer, integer) -> integer);
 > foo;
-foo(integer, integer) -> integer
+foo
 > foo(5, 6);
 11
 > verbosity = 1!;

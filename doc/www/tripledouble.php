@@ -37,7 +37,7 @@ See the corresponding help pages for examples.
 &nbsp;&nbsp;&nbsp;1.00000000000000002775557561562891353466491600711096<br> 
 &nbsp;&nbsp;&nbsp;&gt; prec=110!;<br> 
 &nbsp;&nbsp;&nbsp;&gt; TD(a);<br> 
-&nbsp;&nbsp;&nbsp;1.00000000000000002775557561562891353<br> 
+&nbsp;&nbsp;&nbsp;1.000000000000000027755575615628913534664916007110955975699724<br> 
 </div> 
 </div> 
 <div class="divSeeAlso"> 

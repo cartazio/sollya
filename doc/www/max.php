@@ -46,7 +46,7 @@ NaNs. This means that NaNs may disappear during computations.
 <div class="divExample"> 
 <h2 class="category">Example 1: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; max(1,2,3,exp(5),log(0.25));<br> 
-&nbsp;&nbsp;&nbsp;1.48413159102576603421115580040552279623487667593878e2<br> 
+&nbsp;&nbsp;&nbsp;148.41315910257660342111558004055227962348766759388<br> 
 &nbsp;&nbsp;&nbsp;&gt; max(17);<br> 
 &nbsp;&nbsp;&nbsp;17<br> 
 </div> 
@@ -54,7 +54,7 @@ NaNs. This means that NaNs may disappear during computations.
 <h2 class="category">Example 2: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; l = [|1,2,3,exp(5),log(0.25)|];<br> 
 &nbsp;&nbsp;&nbsp;&gt; max(l);<br> 
-&nbsp;&nbsp;&nbsp;1.48413159102576603421115580040552279623487667593878e2<br> 
+&nbsp;&nbsp;&nbsp;148.41315910257660342111558004055227962348766759388<br> 
 </div> 
 <div class="divExample"> 
 <h2 class="category">Example 3: </h2> 

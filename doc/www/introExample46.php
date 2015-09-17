@@ -7,7 +7,7 @@
 &nbsp;&nbsp;&nbsp;exp(x)<br>
 &nbsp;&nbsp;&nbsp;&gt; s.b(1);<br>
 &nbsp;&nbsp;&nbsp;Warning: rounding has happened. The value displayed is a faithful rounding to 165 bits of the true result.<br>
-&nbsp;&nbsp;&nbsp;2.71828182845904523536028747135266249775724709369998<br>
+&nbsp;&nbsp;&nbsp;2.7182818284590452353602874713526624977572470937<br>
 &nbsp;&nbsp;&nbsp;&gt; s.d.a = [-1;1];<br>
 &nbsp;&nbsp;&nbsp;&gt; s.d.b = sin(x);<br>
 &nbsp;&nbsp;&nbsp;&gt; inf(s.d.a);<br>

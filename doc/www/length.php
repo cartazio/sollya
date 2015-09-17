@@ -48,6 +48,6 @@ If <span class="arg">L</span> is an end-elliptic list, <?php linkTo("command","l
 <div class="divExample"> 
 <h2 class="category">Example 4: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; length([|1,2...|]);<br> 
-&nbsp;&nbsp;&nbsp;@Inf@<br> 
+&nbsp;&nbsp;&nbsp;infty<br> 
 </div> 
 </div> 

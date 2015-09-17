@@ -47,11 +47,11 @@ In particular: the rule is always applied at least once, if necessary.
 &nbsp;&nbsp;&nbsp;&gt; hopitalrecursions=0;<br> 
 &nbsp;&nbsp;&nbsp;The number of recursions for Hopital's rule has been set to 0.<br> 
 &nbsp;&nbsp;&nbsp;&gt; evaluate(log(1+x)^2/x^2,[-1/2; 1]);<br> 
-&nbsp;&nbsp;&nbsp;[-@Inf@;@Inf@]<br> 
+&nbsp;&nbsp;&nbsp;[-infty;infty]<br> 
 &nbsp;&nbsp;&nbsp;&gt; hopitalrecursions=1;<br> 
 &nbsp;&nbsp;&nbsp;The number of recursions for Hopital's rule has been set to 1.<br> 
 &nbsp;&nbsp;&nbsp;&gt; evaluate(log(1+x)^2/x^2,[-1/2; 1]);<br> 
-&nbsp;&nbsp;&nbsp;[-2.52258872223978123766892848583270627230200053744108;6.7725887222397812376689284858327062723020005374411]<br> 
+&nbsp;&nbsp;&nbsp;[-2.5225887222397812376689284858327062723020005374411;6.7725887222397812376689284858327062723020005374412]<br> 
 </div> 
 </div> 
 <div class="divSeeAlso"> 

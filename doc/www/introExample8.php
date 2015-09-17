@@ -14,5 +14,5 @@
 &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;if r > maximum then { maximum=r; argmaximum=t; };<br>
 &nbsp;&nbsp;&nbsp;&nbsp; };<br>
 &nbsp;&nbsp;&nbsp;&gt; print("The infinity norm of", p-f, "is", maximum, "and is reached at", argmaximum);<br>
-&nbsp;&nbsp;&nbsp;The infinity norm of -3.89710727796949e-2 * x^2 + -1.79806720921853 * x + (-0.4162655728752966) - cos(2 * exp(x)) is 8.630659444322699e-4 and is reached at 6.663550880713786e-2<br>
+&nbsp;&nbsp;&nbsp;The infinity norm of -3.89710727796949e-2 * x^2 + -1.79806720921853 * x + (-0.4162655728752966) - cos(2 * exp(x)) is 8.6306594443227e-4 and is reached at 6.66355088071379e-2<br>
 </div>

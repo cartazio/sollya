@@ -84,13 +84,11 @@ other effect though.
 &nbsp;&nbsp;&nbsp;If safe computation is needed, try to increase the precision.<br> 
 &nbsp;&nbsp;&nbsp;Information (196): formally differentiating a function.<br> 
 &nbsp;&nbsp;&nbsp;Information (197): differentiating the expression 'exp(x * 0.1)'<br> 
-&nbsp;&nbsp;&nbsp;Information (204): extraction of coefficient terms from a polynomial uses a special algorithm for Horner forms.<br> 
 &nbsp;&nbsp;&nbsp;Information (207): no Horner simplification will be performed because the given tree is already in Horner form.<br> 
 &nbsp;&nbsp;&nbsp;exp(x * 0.1) * 0.1<br> 
 &nbsp;&nbsp;&nbsp;&gt; suppressmessage([| 174, 207, 196 |]);<br> 
 &nbsp;&nbsp;&nbsp;&gt; diff(exp(x * 0.1));<br> 
 &nbsp;&nbsp;&nbsp;Information (197): differentiating the expression 'exp(x * 0.1)'<br> 
-&nbsp;&nbsp;&nbsp;Information (204): extraction of coefficient terms from a polynomial uses a special algorithm for Horner forms.<br> 
 &nbsp;&nbsp;&nbsp;exp(x * 0.1) * 0.1<br> 
 &nbsp;&nbsp;&nbsp;&gt; unsuppressmessage([| 174, 196 |]);<br> 
 </div> 
@@ -104,7 +102,7 @@ other effect though.
 &nbsp;&nbsp;&nbsp;&gt; getsuppressedmessages();<br> 
 &nbsp;&nbsp;&nbsp;[|195, 196, 197, 205, 207, 387, 388, 390, 391|]<br> 
 &nbsp;&nbsp;&nbsp;&gt; evaluate(x/sin(x) - 1, [-1;1]);<br> 
-&nbsp;&nbsp;&nbsp;[0;0.85081571768092561791175324139865019347039665509409]<br> 
+&nbsp;&nbsp;&nbsp;[0;0.8508157176809256179117532413986501934703966550941]<br> 
 &nbsp;&nbsp;&nbsp;&gt; unsuppressmessage(getsuppressedmessages());<br> 
 &nbsp;&nbsp;&nbsp;&gt; getsuppressedmessages();<br> 
 &nbsp;&nbsp;&nbsp;[| |]<br> 

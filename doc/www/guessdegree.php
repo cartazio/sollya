@@ -55,7 +55,7 @@ form [*, +Inf] is returned. Note that <span class="arg">bound</span> must be a p
 <div class="divExample"> 
 <h2 class="category">Example 2: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; guessdegree(exp(x),[-1;1],1e-10,default, 9);<br> 
-&nbsp;&nbsp;&nbsp;[10;@Inf@]<br> 
+&nbsp;&nbsp;&nbsp;[10;infty]<br> 
 </div> 
 <div class="divExample"> 
 <h2 class="category">Example 3: </h2> 

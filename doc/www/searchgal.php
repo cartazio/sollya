@@ -65,7 +65,7 @@ evaluates to an empty list.
 &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;v = s[0];<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;print("The rounding error is 2^(",evaluate(log2(abs(DD(f)/f - 1)),v),")");<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; } else print("No value found");<br> 
-&nbsp;&nbsp;&nbsp;The rounding error is 2^( -1.12106878438809380148206984258358542322113874177832e2 )<br> 
+&nbsp;&nbsp;&nbsp;The rounding error is 2^( -112.106878438809380148206984258358542322113874177832 )<br> 
 </div> 
 <div class="divExample"> 
 <h2 class="category">Example 3: </h2> 

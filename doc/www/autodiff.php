@@ -73,15 +73,15 @@ computing an accurate enclosure of the image of a function over an interval.
 &nbsp;&nbsp;&nbsp;[0.45986058925497069206106494332976097408234056912429;1.20787210589964169595901037621103012113048821362855]<br> 
 &nbsp;&nbsp;&nbsp;&gt; fprime = diff(f);<br> 
 &nbsp;&nbsp;&nbsp;&gt; L[1];<br> 
-&nbsp;&nbsp;&nbsp;[2.53086745013099407167484456656211083053393118778677e-2;1.75680249530792825137263909451182909413591288733649]<br> 
+&nbsp;&nbsp;&nbsp;[2.53086745013099407167484456656211083053393118778677e-2;1.7568024953079282513726390945118290941359128873365]<br> 
 &nbsp;&nbsp;&nbsp;&gt; evaluate(fprime,[2,4]);<br> 
-&nbsp;&nbsp;&nbsp;[2.71048755415961996452136364304380881763456815673085e-2;1.10919530663943290837397225788623531405558431279949]<br> 
+&nbsp;&nbsp;&nbsp;[2.71048755415961996452136364304380881763456815673085e-2;1.1091953066394329083739722578862353140555843127995]<br> 
 </div> 
 <div class="divExample"> 
 <h2 class="category">Example 3: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; L = autodiff(sin(x)/x, 0, [-1,1]);<br> 
 &nbsp;&nbsp;&nbsp;&gt; L[0];<br> 
-&nbsp;&nbsp;&nbsp;[-@Inf@;@Inf@]<br> 
+&nbsp;&nbsp;&nbsp;[-infty;infty]<br> 
 &nbsp;&nbsp;&nbsp;&gt; evaluate(sin(x)/x, [-1,1]);<br> 
 &nbsp;&nbsp;&nbsp;[0.5403023058681397174009366074429766037323104206179;1]<br> 
 </div> 

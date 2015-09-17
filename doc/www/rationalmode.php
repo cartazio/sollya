@@ -53,10 +53,10 @@ which is in most cases a faithful rounding of the constant expression.
 <h2 class="category">Example 2: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; rationalmode=off!;<br> 
 &nbsp;&nbsp;&nbsp;&gt; exp(19/17 + 3/94);<br> 
-&nbsp;&nbsp;&nbsp;3.15680977395514136754709208944824276340328162814418<br> 
+&nbsp;&nbsp;&nbsp;3.1568097739551413675470920894482427634032816281442<br> 
 &nbsp;&nbsp;&nbsp;&gt; rationalmode=on!;<br> 
 &nbsp;&nbsp;&nbsp;&gt; exp(19/17 + 3/94);<br> 
-&nbsp;&nbsp;&nbsp;3.15680977395514136754709208944824276340328162814418<br> 
+&nbsp;&nbsp;&nbsp;3.1568097739551413675470920894482427634032816281442<br> 
 </div> 
 </div> 
 <div class="divSeeAlso"> 

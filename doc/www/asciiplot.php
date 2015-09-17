@@ -103,7 +103,7 @@ instead of a plot.
 <div class="divExample"> 
 <h2 class="category">Example 4: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; asciiplot(exp(x),[1;1]);<br> 
-&nbsp;&nbsp;&nbsp;2.71828182845904523536028747135266249775724709369998<br> 
+&nbsp;&nbsp;&nbsp;2.7182818284590452353602874713526624977572470937<br> 
 </div> 
 </div> 
 <div class="divSeeAlso"> 

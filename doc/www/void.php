@@ -8,6 +8,7 @@
 <h2 class="libraryname">Library names:</h2> 
 <span class="commandline type">sollya_obj_t sollya_lib_void()</span> 
 <span class="commandline type">int sollya_lib_is_void(sollya_obj_t)</span> 
+<span class="commandline type">SOLLYA_EXTERNALPROC_TYPE_VOID</span> 
 </div> 
 <div class="divUsage"> 
 <h2 class="category">Usage: </h2> 
@@ -71,7 +72,7 @@ details.
 &nbsp;&nbsp;&nbsp;&gt; bashexecute("gcc -fPIC -shared -o externalprocvoidexample externalprocvoidexample.o");<br> 
 &nbsp;&nbsp;&nbsp;&gt; externalproc(foo, "./externalprocvoidexample", void -&gt; void);<br> 
 &nbsp;&nbsp;&nbsp;&gt; foo;<br> 
-&nbsp;&nbsp;&nbsp;foo(void) -&gt; void<br> 
+&nbsp;&nbsp;&nbsp;foo<br> 
 &nbsp;&nbsp;&nbsp;&gt; foo();<br> 
 &nbsp;&nbsp;&nbsp;Hello from the external world.<br> 
 &nbsp;&nbsp;&nbsp;&gt; foo(void);<br> 

@@ -3,23 +3,23 @@
 > f(-infty);
 5
 > evaluate(f,[-infty;infty]);
-[5;@Inf@]
+[5;infty]
 > f(infty);
-@Inf@
+infty
 > [-infty;5] * [3;4];
-[-@Inf@;20]
+[-infty;20]
 > -infty < 5;
 true
 > log(0);
--@Inf@
+-infty
 > [log(0);17];
-Warning: the given expression is not a constant but an expression to evaluate
-and a faithful evaluation is not possible.
-Will use a plain floating-point evaluation, which might yield a completely wrong
- value.
 Warning: inclusion property is satisfied but the diameter may be greater than th
 e least possible.
-[-@Inf@;17]
+Warning: at least one of the given expressions is not a constant but requires ev
+aluation.
+Evaluation is guaranteed to ensure the inclusion property. The approximate resul
+t is at least 165 bit accurate.
+[-infty;17]
 > 
 \end{Verbatim}
 \end{minipage}\end{center}

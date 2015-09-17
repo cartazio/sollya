@@ -66,7 +66,7 @@ function <span class="arg">function</span> by function <span class="arg">functio
 <div class="divExample"> 
 <h2 class="category">Example 2: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; print(evaluate(sin(pi * x), 2));<br> 
-&nbsp;&nbsp;&nbsp;[-1.72986452514381269516508615031098129542836767991679e-12715;7.5941198201187963145069564314525661706039084390067e-12716]<br> 
+&nbsp;&nbsp;&nbsp;[-1.7298645251438126951650861503109812954283676799168e-12715;7.5941198201187963145069564314525661706039084390068e-12716]<br> 
 </div> 
 <div class="divExample"> 
 <h2 class="category">Example 3: </h2> 
