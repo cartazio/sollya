@@ -510,5 +510,5 @@ else "Check that mpfr_urandom has the expected behavior (either one of the old 3
 print("=============== Check remez #45 ================");
 restart;
 verbosity=0!;
-p := remez(1,[|1,3,5|],[0;pi/8],1/sin(x));
-p;
+p = remez(1,[|1,3,5|],[0;pi/8],1/sin(x));
+if (p==p) then print("Removable singularity correctly detected") else print("Regression with respect to revision 9f9d12d");
