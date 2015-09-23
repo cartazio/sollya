@@ -88,6 +88,7 @@ tcosh.c \
 tcreate_structure.c \
 tdecimal.c \
 tdecompose_externalprocedure.c \
+tdecompose_externalprocedure_with_data.c \
 tdecompose_function.c \
 tdecompose_libraryconstant.c \
 tdecompose_libraryconstant_with_data.c \
@@ -118,6 +119,7 @@ tevaluate_function_at_point.c \
 texecute.c \
 texecute_procedure.c \
 texternalprocedure.c \
+texternalprocedure_with_data.c \
 texp.c \
 texpand.c \
 texpm1.c \

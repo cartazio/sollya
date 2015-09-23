@@ -1,0 +1,44 @@
+succ
+succ
+>>>>Hello world<<<<>>>>0<<<<
+17
+sollya_lib_decompose_externalprocedure_with_data has worked on "succ": arity = 1, result type = integer, argument types = integer 
+The function pointer is okay
+The data pointer is okay
+Trying out the function
+>>>>Grias Eahna Good.<<<<>>>>17<<<<
+The function has signaled success, the result is 43, the data counter is 18
+The behavior when no name is suggested is conform to the semantic
+>>>>Hello world<<<<>>>>1<<<<
+17
+sollya_lib_decompose_externalprocedure_with_data has worked: arity = 1, result type = integer, argument types = integer 
+The function pointer is okay
+The data pointer is okay
+Trying out the function
+>>>>Grias Eahna Good.<<<<>>>>18<<<<
+The function has signaled success, the result is 43, the data counter is 19
+strange_proc
+strange_proc
+Warning: the given expression is not a constant but an expression to evaluate. A faithful evaluation to 165 bits will be used.
+>>>>Hello world<<<<>>>>2<<<<
+>>>Coucou<<<>>>17<<<>>>2.7182818284590452353602874713526624977572470937<<<
+true
+sollya_lib_decompose_externalprocedure_with_data has worked on "strange_proc": arity = 3, result type = boolean, argument types = string integer constant 
+The function pointer is okay
+The data pointer is okay
+Trying out the function
+>>>>Grias Eahna Good.<<<<>>>>19<<<<
+>>>Hello world<<<>>>42<<<>>>1664<<<
+The function has signaled success, the result is false, the data counter is 20
+The behavior when no name is suggested is conform to the semantic
+Warning: the given expression is not a constant but an expression to evaluate. A faithful evaluation to 165 bits will be used.
+>>>>Hello world<<<<>>>>3<<<<
+>>>Coucou<<<>>>42<<<>>>2.7182818284590452353602874713526624977572470937<<<
+false
+sollya_lib_decompose_externalprocedure_with_data has worked: arity = 3, result type = boolean, argument types = string integer constant 
+The function pointer is okay
+The data pointer is okay
+Trying out the function
+>>>>Grias Eahna Good.<<<<>>>>20<<<<
+>>>Hello world<<<>>>42<<<>>>1664<<<
+The function has signaled success, the result is false, the data counter is 21
