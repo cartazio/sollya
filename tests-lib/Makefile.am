@@ -39,6 +39,7 @@ tbuild_function_free_variable.c \
 tbuild_function_halfprecision.c \
 tbuild_function_libraryconstant.c \
 tbuild_function_libraryfunction.c \
+tbuild_function_libraryfunction_with_data.c \
 tbuild_function_log10.c \
 tbuild_function_log1p.c \
 tbuild_function_log2.c \
@@ -89,6 +90,7 @@ tdecompose_externalprocedure.c \
 tdecompose_function.c \
 tdecompose_libraryconstant.c \
 tdecompose_libraryfunction.c \
+tdecompose_libraryfunction_with_data.c \
 tdecompose_procedurefunction.c \
 tdefault.c \
 tdegree.c \
@@ -206,6 +208,7 @@ tis_void.c \
 tlength.c \
 tlibraryconstant.c \
 tlibraryfunction.c \
+tlibraryfunction_with_data.c \
 tlist.c \
 tlog10.c \
 tlog1p.c \

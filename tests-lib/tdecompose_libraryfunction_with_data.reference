@@ -1,0 +1,17 @@
+superfunc(sin(_x_^2)^2 / 3) (expecting: superfunc)
+>>>>Hello world<<<<>>>>0<<<<
+-1.6559182168023571790627102018333971500396728515625 (expecting: approximate value of log(sin(4)^2 * 1/3))
+Decomposition of superfunc(sin(_x_^2)^2 / 3) succeeded
+h = sin(_x_^2)^2 / 3
+derivation order = 0
+The function pointer is okay
+The data pointer is okay
+(diff(superfunc))(sin(_x_)) * cos(_x_) (expecting: (diff(superfunc))(sin(_x_)) * cos(_x_))
+diff(superfunc) (expecting: diff(superfunc))
+>>>>Hello world<<<<>>>>1<<<<
+0.25 (expecting: approximate value of 1/4)
+Decomposition of diff(superfunc) succeeded
+h = _x_
+derivation order = 1
+The function pointer is okay
+The data pointer is okay
