@@ -53,7 +53,7 @@ roundings happen.
 &nbsp;&nbsp;&nbsp;Warning: at least one of the given expressions or a subexpression is not correctly typed<br> 
 &nbsp;&nbsp;&nbsp;or its evaluation has failed because of some error on a side-effect.<br> 
 &nbsp;&nbsp;&nbsp;Information: the expression or a partial evaluation of it has been the following:<br> 
-&nbsp;&nbsp;&nbsp;(1.19999999999999999999999999999999999999999999999999) + ("toto")<br> 
+&nbsp;&nbsp;&nbsp;(1.2) + ("toto")<br> 
 &nbsp;&nbsp;&nbsp;error<br> 
 </div> 
 </div> 

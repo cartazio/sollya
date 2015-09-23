@@ -1390,7 +1390,11 @@ void libraryFunction_diff(sollya_mpfi_t *res, node *f, sollya_mpfi_t x, int n, i
   sollya_mpfi_init2(temp, prec);
 
   for(i=0;i<=n;i++) {
-    accessThruMemRef(f)->libFun->code(temp, x, accessThruMemRef(f)->libFunDeriv + i);
+    if (accessThruMemRef(f)->libFun->hasData) {
+      ((int (*)(mpfi_t, mpfi_t, int, void *)) (accessThruMemRef(f)->libFun->code))(temp, x, accessThruMemRef(f)->libFunDeriv + i, accessThruMemRef(f)->libFun->data);
+    } else {
+      ((int (*)(mpfi_t, mpfi_t, int)) (accessThruMemRef(f)->libFun->code))(temp, x, accessThruMemRef(f)->libFunDeriv + i);
+    }
     sollya_init_and_convert_interval(temp2, temp);
     sollya_mpfi_div(res[i], temp2, fact);
     sollya_mpfi_clear(temp2);

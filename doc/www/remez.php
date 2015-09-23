@@ -87,14 +87,14 @@ Examples of use:<br>
 &nbsp;&nbsp;&nbsp;&gt; degree(p);<br> 
 &nbsp;&nbsp;&nbsp;5<br> 
 &nbsp;&nbsp;&nbsp;&gt; dirtyinfnorm(p-exp(x),[0;1]);<br> 
-&nbsp;&nbsp;&nbsp;1.12956981510961487071711938292660776072226345893629e-6<br> 
+&nbsp;&nbsp;&nbsp;1.1295698151096148707171193829266077607222634589363e-6<br> 
 </div> 
 <div class="divExample"> 
 <h2 class="category">Example 2: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; p = remez(1,[|0,2,4,6,8|],[0,Pi/4],1/cos(x));<br> 
 &nbsp;&nbsp;&nbsp;&gt; canonical=on!;<br> 
 &nbsp;&nbsp;&nbsp;&gt; p;<br> 
-&nbsp;&nbsp;&nbsp;0.99999999994393732180959690352543887130348096061124 + -0.499999995715568577687720530637215446709494672222587 * x^2 + 4.1666613233473633009941059480570275870113220089059e-2 * x^4 + -1.3886529147145693651355523880319714051047635695061e-3 * x^6 + 2.4372679177224179934800328511009205218114284220126e-5 * x^8<br> 
+&nbsp;&nbsp;&nbsp;0.99999999994393732180959690352543887130348096061124 + -0.49999999571556857768772053063721544670949467222259 * x^2 + 4.1666613233473633009941059480570275870113220089059e-2 * x^4 + -1.3886529147145693651355523880319714051047635695061e-3 * x^6 + 2.4372679177224179934800328511009205218114284220126e-5 * x^8<br> 
 </div> 
 <div class="divExample"> 
 <h2 class="category">Example 3: </h2> 
@@ -102,7 +102,7 @@ Examples of use:<br>
 &nbsp;&nbsp;&nbsp;&gt; p2 = remez(exp(x),5,[0;1],default,1e-10);<br> 
 &nbsp;&nbsp;&nbsp;&gt; p3 = remez(exp(x),5,[0;1],default,1e-15);<br> 
 &nbsp;&nbsp;&nbsp;&gt; dirtyinfnorm(p1-exp(x),[0;1]);<br> 
-&nbsp;&nbsp;&nbsp;1.12956981510961487071711938292660776072226345893629e-6<br> 
+&nbsp;&nbsp;&nbsp;1.1295698151096148707171193829266077607222634589363e-6<br> 
 &nbsp;&nbsp;&nbsp;&gt; dirtyinfnorm(p2-exp(x),[0;1]);<br> 
 &nbsp;&nbsp;&nbsp;1.12956980227478675612619255125474525171079325793124e-6<br> 
 &nbsp;&nbsp;&nbsp;&gt; dirtyinfnorm(p3-exp(x),[0;1]);<br> 
@@ -115,7 +115,7 @@ Examples of use:<br>
 &nbsp;&nbsp;&nbsp;&gt; p1 = remez(g, L, [-1/16;1/16]);<br> 
 &nbsp;&nbsp;&nbsp;&gt; p2 = remez(g, 3, [-1/16;1/16]);<br> 
 &nbsp;&nbsp;&nbsp;&gt; dirtyinfnorm(p1 - g, [-1/16;1/16]);<br> 
-&nbsp;&nbsp;&nbsp;9.8841323829271038137685646777951687620288462194745e-8<br> 
+&nbsp;&nbsp;&nbsp;9.8841323829271038137685646777951687620288462194746e-8<br> 
 &nbsp;&nbsp;&nbsp;&gt; dirtyinfnorm(p2 - g, [-1/16;1/16]);<br> 
 &nbsp;&nbsp;&nbsp;2.54337800593461418356437401152248866818783932027105e-9<br> 
 </div> 
@@ -124,11 +124,11 @@ Examples of use:<br>
 &nbsp;&nbsp;&nbsp;&gt; f = sin(x);<br> 
 &nbsp;&nbsp;&nbsp;&gt; I = [-3b-5;-1b-1074];<br> 
 &nbsp;&nbsp;&nbsp;&gt; time(popt = remez(1, [|1, 3, 4, 5, 7, 8, 9|], I, 1/f));<br> 
-&nbsp;&nbsp;&nbsp;0.22906699999999999999879263246072014226228930056095<br> 
+&nbsp;&nbsp;&nbsp;0.13995799999999999999608993328514827680919552221894<br> 
 &nbsp;&nbsp;&nbsp;&gt; time(p1 = remez(1, [|1, 3, 4, 5, 7, 8, 9|], I, 1/f, default, [0, 1b-73]));<br> 
-&nbsp;&nbsp;&nbsp;0.143248000000000000006029898802495381460175849497318<br> 
+&nbsp;&nbsp;&nbsp;0.10419399999999999999579849974118417321733431890607<br> 
 &nbsp;&nbsp;&nbsp;&gt; time(p2 = remez(1, [|1, 3, 4, 5, 7, 8, 9|], I, 1/f, default, [3b-72, +@Inf@]));<br> 
-&nbsp;&nbsp;&nbsp;0.156266000000000000009440365156265784207789693027735<br> 
+&nbsp;&nbsp;&nbsp;0.116814000000000000001549108064047288735309848561883<br> 
 &nbsp;&nbsp;&nbsp;&gt; dirtyinfnorm(popt/f-1, I);<br> 
 &nbsp;&nbsp;&nbsp;2.06750931454112835098093903810531156576504665659064e-22<br> 
 &nbsp;&nbsp;&nbsp;&gt; dirtyinfnorm(p1/f-1, I);<br> 

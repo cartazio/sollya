@@ -104,7 +104,7 @@ character sequences are interpreted immediately.
 &nbsp;&nbsp;&nbsp;&gt; midpointmode = off;<br> 
 &nbsp;&nbsp;&nbsp;Midpoint mode has been deactivated.<br> 
 &nbsp;&nbsp;&nbsp;&gt; print(b);<br> 
-&nbsp;&nbsp;&nbsp;[0.70710678118654752440084436210484903928483593768844;0.70710678118654949743721782517557347782646274417048]<br> 
+&nbsp;&nbsp;&nbsp;[0.70710678118654752440084436210484903928483593768845;0.70710678118654949743721782517557347782646274417049]<br> 
 &nbsp;&nbsp;&nbsp;&gt; midpointmode = on;<br> 
 &nbsp;&nbsp;&nbsp;Midpoint mode has been activated.<br> 
 &nbsp;&nbsp;&nbsp;&gt; print(b);<br> 

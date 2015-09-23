@@ -335,6 +335,9 @@ int performListPrependOnEntry(chain *symTbl, char *ident, node *tree) {
   while (curr != NULL) {
     if (strcmp(((entry *) (curr->value))->name,ident) == 0) {
       oldNode = (node *) (((entry *) curr->value)->value);
+      if (oldNode->nodeType == MEMREF) {
+	oldNode->hashComputed = 0;
+      }
       if ((oldNode->nodeType == MEMREF) && (oldNode->isCorrectlyTyped)) oldChecked = 1;
       newChecked = oldChecked && addedChecked;
       while (1) {
@@ -449,6 +452,9 @@ int performListTailOnEntry(chain *symTbl, char *ident) {
   while (curr != NULL) {
     if (strcmp(((entry *) (curr->value))->name,ident) == 0) {
       oldNode = (node *) (((entry *) curr->value)->value);
+      if (oldNode->nodeType == MEMREF) {
+	oldNode->hashComputed = 0;
+      }
       if ((oldNode->nodeType == MEMREF) && (oldNode->isCorrectlyTyped)) oldChecked = 1;
       while (1) {
 	if (oldNode->nodeType != MEMREF) break;

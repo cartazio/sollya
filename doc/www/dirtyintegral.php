@@ -40,12 +40,12 @@ request to sylvain.chevillard@ens-lyon.org.
 <div class="divExample"> 
 <h2 class="category">Example 1: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; sin(10);<br> 
-&nbsp;&nbsp;&nbsp;-0.54402111088936981340474766185137728168364301291621<br> 
+&nbsp;&nbsp;&nbsp;-0.54402111088936981340474766185137728168364301291622<br> 
 &nbsp;&nbsp;&nbsp;&gt; dirtyintegral(cos(x),[0;10]);<br> 
-&nbsp;&nbsp;&nbsp;-0.54400304905152629822448058882475382036536298356281<br> 
+&nbsp;&nbsp;&nbsp;-0.54400304905152629822448058882475382036536298356282<br> 
 &nbsp;&nbsp;&nbsp;&gt; points=2000!;<br> 
 &nbsp;&nbsp;&nbsp;&gt; dirtyintegral(cos(x),[0;10]);<br> 
-&nbsp;&nbsp;&nbsp;-0.54401997751158321972222697312583199035995837926892<br> 
+&nbsp;&nbsp;&nbsp;-0.54401997751158321972222697312583199035995837926893<br> 
 </div> 
 </div> 
 <div class="divSeeAlso"> 

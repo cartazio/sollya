@@ -1,6 +1,6 @@
 /*
 
-  Copyright 2007-2012 by
+  Copyright 2007-2015 by
 
   Laboratoire de l'Informatique du Parallelisme,
   UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
@@ -76,8 +76,9 @@ typedef struct libraryFunctionStruct libraryFunction;
 struct libraryFunctionStruct
 {
   char *functionName;
-  int (*code)(mpfi_t, mpfi_t, int); /* used for LIBRARYFUNCTION */
-  void (*constant_code)(mpfr_t, mp_prec_t); /* used for LIBRARYCONSTANT */
+  void *code;
+  int hasData;
+  void *data;
 };
 
 typedef struct libraryProcedureStruct libraryProcedure;
@@ -86,8 +87,9 @@ struct libraryProcedureStruct
   char *procedureName;
   void *code;
   chain *signature;
+  int hasData;
+  void *data;
 };
-
 
 #define VOID_TYPE 0
 #define CONSTANT_TYPE 1
@@ -116,5 +118,11 @@ void freeConstantLibraries();
 void freeProcLibraries();
 libraryFunction *bindFunctionByPtr(char *suggestedName, int (*func)(mpfi_t, mpfi_t, int));
 libraryFunction *bindConstantFunctionByPtr(char *suggestedName, void (*func)(mpfr_t, mp_prec_t));
+libraryProcedure *bindProcedureByPtr(int resType, int *argTypes, int arity, char *suggestedName, void *func);
+libraryFunction *bindFunctionByPtrWithData(char *suggestedName, int (*func)(mpfi_t, mpfi_t, int, void *), void *data);
+libraryFunction *bindConstantFunctionByPtrWithData(char *suggestedName, void (*func)(mpfr_t, mp_prec_t, void *), void *data);
+libraryProcedure *bindProcedureByPtrWithData(int resType, int *argTypes, int arity, char *suggestedName, void *func, void *data);
+
+
 
 #endif /* ifdef LIBRARY_H*/

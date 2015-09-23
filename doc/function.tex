@@ -5,7 +5,8 @@
 \noindent Library names:\\
 \verb|   sollya_obj_t sollya_lib_procedurefunction(sollya_obj_t, sollya_obj_t)|\\
 \verb|   sollya_obj_t sollya_lib_build_function_procedurefunction(sollya_obj_t,|\\
-\verb|                                                            sollya_obj_t)|\\[0.2cm]
+\verb|                                                            sollya_obj_t)|\\
+\verb|   SOLLYA_EXTERNALPROC_TYPE_FUNCTION|\\[0.2cm]
 \noindent Usage: 
 \begin{center}
 \textbf{function}(\emph{procedure})  : \textsf{procedure} $\rightarrow$ \textsf{function}\\
@@ -72,9 +73,9 @@ Parameters:
   };
 > f = function(EXP);
 > f(1);
-2.71828182845904523536028747135266249775724709369998
+2.7182818284590452353602874713526624977572470937
 > exp(1);
-2.71828182845904523536028747135266249775724709369998
+2.7182818284590452353602874713526624977572470937
 > f(x + 3);
 (function(proc(X, n, p)
 {
@@ -99,7 +100,7 @@ return res;
 1
 > g = f(sin(x));
 > g(17);
-0.382358169993866834026905546416556413595734583420876
+0.38235816999386683402690554641655641359573458342088
 > diff(g);
 (diff(function(proc(X, n, p)
 {
@@ -114,7 +115,7 @@ return res;
 1.25338076749344683697237458088447611474812675164344
 > p = remez(f,3,[-1/2;1/2]);
 > p;
-0.99967120901420646830315493949039176881764871951832 + x * (0.999737029835711401
+0.99967120901420646830315493949039176881764871951833 + x * (0.999737029835711401
 34762682913614052309208076875596 + x * (0.51049729360282624921622721654643510358
 3073053437 + x * 0.169814324607133287588897694747370380479108785868016))
 \end{Verbatim}

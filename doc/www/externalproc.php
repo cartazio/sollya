@@ -4,6 +4,15 @@
 <span class="smallDescription">binds an external code to a Sollya procedure 
 </span> 
 </div> 
+<div class="divLibraryName"> 
+<h2 class="libraryname">Library names:</h2> 
+<span class="commandline type">&nbsp;&nbsp;sollya_obj_t sollya_lib_externalprocedure(sollya_externalprocedure_type_t, </span> 
+<span class="commandline type">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sollya_externalprocedure_type_t *,</span> 
+<span class="commandline type">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int, char *, void *);</span> 
+<span class="commandline type">&nbsp;&nbsp;sollya_obj_t sollya_lib_externalprocedure_with_data(sollya_externalprocedure_type_t, </span> 
+<span class="commandline type">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sollya_externalprocedure_type_t *,</span> 
+<span class="commandline type">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int, char *, void *, void *);</span> 
+</div> 
 <div class="divUsage"> 
 <h2 class="category">Usage: </h2> 
 <span class="commandline"><?php linkTo("command","externalproc","externalproc");?>(<span class="arg">identifier</span>, <span class="arg">filename</span>, <span class="arg">argumenttype</span> -&gt; <span class="arg">resulttype</span>) : (<span class="type">identifier type</span>, <span class="type">string</span>, <span class="type">type type</span>, <span class="type">type type</span>) -&gt; <span class="type">void</span></span> 
@@ -145,7 +154,7 @@ functions is to return a zero value, upon error a non-zero value.
 &nbsp;&nbsp;&nbsp;&gt; bashexecute("gcc -fPIC -shared -o externalprocexample externalprocexample.o");<br> 
 &nbsp;&nbsp;&nbsp;&gt; externalproc(foo, "./externalprocexample", (integer, integer) -&gt; integer);<br> 
 &nbsp;&nbsp;&nbsp;&gt; foo;<br> 
-&nbsp;&nbsp;&nbsp;foo(integer, integer) -&gt; integer<br> 
+&nbsp;&nbsp;&nbsp;foo<br> 
 &nbsp;&nbsp;&nbsp;&gt; foo(5, 6);<br> 
 &nbsp;&nbsp;&nbsp;11<br> 
 &nbsp;&nbsp;&nbsp;&gt; verbosity = 1!;<br> 

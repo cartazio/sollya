@@ -153,6 +153,12 @@ are used to communicate with \sollya from another program.
 feature for displaying values has changed in \sollya from version 1.1
 to version 2.0. The old feature is deprecated. If you wish to use it
 nevertheless, use this deprecated option.
+\item \texttt{--oldexternalprocprint}: The behavior of an undocumented
+  feature for displaying \sollya objects representing external
+  procedures upon automatic printing at the \sollya prompt has been
+  changed in \sollya from version 4.1 to version 5.0. The old feature
+  is deprecated. If you wish to use it nevertheless, use this
+  deprecated option.
 \item \texttt{--oldrlwrapcompatible}: This option is deprecated. It
   makes \sollya emit a non ANSI X3.64 compliant coloring escape
   sequence for making it compatible with versions of \texttt{rlwrap}
@@ -600,7 +606,7 @@ The constant $\pi$ is available through the keyword \key{pi} as a $0$-ary functi
 
 \input{introExample19}
 
-The reader may wish to see Sections \ref{lablibrary} and \ref{labfunction} for ways of dynamically adding other base functions to Sollya.
+The reader may wish to see Sections \ref{lablibrary} and \ref{labfunction} for ways of dynamically adding other base functions to \sollya.
 
 \subsection{Strings}
 Anything written between quotes is interpreted as a string. The infix operator \com{@} concatenates two strings. To get the length of a string, use the \com{length} function. You can access the $i$-th character of a string using brackets (see the example below). There is no character type in \sollya: the $i$-th character of a string is returned as a string itself.
@@ -1737,19 +1743,43 @@ int is_made_of_constants(sollya_obj_t f) {
 \end{Verbatim}
 \end{minipage}\end{center}
 
-Functions are provided to allow the user to retrieve further information from library function, library constant or procedure function objects:
+Functions are provided to allow the user to retrieve further information from library function, library constant, procedure function and external procedure objects:
 \begin{itemize}
 \item \verb|int sollya_lib_decompose_libraryfunction(int (**f)(mpfi_t, mpfi_t, int),|\\
 \phantom{\texttt{int sollya\_lib\_decompose\_libraryfunction( }}\verb|int *deriv, sollya_obj_t *e,|\\
-\phantom{\texttt{int sollya\_lib\_decompose\_libraryfunction( }}\verb|sollya_obj_t g)|:\\ assume that \verb|g| represents an expression $f_0(f_1)$ where $f_0$ is a library function. Then, $f_0$ is the $n$-th derivative (for some $n$) of a function provided within Sollya via an external C function \verb|int func(mpfi_t, mpfi_t, int)|.\\
-As a result of a call to \verb|sollya_lib_decompose_libraryfunction|, the value $n$ is stored at the address referred to by \verb|deriv|, a pointer to \verb|func| is stored at the address referred to by \verb|f| and a Sollya object representing $f_1$ is stored at the address referred to by \verb|e|. Please notice that the object stored in \verb|e| must manually be cleared once it becomes useless. Upon success, a boolean integer representing true is returned. If \verb|g| is not a library function object, nothing happens and false is returned.
+\phantom{\texttt{int sollya\_lib\_decompose\_libraryfunction( }}\verb|sollya_obj_t g)|:\\ assume that \verb|g| represents an expression $f_0(f_1)$ where $f_0$ is a library function. Then, $f_0$ is the $n$-th derivative (for some $n$) of a function provided within \sollya via an external C function \verb|int func(mpfi_t, mpfi_t, int)|.\\
+As a result of a call to \verb|sollya_lib_decompose_libraryfunction|, the value $n$ is stored at the address referred to by \verb|deriv|, a pointer to \verb|func| is stored at the address referred to by \verb|f| and a \sollya object representing $f_1$ is stored at the address referred to by \verb|e|. Please notice that the object stored in \verb|e| must manually be cleared once it becomes useless. Upon success, a boolean integer representing true is returned. If \verb|g| is not a library function object, nothing happens and false is returned.
+\item \verb|int sollya_lib_decompose_libraryfunction_with_data(|\\
+\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|int (**f)(mpfi_t, mpfi_t, int, void *),|\\
+\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|int *deriv, sollya_obj_t *e, void **data|\\
+\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|sollya_obj_t g)|:\\ works exactly as the previous function but additionnally returns a pointer to the \verb|void *| data field that had been provided when the library function was created.
 \item \verb|int sollya_lib_decompose_procedurefunction(sollya_obj_t *f, int *deriv,|\\
 \phantom{\texttt{int sollya\_lib\_decompose\_procedurefunction( }}\verb|sollya_obj_t *e, sollya_obj_t g)|:\\
-assume that \verb|g| represents an expression $f_0(f_1)$ where $f_0$ is a procedure function. Then, $f_0$ is the $n$-th derivative (for some $n$) of a function provided within Sollya via a procedure \verb|proc(X, n, p) {...}|.\\
-As a result of a call to \verb|sollya_lib_decompose_procedurefunction|, the value $n$ is stored at the address referred to by \verb|deriv|, a Sollya object representing the procedure is stored at the address referred to by \verb|f|, a Sollya object representing $f_1$ is stored at the address referred to by \verb|e|. Please notice that the objects stored in \verb|f| and \verb|e| must manually be cleared once they become useless. Upon success, a boolean integer representing true is returned. If \verb|g| is not a procedure function object, nothing happens and false is returned.
+assume that \verb|g| represents an expression $f_0(f_1)$ where $f_0$ is a procedure function. Then, $f_0$ is the $n$-th derivative (for some $n$) of a function provided within \sollya via a procedure \verb|proc(X, n, p) {...}|.\\
+As a result of a call to \verb|sollya_lib_decompose_procedurefunction|, the value $n$ is stored at the address referred to by \verb|deriv|, a \sollya object representing the procedure is stored at the address referred to by \verb|f|, a \sollya object representing $f_1$ is stored at the address referred to by \verb|e|. Please notice that the objects stored in \verb|f| and \verb|e| must manually be cleared once they become useless. Upon success, a boolean integer representing true is returned. If \verb|g| is not a procedure function object, nothing happens and false is returned.
 \item \verb|int sollya_lib_decompose_libraryconstant(void (**f)(mpfr_t, mp_prec_t),|\\
 \phantom{\texttt{int sollya\_lib\_decompose\_libraryconstant( }}\verb|sollya_obj_t c)|:\\
 assume that \verb|c| is a constant provided via an external C function \verb|void func(mpfr_t, mp_prec_t)|. As a result of a call to \verb|sollya_lib_decompose_libraryconstant|, a pointer to \verb|func| is stored at the address referred to by \verb|f| and a boolean integer representing true is returned. Otherwise, nothing happens and false is returned.
+\item \verb|int sollya_lib_decompose_libraryconstant_with_data(|\\
+\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|void (**f)(mpfr_t, mp_prec_t, void *),|\\
+\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|void **data,|\\
+\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|sollya_obj_t c)|:\\
+works exactly as the previous function but additionnally returns a pointer to the \verb|void *| data field that had been provided when the library constant was created.
+\item \verb|int sollya_lib_decompose_externalprocedure(sollya_externalprocedure_type_t *res,|\\
+\phantom{\texttt{int sollya\_lib\_decompose\_externalprocedure( }}\verb|sollya_externalprocedure_type_t **args,|\\
+\phantom{\texttt{int sollya\_lib\_decompose\_externalprocedure( }}\verb|int *arity,|\\
+\phantom{\texttt{int sollya\_lib\_decompose\_externalprocedure( }}\verb|void **f,|\\
+\phantom{\texttt{int sollya\_lib\_decompose\_externalprocedure( }}\verb|sollya_obj_t p)|:\\
+assume that \verb|p| is an external procedure provided via an external C function \verb|func| (of appropriate type) bound to \sollya by one of the means provided for that purpose. As a result of a call to \verb|sollya_lib_decompose_externalprocedure|, a pointer to \verb|func| is stored at the address pointed to by \verb|f|, the result type of the external procedure is stored at \verb|res|,
+an array of its argument types is allocated, filled and stored at the address pointed to by \verb|args| (unless the procedure function takes no argument in which case the \verb|args| argument is ignored), the arity of the external procedure (and hence number of elements of the array allocated and stored at \verb|args|) is stored at the integer pointed by \verb|arity| and true is returned. If \verb|p| is no external procedure object, nothing happens and false is returned.
+\item \verb|int sollya_lib_decompose_externalprocedure_with_data(|\\
+\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|sollya_externalprocedure_type_t *res,|\\
+\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|sollya_externalprocedure_type_t **args,|\\
+\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|int *arity,|\\
+\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|void **f,|\\
+\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|void **data,|\\
+\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|sollya_obj_t p)|:\\
+works exactly as the previous function but additionnally returns a pointer to the \verb|void *| data field that had been provided when the external procedure was created.
 \end{itemize}
 \subsection{Faithfully evaluate a functional expression}
 Let us suppose that \verb|f| is a functional expression and \verb|a| is a numerical value or a constant expression. One of the very convenient features of the interactive tool is that the user can simply write \verb|f(a)| at the prompt: the tool automatically adapts its internal precision in order to compute a value that is a faithful rounding (at the current tool precision) of the true value $f(a)$. Sometimes it does not achieve to find a faithful rounding, but in any case, if the result is not proved to be exact, a warning is displayed explaining how confident one should be with respect to the returned value. This feature is made available within the library with the two following functions:
@@ -1818,6 +1848,26 @@ In the interactive tool, it is also possible to write \verb|f(a)| when \verb|a| 
 \end{center}
 
 This function returns a boolean integer: false means failure (i.e., \verb|f| is not a functional expression), in which case \verb|res| is left unchanged, and true means success, in which case \verb|res| contains the result of the evaluation. The function might succeed, and yet \verb|res| might contain something useless such as an unbounded interval or even $[\textrm{NaN},\textrm{NaN}]$ (this happens for instance when \verb|a| contains points that lie in the interior of the complement of the definition domain of \verb|f|). It is the user's responsibility to check afterwards whether the computed interval is bounded, unbounded or NaN.
+
+\subsection{Computing hashes on \sollya objects}
+
+Certain language bindings require hashes to be available for any
+object represented. In order to help with such language bindings, the
+\sollya library supports a function that computes a $64$ bit unsigned
+integer as a hash for a given \sollya object: 
+\begin{center}
+\verb|uint64_t sollya_lib_hash(sollya_obj_t obj).|
+\end{center}
+The \sollya library guarantees that any two objects that compare equal
+(with one of the comparison funcions provided with the \sollya
+library) will have the same hash value. The user should be aware that
+to ensure this implication, \sollya needs to compute a unique
+representation of an object when it is to be hashed. This computation
+step can be pretty expensive for certain objects. However, this cost
+must be paid only once: \sollya will cache an object's hash value for
+further use. The user should also be aware that the hash value for a
+given object is bound to a certain \sollya session and, in particular,
+is not portable between platforms nor over consecutive \sollya versions.
 
 \subsection{Executing \sollya procedures}
 

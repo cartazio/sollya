@@ -154,6 +154,12 @@ are used to communicate with <span class="sollya">Sollya</span> from another pro
 feature for displaying values has changed in <span class="sollya">Sollya</span> from version 1.1
 to version 2.0. The old feature is deprecated. If you wish to use it
 nevertheless, use this deprecated option.
+</li><li> <code>--oldexternalprocprint</code>:The behavior of an undocumented
+feature for displaying <span class="sollya">Sollya</span> objects representing external
+procedures upon automatic printing at the <span class="sollya">Sollya</span> prompt has been
+changed in <span class="sollya">Sollya</span> from version 4.1 to version 5.0. The old feature
+is deprecated. If you wish to use it nevertheless, use this
+deprecated option.    
 </li><li> <code>--oldrlwrapcompatible</code>: This option is deprecated. It
   makes <span class="sollya">Sollya</span> emit a non ANSI X3.64 compliant coloring escape
   sequence for making it compatible with versions of <code>rlwrap</code>
@@ -610,7 +616,7 @@ The constant pi is available through the keyword <code class="key">pi</code> as 
 <p>
 <?php include("introExample19.php"); ?>
 <p>
-The reader may wish to see Sections <a href="help.php?name=library&amp;goBack=none">library</a> and <a href="help.php?name=function&amp;goBack=none">function</a> for ways of dynamically adding other base functions to Sollya.
+The reader may wish to see Sections <a href="help.php?name=library&amp;goBack=none">library</a> and <a href="help.php?name=function&amp;goBack=none">function</a> for ways of dynamically adding other base functions to <span class="sollya">Sollya</span>.
 <h2>5.6 - Strings</h2>
 <p>
 Anything written between quotes is interpreted as a string. The infix operator <code class="com">@</code> concatenates two strings. To get the length of a string, use the <code class="com">length</code> function. You can access the i-th character of a string using brackets (see the example below). There is no character type in <span class="sollya">Sollya</span>: the i-th character of a string is returned as a string itself.
@@ -1070,7 +1076,7 @@ this point:
 <p><a name="commandsAndFunctions"></a>
 <h1>8 - Commands and functions</h1>
 <p>
-The list of commands of Sollya is available in two flavours:
+The list of commands of <span class="sollya">Sollya</span> is available in two flavours:
 <ul>
   <li>As a <a href="help.php">single page containing the description of all the commands.</a></li>
   <li>Or with <a href="help.php?name=listOfCommands&amp;goBack=none">each command on a different page</a> (faster to load).</li>
@@ -1736,19 +1742,40 @@ int is_made_of_constants(sollya_obj_t f) {<br>
 </div>
 
 <p>
-Functions are provided to allow the user to retrieve further information from library function, library constant or procedure function objects:
+Functions are provided to allow the user to retrieve further information from library function, library constant, procedure function and external procedure objects:
 <ul>
   <li> <code>int sollya_lib_decompose_libraryfunction(int (**f)(mpfi_t, mpfi_t, int),</code><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>int *deriv, sollya_obj_t *e,</code><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>sollya_obj_t g)</code>:<br> assume that <code>g</code> represents an expression f<sub>0</sub>(f<sub>1</sub>) where f<sub>0</sub> is a library function. Then, f<sub>0</sub> is the n-th derivative (for some n) of a function provided within Sollya via an external C function <code>int func(mpfi_t, mpfi_t, int)</code>.<br>
-As a result of a call to <code>sollya_lib_decompose_libraryfunction</code>, the value n is stored at the address referred to by <code>deriv</code>, a pointer to <code>func</code> is stored at the address referred to by <code>f</code> and a Sollya object representing f<sub>1</sub> is stored at the address referred to by <code>e</code>. Please notice that the object stored in <code>e</code> must manually be cleared once it becomes useless. Upon success, a boolean integer representing true is returned. If <code>g</code> is not a library function object, nothing happens and false is returned.</li>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>sollya_obj_t g)</code>:<br> assume that <code>g</code> represents an expression f<sub>0</sub>(f<sub>1</sub>) where f<sub>0</sub> is a library function. Then, f<sub>0</sub> is the n-th derivative (for some n) of a function provided within <span class="sollya">Sollya</span> via an external C function <code>int func(mpfi_t, mpfi_t, int)</code>.<br>
+    As a result of a call to <code>sollya_lib_decompose_libraryfunction</code>, the value n is stored at the address referred to by <code>deriv</code>, a pointer to <code>func</code> is stored at the address referred to by <code>f</code> and a <span class="sollya">Sollya</span> object representing f<sub>1</sub> is stored at the address referred to by <code>e</code>. Please notice that the object stored in <code>e</code> must manually be cleared once it becomes useless. Upon success, a boolean integer representing true is returned. If <code>g</code> is not a library function object, nothing happens and false is returned.</li>
+  <li> <code>int sollya_lib_decompose_libraryfunction_with_data(int (**f)(mpfi_t, mpfi_t, int, void *),</code><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>int *deriv, sollya_obj_t *e, void **data</code><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>sollya_obj_t g)</code>:<br>
+  works exactly as the previous function but additionnally returns a pointer to the <code>void *</code> data field that had been provided when the library function was created.</li>
   <li> <code>int sollya_lib_decompose_procedurefunction(sollya_obj_t *f, int *deriv,</code><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>sollya_obj_t *e, sollya_obj_t g)</code>:<br>
-assume that <code>g</code> represents an expression f<sub>0</sub>(f<sub>1</sub>) where f<sub>0</sub> is a procedure function. Then, f<sub>0</sub> is the n-th derivative (for some n) of a function provided within Sollya via a procedure <code>proc(X, n, p) {...}</code>.<br>
-As a result of a call to <code>sollya_lib_decompose_procedurefunction</code>, the value n is stored at the address referred to by <code>deriv</code>, a Sollya object representing the procedure is stored at the address referred to by <code>f</code>, a Sollya object representing f<sub>1</sub> is stored at the address referred to by <code>e</code>. Please notice that the objects stored in <code>f</code> and <code>e</code> must manually be cleared once they become useless. Upon success, a boolean integer representing true is returned. If <code>g</code> is not a procedure function object, nothing happens and false is returned.</li>
+assume that <code>g</code> represents an expression f<sub>0</sub>(f<sub>1</sub>) where f<sub>0</sub> is a procedure function. Then, f<sub>0</sub> is the n-th derivative (for some n) of a function provided within <span class="sollya">Sollya</span> via a procedure <code>proc(X, n, p) {...}</code>.<br>
+As a result of a call to <code>sollya_lib_decompose_procedurefunction</code>, the value n is stored at the address referred to by <code>deriv</code>, a <span class="sollya">Sollya</span> object representing the procedure is stored at the address referred to by <code>f</code>, a <span class="sollya">Sollya</span> object representing f<sub>1</sub> is stored at the address referred to by <code>e</code>. Please notice that the objects stored in <code>f</code> and <code>e</code> must manually be cleared once they become useless. Upon success, a boolean integer representing true is returned. If <code>g</code> is not a procedure function object, nothing happens and false is returned.</li>
   <li> <code>int sollya_lib_decompose_libraryconstant(void (**f)(mpfr_t, mp_prec_t),</code><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>sollya_obj_t c)</code>:<br>
-assume that <code>c</code> is a constant provided via an external C function <code>void func(mpfr_t, mp_prec_t)</code>. As a result of a call to <code>sollya_lib_decompose_libraryconstant</code>, a pointer to <code>func</code> is stored at the address referred to by <code>f</code> and a boolean integer representing true is returned. Otherwise, nothing happens and false is returned.</li>
+    assume that <code>c</code> is a constant provided via an external C function <code>void func(mpfr_t, mp_prec_t)</code>. As a result of a call to <code>sollya_lib_decompose_libraryconstant</code>, a pointer to <code>func</code> is stored at the address referred to by <code>f</code> and a boolean integer representing true is returned. Otherwise, nothing happens and false is returned.</li>
+  <li> <code>int sollya_lib_decompose_libraryconstant_with_data(void (**f)(mpfr_t, mp_prec_t, void *),</code><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>void **data,</code><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>sollya_obj_t c)</code>:<br>
+    works exactly as the previous function but additionnally returns a pointer to the <code>void *</code> data field that had been provided when the library constant was created.</li>
+  <li> <code>int sollya_lib_decompose_externalprocedure(sollya_externalprocedure_type_t *res,</code><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>sollya_externalprocedure_type_t **args,</code><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>int *arity,</code><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>void **f,</code><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>sollya_obj_t p)</code>:<br>
+    assume that <code>p</code> is an external procedure provided via an external C function <code>func</code> (of appropriate type) bound to <span class="sollya">Sollya</span> by one of the means provided for that purpose. As a result of a call to <code>sollya_lib_decompose_externalprocedure</code>, a pointer to <code>func</code> is stored at the address pointed to by <code>f</code>, the result type of the external procedure is stored at <code>res</code>, an array of its argument types is allocated, filled and stored at the address pointed to by <code>args</code> (unless the procedure function takes no argument in which case the <code>args</code> argument is ignored), the arity of the external procedure (and hence number of elements of the array allocated and stored at <code>args</code>) is stored at the integer pointed by <code>arity</code> and true is returned. If <code>p</code> is no external procedure object, nothing happens and false is returned.</li>
+  <li><code>int sollya_lib_decompose_externalprocedure_with_data(sollya_externalprocedure_type_t *res,</code><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>sollya_externalprocedure_type_t **args,</code><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>int *arity,</code><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>void **f,</code><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>void **data,</code><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>sollya_obj_t p)</code>:<br>
+    works exactly as the previous function but additionnally returns a pointer to the <code>void *</code> data field that had been provided when the external procedure was created.</li>
 </ul>
 
 <h2>10.13 - Faithfully evaluate a functional expression</h2>
@@ -1814,7 +1841,25 @@ In the interactive tool, it is also possible to write <code>f(a)</code> when <co
 <p>
 This function returns a boolean integer: false means failure (i.e., <code>f</code> is not a functional expression), in which case <code>res</code> is left unchanged, and true means success, in which case <code>res</code> contains the result of the evaluation. The function might succeed, and yet <code>res</code> might contain something useless such as an unbounded interval or even [NaN, NaN] (this happens for instance when <code>a</code> contains points that lie in the interior of the complement of the definition domain of <code>f</code>). It is the user's responsibility to check afterwards whether the computed interval is bounded, unbounded or NaN.
 
-<h2>10.14 - Executing <span class="sollya">Sollya</span> procedures</h2>
+<h2>10.14 - Computing hashes on <span class="sollya">Sollya</span> objects</h2>
+
+Certain language bindings require hashes to be available for any
+object represented. In order to help with such language bindings, the
+<span class="sollya">Sollya</span> library supports a function that computes a 64 bit unsigned
+integer as a hash for a given <span class="sollya">Sollya</span> object: <br>
+<code>uint64_t sollya_lib_hash(sollya_obj_t obj)</code>.<br>
+The <span class="sollya">Sollya</span> library guarantees that any two objects that compare equal
+(with one of the comparison funcions provided with the <span class="sollya">Sollya</span>
+library) will have the same hash value. The user should be aware that
+to ensure this implication, <span class="sollya">Sollya</span> needs to compute a unique
+representation of an object when it is to be hashed. This computation
+step can be pretty expensive for certain objects. However, this cost
+must be paid only once: <span class="sollya">Sollya</span> will cache an object's hash value for
+further use. The user should also be aware that the hash value for a
+given object is bound to a certain <span class="sollya">Sollya</span> session and, in particular,
+is not portable between platforms nor over consecutive <span class="sollya">Sollya</span> versions.
+
+<h2>10.15 - Executing <span class="sollya">Sollya</span> procedures</h2>
 Objects representing procedures written in <span class="sollya">Sollya</span> language (see also
 Section~\ref{procedures}) can be created using the <span class="sollya">Sollya</span> library
 functions <code>sollya_lib_parse_string</code> and <code>sollya_lib_parse</code>
@@ -1844,14 +1889,14 @@ the <span class="sollya">Sollya</span> <code>void</code> object, a <span class="
 returned. The user should not forget to deallocate that <code>void</code>
 object. 
 
-<h2>10.15 - Name of the free variable</h2>
+<h2>10.16 - Name of the free variable</h2>
 <p>
 The default name for the free variable is the same in the library and in the interactive tool: it is <code>_x_</code>. In the interactive tool, this name is automatically changed at the first use of an undefined symbol. Accordingly in library mode, if an object is defined by <code>sollya_lib_parse_string</code> with an expression containing an undefined symbol, that symbol will become the free variable name if it has not already been changed before. But what if one does not use <code>sollya_lib_parse_string</code> (because it is not efficient) but one wants to change the name of the free variable? The name can be changed with <code>sollya_lib_name_free_variable("some_name")</code>.
 <p>
 It is possible to get the current name of the free variable with <code>sollya_lib_get_free_variable_name()</code>. This function returns a <code>char *</code> containing the current name of the free variable. Please note that this <code>char *</code> is dynamically allocated on the heap and should be cleared after its use with <code>sollya_lib_free()</code> (see below).
 
 <a name="library_commands_and_functions"></a>
-<h2>10.16 - Commands and functions</h2>
+<h2>10.17 - Commands and functions</h2>
 <p>
 Besides some exceptions, every command and every function available in the <span class="sollya">Sollya</span> interactive tool has its equivalent (with a very close syntax) in the library. Section&nbsp;<a href="#commandsAndFunctions">List of available commands</a> of the present documentation gives the library syntax as well as the interactive tool syntax of each commands and functions. The same information is available within the interactive tool by typing <code>help some_command</code>. So if one knows the name of a command or function in the interactive tool, it is easy to recover its library name and signature.
 <p>
@@ -1892,7 +1937,7 @@ void my_function(sollya_obj_t f, sollya_obj_t I, ...) {<br>
 
 <p>
 <a name="callbacks"></a>
-<h2>10.17 - Warning messages in library mode</h2>
+<h2>10.18 - Warning messages in library mode</h2>
 <p>
 The philosophy of <span class="sollya">Sollya</span> is &ldquo;whenever something is not exact, explicitly warn about that&rdquo;. This is a nice feature since this ensures that the user always perfectly knows the degree of confidence they can have in a result (is it exact? or only faithful? or even purely numerical, without any warranty?) However, it is sometimes desirable to hide some (or all) of these messages. This is especially true in library mode where messages coming from <span class="sollya">Sollya</span> are intermingled with the messages of the main program. The library hence provides a specific mechanism to catch all messages emitted by the <span class="sollya">Sollya</span> core and handle each of them specifically: installation of a callback for messages.
 <p>
@@ -1992,7 +2037,7 @@ is a continuation message, otherwise (zero integer value), the message is a new 
 in second argument results in undefined behavior.
 
 <a name="customMemoryFunctions"></a>
-<h2>10.18 - Using <span class="sollya">Sollya</span> in a program that has its own allocation functions</h2>
+<h2>10.19 - Using <span class="sollya">Sollya</span> in a program that has its own allocation functions</h2>
 <p>
 <span class="sollya">Sollya</span> uses its own allocation functions: as a consequence, pointers that have been allocated by <span class="sollya">Sollya</span> functions must be freed using <code>sollya_lib_free</code> instead of the usual <code>free</code> function. Another consequence is that <span class="sollya">Sollya</span> registers its own allocation functions to the <code>GMP</code> library, using the mechanism provided by <code>GMP</code>, so that <code>GMP</code> also uses <span class="sollya">Sollya</span> allocation functions behind the scene, when the user performs a call to, e.g., <code>mpz_init</code>, <code>mpfr_init2</code>, etc.
 <p>
@@ -2030,7 +2075,7 @@ Of course, even if the user registers <code>custom_malloc</code>, <code>custom_f
 <p>No access to the overloaded version of <code>custom_realloc_with_size</code> and <code>custom_free_with_size</code> is provided, but if the user really wants to retrieve them, they can do it with <code>mp_get_memory_functions</code> since they are registered to <code>GMP</code>.
 
 <p><a name="sec:libInitArgs"></a>
-<h3>10.19 - Passing arguments upon <span class="sollya">Sollya</span> library initialization</h3>
+<h3>10.20 - Passing arguments upon <span class="sollya">Sollya</span> library initialization</h3>
 
 As explained in Section \ref{variables}, in an interactive <span class="sollya">Sollya</span>
 session the predefined variable <code>__argv</code> gets set to a list of

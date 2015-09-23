@@ -9,6 +9,7 @@
 <span class="commandline type">sollya_obj_t sollya_lib_procedurefunction(sollya_obj_t, sollya_obj_t)</span> 
 <span class="commandline type">sollya_obj_t sollya_lib_build_function_procedurefunction(sollya_obj_t,</span> 
 <span class="commandline type">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sollya_obj_t)</span> 
+<span class="commandline type">SOLLYA_EXTERNALPROC_TYPE_FUNCTION</span> 
 </div> 
 <div class="divUsage"> 
 <h2 class="category">Usage: </h2> 
@@ -77,9 +78,9 @@ particular, they cannot be assigned to variables.
 &nbsp;&nbsp;&nbsp;&nbsp; };<br> 
 &nbsp;&nbsp;&nbsp;&gt; f = function(EXP);<br> 
 &nbsp;&nbsp;&nbsp;&gt; f(1);<br> 
-&nbsp;&nbsp;&nbsp;2.71828182845904523536028747135266249775724709369998<br> 
+&nbsp;&nbsp;&nbsp;2.7182818284590452353602874713526624977572470937<br> 
 &nbsp;&nbsp;&nbsp;&gt; exp(1);<br> 
-&nbsp;&nbsp;&nbsp;2.71828182845904523536028747135266249775724709369998<br> 
+&nbsp;&nbsp;&nbsp;2.7182818284590452353602874713526624977572470937<br> 
 &nbsp;&nbsp;&nbsp;&gt; f(x + 3);<br> 
 &nbsp;&nbsp;&nbsp;(function(proc(X, n, p)<br> 
 &nbsp;&nbsp;&nbsp;{<br> 
@@ -104,7 +105,7 @@ particular, they cannot be assigned to variables.
 &nbsp;&nbsp;&nbsp;1<br> 
 &nbsp;&nbsp;&nbsp;&gt; g = f(sin(x));<br> 
 &nbsp;&nbsp;&nbsp;&gt; g(17);<br> 
-&nbsp;&nbsp;&nbsp;0.382358169993866834026905546416556413595734583420876<br> 
+&nbsp;&nbsp;&nbsp;0.38235816999386683402690554641655641359573458342088<br> 
 &nbsp;&nbsp;&nbsp;&gt; diff(g);<br> 
 &nbsp;&nbsp;&nbsp;(diff(function(proc(X, n, p)<br> 
 &nbsp;&nbsp;&nbsp;{<br> 
@@ -119,7 +120,7 @@ particular, they cannot be assigned to variables.
 &nbsp;&nbsp;&nbsp;1.25338076749344683697237458088447611474812675164344<br> 
 &nbsp;&nbsp;&nbsp;&gt; p = remez(f,3,[-1/2;1/2]);<br> 
 &nbsp;&nbsp;&nbsp;&gt; p;<br> 
-&nbsp;&nbsp;&nbsp;0.99967120901420646830315493949039176881764871951832 + x * (0.99973702983571140134762682913614052309208076875596 + x * (0.510497293602826249216227216546435103583073053437 + x * 0.169814324607133287588897694747370380479108785868016))<br> 
+&nbsp;&nbsp;&nbsp;0.99967120901420646830315493949039176881764871951833 + x * (0.99973702983571140134762682913614052309208076875596 + x * (0.510497293602826249216227216546435103583073053437 + x * 0.169814324607133287588897694747370380479108785868016))<br> 
 </div> 
 </div> 
 <div class="divSeeAlso"> 

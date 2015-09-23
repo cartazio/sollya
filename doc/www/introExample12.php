@@ -8,10 +8,10 @@
 &nbsp;&nbsp;&nbsp;&gt; b = 5;<br>
 &nbsp;&nbsp;&nbsp;&gt; f(b);<br>
 &nbsp;&nbsp;&nbsp;Warning: rounding has happened. The value displayed is a faithful rounding to 165 bits of the true result.<br>
-&nbsp;&nbsp;&nbsp;1.48413159102576603421115580040552279623487667593878e2<br>
+&nbsp;&nbsp;&nbsp;148.41315910257660342111558004055227962348766759388<br>
 &nbsp;&nbsp;&nbsp;&gt; {var b; b = 4; f(b); };<br>
 &nbsp;&nbsp;&nbsp;Warning: rounding has happened. The value displayed is a faithful rounding to 165 bits of the true result.<br>
-&nbsp;&nbsp;&nbsp;5.45981500331442390781102612028608784027907370386137e1<br>
+&nbsp;&nbsp;&nbsp;54.598150033144239078110261202860878402790737038614<br>
 &nbsp;&nbsp;&nbsp;&gt; {var x; x = 3; };<br>
 &nbsp;&nbsp;&nbsp;Warning: the identifier "x" is already bound to the current free variable.<br>
 &nbsp;&nbsp;&nbsp;It cannot be declared as a local variable. The declaration of "x" will have no effect.<br>

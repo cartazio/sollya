@@ -1,21 +1,21 @@
 \begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > 3/0;
 Warning: the given expression is undefined or numerically unstable.
-@NaN@
+NaN
 > (-3)/0;
 Warning: the given expression is undefined or numerically unstable.
-@NaN@
+NaN
 > infty/infty;
 Warning: the given expression is undefined or numerically unstable.
-@NaN@
+NaN
 > infty + infty;
-@Inf@
+infty
 > infty - infty;
 Warning: the given expression is undefined or numerically unstable.
-@NaN@
+NaN
 > f = exp(x) + 5;
 > f(NaN);
-@NaN@
+NaN
 > NaN == 5;
 false
 > NaN == NaN;

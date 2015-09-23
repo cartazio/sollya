@@ -64,7 +64,7 @@ the free variable) as the other one.
 <div class="divExample"> 
 <h2 class="category">Example 4: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; 3 / 0;<br> 
-&nbsp;&nbsp;&nbsp;@NaN@<br> 
+&nbsp;&nbsp;&nbsp;NaN<br> 
 </div> 
 <div class="divExample"> 
 <h2 class="category">Example 5: </h2> 
@@ -76,7 +76,7 @@ the free variable) as the other one.
 &nbsp;&nbsp;&nbsp;&gt; [1;2] / [3;4];<br> 
 &nbsp;&nbsp;&nbsp;[0.25;0.66666666666666666666666666666666666666666666666668]<br> 
 &nbsp;&nbsp;&nbsp;&gt; [1;2] / 17;<br> 
-&nbsp;&nbsp;&nbsp;[5.8823529411764705882352941176470588235294117647058e-2;0.11764705882352941176470588235294117647058823529412]<br> 
+&nbsp;&nbsp;&nbsp;[5.8823529411764705882352941176470588235294117647059e-2;0.11764705882352941176470588235294117647058823529412]<br> 
 &nbsp;&nbsp;&nbsp;&gt; -13 / [4;17];<br> 
 &nbsp;&nbsp;&nbsp;[-3.25;-0.76470588235294117647058823529411764705882352941175]<br> 
 </div> 

@@ -54,7 +54,7 @@ with other functions (and thus be plotted and so on).
 &nbsp;&nbsp;&nbsp;&gt; f = sin(DE(x));<br> 
 &nbsp;&nbsp;&nbsp;&gt; f(pi);<br> 
 &nbsp;&nbsp;&nbsp;Warning: rounding has happened. The value displayed is a faithful rounding to 165 bits of the true result.<br> 
-&nbsp;&nbsp;&nbsp;-5.0165576126683320235573270803307570138315616702549e-20<br> 
+&nbsp;&nbsp;&nbsp;-5.016557612668332023557327080330757013831561670255e-20<br> 
 &nbsp;&nbsp;&nbsp;&gt; g = sin(round(x,64,RN));<br> 
 &nbsp;&nbsp;&nbsp;Warning: at least one of the given expressions or a subexpression is not correctly typed<br> 
 &nbsp;&nbsp;&nbsp;or its evaluation has failed because of some error on a side-effect.<br> 

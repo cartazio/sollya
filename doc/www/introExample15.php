@@ -11,7 +11,7 @@
 &nbsp;&nbsp;&nbsp;&gt; prec = 120;<br>
 &nbsp;&nbsp;&nbsp;The precision has been set to 120 bits.<br>
 &nbsp;&nbsp;&nbsp;&gt; f;<br>
-&nbsp;&nbsp;&nbsp;4.097099999999998544808477163314819335e3 + x<br>
+&nbsp;&nbsp;&nbsp;4097.099999999998544808477163314819336 + x<br>
 &nbsp;&nbsp;&nbsp;&gt; g;<br>
 &nbsp;&nbsp;&nbsp;4098 + x<br>
 </div>

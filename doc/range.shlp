@@ -3,6 +3,8 @@
 #CALLING $COMMAND
 #TYPE $TYPE_TYPE
 
+#LIBRARYNAME SOLLYA_EXTERNALPROC_TYPE_RANGE
+
 #DESCRIPTION 
 $COMMAND represents the $RANGE_TYPE type for declarations
 of external procedures by means of $EXTERNALPROC.

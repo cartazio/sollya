@@ -95,7 +95,7 @@ in Gappa.
 <div class="divExample"> 
 <h2 class="category">Example 1: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; implementpoly(1 - 1/6 * x^2 + 1/120 * x^4, [-1b-10;1b-10], 1b-30, D, "p","implementation.c");<br> 
-&nbsp;&nbsp;&nbsp;1 + x^2 * (-0.166666666666666657414808128123695496469736099243164 + x^2 * 8.3333333333333332176851016015461937058717012405395e-3)<br> 
+&nbsp;&nbsp;&nbsp;1 + x^2 * (-0.166666666666666657414808128123695496469736099243164 + x^2 * 8.3333333333333332176851016015461937058717012405396e-3)<br> 
 &nbsp;&nbsp;&nbsp;&gt; readfile("implementation.c");<br> 
 &nbsp;&nbsp;&nbsp;/*<br> 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This code was generated using non-trivial code generation commands of<br> 
@@ -218,7 +218,7 @@ in Gappa.
 <div class="divExample"> 
 <h2 class="category">Example 2: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; implementpoly(1 - 1/6 * x^2 + 1/120 * x^4, [-1b-10;1b-10], 1b-30, D, "p","implementation.c","implementation.gappa");<br> 
-&nbsp;&nbsp;&nbsp;1 + x^2 * (-0.166666666666666657414808128123695496469736099243164 + x^2 * 8.3333333333333332176851016015461937058717012405395e-3)<br> 
+&nbsp;&nbsp;&nbsp;1 + x^2 * (-0.166666666666666657414808128123695496469736099243164 + x^2 * 8.3333333333333332176851016015461937058717012405396e-3)<br> 
 </div> 
 <div class="divExample"> 
 <h2 class="category">Example 3: </h2> 

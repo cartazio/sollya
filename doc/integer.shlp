@@ -3,6 +3,8 @@
 #CALLING $COMMAND
 #TYPE $TYPE_TYPE
 
+#LIBRARYNAME SOLLYA_EXTERNALPROC_TYPE_INTEGER
+
 #DESCRIPTION 
 $COMMAND represents the machine integer type for declarations
 of external procedures $EXTERNALPROC.

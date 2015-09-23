@@ -38,7 +38,9 @@ tbuild_function_floor.c \
 tbuild_function_free_variable.c \
 tbuild_function_halfprecision.c \
 tbuild_function_libraryconstant.c \
+tbuild_function_libraryconstant_with_data.c \
 tbuild_function_libraryfunction.c \
+tbuild_function_libraryfunction_with_data.c \
 tbuild_function_log10.c \
 tbuild_function_log1p.c \
 tbuild_function_log2.c \
@@ -85,9 +87,13 @@ tcos.c \
 tcosh.c \
 tcreate_structure.c \
 tdecimal.c \
+tdecompose_externalprocedure.c \
+tdecompose_externalprocedure_with_data.c \
 tdecompose_function.c \
 tdecompose_libraryconstant.c \
+tdecompose_libraryconstant_with_data.c \
 tdecompose_libraryfunction.c \
+tdecompose_libraryfunction_with_data.c \
 tdecompose_procedurefunction.c \
 tdefault.c \
 tdegree.c \
@@ -112,6 +118,8 @@ tevaluate_function_at_constant_expression.c \
 tevaluate_function_at_point.c \
 texecute.c \
 texecute_procedure.c \
+texternalprocedure.c \
+texternalprocedure_with_data.c \
 texp.c \
 texpand.c \
 texpm1.c \
@@ -156,6 +164,7 @@ tget_timing.c \
 tget_verbosity.c \
 thalfprecision.c \
 thalfprecision_obj.c \
+thash.c \
 thead.c \
 thexadecimal.c \
 thonorcoeffprec.c \
@@ -202,7 +211,9 @@ tis_true.c \
 tis_void.c \
 tlength.c \
 tlibraryconstant.c \
+tlibraryconstant_with_data.c \
 tlibraryfunction.c \
+tlibraryfunction_with_data.c \
 tlist.c \
 tlog10.c \
 tlog1p.c \

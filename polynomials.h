@@ -1,6 +1,6 @@
 /*
 
-  Copyright 2014 by
+  Copyright 2014-2015 by
 
   Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
   UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France
@@ -50,10 +50,12 @@
 #ifndef POLYNOMIALS_H
 #define POLYNOMIALS_H
 
+#include <stdint.h>
 #include <gmp.h>
 #include <mpfr.h>
 #include <stdio.h>
 #include "mpfi-compat.h"
+
 
 /* An abstract type for polynomials */
 typedef struct __polynomial_struct_t * polynomial_t;
@@ -126,6 +128,9 @@ polynomial_t polynomialRound(polynomial_t, mp_prec_t);
 
 /* A function to prevent memory reference loops */
 int polynomialReferencesExpression(polynomial_t, struct nodeStruct *);
+
+/* A hashing function */
+uint64_t polynomialHash(polynomial_t);
 
 
 #endif /* ifdef POLYNOMIALS_H*/

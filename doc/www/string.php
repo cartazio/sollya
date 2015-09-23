@@ -4,6 +4,10 @@
 <span class="smallDescription">keyword representing a <span class="type">string</span> type  
 </span> 
 </div> 
+<div class="divLibraryName"> 
+<h2 class="libraryname">Library name:</h2> 
+<span class="commandline type">SOLLYA_EXTERNALPROC_TYPE_STRING</span> 
+</div> 
 <div class="divUsage"> 
 <h2 class="category">Usage: </h2> 
 <span class="commandline"><?php linkTo("command","string","string");?> : <span class="type">type type</span></span> 

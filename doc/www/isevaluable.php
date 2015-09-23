@@ -34,14 +34,14 @@ as shown below in the last example.
 &nbsp;&nbsp;&nbsp;&gt; isevaluable(sin(pi * 1/x), 0.75);<br> 
 &nbsp;&nbsp;&nbsp;true<br> 
 &nbsp;&nbsp;&nbsp;&gt; print(evaluate(sin(pi * 1/x), 0.75));<br> 
-&nbsp;&nbsp;&nbsp;-0.86602540378443864676372317075293618347140262690518<br> 
+&nbsp;&nbsp;&nbsp;-0.86602540378443864676372317075293618347140262690519<br> 
 </div> 
 <div class="divExample"> 
 <h2 class="category">Example 2: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; isevaluable(sin(pi * 1/x), 0.5);<br> 
 &nbsp;&nbsp;&nbsp;true<br> 
 &nbsp;&nbsp;&nbsp;&gt; print(evaluate(sin(pi * 1/x), 0.5));<br> 
-&nbsp;&nbsp;&nbsp;[-1.72986452514381269516508615031098129542836767991679e-12715;7.5941198201187963145069564314525661706039084390067e-12716]<br> 
+&nbsp;&nbsp;&nbsp;[-1.7298645251438126951650861503109812954283676799168e-12715;7.5941198201187963145069564314525661706039084390068e-12716]<br> 
 </div> 
 <div class="divExample"> 
 <h2 class="category">Example 3: </h2> 

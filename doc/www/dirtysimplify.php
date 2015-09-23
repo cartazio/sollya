@@ -31,9 +31,9 @@ floating-point arithmetic with the global precision <?php linkTo("command","prec
 <div class="divExample"> 
 <h2 class="category">Example 1: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; print(dirtysimplify(sin(pi * x)));<br> 
-&nbsp;&nbsp;&nbsp;sin(3.14159265358979323846264338327950288419716939937508 * x)<br> 
+&nbsp;&nbsp;&nbsp;sin(3.1415926535897932384626433832795028841971693993751 * x)<br> 
 &nbsp;&nbsp;&nbsp;&gt; print(dirtysimplify(erf(exp(3) + x * log(4))));<br> 
-&nbsp;&nbsp;&nbsp;erf(2.00855369231876677409285296545817178969879078385544e1 + x * 1.3862943611198906188344642429163531361510002687205)<br> 
+&nbsp;&nbsp;&nbsp;erf(20.0855369231876677409285296545817178969879078385544 + x * 1.3862943611198906188344642429163531361510002687205)<br> 
 </div> 
 <div class="divExample"> 
 <h2 class="category">Example 2: </h2> 
@@ -42,7 +42,7 @@ floating-point arithmetic with the global precision <?php linkTo("command","prec
 &nbsp;&nbsp;&nbsp;&gt; s = dirtysimplify(erf(0.5));<br> 
 &nbsp;&nbsp;&nbsp;&gt; prec = 200!;<br> 
 &nbsp;&nbsp;&nbsp;&gt; t;<br> 
-&nbsp;&nbsp;&nbsp;0.5204998778130465376827466538919645287364515757579637000588058<br> 
+&nbsp;&nbsp;&nbsp;0.520499877813046537682746653891964528736451575757963700058806<br> 
 &nbsp;&nbsp;&nbsp;&gt; s;<br> 
 &nbsp;&nbsp;&nbsp;0.52050018310546875<br> 
 </div> 

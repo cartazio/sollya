@@ -96,6 +96,7 @@
 #include <setjmp.h>
 #include "hooks.h"
 #include "polynomials.h"
+#include "hash.h"
 
 #define READBUFFERSIZE 16000
 
@@ -432,6 +433,470 @@ node *copyThingInner(node *);
 
 node *copyThing(node *tree) {
   return addMemRef(copyThingInner(tree));
+}
+
+uint64_t hashEntryWithThing(entry *e) {
+  uint64_t hash;
+  hash = hashString(e->name);
+  hash = hashCombine(hash, hashThing((node *) (e->value)));
+  return hash;
+}
+
+uint64_t hashThingInnerst(node *tree) {
+  uint64_t hash;
+  chain *curr;
+  
+  if (tree == NULL) return hashPointer(NULL);
+
+  hash = hashInt((int) (tree->nodeType));
+  switch (tree->nodeType) {
+    /* Memory references : trivial recursion */
+  case MEMREF:
+    hash = hashThing(getMemRefChild(tree));
+    break;
+    /* "Constants" : no recursion */
+  case VARIABLE:
+  case PI_CONST:
+  case QUIT:
+  case FALSEQUIT:
+  case FALSERESTART:
+  case RESTART:
+  case NOP:
+  case ON:
+  case OFF:
+  case DYADIC:
+  case POWERS:
+  case BINARY:
+  case HEXADECIMAL:
+  case FILESYM:
+  case POSTSCRIPT:
+  case POSTSCRIPTFILE:
+  case PERTURB:
+  case ROUNDDOWN:
+  case ROUNDUP:
+  case ROUNDTOZERO:
+  case ROUNDTONEAREST:
+  case HONORCOEFF:
+  case TRUE:
+  case UNIT:
+  case FALSE:
+  case DEFAULT:
+  case DECIMAL:
+  case ABSOLUTESYM:
+  case RELATIVESYM:
+  case FIXED:
+  case FLOATING:
+  case ERRORSPECIAL:
+  case DOUBLESYMBOL:
+  case SINGLESYMBOL:
+  case QUADSYMBOL:
+  case HALFPRECISIONSYMBOL:
+  case DOUBLEEXTENDEDSYMBOL:
+  case DOUBLEDOUBLESYMBOL:
+  case TRIPLEDOUBLESYMBOL:
+  case EMPTYLIST:
+  case ELLIPTIC:
+  case GETSUPPRESSEDMESSAGES:
+  case GETBACKTRACE:
+  case PRECDEREF:
+  case POINTSDEREF:
+  case DIAMDEREF:
+  case DISPLAYDEREF:
+  case VERBOSITYDEREF:
+  case CANONICALDEREF:
+  case AUTOSIMPLIFYDEREF:
+  case SHOWMESSAGENUMBERSDEREF:
+  case TAYLORRECURSDEREF:
+  case TIMINGDEREF:
+  case FULLPARENDEREF:
+  case MIDPOINTDEREF:
+  case DIEONERRORMODEDEREF:
+  case RATIONALMODEDEREF:
+  case SUPPRESSWARNINGSDEREF:
+  case HOPITALRECURSDEREF:
+    break;
+    /* Unary "functions" : recursion on child1 */
+  case SQRT:
+  case EXP:
+  case LOG:
+  case LOG_2:
+  case LOG_10:
+  case SIN:
+  case COS:
+  case TAN:
+  case ASIN:
+  case ACOS:
+  case ATAN:
+  case SINH:
+  case COSH:
+  case TANH:
+  case ASINH:
+  case ACOSH:
+  case ATANH:
+  case NEG:
+  case ABS:
+  case DOUBLE:
+  case SINGLE:
+  case HALFPRECISION:
+  case QUAD:
+  case DOUBLEDOUBLE:
+  case TRIPLEDOUBLE:
+  case ERF:
+  case ERFC:
+  case LOG_1P:
+  case EXP_M1:
+  case DOUBLEEXTENDED:
+  case CEIL:
+  case FLOOR:
+  case NEARESTINT:
+  case NOPARG:
+  case PRINTHEXA:
+  case PRINTFLOAT:
+  case PRINTBINARY:
+  case PRINTEXPANSION:
+  case BASHEXECUTE:
+  case PRINTXML:
+  case PRECASSIGN:
+  case POINTSASSIGN:
+  case DIAMASSIGN:
+  case DISPLAYASSIGN:
+  case VERBOSITYASSIGN:
+  case CANONICALASSIGN:
+  case AUTOSIMPLIFYASSIGN:
+  case SHOWMESSAGENUMBERSASSIGN:
+  case TAYLORRECURSASSIGN:
+  case TIMINGASSIGN:
+  case FULLPARENASSIGN:
+  case MIDPOINTASSIGN:
+  case DIEONERRORMODEASSIGN:
+  case RATIONALMODEASSIGN:
+  case SUPPRESSWARNINGSASSIGN:
+  case HOPITALRECURSASSIGN:
+  case PRECSTILLASSIGN:
+  case POINTSSTILLASSIGN:
+  case DIAMSTILLASSIGN:
+  case DISPLAYSTILLASSIGN:
+  case VERBOSITYSTILLASSIGN:
+  case CANONICALSTILLASSIGN:
+  case AUTOSIMPLIFYSTILLASSIGN:
+  case SHOWMESSAGENUMBERSSTILLASSIGN:
+  case TAYLORRECURSSTILLASSIGN:
+  case TIMINGSTILLASSIGN:
+  case FULLPARENSTILLASSIGN:
+  case MIDPOINTSTILLASSIGN:
+  case DIEONERRORMODESTILLASSIGN:
+  case RATIONALMODESTILLASSIGN:
+  case SUPPRESSWARNINGSSTILLASSIGN:
+  case HOPITALRECURSSTILLASSIGN:
+  case NEGATION:
+  case DEBOUNDMAX:
+  case DEBOUNDMIN:
+  case DEBOUNDMID:
+  case EVALCONST:
+  case DIFF:
+  case DIRTYSIMPLIFY:
+  case SIMPLIFYSAFE:
+  case TIME:
+  case HORNER:
+  case CANONICAL:
+  case EXPAND:
+  case DEGREE:
+  case NUMERATOR:
+  case DENOMINATOR:
+  case PARSE:
+  case READXML:
+  case EXECUTE:
+  case HEAD:
+  case ROUNDCORRECTLY:
+  case READFILE:
+  case REVERT:
+  case SORT:
+  case MANTISSA:
+  case EXPONENT:
+  case PRECISION:
+  case TAIL:
+  case LENGTH:
+  case OBJECTNAME:
+    hash = hashCombine(hash, hashThing(tree->child1));
+    break;
+    /* Binary "functions" : recursion on child1 and child2 */
+  case ADD:
+  case SUB:
+  case MUL:
+  case DIV:
+  case POW:
+  case WHILE:
+  case IF:
+  case ASCIIPLOT:
+  case PRINTXMLNEWFILE:
+  case PRINTXMLAPPENDFILE:
+  case AND:
+  case OR:
+  case INDEX:
+  case COMPAREEQUAL:
+  case COMPAREIN:
+  case COMPARELESS:
+  case COMPAREGREATER:
+  case COMPARELESSEQUAL:
+  case COMPAREGREATEREQUAL:
+  case COMPARENOTEQUAL:
+  case CONCAT:
+  case ADDTOLIST:
+  case PREPEND:
+  case APPEND:
+  case RANGE:
+  case SUBSTITUTE:
+  case COMPOSEPOLYNOMIALS:
+  case COEFF:
+  case SUBPOLY:
+  case ROUNDCOEFFICIENTS:
+  case RATIONALAPPROX:
+  case EVALUATE:
+  case FINDZEROS:
+  case FPFINDZEROS:
+  case DIRTYINFNORM:
+  case NUMBERROOTS:
+  case INTEGRAL:
+  case DIRTYINTEGRAL:
+  case ZERODENOMINATORS:
+  case ISEVALUABLE:
+  case PROTOASSIGNMENTINSTRUCTURE:
+  case PROTOFLOATASSIGNMENTINSTRUCTURE:
+  case DIRTYFINDZEROS:
+    hash = hashCombine(hash, hashThing(tree->child1));
+    hash = hashCombine(hash, hashThing(tree->child2));
+    break;
+    /* "Functions" with more than 2 arguments : recursion the arguments chain */
+  case COMMANDLIST:
+  case IFELSE:
+  case PRINT:
+  case SUPPRESSMESSAGE:
+  case UNSUPPRESSMESSAGE:
+  case PLOT:
+  case EXTERNALPLOT:
+  case WRITE:
+  case WORSTCASE:
+  case AUTOPRINT:
+  case BASHEVALUATE:
+  case REMEZ:
+  case ANNOTATEFUNCTION:
+  case MIN:
+  case MAX:
+  case FPMINIMAX:
+  case TAYLOR:
+  case TAYLORFORM:
+  case CHEBYSHEVFORM:
+  case AUTODIFF:
+  case ACCURATEINFNORM:
+  case ROUNDTOFORMAT:
+  case INFNORM:
+  case SUPNORM:
+  case IMPLEMENTPOLY:
+  case IMPLEMENTCONST:
+  case CHECKINFNORM:
+  case SEARCHGAL:
+  case GUESSDEGREE:
+  case ASSIGNMENTININDEXING:
+  case FLOATASSIGNMENTININDEXING:
+    for (curr=tree->arguments;curr!=NULL;curr=curr->next) {
+      hash = hashCombine(hash, hashThing((node *) (curr->value)));
+    }
+    break;
+    /* "Functions" with more than 2 arguments and one special argument : recursion the arguments chain and on child1 */
+  case NEWFILEPRINT:
+  case APPENDFILEPRINT:
+  case NEWFILEWRITE:
+  case APPENDFILEWRITE:
+  case APPLY:
+  case MATCH:
+    hash = hashCombine(hash, hashThing(tree->child1));
+    for (curr=tree->arguments;curr!=NULL;curr=curr->next) {
+      hash = hashCombine(hash, hashThing((node *) (curr->value)));
+    }
+    break;
+    /* "Functions" with more than 2 arguments and 2 special arguments : recursion the arguments chain and on child1 and child2 */
+  case MATCHELEMENT:
+    hash = hashCombine(hash, hashThing(tree->child1));
+    hash = hashCombine(hash, hashThing(tree->child2));
+    for (curr=tree->arguments;curr!=NULL;curr=curr->next) {
+      hash = hashCombine(hash, hashThing((node *) (curr->value)));
+    }
+    break;
+    /* Constants : hashing the MPFR value */
+  case CONSTANT:
+    hash = hashCombine(hash, hashMpfr(*(tree->value)));
+    break;
+    /* "Strings" : hashing the string */
+  case STRING:
+  case TABLEACCESS:
+  case ISBOUND:
+  case DECIMALCONSTANT:
+  case MIDPOINTCONSTANT:
+  case DYADICCONSTANT:
+  case HEXCONSTANT:
+  case HEXADECIMALCONSTANT:
+  case BINARYCONSTANT:
+    hash = hashCombine(hash, hashString(tree->string));
+    break;
+    /* "Strings" + arguments with things */
+  case FOR:
+  case TABLEACCESSWITHSUBSTITUTE:
+    hash = hashCombine(hash, hashString(tree->string));
+    for (curr=tree->arguments;curr!=NULL;curr=curr->next) {
+      hash = hashCombine(hash, hashThing((node *) (curr->value)));
+    }
+    break;
+    /* "Strings" + 1 child */
+  case ASSIGNMENT:
+  case FLOATASSIGNMENT:
+  case LIBRARYBINDING:
+  case LIBRARYCONSTANTBINDING:
+  case STRUCTACCESS:
+    hash = hashCombine(hash, hashThing(tree->child1));
+    hash = hashCombine(hash, hashString(tree->string));
+    break;
+    /* "Strings" + 2 childs */
+  case FORIN:
+  case BIND:
+    hash = hashCombine(hash, hashThing(tree->child1));
+    hash = hashCombine(hash, hashThing(tree->child2));    
+    hash = hashCombine(hash, hashString(tree->string));
+    break;
+    /* Argument list contains strings */
+  case VARIABLEDECLARATION:
+    for (curr=tree->arguments;curr!=NULL;curr=curr->next) {
+      hash = hashCombine(hash, hashString((char *) (curr->value)));
+    }
+    break;
+    /* "Strings" + argument list contains strings */
+  case RENAME:
+    hash = hashCombine(hash, hashString(tree->string));
+    for (curr=tree->arguments;curr!=NULL;curr=curr->next) {
+      hash = hashCombine(hash, hashString((char *) (curr->value)));
+    }
+    break;
+    /* Argument list contains strings + 1 child */
+  case ASSIGNMENTINSTRUCTURE:
+  case FLOATASSIGNMENTINSTRUCTURE:  
+    hash = hashCombine(hash, hashThing(tree->child1));
+    for (curr=tree->arguments;curr!=NULL;curr=curr->next) {
+      hash = hashCombine(hash, hashString((char *) (curr->value)));
+    }
+    break;
+    /* Argument list contains strings + 2 childs */
+  case PROC:
+  case PROCILLIM:
+    hash = hashCombine(hash, hashThing(tree->child1));
+    hash = hashCombine(hash, hashThing(tree->child2));
+    for (curr=tree->arguments;curr!=NULL;curr=curr->next) {
+      hash = hashCombine(hash, hashString((char *) (curr->value)));
+    }
+    break;    
+    /* Special cases */
+  case LIBRARYFUNCTION:
+    hash = hashCombine(hash, hashThing(tree->child1));
+    hash = hashCombine(hash, hashInt(tree->libFunDeriv));
+    hash = hashCombine(hash, hashPointer(tree->libFun->code));
+    if (tree->libFun->hasData) {
+      hash = hashCombine(hash, hashPointer(tree->libFun->data));
+    }
+    break;
+  case LIBRARYCONSTANT:
+    hash = hashCombine(hash, hashPointer(tree->libFun->code));
+    if (tree->libFun->hasData) {
+      hash = hashCombine(hash, hashPointer(tree->libFun->data));
+    }
+    break;
+  case EXTERNALPROCEDUREUSAGE:
+    hash = hashCombine(hash, hashPointer(tree->libProc->code));
+    break;
+  case PROCEDUREFUNCTION:
+    hash = hashCombine(hash, hashThing(tree->child1));
+    hash = hashCombine(hash, hashThing(tree->child2));
+    hash = hashCombine(hash, hashInt(tree->libFunDeriv));
+    break;
+  case EXTERNALPROC:
+    hash = hashCombine(hash, hashThing(tree->child1));
+    hash = hashCombine(hash, hashString(tree->string));
+    for (curr=tree->arguments;curr!=NULL;curr=curr->next) {
+      hash = hashCombine(hash, hashInt(*((int *) (curr->value))));
+    }
+    break;
+  case LIST:
+  case FINALELLIPTICLIST:
+    for (curr=tree->arguments;curr!=NULL;curr=curr->next) {
+      hash = hashCombine(hash, hashThing((node *) (curr->value)));
+    }
+    break;
+  case STRUCTURE:
+    for (curr=tree->arguments;curr!=NULL;curr=curr->next) {
+      hash = hashCombine(hash, hashEntryWithThing((entry *) (curr->value)));
+    }
+    break;
+  default:
+    sollyaFprintf(stderr,"Error: hashThingInnerst: unknown identifier (%d) in the tree\n",tree->nodeType);
+    exit(1);
+  }
+
+  return hash;
+}
+
+uint64_t hashThingInner(node *tree) {
+  uint64_t hash;
+  polynomial_t polynomial;
+  
+  if (tree == NULL) return hashPointer(NULL);
+
+  if (tree->nodeType == MEMREF) {
+    if (tree->hashComputed) {
+      return tree->hash;
+    }
+    if (tree->polynomialRepresentation != NULL) {
+      hash = polynomialHash(tree->polynomialRepresentation);
+    } else {
+      tryRepresentAsPolynomial(tree);
+      if (tree->polynomialRepresentation != NULL) {
+	hash = polynomialHash(tree->polynomialRepresentation);
+      } else {
+	if (isPureTree(tree)) {
+	  if (polynomialFromExpressionOnlyRealCoeffs(&polynomial, tree)) {
+	    hash = polynomialHash(polynomial);
+	    polynomialFree(polynomial); 
+	  } else {
+	    hash = hashThingInnerst(getMemRefChild(tree));
+	  }
+	} else {
+	  hash = hashThingInnerst(getMemRefChild(tree));
+	}
+      }
+    }
+    tree->hash = hash;
+    tree->hashComputed = 1;
+    return hash;
+  }
+
+  return hashThingInnerst(tree);
+}
+
+uint64_t hashThing(node *tree) {
+  polynomial_t polynomial;
+  uint64_t hash;
+
+  if (tree == NULL) return hashPointer(NULL);
+  
+  if (tree->nodeType == MEMREF) {
+    return hashThingInner(tree);
+  }
+
+  if (isPureTree(tree)) {
+      if (polynomialFromExpressionOnlyRealCoeffs(&polynomial, tree)) {
+	hash = polynomialHash(polynomial);
+	polynomialFree(polynomial);
+	return hash;
+      }
+  }
+  
+  return hashThingInner(tree);
 }
 
 node *copyThingInner(node *tree) {
@@ -8353,7 +8818,7 @@ node *getThingFromTable(char *identifier, int doCopy, int *didCopy) {
   return (node *) getEntry(symbolTable, identifier, returnThingOnVoid);
 }
 
-void printExternalProcedureUsage(node *tree) {
+void printExternalProcedureUsageOldStyle(node *tree) {
   chain *curr;
   if (isExternalProcedureUsage(tree)) {
     sollyaPrintf("%s(",accessThruMemRef(tree)->libProc->procedureName);
@@ -8461,6 +8926,12 @@ void printExternalProcedureUsage(node *tree) {
     default:
       sollyaPrintf("unknown type");
     }
+  }
+}
+
+void printExternalProcedureUsage(node *tree) {
+  if (isExternalProcedureUsage(tree)) {
+    sollyaPrintf("%s",accessThruMemRef(tree)->libProc->procedureName);
   }
 }
 
@@ -10401,7 +10872,11 @@ int executeCommandInner(node *tree) {
 	    autoprint(tempNode,0,NULL,NULL);
 	  } else {
 	    outputMode();
-	    printExternalProcedureUsage(tempNode);
+	    if (oldExternalProcedurePrint) {
+	      printExternalProcedureUsageOldStyle(tempNode);
+	    } else {
+	      printExternalProcedureUsage(tempNode);
+	    }
 	  }
 	  sollyaPrintf("\n");
 	}
@@ -10440,10 +10915,15 @@ int executeCommandInner(node *tree) {
 	}
 	if (!autoprintAlreadyDone) {
 	  outputMode();
-	  if (!isExternalProcedureUsage(tempNode))
+	  if (!isExternalProcedureUsage(tempNode)) {
 	    autoprint(tempNode,0,NULL,NULL);
-	  else
-	    printExternalProcedureUsage(tempNode);
+	  } else {
+	    if (oldExternalProcedurePrint) {
+	      printExternalProcedureUsageOldStyle(tempNode);
+	    } else {
+	      printExternalProcedureUsage(tempNode);
+	    }
+	  }
 	  freeThing(tempNode);
 	}
 	if (oldAutoPrint) {
@@ -18298,7 +18778,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
   if (numberArgs != 0) {
     switch (myResultSignature) {
     case VOID_TYPE:
-      externalResult = ((int (*)(void **))(proc->code))(arguments);
+      if (proc->hasData) {
+	externalResult = ((int (*)(void **, void *))(proc->code))(arguments, proc->data);
+      } else {
+	externalResult = ((int (*)(void **))(proc->code))(arguments);
+      }
       if (externalResult) {
 	*resultThing = makeUnit();
       }
@@ -18306,7 +18790,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
     case CONSTANT_TYPE:
       resultSpace = safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*((mpfr_t *) resultSpace),tools_precision);
-      externalResult = ((int (*)(mpfr_t *, void **))(proc->code))((mpfr_t *) resultSpace,arguments);
+      if (proc->hasData) {
+	externalResult = ((int (*)(mpfr_t *, void **, void *))(proc->code))((mpfr_t *) resultSpace,arguments, proc->data);
+      } else {
+	externalResult = ((int (*)(mpfr_t *, void **))(proc->code))((mpfr_t *) resultSpace,arguments);
+      }
       if (externalResult) {
 	*resultThing = makeConstant(*((mpfr_t *) resultSpace));
       }
@@ -18314,13 +18802,21 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       safeFree(resultSpace);
       break;
     case FUNCTION_TYPE:
-      externalResult = ((int (*)(node **, void **))(proc->code))((node **) (&resultSpace),arguments);
+      if (proc->hasData) {
+	externalResult = ((int (*)(node **, void **, void *))(proc->code))((node **) (&resultSpace),arguments, proc->data);
+      } else {
+	externalResult = ((int (*)(node **, void **))(proc->code))((node **) (&resultSpace),arguments);
+      }
       if (externalResult) {
 	*resultThing = (node *) resultSpace;
       }
       break;
     case OBJECT_TYPE:
-      externalResult = ((int (*)(node **, void **))(proc->code))((node **) (&resultSpace),arguments);
+      if (proc->hasData) {
+	externalResult = ((int (*)(node **, void **, void *))(proc->code))((node **) (&resultSpace),arguments, proc->data);
+      } else {
+	externalResult = ((int (*)(node **, void **))(proc->code))((node **) (&resultSpace),arguments);
+      }
       if (externalResult) {
 	*resultThing = (node *) resultSpace;
       }
@@ -18328,7 +18824,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
     case RANGE_TYPE:
       resultSpace = safeMalloc(sizeof(sollya_mpfi_t));
       sollya_mpfi_init2(*((sollya_mpfi_t *) resultSpace),tools_precision);
-      externalResult = ((int (*)(mpfi_t *, void **))(proc->code))((mpfi_t *) resultSpace,arguments);
+      if (proc->hasData) {
+	externalResult = ((int (*)(mpfi_t *, void **, void *))(proc->code))((mpfi_t *) resultSpace,arguments, proc->data);
+      } else {
+	externalResult = ((int (*)(mpfi_t *, void **))(proc->code))((mpfi_t *) resultSpace,arguments);
+      }
       if (externalResult) {
 	mpfr_init2(a,tools_precision);
 	mpfr_init2(b,tools_precision);
@@ -18343,7 +18843,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       break;
     case INTEGER_TYPE:
       resultSpace = safeMalloc(sizeof(int));
-      externalResult = ((int (*)(int *, void **))(proc->code))((int *) (resultSpace),arguments);
+      if (proc->hasData) {
+	externalResult = ((int (*)(int *, void **, void *))(proc->code))((int *) (resultSpace),arguments, proc->data);
+      } else {
+	externalResult = ((int (*)(int *, void **))(proc->code))((int *) (resultSpace),arguments);
+      }
       if (externalResult) {
 	mpfr_init2(a,(mp_prec_t) (8 * sizeof(int) + 5));
 	mpfr_set_si(a,*((int *) resultSpace), GMP_RNDN);
@@ -18353,7 +18857,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       safeFree(resultSpace);
       break;
     case STRING_TYPE:
-      externalResult = ((int (*)(char **, void **))(proc->code))((char **) (&resultSpace),arguments);
+      if (proc->hasData) {
+	externalResult = ((int (*)(char **, void **, void *))(proc->code))((char **) (&resultSpace),arguments, proc->data);
+      } else {
+	externalResult = ((int (*)(char **, void **))(proc->code))((char **) (&resultSpace),arguments);
+      }
       if (externalResult) {
 	*resultThing = makeString((char *) resultSpace);
 	safeFree(resultSpace);
@@ -18361,7 +18869,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       break;
     case BOOLEAN_TYPE:
       resultSpace = safeMalloc(sizeof(int));
-      externalResult = ((int (*)(int *, void **))(proc->code))((int *) (resultSpace),arguments);
+      if (proc->hasData) {
+	externalResult = ((int (*)(int *, void **, void *))(proc->code))((int *) (resultSpace),arguments, proc->data);
+      } else {
+	externalResult = ((int (*)(int *, void **))(proc->code))((int *) (resultSpace),arguments);
+      }
       if (externalResult) {
 	if (*((int *) resultSpace)) {
 	  *resultThing = makeTrue();
@@ -18372,7 +18884,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       safeFree(resultSpace);
       break;
     case CONSTANT_LIST_TYPE:
-      externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) (&resultSpace),arguments);
+      if (proc->hasData) {
+	externalResult = ((int (*)(chain **, void **, void *))(proc->code))((chain **) (&resultSpace),arguments, proc->data);
+      } else {
+	externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) (&resultSpace),arguments);
+      }
       if (externalResult) {
 	curr = (chain *) resultSpace;
 	if (curr == NULL) {
@@ -18390,7 +18906,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       }
       break;
     case FUNCTION_LIST_TYPE:
-      externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) (&resultSpace),arguments);
+      if (proc->hasData) {
+	externalResult = ((int (*)(chain **, void **, void *))(proc->code))((chain **) (&resultSpace),arguments, proc->data);
+      } else {
+	externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) (&resultSpace),arguments);
+      }
       if (externalResult) {
 	if (((chain *) resultSpace) == NULL) {
 	  *resultThing = makeEmptyList();
@@ -18400,7 +18920,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       }
       break;
     case OBJECT_LIST_TYPE:
-      externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) (&resultSpace),arguments);
+      if (proc->hasData) {
+	externalResult = ((int (*)(chain **, void **, void *))(proc->code))((chain **) (&resultSpace),arguments, proc->data);
+      } else {
+	externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) (&resultSpace),arguments);
+      }
       if (externalResult) {
 	if (((chain *) resultSpace) == NULL) {
 	  *resultThing = makeEmptyList();
@@ -18410,7 +18934,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       }
       break;
     case RANGE_LIST_TYPE:
-      externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) (&resultSpace),arguments);
+      if (proc->hasData) {
+	externalResult = ((int (*)(chain **, void **, void *))(proc->code))((chain **) (&resultSpace),arguments, proc->data);
+      } else {
+	externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) (&resultSpace),arguments);
+      }
       if (externalResult) {
 	curr = (chain *) resultSpace;
 	if (curr == NULL) {
@@ -18435,7 +18963,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       }
       break;
     case INTEGER_LIST_TYPE:
-      externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) (&resultSpace),arguments);
+      if (proc->hasData) {
+	externalResult = ((int (*)(chain **, void **, void *))(proc->code))((chain **) (&resultSpace),arguments, proc->data);
+      } else {
+	externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) (&resultSpace),arguments);
+      }
       if (externalResult) {
 	curr = (chain *) resultSpace;
 	if (curr == NULL) {
@@ -18456,7 +18988,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       }
       break;
     case STRING_LIST_TYPE:
-      externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) (&resultSpace),arguments);
+      if (proc->hasData) {
+	externalResult = ((int (*)(chain **, void **, void *))(proc->code))((chain **) (&resultSpace),arguments, proc->data);
+      } else {
+	externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) (&resultSpace),arguments);
+      }
       if (externalResult) {
 	curr = (chain *) resultSpace;
 	if (curr == NULL) {
@@ -18474,7 +19010,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       }
       break;
     case BOOLEAN_LIST_TYPE:
-      externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) (&resultSpace),arguments);
+      if (proc->hasData) {
+	externalResult = ((int (*)(chain **, void **, void *))(proc->code))((chain **) (&resultSpace),arguments, proc->data);
+      } else {
+	externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) (&resultSpace),arguments);
+      }
       if (externalResult) {
 	curr = (chain *) resultSpace;
 	if (curr == NULL) {
@@ -18503,7 +19043,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
   } else {
     switch (myResultSignature) {
     case VOID_TYPE:
-      externalResult = ((int (*)(void))(proc->code))();
+      if (proc->hasData) {
+	externalResult = ((int (*)(void *))(proc->code))(proc->data);
+      } else {
+	externalResult = ((int (*)())(proc->code))();
+      }
       if (externalResult) {
 	*resultThing = makeUnit();
       }
@@ -18511,7 +19055,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
     case CONSTANT_TYPE:
       resultSpace = safeMalloc(sizeof(mpfr_t));
       mpfr_init2(*((mpfr_t *) resultSpace),tools_precision);
-      externalResult = ((int (*)(mpfr_t *))(proc->code))((mpfr_t *) resultSpace);
+      if (proc->hasData) {
+	externalResult = ((int (*)(mpfr_t *, void *))(proc->code))((mpfr_t *) resultSpace, proc->data);
+      } else {
+	externalResult = ((int (*)(mpfr_t *))(proc->code))((mpfr_t *) resultSpace);
+      }
       if (externalResult) {
 	*resultThing = makeConstant(*((mpfr_t *) resultSpace));
       }
@@ -18519,13 +19067,21 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       safeFree(resultSpace);
       break;
     case FUNCTION_TYPE:
-      externalResult = ((int (*)(node **))(proc->code))((node **) (&resultSpace));
+      if (proc->hasData) {
+	externalResult = ((int (*)(node **, void *))(proc->code))((node **) (&resultSpace), proc->data);
+      } else {
+	externalResult = ((int (*)(node **))(proc->code))((node **) (&resultSpace));
+      }
       if (externalResult) {
 	*resultThing = (node *) resultSpace;
       }
       break;
     case OBJECT_TYPE:
-      externalResult = ((int (*)(node **))(proc->code))((node **) (&resultSpace));
+      if (proc->hasData) {
+	externalResult = ((int (*)(node **, void *))(proc->code))((node **) (&resultSpace), proc->data);
+      } else {
+	externalResult = ((int (*)(node **))(proc->code))((node **) (&resultSpace));
+      }
       if (externalResult) {
 	*resultThing = (node *) resultSpace;
       }
@@ -18533,7 +19089,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
     case RANGE_TYPE:
       resultSpace = safeMalloc(sizeof(sollya_mpfi_t));
       sollya_mpfi_init2(*((sollya_mpfi_t *) resultSpace),tools_precision);
-      externalResult = ((int (*)(sollya_mpfi_t *))(proc->code))((sollya_mpfi_t *) resultSpace);
+      if (proc->hasData) {
+	externalResult = ((int (*)(sollya_mpfi_t *, void *))(proc->code))((sollya_mpfi_t *) resultSpace, proc->data);
+      } else {
+	externalResult = ((int (*)(sollya_mpfi_t *))(proc->code))((sollya_mpfi_t *) resultSpace);
+      }
       if (externalResult) {
 	mpfr_init2(a,tools_precision);
 	mpfr_init2(b,tools_precision);
@@ -18548,7 +19108,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       break;
     case INTEGER_TYPE:
       resultSpace = safeMalloc(sizeof(int));
-      externalResult = ((int (*)(int *))(proc->code))((int *) (resultSpace));
+      if (proc->hasData) {
+	externalResult = ((int (*)(int *, void *))(proc->code))((int *) (resultSpace), proc->data);
+      } else {
+	externalResult = ((int (*)(int *))(proc->code))((int *) (resultSpace));
+      }
       if (externalResult) {
 	mpfr_init2(a,(mp_prec_t) (8 * sizeof(int) + 5));
 	mpfr_set_si(a,*((int *) resultSpace), GMP_RNDN);
@@ -18558,7 +19122,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       safeFree(resultSpace);
       break;
     case STRING_TYPE:
-      externalResult = ((int (*)(char **))(proc->code))((char **) (&resultSpace));
+      if (proc->hasData) {
+	externalResult = ((int (*)(char **, void *))(proc->code))((char **) (&resultSpace), proc->data);
+      } else {
+	externalResult = ((int (*)(char **))(proc->code))((char **) (&resultSpace));
+      }
       if (externalResult) {
 	*resultThing = makeString((char *) resultSpace);
 	safeFree(resultSpace);
@@ -18566,7 +19134,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       break;
     case BOOLEAN_TYPE:
       resultSpace = safeMalloc(sizeof(int));
-      externalResult = ((int (*)(int *))(proc->code))((int *) (resultSpace));
+      if (proc->hasData) {
+	externalResult = ((int (*)(int *, void *))(proc->code))((int *) (resultSpace), proc->data);
+      } else {
+	externalResult = ((int (*)(int *))(proc->code))((int *) (resultSpace));
+      }
       if (externalResult) {
 	if (*((int *) resultSpace)) {
 	  *resultThing = makeTrue();
@@ -18577,7 +19149,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       safeFree(resultSpace);
       break;
     case CONSTANT_LIST_TYPE:
-      externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
+      if (proc->hasData) {
+	externalResult = ((int (*)(chain **, void *))(proc->code))((chain **) (&resultSpace), proc->data);
+      } else {
+	externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
+      }
       if (externalResult) {
 	curr = (chain *) resultSpace;
 	if (curr == NULL) {
@@ -18595,7 +19171,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       }
       break;
     case FUNCTION_LIST_TYPE:
-      externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
+      if (proc->hasData) {
+	externalResult = ((int (*)(chain **, void *))(proc->code))((chain **) (&resultSpace), proc->data);
+      } else {
+	externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
+      }
       if (externalResult) {
 	if (((chain *) resultSpace) == NULL) {
 	  *resultThing = makeEmptyList();
@@ -18605,7 +19185,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       }
       break;
     case OBJECT_LIST_TYPE:
-      externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
+      if (proc->hasData) {
+	externalResult = ((int (*)(chain **, void *))(proc->code))((chain **) (&resultSpace), proc->data);
+      } else {
+	externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
+      }
       if (externalResult) {
 	if (((chain *) resultSpace) == NULL) {
 	  *resultThing = makeEmptyList();
@@ -18615,7 +19199,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       }
       break;
     case RANGE_LIST_TYPE:
-      externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
+      if (proc->hasData) {
+	externalResult = ((int (*)(chain **, void *))(proc->code))((chain **) (&resultSpace), proc->data);
+      } else {
+	externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
+      }
       if (externalResult) {
 	curr = (chain *) resultSpace;
 	if (curr == NULL) {
@@ -18640,7 +19228,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       }
       break;
     case INTEGER_LIST_TYPE:
-      externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
+      if (proc->hasData) {
+	externalResult = ((int (*)(chain **, void *))(proc->code))((chain **) (&resultSpace), proc->data);
+      } else {
+	externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
+      }
       if (externalResult) {
 	curr = (chain *) resultSpace;
 	if (curr == NULL) {
@@ -18661,7 +19253,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       }
       break;
     case STRING_LIST_TYPE:
-      externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
+      if (proc->hasData) {
+	externalResult = ((int (*)(chain **, void *))(proc->code))((chain **) (&resultSpace), proc->data);
+      } else {
+	externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
+      }
       if (externalResult) {
 	curr = (chain *) resultSpace;
 	if (curr == NULL) {
@@ -18679,7 +19275,11 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       }
       break;
     case BOOLEAN_LIST_TYPE:
-      externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
+      if (proc->hasData) {
+	externalResult = ((int (*)(chain **, void *))(proc->code))((chain **) (&resultSpace), proc->data);
+      } else {
+	externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
+      }
       if (externalResult) {
 	curr = (chain *) resultSpace;
 	if (curr == NULL) {
@@ -22077,7 +22677,11 @@ node *evaluateThingInnerst(node *tree) {
       sollya_mpfi_init2(tempIA,pTemp);
       sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
       mpfi_init2(tempID,tools_precision);
-      copy->libFun->code(tempID, tempIA, copy->libFunDeriv); 
+      if (copy->libFun->hasData) {
+	((int (*)(mpfi_t, mpfi_t, int, void *)) (copy->libFun->code))(tempID, tempIA, copy->libFunDeriv, copy->libFun->data);
+      } else {
+	((int (*)(mpfi_t, mpfi_t, int)) (copy->libFun->code))(tempID, tempIA, copy->libFunDeriv);
+      }
       sollya_init_and_convert_interval(tempIC, tempID);
       mpfi_clear(tempID);
       freeThing(copy);

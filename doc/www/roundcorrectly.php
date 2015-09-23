@@ -42,7 +42,7 @@ evaluates to NaN.
 <div class="divExample"> 
 <h2 class="category">Example 2: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; roundcorrectly([-1; 1]);<br> 
-&nbsp;&nbsp;&nbsp;@NaN@<br> 
+&nbsp;&nbsp;&nbsp;NaN<br> 
 </div> 
 </div> 
 <div class="divSeeAlso"> 

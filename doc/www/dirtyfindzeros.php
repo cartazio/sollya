@@ -48,7 +48,7 @@ of variable <?php linkTo("command","prec","prec");?>.
 <div class="divExample"> 
 <h2 class="category">Example 1: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; dirtyfindzeros(sin(x),[-5;5]);<br> 
-&nbsp;&nbsp;&nbsp;[|-3.14159265358979323846264338327950288419716939937508, 0, 3.14159265358979323846264338327950288419716939937508|]<br> 
+&nbsp;&nbsp;&nbsp;[|-3.1415926535897932384626433832795028841971693993751, 0, 3.1415926535897932384626433832795028841971693993751|]<br> 
 </div> 
 <div class="divExample"> 
 <h2 class="category">Example 2: </h2> 

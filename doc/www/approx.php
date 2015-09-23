@@ -48,7 +48,7 @@ operators. It cannot be repeatedly used without brackets.
 &nbsp;&nbsp;&nbsp;&gt; print(exp(5));<br> 
 &nbsp;&nbsp;&nbsp;exp(5)<br> 
 &nbsp;&nbsp;&nbsp;&gt; print(~ exp(5));<br> 
-&nbsp;&nbsp;&nbsp;1.48413159102576603421115580040552279623487667593878e2<br> 
+&nbsp;&nbsp;&nbsp;148.41315910257660342111558004055227962348766759388<br> 
 </div> 
 <div class="divExample"> 
 <h2 class="category">Example 2: </h2> 
@@ -71,14 +71,14 @@ operators. It cannot be repeatedly used without brackets.
 &nbsp;&nbsp;&nbsp;&gt; print(~exp(x*5*Pi));<br> 
 &nbsp;&nbsp;&nbsp;exp((pi) * 5 * x)<br> 
 &nbsp;&nbsp;&nbsp;&gt; print(exp(x* ~(5*Pi)));<br> 
-&nbsp;&nbsp;&nbsp;exp(x * 1.57079632679489661923132169163975144209858469968757e1)<br> 
+&nbsp;&nbsp;&nbsp;exp(x * 15.7079632679489661923132169163975144209858469968757)<br> 
 </div> 
 <div class="divExample"> 
 <h2 class="category">Example 6: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; print(~exp(5)*x);<br> 
-&nbsp;&nbsp;&nbsp;1.48413159102576603421115580040552279623487667593878e2 * x<br> 
+&nbsp;&nbsp;&nbsp;148.41315910257660342111558004055227962348766759388 * x<br> 
 &nbsp;&nbsp;&nbsp;&gt; print( (~exp(5))*x);<br> 
-&nbsp;&nbsp;&nbsp;1.48413159102576603421115580040552279623487667593878e2 * x<br> 
+&nbsp;&nbsp;&nbsp;148.41315910257660342111558004055227962348766759388 * x<br> 
 &nbsp;&nbsp;&nbsp;&gt; print(~(exp(5)*x));<br> 
 &nbsp;&nbsp;&nbsp;exp(5) * x<br> 
 </div> 

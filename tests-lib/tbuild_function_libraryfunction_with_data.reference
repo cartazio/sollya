@@ -1,0 +1,7 @@
+superfunc (expecting: superfunc)
+>>>>Hello world<<<<>>>>0<<<<
+0.6931471805599453972490664455108344554901123046875 (expecting: approximate value of log(2))
+(diff(superfunc))(sin(_x_)) * cos(_x_) (expecting: (diff(superfunc))(sin(_x_)) * cos(_x_))
+diff(superfunc) (expecting: diff(superfunc))
+>>>>Hello world<<<<>>>>1<<<<
+0.25 (expecting: approximate value of 1/4)

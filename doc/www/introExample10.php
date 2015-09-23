@@ -4,7 +4,7 @@
 &nbsp;&nbsp;&nbsp;&gt; display=decimal;<br>
 &nbsp;&nbsp;&nbsp;Display mode is decimal numbers.<br>
 &nbsp;&nbsp;&nbsp;&gt; a;<br>
-&nbsp;&nbsp;&nbsp;1.725e1<br>
+&nbsp;&nbsp;&nbsp;17.25<br>
 &nbsp;&nbsp;&nbsp;&gt; display=binary;<br>
 &nbsp;&nbsp;&nbsp;Display mode is binary numbers.<br>
 &nbsp;&nbsp;&nbsp;&gt; a;<br>

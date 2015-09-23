@@ -87,8 +87,6 @@ annotation, that derivative needs to be annotated using <?php linkTo("command","
 &nbsp;&nbsp;&nbsp;&gt; "h(0.25) = ";<br> 
 &nbsp;&nbsp;&nbsp;h(0.25) = <br> 
 &nbsp;&nbsp;&nbsp;&gt; h(0.25);<br> 
-&nbsp;&nbsp;&nbsp;Using procedure function exponential<br> 
-&nbsp;&nbsp;&nbsp;Using procedure function exponential<br> 
 &nbsp;&nbsp;&nbsp;1.2840254166877414840735<br> 
 </div> 
 </div> 

@@ -1,0 +1,11 @@
+sollya_lib_decompose_externalprocedure correctly signals that "cos(_x_)" cannot be decomposed as an external function.
+sollya_lib_decompose_externalprocedure has worked on "funny": arity = 3, result type = boolean, argument types = string integer constant 
+Trying out the function
+>>>Hello world<<<>>>42<<<>>>1664<<<
+The function has signaled success, the result is false
+sollya_lib_decompose_externalprocedure has worked on "zeit": arity = 0, result type = integer, argument types = 
+Trying out the function
+The function has signaled success, the result is okay
+sollya_lib_decompose_externalprocedure has worked on "succ": arity = 1, result type = integer, argument types = integer 
+Trying out the function
+The function has signaled success, the result is 42

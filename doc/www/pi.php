@@ -36,7 +36,7 @@ current precision at this time.
 &nbsp;&nbsp;&nbsp;&gt; prec=20!;<br> 
 &nbsp;&nbsp;&nbsp;&gt; a;<br> 
 &nbsp;&nbsp;&nbsp;Warning: rounding has happened. The value displayed is a faithful rounding to 20 bits of the true result.<br> 
-&nbsp;&nbsp;&nbsp;6.283187<br> 
+&nbsp;&nbsp;&nbsp;6.28319<br> 
 </div> 
 <div class="divExample"> 
 <h2 class="category">Example 2: </h2> 

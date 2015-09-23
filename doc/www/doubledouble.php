@@ -36,7 +36,7 @@ See the corresponding help pages for examples.
 &nbsp;&nbsp;&nbsp;1.0000000000000000000000000000007888609052210118054<br> 
 &nbsp;&nbsp;&nbsp;&gt; prec=50!;<br> 
 &nbsp;&nbsp;&nbsp;&gt; DD(a);<br> 
-&nbsp;&nbsp;&nbsp;1.0000000000000000000000000000008<br> 
+&nbsp;&nbsp;&nbsp;1.000000000000000000000000000000788860905<br> 
 </div> 
 </div> 
 <div class="divSeeAlso"> 
