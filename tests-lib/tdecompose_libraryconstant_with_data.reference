@@ -1,0 +1,12 @@
+superconst (expecting: superconst)
+>>>>Hello world<<<<>>>>0<<<<
+0.57721566490153275452712477999739348888397216796875 (expecting: 0.5772...)
+Decomposition of superconst succeeded
+The function pointer is okay
+The data pointer is okay
+superconst (expecting: superconst)
+>>>>Hello world<<<<>>>>1<<<<
+0.57721566490153275452712477999739348888397216796875 (expecting: 0.5772...)
+Decomposition of superconst succeeded
+The function pointer is okay
+The data pointer is okay

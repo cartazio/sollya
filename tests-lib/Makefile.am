@@ -38,6 +38,7 @@ tbuild_function_floor.c \
 tbuild_function_free_variable.c \
 tbuild_function_halfprecision.c \
 tbuild_function_libraryconstant.c \
+tbuild_function_libraryconstant_with_data.c \
 tbuild_function_libraryfunction.c \
 tbuild_function_libraryfunction_with_data.c \
 tbuild_function_log10.c \
@@ -89,6 +90,7 @@ tdecimal.c \
 tdecompose_externalprocedure.c \
 tdecompose_function.c \
 tdecompose_libraryconstant.c \
+tdecompose_libraryconstant_with_data.c \
 tdecompose_libraryfunction.c \
 tdecompose_libraryfunction_with_data.c \
 tdecompose_procedurefunction.c \
@@ -207,6 +209,7 @@ tis_true.c \
 tis_void.c \
 tlength.c \
 tlibraryconstant.c \
+tlibraryconstant_with_data.c \
 tlibraryfunction.c \
 tlibraryfunction_with_data.c \
 tlist.c \
