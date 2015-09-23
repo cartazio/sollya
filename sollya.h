@@ -769,6 +769,11 @@ extern "C" {
   sollya_fp_result_t sollya_lib_evaluate_function_at_constant_expression(mpfr_t, sollya_obj_t, sollya_obj_t, mpfr_t *);
   int sollya_lib_evaluate_function_over_interval(mpfi_t, sollya_obj_t, mpfi_t);
 
+  /* A short-cut function for "evaluation" of functions represented as
+     Sollya objects at points (or intervals) represented as Sollya objects 
+  */
+  sollya_obj_t sollya_lib_evaluate_function_at_object(sollya_obj_t, sollya_obj_t);
+  
   /* Functions to manipulate lists
 
      These functions are not necessarily needed when using the Sollya library in

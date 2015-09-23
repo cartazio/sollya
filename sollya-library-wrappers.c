@@ -4497,6 +4497,11 @@ int sollya_lib_evaluate_function_over_interval(mpfi_t y, sollya_obj_t obj1, mpfi
   return 1;
 }
 
+sollya_obj_t sollya_lib_evaluate_function_at_object(sollya_obj_t obj1, sollya_obj_t obj2) {
+  return sollya_lib_apply(obj1, obj2, NULL);
+}
+
+
 sollya_obj_t sollya_lib_externalprocedure(sollya_externalprocedure_type_t res_type, sollya_externalprocedure_type_t *arg_types, int arity, char *name, void *func) {
   libraryProcedure *libProc;
   int resType;

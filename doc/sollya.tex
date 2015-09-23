@@ -1849,6 +1849,26 @@ In the interactive tool, it is also possible to write \verb|f(a)| when \verb|a| 
 
 This function returns a boolean integer: false means failure (i.e., \verb|f| is not a functional expression), in which case \verb|res| is left unchanged, and true means success, in which case \verb|res| contains the result of the evaluation. The function might succeed, and yet \verb|res| might contain something useless such as an unbounded interval or even $[\textrm{NaN},\textrm{NaN}]$ (this happens for instance when \verb|a| contains points that lie in the interior of the complement of the definition domain of \verb|f|). It is the user's responsibility to check afterwards whether the computed interval is bounded, unbounded or NaN.
 
+\subsection{Computing hashes on \sollya objects}
+
+Certain language bindings require hashes to be available for any
+object represented. In order to help with such language bindings, the
+\sollya library supports a function that computes a $64$ bit unsigned
+integer as a hash for a given \sollya object: 
+\begin{center}
+\verb|uint64_t sollya_lib_hash(sollya_obj_t obj).|
+\end{center}
+The \sollya library guarantees that any two objects that compare equal
+(with one of the comparison funcions provided with the \sollya
+library) will have the same hash value. The user should be aware that
+to ensure this implication, \sollya needs to compute a unique
+representation of an object when it is to be hashed. This computation
+step can be pretty expensive for certain objects. However, this cost
+must be paid only once: \sollya will cache an object's hash value for
+further use. The user should also be aware that the hash value for a
+given object is bound to a certain \sollya session and, in particular,
+is not portable between platforms nor over consecutive \sollya versions.
+
 \subsection{Executing \sollya procedures}
 
 Objects representing procedures written in \sollya language (see also
