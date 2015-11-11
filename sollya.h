@@ -244,7 +244,7 @@ extern "C" {
   typedef enum sollya_externalprocedure_type_enum_t sollya_externalprocedure_type_t;
 
   /* Initialization and finalization functions */
-  int sollya_lib_init();
+  int sollya_lib_init(void);
   int sollya_lib_init_with_arguments(int, char **);
   int sollya_lib_init_with_custom_memory_functions(void *(*)(size_t),
 						   void *(*)(size_t, size_t),
@@ -260,13 +260,13 @@ extern "C" {
 								  void (*)(void *, size_t),
 								  int,
 								  char **);
-  int sollya_lib_close();
+  int sollya_lib_close(void);
 
   /* Functions to install and uninstall a call-back for the messages
      emitted by the Sollya core.
   */
   int sollya_lib_install_msg_callback(int (*) (sollya_msg_t, void *), void *);
-  int sollya_lib_uninstall_msg_callback();
+  int sollya_lib_uninstall_msg_callback(void);
   void sollya_lib_get_msg_callback(int (**)(sollya_msg_t, void *), void **);
 
   /* A function to get a numerical message id out of the opaque
@@ -337,7 +337,7 @@ extern "C" {
 
   */
   void sollya_lib_name_free_variable(const char *);
-  char *sollya_lib_get_free_variable_name();
+  char *sollya_lib_get_free_variable_name(void);
 
   /* Functions corresponding to Sollya commands */
   void sollya_lib_plot(sollya_obj_t, sollya_obj_t, ...);
@@ -397,7 +397,7 @@ extern "C" {
   void sollya_lib_set_hopitalrecursions(sollya_obj_t);
 
   /* Functions corresponding to Sollya built-in procedures */
-  sollya_obj_t sollya_lib_free_variable();
+  sollya_obj_t sollya_lib_free_variable(void);
   sollya_obj_t sollya_lib_and(sollya_obj_t, sollya_obj_t);
   sollya_obj_t sollya_lib_or(sollya_obj_t, sollya_obj_t);
   sollya_obj_t sollya_lib_negate(sollya_obj_t);
@@ -426,8 +426,8 @@ extern "C" {
   sollya_obj_t sollya_lib_diff(sollya_obj_t);
   sollya_obj_t sollya_lib_bashevaluate(sollya_obj_t, ...);
   sollya_obj_t sollya_lib_v_bashevaluate(sollya_obj_t, va_list);
-  sollya_obj_t sollya_lib_getsuppressedmessages();
-  sollya_obj_t sollya_lib_getbacktrace();
+  sollya_obj_t sollya_lib_getsuppressedmessages(void);
+  sollya_obj_t sollya_lib_getbacktrace(void);
   sollya_obj_t sollya_lib_remez(sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
   sollya_obj_t sollya_lib_v_remez(sollya_obj_t, sollya_obj_t, sollya_obj_t, va_list);
   sollya_obj_t sollya_lib_annotatefunction(sollya_obj_t, sollya_obj_t, sollya_obj_t, sollya_obj_t, ...);
@@ -521,57 +521,57 @@ extern "C" {
   sollya_obj_t sollya_lib_nearestint(sollya_obj_t);
   sollya_obj_t sollya_lib_length(sollya_obj_t);
   sollya_obj_t sollya_lib_objectname(sollya_obj_t);
-  sollya_obj_t sollya_lib_get_prec();
-  sollya_obj_t sollya_lib_get_points();
-  sollya_obj_t sollya_lib_get_diam();
-  sollya_obj_t sollya_lib_get_display();
-  sollya_obj_t sollya_lib_get_verbosity();
-  sollya_obj_t sollya_lib_get_canonical();
-  sollya_obj_t sollya_lib_get_autosimplify();
-  sollya_obj_t sollya_lib_get_fullparentheses();
-  sollya_obj_t sollya_lib_get_showmessagenumbers();
-  sollya_obj_t sollya_lib_get_taylorrecursions();
-  sollya_obj_t sollya_lib_get_timing();
-  sollya_obj_t sollya_lib_get_midpointmode();
-  sollya_obj_t sollya_lib_get_dieonerrormode();
-  sollya_obj_t sollya_lib_get_rationalmode();
-  sollya_obj_t sollya_lib_get_roundingwarnings();
-  sollya_obj_t sollya_lib_get_hopitalrecursions();
+  sollya_obj_t sollya_lib_get_prec(void);
+  sollya_obj_t sollya_lib_get_points(void);
+  sollya_obj_t sollya_lib_get_diam(void);
+  sollya_obj_t sollya_lib_get_display(void);
+  sollya_obj_t sollya_lib_get_verbosity(void);
+  sollya_obj_t sollya_lib_get_canonical(void);
+  sollya_obj_t sollya_lib_get_autosimplify(void);
+  sollya_obj_t sollya_lib_get_fullparentheses(void);
+  sollya_obj_t sollya_lib_get_showmessagenumbers(void);
+  sollya_obj_t sollya_lib_get_taylorrecursions(void);
+  sollya_obj_t sollya_lib_get_timing(void);
+  sollya_obj_t sollya_lib_get_midpointmode(void);
+  sollya_obj_t sollya_lib_get_dieonerrormode(void);
+  sollya_obj_t sollya_lib_get_rationalmode(void);
+  sollya_obj_t sollya_lib_get_roundingwarnings(void);
+  sollya_obj_t sollya_lib_get_hopitalrecursions(void);
 
   /* Functions creating Sollya objects */
-  sollya_obj_t sollya_lib_on();
-  sollya_obj_t sollya_lib_off();
-  sollya_obj_t sollya_lib_dyadic();
-  sollya_obj_t sollya_lib_powers();
-  sollya_obj_t sollya_lib_binary();
-  sollya_obj_t sollya_lib_hexadecimal();
-  sollya_obj_t sollya_lib_file();
-  sollya_obj_t sollya_lib_postscript();
-  sollya_obj_t sollya_lib_postscriptfile();
-  sollya_obj_t sollya_lib_perturb();
-  sollya_obj_t sollya_lib_round_down();
-  sollya_obj_t sollya_lib_round_up();
-  sollya_obj_t sollya_lib_round_towards_zero();
-  sollya_obj_t sollya_lib_round_to_nearest();
-  sollya_obj_t sollya_lib_honorcoeffprec();
-  sollya_obj_t sollya_lib_true();
-  sollya_obj_t sollya_lib_false();
-  sollya_obj_t sollya_lib_void();
-  sollya_obj_t sollya_lib_default();
-  sollya_obj_t sollya_lib_decimal();
-  sollya_obj_t sollya_lib_absolute();
-  sollya_obj_t sollya_lib_relative();
-  sollya_obj_t sollya_lib_fixed();
-  sollya_obj_t sollya_lib_floating();
-  sollya_obj_t sollya_lib_error();
-  sollya_obj_t sollya_lib_double_obj();
-  sollya_obj_t sollya_lib_single_obj();
-  sollya_obj_t sollya_lib_quad_obj();
-  sollya_obj_t sollya_lib_halfprecision_obj();
-  sollya_obj_t sollya_lib_doubleextended_obj();
-  sollya_obj_t sollya_lib_double_double_obj();
-  sollya_obj_t sollya_lib_triple_double_obj();
-  sollya_obj_t sollya_lib_pi();
+  sollya_obj_t sollya_lib_on(void);
+  sollya_obj_t sollya_lib_off(void);
+  sollya_obj_t sollya_lib_dyadic(void);
+  sollya_obj_t sollya_lib_powers(void);
+  sollya_obj_t sollya_lib_binary(void);
+  sollya_obj_t sollya_lib_hexadecimal(void);
+  sollya_obj_t sollya_lib_file(void);
+  sollya_obj_t sollya_lib_postscript(void);
+  sollya_obj_t sollya_lib_postscriptfile(void);
+  sollya_obj_t sollya_lib_perturb(void);
+  sollya_obj_t sollya_lib_round_down(void);
+  sollya_obj_t sollya_lib_round_up(void);
+  sollya_obj_t sollya_lib_round_towards_zero(void);
+  sollya_obj_t sollya_lib_round_to_nearest(void);
+  sollya_obj_t sollya_lib_honorcoeffprec(void);
+  sollya_obj_t sollya_lib_true(void);
+  sollya_obj_t sollya_lib_false(void);
+  sollya_obj_t sollya_lib_void(void);
+  sollya_obj_t sollya_lib_default(void);
+  sollya_obj_t sollya_lib_decimal(void);
+  sollya_obj_t sollya_lib_absolute(void);
+  sollya_obj_t sollya_lib_relative(void);
+  sollya_obj_t sollya_lib_fixed(void);
+  sollya_obj_t sollya_lib_floating(void);
+  sollya_obj_t sollya_lib_error(void);
+  sollya_obj_t sollya_lib_double_obj(void);
+  sollya_obj_t sollya_lib_single_obj(void);
+  sollya_obj_t sollya_lib_quad_obj(void);
+  sollya_obj_t sollya_lib_halfprecision_obj(void);
+  sollya_obj_t sollya_lib_doubleextended_obj(void);
+  sollya_obj_t sollya_lib_double_double_obj(void);
+  sollya_obj_t sollya_lib_triple_double_obj(void);
+  sollya_obj_t sollya_lib_pi(void);
   sollya_obj_t sollya_lib_libraryconstant(char *, void (*)(mpfr_t, mp_prec_t));
   sollya_obj_t sollya_lib_libraryfunction(sollya_obj_t, char *, int (*)(mpfi_t, mpfi_t, int));
   sollya_obj_t sollya_lib_externalprocedure(sollya_externalprocedure_type_t, sollya_externalprocedure_type_t *, int, char *, void *);
@@ -858,7 +858,7 @@ extern "C" {
   sollya_obj_t sollya_lib_v_build_list(va_list);
   sollya_obj_t sollya_lib_v_build_end_elliptic_list(va_list);
 
-  sollya_obj_t sollya_lib_build_function_free_variable();
+  sollya_obj_t sollya_lib_build_function_free_variable(void);
   sollya_obj_t sollya_lib_build_function_add(sollya_obj_t, sollya_obj_t);
   sollya_obj_t sollya_lib_build_function_sub(sollya_obj_t, sollya_obj_t);
   sollya_obj_t sollya_lib_build_function_mul(sollya_obj_t, sollya_obj_t);
@@ -897,7 +897,7 @@ extern "C" {
   sollya_obj_t sollya_lib_build_function_asinh(sollya_obj_t);
   sollya_obj_t sollya_lib_build_function_acosh(sollya_obj_t);
   sollya_obj_t sollya_lib_build_function_atanh(sollya_obj_t);
-  sollya_obj_t sollya_lib_build_function_pi();
+  sollya_obj_t sollya_lib_build_function_pi(void);
   sollya_obj_t sollya_lib_build_function_libraryconstant(char *, void (*)(mpfr_t, mp_prec_t));
   sollya_obj_t sollya_lib_build_function_libraryfunction(sollya_obj_t, char *, int (*)(mpfi_t, mpfi_t, int));
   sollya_obj_t sollya_lib_build_function_libraryconstant_with_data(char *, void (*)(mpfr_t, mp_prec_t, void *), void *, void (*)(void *));
