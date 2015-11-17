@@ -9,6 +9,10 @@ typedef struct data_struct_t {
   int  counter;
 } data_t;
 
+void dealloc(void *data) {
+  return;
+}
+
 int myownlog(mpfi_t result, mpfi_t x, int n, void *ptr) {
   data_t *data;
 
@@ -100,22 +104,24 @@ int main(void) {
   int (*func)(mpfi_t, mpfi_t, int, void *);
   int deriv;
   void *ptr;
+  void (*resDealloc)(void *);
 
   sollya_lib_init();
   g = sollya_lib_parse_string("sin(_x_^2)^2 * 1/3");
-  f = sollya_lib_libraryfunction_with_data(g, "superfunc", myownlog, &data);
+  f = sollya_lib_libraryfunction_with_data(g, "superfunc", myownlog, &data, dealloc);
   sollya_lib_printf("%b (expecting: superfunc)\n", f);
   mpfr_init2(x, 30);
   mpfr_init2(y, 50);
   mpfr_set_ui(x, 2, GMP_RNDN);
   sollya_lib_evaluate_function_at_point(y, f, x, NULL);
   sollya_lib_printf("%v (expecting: approximate value of log(sin(4)^2 * 1/3))\n", y);
-  if (sollya_lib_decompose_libraryfunction_with_data(&func, &deriv, &h, &ptr, f)) {
+  if (sollya_lib_decompose_libraryfunction_with_data(&func, &deriv, &h, &ptr, &resDealloc, f)) {
     sollya_lib_printf("Decomposition of %b succeeded\n", f);
     sollya_lib_printf("h = %b\n", h);
     sollya_lib_printf("derivation order = %d\n", deriv);
     sollya_lib_printf("The function pointer is %s\n", ((func == myownlog) ? "okay" : "wrong"));
     sollya_lib_printf("The data pointer is %s\n", ((ptr == ((void *) (&data))) ? "okay" : "wrong"));
+    sollya_lib_printf("The deallocation function pointer is %s\n", ((((void *) resDealloc) == ((void *) dealloc)) ? "okay" : "wrong"));
     sollya_lib_clear_obj(h);
   } else {
     sollya_lib_printf("Could not decompose %b\n", f);
@@ -130,12 +136,13 @@ int main(void) {
   mpfr_set_ui(x, 4, GMP_RNDN);
   sollya_lib_evaluate_function_at_point(y, f, x, NULL);
   sollya_lib_printf("%v (expecting: approximate value of 1/4)\n", y);
-  if (sollya_lib_decompose_libraryfunction_with_data(&func, &deriv, &h, &ptr, f)) {
+  if (sollya_lib_decompose_libraryfunction_with_data(&func, &deriv, &h, &ptr, &resDealloc, f)) {
     sollya_lib_printf("Decomposition of %b succeeded\n", f);
     sollya_lib_printf("h = %b\n", h);
     sollya_lib_printf("derivation order = %d\n", deriv);
     sollya_lib_printf("The function pointer is %s\n", ((func == myownlog) ? "okay" : "wrong"));
     sollya_lib_printf("The data pointer is %s\n", ((ptr == ((void *) (&data))) ? "okay" : "wrong"));
+    sollya_lib_printf("The deallocation function pointer is %s\n", ((((void *) resDealloc) == ((void *) dealloc)) ? "okay" : "wrong"));
     sollya_lib_clear_obj(h);
   } else {
     sollya_lib_printf("Could not decompose %b\n", f);

@@ -9,6 +9,10 @@ typedef struct data_struct_t {
   int  counter;
 } data_t;
 
+void dealloc(void *data) {
+  return;
+}
+
 void euler_gamma(mpfr_t res, mp_prec_t prec, void *ptr) {
   data_t *data;
 
@@ -29,21 +33,23 @@ int main(void) {
   data_t data = { "Hello world", 0 };
   void (*func)(mpfr_t, mp_prec_t, void *);
   void *ptr;
+  void (*resDealloc)(void *);
 
 
   sollya_lib_init();
 
-  f = sollya_lib_libraryconstant_with_data("superconst", euler_gamma, &data);
+  f = sollya_lib_libraryconstant_with_data("superconst", euler_gamma, &data, dealloc);
   sollya_lib_printf("%b (expecting: superconst)\n", f);
   mpfr_init2(x, 30);
   mpfr_init2(y, 50);
   mpfr_set_ui(x, 2, GMP_RNDN);
   sollya_lib_evaluate_function_at_point(y, f, x, NULL);
   sollya_lib_printf("%v (expecting: 0.5772...)\n", y);
-  if (sollya_lib_decompose_libraryconstant_with_data(&func, &ptr, f)) {
+  if (sollya_lib_decompose_libraryconstant_with_data(&func, &ptr, &resDealloc, f)) {
     sollya_lib_printf("Decomposition of %b succeeded\n", f);
     sollya_lib_printf("The function pointer is %s\n", ((func == euler_gamma) ? "okay" : "wrong"));
     sollya_lib_printf("The data pointer is %s\n", ((ptr == ((void *) (&data))) ? "okay" : "wrong"));
+    sollya_lib_printf("The deallocation function pointer is %s\n", ((((void *) resDealloc) == ((void *) dealloc)) ? "okay" : "wrong"));
   } else {
     sollya_lib_printf("Could not decompose %b\n", f);
   }  
@@ -53,10 +59,11 @@ int main(void) {
   mpfr_set_ui(x, 2, GMP_RNDN);
   sollya_lib_evaluate_function_at_point(y, f, x, NULL);
   sollya_lib_printf("%v (expecting: 0.5772...)\n", y);
-  if (sollya_lib_decompose_libraryconstant_with_data(&func, &ptr, f)) {
+  if (sollya_lib_decompose_libraryconstant_with_data(&func, &ptr, &resDealloc, f)) {
     sollya_lib_printf("Decomposition of %b succeeded\n", f);
     sollya_lib_printf("The function pointer is %s\n", ((func == euler_gamma) ? "okay" : "wrong"));
     sollya_lib_printf("The data pointer is %s\n", ((ptr == ((void *) (&data))) ? "okay" : "wrong"));
+    sollya_lib_printf("The deallocation function pointer is %s\n", ((((void *) resDealloc) == ((void *) dealloc)) ? "okay" : "wrong"));
   } else {
     sollya_lib_printf("Could not decompose %b\n", f);
   }  

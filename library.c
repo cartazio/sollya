@@ -570,6 +570,7 @@ libraryFunction *bindFunction(char* libraryName, char *functionName) {
   currFunct->code = (void *) myFunction;
   currFunct->hasData = 0;
   currFunct->data = NULL;
+  currFunct->dealloc = NULL;
 
   libHandle->functionList = addElement(libHandle->functionList,currFunct);
 
@@ -630,7 +631,7 @@ libraryFunction *getFunctionByPtr(void *func, int hasData, void *data) {
   return NULL;
 }
 
-static libraryFunction *__bindFunctionByPtrImpl(char *suggestedName, void *func, int hasData, void *data) {
+static libraryFunction *__bindFunctionByPtrImpl(char *suggestedName, void *func, int hasData, void *data, void *dealloc) {
   libraryFunction *res;
   char *unifiedName, *basename, *filteredSuggestedName, *filteredBaseName;
 
@@ -670,6 +671,7 @@ static libraryFunction *__bindFunctionByPtrImpl(char *suggestedName, void *func,
   res->code = func;
   res->hasData = hasData;
   res->data = data;
+  res->dealloc = dealloc;
 
   globalLibraryFunctions = addElement(globalLibraryFunctions, res);
 
@@ -677,11 +679,11 @@ static libraryFunction *__bindFunctionByPtrImpl(char *suggestedName, void *func,
 }
 
 libraryFunction *bindFunctionByPtr(char *suggestedName, int (*func)(mpfi_t, mpfi_t, int)) {
-  return __bindFunctionByPtrImpl(suggestedName, ((void *) func), 0, NULL);
+  return __bindFunctionByPtrImpl(suggestedName, ((void *) func), 0, NULL, NULL);
 }
 
-libraryFunction *bindFunctionByPtrWithData(char *suggestedName, int (*func)(mpfi_t, mpfi_t, int, void *), void *data) {
-  return __bindFunctionByPtrImpl(suggestedName, ((void *) func), 1, data);
+libraryFunction *bindFunctionByPtrWithData(char *suggestedName, int (*func)(mpfi_t, mpfi_t, int, void *), void *data, void (*dealloc)(void *)) {
+  return __bindFunctionByPtrImpl(suggestedName, ((void *) func), 1, data, ((void *) dealloc));
 }
 
 void freeFunctionLibraries() {
@@ -694,6 +696,13 @@ void freeFunctionLibraries() {
   currFunList = globalLibraryFunctions;
   while (currFunList != NULL) {
     currFunct = (libraryFunction *) currFunList->value;
+    if (currFunct->dealloc != NULL) {
+      if (currFunct->hasData) {
+	((void (*)(void *)) currFunct->dealloc)(currFunct->data);
+      } else {
+	((void (*)()) currFunct->dealloc)();
+      }
+    }
     safeFree(currFunct->functionName);
     safeFree(currFunList->value);
     prevFunList = currFunList;
@@ -717,6 +726,13 @@ void freeFunctionLibraries() {
     currFunList = currLibHandle->functionList;
     while (currFunList != NULL) {
       currFunct = (libraryFunction *) currFunList->value;
+      if (currFunct->dealloc != NULL) {
+	if (currFunct->hasData) {
+	  ((void (*)(void *)) currFunct->dealloc)(currFunct->data);
+	} else {
+	  ((void (*)()) currFunct->dealloc)();
+	}
+      }
       safeFree(currFunct->functionName);
       safeFree(currFunList->value);
       prevFunList = currFunList;
@@ -777,6 +793,7 @@ libraryFunction *bindConstantFunction(char* libraryName, char *functionName) {
   currFunct->code = (void *) myFunction;
   currFunct->hasData = 0;
   currFunct->data = NULL;
+  currFunct->dealloc = NULL;
 
   libHandle->functionList = addElement(libHandle->functionList,currFunct);
 
@@ -837,7 +854,7 @@ libraryFunction *getConstantFunctionByPtr(void *func, int hasData, void *data) {
   return NULL;
 }
 
-static libraryFunction *__bindConstantFunctionByPtrImpl(char *suggestedName, void *func, int hasData, void *data) {
+static libraryFunction *__bindConstantFunctionByPtrImpl(char *suggestedName, void *func, int hasData, void *data, void *dealloc) {
   libraryFunction *res;
   char *unifiedName, *basename, *filteredBaseName, *filteredSuggestedName;
 
@@ -877,6 +894,8 @@ static libraryFunction *__bindConstantFunctionByPtrImpl(char *suggestedName, voi
   res->code = func;
   res->hasData = hasData;
   res->data = data;
+  res->dealloc = dealloc;
+  
 
   globalLibraryConstants = addElement(globalLibraryConstants, res);
 
@@ -884,11 +903,11 @@ static libraryFunction *__bindConstantFunctionByPtrImpl(char *suggestedName, voi
 }
 
 libraryFunction *bindConstantFunctionByPtr(char *suggestedName, void (*func)(mpfr_t, mp_prec_t)) {
-  return __bindConstantFunctionByPtrImpl(suggestedName, ((void *) func), 0, NULL);
+  return __bindConstantFunctionByPtrImpl(suggestedName, ((void *) func), 0, NULL, NULL);
 }
 
-libraryFunction *bindConstantFunctionByPtrWithData(char *suggestedName, void (*func)(mpfr_t, mp_prec_t, void *), void *data) {
-  return __bindConstantFunctionByPtrImpl(suggestedName, ((void *) func), 1, data);
+libraryFunction *bindConstantFunctionByPtrWithData(char *suggestedName, void (*func)(mpfr_t, mp_prec_t, void *), void *data, void (*dealloc)(void *)) {
+  return __bindConstantFunctionByPtrImpl(suggestedName, ((void *) func), 1, data, ((void *) dealloc));
 }
 
 void freeConstantLibraries() {
@@ -901,6 +920,13 @@ void freeConstantLibraries() {
   currFunList = globalLibraryConstants;
   while (currFunList != NULL) {
     currFunct = (libraryFunction *) currFunList->value;
+    if (currFunct->dealloc != NULL) {
+      if (currFunct->hasData) {
+	((void (*)(void *)) currFunct->dealloc)(currFunct->data);
+      } else {
+	((void (*)()) currFunct->dealloc)();
+      }
+    }
     safeFree(currFunct->functionName);
     safeFree(currFunList->value);
     prevFunList = currFunList;
@@ -924,6 +950,13 @@ void freeConstantLibraries() {
     currFunList = currLibHandle->functionList;
     while (currFunList != NULL) {
       currFunct = (libraryFunction *) currFunList->value;
+      if (currFunct->dealloc != NULL) {
+	if (currFunct->hasData) {
+	  ((void (*)(void *)) currFunct->dealloc)(currFunct->data);
+	} else {
+	  ((void (*)()) currFunct->dealloc)();
+	}
+      }
       safeFree(currFunct->functionName);
       safeFree(currFunList->value);
       prevFunList = currFunList;
@@ -977,6 +1010,7 @@ libraryProcedure *bindProcedure(char* libraryName, char *procedureName, chain *s
   currProc->signature = copyChainWithoutReversal(signature, copyIntPtrOnVoid);
   currProc->hasData = 0;
   currProc->data = NULL;
+  currProc->dealloc = NULL;
 
 
   libHandle->functionList = addElement(libHandle->functionList,currProc);
@@ -1038,7 +1072,7 @@ libraryProcedure *getProcedureByPtr(void *ptr, int hasData, void *data) {
   return NULL;
 }
 
-static libraryProcedure *__bindProcedureByPtrImpl(int resType, int *argTypes, int arity, char *suggestedName, void *func, int hasData, void *data) {
+static libraryProcedure *__bindProcedureByPtrImpl(int resType, int *argTypes, int arity, char *suggestedName, void *func, int hasData, void *data, void *dealloc) {
   libraryProcedure *res;
   char *unifiedName, *basename, *filteredBaseName, *filteredSuggestedName;
   chain *signature, *temp;
@@ -1109,6 +1143,7 @@ static libraryProcedure *__bindProcedureByPtrImpl(int resType, int *argTypes, in
   res->signature = signature;
   res->hasData = hasData;
   res->data = data;
+  res->dealloc = dealloc;
 
   globalLibraryProcedures = addElement(globalLibraryProcedures, res);
 
@@ -1116,11 +1151,11 @@ static libraryProcedure *__bindProcedureByPtrImpl(int resType, int *argTypes, in
 }
 
 libraryProcedure *bindProcedureByPtr(int resType, int *argTypes, int arity, char *suggestedName, void *func) {
-  return __bindProcedureByPtrImpl(resType, argTypes, arity, suggestedName, func, 0, NULL);
+  return __bindProcedureByPtrImpl(resType, argTypes, arity, suggestedName, func, 0, NULL, NULL);
 }
 
-libraryProcedure *bindProcedureByPtrWithData(int resType, int *argTypes, int arity, char *suggestedName, void *func, void *data) {
-  return __bindProcedureByPtrImpl(resType, argTypes, arity, suggestedName, func, 1, data);
+libraryProcedure *bindProcedureByPtrWithData(int resType, int *argTypes, int arity, char *suggestedName, void *func, void *data, void (*dealloc)(void *)) {
+  return __bindProcedureByPtrImpl(resType, argTypes, arity, suggestedName, func, 1, data, ((void *) dealloc));
 }
 
 void freeProcLibraries() {
@@ -1133,6 +1168,13 @@ void freeProcLibraries() {
   currProcList = globalLibraryProcedures;
   while (currProcList != NULL) {
     currProc = (libraryProcedure *) currProcList->value;
+    if (currProc->dealloc != NULL) {
+      if (currProc->hasData) {
+	((void (*)(void *)) currProc->dealloc)(currProc->data);
+      } else {
+	((void (*)()) currProc->dealloc)();
+      }
+    }
     safeFree(currProc->procedureName);
     freeChain(currProc->signature,freeIntPtr);
     safeFree(currProcList->value);
@@ -1157,6 +1199,13 @@ void freeProcLibraries() {
     currProcList = currLibHandle->functionList;
     while (currProcList != NULL) {
       currProc = (libraryProcedure *) currProcList->value;
+      if (currProc->dealloc != NULL) {
+	if (currProc->hasData) {
+	  ((void (*)(void *)) currProc->dealloc)(currProc->data);
+	} else {
+	  ((void (*)()) currProc->dealloc)();
+	}
+      }
       safeFree(currProc->procedureName);
       freeChain(currProc->signature,freeIntPtr);
       safeFree(currProcList->value);

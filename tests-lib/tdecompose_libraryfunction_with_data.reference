@@ -6,6 +6,7 @@ h = sin(_x_^2)^2 / 3
 derivation order = 0
 The function pointer is okay
 The data pointer is okay
+The deallocation function pointer is okay
 (diff(superfunc))(sin(_x_)) * cos(_x_) (expecting: (diff(superfunc))(sin(_x_)) * cos(_x_))
 diff(superfunc) (expecting: diff(superfunc))
 >>>>Hello world<<<<>>>>1<<<<
@@ -15,3 +16,4 @@ h = _x_
 derivation order = 1
 The function pointer is okay
 The data pointer is okay
+The deallocation function pointer is okay

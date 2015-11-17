@@ -5,6 +5,7 @@ succ
 sollya_lib_decompose_externalprocedure_with_data has worked on "succ": arity = 1, result type = integer, argument types = integer 
 The function pointer is okay
 The data pointer is okay
+The deallocation function pointer is okay
 Trying out the function
 >>>>Grias Eahna Good.<<<<>>>>17<<<<
 The function has signaled success, the result is 43, the data counter is 18
@@ -14,6 +15,7 @@ The behavior when no name is suggested is conform to the semantic
 sollya_lib_decompose_externalprocedure_with_data has worked: arity = 1, result type = integer, argument types = integer 
 The function pointer is okay
 The data pointer is okay
+The deallocation function pointer is okay
 Trying out the function
 >>>>Grias Eahna Good.<<<<>>>>18<<<<
 The function has signaled success, the result is 43, the data counter is 19
@@ -26,6 +28,7 @@ true
 sollya_lib_decompose_externalprocedure_with_data has worked on "strange_proc": arity = 3, result type = boolean, argument types = string integer constant 
 The function pointer is okay
 The data pointer is okay
+The deallocation function pointer is okay
 Trying out the function
 >>>>Grias Eahna Good.<<<<>>>>19<<<<
 >>>Hello world<<<>>>42<<<>>>1664<<<
@@ -38,6 +41,7 @@ false
 sollya_lib_decompose_externalprocedure_with_data has worked: arity = 3, result type = boolean, argument types = string integer constant 
 The function pointer is okay
 The data pointer is okay
+The deallocation function pointer is okay
 Trying out the function
 >>>>Grias Eahna Good.<<<<>>>>20<<<<
 >>>Hello world<<<>>>42<<<>>>1664<<<

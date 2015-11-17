@@ -47,6 +47,10 @@ char *externalprocTypeToString(sollya_externalprocedure_type_t t) {
   return "unknown";
 }
 
+void dealloc(void *data) {
+  return;
+}
+
 int successor_impl(int a) {
   return a + 1;
 }
@@ -123,11 +127,12 @@ int main(void) {
   int result;
   void *args[3];
   mpfr_t myMpfr;
+  void (*resDealloc)(void *);
   
   sollya_lib_init();
 
   argTypes[0] = SOLLYA_EXTERNALPROC_TYPE_INTEGER;
-  f[0] = sollya_lib_externalprocedure_with_data(SOLLYA_EXTERNALPROC_TYPE_INTEGER, argTypes, 1, "succ", successor, &data);
+  f[0] = sollya_lib_externalprocedure_with_data(SOLLYA_EXTERNALPROC_TYPE_INTEGER, argTypes, 1, "succ", successor, &data, NULL);
   sollya_lib_printf("%b\n", f[0]);
   sollya_lib_autoprint(f[0], NULL);
   f[1] = SOLLYA_CONST_SI64(16);
@@ -135,7 +140,7 @@ int main(void) {
   sollya_lib_printf("%b\n", f[2]);
 
   argument_types = NULL;
-  res = sollya_lib_decompose_externalprocedure_with_data(&result_type, &argument_types, &arity, &func, &resData, f[0]);
+  res = sollya_lib_decompose_externalprocedure_with_data(&result_type, &argument_types, &arity, &func, &resData, &resDealloc, f[0]);
   if (res) {
     sollya_lib_printf("sollya_lib_decompose_externalprocedure_with_data has worked on \"%b\": arity = %d, result type = %s, argument types = ", f[0], arity, externalprocTypeToString(result_type));
     for (i=0;i<arity;i++) {
@@ -144,6 +149,7 @@ int main(void) {
     sollya_lib_printf("\n");
     sollya_lib_printf("The function pointer is %s\n", ((((void *) func) == ((void *) successor)) ? "okay" : "wrong"));
     sollya_lib_printf("The data pointer is %s\n", ((resData == ((void *) (&data))) ? "okay" : "wrong"));
+    sollya_lib_printf("The deallocation function pointer is %s\n", ((((void *) resDealloc) == NULL) ? "okay" : "wrong"));
     if ((arity == 1) &&
 	(result_type == SOLLYA_EXTERNALPROC_TYPE_INTEGER) &&
 	(argument_types[0] == SOLLYA_EXTERNALPROC_TYPE_INTEGER)) {
@@ -157,7 +163,7 @@ int main(void) {
   }
 
   argTypes[0] = SOLLYA_EXTERNALPROC_TYPE_INTEGER;
-  f[3] = sollya_lib_externalprocedure_with_data(SOLLYA_EXTERNALPROC_TYPE_INTEGER, argTypes, 1, NULL, successor_bis, &data);
+  f[3] = sollya_lib_externalprocedure_with_data(SOLLYA_EXTERNALPROC_TYPE_INTEGER, argTypes, 1, NULL, successor_bis, &data, dealloc);
   sollya_lib_sprintf(str1, "%b", f[3]);
   sollya_lib_sprintf(str2, "proc_%p_%p", successor_bis, &data);
   sollya_lib_sprintf(str3, "%s_%p", "successor_bis", &data);
@@ -171,7 +177,7 @@ int main(void) {
   sollya_lib_printf("%b\n", f[5]);
 
   argument_types = NULL;
-  res = sollya_lib_decompose_externalprocedure_with_data(&result_type, &argument_types, &arity, &func, &resData, f[3]);
+  res = sollya_lib_decompose_externalprocedure_with_data(&result_type, &argument_types, &arity, &func, &resData, &resDealloc, f[3]);
   if (res) {
     sollya_lib_printf("sollya_lib_decompose_externalprocedure_with_data has worked: arity = %d, result type = %s, argument types = ", arity, externalprocTypeToString(result_type));
     for (i=0;i<arity;i++) {
@@ -180,6 +186,7 @@ int main(void) {
     sollya_lib_printf("\n");
     sollya_lib_printf("The function pointer is %s\n", ((((void *) func) == ((void *) successor_bis)) ? "okay" : "wrong"));
     sollya_lib_printf("The data pointer is %s\n", ((resData == ((void *) (&data))) ? "okay" : "wrong"));
+    sollya_lib_printf("The deallocation function pointer is %s\n", ((((void *) resDealloc) == ((void *) dealloc)) ? "okay" : "wrong"));
     if ((arity == 1) &&
 	(result_type == SOLLYA_EXTERNALPROC_TYPE_INTEGER) &&
 	(argument_types[0] == SOLLYA_EXTERNALPROC_TYPE_INTEGER)) {
@@ -195,7 +202,7 @@ int main(void) {
   argTypes[0] = SOLLYA_EXTERNALPROC_TYPE_STRING;
   argTypes[1] = SOLLYA_EXTERNALPROC_TYPE_INTEGER;
   argTypes[2] = SOLLYA_EXTERNALPROC_TYPE_CONSTANT;
-  f[6] = sollya_lib_externalprocedure_with_data(SOLLYA_EXTERNALPROC_TYPE_BOOLEAN, argTypes, 3, "strange_proc", strange, &data);
+  f[6] = sollya_lib_externalprocedure_with_data(SOLLYA_EXTERNALPROC_TYPE_BOOLEAN, argTypes, 3, "strange_proc", strange, &data, dealloc);
   sollya_lib_printf("%b\n", f[6]);
   sollya_lib_autoprint(f[6], NULL);
   f[7] = sollya_lib_string("Coucou");
@@ -205,7 +212,7 @@ int main(void) {
   sollya_lib_printf("%b\n", f[10]);
 
   argument_types = NULL;
-  res = sollya_lib_decompose_externalprocedure_with_data(&result_type, &argument_types, &arity, &func, &resData, f[6]);
+  res = sollya_lib_decompose_externalprocedure_with_data(&result_type, &argument_types, &arity, &func, &resData, &resDealloc, f[6]);
   if (res) {
     sollya_lib_printf("sollya_lib_decompose_externalprocedure_with_data has worked on \"%b\": arity = %d, result type = %s, argument types = ", f[6], arity, externalprocTypeToString(result_type));
     for (i=0;i<arity;i++) {
@@ -214,6 +221,7 @@ int main(void) {
     sollya_lib_printf("\n");
     sollya_lib_printf("The function pointer is %s\n", ((((void *) func) == ((void *) strange)) ? "okay" : "wrong"));
     sollya_lib_printf("The data pointer is %s\n", ((resData == ((void *) (&data))) ? "okay" : "wrong"));
+    sollya_lib_printf("The deallocation function pointer is %s\n", ((((void *) resDealloc) == ((void *) dealloc)) ? "okay" : "wrong"));
     if ((arity == 3) &&
 	(result_type == SOLLYA_EXTERNALPROC_TYPE_BOOLEAN) &&
 	(argument_types[0] == SOLLYA_EXTERNALPROC_TYPE_STRING) &&
@@ -236,7 +244,7 @@ int main(void) {
   argTypes[0] = SOLLYA_EXTERNALPROC_TYPE_STRING;
   argTypes[1] = SOLLYA_EXTERNALPROC_TYPE_INTEGER;
   argTypes[2] = SOLLYA_EXTERNALPROC_TYPE_CONSTANT;
-  f[11] = sollya_lib_externalprocedure_with_data(SOLLYA_EXTERNALPROC_TYPE_BOOLEAN, argTypes, 3, NULL, strange_bis, &data);
+  f[11] = sollya_lib_externalprocedure_with_data(SOLLYA_EXTERNALPROC_TYPE_BOOLEAN, argTypes, 3, NULL, strange_bis, &data, dealloc);
   sollya_lib_sprintf(str1, "%b", f[11]);
   sollya_lib_sprintf(str2, "proc_%p_%p", strange_bis, &data);
   sollya_lib_sprintf(str3, "%s_%p", "strange_bis", &data);
@@ -252,7 +260,7 @@ int main(void) {
   sollya_lib_printf("%b\n", f[15]);
 
   argument_types = NULL;
-  res = sollya_lib_decompose_externalprocedure_with_data(&result_type, &argument_types, &arity, &func, &resData, f[11]);
+  res = sollya_lib_decompose_externalprocedure_with_data(&result_type, &argument_types, &arity, &func, &resData, &resDealloc, f[11]);
   if (res) {
     sollya_lib_printf("sollya_lib_decompose_externalprocedure_with_data has worked: arity = %d, result type = %s, argument types = ", arity, externalprocTypeToString(result_type));
     for (i=0;i<arity;i++) {
@@ -261,6 +269,7 @@ int main(void) {
     sollya_lib_printf("\n");
     sollya_lib_printf("The function pointer is %s\n", ((((void *) func) == ((void *) strange_bis)) ? "okay" : "wrong"));
     sollya_lib_printf("The data pointer is %s\n", ((resData == ((void *) (&data))) ? "okay" : "wrong"));
+    sollya_lib_printf("The deallocation function pointer is %s\n", ((((void *) resDealloc) == ((void *) dealloc)) ? "okay" : "wrong"));
     if ((arity == 3) &&
 	(result_type == SOLLYA_EXTERNALPROC_TYPE_BOOLEAN) &&
 	(argument_types[0] == SOLLYA_EXTERNALPROC_TYPE_STRING) &&

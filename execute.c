@@ -5425,6 +5425,12 @@ int isExternalProcedureUsage(node *tree) {
   return 0;
 }
 
+int isLibraryConstant(node *tree) {
+  if (tree->nodeType == MEMREF) return isLibraryConstant(getMemRefChild(tree));
+  if (tree->nodeType == LIBRARYCONSTANT) return 1;
+  return 0;
+}
+
 int isProcedure(node *tree) {
   if (tree->nodeType == MEMREF) return isProcedure(getMemRefChild(tree));
   if (tree->nodeType == PROC) return 1;

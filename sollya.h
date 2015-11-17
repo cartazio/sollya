@@ -575,9 +575,9 @@ extern "C" {
   sollya_obj_t sollya_lib_libraryconstant(char *, void (*)(mpfr_t, mp_prec_t));
   sollya_obj_t sollya_lib_libraryfunction(sollya_obj_t, char *, int (*)(mpfi_t, mpfi_t, int));
   sollya_obj_t sollya_lib_externalprocedure(sollya_externalprocedure_type_t, sollya_externalprocedure_type_t *, int, char *, void *);
-  sollya_obj_t sollya_lib_libraryconstant_with_data(char *, void (*)(mpfr_t, mp_prec_t, void *), void *);
-  sollya_obj_t sollya_lib_libraryfunction_with_data(sollya_obj_t, char *, int (*)(mpfi_t, mpfi_t, int, void *), void *);
-  sollya_obj_t sollya_lib_externalprocedure_with_data(sollya_externalprocedure_type_t, sollya_externalprocedure_type_t *, int, char *, void *, void *);
+  sollya_obj_t sollya_lib_libraryconstant_with_data(char *, void (*)(mpfr_t, mp_prec_t, void *), void *, void (*)(void *));
+  sollya_obj_t sollya_lib_libraryfunction_with_data(sollya_obj_t, char *, int (*)(mpfi_t, mpfi_t, int, void *), void *, void (*)(void *));
+  sollya_obj_t sollya_lib_externalprocedure_with_data(sollya_externalprocedure_type_t, sollya_externalprocedure_type_t *, int, char *, void *, void *, void (*)(void *));
   sollya_obj_t sollya_lib_procedurefunction(sollya_obj_t, sollya_obj_t);
 
 
@@ -648,6 +648,7 @@ extern "C" {
   int sollya_lib_obj_is_error(sollya_obj_t);
   int sollya_lib_obj_is_structure(sollya_obj_t);
   int sollya_lib_obj_is_procedure(sollya_obj_t);
+  int sollya_lib_obj_is_externalprocedure(sollya_obj_t);
 
   /* Functions to decompose Sollya objects that represent mathematical
      functions.
@@ -689,9 +690,9 @@ extern "C" {
   int sollya_lib_decompose_libraryfunction(int (**)(mpfi_t, mpfi_t, int), int *, sollya_obj_t *, sollya_obj_t);
   int sollya_lib_decompose_libraryconstant(void (**)(mpfr_t, mp_prec_t), sollya_obj_t);
   int sollya_lib_decompose_externalprocedure(sollya_externalprocedure_type_t *, sollya_externalprocedure_type_t **, int *, void **, sollya_obj_t);
-  int sollya_lib_decompose_libraryfunction_with_data(int (**)(mpfi_t, mpfi_t, int, void *), int *, sollya_obj_t *, void **, sollya_obj_t);
-  int sollya_lib_decompose_libraryconstant_with_data(void (**)(mpfr_t, mp_prec_t, void *), void **, sollya_obj_t);
-  int sollya_lib_decompose_externalprocedure_with_data(sollya_externalprocedure_type_t *, sollya_externalprocedure_type_t **, int *, void **, void **, sollya_obj_t);
+  int sollya_lib_decompose_libraryfunction_with_data(int (**)(mpfi_t, mpfi_t, int, void *), int *, sollya_obj_t *, void **, void (**)(void *), sollya_obj_t);
+  int sollya_lib_decompose_libraryconstant_with_data(void (**)(mpfr_t, mp_prec_t, void *), void **, void (**)(void *), sollya_obj_t);
+  int sollya_lib_decompose_externalprocedure_with_data(sollya_externalprocedure_type_t *, sollya_externalprocedure_type_t **, int *, void **, void **, void (**)(void *), sollya_obj_t);
   int sollya_lib_decompose_procedurefunction(sollya_obj_t *, int *, sollya_obj_t *, sollya_obj_t);
   
   /* A function to compute a hash value on Sollya objects 
@@ -768,6 +769,7 @@ extern "C" {
   int sollya_lib_is_double_double_obj(sollya_obj_t);
   int sollya_lib_is_triple_double_obj(sollya_obj_t);
   int sollya_lib_is_pi(sollya_obj_t);
+  int sollya_lib_is_libraryconstant(sollya_obj_t);
 
   /* Functions to evaluate Sollya objects that are mathematical
      functions at points, over intervals or at points given by constant expressions
@@ -898,8 +900,8 @@ extern "C" {
   sollya_obj_t sollya_lib_build_function_pi();
   sollya_obj_t sollya_lib_build_function_libraryconstant(char *, void (*)(mpfr_t, mp_prec_t));
   sollya_obj_t sollya_lib_build_function_libraryfunction(sollya_obj_t, char *, int (*)(mpfi_t, mpfi_t, int));
-  sollya_obj_t sollya_lib_build_function_libraryconstant_with_data(char *, void (*)(mpfr_t, mp_prec_t, void *), void *);
-  sollya_obj_t sollya_lib_build_function_libraryfunction_with_data(sollya_obj_t, char *, int (*)(mpfi_t, mpfi_t, int, void *), void *);
+  sollya_obj_t sollya_lib_build_function_libraryconstant_with_data(char *, void (*)(mpfr_t, mp_prec_t, void *), void *, void (*)(void *));
+  sollya_obj_t sollya_lib_build_function_libraryfunction_with_data(sollya_obj_t, char *, int (*)(mpfi_t, mpfi_t, int, void *), void *, void (*)(void *));
   sollya_obj_t sollya_lib_build_function_procedurefunction(sollya_obj_t, sollya_obj_t);
 
   /* Macros provided as shortcuts to functions sollya_lib_build_function_* */

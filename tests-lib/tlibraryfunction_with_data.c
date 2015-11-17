@@ -101,7 +101,7 @@ int main(void) {
   sollya_lib_init();
   X = sollya_lib_free_variable();
 
-  f = sollya_lib_libraryfunction_with_data(X, "superfunc", myownlog, &data);
+  f = sollya_lib_libraryfunction_with_data(X, "superfunc", myownlog, &data, NULL);
   sollya_lib_printf("%b (expecting: superfunc)\n", f);
   mpfr_init2(x, 30);
   mpfr_init2(y, 50);

@@ -78,7 +78,7 @@ int main(void) {
   sollya_lib_init();
 
   argTypes[0] = SOLLYA_EXTERNALPROC_TYPE_INTEGER;
-  f[0] = sollya_lib_externalprocedure_with_data(SOLLYA_EXTERNALPROC_TYPE_INTEGER, argTypes, 1, "succ", successor, &data);
+  f[0] = sollya_lib_externalprocedure_with_data(SOLLYA_EXTERNALPROC_TYPE_INTEGER, argTypes, 1, "succ", successor, &data, NULL);
   sollya_lib_printf("%b\n", f[0]);
   sollya_lib_autoprint(f[0], NULL);
   f[1] = SOLLYA_CONST_SI64(16);
@@ -86,7 +86,7 @@ int main(void) {
   sollya_lib_printf("%b\n", f[2]);
 
   argTypes[0] = SOLLYA_EXTERNALPROC_TYPE_INTEGER;
-  f[3] = sollya_lib_externalprocedure_with_data(SOLLYA_EXTERNALPROC_TYPE_INTEGER, argTypes, 1, NULL, successor_bis, &data);
+  f[3] = sollya_lib_externalprocedure_with_data(SOLLYA_EXTERNALPROC_TYPE_INTEGER, argTypes, 1, NULL, successor_bis, &data, NULL);
   sollya_lib_sprintf(str1, "%b", f[3]);
   sollya_lib_sprintf(str2, "proc_%p_%p", successor_bis, &data);
   sollya_lib_sprintf(str3, "%s_%p", "successor_bis", &data);
@@ -102,7 +102,7 @@ int main(void) {
   argTypes[0] = SOLLYA_EXTERNALPROC_TYPE_STRING;
   argTypes[1] = SOLLYA_EXTERNALPROC_TYPE_INTEGER;
   argTypes[2] = SOLLYA_EXTERNALPROC_TYPE_CONSTANT;
-  f[6] = sollya_lib_externalprocedure_with_data(SOLLYA_EXTERNALPROC_TYPE_BOOLEAN, argTypes, 3, "strange_proc", strange, &data);
+  f[6] = sollya_lib_externalprocedure_with_data(SOLLYA_EXTERNALPROC_TYPE_BOOLEAN, argTypes, 3, "strange_proc", strange, &data, NULL);
   sollya_lib_printf("%b\n", f[6]);
   sollya_lib_autoprint(f[6], NULL);
   f[7] = sollya_lib_string("Coucou");
@@ -114,7 +114,7 @@ int main(void) {
   argTypes[0] = SOLLYA_EXTERNALPROC_TYPE_STRING;
   argTypes[1] = SOLLYA_EXTERNALPROC_TYPE_INTEGER;
   argTypes[2] = SOLLYA_EXTERNALPROC_TYPE_CONSTANT;
-  f[6] = sollya_lib_externalprocedure_with_data(SOLLYA_EXTERNALPROC_TYPE_BOOLEAN, argTypes, 3, NULL, strange_bis, &data);
+  f[6] = sollya_lib_externalprocedure_with_data(SOLLYA_EXTERNALPROC_TYPE_BOOLEAN, argTypes, 3, NULL, strange_bis, &data, NULL);
   sollya_lib_sprintf(str1, "%b", f[6]);
   sollya_lib_sprintf(str2, "proc_%p_%p", strange_bis, &data);
   sollya_lib_sprintf(str3, "%s_%p", "strange_bis", &data);

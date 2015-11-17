@@ -1840,17 +1840,17 @@ sollya_obj_t sollya_lib_libraryfunction(sollya_obj_t obj1, char *name, int (*fun
   return evaluatedThing;
 }
 
-sollya_obj_t sollya_lib_libraryconstant_with_data(char *name, void (*func)(mpfr_t, mp_prec_t, void *), void *data) {
+sollya_obj_t sollya_lib_libraryconstant_with_data(char *name, void (*func)(mpfr_t, mp_prec_t, void *), void *data, void (*dealloc)(void *)) {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = sollya_lib_build_function_libraryconstant_with_data(name, func, data);
+  thingToEvaluate = sollya_lib_build_function_libraryconstant_with_data(name, func, data, dealloc);
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
 }
 
-sollya_obj_t sollya_lib_libraryfunction_with_data(sollya_obj_t obj1, char *name, int (*func)(mpfi_t, mpfi_t, int, void *), void *data) {
+sollya_obj_t sollya_lib_libraryfunction_with_data(sollya_obj_t obj1, char *name, int (*func)(mpfi_t, mpfi_t, int, void *), void *data, void (*dealloc)(void *)) {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = sollya_lib_build_function_libraryfunction_with_data(copyThing(obj1),name,func,data);
+  thingToEvaluate = sollya_lib_build_function_libraryfunction_with_data(copyThing(obj1),name,func,data,dealloc);
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -3849,9 +3849,9 @@ int sollya_lib_decompose_libraryfunction(int (**func)(mpfi_t, mpfi_t, int), int 
   return 1;
 }
 
-int sollya_lib_decompose_libraryfunction_with_data(int (**func)(mpfi_t, mpfi_t, int, void *), int *deriv, sollya_obj_t *sub_func, void **data, sollya_obj_t obj) {
+int sollya_lib_decompose_libraryfunction_with_data(int (**func)(mpfi_t, mpfi_t, int, void *), int *deriv, sollya_obj_t *sub_func, void **data, void (**dealloc)(void *), sollya_obj_t obj) {
 
-  if (obj->nodeType == MEMREF) return sollya_lib_decompose_libraryfunction_with_data(func, deriv, sub_func, data, getMemRefChild(obj));
+  if (obj->nodeType == MEMREF) return sollya_lib_decompose_libraryfunction_with_data(func, deriv, sub_func, data, dealloc, getMemRefChild(obj));
 
   if (obj->nodeType != LIBRARYFUNCTION) return 0;
 
@@ -3868,6 +3868,9 @@ int sollya_lib_decompose_libraryfunction_with_data(int (**func)(mpfi_t, mpfi_t, 
   }
   if (data != NULL) {
     *data = obj->libFun->data;
+  }
+  if (dealloc != NULL) {
+    *dealloc = obj->libFun->dealloc;
   }
 
   return 1;
@@ -3888,9 +3891,9 @@ int sollya_lib_decompose_libraryconstant(void (**func)(mpfr_t, mp_prec_t), solly
   return 1;
 }
 
-int sollya_lib_decompose_libraryconstant_with_data(void (**func)(mpfr_t, mp_prec_t, void *), void **data, sollya_obj_t obj) {
+int sollya_lib_decompose_libraryconstant_with_data(void (**func)(mpfr_t, mp_prec_t, void *), void **data, void (**dealloc)(void *), sollya_obj_t obj) {
 
-  if (obj->nodeType == MEMREF) return sollya_lib_decompose_libraryconstant_with_data(func, data, getMemRefChild(obj));
+  if (obj->nodeType == MEMREF) return sollya_lib_decompose_libraryconstant_with_data(func, data, dealloc, getMemRefChild(obj));
 
   if (obj->nodeType != LIBRARYCONSTANT) return 0;
 
@@ -3901,6 +3904,9 @@ int sollya_lib_decompose_libraryconstant_with_data(void (**func)(mpfr_t, mp_prec
   }
   if (data != NULL) {
     *data = obj->libFun->data;
+  }
+  if (dealloc != NULL) {
+    *dealloc = obj->libFun->dealloc;
   }
 
   return 1;
@@ -4053,7 +4059,7 @@ int sollya_lib_decompose_externalprocedure(sollya_externalprocedure_type_t *resT
   return 1;
 }
 
-int sollya_lib_decompose_externalprocedure_with_data(sollya_externalprocedure_type_t *resType, sollya_externalprocedure_type_t **argTypes, int *arity, void **func, void **data, sollya_obj_t obj) {
+int sollya_lib_decompose_externalprocedure_with_data(sollya_externalprocedure_type_t *resType, sollya_externalprocedure_type_t **argTypes, int *arity, void **func, void **data, void (**dealloc)(void *), sollya_obj_t obj) {
   sollya_externalprocedure_type_t myResType;
   sollya_externalprocedure_type_t *myArgTypes;
   sollya_externalprocedure_type_t t;
@@ -4061,7 +4067,7 @@ int sollya_lib_decompose_externalprocedure_with_data(sollya_externalprocedure_ty
   int myArity;
   int i;
   
-  if (obj->nodeType == MEMREF) return sollya_lib_decompose_externalprocedure_with_data(resType, argTypes, arity, func, data, getMemRefChild(obj));
+  if (obj->nodeType == MEMREF) return sollya_lib_decompose_externalprocedure_with_data(resType, argTypes, arity, func, data, dealloc, getMemRefChild(obj));
 
   if (obj->nodeType != EXTERNALPROCEDUREUSAGE) return 0;
   if (!(obj->libProc->hasData)) return 0;
@@ -4198,6 +4204,9 @@ int sollya_lib_decompose_externalprocedure_with_data(sollya_externalprocedure_ty
     } else {
       safeFree(myArgTypes);
     }
+  }
+  if (dealloc != NULL) {
+    *dealloc = obj->libProc->dealloc;
   }
 
   return 1;
@@ -4356,6 +4365,14 @@ int sollya_lib_obj_is_structure(sollya_obj_t obj1) {
 
 int sollya_lib_obj_is_procedure(sollya_obj_t obj1) {
   return isProcedure(obj1);
+}
+
+int sollya_lib_obj_is_externalprocedure(sollya_obj_t obj1) {
+  return isExternalProcedureUsage(obj1);
+}
+
+int sollya_lib_is_libraryconstant(sollya_obj_t obj1) {
+  return isLibraryConstant(obj1);
 }
 
 uint64_t sollya_lib_hash(sollya_obj_t obj1) {
@@ -5076,7 +5093,7 @@ sollya_obj_t sollya_lib_externalprocedure(sollya_externalprocedure_type_t res_ty
   return evaluatedExternalProcedure;
 }
 
-sollya_obj_t sollya_lib_externalprocedure_with_data(sollya_externalprocedure_type_t res_type, sollya_externalprocedure_type_t *arg_types, int arity, char *name, void *func, void *data) {
+sollya_obj_t sollya_lib_externalprocedure_with_data(sollya_externalprocedure_type_t res_type, sollya_externalprocedure_type_t *arg_types, int arity, char *name, void *func, void *data, void (*dealloc)(void *)) {
   libraryProcedure *libProc;
   int resType;
   int *argTypes;
@@ -5191,7 +5208,7 @@ sollya_obj_t sollya_lib_externalprocedure_with_data(sollya_externalprocedure_typ
     argTypes[i] = t;
   }
 
-  libProc = bindProcedureByPtrWithData(resType, argTypes, arity, name, func, data);
+  libProc = bindProcedureByPtrWithData(resType, argTypes, arity, name, func, data, dealloc);
 
   safeFree(argTypes);
   
@@ -5668,11 +5685,11 @@ sollya_obj_t sollya_lib_build_function_libraryfunction(sollya_obj_t obj1, char *
   return addMemRef(res);
 }
 
-sollya_obj_t sollya_lib_build_function_libraryconstant_with_data(char *name, void (*func)(mpfr_t, mp_prec_t, void *), void *data) {
+sollya_obj_t sollya_lib_build_function_libraryconstant_with_data(char *name, void (*func)(mpfr_t, mp_prec_t, void *), void *data, void (*dealloc)(void *)) {
   libraryFunction *libFunc;
   node *res;
 
-  libFunc = bindConstantFunctionByPtrWithData(name, func, data);
+  libFunc = bindConstantFunctionByPtrWithData(name, func, data, dealloc);
   res = (node *) safeMalloc(sizeof(node));
   res->nodeType = LIBRARYCONSTANT;
   res->libFun = libFunc;
@@ -5680,11 +5697,11 @@ sollya_obj_t sollya_lib_build_function_libraryconstant_with_data(char *name, voi
   return addMemRef(res);
 }
 
-sollya_obj_t sollya_lib_build_function_libraryfunction_with_data(sollya_obj_t obj1, char *name, int (*func)(mpfi_t, mpfi_t, int, void *), void *data) {
+sollya_obj_t sollya_lib_build_function_libraryfunction_with_data(sollya_obj_t obj1, char *name, int (*func)(mpfi_t, mpfi_t, int, void *), void *data, void (*dealloc)(void *)) {
   libraryFunction *libFunc;
   node *res;
 
-  libFunc = bindFunctionByPtrWithData(name, func, data);
+  libFunc = bindFunctionByPtrWithData(name, func, data, dealloc);
   res = (node *) safeMalloc(sizeof(node));
   res->nodeType = LIBRARYFUNCTION;
   res->libFun = libFunc;

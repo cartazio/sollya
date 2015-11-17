@@ -30,7 +30,7 @@ int main(void) {
 
   sollya_lib_init();
 
-  f = sollya_lib_build_function_libraryconstant_with_data("superconst", euler_gamma, &data);
+  f = sollya_lib_build_function_libraryconstant_with_data("superconst", euler_gamma, &data, NULL);
   sollya_lib_printf("%b (expecting: superconst)\n", f);
   mpfr_init2(x, 30);
   mpfr_init2(y, 50);

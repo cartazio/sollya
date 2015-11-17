@@ -79,6 +79,7 @@ struct libraryFunctionStruct
   void *code;
   int hasData;
   void *data;
+  void *dealloc;
 };
 
 typedef struct libraryProcedureStruct libraryProcedure;
@@ -89,6 +90,7 @@ struct libraryProcedureStruct
   chain *signature;
   int hasData;
   void *data;
+  void *dealloc;
 };
 
 #define VOID_TYPE 0
@@ -119,9 +121,9 @@ void freeProcLibraries();
 libraryFunction *bindFunctionByPtr(char *suggestedName, int (*func)(mpfi_t, mpfi_t, int));
 libraryFunction *bindConstantFunctionByPtr(char *suggestedName, void (*func)(mpfr_t, mp_prec_t));
 libraryProcedure *bindProcedureByPtr(int resType, int *argTypes, int arity, char *suggestedName, void *func);
-libraryFunction *bindFunctionByPtrWithData(char *suggestedName, int (*func)(mpfi_t, mpfi_t, int, void *), void *data);
-libraryFunction *bindConstantFunctionByPtrWithData(char *suggestedName, void (*func)(mpfr_t, mp_prec_t, void *), void *data);
-libraryProcedure *bindProcedureByPtrWithData(int resType, int *argTypes, int arity, char *suggestedName, void *func, void *data);
+libraryFunction *bindFunctionByPtrWithData(char *suggestedName, int (*func)(mpfi_t, mpfi_t, int, void *), void *data, void (*dealloc)(void *));
+libraryFunction *bindConstantFunctionByPtrWithData(char *suggestedName, void (*func)(mpfr_t, mp_prec_t, void *), void *data, void (*dealloc)(void *));
+libraryProcedure *bindProcedureByPtrWithData(int resType, int *argTypes, int arity, char *suggestedName, void *func, void *data, void (*dealloc)(void *));
 int isValidIdentifier(char *name);
 
 
