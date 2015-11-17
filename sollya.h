@@ -671,11 +671,18 @@ extern "C" {
   */
   int sollya_lib_get_subfunctions(sollya_obj_t, int *, ...);
   int sollya_lib_v_get_subfunctions(sollya_obj_t, int *, va_list);
+  int sollya_lib_get_subfunction(sollya_obj_t *, sollya_obj_t, int);
 
   /* A one-does-it-all function */
   int sollya_lib_decompose_function(sollya_obj_t, sollya_base_function_t *, int *, ...);
   int sollya_lib_v_decompose_function(sollya_obj_t, sollya_base_function_t *, int *, va_list);
 
+  /* A construction function that inverts the action of the
+     decomposition function.
+  */
+  int sollya_lib_construct_function(sollya_obj_t *, sollya_base_function_t, ...);
+  int sollya_lib_v_construct_function(sollya_obj_t *, sollya_base_function_t, va_list);
+  
   /* Some particular functions to decompose library function objects,
      library constant objects and procedure function objects
   */

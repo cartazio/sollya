@@ -183,7 +183,11 @@ int sollya_lib_uninstall_msg_callback() {
 }
 
 void sollya_lib_get_msg_callback(int (**fptr)(sollya_msg_t, void *), void **data) {
-  getMessageCallback(fptr, data);
+  int (*myfptr)(sollya_msg_t, void *);
+  void *mydata;
+  getMessageCallback(&myfptr, &mydata);
+  if (fptr != NULL) *fptr = myfptr;
+  if (data != NULL) *data = mydata;
 }
 
 int sollya_lib_get_msg_id(sollya_msg_t msg) {
@@ -2498,7 +2502,9 @@ int sollya_lib_get_prec_of_range(mp_prec_t *pr, sollya_obj_t obj1) {
     prec = mpfr_get_prec(a);
     p = mpfr_get_prec(b);
     if (p > prec) prec = p;
-    *pr = prec;
+    if (pr != NULL) {
+      *pr = prec;
+    }
     return 1;
   }
 
@@ -2536,7 +2542,17 @@ int sollya_lib_get_bounds_from_range(mpfr_t left, mpfr_t right, sollya_obj_t obj
 }
 
 int sollya_lib_get_string(char **str, sollya_obj_t obj1) {
-  return evaluateThingToString(str, obj1);
+  int res;
+  char *mystr;
+  res = evaluateThingToString(&mystr, obj1);
+  if (res) {
+    if (str != NULL) {
+      *str = mystr;
+    } else {
+      safeFree(mystr);
+    }
+  }
+  return res;
 }
 
 int sollya_lib_get_constant_inner(mpfr_t value, sollya_obj_t obj1, sollya_obj_t roundOp, int *warning) {
@@ -2715,6 +2731,7 @@ int sollya_lib_get_constant(mpfr_t value, sollya_obj_t obj1) {
 
 int sollya_lib_get_prec_of_constant(mp_prec_t *pr, sollya_obj_t obj1) {
   sollya_obj_t evaluatedObj, simplifiedObj;
+  mp_prec_t prec;
 
   evaluatedObj = evaluateThing(obj1);
   if (!isPureTree(evaluatedObj)) {
@@ -2730,7 +2747,10 @@ int sollya_lib_get_prec_of_constant(mp_prec_t *pr, sollya_obj_t obj1) {
   }
 
   if (accessThruMemRef(simplifiedObj)->nodeType == CONSTANT) {
-    *pr = mpfr_get_prec(*(accessThruMemRef(simplifiedObj)->value));
+    prec = mpfr_get_prec(*(accessThruMemRef(simplifiedObj)->value));
+    if (pr != NULL) {
+      *pr = prec;
+    }
     freeThing(evaluatedObj);
     freeThing(simplifiedObj);
     return 1;
@@ -2745,14 +2765,15 @@ int sollya_lib_get_constant_as_double(double *value, sollya_obj_t obj1) {
   mpfr_t temp, reconvert;
   sollya_obj_t roundOp;
   int warning = 1;
+  double val;
 
   roundOp = makeDouble(makeVariable());
   mpfr_init2(temp,53); /* sollya_lib_get_constant_inner may change the precision afterwards */
   if (sollya_lib_get_constant_inner(temp, obj1, roundOp, &warning)) {
-    *value = sollya_mpfr_get_d(temp, GMP_RNDN);
-    sollya_lib_internal_double_zero_sign_normalize(value);
+    val = sollya_mpfr_get_d(temp, GMP_RNDN);
+    sollya_lib_internal_double_zero_sign_normalize(&val);
     mpfr_init2(reconvert,64);
-    mpfr_set_d(reconvert, *value, GMP_RNDN); /* Exact as precision enough for a double */
+    mpfr_set_d(reconvert, val, GMP_RNDN); /* Exact as precision enough for a double */
     if ((mpfr_cmp(temp, reconvert) != 0) &&
 	(mpfr_number_p(temp) || mpfr_inf_p(temp)) &&
 	(mpfr_number_p(reconvert) || mpfr_inf_p(reconvert))) {
@@ -2763,6 +2784,9 @@ int sollya_lib_get_constant_as_double(double *value, sollya_obj_t obj1) {
     mpfr_clear(reconvert);
     mpfr_clear(temp);
     freeThing(roundOp);
+    if (value != NULL) {
+      *value = val;
+    }
     return 1;
   }
 
@@ -2914,13 +2938,14 @@ int sollya_lib_get_constant_as_int(int *value, sollya_obj_t obj1) {
   mpfr_t temp, reconvert;
   sollya_obj_t roundOp;
   int warning = 1;
+  int val;
 
   roundOp = makeNearestInt(makeVariable());
   mpfr_init2(temp,8 * sizeof(int)); /* sollya_lib_get_constant_inner may change the precision afterwards */
   if (sollya_lib_get_constant_inner(temp, obj1, roundOp, &warning)) {
-    *value = mpfr_get_si_wrapper(temp, GMP_RNDN);
+    val = mpfr_get_si_wrapper(temp, GMP_RNDN);
     mpfr_init2(reconvert,8 * sizeof(int) + 10);
-    mpfr_set_si(reconvert, *value, GMP_RNDN); /* Exact as precision enough for an int */
+    mpfr_set_si(reconvert, val, GMP_RNDN); /* Exact as precision enough for an int */
     if ((mpfr_cmp(temp, reconvert) != 0) || mpfr_nan_p(temp) || mpfr_nan_p(reconvert)) {
       if (mpfr_number_p(temp) || mpfr_inf_p(temp)) {
 	if ((!noRoundingWarnings) && warning) {
@@ -2933,6 +2958,9 @@ int sollya_lib_get_constant_as_int(int *value, sollya_obj_t obj1) {
     mpfr_clear(reconvert);
     mpfr_clear(temp);
     freeThing(roundOp);
+    if (value != NULL) {
+      *value = val;
+    }
     return 1;
   }
 
@@ -3049,13 +3077,14 @@ int sollya_lib_get_constant_as_int64(int64_t *value, sollya_obj_t obj1) {
   mpfr_t temp, reconvert;
   sollya_obj_t roundOp;
   int warning = 1;
+  int64_t val;
 
   roundOp = makeNearestInt(makeVariable());
   mpfr_init2(temp,8 * sizeof(int64_t) + 10); /* sollya_lib_get_constant_inner may change the precision afterwards */
   if (sollya_lib_get_constant_inner(temp, obj1, roundOp, &warning)) {
-    *value = sollya_lib_helper_mpfr_to_int64(temp);
+    val = sollya_lib_helper_mpfr_to_int64(temp);
     mpfr_init2(reconvert,8 * sizeof(int64_t) + 10);
-    sollya_lib_helper_mpfr_from_int64(reconvert, *value, GMP_RNDN); /* Exact as precision enough for an int64 */
+    sollya_lib_helper_mpfr_from_int64(reconvert, val, GMP_RNDN); /* Exact as precision enough for an int64 */
     if ((mpfr_cmp(temp, reconvert) != 0) || mpfr_nan_p(temp) || mpfr_nan_p(reconvert)) {
       if (mpfr_number_p(temp) || mpfr_inf_p(temp)) {
 	if ((!noRoundingWarnings) && warning) {
@@ -3068,6 +3097,9 @@ int sollya_lib_get_constant_as_int64(int64_t *value, sollya_obj_t obj1) {
     mpfr_clear(reconvert);
     mpfr_clear(temp);
     freeThing(roundOp);
+    if (value != NULL) {
+      *value = val;
+    }
     return 1;
   }
 
@@ -3080,13 +3112,14 @@ int sollya_lib_get_constant_as_uint64(uint64_t *value, sollya_obj_t obj1) {
   mpfr_t temp, reconvert;
   sollya_obj_t roundOp;
   int warning = 1;
+  uint64_t val;
 
   roundOp = makeNearestInt(makeVariable());
   mpfr_init2(temp,8 * sizeof(uint64_t) + 10); /* sollya_lib_get_constant_inner may change the precision afterwards */
   if (sollya_lib_get_constant_inner(temp, obj1, roundOp, &warning)) {
-    *value = sollya_lib_helper_mpfr_to_uint64(temp);
+    val = sollya_lib_helper_mpfr_to_uint64(temp);
     mpfr_init2(reconvert,8 * sizeof(uint64_t) + 10);
-    sollya_lib_helper_mpfr_from_uint64(reconvert, *value, GMP_RNDN); /* Exact as precision enough for an uint64 */
+    sollya_lib_helper_mpfr_from_uint64(reconvert, val, GMP_RNDN); /* Exact as precision enough for an uint64 */
     if ((mpfr_cmp(temp, reconvert) != 0) || mpfr_nan_p(temp) || mpfr_nan_p(reconvert)) {
       if (mpfr_number_p(temp) || mpfr_inf_p(temp)) {
 	if ((!noRoundingWarnings) && warning) {
@@ -3099,6 +3132,9 @@ int sollya_lib_get_constant_as_uint64(uint64_t *value, sollya_obj_t obj1) {
     mpfr_clear(reconvert);
     mpfr_clear(temp);
     freeThing(roundOp);
+    if (value != NULL) {
+      *value = val;
+    }
     return 1;
   }
 
@@ -3145,23 +3181,42 @@ int sollya_lib_get_list_elements(sollya_obj_t **objects, int *num, int *end_elli
   sollya_obj_t evaluatedObj;
   int tempVal, i;
   chain *curr;
+  int number;
+  sollya_obj_t *objs;
 
   evaluatedObj = evaluateThing(obj1);
   if (isEmptyList(evaluatedObj)) {
-    *num = 0;
-    *end_elliptic = 0;
+    if (num != NULL) {
+      *num = 0;
+    }
+    if (end_elliptic != NULL) {
+      *end_elliptic = 0;
+    }
     freeThing(evaluatedObj);
     return 1;
   }
 
   tempVal = 0;
   if (isPureList(evaluatedObj) || (tempVal = isPureFinalEllipticList(evaluatedObj))) {
-    *num = lengthChain(accessThruMemRef(evaluatedObj)->arguments);
-    *objects = (sollya_obj_t *) safeCalloc(*num,sizeof(sollya_obj_t));
+    number = lengthChain(accessThruMemRef(evaluatedObj)->arguments);
+    objs = (sollya_obj_t *) safeCalloc(number,sizeof(sollya_obj_t));
     for (curr=accessThruMemRef(evaluatedObj)->arguments,i=0;curr!=NULL;curr=curr->next,i++) {
-      (*objects)[i] = copyThing((node *) (curr->value));
+      objs[i] = copyThing((node *) (curr->value));
     }
-    *end_elliptic = tempVal;
+    if (num != NULL) {
+      *num = number;
+    }
+    if (objects != NULL) {
+      *objects = objs;
+    } else {
+      for (i=0;i<number;i++) {
+	freeThing(objs[i]);
+      }
+      safeFree(objs);
+    }
+    if (end_elliptic != NULL) {
+      *end_elliptic = tempVal;
+    }
     freeThing(evaluatedObj);
     return 1;
   }
@@ -3175,6 +3230,7 @@ int sollya_lib_get_element_in_list(sollya_obj_t *res, sollya_obj_t obj1, int n) 
   int tempVal, num;
   sollya_obj_t indexObj, protoObj;
   mpfr_t nAsMpfr;
+  sollya_obj_t result;
 
   if (n < 0) return 0;
 
@@ -3198,7 +3254,12 @@ int sollya_lib_get_element_in_list(sollya_obj_t *res, sollya_obj_t obj1, int n) 
     mpfr_clear(nAsMpfr);
 
     protoObj = makeIndex(evaluatedObj, indexObj);
-    *res = evaluateThing(protoObj);
+    result = evaluateThing(protoObj);
+    if (res != NULL) {
+      *res = result;
+    } else {
+      freeThing(result);
+    }
 
     freeThing(protoObj);
     return 1;
@@ -3233,9 +3294,11 @@ int sollya_lib_obj_is_error(sollya_obj_t obj1) {
 }
 
 int sollya_lib_get_function_arity(int *ari, sollya_obj_t obj1) {
+  int ar;
   if (!isPureTree(obj1)) return 0;
+  ar = arity(obj1);
   if (ari != NULL) {
-    *ari = arity(obj1);
+    *ari = ar;
   }
   return 1;
 }
@@ -3389,6 +3452,7 @@ int sollya_lib_v_decompose_function(sollya_obj_t obj1, sollya_base_function_t *b
     *ari = funcArity;
   }
   switch (obj1->nodeType) {
+  case CONSTANT:
   case LIBRARYCONSTANT:
     funcArity = 1;
     break;
@@ -3406,6 +3470,7 @@ int sollya_lib_v_decompose_function(sollya_obj_t obj1, sollya_base_function_t *b
       switch (i) {
       case 1:
 	switch (obj1->nodeType) {
+	case CONSTANT:
 	case LIBRARYCONSTANT:
 	case VARIABLE:
 	  *elem = copyThing(obj1);
@@ -3422,14 +3487,16 @@ int sollya_lib_v_decompose_function(sollya_obj_t obj1, sollya_base_function_t *b
 	  (*elem)->nodeType = LIBRARYFUNCTION;
 	  (*elem)->libFun = obj1->libFun;
 	  (*elem)->libFunDeriv = obj1->libFunDeriv;
-	  (*elem)->child1 = makeVariable();
+	  (*elem)->child1 = addMemRef(makeVariable());
+	  *elem = addMemRef(*elem);
 	  break;
 	case PROCEDUREFUNCTION:
 	  *elem = (node *) safeMalloc(sizeof(node));
 	  (*elem)->nodeType = PROCEDUREFUNCTION;
 	  (*elem)->libFunDeriv = obj1->libFunDeriv;
-	  (*elem)->child1 = makeVariable();
+	  (*elem)->child1 = addMemRef(makeVariable());
 	  (*elem)->child2 = copyThing(obj1->child2);
+	  *elem = addMemRef(*elem);
 	  break;
 	default:
 	  *elem = copyThing(obj1->child2);
@@ -3461,6 +3528,239 @@ int sollya_lib_decompose_function(sollya_obj_t obj1, sollya_base_function_t *bas
   return res;
 }
 
+static inline int __sollya_lib_v_construct_function_inner(sollya_obj_t *func, sollya_base_function_t base_func, va_list varlist) {
+  sollya_obj_t arg1, arg2, myfunc;
+  int num_args;
+
+  num_args = 0;
+  arg1 = va_arg(varlist,sollya_obj_t);
+  if (arg1 != NULL) {
+    num_args++;
+    arg2 = va_arg(varlist,sollya_obj_t);
+    if (arg2 != NULL) {
+      num_args++;
+    }
+  }
+  switch (base_func) {
+  case SOLLYA_BASE_FUNC_PI:
+    myfunc = addMemRef(sollya_lib_pi());
+    break;
+  case SOLLYA_BASE_FUNC_FREE_VARIABLE:
+    myfunc = addMemRef(sollya_lib_free_variable());
+    break;
+  case SOLLYA_BASE_FUNC_CONSTANT:
+    if (num_args < 1) return 0;
+    if (accessThruMemRef(arg1)->nodeType != CONSTANT) return 0;
+    myfunc = addMemRef(sollya_lib_copy_obj(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_LIBRARYCONSTANT:
+    if (num_args < 1) return 0;
+    if (accessThruMemRef(arg1)->nodeType != LIBRARYCONSTANT) return 0;
+    myfunc = addMemRef(sollya_lib_copy_obj(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_LIBRARYFUNCTION:
+    if (num_args < 2) return 0;
+    if (accessThruMemRef(arg2)->nodeType != LIBRARYFUNCTION) return 0;
+    if (accessThruMemRef(accessThruMemRef(arg2)->child1)->nodeType != VARIABLE) return 0;
+    myfunc = addMemRef(sollya_lib_apply(arg2, arg1, NULL));
+    break;
+  case SOLLYA_BASE_FUNC_PROCEDUREFUNCTION:
+    if (num_args < 2) return 0;
+    if (accessThruMemRef(arg2)->nodeType != PROCEDUREFUNCTION) return 0;
+    if (accessThruMemRef(accessThruMemRef(arg2)->child1)->nodeType != VARIABLE) return 0;
+    myfunc = addMemRef(sollya_lib_apply(arg2, arg1, NULL));
+    break;
+  case SOLLYA_BASE_FUNC_ADD:
+    if (num_args < 2) return 0;
+    myfunc = addMemRef(sollya_lib_add(arg1, arg2));
+    break;
+  case SOLLYA_BASE_FUNC_SUB:
+    if (num_args < 2) return 0;
+    myfunc = addMemRef(sollya_lib_sub(arg1, arg2));
+    break;
+  case SOLLYA_BASE_FUNC_MUL:
+    if (num_args < 2) return 0;
+    myfunc = addMemRef(sollya_lib_mul(arg1, arg2));
+    break;
+  case SOLLYA_BASE_FUNC_DIV:
+    if (num_args < 2) return 0;
+    myfunc = addMemRef(sollya_lib_div(arg1, arg2));
+    break;
+  case SOLLYA_BASE_FUNC_POW:
+    if (num_args < 2) return 0;
+    myfunc = addMemRef(sollya_lib_pow(arg1, arg2));
+    break;
+  case SOLLYA_BASE_FUNC_ABS:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_abs(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_ACOS:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_acos(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_ACOSH:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_acosh(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_ASIN:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_asin(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_ASINH:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_asinh(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_ATAN:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_atan(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_ATANH:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_atanh(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_CEIL:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_ceil(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_COS:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_cos(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_COSH:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_cosh(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_DOUBLE:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_double(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_DOUBLEDOUBLE:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_double_double(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_DOUBLEEXTENDED:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_doubleextended(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_ERF:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_erf(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_ERFC:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_erfc(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_EXP:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_exp(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_EXP_M1:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_expm1(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_FLOOR:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_floor(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_HALFPRECISION:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_halfprecision(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_LOG:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_log(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_LOG_10:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_log10(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_LOG_1P:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_log1p(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_LOG_2:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_log2(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_NEARESTINT:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_nearestint(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_NEG:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_neg(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_QUAD:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_quad(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_SIN:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_sin(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_SINGLE:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_single(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_SINH:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_sinh(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_SQRT:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_sqrt(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_TAN:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_tan(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_TANH:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_tanh(arg1));
+    break;
+  case SOLLYA_BASE_FUNC_TRIPLEDOUBLE:
+    if (num_args < 1) return 0;
+    myfunc = addMemRef(sollya_lib_triple_double(arg1));
+    break;
+  default:
+    return 0;
+    break;
+  }
+  if (func != NULL) {
+    *func = myfunc;
+  } else {
+    freeThing(myfunc);
+  }
+  return 1;
+}
+
+int sollya_lib_v_construct_function(sollya_obj_t *func, sollya_base_function_t base_func, va_list varlist) {
+  int res;
+  sollya_obj_t myfunc;
+
+  res = __sollya_lib_v_construct_function_inner(&myfunc, base_func, varlist);
+
+  if (!res) return 0;
+  if (func != NULL) {
+    *func = myfunc;
+  } else {
+    freeThing(myfunc);
+  }
+
+  return 1;
+}
+
+int sollya_lib_construct_function(sollya_obj_t *func, sollya_base_function_t base_func, ...) {
+  va_list varlist;
+  int res;
+
+  va_start(varlist,base_func);
+  res = sollya_lib_v_construct_function(func, base_func, varlist);
+  va_end(varlist);
+
+  return res;
+}
+
 int sollya_lib_v_get_subfunctions(sollya_obj_t obj1, int *ari, va_list varlist) {
   return sollya_lib_v_decompose_function(obj1, NULL, ari, varlist);
 }
@@ -3476,6 +3776,53 @@ int sollya_lib_get_subfunctions(sollya_obj_t obj1, int *ari, ...) {
   return res;
 }
 
+int sollya_lib_get_subfunction(sollya_obj_t *subfunc, sollya_obj_t obj, int n) {
+  int res, arity, myarity;
+  sollya_obj_t c1, c2;
+
+  if (n < 0) return 0;
+  if (n > 1) return 0;
+
+  c1 = NULL;
+  c2 = NULL;
+  res = sollya_lib_get_subfunctions(obj, &arity, &c1, &c2);
+
+  if (!res) return 0;
+  if (c1 == NULL) {
+    myarity = 0;
+  } else {
+    if (c2 == NULL) {
+      myarity = 1;
+    } else {
+      myarity = 2;
+    }
+  }
+  if (n >= myarity) {
+    if (c1 != NULL) freeThing(c1);
+    if (c2 != NULL) freeThing(c2);
+    return 0;
+  }
+  switch (n) {
+  case 0:
+    if (subfunc != NULL) {
+      *subfunc = copyThing(c1);
+    }
+    break;
+  case 1:
+    if (subfunc != NULL) {
+      *subfunc = copyThing(c2);
+    }
+    break;
+  default:
+    if (c1 != NULL) freeThing(c1);
+    if (c2 != NULL) freeThing(c2);
+    return 0;
+  }
+  if (c1 != NULL) freeThing(c1);
+  if (c2 != NULL) freeThing(c2);
+  return 1;
+}
+
 int sollya_lib_get_head_function(sollya_base_function_t *base_func, sollya_obj_t obj1) {
   return sollya_lib_decompose_function(obj1, base_func, NULL, NULL);
 }
@@ -3489,9 +3836,15 @@ int sollya_lib_decompose_libraryfunction(int (**func)(mpfi_t, mpfi_t, int), int 
 
   if (obj->libFun->hasData) return 0;
   
-  *func = (int (*)(mpfi_t, mpfi_t, int)) (obj->libFun->code);
-  *deriv = obj->libFunDeriv;
-  *sub_func = copyThing(obj->child1);
+  if (func != NULL) {
+    *func = (int (*)(mpfi_t, mpfi_t, int)) (obj->libFun->code);
+  }
+  if (deriv != NULL) {
+    *deriv = obj->libFunDeriv;
+  }
+  if (sub_func != NULL) {
+    *sub_func = copyThing(obj->child1);
+  } 
 
   return 1;
 }
@@ -3504,10 +3857,18 @@ int sollya_lib_decompose_libraryfunction_with_data(int (**func)(mpfi_t, mpfi_t, 
 
   if (!(obj->libFun->hasData)) return 0;
   
-  *func = (int (*)(mpfi_t, mpfi_t, int, void *)) (obj->libFun->code);
-  *deriv = obj->libFunDeriv;
-  *sub_func = copyThing(obj->child1);
-  *data = obj->libFun->data;
+  if (func != NULL) {
+    *func = (int (*)(mpfi_t, mpfi_t, int, void *)) (obj->libFun->code);
+  }
+  if (deriv != NULL) {
+    *deriv = obj->libFunDeriv;
+  }
+  if (sub_func != NULL) {
+    *sub_func = copyThing(obj->child1);
+  }
+  if (data != NULL) {
+    *data = obj->libFun->data;
+  }
 
   return 1;
 }
@@ -3520,7 +3881,9 @@ int sollya_lib_decompose_libraryconstant(void (**func)(mpfr_t, mp_prec_t), solly
 
   if (obj->libFun->hasData) return 0;
   
-  *func = (void (*)(mpfr_t, mp_prec_t)) (obj->libFun->code);
+  if (func != NULL) {
+    *func = (void (*)(mpfr_t, mp_prec_t)) (obj->libFun->code);
+  }
 
   return 1;
 }
@@ -3533,8 +3896,12 @@ int sollya_lib_decompose_libraryconstant_with_data(void (**func)(mpfr_t, mp_prec
 
   if (!(obj->libFun->hasData)) return 0;
   
-  *func = (void (*)(mpfr_t, mp_prec_t, void *)) (obj->libFun->code);
-  *data = obj->libFun->data;
+  if (func != NULL) {
+    *func = (void (*)(mpfr_t, mp_prec_t, void *)) (obj->libFun->code);
+  }
+  if (data != NULL) {
+    *data = obj->libFun->data;
+  }
 
   return 1;
 }
@@ -3666,11 +4033,21 @@ int sollya_lib_decompose_externalprocedure(sollya_externalprocedure_type_t *resT
     }
   }
   
-  *func = obj->libProc->code;
-  *resType = myResType;
-  *arity = myArity;
+  if (func != NULL) {
+    *func = obj->libProc->code;
+  }
+  if (resType != NULL) {
+    *resType = myResType;
+  }
+  if (arity != NULL) {
+    *arity = myArity;
+  }
   if (myArity != 0) {
-    *argTypes = myArgTypes;
+    if (argTypes != NULL) {
+      *argTypes = myArgTypes;
+    } else {
+      safeFree(myArgTypes);
+    }
   }
 
   return 1;
@@ -3803,12 +4180,24 @@ int sollya_lib_decompose_externalprocedure_with_data(sollya_externalprocedure_ty
     }
   }
   
-  *func = obj->libProc->code;
-  *data = obj->libProc->data;
-  *resType = myResType;
-  *arity = myArity;
+  if (func != NULL) {
+    *func = obj->libProc->code;
+  }
+  if (data != NULL) {
+    *data = obj->libProc->data;
+  }
+  if (resType != NULL) {
+    *resType = myResType;
+  }
+  if (arity != NULL) {
+    *arity = myArity;
+  }
   if (myArity != 0) {
-    *argTypes = myArgTypes;
+    if (argTypes != NULL) {
+      *argTypes = myArgTypes;
+    } else {
+      safeFree(myArgTypes);
+    }
   }
 
   return 1;
@@ -3820,9 +4209,15 @@ int sollya_lib_decompose_procedurefunction(sollya_obj_t *proc, int *deriv, solly
 
   if (obj->nodeType != PROCEDUREFUNCTION) return 0;
 
-  *proc = copyThing(obj->child2);
-  *deriv = obj->libFunDeriv;
-  *sub_func = copyThing(obj->child1);
+  if (proc != NULL) {
+    *proc = copyThing(obj->child2);
+  }
+  if (deriv != NULL) {
+    *deriv = obj->libFunDeriv;
+  }
+  if (sub_func != NULL) {
+    *sub_func = copyThing(obj->child1);
+  }
 
   return 1;
 }
@@ -3967,7 +4362,7 @@ uint64_t sollya_lib_hash(sollya_obj_t obj1) {
   return hashThing(obj1);
 }
 
-int sollya_lib_get_structure_elements(char ***identifiers, sollya_obj_t **objects, int *num, sollya_obj_t obj1) {
+static inline int __sollya_lib_get_structure_elements_inner(char ***identifiers, sollya_obj_t **objects, int *num, sollya_obj_t obj1) {
   chain *curr;
   int i;
 
@@ -3986,8 +4381,41 @@ int sollya_lib_get_structure_elements(char ***identifiers, sollya_obj_t **object
   return 1;
 }
 
+int sollya_lib_get_structure_elements(char ***identifiers, sollya_obj_t **objects, int *num, sollya_obj_t obj1) {
+  char **myidentifiers;
+  sollya_obj_t *myobjects;
+  int mynum;
+  int i;
+  int res;
+  
+  res = __sollya_lib_get_structure_elements_inner(&myidentifiers, &myobjects, &mynum, obj1);
+  if (res) {
+    if (identifiers != NULL) {
+      *identifiers = myidentifiers;
+    } else {
+      for (i=0;i<mynum;i++) {
+	safeFree(myidentifiers[i]);
+      }
+      safeFree(myidentifiers);
+    }
+    if (objects != NULL) {
+      *objects = myobjects;
+    } else {
+      for (i=0;i<mynum;i++) {
+	freeThing(myobjects[i]);
+      }
+      safeFree(myobjects);
+    }
+    if (num != NULL) {
+      *num = mynum;
+    }
+  }
+  return res;
+}
+
 int sollya_lib_get_element_in_structure(sollya_obj_t *object, char *identifier, sollya_obj_t obj1) {
   chain *curr;
+  sollya_obj_t myobj;
 
   if (obj1->nodeType == MEMREF) return sollya_lib_get_element_in_structure(object, identifier, getMemRefChild(obj1));
 
@@ -3995,7 +4423,12 @@ int sollya_lib_get_element_in_structure(sollya_obj_t *object, char *identifier, 
 
   for (curr=obj1->arguments; curr != NULL; curr=curr->next) {
     if (!strcmp(identifier, (char *) (((entry *) (curr->value))->name))) {
-      *object = copyThing((node *) (((entry *) (curr->value))->value));
+      myobj = copyThing((node *) (((entry *) (curr->value))->value));
+      if (object != NULL) {
+	*object = myobj;
+      } else {
+	freeThing(myobj);
+      }
       return 1;
     }
   }
@@ -4008,13 +4441,21 @@ int sollya_lib_create_structure(sollya_obj_t *object, sollya_obj_t obj1, char *i
   int added;
   chain *curr;
   node *tempObj;
+  sollya_obj_t myobject;
 
+  if (!isValidIdentifier(identifier)) return 0;
+  
   if (obj1 == NULL) {
     tempEntry = (entry *) safeMalloc(sizeof(entry));
     tempEntry->name = (char *) safeCalloc(strlen(identifier) + 1, sizeof(char));
     strcpy(tempEntry->name, identifier);
     tempEntry->value = copyThing(obj2);
-    *object = makeStructure(addElement(NULL, tempEntry));
+    myobject = makeStructure(addElement(NULL, tempEntry));
+    if (object != NULL) {
+      *object = myobject;
+    } else {
+      freeThing(myobject);
+    }
     return 1;
   }
 
@@ -4045,7 +4486,12 @@ int sollya_lib_create_structure(sollya_obj_t *object, sollya_obj_t obj1, char *i
     tempEntry->value = copyThing(obj2);
     tempObj->arguments = addElement(tempObj->arguments, tempEntry);
   }
-  *object = tempObj;
+  myobject = tempObj;
+  if (object != NULL) {
+    *object = myobject;
+  } else {
+    freeThing(myobject);
+  }
 
   return 1;
 }
@@ -5258,204 +5704,4 @@ sollya_obj_t sollya_lib_build_function_procedurefunction(sollya_obj_t obj1, soll
   return addMemRef(res);
 }
 
-
-sollya_obj_t sollya_lib_build_function(sollya_base_function_t func, ...) {
-  va_list varlist;
-  sollya_obj_t arg1, arg2;
-  sollya_obj_t res;
-  void (*libConst)(mpfr_t, mp_prec_t);
-  int (*libFunc)(mpfi_t, mpfi_t, int);
-  char *str;
-
-  va_start(varlist,func);
-
-  switch (func) {
-  case SOLLYA_BASE_FUNC_ABS:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_abs(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_ACOS:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_acos(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_ACOSH:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_acosh(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_ADD:
-    arg1 = va_arg(varlist,node *);
-    arg2 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_add(arg1,arg2);
-    break;
-  case SOLLYA_BASE_FUNC_ASIN:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_asin(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_ASINH:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_asinh(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_ATAN:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_atan(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_ATANH:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_atanh(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_CEIL:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_ceil(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_CONSTANT:
-    res = sollya_lib_constant((void *) va_arg(varlist,const mpfr_srcptr));
-    break;
-  case SOLLYA_BASE_FUNC_COS:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_cos(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_COSH:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_cosh(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_DIV:
-    arg1 = va_arg(varlist,node *);
-    arg2 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_div(arg1,arg2);
-    break;
-  case SOLLYA_BASE_FUNC_DOUBLE:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_double(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_DOUBLEDOUBLE:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_double_double(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_DOUBLEEXTENDED:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_doubleextended(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_ERF:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_erf(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_ERFC:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_erfc(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_EXP:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_exp(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_EXP_M1:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_expm1(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_FLOOR:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_floor(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_FREE_VARIABLE:
-    res = sollya_lib_build_function_free_variable();
-    break;
-  case SOLLYA_BASE_FUNC_HALFPRECISION:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_halfprecision(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_LOG:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_log(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_LOG_10:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_log10(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_LOG_1P:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_log1p(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_LOG_2:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_log2(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_MUL:
-    arg1 = va_arg(varlist,node *);
-    arg2 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_mul(arg1,arg2);
-    break;
-  case SOLLYA_BASE_FUNC_NEARESTINT:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_nearestint(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_NEG:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_neg(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_PI:
-    res = sollya_lib_build_function_pi();
-    break;
-  case SOLLYA_BASE_FUNC_POW:
-    arg1 = va_arg(varlist,node *);
-    arg2 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_pow(arg1,arg2);
-    break;
-  case SOLLYA_BASE_FUNC_QUAD:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_quad(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_SIN:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_sin(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_SINGLE:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_single(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_SINH:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_sinh(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_SQRT:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_sqrt(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_SUB:
-    arg1 = va_arg(varlist,node *);
-    arg2 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_sub(arg1,arg2);
-    break;
-  case SOLLYA_BASE_FUNC_TAN:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_tan(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_TANH:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_tanh(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_TRIPLEDOUBLE:
-    arg1 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_triple_double(arg1);
-    break;
-  case SOLLYA_BASE_FUNC_LIBRARYCONSTANT:
-    str = va_arg(varlist,char *);
-    libConst = va_arg(varlist,void (*)(mpfr_t, mp_prec_t));
-    res = sollya_lib_build_function_libraryconstant(str, libConst);
-    break;
-  case SOLLYA_BASE_FUNC_LIBRARYFUNCTION:
-    arg1 = va_arg(varlist,node *);
-    str = va_arg(varlist,char *);
-    libFunc = va_arg(varlist,int (*)(mpfi_t, mpfi_t, int));
-    res = sollya_lib_build_function_libraryfunction(arg1, str, libFunc);
-    break;
-  case SOLLYA_BASE_FUNC_PROCEDUREFUNCTION:
-    arg1 = va_arg(varlist,node *);
-    arg2 = va_arg(varlist,node *);
-    res = sollya_lib_build_function_procedurefunction(arg1, arg2);
-    break;
-  }
-
-  va_end(varlist);
-
-  return addMemRef(res);
-}
 

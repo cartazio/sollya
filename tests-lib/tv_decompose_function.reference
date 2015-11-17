@@ -1,5 +1,5 @@
 pi: type = SOLLYA_BASE_FUNC_PI, n = 0, subfunctions = NULL, NULL and NULL.
-3: type = SOLLYA_BASE_FUNC_CONSTANT, n = 0, subfunctions = NULL, NULL and NULL.
+3: type = SOLLYA_BASE_FUNC_CONSTANT, n = 0, subfunctions = 3, NULL and NULL.
 superconst: type = SOLLYA_BASE_FUNC_LIBRARYCONSTANT, n = 0, subfunctions = superconst, NULL and NULL.
 _x_: type = SOLLYA_BASE_FUNC_FREE_VARIABLE, n = 1, subfunctions = _x_, NULL and NULL.
 exp(sin(_x_) + 17): type = SOLLYA_BASE_FUNC_EXP, n = 1, subfunctions = sin(_x_) + 17, NULL and NULL.

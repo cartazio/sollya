@@ -385,6 +385,18 @@ int symbolNameIsKeyword(char *name) {
   return 0;
 }
 
+int isValidIdentifier(char *name) {
+  char *tmp;
+  int equal;
+  
+  if (symbolNameIsKeyword(name)) return 0;
+  tmp = (char *) safeCalloc(strlen(name) + 1, sizeof(char));
+  copyIdentifierSymbols(tmp, name);
+  equal = (strcmp(tmp, name) == 0);
+  safeFree(tmp);
+  return equal;
+}
+
 char *unifySymbolName(char *basename) {
   char *res, *str;
   uint64_t number;
