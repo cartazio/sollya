@@ -122,7 +122,7 @@ libraryProcedure *bindProcedureByPtr(int resType, int *argTypes, int arity, char
 libraryFunction *bindFunctionByPtrWithData(char *suggestedName, int (*func)(mpfi_t, mpfi_t, int, void *), void *data);
 libraryFunction *bindConstantFunctionByPtrWithData(char *suggestedName, void (*func)(mpfr_t, mp_prec_t, void *), void *data);
 libraryProcedure *bindProcedureByPtrWithData(int resType, int *argTypes, int arity, char *suggestedName, void *func, void *data);
-
+int isValidIdentifier(char *name);
 
 
 #endif /* ifdef LIBRARY_H*/
