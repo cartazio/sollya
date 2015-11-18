@@ -24195,6 +24195,39 @@ node *evaluateThingInnerst(node *tree) {
 			      copy = makeError();
 			    }
 			    freeThing(tempNode);
+			  } else {
+			    if (isExternalProcedureUsage(copy->child1) && isEmptyList(copy->child2)) {
+			      tempNode2 = NULL;
+			      if (executeExternalProcedure(&tempNode2, accessThruMemRef(copy->child1)->libProc, NULL)) {
+				if (tempNode2 != NULL) {
+				  freeThing(copy);
+				  copy = tempNode2;
+				} 
+			      } else {
+				printMessage(1,SOLLYA_MSG_EXTERNAL_PROCEDURE_SIGNALED_FAILURE,"Warning: external procedure has signalized failure.\n");
+				considerDyingOnError();
+				freeThing(copy);
+				copy = makeError();
+			      }
+			    } else {
+			      if (isExternalProcedureUsage(copy->child1) && isList(copy->child2)) {
+			       	tempChain = copyChainWithoutReversal(accessThruMemRef(copy->child2)->arguments, evaluateThingOnVoid);
+				tempNode2 = NULL;
+				if (executeExternalProcedure(&tempNode2, accessThruMemRef(copy->child1)->libProc, tempChain)) {
+				  if (tempNode2 != NULL) {
+				    freeThing(copy);
+				    copy = tempNode2;
+				  } 
+				  freeChain(tempChain, freeThingOnVoid);
+				} else {
+				  printMessage(1,SOLLYA_MSG_EXTERNAL_PROCEDURE_SIGNALED_FAILURE,"Warning: external procedure has signalized failure.\n");
+				  considerDyingOnError();
+				  freeThing(copy);
+				  copy = makeError();
+				  freeChain(tempChain, freeThingOnVoid);
+				}
+			      }
+			    }
 			  }
 			}
 		      }
