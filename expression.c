@@ -9246,6 +9246,7 @@ void evaluate(mpfr_t result, node *tree, mpfr_t x, mp_prec_t prec) {
     libraryConstantToInterval(stackI, tree);
     sollya_mpfi_get_fr(result, stackI);
     sollya_mpfi_clear(stackI);
+    break;
   default:
     sollyaFprintf(stderr,"Error: evaluate: unknown identifier in the tree\n");
     exit(1);
