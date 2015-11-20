@@ -7,10 +7,10 @@
 \verb|   sollya_obj_t sollya_lib_build_function_libraryconstant(char *,|\\
 \verb|                                                          void (*)(mpfr_t,|\\
 \verb|                                                                   mp_prec_t))|\\
-\verb|   sollya_obj_t sollya_lib_libraryconstant_with_data(char *, void (*)(mpfr_t, mp_prec_t, void *), void *)|\\
+\verb|   sollya_obj_t sollya_lib_libraryconstant_with_data(char *, void (*)(mpfr_t, mp_prec_t, void *), void *, void (*)(void *))|\\
 \verb|   sollya_obj_t sollya_lib_build_function_libraryconstant_with_data(char *,|\\
 \verb|                                                                    void (*)(mpfr_t,|\\
-\verb|                                                                    mp_prec_t, void *), void *)|\\[0.2cm]
+\verb|                                                                    mp_prec_t, void *), void *, void (*)(void *))|\\[0.2cm]
 \noindent Usage: 
 \begin{center}
 \textbf{libraryconstant}(\emph{path}) : \textsf{string} $\rightarrow$ \textsf{function}\\

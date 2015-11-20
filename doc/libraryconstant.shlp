@@ -5,10 +5,10 @@
 #LIBRARYNAME sollya_obj_t sollya_lib_build_function_libraryconstant(char *,
 #LIBRARYNAME (CONTINUED)                                            void (*)(mpfr_t,
 #LIBRARYNAME (CONTINUED)                                                     mp_prec_t))
-#LIBRARYNAME sollya_obj_t sollya_lib_libraryconstant_with_data(char *, void (*)(mpfr_t, mp_prec_t, void *), void *)
+#LIBRARYNAME sollya_obj_t sollya_lib_libraryconstant_with_data(char *, void (*)(mpfr_t, mp_prec_t, void *), void *, void (*)(void *))
 #LIBRARYNAME sollya_obj_t sollya_lib_build_function_libraryconstant_with_data(char *,
 #LIBRARYNAME (CONTINUED)                                                      void (*)(mpfr_t,
-#LIBRARYNAME (CONTINUED)                                                      mp_prec_t, void *), void *)
+#LIBRARYNAME (CONTINUED)                                                      mp_prec_t, void *), void *, void (*)(void *))
 
 #CALLING $COMMAND(<path>)
 #TYPE $STRING_TYPE -> $FUNCTION_TYPE

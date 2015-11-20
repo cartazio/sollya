@@ -8,11 +8,11 @@
 #LIBRARYNAME (CONTINUED)                                                    mpfi_t, int))
 #LIBRARYNAME sollya_obj_t sollya_lib_libraryfunction_with_data(sollya_obj_t, char *,
 #LIBRARYNAME (CONTINUED)                                       int (*)(mpfi_t, mpfi_t, int, void *),
-#LIBRARYNAME (CONTINUED)                                       void *)
+#LIBRARYNAME (CONTINUED)                                       void *, void (*)(void *))
 #LIBRARYNAME sollya_obj_t sollya_lib_build_function_libraryfunction_with_data(sollya_obj_t, char *,
 #LIBRARYNAME (CONTINUED)                                                      int (*)(mpfi_t,
 #LIBRARYNAME (CONTINUED)                                                              mpfi_t, int, void *),
-#LIBRARYNAME (CONTINUED)                                                      void *)
+#LIBRARYNAME (CONTINUED)                                                      void *, void (*)(void *))
 
 
 #CALLING $COMMAND(<path>)
