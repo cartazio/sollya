@@ -1277,9 +1277,7 @@ void freeTool() {
   if(newReadFilename != NULL) safeFree(newReadFilename);
   if(suppressedMessages != NULL) freeBitfield(suppressedMessages);
 
-  if (!(eliminatePromptBackup == 1)) {
-    removePlotFiles();
-  }
+  removePlotFiles();
 
   while ((readStack != NULL) && (readStack2 != NULL)) {
     temp_fd = *((FILE **) (readStack2->value));
@@ -1718,9 +1716,7 @@ int finalizeLibraryMode() {
   if(suppressedMessages != NULL) freeBitfield(suppressedMessages);
   suppressedMessages = NULL;
 
-  if (!(eliminatePromptBackup == 1)) {
-    removePlotFiles();
-  }
+  removePlotFiles();
 
   while ((readStack != NULL) && (readStack2 != NULL)) {
     temp_fd = *((FILE **) (readStack2->value));
