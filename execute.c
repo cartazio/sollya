@@ -21159,7 +21159,8 @@ node *evaluateThingInnerFpminimax(node *tree, char *timingString) {
      but not in FLOATING mode
   */
   if( (accessThruMemRef(thirdArg)->nodeType == LIST) || (accessThruMemRef(thirdArg)->nodeType == FINALELLIPTICLIST) )
-    evaluateFormatsListForFPminimax(&formats, thirdArg, lengthChain(monomials), fpfixedArg);
+    if (!evaluateFormatsListForFPminimax(&formats, thirdArg, lengthChain(monomials), fpfixedArg))
+      failure = 1;
   else {
     printMessage(1, SOLLYA_MSG_FPMINIMAX_THIRD_ARG_MUST_BE_FORMAT_INDICATIONS, "Error in fpminimax: the third argument of fpminimax must be a list of formats indications.\n");
     failure = 1;
