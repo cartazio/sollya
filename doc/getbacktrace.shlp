@@ -1,0 +1,71 @@
+#NAME $GETBACKTRACE
+#QUICK_DESCRIPTION returns the list of $SOLLYA procedures currently run
+#CALLING $COMMAND()
+#TYPE $VOID_TYPE -> $LIST_TYPE
+#LIBRARYNAME sollya_obj_t sollya_lib_getbacktrace();
+
+#DESCRIPTION
+The $COMMAND command allows the stack of $SOLLYA procedures that are
+currently run to be inspected. When called, $COMMAND returns an
+ordered list of structures, each of which contains an element
+§§passed_args§passed\_args§§ and an element §§called_proc§called\_proc§§. The element §§called_proc§called\_proc§§
+contains the $SOLLYA object representing the procedure being run. The
+element §§passed_args§passed\_args§§ contains an ordered list of all effective
+arguments passed to the procedure when it was called. The procedure called
+last (i.e. on top of the stack) comes first in the list returned
+by $COMMAND. When any of the procedure called takes no arguments, the
+§§passed_arg§passed\_args§§ element of the corresponding structure evaluates to an empty
+list.
+
+#DESCRIPTION
+When called from outside any procedure (at toplevel), $COMMAND returns
+an empty list.
+
+#DESCRIPTION
+When called for a stack containing a call to a variadic procedure that was
+called with an infinite number of effective arguments, the corresponding
+§§passed_args§passed\_args§§ element evaluates to an end-elliptic list.
+
+#EXAMPLE
+procedure testA() {
+	  "Current backtrace:";
+	  getbacktrace();
+};
+
+procedure testB(X) {
+	  "X = ", X;
+	  testA();
+};
+
+procedure testC(X, Y) {
+	  "X = ", X, ", Y = ", Y;
+	  testB(Y);
+};
+
+testC(17, 42);
+
+#EXAMPLE
+getbacktrace();
+
+#EXAMPLE
+procedure printnumargs(X) {
+	  "number of arguments: ", X;
+	  getbacktrace();
+};
+
+procedure numargs(l = ...) {
+	  "l[17] = ", l[17];
+	  printnumargs(length(l));
+};
+
+procedure test() {
+	  numargs @ [|25 ...|];
+};
+
+test();
+
+#SEEALSO $PROC
+#SEEALSO $PROCEDURE
+#SEEALSO $BIND
+#SEEALSO $CONCAT
+

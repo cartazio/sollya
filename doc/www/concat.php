@@ -86,5 +86,5 @@ performed.
 </div> 
 </div> 
 <div class="divSeeAlso"> 
-<span class="category">See also: </span><?php linkTo("command","prepend",".:");?>, <?php linkTo("command","append",":.");?>, <?php linkTo("command","procedure","procedure");?>, <?php linkTo("command","proc","proc");?>, <?php linkTo("command","bind","bind");?> 
+<span class="category">See also: </span><?php linkTo("command","prepend",".:");?>, <?php linkTo("command","append",":.");?>, <?php linkTo("command","procedure","procedure");?>, <?php linkTo("command","proc","proc");?>, <?php linkTo("command","bind","bind");?>, <?php linkTo("command","getbacktrace","getbacktrace");?> 
 </div> 

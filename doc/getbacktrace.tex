@@ -1,0 +1,107 @@
+\subsection{getbacktrace}
+\label{labgetbacktrace}
+\noindent Name: \textbf{getbacktrace}\\
+\phantom{aaa}returns the list of \sollya procedures currently run\\[0.2cm]
+\noindent Library name:\\
+\verb|   sollya_obj_t sollya_lib_getbacktrace();|\\[0.2cm]
+\noindent Usage: 
+\begin{center}
+\textbf{getbacktrace}() : \textsf{void} $\rightarrow$ \textsf{list}\\
+\end{center}
+\noindent Description: \begin{itemize}
+
+\item The \textbf{getbacktrace} command allows the stack of \sollya procedures that are
+   currently run to be inspected. When called, \textbf{getbacktrace} returns an
+   ordered list of structures, each of which contains an element
+   passed\_args and an element called\_proc. The element called\_proc
+   contains the \sollya object representing the procedure being run. The
+   element passed\_args contains an ordered list of all effective
+   arguments passed to the procedure when it was called. The procedure called
+   last (i.e. on top of the stack) comes first in the list returned
+   by \textbf{getbacktrace}. When any of the procedure called takes no arguments, the
+   passed\_args element of the corresponding structure evaluates to an empty
+   list.
+
+\item When called from outside any procedure (at toplevel), \textbf{getbacktrace} returns
+   an empty list.
+
+\item When called for a stack containing a call to a variadic procedure that was
+   called with an infinite number of effective arguments, the corresponding
+   passed\_args element evaluates to an end-elliptic list.
+\end{itemize}
+\noindent Example 1: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> procedure testA() {
+        "Current backtrace:";
+        getbacktrace();
+  };
+> procedure testB(X) {
+        "X = ", X;
+        testA();
+  };
+> procedure testC(X, Y) {
+        "X = ", X, ", Y = ", Y;
+        testB(Y);
+  };
+> testC(17, 42);
+X = 17, Y = 42
+X = 42
+Current backtrace:
+[|{ .passed_args = [| |], .called_proc = proc()
+{
+"Current backtrace:";
+getbacktrace();
+return void;
+} }, { .passed_args = [|42|], .called_proc = proc(X)
+{
+"X = ", X;
+testA();
+return void;
+} }, { .passed_args = [|17, 42|], .called_proc = proc(X, Y)
+{
+"X = ", X, ", Y = ", Y;
+testB(Y);
+return void;
+} }|]
+\end{Verbatim}
+\end{minipage}\end{center}
+\noindent Example 2: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> getbacktrace();
+[| |]
+\end{Verbatim}
+\end{minipage}\end{center}
+\noindent Example 3: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> procedure printnumargs(X) {
+        "number of arguments: ", X;
+        getbacktrace();
+  };
+> procedure numargs(l = ...) {
+        "l[17] = ", l[17];
+        printnumargs(length(l));
+  };
+> procedure test() {
+        numargs @ [|25 ...|];
+  };
+> test();
+l[17] = 42
+number of arguments: infty
+[|{ .passed_args = [|infty|], .called_proc = proc(X)
+{
+"number of arguments: ", X;
+getbacktrace();
+return void;
+} }, { .passed_args = [|25|], .called_proc = proc(l = ...)
+{
+"l[17] = ", l[17];
+printnumargs(length(l));
+return void;
+} }, { .passed_args = [| |], .called_proc = proc()
+{
+(numargs) @ ([|25...|]);
+return void;
+} }|]
+\end{Verbatim}
+\end{minipage}\end{center}
+See also: \textbf{proc} (\ref{labproc}), \textbf{procedure} (\ref{labprocedure}), \textbf{bind} (\ref{labbind}), \textbf{@} (\ref{labconcat})

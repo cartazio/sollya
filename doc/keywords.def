@@ -24,6 +24,7 @@ APPROX="§§~§$\\sim$§§"
 VAR="var"
 PROC="proc"
 PROCEDURE="procedure"
+GETBACKTRACE="getbacktrace"
 NOP="nop"
 RETURN="return"
 
