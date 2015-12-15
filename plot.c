@@ -1,6 +1,6 @@
 /*
 
-  Copyright 2006-2013 by
+  Copyright 2006-2015 by
 
   Laboratoire de l'Informatique du Parallelisme,
   UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
@@ -302,10 +302,28 @@ void plotTree(chain *treeList, mpfr_t a, mpfr_t b, unsigned long int points, mp_
   if (plotPossible) {
     if ((name==NULL) || (type==PLOTFILE)) {
       if (fork()==0) {
-	daemon(1,1);
-	execlp("gnuplot", "gnuplot", "-persist", gplotname, NULL);
-	perror("An error occurred when calling gnuplot ");
-	exit(1);
+	if (daemon(1,1) == 0) {
+	  if (fork() == 0) {
+	    execlp("gnuplot", "gnuplot", "-persist", gplotname, NULL);
+	    perror("An error occurred when calling gnuplot ");
+	    exit(1);
+	  } else {
+	    wait(NULL);
+	    remove(gplotname);
+	    remove(dataname);
+	    exit(0);
+	  }
+	} else {
+	  fprintf(stderr, "Could not create a daemon for gnuplot\n");
+	  if (fork() == 0) {
+	    execlp("gnuplot", "gnuplot", "-persist", gplotname, NULL);
+	    perror("An error occurred when calling gnuplot ");
+	    exit(1);
+	  } else {
+	    wait(NULL);
+	    exit(0);
+	  }	  
+	}
       }
       else wait(NULL);
     }
