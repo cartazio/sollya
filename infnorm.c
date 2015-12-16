@@ -2512,7 +2512,7 @@ chain* evaluateITaylorOnDiv(sollya_mpfi_t result, node *func, sollya_mpfi_t x, m
 
 chain* evaluateITaylorInner(sollya_mpfi_t, node *, node *, sollya_mpfi_t, mp_prec_t, int, exprBoundTheo *, int, int, int, mp_exp_t *);
 
-chain* evaluateITaylor(sollya_mpfi_t result, node *func, node *deriv, sollya_mpfi_t x, mp_prec_t prec, int recurse, exprBoundTheo *theo, int noExcludes, int fastAddSub, int workForThin, mp_exp_t *cutoff) {
+chain* evaluateITaylorWrapped(sollya_mpfi_t result, node *func, node *deriv, sollya_mpfi_t x, mp_prec_t prec, int recurse, exprBoundTheo *theo, int noExcludes, int fastAddSub, int workForThin, mp_exp_t *cutoff) {
   chain *excludes;
   mp_prec_t *precPtr;
   sollya_mpfi_t *intervalPtr;
@@ -2564,6 +2564,16 @@ chain* evaluateITaylor(sollya_mpfi_t result, node *func, node *deriv, sollya_mpf
   }
 
   return excludes;
+}
+
+chain* evaluateITaylor(sollya_mpfi_t result, node *func, node *deriv, sollya_mpfi_t x, mp_prec_t prec, int recurse, exprBoundTheo *theo, int noExcludes, int fastAddSub, int workForThin, mp_exp_t *cutoff) {
+  if (deriv == NULL) {
+    return evaluateITaylorWrapped(result, func, deriv, x, prec, recurse, theo, noExcludes, fastAddSub, workForThin, cutoff);
+  }
+  if (containsNonDifferentiableSubfunctions(func)) {
+    return evaluateITaylorWrapped(result, func, NULL, x, prec, recurse, theo, noExcludes, fastAddSub, workForThin, cutoff);
+  }
+  return evaluateITaylorWrapped(result, func, deriv, x, prec, recurse, theo, noExcludes, fastAddSub, workForThin, cutoff);
 }
 
 chain* evaluateITaylorInner(sollya_mpfi_t result, node *func, node *deriv, sollya_mpfi_t x, mp_prec_t prec, int recurse, exprBoundTheo *theo, int noExcludes, int fastAddSub, int workForThin, mp_exp_t *cutoff) {
@@ -4008,6 +4018,11 @@ void evaluateRangeFunction(rangetype yrange, node *func, rangetype xrange, mp_pr
   rangetype myrange;
   node *myderiv;
 
+  if (containsNonDifferentiableSubfunctions(func)) {
+    evaluateRangeFunctionFast(yrange,func,NULL,xrange,prec);
+    return;
+  }
+  
   temp = differentiate(func);
   deriv = horner(temp);
 

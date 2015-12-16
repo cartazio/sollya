@@ -1,6 +1,6 @@
 /*
 
-  Copyright 2006-2014 by
+  Copyright 2006-2015 by
 
   Laboratoire de l'Informatique du Parallelisme,
   UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
@@ -328,7 +328,7 @@ int mpfr_to_mpz( mpz_t y, mpfr_t x);
 mp_prec_t getMpzPrecision(mpz_t x);
 int containsOnlyRealNumbers(node * tree);
 void tryCopyTreeAnnotations(node *newTree, node *oldTree);
-
+int containsNonDifferentiableSubfunctions(node *tree);
 
 node *makeVariable();
 node *makeConstant(mpfr_t x);

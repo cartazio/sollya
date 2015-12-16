@@ -6392,6 +6392,85 @@ node* differentiateUnsimplified(node *tree) {
   return res;
 }
 
+int containsNonDifferentiableSubfunctions(node *tree) {
+
+  /* Memory references */
+  if (tree->nodeType == MEMREF) {
+    if (tree->polynomialRepresentation != NULL) {
+      return 0; /* Polynomials are always differentiable */
+    }
+    return containsNonDifferentiableSubfunctions(getMemRefChild(tree));
+  }
+
+  /* Constant expressions are always differentiable */
+  if (isConstant(tree)) {
+    return 0;
+  }
+
+  /* Other cases */
+  switch (tree->nodeType) {
+  case VARIABLE:
+    return 0;
+    break;
+  case CONSTANT:
+  case PI_CONST:
+  case LIBRARYCONSTANT:
+    return 0;
+    break;
+  case ADD:
+  case SUB:
+  case MUL:
+  case DIV:
+  case POW:
+    return (containsNonDifferentiableSubfunctions(tree->child1) ||
+	    containsNonDifferentiableSubfunctions(tree->child2));
+    break;
+  case SQRT:
+  case EXP:
+  case LOG:
+  case LOG_2:
+  case LOG_10:
+  case SIN:
+  case COS:
+  case TAN:
+  case ASIN:
+  case ACOS:
+  case ATAN:
+  case SINH:
+  case COSH:
+  case TANH:
+  case ASINH:
+  case ACOSH:
+  case ATANH:
+  case NEG:
+  case ABS:
+  case ERF:
+  case ERFC:
+  case LOG_1P:
+  case EXP_M1:
+  case LIBRARYFUNCTION:
+  case PROCEDUREFUNCTION:
+    return containsNonDifferentiableSubfunctions(tree->child1);
+    break;
+  case DOUBLE:
+  case SINGLE:
+  case QUAD:
+  case HALFPRECISION:
+  case DOUBLEDOUBLE:
+  case TRIPLEDOUBLE:
+  case DOUBLEEXTENDED:
+  case CEIL:
+  case FLOOR:
+  case NEARESTINT:
+    return 1;
+    break;
+  default:
+    sollyaFprintf(stderr,"Error: containsNonDifferentiableSubfunctions: unknown identifier (%d) in the tree\n", tree->nodeType);
+    exit(1);
+  }
+  return 0;
+}
+
 node* differentiateUnsimplifiedInner(node *tree) {
   node *derivative;
   mpfr_t *mpfr_temp;
