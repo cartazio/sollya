@@ -217,6 +217,14 @@ void *(*oldGMPMalloc)(size_t) = NULL;
 void *(*oldGMPRealloc)(void *, size_t, size_t) = NULL;
 void (*oldGMPFree)(void *, size_t) = NULL;
 
+void (*replacement_mp_set_memory_functions)(void *(*)(size_t),
+					    void *(*)(void *, size_t, size_t),
+					    void (*)(void *, size_t)) = NULL;
+void (*replacement_mp_get_memory_functions)(void *(**)(size_t),
+					    void *(**)(void *, size_t, size_t),
+					    void (**)(void *, size_t)) = NULL;
+
+
 /* END OF GLOBAL VARIABLES FOR THE MEMORY ALLOCATION FUNCTIONS */
 
 
@@ -579,17 +587,25 @@ void wrapSafeFree(void *ptr, size_t size) {
 
 /* Wrap the GMP mp_set_memory_functions and mp_get_memory_functions
    once in order to enable opportunities for different memory
-   management at a later point.
+   management.
 */
 void sollya_mp_set_memory_functions(void *(*alloc_func_ptr) (size_t),
 				    void *(*realloc_func_ptr) (void *, size_t, size_t),
 				    void (*free_func_ptr) (void *, size_t)) {
+  if (replacement_mp_set_memory_functions != NULL) {
+    replacement_mp_set_memory_functions(alloc_func_ptr, realloc_func_ptr, free_func_ptr);
+    return;
+  }
   mp_set_memory_functions(alloc_func_ptr, realloc_func_ptr, free_func_ptr);
 }
 
 void sollya_mp_get_memory_functions(void *(**alloc_func_ptr) (size_t),
 				    void *(**realloc_func_ptr) (void *, size_t, size_t),
 				    void (**free_func_ptr) (void *, size_t)) {
+  if (replacement_mp_get_memory_functions != NULL) {
+    replacement_mp_get_memory_functions(alloc_func_ptr, realloc_func_ptr, free_func_ptr);
+    return;
+  }
   mp_get_memory_functions(alloc_func_ptr, realloc_func_ptr, free_func_ptr);
 }
 
@@ -1654,10 +1670,20 @@ int initializeLibraryMode(void *(*myActualMalloc)(size_t),
 			  void *(*myActualReallocWithSize)(void *, size_t, size_t),
 			  void (*myActualFreeWithSize)(void *, size_t),
 			  int argc,
-			  char **argv) {
+			  char **argv,
+			  void (*my_mp_set_func)(void *(*)(size_t),
+						 void *(*)(void *, size_t, size_t),
+						 void (*)(void *, size_t)),
+			  void (*my_mp_get_func)(void *(**)(size_t),
+						 void *(**)(void *, size_t, size_t),
+						 void (**)(void *, size_t))) {
   void *ptr;
   int k, allArgsOkay;
   libraryMode = 1;
+  replacement_mp_set_memory_functions = NULL;
+  replacement_mp_get_memory_functions = NULL;
+  if (my_mp_set_func != NULL) replacement_mp_set_memory_functions = my_mp_set_func;
+  if (my_mp_get_func != NULL) replacement_mp_get_memory_functions = my_mp_get_func;
   if (myActualMalloc != NULL) actualMalloc = myActualMalloc;
   if (myActualCalloc != NULL) actualCalloc = myActualCalloc;
   if (myActualRealloc != NULL) actualRealloc = myActualRealloc;
@@ -1759,6 +1785,8 @@ int finalizeLibraryMode() {
   actualRealloc = realloc;
   actualFreeWithSize = wrapSafeFree;
   actualReallocWithSize = wrapSafeRealloc;
+  replacement_mp_set_memory_functions = NULL;
+  replacement_mp_get_memory_functions = NULL;
   libraryMode = 0;
   return 1;
 }
@@ -1909,6 +1937,8 @@ int general(int argc, char *argv[]) {
   int sollyaOptions;
   int frameCorruptionPrinted;
 
+  replacement_mp_set_memory_functions = NULL;
+  replacement_mp_get_memory_functions = NULL;
   messageCallback = NULL;
   libraryMode = 0;
   lastMessageCallbackResult = 1;

@@ -136,6 +136,62 @@ void sollya_lib_internal_double_zero_sign_normalize(double *op) {
 
 /* Actual wrapper functions */
 
+int sollya_lib_init_with_custom_memory_functions_with_arguments_with_custom_memory_function_modifiers(void *(*myMalloc)(size_t),
+												      void *(*myCalloc)(size_t, size_t),
+												      void *(*myRealloc)(void *, size_t),
+												      void (*myFree)(void*),
+												      void *(*myReallocWithSize)(void *, size_t, size_t),
+												      void (*myFreeWithSize)(void *, size_t),
+												      int argc,
+												      char **argv,
+												      void (*my_mp_set_func)(void *(*)(size_t),
+															     void *(*)(void *, size_t, size_t),
+															     void (*)(void *, size_t)),
+												      void (*my_mp_get_func)(void *(**)(size_t),
+															     void *(**)(void *, size_t, size_t),
+															     void (**)(void *, size_t))) {
+  if (__sollya_lib_initialized < 0) __sollya_lib_initialized = 0;
+  __sollya_lib_initialized++;
+  if (__sollya_lib_initialized > 1) return 0;
+  return initializeLibraryMode(myMalloc, myCalloc, myRealloc, myFree, myReallocWithSize, myFreeWithSize, argc, argv, my_mp_set_func, my_mp_get_func);
+}
+
+int sollya_lib_init_with_custom_memory_functions_with_custom_memory_function_modifiers(void *(*myMalloc)(size_t),
+										       void *(*myCalloc)(size_t, size_t),
+										       void *(*myRealloc)(void *, size_t),
+										       void (*myFree)(void*),
+										       void *(*myReallocWithSize)(void *, size_t, size_t),
+										       void (*myFreeWithSize)(void *, size_t),
+										       void (*my_mp_set_func)(void *(*)(size_t),
+													      void *(*)(void *, size_t, size_t),
+													      void (*)(void *, size_t)),
+										       void (*my_mp_get_func)(void *(**)(size_t),
+													      void *(**)(void *, size_t, size_t),
+													      void (**)(void *, size_t))) {
+  return sollya_lib_init_with_custom_memory_functions_with_arguments_with_custom_memory_function_modifiers(myMalloc, myCalloc, myRealloc, myFree, myReallocWithSize, myFreeWithSize,
+													   0, NULL,
+													   my_mp_set_func, my_mp_get_func);
+}
+
+int sollya_lib_init_with_arguments_with_custom_memory_function_modifiers(int argc, char **argv,
+									 void (*my_mp_set_func)(void *(*)(size_t),
+												void *(*)(void *, size_t, size_t),
+												void (*)(void *, size_t)),
+									 void (*my_mp_get_func)(void *(**)(size_t),
+												void *(**)(void *, size_t, size_t),
+												void (**)(void *, size_t))) {
+  return sollya_lib_init_with_custom_memory_functions_with_arguments_with_custom_memory_function_modifiers(NULL, NULL, NULL, NULL, NULL, NULL, argc, argv, my_mp_set_func, my_mp_get_func);
+}
+
+int sollya_lib_init_with_custom_memory_function_modifiers(void (*my_mp_set_func)(void *(*)(size_t),
+										 void *(*)(void *, size_t, size_t),
+										 void (*)(void *, size_t)),
+							  void (*my_mp_get_func)(void *(**)(size_t),
+										 void *(**)(void *, size_t, size_t),
+										 void (**)(void *, size_t))) {
+  return sollya_lib_init_with_custom_memory_functions_with_custom_memory_function_modifiers(NULL, NULL, NULL, NULL, NULL, NULL, my_mp_set_func, my_mp_get_func);
+}
+
 int sollya_lib_init_with_custom_memory_functions_with_arguments(void *(*myMalloc)(size_t),
 								void *(*myCalloc)(size_t, size_t),
 								void *(*myRealloc)(void *, size_t),
@@ -144,10 +200,7 @@ int sollya_lib_init_with_custom_memory_functions_with_arguments(void *(*myMalloc
 								void (*myFreeWithSize)(void *, size_t),
 								int argc,
 								char **argv) {
-  if (__sollya_lib_initialized < 0) __sollya_lib_initialized = 0;
-  __sollya_lib_initialized++;
-  if (__sollya_lib_initialized > 1) return 0;
-  return initializeLibraryMode(myMalloc, myCalloc, myRealloc, myFree, myReallocWithSize, myFreeWithSize, argc, argv);
+  return sollya_lib_init_with_custom_memory_functions_with_arguments_with_custom_memory_function_modifiers(myMalloc, myCalloc, myRealloc, myFree, myReallocWithSize, myFreeWithSize, argc, argv, NULL, NULL);
 }
 
 int sollya_lib_init_with_custom_memory_functions(void *(*myMalloc)(size_t),
@@ -156,15 +209,15 @@ int sollya_lib_init_with_custom_memory_functions(void *(*myMalloc)(size_t),
 						 void (*myFree)(void*),
 						 void *(*myReallocWithSize)(void *, size_t, size_t),
 						 void (*myFreeWithSize)(void *, size_t)) {
-  return sollya_lib_init_with_custom_memory_functions_with_arguments(myMalloc, myCalloc, myRealloc, myFree, myReallocWithSize, myFreeWithSize, 0, NULL);
+  return sollya_lib_init_with_custom_memory_functions_with_custom_memory_function_modifiers(myMalloc, myCalloc, myRealloc, myFree, myReallocWithSize, myFreeWithSize, NULL, NULL);
 }
 
 int sollya_lib_init_with_arguments(int argc, char **argv) {
-  return sollya_lib_init_with_custom_memory_functions_with_arguments(NULL, NULL, NULL, NULL, NULL, NULL, argc, argv);
+  return sollya_lib_init_with_arguments_with_custom_memory_function_modifiers(argc, argv, NULL, NULL);
 }
 
 int sollya_lib_init() {
-  return sollya_lib_init_with_custom_memory_functions(NULL, NULL, NULL, NULL, NULL, NULL);
+  return sollya_lib_init_with_custom_memory_function_modifiers(NULL, NULL);
 }
 
 int sollya_lib_close() {
