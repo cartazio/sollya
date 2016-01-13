@@ -644,66 +644,240 @@ char *sPrintBinary(mpfr_t x) {
   return resultStr;
 }
 
-char *sPrintHexadecimal(mpfr_t x) {
-  mpfr_t xx;
-  int negative;
-  mp_prec_t prec;
-  mp_exp_t expo;
-  char *raw, *formatted, *temp1, *temp2, *str3;
-  char *temp3 = NULL;
-  char *resultStr;
-
-  prec = mpfr_get_prec(x);
-  mpfr_init2(xx,prec);
-  mpfr_abs(xx,x,GMP_RNDN);
-  negative = 0;
-  if (mpfr_sgn(x) < 0) negative = 1;
-  raw = mpfr_get_str(NULL,&expo,16,0,xx,GMP_RNDN);
-  if (raw == NULL) {
-    sollyaFprintf(stderr,"Error: unable to get a string for the given number.\n");
-    exit(1);
-  } else {
-    formatted = safeCalloc(strlen(raw) + 3, sizeof(char));
-    temp1 = raw; temp2 = formatted;
-    *temp2 = *temp1; temp2++; temp1++;
-    *temp2 = '.'; temp2++;
-    while (*temp1 != '\0') {
-      *temp2 = *temp1;
-      temp2++; temp1++;
-    }
-    str3 = (char *) safeCalloc(strlen(formatted)+2,sizeof(char));
-    removeTrailingZeros(str3,formatted);
-    if (!mpfr_zero_p(x)) {
-      if (mpfr_number_p(x)) {
-	temp3 = (char *) safeCalloc(strlen(str3)+74,sizeof(char));
-	if (negative) {
-	  sprintf(temp3,"-0x%sp%d",str3,4 * (((int)expo)-1));
-	} else {
-	  sprintf(temp3,"0x%sp%d",str3,4 * (((int)expo)-1));
-	}
-      } else {
-	temp3 = (char *) safeCalloc(strlen(raw) + 2,sizeof(char));
-	if (negative)
-	  sprintf(temp3,"-%s",raw);
-	else
-	  sprintf(temp3,"%s",raw);
-      }
-    }
-    else {
-      temp3 = (char *) safeCalloc(2,sizeof(char));
-      sprintf(temp3,"0");
-    }
-    safeFree(formatted);
-    safeFree(str3);
-  }
-  mpfr_free_str(raw);
-  mpfr_clear(xx);
-  resultStr = (char *) safeCalloc(strlen(temp3) + 1,sizeof(char));
-  sprintf(resultStr,"%s",temp3);
-  safeFree(temp3);
-  return resultStr;
+static inline int __sprintfValue_sprintf(char *str, const char *format, ...) {
+  va_list varlist;
+  int res;
+  va_start(varlist, format);
+  deferSignalHandling();
+  res = vsprintf(str, format, varlist);
+  resumeSignalHandling();
+  va_end(varlist);
+  return res;
 }
 
+char *sPrintHexadecimal(mpfr_t x) {
+  char *res, *curr;
+  mpfr_exp_t E;
+  mpz_t m, n, z;
+  int s;
+  mp_bitcnt_t zerosRight;
+  size_t q, w, a, i;
+  long long int tmp;
+  mpfr_exp_t Et;
+
+  /* Display zero */
+  if (mpfr_zero_p(x)) {
+    res = safeCalloc(strlen("0") + 1, sizeof(char));
+    strcpy(res, "0");
+    return res;
+  }
+
+  /* Display NaN */
+  if (mpfr_nan_p(x)) {
+    res = safeCalloc(strlen("NaN") + 1, sizeof(char));
+    strcpy(res, "NaN");
+    return res;
+  }
+  
+  /* Display +/- Infinity */
+  if (mpfr_inf_p(x)) {
+    if (mpfr_sgn(x) < 0) {
+      /* Display -infty */
+      res = safeCalloc(strlen("-infty") + 1, sizeof(char));
+      strcpy(res, "-infty");
+    } else {
+      /* Display infty */
+      res = safeCalloc(strlen("infty") + 1, sizeof(char));
+      strcpy(res, "infty");
+    }
+    return res;
+  }
+
+  /* Here, the input is neither zero, nor NaN, nor an infinity 
+     
+     We can therefore split it into a sign, an exponent and an odd
+     integer mantissa.
+
+  */
+  mpz_init(m);
+  E = mpfr_get_z_2exp(m, x);
+  s = 0;
+  if (mpz_sgn(m) < 0) {
+    mpz_neg(m, m);
+    s = 1;
+  }
+  zerosRight = mpz_scan1(m, 0);
+  mpz_fdiv_q_2exp(m, m, zerosRight);
+  E += zerosRight;
+  
+  /* Here, we have x = (-1)^s * 2^E * m 
+
+     where m = 2 * k + 1, k in N 
+
+     We now compute q = floor(log2(m)) and
+     then 
+
+     n = m - 2^q.
+
+  */
+  q = mpz_sizeinbase(m, 2);
+  q--;
+
+  mpz_init(n);
+  mpz_set_si(n, 1);
+  if (q != ((size_t) 0)) {
+    mpz_mul_2exp(n, n, (mp_bitcnt_t) q);
+  }
+  mpz_sub(n, m, n);
+
+  /* Now, we have to display 
+     
+     x = (-1)^s * 2^(E + q) * (1 + n * 2^(-q))
+     
+     We start by checking if n is zero. In this
+     case m = 2^q + n is an integer power of 2.
+
+  */
+  if (mpz_sgn(n) == 0) {
+    /* Here, we have n = 0, so we have to display 
+
+       x = (-1)^s * 2^(E + q) * 1
+
+    */
+    E += q;
+    res = safeCalloc(1 + 2 + 1 + 8 * sizeof(mpfr_exp_t) + 1, sizeof(char));
+    if (s) {
+      res[0] = '-';
+      curr = res + 1;
+    } else {
+      curr = res;
+    }
+    curr[0] = '0';
+    curr[1] = 'x';
+    curr[2] = '1';
+    curr[3] = 'p';
+    curr += 4;
+    if (E != ((mpfr_exp_t) 0)) {
+      if (sizeof(mpfr_exp_t) <= sizeof(int)) {
+	__sprintfValue_sprintf(curr, "%d", (int) E);
+      } else {
+	if (sizeof(mpfr_exp_t) <= sizeof(long int)) {
+	  __sprintfValue_sprintf(curr, "%ld", (long int) E);
+	} else {
+	  if (sizeof(mpfr_exp_t) <= sizeof(long long int)) {
+	    __sprintfValue_sprintf(curr, "%lld", (long long int) E);
+	  } else {
+	    tmp = (long long int) E;
+	    Et = (mpfr_exp_t) tmp;
+	    if (E == Et) {
+	      __sprintfValue_sprintf(curr, "%lld", tmp);
+	    } else {
+	      sollyaFprintf(stderr,"Error: sPrintHexadecimal: mpfr_exp_t variable too large to be displayed.\n");
+	      exit(1);
+	    }
+	  }
+	}
+      }
+    }
+  } else {
+    /* Here, we have n = 0, so we have to display 
+
+       x = (-1)^s * 2^(E + q) * (1 + z * 2^(-w))
+
+       where 
+
+       w = 4 * ceil(q/4)
+
+       which is an integer divisible by 4
+
+       and
+       
+       z = n * 2^(w-q)
+       
+       Hence 
+
+       w - q = 4 * ceil(q / 4) - q 
+             = 4 * (q / 4 + delta) - q 
+	     = 4 * delta 
+
+       where delta is bounded by 0 <= delta < 1
+
+       Since w - q is integer, we have 
+
+       0 <= w - q <= 3.
+
+       Further we have 
+
+       1 <= n <= 2^q - 1
+
+       and hence 
+
+       1 <= z <= 2^w - 1.
+
+    */
+    w = q >> 2;
+    if ((q & ((size_t) 3)) != ((size_t) 0)) w++;
+    w <<= 2;
+    mpz_init(z);
+    if ((w - q) != ((size_t) 0)) {
+      mpz_mul_2exp(z, n, (mp_bitcnt_t) (w - q));
+    } else {
+      mpz_set(z, n);
+    }
+    E += q;
+    res = safeCalloc(1 + 2 + 1 + 1 + ((size_t) (w >> 2)) + 1 + 1 + 8 * sizeof(mpfr_exp_t) + 1, sizeof(char));
+    if (s) {
+      res[0] = '-';
+      curr = res + 1;
+    } else {
+      curr = res;
+    }
+    curr[0] = '0';
+    curr[1] = 'x';
+    curr[2] = '1';
+    curr[3] = '.';
+    curr += 4;
+    a = mpz_sizeinbase(z, 16);
+    for (i=((size_t) 0);i<((size_t) ((w >> 2) - a));i++) {
+      curr[i] = '0';
+    }
+    curr += ((size_t) ((w >> 2) - a));
+    mpz_get_str(curr, 16, z);
+    curr += a;
+    curr[0] = 'p';
+    curr++;
+    if (E != ((mpfr_exp_t) 0)) {
+      if (sizeof(mpfr_exp_t) <= sizeof(int)) {
+	__sprintfValue_sprintf(curr, "%d", (int) E);
+      } else {
+	if (sizeof(mpfr_exp_t) <= sizeof(long int)) {
+	  __sprintfValue_sprintf(curr, "%ld", (long int) E);
+	} else {
+	  if (sizeof(mpfr_exp_t) <= sizeof(long long int)) {
+	    __sprintfValue_sprintf(curr, "%lld", (long long int) E);
+	  } else {
+	    tmp = (long long int) E;
+	    Et = (mpfr_exp_t) tmp;
+	    if (E == Et) {
+	      __sprintfValue_sprintf(curr, "%lld", tmp);
+	    } else {
+	      sollyaFprintf(stderr,"Error: sPrintHexadecimal: mpfr_exp_t variable too large to be displayed.\n");
+	      exit(1);
+	    }
+	  }
+	}
+      }
+    }
+    mpz_clear(z);
+  }
+  
+  /* Clear temporaries */
+  mpz_clear(n);
+  mpz_clear(m);
+  
+  /* Return the result */
+  return res;
+}
 
 void printBinary(mpfr_t x) {
   char *str;
@@ -719,17 +893,6 @@ void printHexadecimalValue(mpfr_t x) {
   str = sPrintHexadecimal(x);
   sollyaPrintf("%s",str);
   safeFree(str);
-}
-
-static inline int __sprintfValue_sprintf(char *str, const char *format, ...) {
-  va_list varlist;
-  int res;
-  va_start(varlist, format);
-  deferSignalHandling();
-  res = vsprintf(str, format, varlist);
-  resumeSignalHandling();
-  va_end(varlist);
-  return res;
 }
 
 static inline void __sprintfValue_init_value(mpfr_t x, mpfr_t *valPtr) {
