@@ -63,7 +63,7 @@ global mode by an indication.
 &nbsp;&nbsp;&nbsp;&gt; display = hexadecimal;<br> 
 &nbsp;&nbsp;&nbsp;Display mode is hexadecimal numbers.<br> 
 &nbsp;&nbsp;&nbsp;&gt; a;<br> 
-&nbsp;&nbsp;&nbsp;0xb.504f333f9de6484597d89b3754abe9f1d6f60ba88p-4<br> 
+&nbsp;&nbsp;&nbsp;0x1.6a09e667f3bcc908b2fb1366ea957d3e3adec1751p-1<br> 
 &nbsp;&nbsp;&nbsp;&gt; display = dyadic;<br> 
 &nbsp;&nbsp;&nbsp;Display mode is dyadic numbers.<br> 
 &nbsp;&nbsp;&nbsp;&gt; a;<br> 
