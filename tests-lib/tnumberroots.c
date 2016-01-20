@@ -18,7 +18,10 @@ int callback(sollya_msg_t msg, void *data) {
     break;    
   case SOLLYA_MSG_EXPR_NOT_CORRECTLY_TYPED:
     sollya_lib_printf("Caught the message that a given expression is not correctly typed.\n");
-    break;        
+    break;
+  case SOLLYA_MSG_STURM_INTERVAL_A_CERTAIN_PREC_HAS_BEEN_CHOSEN:
+    sollya_lib_printf("Caught the message that a certain working precision has been chosen.\n");
+    break;    
   default:
     sollya_lib_printf("Unexpected warning %d.\n", message);
   }
@@ -27,6 +30,7 @@ int callback(sollya_msg_t msg, void *data) {
 
 int main(void) {
   sollya_obj_t a[NB_OF_TESTS], b[NB_OF_TESTS], c[NB_OF_TESTS];
+  sollya_obj_t temp;
   int i;
 
   sollya_lib_init();
@@ -68,11 +72,19 @@ int main(void) {
   a[11] = sollya_lib_parse_string("exp(x)");
   b[11] = sollya_lib_parse_string("[-1;1]");
 
+  temp = SOLLYA_CONST_SI64(2);
+  sollya_lib_set_verbosity(temp);
+  sollya_lib_clear_obj(temp);
+  
   for (i=0;i<NB_OF_TESTS;i++) {
     c[i] = sollya_lib_numberroots(a[i],b[i]);
     sollya_lib_printf("The polynomial %b has %b root(s) in the interval %b.\n",a[i],c[i],b[i]);
   }
 
+  temp = SOLLYA_CONST_SI64(1);
+  sollya_lib_set_verbosity(temp);
+  sollya_lib_clear_obj(temp);
+  
   for (i=0;i<NB_OF_TESTS;i++) {
     sollya_lib_clear_obj(a[i]);
     sollya_lib_clear_obj(b[i]);

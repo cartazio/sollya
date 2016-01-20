@@ -788,7 +788,7 @@ int getNrRoots(mpfr_t res, node *f, sollya_mpfi_t range, mp_prec_t precision, in
     resMpfi = sturm_mpfi(&nr, qCoefficients, deg,x,precision);
     if (!resMpfi) {
       if (!silent) {
-	printMessage(1,SOLLYA_MSG_STURM_USING_SLOWER_ALGORITHM_ON_RATIONALS,"Warning: using slower GMP MPQ version\n");
+	printMessage(2,SOLLYA_MSG_STURM_USING_SLOWER_ALGORITHM_ON_RATIONALS,"Information: using slower GMP MPQ version\n");
       }
       sturm_mpq(&nr, qCoefficients, deg,x);
     }
