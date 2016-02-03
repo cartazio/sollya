@@ -25,6 +25,7 @@ VAR="var"
 PROC="proc"
 PROCEDURE="procedure"
 GETBACKTRACE="getbacktrace"
+OBJECTNAME="objectname"
 NOP="nop"
 RETURN="return"
 

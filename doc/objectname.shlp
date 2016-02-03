@@ -1,0 +1,104 @@
+#NAME $OBJECTNAME
+#QUICK_DESCRIPTION returns, given a $SOLLYA object, a string that can be reparsed to the object
+#CALLING $COMMAND(<obj>)
+#TYPE $ANY_TYPE -> $STRING_TYPE
+#LIBRARYNAME sollya_obj_t sollya_lib_objectname(sollya_obj_t);
+
+#DESCRIPTION
+The $COMMAND command allows a textual representation to be recovered
+for any type of $SOLLYA object <obj>, given in argument to
+$COMMAND. This textual representation is returned as a string
+formatted in such a way that, when given to the $PARSE command, the
+original object <obj> is recovered.
+
+#DESCRIPTION
+In contrast to any other way of "printing" a $SOLLYA object into a
+string, such as by concatenating it to an empty string with the use of
+the $CONCAT operator, $COMMAND queries the $SOLLYA symbol table in order
+to recover, the name of an identifier the object <obj> is assigned to.
+The only condition for an identifier the object <obj> is assigned to
+to be eligible to be returned by $COMMAND is to be accessible in the
+scope $COMMAND is executed in, i.e. not to be shadowed by an identifier
+of the same name which does not hold the object <obj>. Only in cases
+when no such eligible identifier exists, $COMMAND returns an unnamed
+textual representation of the object <obj>, in a similar fashion to
+"printing" the object.
+
+#DESCRIPTION
+$COMMAND is particularly useful in combination with $GETBACKTRACE, when
+the $SOLLYA procedure stack is to be displayed in a fashion, where
+procedures are identified by their name and not their procedural content.
+
+#DESCRIPTION
+$COMMAND may also be used to get a string representation of the free
+mathematical variable.
+
+#EXAMPLE
+s = "Hello";
+objectname("Hello");
+
+#EXAMPLE
+f = exp(x);
+g = sin(x);
+[| objectname(exp(x)), objectname(sin(x)), objectname(cos(x)) |];
+
+#EXAMPLE
+o = { .f = exp(x), .I = [-1;1] };
+s = objectname(o);
+write("s = \"", s, "\" parses to ", parse(s), "\n");
+
+#EXAMPLE
+n = 1664;
+objectname(n);
+
+#EXAMPLE
+f = exp(x);
+g = sin(x);
+
+procedure test() {
+    var f;
+    var h;
+
+    f = tan(x);
+    h = cos(x);
+
+    [| objectname(exp(x)), objectname(sin(x)), objectname(cos(x)) |];
+};
+
+test();
+
+#EXAMPLE
+procedure apply_proc(p, a, b) {
+    return p(a, b);
+};
+
+procedure show_trace_and_add(n, m) {
+    var i, bt;
+    bt = getbacktrace();
+    write("Procedure stack:\n");
+    for i from 0 to length(bt) - 1 do {
+    	write("   Procedure ", objectname((bt[i]).called_proc), " called with ", length((bt[i]).passed_args), " arguments\n");
+    };
+    write("\n");	  
+    return n + m;
+};
+
+procedure show_and_succ(u) {
+	  return apply_proc(show_trace_and_add, u, 1);
+};
+
+show_and_succ(16);
+
+#EXAMPLE
+f = exp(three_decker_sauerkraut_and_toadstool_sandwich_with_arsenic_sauce);
+g = sin(_x_);
+h = f(g);
+h;
+objectname(_x_);
+
+#SEEALSO $PARSE
+#SEEALSO $VAR
+#SEEALSO $GETBACKTRACE
+#SEEALSO $PROC
+#SEEALSO $PROCEDURE
+#SEEALSO $CONCAT

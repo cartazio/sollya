@@ -117,6 +117,7 @@ $listOfCommands=array(
 "not","!",
 "numberroots","numberroots",
 "numerator","numerator",
+"objectname","objectname",
 "object","object",
 "off","off",
 "on","on",

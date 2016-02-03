@@ -1,0 +1,122 @@
+\subsection{objectname}
+\label{labobjectname}
+\noindent Name: \textbf{objectname}\\
+\phantom{aaa}returns, given a \sollya object, a string that can be reparsed to the object\\[0.2cm]
+\noindent Library name:\\
+\verb|   sollya_obj_t sollya_lib_objectname(sollya_obj_t);|\\[0.2cm]
+\noindent Usage: 
+\begin{center}
+\textbf{objectname}(\emph{obj}) : \textsf{any type} $\rightarrow$ \textsf{string}\\
+\end{center}
+\noindent Description: \begin{itemize}
+
+\item The \textbf{objectname} command allows a textual representation to be recovered
+   for any type of \sollya object \emph{obj}, given in argument to
+   \textbf{objectname}. This textual representation is returned as a string
+   formatted in such a way that, when given to the \textbf{parse} command, the
+   original object \emph{obj} is recovered.
+
+\item In contrast to any other way of "printing" a \sollya object into a
+   string, such as by concatenating it to an empty string with the use of
+   the \textbf{@} operator, \textbf{objectname} queries the \sollya symbol table in order
+   to recover, the name of an identifier the object \emph{obj} is assigned to.
+   The only condition for an identifier the object \emph{obj} is assigned to
+   to be eligible to be returned by \textbf{objectname} is to be accessible in the
+   scope \textbf{objectname} is executed in, i.e. not to be shadowed by an identifier
+   of the same name which does not hold the object \emph{obj}. Only in cases
+   when no such eligible identifier exists, \textbf{objectname} returns an unnamed
+   textual representation of the object \emph{obj}, in a similar fashion to
+   "printing" the object.
+
+\item \textbf{objectname} is particularly useful in combination with \textbf{getbacktrace}, when
+   the \sollya procedure stack is to be displayed in a fashion, where
+   procedures are identified by their name and not their procedural content.
+
+\item \textbf{objectname} may also be used to get a string representation of the free
+   mathematical variable.
+\end{itemize}
+\noindent Example 1: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> s = "Hello";
+> objectname("Hello");
+s
+\end{Verbatim}
+\end{minipage}\end{center}
+\noindent Example 2: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> f = exp(x);
+> g = sin(x);
+> [| objectname(exp(x)), objectname(sin(x)), objectname(cos(x)) |];
+[|"f", "g", "cos(x)"|]
+\end{Verbatim}
+\end{minipage}\end{center}
+\noindent Example 3: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> o = { .f = exp(x), .I = [-1;1] };
+> s = objectname(o);
+> write("s = \"", s, "\" parses to ", parse(s), "\n");
+s = "o" parses to { .f = exp(x), .I = [-1;1] }
+\end{Verbatim}
+\end{minipage}\end{center}
+\noindent Example 4: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> n = 1664;
+> objectname(n);
+n
+\end{Verbatim}
+\end{minipage}\end{center}
+\noindent Example 5: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> f = exp(x);
+> g = sin(x);
+> procedure test() {
+      var f;
+      var h;
+      f = tan(x);
+      h = cos(x);
+      [| objectname(exp(x)), objectname(sin(x)), objectname(cos(x)) |];
+  };
+> test();
+[|"exp(x)", "g", "h"|]
+\end{Verbatim}
+\end{minipage}\end{center}
+\noindent Example 6: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> procedure apply_proc(p, a, b) {
+      return p(a, b);
+  };
+> procedure show_trace_and_add(n, m) {
+      var i, bt;
+      bt = getbacktrace();
+      write("Procedure stack:\n");
+      for i from 0 to length(bt) - 1 do {
+          write("   Procedure ", objectname((bt[i]).called_proc), " called with 
+", length((bt[i]).passed_args), " arguments\n");
+      };
+      write("\n");      
+      return n + m;
+  };
+> procedure show_and_succ(u) {
+        return apply_proc(show_trace_and_add, u, 1);
+  };
+> show_and_succ(16);
+Procedure stack:
+   Procedure show_trace_and_add called with 2 arguments
+   Procedure apply_proc called with 3 arguments
+   Procedure show_and_succ called with 1 arguments
+
+17
+\end{Verbatim}
+\end{minipage}\end{center}
+\noindent Example 7: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> f = exp(three_decker_sauerkraut_and_toadstool_sandwich_with_arsenic_sauce);
+> g = sin(_x_);
+> h = f(g);
+> h;
+exp(sin(three_decker_sauerkraut_and_toadstool_sandwich_with_arsenic_sauce))
+> objectname(_x_);
+three_decker_sauerkraut_and_toadstool_sandwich_with_arsenic_sauce
+\end{Verbatim}
+\end{minipage}\end{center}
+See also: \textbf{parse} (\ref{labparse}), \textbf{var} (\ref{labvar}), \textbf{getbacktrace} (\ref{labgetbacktrace}), \textbf{proc} (\ref{labproc}), \textbf{procedure} (\ref{labprocedure}), \textbf{@} (\ref{labconcat})

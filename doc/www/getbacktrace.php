@@ -108,5 +108,5 @@ passed_args element evaluates to an end-elliptic list.
 </div> 
 </div> 
 <div class="divSeeAlso"> 
-<span class="category">See also: </span><?php linkTo("command","proc","proc");?>, <?php linkTo("command","procedure","procedure");?>, <?php linkTo("command","bind","bind");?>, <?php linkTo("command","concat","@");?> 
+<span class="category">See also: </span><?php linkTo("command","proc","proc");?>, <?php linkTo("command","procedure","procedure");?>, <?php linkTo("command","objectname","objectname");?>, <?php linkTo("command","bind","bind");?>, <?php linkTo("command","concat","@");?> 
 </div> 
