@@ -10,6 +10,7 @@ typedef struct data_struct_t {
 } data_t;
 
 void dealloc(void *data) {
+  (void) data;
   return;
 }
 
@@ -29,7 +30,6 @@ void euler_gamma(mpfr_t res, mp_prec_t prec, void *ptr) {
 int main(void) {
   sollya_obj_t f;
   mpfr_t x,y;
-  int i;
   data_t data = { "Hello world", 0 };
   void (*func)(mpfr_t, mp_prec_t, void *);
   void *ptr;

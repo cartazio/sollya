@@ -75,7 +75,7 @@ int main(void) {
   res = sollya_lib_decompose_externalprocedure(&result_type, &argument_types, &arity, &func, f[0]);
   if (res) {
     sollya_lib_printf("sollya_lib_decompose_externalprocedure has signaled success on \"%b\" while it should not have worked.\n", f[0]);
-    safeFree(argument_types);
+    sollya_lib_free(argument_types);
   } else {
     sollya_lib_printf("sollya_lib_decompose_externalprocedure correctly signals that \"%b\" cannot be decomposed as an external function.\n", f[0]);
   }
@@ -104,7 +104,7 @@ int main(void) {
       sollya_lib_printf("The function has signaled %s, the result is %s\n", (res ? "success" : "failure"), (result ? "true" : "false"));
       mpfr_clear(myMpfr);
     }    
-    safeFree(argument_types);
+    sollya_lib_free(argument_types);
   }
 
   argument_types = NULL;
@@ -122,7 +122,7 @@ int main(void) {
       res = ((int (*)(int *)) func)(&result);
       sollya_lib_printf("The function has signaled %s, the result is %s\n", (res ? "success" : "failure"), ((result != 17) ? "okay" : "not okay"));
     }    
-    safeFree(argument_types);
+    sollya_lib_free(argument_types);
   }
 
   argument_types = NULL;
@@ -142,7 +142,7 @@ int main(void) {
       res = ((int (*)(int *, void **)) func)(&result, args);
       sollya_lib_printf("The function has signaled %s, the result is %d\n", (res ? "success" : "failure"), result);
     }    
-    safeFree(argument_types);
+    sollya_lib_free(argument_types);
   }
   
   for(i=0;i<=3;i++)  sollya_lib_clear_obj(f[i]);

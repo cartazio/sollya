@@ -1922,14 +1922,14 @@ void freeGlobalReusedMPFRVars() {
 
 int general(int argc, char *argv[]) {
   struct termios termAttr;
-  int parseAbort, executeAbort;
+  volatile int parseAbort, executeAbort;
   int i;
   FILE *fd = NULL;
   struct rlimit rlim;
   char *error;
   int doNotModifyStackSize;
   int repeatSetRLimit;
-  int lastWasError;
+  volatile int lastWasError;
   int finishedBeforeParsing;
   int argsArgRead;
   char **temp;

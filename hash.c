@@ -70,7 +70,7 @@ static inline uint64_t __hashCombine_internal(uint64_t h1, uint64_t h2) {
   uint64_t tmp1, tmp2;
   tmp1 = h1 ^ h2;
   tmp2 = __rotateLeft(tmp1, 17);
-  return tmp1;
+  return tmp2;
 }
 
 static inline uint64_t __hashUint64_internal(uint64_t x) {
@@ -230,11 +230,18 @@ static inline uint64_t __hashLong_internal(long x) {
   return __hashUnsignedLong_internal(tmp);
 }
 
+typedef union {
+  uint64_t l;
+  double d;
+} binary64_caster;
+
 static inline uint64_t __hashDouble_internal(double x) {
   double xx;
   uint64_t tmp;
+  binary64_caster caster;
   xx = x;
-  tmp = *((uint64_t *) &xx);
+  caster.d = xx;
+  tmp = caster.l;
   return __hashUint64_internal(tmp);
 }
 

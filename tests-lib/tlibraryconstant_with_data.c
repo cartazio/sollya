@@ -25,7 +25,6 @@ void euler_gamma(mpfr_t res, mp_prec_t prec, void *ptr) {
 int main(void) {
   sollya_obj_t f;
   mpfr_t x,y;
-  int i;
   data_t data = { "Hello world", 0 };
 
   sollya_lib_init();

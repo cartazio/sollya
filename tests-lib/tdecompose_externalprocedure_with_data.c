@@ -48,6 +48,7 @@ char *externalprocTypeToString(sollya_externalprocedure_type_t t) {
 }
 
 void dealloc(void *data) {
+  (void) data;
   return;
 }
 
@@ -159,7 +160,7 @@ int main(void) {
       res = ((int (*)(int *, void **, void *)) func)(&result, args, &tryData);
       sollya_lib_printf("The function has signaled %s, the result is %d, the data counter is %d\n", (res ? "success" : "failure"), result, tryData.counter);
     }    
-    safeFree(argument_types);
+    sollya_lib_free(argument_types);
   }
 
   argTypes[0] = SOLLYA_EXTERNALPROC_TYPE_INTEGER;
@@ -196,7 +197,7 @@ int main(void) {
       res = ((int (*)(int *, void **, void *)) func)(&result, args, &tryData);
       sollya_lib_printf("The function has signaled %s, the result is %d, the data counter is %d\n", (res ? "success" : "failure"), result, tryData.counter);
     }    
-    safeFree(argument_types);
+    sollya_lib_free(argument_types);
   }
 
   argTypes[0] = SOLLYA_EXTERNALPROC_TYPE_STRING;
@@ -238,7 +239,7 @@ int main(void) {
       sollya_lib_printf("The function has signaled %s, the result is %s, the data counter is %d\n", (res ? "success" : "failure"), (result ? "true" : "false"), tryData.counter);
       mpfr_clear(myMpfr);
     }    
-    safeFree(argument_types);
+    sollya_lib_free(argument_types);
   }
 
   argTypes[0] = SOLLYA_EXTERNALPROC_TYPE_STRING;
@@ -286,7 +287,7 @@ int main(void) {
       sollya_lib_printf("The function has signaled %s, the result is %s, the data counter is %d\n", (res ? "success" : "failure"), (result ? "true" : "false"), tryData.counter);
       mpfr_clear(myMpfr);
     }    
-    safeFree(argument_types);
+    sollya_lib_free(argument_types);
   }
   
   for(i=0;i<=15;i++) sollya_lib_clear_obj(f[i]);

@@ -1,5 +1,6 @@
 #include <mpfi.h>
 #include <time.h>
+#include <sollya.h>
 
 int myownlog(mpfi_t result, mpfi_t x, int n) {
   if(n==0) {

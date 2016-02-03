@@ -10,6 +10,7 @@ typedef struct data_struct_t {
 } data_t;
 
 void dealloc(void *data) {
+  (void) data;
   return;
 }
 
@@ -99,7 +100,6 @@ int myownlog(mpfi_t result, mpfi_t x, int n, void *ptr) {
 int main(void) {
   sollya_obj_t g, f, h;
   mpfr_t x,y;
-  int i;
   data_t data = { "Hello world", 0 };
   int (*func)(mpfi_t, mpfi_t, int, void *);
   int deriv;

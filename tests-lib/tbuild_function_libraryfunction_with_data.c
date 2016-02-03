@@ -93,9 +93,8 @@ int myownlog(mpfi_t result, mpfi_t x, int n, void *ptr) {
 }
 
 int main(void) {
-  sollya_obj_t X, f;
+  sollya_obj_t f;
   mpfr_t x,y;
-  int i;
   data_t data = { "Hello world", 0 };
 
   sollya_lib_init();
