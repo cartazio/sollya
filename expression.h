@@ -193,16 +193,6 @@ struct rangetypeStruct
 
 void *safeMalloc (size_t);
 
-#if defined (HAVE_ENABLE_LEGACY_MEMORY_MANAGEMENT) && HAVE_ENABLE_LEGACY_MEMORY_MANAGEMENT
-
-static inline node* addMemRef(node *tree) { return tree; }
-
-static inline node* getMemRefChild(node *tree) { return tree->child1; }
-
-static inline node *addMemRefEvenOnNull(node *tree) { return tree; }
-
-#else
-
 static inline node* addMemRefEvenOnNull(node *tree) {
   node *res;
 
@@ -247,9 +237,6 @@ static inline node* getMemRefChild(node *tree) {
   tree->memRefChildFromPolynomial = 1;
   return tree->child1;
 }
-
-#endif
-
 
 static inline node* accessThruMemRef(node *tree) {
   node *res;
