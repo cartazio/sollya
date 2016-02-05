@@ -50,6 +50,7 @@
 #include <limits.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include "config.h"
 #include "general.h"
 #include "execute.h"
 #include "infnorm.h"
@@ -57,6 +58,10 @@
 #include "polynomials.h"
 #include "printf.h"
 #include "hash.h"
+
+#if (!(defined(HAVE_MP_BITCNT_T) && (HAVE_MP_BITCNT_T)))
+typedef unsigned long int mp_bitcnt_t;
+#endif
 
 
 /* Helper types */

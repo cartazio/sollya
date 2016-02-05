@@ -583,6 +583,9 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM([[#define _GNU_SOURCE 1
               ],
               AC_MSG_RESULT(no))
 
+
+AC_CHECK_TYPES([mp_bitcnt_t], [], [], [[#include <gmp.h>]])
+
 CPPFLAGS="$USER_CPPFLAGS"
 CFLAGS="$USER_CFLAGS"
 LDFLAGS="$USER_LDFLAGS"
