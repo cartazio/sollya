@@ -334,12 +334,6 @@ tvoid.c
 
 EXTRA_DIST = check.proto $(TESTFILES) $(TESTFILES:.c=.reference)
 
-# Notice that the following line will overwrite any previous content in AM_CPPFLAGS
-# This is not a problem as there is currently nothing in this variable and we do not
-# see any reason why it should change soon. Just for the record, more information
-# about this changeset is available in the resolution comments of bug #17197.
-AM_CPPFLAGS = -I$(top_srcdir)
-
 check_PROGRAMS = force_compilation $(TESTFILES:.c=)
 check_LIBRARIES = libraryexample.a # libraryexample.a will be a shared library actually,
                                    # but we do not know how to explain it to automake.
@@ -351,7 +345,7 @@ LDADD = $(top_builddir)/.libs/libsollya.la -lstdc++
 MOSTLYCLEANFILES = $(TESTS) libraryexample.a
 
 libraryexample.$(OBJEXT): libraryexample.c
-	$(CC) $(CFLAGS) $(AM_CPPFLAGS) -fPIC -Wall -c '$(srcdir)/libraryexample.c'
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(AM_CPPFLAGS) -fPIC -Wall -c '$(srcdir)/libraryexample.c'
 
 libraryexample.a: libraryexample.$(OBJEXT)
 	$(CC) $(LDFLAGS) $(AM_LDFLAGS) -shared -o libraryexample.a libraryexample.$(OBJEXT) -lmpfi -lmpfr -lgmp
