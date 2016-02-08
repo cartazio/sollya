@@ -1,0 +1,55 @@
+Bugs fixed
+----------
+17133 -- [ ] tests added    [ ] is closed    [ ] worth mentioning
+18746 -- [ ] tests added    [ ] is closed    [ ] worth mentioning
+18940 -- [ ] tests added    [ ] is closed    [ ] worth mentioning
+17197 -- [ ] tests added    [ ] is closed    [ ] worth mentioning
+12665 -- [ ] tests added    [ ] is closed    [ ] worth mentioning
+18992 -- [ ] tests added    [ ] is closed    [ ] worth mentioning
+19925 -- [ ] tests added    [ ] is closed    [ ] worth mentioning
+19976 -- [ ] tests added    [ ] is closed    [ ] worth mentioning
+
+
+Problems solved, without bug report number
+------------------------------------------
+@rev:
+4b89b29 -- [ ] should create a bug report   [ ] worth mentioning
+bc748a4 -- [ ] should create a bug report   [ ] worth mentioning
+95ccf7f -- [ ] should create a bug report   [ ] worth mentioning
+abce1ae -- [ ] should create a bug report   [ ] worth mentioning
+0513d99 -- [ ] should create a bug report   [ ] worth mentioning
+9f9d12d -- [ ] should create a bug report   [ ] worth mentioning
+
+New features
+-------------
+"Well-documented" implies existence of documentation, clarity, existence of shlp file if needed, and listed in `help help`
+"Well-tested" implies existence of tests, more or less completeness of their coverage, check also in library mode if necessary, and timechecks if appropriate
+
+Compatibility with recent versions of Bison (see @rev 4e02ea7f)                  -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
+Metalibm files must be recent enough                                             -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
+printmessage available in library mode                                           -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
+Global improvement of the evaluations within Sollya                              -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
+Annotations                                                                      -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
+Improvement of interval-arithmetic pow function                                  -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
+Support to pass command line (bash) arguments to a Sollya script                 -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
+New feature uniqueId                                                             -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
+New features backtrace and objectname                                            -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
+Command 'execute' now available in library mode                                  -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
+Feature 'execute_procedure' in library mode                                      -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
+New API sollya_lib_obj_is_procedure (see @rev e00e45c)                           -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
+New API sollya_lib_obj_is_external_procedure (see @rev c629)                     -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
+New API sollya_lib_obj_is_library_constant (see @rev c59)                        -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
+New feature hash in library mode                                                 -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
+In library mode (void *) argument to externalproc, library_fun and library_cons  -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
+New API sollya_lib_get_subfunction and sollya_lib_[v]construct_function          -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
+New API for deallocation in sollya_lib_decompose*_with_data                      -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
+Unified externalprocedure and procedure with respect to list argument with @     -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
+Fixed problem of persisting gnuplot files (see @ref 8cb140c)                     -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
+
+Further TODOs
+-------------
+Suppress option for compiling without memrefs
+Add tests for the code of faithful/correct rounding evaluation of f(x)
+Add tests for patch of @rev 670fa3d
+Timecheck does not work anymore on some particular architectures
+Test what version of GMP, MPFR, Bison, MPFI are required and update documentation accordingly
