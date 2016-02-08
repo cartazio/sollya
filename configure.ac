@@ -482,6 +482,20 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM([[#include <stdlib.h>]],
                  LDFLAGS="$AM_LDFLAGS $USER_LDFLAGS"
               ])
 
+LDFLAGS="$AM_LDFLAGS -Wl,-export-all-symbols $USER_LDFLAGS"
+AC_MSG_CHECKING([for -export-all-symbols support])
+AC_RUN_IFELSE([AC_LANG_PROGRAM([[#include <stdlib.h>]],
+                               [[exit(0);]]
+                              )],
+              [
+                 AC_MSG_RESULT(yes)
+                 AM_LDFLAGS="$AM_LDFLAGS -Wl,-export-all-symbols"
+              ],
+              [
+                 AC_MSG_RESULT(no)
+                 LDFLAGS="$AM_LDFLAGS $USER_LDFLAGS"
+              ])
+
 
 LDFLAGS="$AM_LDFLAGS -Xlinker --allow-multiple-definition $USER_LDFLAGS"
 AC_MSG_CHECKING([for -Xlinker --allow-multiple-definition support])
