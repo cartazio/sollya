@@ -585,6 +585,24 @@ void wrapSafeFree(void *ptr, size_t size) {
   safeFree(ptr);
 }
 
+/* Cling-wrap the GMP functions again */
+void *clingWrapSafeReallocWithSize(void *ptr, size_t old_size, size_t new_size) {
+  void *newPtr;
+
+  newPtr = actualReallocWithSize(ptr, old_size, new_size);
+  if ((new_size != 0) && (newPtr == NULL)) {
+    sollyaFprintf(stderr,"Error: realloc could not succeed. No more memory left.\n");
+    exit(1);
+  }
+
+  return newPtr;
+}
+
+void clingWrapSafeFreeWithSize(void *ptr, size_t size) {
+  actualFreeWithSize(ptr, size);
+}
+
+
 /* Wrap the GMP mp_set_memory_functions and mp_get_memory_functions
    once in order to enable opportunities for different memory
    management.
@@ -1680,8 +1698,17 @@ int initializeLibraryMode(void *(*myActualMalloc)(size_t),
   void *ptr;
   int k, allArgsOkay;
   libraryMode = 1;
+  oldGMPMalloc = NULL;
+  oldGMPRealloc = NULL;
+  oldGMPFree = NULL;
   replacement_mp_set_memory_functions = NULL;
   replacement_mp_get_memory_functions = NULL;
+  actualCalloc = calloc;
+  actualMalloc = malloc;
+  actualFree = free;
+  actualRealloc = realloc;
+  actualFreeWithSize = wrapSafeFree;
+  actualReallocWithSize = wrapSafeRealloc;  
   if (my_mp_set_func != NULL) replacement_mp_set_memory_functions = my_mp_set_func;
   if (my_mp_get_func != NULL) replacement_mp_get_memory_functions = my_mp_get_func;
   if (myActualMalloc != NULL) actualMalloc = myActualMalloc;
@@ -1700,7 +1727,7 @@ int initializeLibraryMode(void *(*myActualMalloc)(size_t),
   printMode = PRINT_MODE_LEGACY;
   warnFile = NULL;
   eliminatePromptBackup = 1;
-  wrap_mp_set_memory_functions(safeMalloc,actualReallocWithSize,actualFreeWithSize);
+  wrap_mp_set_memory_functions(safeMalloc,clingWrapSafeReallocWithSize,clingWrapSafeFreeWithSize);
   if ((argc >= 1) && (argv != NULL)) {
     for (k=0,allArgsOkay = 1;(k<argc)&&allArgsOkay;k++) {
       allArgsOkay = allArgsOkay && (argv[k] != NULL);
@@ -1787,6 +1814,9 @@ int finalizeLibraryMode() {
   actualReallocWithSize = wrapSafeRealloc;
   replacement_mp_set_memory_functions = NULL;
   replacement_mp_get_memory_functions = NULL;
+  oldGMPMalloc = NULL;
+  oldGMPRealloc = NULL;
+  oldGMPFree = NULL;
   libraryMode = 0;
   return 1;
 }
@@ -1937,8 +1967,17 @@ int general(int argc, char *argv[]) {
   int sollyaOptions;
   int frameCorruptionPrinted;
 
+  oldGMPMalloc = NULL;
+  oldGMPRealloc = NULL;
+  oldGMPFree = NULL;
   replacement_mp_set_memory_functions = NULL;
   replacement_mp_get_memory_functions = NULL;
+  actualCalloc = calloc;
+  actualMalloc = malloc;
+  actualFree = free;
+  actualRealloc = realloc;
+  actualFreeWithSize = wrapSafeFree;
+  actualReallocWithSize = wrapSafeRealloc;    
   messageCallback = NULL;
   libraryMode = 0;
   lastMessageCallbackResult = 1;
@@ -2147,7 +2186,7 @@ int general(int argc, char *argv[]) {
   }
   initSignalHandler(eliminatePromptBackup);
   blockSignals(eliminatePromptBackup);
-  wrap_mp_set_memory_functions(safeMalloc,actualReallocWithSize,actualFreeWithSize);
+  wrap_mp_set_memory_functions(safeMalloc,clingWrapSafeReallocWithSize,clingWrapSafeFreeWithSize);
   initToolDefaults();
 
   exitInsteadOfRecover = 0;
