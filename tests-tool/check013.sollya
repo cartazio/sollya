@@ -225,6 +225,7 @@ parse("taylor(exp(x),5,0)");
 
 restart;
 print("=============== Test number 247 ================");
+/* Non-regression test for bug [#7216] */
 d = [|dyadic, powers, binary|];
 exprs = [|x^1, x^3, x^3.5, x^(-3), x^(-3.5), (-x)^3, (-x)^3.5, (-x)^(-3), (-x)^(-3.5)|];
 procedure foo_gen(n, e) {var res; res = n * e; return res; };
@@ -257,6 +258,12 @@ for dd in d do {
 restart;
 print("=============== Test number 248 ================");
 restart;
+/* Non-regression test for bug [#18992] */
+verbosity=1;
+degree(x^(2^(2^80)));
+degree(0/x);
+degree(sin(x));
+
 print("=============== Test number 249 ================");
 
 restart;
