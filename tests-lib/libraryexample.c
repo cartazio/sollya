@@ -1,4 +1,5 @@
 #include <mpfi.h>
+#include <mpfr.h>
 #include <time.h>
 #include <sollya.h>
 
@@ -85,7 +86,7 @@ void euler_gamma(mpfr_t res, mp_prec_t prec) {
 }
 
 int funny_impl(char *str, int i, mpfr_t v) {
-  sollya_lib_printf(">>>%s<<<>>>%d<<<>>>%v<<<\n", str, i, v);
+  printf(">>>%s<<<>>>%d<<<>>>%ld<<<\n", str, i, (long int) mpfr_get_si(v,GMP_RNDN));
   return (i == 17);
 }
 

@@ -354,12 +354,20 @@ char *getBaseFunctionName(void *func, const char *base, int hasData, void *data)
     errorOccurred = 1;
   }
   if (errorOccurred) {
-    myFuncName = (char *) safeCalloc(strlen(base) + 3 + 8 * sizeof(void *) + 1 + 8 * sizeof(void *) + 1,sizeof(char));
-    sprintf(myFuncName, "%s_%p", base, func);
+    myFuncName = (char *) safeCalloc(strlen(base) + 3 + 8 * sizeof(void *) + 1 + 8 * sizeof(void *) + 1 + 8 * sizeof(void *) + 1,sizeof(char));
+    if (hasData) {
+      sprintf(myFuncName, "%s_%p_%p", base, func, data);
+    } else {
+      sprintf(myFuncName, "%s_%p", base, func);
+    }
   }
 #else
-  myFuncName = (char *) safeCalloc(strlen(base) + 3 + 8 * sizeof(void *) + 1 + 8 * sizeof(void *) + 1,sizeof(char));
-  sprintf(myFuncName, "%s_%p", base, func);
+  myFuncName = (char *) safeCalloc(strlen(base) + 3 + 8 * sizeof(void *) + 1 + 8 * sizeof(void *) + 1 + 8 * sizeof(void *) + 1,sizeof(char));
+  if (hasData) {
+    sprintf(myFuncName, "%s_%p_%p", base, func, data);
+  } else {
+    sprintf(myFuncName, "%s_%p", base, func);
+  }
 #endif
   funcName = (char *) safeCalloc(strlen(myFuncName)+1,sizeof(char));
   strcpy(funcName, myFuncName);

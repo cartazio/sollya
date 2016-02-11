@@ -483,7 +483,6 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM([[#include <stdlib.h>]],
                  LDFLAGS="$AM_LDFLAGS $USER_LDFLAGS"
               ])
 
-
 LDFLAGS="$AM_LDFLAGS -Xlinker --allow-multiple-definition $USER_LDFLAGS"
 AC_MSG_CHECKING([for -Xlinker --allow-multiple-definition support])
 AC_RUN_IFELSE([AC_LANG_PROGRAM([[#include <stdlib.h>]],
