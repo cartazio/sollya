@@ -750,6 +750,11 @@ return res;
 The tool has been restarted.
 =============== Test number 248 ================
 The tool has been restarted.
+The verbosity level has been set to 1.
+Warning: the degree of the given polynomial is larger than the largest multiprecision integer that can be held in memory. The polynomial's degree will be returned as -1.
+-1
+0
+-1
 =============== Test number 249 ================
 The tool has been restarted.
 =============== Test number 250 ================
