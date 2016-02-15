@@ -50,7 +50,7 @@ interactive work with sollya.
 If you wish to compile and install Sollya from a fresh git clone,
 you further need:
 
-- bison version 2.3 or later
+- bison version 2.4 or later
 - flex version 2.5.33 or later
 
 Bison and flex are really needed if you compile a fresh git clone
