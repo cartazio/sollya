@@ -11,3 +11,11 @@ length(a)==3;
 /* Non-regression test for bug #11966 */
 /* The following example should not fall into an infinite loop */
 points=4; dirtyfindzeros( (x-(2-1b-300))*(x-(2+1b-300)), [1,5]);
+
+
+/* Non-regression test for bug patched with commit bc748a402983af1c2b72e7faabc5c3344e2013cf */
+restart;
+p = implementpoly(5933108082745413b-47 + x * (8371870699358531b-57 + x * (-5019189491068933b-64 + x * (-1235985524236843b-65 + x * (5928085562303317b-76 + x * (7007054019943729b-80 + x * (-1400231163274209b-87 + x * (-2363983593233507b-92))))))),[-2961770179049179b-51;740442544762295b-49],3b-54,double,"f","implementation.c",honorcoeffprec);
+readfile("implementation.c");
+
+
