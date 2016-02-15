@@ -7,3 +7,7 @@ f = 2473 - 4979*x/10 + 3971*x^2/100 - 157*x^3/100 + 77*x^4/2500 - 3*x^5/12500;
 points=4!;
 a=dirtyfindzeros(f, [10, 50]);
 length(a)==3;
+
+/* Non-regression test for bug #11966 */
+/* The following example should not fall into an infinite loop */
+points=4; dirtyfindzeros( (x-(2-1b-300))*(x-(2+1b-300)), [1,5]);
