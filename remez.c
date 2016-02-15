@@ -641,6 +641,7 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
 
       if ( ((mpfr_cmp(u, x)==0) && (mpfr_cmp(v, xNew)==0)) ||
            ((mpfr_cmp(v, x)==0) && (mpfr_cmp(u, xNew)==0)) ) {
+        printMessage(5, SOLLYA_MSG_NEWTON_PERFORMING_BISECTION_STEP, "Information (Newton's algorithm): performing a bisection step\n");
         mpfr_add(xNew, u, v, GMP_RNDN);
         mpfr_div_2ui(xNew, xNew, 1, GMP_RNDN);
       }
