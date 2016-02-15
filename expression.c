@@ -71,10 +71,15 @@
 #include "execute.h"
 #include "infnorm.h"
 #include "signalhandling.h"
+#include "config.h"
 
 #define MAXDIFFSIMPLSIZE 100
 #define MAXDIFFSIMPLDEGREE 25
 #define MAXDIFFPOLYSPECIALDEGREE 300
+
+#if (!(defined(HAVE_MP_BITCNT_T) && (HAVE_MP_BITCNT_T)))
+typedef unsigned long int mp_bitcnt_t;
+#endif
 
 static inline void copyTreeAnnotations(node *new, node *old) {
   if (new == NULL) return;
