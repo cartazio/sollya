@@ -103,6 +103,8 @@ extern void parserFree(void *);
 
 %}
 
+%option noyyalloc noyyrealloc noyyfree
+
 %option noyywrap
 %option always-interactive
 %option prefix="internyy"
@@ -805,3 +807,27 @@ NOP             "nop"
 %%
 
 
+void *yyalloc (yy_size_t  size , yyscan_t yyscanner)
+{
+        UNUSED_PARAM(yyscanner);
+        return (void *) malloc( size );
+}
+
+void *yyrealloc  (void * ptr, yy_size_t  size , yyscan_t yyscanner)
+{
+        /* The cast to (char *) in the following accommodates both
+         * implementations that use char* generic pointers, and those
+         * that use void* generic pointers.  It works with the latter
+         * because both ANSI C and C++ allow castless assignment from
+         * any pointer type to void*, and deal with argument conversions
+         * as though doing an assignment.
+         */
+        UNUSED_PARAM(yyscanner);
+        return (void *) realloc( (char *) ptr, size );
+}
+
+void yyfree (void * ptr , yyscan_t yyscanner)
+{
+        UNUSED_PARAM(yyscanner);
+        free( (char *) ptr );   /* see yyrealloc() for (char *) cast */
+}
