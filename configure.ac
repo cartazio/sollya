@@ -32,6 +32,7 @@ AC_LIBTOOL_DLOPEN
 AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
 AC_CONFIG_MACRO_DIR([m4])
+AC_SUBST(AR_FLAGS, "cr")
 
 
 #Check whether flex and bison support interactive and pure parsers
