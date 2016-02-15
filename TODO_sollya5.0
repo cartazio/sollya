@@ -1,24 +1,19 @@
 Bugs fixed
 ----------
-17133 -- [ ] tests added    [ ] is closed    [ ] worth mentioning
-18746 -- [ ] tests added    [ ] is closed    [ ] worth mentioning
-18940 -- [ ] tests added    [ ] is closed    [ ] worth mentioning
-17197 -- [ ] tests added    [ ] is closed    [ ] worth mentioning
+17197 -- VPATH build [x] worth mentioning
 12665 -- [ ] tests added    [ ] is closed    [ ] worth mentioning
-18992 -- [ ] tests added    [ ] is closed    [ ] worth mentioning
 19925 -- [ ] tests added    [ ] is closed    [ ] worth mentioning
-19976 -- [ ] tests added    [ ] is closed    [ ] worth mentioning
+18992 -- degree(x^(2^(2^80)))=-1 [x] worth mentioning
 
 
 Problems solved, without bug report number
 ------------------------------------------
 @rev:
-4b89b29 -- [ ] should create a bug report   [ ] worth mentioning
-bc748a4 -- [ ] should create a bug report   [ ] worth mentioning
-95ccf7f -- [ ] should create a bug report   [ ] worth mentioning
-abce1ae -- [ ] should create a bug report   [ ] worth mentioning
-0513d99 -- [ ] should create a bug report   [ ] worth mentioning
-9f9d12d -- [ ] should create a bug report   [ ] worth mentioning
+4b89b29 -- [x] should create a bug report   [x] worth mentioning
+bc748a4 -- [x] should create a bug report   [x] worth mentioning
+95ccf7f -- [ ] should create a bug report   [ ] worth mentioning   ---> must be understood
+0513d99 -- [x] should create a bug report   [x] worth mentioning
+
 
 New features
 -------------
