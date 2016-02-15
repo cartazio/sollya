@@ -42,6 +42,13 @@ of variable <?php linkTo("command","prec","prec");?>.
      the precision of the approximation is supposed to be doubled at each step. 
 </li><li> Add this value to the list. 
 </li></ul> 
+</li><li>The user should be aware that the list returned by <?php linkTo("command","dirtyfindzeros","dirtyfindzeros");?> may 
+contain a certain floating-point number twice. These repetitions 
+reflect the existence of different zeros of the function the value of 
+which rounds to the same floating-point number in the current working 
+precision. In this case, increasing the working precision will end up 
+making the two zeros distinguishable even in rounded floating-point 
+arithmetic. 
 </ul> 
 </div> 
 <div class="divExamples"> 
