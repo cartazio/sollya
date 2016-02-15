@@ -20,8 +20,6 @@ New features
 "Well-documented" implies existence of documentation, clarity, existence of shlp file if needed, and listed in `help help`
 "Well-tested" implies existence of tests, more or less completeness of their coverage, check also in library mode if necessary, and timechecks if appropriate
 
-Compatibility with recent versions of Bison (see @rev 4e02ea7f)                  -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
-Metalibm files must be recent enough                                             -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 printmessage available in library mode                                           -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 Global improvement of the evaluations within Sollya                              -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 Annotations                                                                      -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
@@ -43,8 +41,11 @@ Fixed problem of persisting gnuplot files (see @ref 8cb140c)                    
 
 Further TODOs
 -------------
-Suppress option for compiling without memrefs
 Add tests for the code of faithful/correct rounding evaluation of f(x)
 Add tests for patch of @rev 670fa3d
 Timecheck does not work anymore on some particular architectures
 Test what version of GMP, MPFR, Bison, MPFI are required and update documentation accordingly
+
+NEWS file
+---------
+Suppress option for compiling without memrefs
