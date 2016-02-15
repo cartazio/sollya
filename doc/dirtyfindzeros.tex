@@ -36,6 +36,14 @@ Parameters:
      the precision of the approximation is supposed to be doubled at each step.
    \item Add this value to the list.
    \end{itemize}
+
+\item The user should be aware that the list returned by \textbf{dirtyfindzeros} may
+   contain a certain floating-point number twice. These repetitions
+   reflect the existence of different zeros of the function the value of
+   which rounds to the same floating-point number in the current working
+   precision. In this case, increasing the working precision will end up
+   making the two zeros distinguishable even in rounded floating-point
+   arithmetic.
 \end{itemize}
 \noindent Example 1: 
 \begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
