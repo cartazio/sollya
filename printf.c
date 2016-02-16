@@ -451,6 +451,7 @@ static inline int sollyaInternalBaseSnFprintf(FILE *fd, int useFd, char *str, si
 
   /* Make compiler happy */
   prec = 12;
+  analyzedWidth = UINT64_C(18446744073709551615);
   /* End of compiler happiness */
 
   frmtLen = strlen(format);

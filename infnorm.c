@@ -6200,6 +6200,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedUnivariateImpreciseArg(m
   point_eval_t res;
   int tern1, tern2;
   mpfi_t temp; /* The type is not a mistake, we use a library function */
+  X = NULL;
 
   if (err == POINT_EVAL_FAILURE) return POINT_EVAL_FAILURE;
   if (!mpfr_number_p(x)) return POINT_EVAL_FAILURE;
@@ -7941,6 +7942,8 @@ int compareConstant(int *cmp, node *func1, node *func2, node *difference, int do
   int freeDiff = 1;
 
   okay = 0;
+  res = -17; /* Makes compiler happy */
+
   if (difference == NULL) {
     rawDiff = addMemRef(makeSub(copyTree(func1),copyTree(func2)));
     rawDiff2 = simplifyRationalErrorfree(rawDiff);
