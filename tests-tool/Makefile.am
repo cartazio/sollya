@@ -27,7 +27,7 @@ $(TESTS): check.proto
 	@echo "Building "$@
 	@echo "#!/bin/sh" > $@
 	@echo "SOLLYA="$(top_builddir)"/sollya" >> $@
-	@echo "TESTFILES=\"$(srcdir)/"$(@:.sh=.sollya)"\"" >> $@
+	@echo "TESTFILES=\""$(@:.sh=.sollya)"\"" >> $@
 	@cat "$(srcdir)/check.proto" >> $@
 	@chmod +x $@
 
