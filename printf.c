@@ -442,7 +442,7 @@ static inline int sollyaInternalBaseSnFprintf(FILE *fd, int useFd, char *str, si
   int correctPrecModifier, analyzedStar, correctWidthModifier, analyzedWidthStar;
   int setAnalyzedWidth;
   uint64_t analyzedWidth, analyzedFlags;
-  uint64_t analyzedPrec = 16;
+  uint64_t analyzedPrec;
   int precisionSpecified;
   mp_prec_t prec;
   mpfr_t tempMpfr;
@@ -452,6 +452,7 @@ static inline int sollyaInternalBaseSnFprintf(FILE *fd, int useFd, char *str, si
   /* Make compiler happy */
   prec = 12;
   analyzedWidth = UINT64_C(18446744073709551615);
+  analyzedPrec = UINT64_C(18446744073709551615);
   /* End of compiler happiness */
 
   frmtLen = strlen(format);
