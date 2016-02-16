@@ -1,6 +1,10 @@
+restart;
+print("=============== Test number 1 ================");
 /* Non-regression test for a segfault bug in fpminimax, fixed on November 20th 2015 */
 fpminimax(exp(x),5,[|D,D,D,D,D|],[-1;1]);
 
+restart;
+print("=============== Test number 2 ================");
 /* Non-regression test for bug #16632 */
 /* The following example should not fall into an infinite loop */
 f = 2473 - 4979*x/10 + 3971*x^2/100 - 157*x^3/100 + 77*x^4/2500 - 3*x^5/12500;
@@ -8,14 +12,19 @@ points=4!;
 a=dirtyfindzeros(f, [10, 50]);
 length(a)==3;
 
+restart;
+print("=============== Test number 3 ================");
 /* Non-regression test for bug #11966 */
 /* The following example should not fall into an infinite loop */
 points=4; dirtyfindzeros( (x-(2-1b-300))*(x-(2+1b-300)), [1,5]);
 
-
-/* Non-regression test for bug patched with commit bc748a402983af1c2b72e7faabc5c3344e2013cf */
 restart;
+print("=============== Test number 4 ================");
+/* Non-regression test for bug patched with commit bc748a402983af1c2b72e7faabc5c3344e2013cf */
 p = implementpoly(5933108082745413b-47 + x * (8371870699358531b-57 + x * (-5019189491068933b-64 + x * (-1235985524236843b-65 + x * (5928085562303317b-76 + x * (7007054019943729b-80 + x * (-1400231163274209b-87 + x * (-2363983593233507b-92))))))),[-2961770179049179b-51;740442544762295b-49],3b-54,double,"f","implementation.c",honorcoeffprec);
 bashevaluate("tail -n 44 implementation.c");
 
-
+restart;
+print("=============== Test number 5 ================");
+/* Non regression test for bug [#20056] Division by zero when computing a degree */
+p = ((1 + x)^3000); degree(diff(p));

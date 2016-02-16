@@ -1,11 +1,18 @@
+The tool has been restarted.
+=============== Test number 1 ================
 Error in fpminimax: there is less formats indications than monomials
 Warning: at least one of the given expressions or a subexpression is not correctly typed
 or its evaluation has failed because of some error on a side-effect.
 error
+The tool has been restarted.
+=============== Test number 2 ================
 true
+The tool has been restarted.
+=============== Test number 3 ================
 The number of points has been set to 4.
 [|1.99999999999999999999999999999999999999999999999996, 2|]
 The tool has been restarted.
+=============== Test number 4 ================
 Warning: the infered precision of the 7th coefficient of the polynomial is greater than
 the necessary precision computed for this step. This may make the automatic determination
 of precisions useless.
@@ -53,3 +60,7 @@ Add12(f_t_15_0h,f_t_15_0m,f_coeff_0h,f_t_14_0h);
 
 
 }
+
+The tool has been restarted.
+=============== Test number 5 ================
+2999
