@@ -108,6 +108,7 @@ chain *copyChain(chain *c, void *(*f) (void *)) {
 
 chain *copyChainWithoutReversal(chain *c, void * (*f) (void *)) {
   chain *curr, *copy, *prev, *elem;
+  prev = NULL; /* compiler happiness */
 
   if (c == NULL) return NULL;
 
@@ -130,6 +131,7 @@ chain *copyChainWithoutReversal(chain *c, void * (*f) (void *)) {
 
 chain *copyChainAndMap(chain *c, void *d, void * (*f) (void *, void *)) {
   chain *curr, *copy, *prev, *elem;
+  prev = NULL;  /* compiler happiness */
 
   if (c == NULL) return NULL;
 
