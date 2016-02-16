@@ -135,11 +135,13 @@ The tool has been restarted.
 x
 x
 x
+The tool has been restarted.
+Display mode is hexadecimal numbers.
 Warning: the given expression is undefined or numerically unstable.
 infty
 Warning: the given expression is undefined or numerically unstable.
 infty
-1.43195535216538855908787738992005803060063628522583e256152523
+0x1.30022c06bcffeab3d0165b14c516dfa7ee0f87c8ap850920263
 Warning: the given expression is undefined or numerically unstable.
 infty
 Error in rationalapprox: the second argument of rationalapprox must be greater or equal to 2.
