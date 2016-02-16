@@ -60,7 +60,49 @@ Add12(f_t_15_0h,f_t_15_0m,f_coeff_0h,f_t_14_0h);
 
 
 }
-
 The tool has been restarted.
 =============== Test number 5 ================
 2999
+The tool has been restarted.
+=============== Test number 6 ================
+Display mode is hexadecimal numbers.
+0
+0x1p
+0x1p1
+0x1.8p1
+0x1p2
+0x1.4p2
+0x1.8p2
+0x1.cp2
+0x1p3
+0x1.2p3
+0x1.4p3
+0x1.6p3
+0x1.8p3
+0x1.ap3
+0x1.cp3
+0x1.ep3
+0x1p4
+0x1.08p5
+true
+true
+true
+true
+0x1.30f842p21
+true
+true
+0x1.eaee86p-2
+0x1.eaee88p-2
+-0x1.5117aep-5
+-0x1.51179p-5
+0x1.6d2026p-9
+-0x1.03f2d4p-6
+0x1.5beeb4p-5
+-0x1.33194ep-4
+0x1.b403a8p-4
+-0x1.22f5c2p-3
+0x1.997748p-3
+-0x1.5554d8p-2
+-0x1.5554d8p
+-0x1.5554d8p20
+-0x1.5554d8p19
