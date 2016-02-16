@@ -3584,10 +3584,11 @@ int sollya_lib_decompose_function(sollya_obj_t obj1, sollya_base_function_t *bas
 static inline int __sollya_lib_v_construct_function_inner(sollya_obj_t *func, sollya_base_function_t base_func, va_list varlist) {
   sollya_obj_t arg1, arg2, myfunc;
   int num_args;
+  arg1 = arg2 = NULL; /* Compiler happiness */
 
   num_args = 0;
   arg1 = va_arg(varlist,sollya_obj_t);
-  if (arg1 != NULL) {
+  if (arg1 != NULL) { /* By our convention, the va_list must be terminated with a NULL pointer */
     num_args++;
     arg2 = va_arg(varlist,sollya_obj_t);
     if (arg2 != NULL) {
