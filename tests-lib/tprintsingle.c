@@ -22,7 +22,8 @@ int main(void) {
   int i;
   float huge = 1e38f;
   volatile float infval, nanval;
-  uint32_t specialval = 0x3fb504f3u;
+  union { uint32_t valint; float valfloat; } specialval;
+  specialval.valint = 0x3fb504f3u;
 
   sollya_lib_init();
   sollya_lib_install_msg_callback(callback, NULL);
@@ -35,7 +36,7 @@ int main(void) {
   a[1] = sollya_lib_constant_from_double((double) (infval));
   a[2] = sollya_lib_constant_from_double((double) (-infval));
   a[3] = sollya_lib_constant_from_double((double) nanval);
-  a[4] = sollya_lib_constant_from_double((double) *((float *) &specialval));
+  a[4] = sollya_lib_constant_from_double((double)(specialval.valfloat));
 
   a[5] = SOLLYA_EXP(SOLLYA_ASIN(sollya_lib_copy_obj(a[0])));
   

@@ -84,7 +84,7 @@ int verif(int r[2], char result[2][BUFSIZE], char test1[2][SIZE], char test2[2][
   int counter[2];
   char test3[2][SIZE];
   char *ptr;
-  int n;
+  int n = 0; /* Compiler happiness */
 
   for(i=0;i<2;i++) {
     counter[i] = my_strnlen(result[i], BUFSIZE);

@@ -2,6 +2,7 @@
 
 int main(void) {
   sollya_obj_t L[3];
+  void *ptr;
   sollya_obj_t listobj, tmp;
   sollya_lib_init();
 
@@ -15,7 +16,8 @@ int main(void) {
   L[2] = sollya_lib_double_obj();
 
   /* Empty end-elliptic list from an invalid pointer: expecting error */
-  listobj = sollya_lib_end_elliptic_list(L+17, 0);
+  ptr = L+17;
+  listobj = sollya_lib_end_elliptic_list((sollya_obj_t *)ptr, 0);
   sollya_lib_printf("%b\n", listobj);
   sollya_lib_clear_obj(listobj);
 

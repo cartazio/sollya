@@ -21,7 +21,8 @@ int main(void) {
   int i;
   double huge = 1e300;
   volatile double infval, nanval;
-  uint64_t specialval = 0x3ff6a09e667f3bcdull;
+  union { uint64_t valint; double valdouble; } specialval;
+  specialval.valint = 0x3ff6a09e667f3bcdull;
 
   sollya_lib_init();
   sollya_lib_install_msg_callback(callback, NULL);
@@ -34,10 +35,10 @@ int main(void) {
   a[1] = sollya_lib_constant_from_double(infval);
   a[2] = sollya_lib_constant_from_double(-infval);
   a[3] = sollya_lib_constant_from_double(nanval);
-  a[4] = sollya_lib_constant_from_double(*((double *) &specialval));
+  a[4] = sollya_lib_constant_from_double(specialval.valdouble);
 
   a[5] = SOLLYA_EXP(SOLLYA_ASIN(sollya_lib_copy_obj(a[0])));
-  
+
   for (i=0;i<6;i++) {
     sollya_lib_printdouble(a[i]);
   }
@@ -45,7 +46,7 @@ int main(void) {
   for (i=0;i<6;i++) {
     sollya_lib_clear_obj(a[i]);
   }
-  
+
   sollya_lib_close();
   return 0;
 }
