@@ -154,12 +154,12 @@ are used to communicate with <span class="sollya">Sollya</span> from another pro
 feature for displaying values has changed in <span class="sollya">Sollya</span> from version 1.1
 to version 2.0. The old feature is deprecated. If you wish to use it
 nevertheless, use this deprecated option.
-</li><li> <code>--oldexternalprocprint</code>:The behavior of an undocumented
+</li><li> <code>--oldexternalprocprint</code>: The behavior of an undocumented
 feature for displaying <span class="sollya">Sollya</span> objects representing external
 procedures upon automatic printing at the <span class="sollya">Sollya</span> prompt has been
 changed in <span class="sollya">Sollya</span> from version 4.1 to version 5.0. The old feature
 is deprecated. If you wish to use it nevertheless, use this
-deprecated option.    
+deprecated option.
 </li><li> <code>--oldrlwrapcompatible</code>: This option is deprecated. It
   makes <span class="sollya">Sollya</span> emit a non ANSI X3.64 compliant coloring escape
   sequence for making it compatible with versions of <code>rlwrap</code>
@@ -317,7 +317,7 @@ structure builds scopes for declared variables. Declared variables in
 inner scopes shadow (global and declared) variables of outer
 scopes. The global free variable, i.e. the mathematical variable for
 variate functional expressions in one variable, cannot be shadowed. Variables are
-declared using the <code class="key">var</code> keyword. See section <a href="help.php?name=var&amp;goBack=none">var</a> for details
+declared using the <code class="key">var</code> keyword. See Section&nbsp;<a href="help.php?name=var&amp;goBack=none">var</a> for details
 on its usage and semantic.
 <p>
 The following code examples illustrate the use of variables.
@@ -364,7 +364,7 @@ There are two special values <code class="key">true</code> and <code class="key"
 <p>
 The comparison operators <code class="key"><</code>, <code class="key">&lt;=</code>, <code class="key">></code> and <code class="key">&gt;=</code> can only be used between two numbers or constant expressions.
 <p>
-The comparison operators <code class="key">==</code> and <code class="key">!=</code> are polymorphic. You can use them to compare any two objects, like two strings, two intervals, etc. As a matter of fact, polymorphism is allowed on both sides: it is possible to compare objects of different type. Such objects of different type, as they can never be syntactically equal, will always compare unequal (see exception for <code class="key">error</code>, section <a href="help.php?name=error&amp;goBack=none">error</a>) and never equal. It is important to remember that testing the equality between two functions will return <code class="key">true</code> if and only if the expression trees representing the two functions are exactly the same or automatic simplification is activated and both functions are polynomials that are equal. See <a href="help.php?name=error&amp;goBack=none">error</a> for an exception concerning the special object <code class="key">error</code>. Example:
+The comparison operators <code class="key">==</code> and <code class="key">!=</code> are polymorphic. You can use them to compare any two objects, like two strings, two intervals, etc. As a matter of fact, polymorphism is allowed on both sides: it is possible to compare objects of different type. Such objects of different type, as they can never be syntactically equal, will always compare unequal (see exception for <code class="key">error</code>, Section&nbsp;<a href="help.php?name=error&amp;goBack=none">error</a>) and never equal. It is important to remember that testing the equality between two functions will return <code class="key">true</code> if and only if the expression trees representing the two functions are exactly the same or automatic simplification is activated and both functions are polynomials that are equal. See <a href="help.php?name=error&amp;goBack=none">error</a> for an exception concerning the special object <code class="key">error</code>. Example:
 <p>
 <?php include("introExample13.php"); ?>
 
@@ -415,7 +415,7 @@ floating-point data representing infinities and Not-a-Numbers (NaNs).
 <code>NaN</code> and <code>@NaN@</code>. <span class="sollya">Sollya</span> does not have support for NaN
 payloads, signaling or quiet NaNs or signs of NaNs. Signaling NaNs
 are supported on input for single and double precision memory
-notation (see section <a href="#sec:general_principles">General Principles</a>). However, they
+notation (see Section&nbsp;<a href="#sec:general_principles">General Principles</a>). However, they
 immediately get converted to plain <span class="sollya">Sollya</span> NaNs.
 </li></ul>
 <p>
@@ -498,7 +498,7 @@ the interval with its bounds evaluated to floating-point numbers.
 <span class="sollya">Sollya</span> has a mode for printing intervals that are that thin that
 their bounds have a number of decimal digits in common when
 printed. That mode is called <code class="com">midpointmode</code>; see below for an
-introduction and section <a href="help.php?name=midpointmode&amp;goBack=none">midpointmode</a> for details. As <span class="sollya">Sollya</span>
+introduction and Section&nbsp;<a href="help.php?name=midpointmode&amp;goBack=none">midpointmode</a> for details. As <span class="sollya">Sollya</span>
 must be able to parse back its own output, a syntax is provided to
 input intervals in midpoint&nbsp;mode. However, please pay attention to the fact that the
 notation used in midpoint&nbsp;mode generally increases the width of
@@ -522,7 +522,7 @@ When the mode <code class="com">midpointmode</code> is set to <code class="com">
 <a href="help.php?name=midpointmode&amp;goBack=none">midpointmode</a>), <span class="sollya">Sollya</span> will display intervals that are
 provably reduced to one point in this extended interval syntax. It
 will use <code class="com">midpointmode</code> syntax for intervals that are sufficiently
-thin but not reduced to one point (see section <a href="help.php?name=midpointmode&amp;goBack=none">midpointmode</a>
+   thin but not reduced to one point (see Section&nbsp;<a href="help.php?name=midpointmode&amp;goBack=none">midpointmode</a>
 for details):
 <p>
 <?php include("introExample40.php"); ?>
@@ -536,7 +536,7 @@ bounds.
 <p>
 Constant expressions get evaluated to floating-point values
 immediately; this includes pi and rational numbers, even when
-<code class="com">rationalmode</code> is <code class="com">on</code> (see section <a href="#sec:rationalmode">Rational numbers and rational arithmetic</a> for
+   <code class="com">rationalmode</code> is <code class="com">on</code> (see Section&nbsp;<a href="#sec:rationalmode">Rational numbers and rational arithmetic</a> for
 this mode).
 <p>
 <?php include("introExample17.php"); ?>
@@ -586,7 +586,7 @@ some optimisations in some cases in order to make the image interval
 as thin as possible. For example, <span class="sollya">Sollya</span> will use a Taylor expansion
 based evaluation if a composed function, call it f, is applied to an
 interval. In other words, in this case <span class="sollya">Sollya</span> will behave as if the
-<code class="com">evaluate</code> command (see section <a href="help.php?name=evaluate&amp;goBack=none">evaluate</a>) were implicitly
+<code class="com">evaluate</code> command (see Section&nbsp;<a href="help.php?name=evaluate&amp;goBack=none">evaluate</a>) were implicitly
 used. In most cases, the result will be different from the one obtained
 by replacing all occurences of the free variable of a function by the 
 interval the function is to be evaluated on:
@@ -646,11 +646,11 @@ meaning.
 </li><li> <code class="com">floating</code>, <code class="com">fixed</code> (see sections <a href="help.php?name=floating&amp;goBack=none">floating</a> and <a href="help.php?name=fixed&amp;goBack=none">fixed</a>)
 </li><li> <code class="com">halfprecision</code>, <code class="com">single</code>, <code class="com">double</code>, <code class="com">doubleextended</code>, <code class="com">doubledouble</code>, <code class="com">quad</code>, <code class="com">tripledouble</code> (see sections <a href="help.php?name=halfprecision&amp;goBack=none">halfprecision</a>, <a href="help.php?name=single&amp;goBack=none">single</a>, <a href="help.php?name=double&amp;goBack=none">double</a>, <a href="help.php?name=doubleextended&amp;goBack=none">doubleextended</a>, <a href="help.php?name=doubledouble&amp;goBack=none">doubledouble</a>, <a href="help.php?name=quad&amp;goBack=none">quad</a> and <a href="help.php?name=tripledouble&amp;goBack=none">tripledouble</a>)
 </li><li> <code class="com">HP</code>, <code class="com">SG</code>, <code class="com">D</code>, <code class="com">DE</code>, <code class="com">DD</code>, <code class="com">QD</code>, <code class="com">TD</code> (see sections <a href="help.php?name=halfprecision&amp;goBack=none">halfprecision</a>, <a href="help.php?name=single&amp;goBack=none">single</a>, <a href="help.php?name=double&amp;goBack=none">double</a>, <a href="help.php?name=doubleextended&amp;goBack=none">doubleextended</a>, <a href="help.php?name=doubledouble&amp;goBack=none">doubledouble</a>, <a href="help.php?name=quad&amp;goBack=none">quad</a> and <a href="help.php?name=tripledouble&amp;goBack=none">tripledouble</a>)
-</li><li> <code class="com">perturb</code> (see section <a href="help.php?name=perturb&amp;goBack=none">perturb</a>)
-</li><li> <code class="com">honorcoeffprec</code> (see section <a href="help.php?name=honorcoeffprec&amp;goBack=none">honorcoeffprec</a>)
-</li><li> <code class="com">default</code> (see section <a href="help.php?name=default&amp;goBack=none">default</a>)
-</li><li> <code class="com">error</code> (see section <a href="help.php?name=error&amp;goBack=none">error</a>)
-</li><li> <code class="com">void</code> (see section <a href="help.php?name=void&amp;goBack=none">void</a>)
+</li><li> <code class="com">perturb</code> (see Section&nbsp;<a href="help.php?name=perturb&amp;goBack=none">perturb</a>)
+</li><li> <code class="com">honorcoeffprec</code> (see Section&nbsp;<a href="help.php?name=honorcoeffprec&amp;goBack=none">honorcoeffprec</a>)
+</li><li> <code class="com">default</code> (see Section&nbsp;<a href="help.php?name=default&amp;goBack=none">default</a>)
+</li><li> <code class="com">error</code> (see Section&nbsp;<a href="help.php?name=error&amp;goBack=none">error</a>)
+</li><li> <code class="com">void</code> (see Section&nbsp;<a href="help.php?name=void&amp;goBack=none">void</a>)
 </li></ul>
 <p>
 <h2>5.8 - Lists</h2>
@@ -696,7 +696,7 @@ following examples:
 <h2>5.9 - Structures</h2>
 <p>
 In a similar way as in lists, <span class="sollya">Sollya</span>
-allows data to be grouped in - untyped - structures. A structure forms
+allows data to be grouped in &ndash;&nbsp;untyped&nbsp;&ndash; structures. A structure forms
 an object to which other objects can be added as elements and
 identified by their names. The elements of a structure can be
 retrieved under their name and used as usual. The following sequence
@@ -742,7 +742,7 @@ not matter in comparisons and otherwise does only for printing.
 Statements in <span class="sollya">Sollya</span> can be grouped in blocks, so-called
 begin-end-blocks.  This can be done using the key tokens <code class="key">{</code> and
 <code class="key">}</code>. Blocks declared this way are considered to be one single
-statement. As already explained in section <a href="#variables">Variables</a>, using
+statement. As already explained in Section&nbsp;<a href="#variables">Variables</a>, using
 begin-end-blocks also opens the possibility of declaring variables
 through the keyword <code class="key">var</code>. 
 <p>
@@ -755,8 +755,8 @@ expressions. For instance, <code>i = i + 1;</code> will dereferentiate the
 identifier <code>i</code> with some content, notate it y, build up the
 expression (function) y + 1 and assign this expression back to
 <code>i</code>. In the example, if <code>i</code> stood for the value 1000,
-the statement <code>i = i + 1;</code> would assign &ldquo;1000 + 1&rdquo; -- and not
-&ldquo;1001&rdquo; -- to <code>i</code>. The assignment operator <code>:=</code> evaluates
+the statement <code>i = i + 1;</code> would assign &ldquo;1000 + 1&rdquo; &ndash; and not
+&ldquo;1001&rdquo; &ndash; to <code>i</code>. The assignment operator <code>:=</code> evaluates
 constant functional expressions before assigning them. On other
 expressions it behaves like <code>=</code>. Still in the example, the
 statement <code>i := i + 1;</code> really assigns 1001 to <code>i</code>.
@@ -839,11 +839,11 @@ programming objects are called <em>procedures</em> in <span class="sollya">Solly
 <p>
 <span class="sollya">Sollya</span> procedures are common objects that can be, for example,
 assigned to variables or stored in lists. Procedures are declared by
-the <code class="key">proc</code> keyword; see section <a href="help.php?name=proc&amp;goBack=none">proc</a> for details. The
+the <code class="key">proc</code> keyword; see Section&nbsp;<a href="help.php?name=proc&amp;goBack=none">proc</a> for details. The
 returned procedure object must then be assigned to a variable. It can
 hence be applied to arguments with common application syntax. The
 <code class="key">procedure</code> keyword provides an abbreviation for declaring and
-assigning a procedure; see section <a href="help.php?name=procedure&amp;goBack=none">procedure</a> for details.
+assigning a procedure; see Section&nbsp;<a href="help.php?name=procedure&amp;goBack=none">procedure</a> for details.
 <p>
 <span class="sollya">Sollya</span> procedures can return objects using the <code class="key">return</code> keyword
 at the end of the begin-end-block of the procedure. Section
@@ -861,7 +861,7 @@ parameters of a procedure be variable. <span class="sollya">Sollya</span> provid
 the case with procedures with an arbitrary number of actual arguments.
 When the procedure is called, those actual arguments are gathered in a
 list which is applied to the only formal list parameter of a procedure
-with an arbitrary number of arguments. See section <a href="help.php?name=procedure&amp;goBack=none">procedure</a>
+with an arbitrary number of arguments. See Section&nbsp;<a href="help.php?name=procedure&amp;goBack=none">procedure</a>
 for the exact syntax and details; an example is given just below.
 <p>
 Let us remark that declaring a procedure does not involve any evaluation or
@@ -1123,7 +1123,7 @@ The header file of the <span class="sollya">Sollya</span> library is <code>solly
 The library provides a virtual <span class="sollya">Sollya</span> session that is perfectly similar to an interactive session: global variables such as <code>verbosity</code>, <code>prec</code>, <code>display</code>, <code>midpointmode</code>, etc. are maintained and affect the behavior of the library, warning messages are displayed when something is not exact, etc. Please notice that the <span class="sollya">Sollya</span> library currently is <strong>not</strong> re-entrant and can only be opened once. A process using the library must hence not be multi-threaded and is limited to one single virtual <span class="sollya">Sollya</span> session.
 
 <p>
-In order to get started with the <span class="sollya">Sollya</span> library, the first thing to do is hence to initialize this virtual session. This is performed with the <code>sollya_lib_init</code> function. Accordingly, one should close the session at the end of the program (which has the effect of releasing all the memory used by <span class="sollya">Sollya</span>). Please notice that <span class="sollya">Sollya</span> uses its own allocation functions and registers them to <code>GMP</code> using the custom allocation functions provided by <code>GMP</code>. Particular precautions should hence be taken when using the <span class="sollya">Sollya</span> library in a program that also registers its own functions to <code>GMP</code>: in that case <code>sollya_lib_init_with_custom_memory_functions</code> should be used instead of <code>sollya_lib_init</code> for initializing the library. This is discussed in <a href="#customMemoryFunctions">a specific section.</a> In addition, variants of the <code>sollya_lib_init</code> function exist that allow the predefined <span class="sollya">Sollya</span> variable <code>__argv</code> (see Section <a href="#variables">Variables</a>) to be set upon library startup. These variants are discussed in Section <a href="#sec:libInitArgs">Passing arguments upon <span class="sollya">Sollya</span> library initialization</a>.
+In order to get started with the <span class="sollya">Sollya</span> library, the first thing to do is hence to initialize this virtual session. This is performed with the <code>sollya_lib_init</code> function. Accordingly, one should close the session at the end of the program (which has the effect of releasing all the memory used by <span class="sollya">Sollya</span>). Please notice that <span class="sollya">Sollya</span> uses its own allocation functions and registers them to <code>GMP</code> using the custom allocation functions provided by <code>GMP</code>. Particular precautions should hence be taken when using the <span class="sollya">Sollya</span> library in a program that also registers its own functions to <code>GMP</code>: in that case <code>sollya_lib_init_with_custom_memory_functions</code> should be used instead of <code>sollya_lib_init</code> for initializing the library. This is discussed in <a href="#customMemoryFunctions">a specific section.</a> In addition, variants of the <code>sollya_lib_init</code> function exist that allow the predefined <span class="sollya">Sollya</span> variable <code>__argv</code> (see Section&nbsp;<a href="#variables">Variables</a>) to be set upon library startup. These variants are discussed in Section&nbsp;<a href="#sec:libInitArgs">Passing arguments upon <span class="sollya">Sollya</span> library initialization</a>.
 <p>
 In the usual case when <span class="sollya">Sollya</span> is used in a program that does not register allocation functions to&nbsp;<code>GMP</code>, a minimal file using the library is hence the following.
 
@@ -1149,7 +1149,7 @@ Suppose that this code is saved in a file called <code>foo.c</code>. The compila
 
  <h2>10.2 - Sollya object data-type</h2>
 <p>
-The library provides a single data type called <code>sollya_obj_t</code> that can contain any <span class="sollya">Sollya</span> object (a <span class="sollya">Sollya</span> object is anything that can be stored in a variable within the interactive tool. See Section <a href="#sec:data_types">Data Types</a> of the present documentation for details). Please notice that <code>sollya_obj_t</code> is in fact a pointer type; this has two consequences:
+The library provides a single data type called <code>sollya_obj_t</code> that can contain any <span class="sollya">Sollya</span> object (a <span class="sollya">Sollya</span> object is anything that can be stored in a variable within the interactive tool. See Section&nbsp;<a href="#sec:data_types">Data Types</a> of the present documentation for details). Please notice that <code>sollya_obj_t</code> is in fact a pointer type; this has two consequences:
 <ul>
   <li> <code>NULL</code> is a placeholder that can be used as a <code>sollya_obj_t</code> in some contexts. This placeholder is particularly useful as an end marker for functions with a variable number of arguments (see Sections <a href="#creating_lists">Lists</a> and <a href="#library_commands_and_functions">Commands and functions.</a></li>
   <li> An assignment with the &ldquo;=&rdquo; sign does not copy an object but only copies the reference to it. In order to perform a (deep) copy, the <code>sollya_lib_copy_obj()</code> function is available.</li>
@@ -1762,7 +1762,7 @@ As a result of a call to <code>sollya_lib_decompose_procedurefunction</code>, th
   <li> <code>int sollya_lib_decompose_libraryconstant_with_data(void (**f)(mpfr_t, mp_prec_t, void *),</code><br>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>void **data, void (**dealloc)(void *),</code><br>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>sollya_obj_t c)</code>:<br>
-    works exactly as the previous function but additionnally returns a pointer to the <code>void *</code> data field and the pointer to the deallocation function, that had been provided when the library constant was created.</li>
+    works exactly as the previous function but additionnally returns a pointer to the <code>void *</code> data field and the pointer to the deallocation function that had been provided when the library constant was created.</li>
   <li> <code>int sollya_lib_decompose_externalprocedure(sollya_externalprocedure_type_t *res,</code><br>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>sollya_externalprocedure_type_t **args,</code><br>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>int *arity,</code><br>
@@ -1849,7 +1849,7 @@ object represented. In order to help with such language bindings, the
 integer as a hash for a given <span class="sollya">Sollya</span> object: <br>
 <code>uint64_t sollya_lib_hash(sollya_obj_t obj)</code>.<br>
 The <span class="sollya">Sollya</span> library guarantees that any two objects that compare equal
-(with one of the comparison funcions provided with the <span class="sollya">Sollya</span>
+(with one of the comparison functions provided with the <span class="sollya">Sollya</span>
 library) will have the same hash value. The user should be aware that
 to ensure this implication, <span class="sollya">Sollya</span> needs to compute a unique
 representation of an object when it is to be hashed. This computation
@@ -1860,10 +1860,11 @@ given object is bound to a certain <span class="sollya">Sollya</span> session an
 is not portable between platforms nor over consecutive <span class="sollya">Sollya</span> versions.
 
 <h2>10.15 - Executing <span class="sollya">Sollya</span> procedures</h2>
+<p>
 Objects representing procedures written in <span class="sollya">Sollya</span> language (see also
-Section~\ref{procedures}) can be created using the <span class="sollya">Sollya</span> library
+Section&nbsp;<a href="#sec:procedures">7.1 - Procedures</a>) can be created using the <span class="sollya">Sollya</span> library
 functions <code>sollya_lib_parse_string</code> and <code>sollya_lib_parse</code>
-or thru execution of a <span class="sollya">Sollya</span> script using <code>sollya_lib_execute</code>.
+or through execution of a <span class="sollya">Sollya</span> script using <code>sollya_lib_execute</code>.
 <p>
 In order to execute such procedure objects on arguments, available as
 <span class="sollya">Sollya</span> objects, too, the functions 
@@ -2029,8 +2030,8 @@ int main() {<br>
 <p>
 More involved examples are possible: for instance, instead of setting a flag, it is possible to keep in some variable what the last message was. One may even implement a stack mechanism and store the messages in a stack, in order to handle them later. (Please remember however that <code>sollya_msg_t</code> is a pointer type and that the <code>sollya_msg_t</code> object received as argument of a callback call has no more meaning once the callback call returned. If a stack mechanism is implemented it should store information such as the message ID, or the message text, as given by <code>sollya_lib_get_msg_id</code> and <code>sollya_lib_msg_to_text</code>, but not the <code>sollya_msg_t</code> object itself.)
 <p>
-In addition the <span class="sollya">Sollya</span> library offers a way to print <span class="sollya">Sollya</span> warning messages -or provoke callback calls if a callback is installed- from a program that uses the <span class="sollya">Sollya</span> library. The function supporting this feature
-is <code>int sollya_lib_printmessage(int, int, const char *, ...)</code>. Set aside its first two arguments, this functions behaves like the function <code>sollya_lib_printf</code>, i.e. its <code>char *</code> argument is a format
+    In addition the <span class="sollya">Sollya</span> library offers a way to print <span class="sollya">Sollya</span> warning messages &ndash;&nbsp;or provoke callback calls if a callback is installed&nbsp;&ndash; from a program that uses the <span class="sollya">Sollya</span> library. The function supporting this feature
+is <code>int sollya_lib_printmessage(int, int, const char *, ...)</code>. Set aside its first two arguments, this function behaves like the function <code>sollya_lib_printf</code>, i.e. its <code>char *</code> argument is a format
 string, followed by a variadic number of arguments corresponding to that format string. The first argument of the <code>sollya_lib_printmessage</code> function is the least verbosity level at which that warning shall be displayed.
 Its second argument is a boolean argument indicating if the given call of the function continues the message that has been started out printing with a previous call; if the boolean is true (non-zero integer value), the message
 is a continuation message, otherwise (zero integer value), the message is a new message. Calling <code>sollya_lib_printmessage</code> with a non-zero value in second argument without having called the functions with a zero value
@@ -2076,8 +2077,8 @@ Of course, even if the user registers <code>custom_malloc</code>, <code>custom_f
 
 <p><a name="sec:libInitArgs"></a>
 <h3>10.20 - Passing arguments upon <span class="sollya">Sollya</span> library initialization</h3>
-
-As explained in Section \ref{variables}, in an interactive <span class="sollya">Sollya</span>
+<p>
+As explained in Section&nbsp;<a href="#variables">4 - Variables</a>, in an interactive <span class="sollya">Sollya</span>
 session the predefined variable <code>__argv</code> gets set to a list of
 character strings passed to <span class="sollya">Sollya</span> as shell arguments. Certain
 <span class="sollya">Sollya</span> scripts may depend on this variable to be set; their execution
@@ -2100,7 +2101,7 @@ achieved with one of the following functions, which replace the usual
 <code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void (*custom_free_with_size)(void *, size_t),             </code><br>
 <code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int argc, char **argv)</code>: 
 initialize the <span class="sollya">Sollya</span> library, using custom memory allocation
-functions as described in Section \ref{customMemoryFunctions}, and
+functions as described in Section&nbsp;<a href="#customMemoryFunctions">10.19 - Using <span class="sollya">Sollya</span> in a program that has its own allocation functions</a>, and
 set <code>__argv</code> to the list formed by the <code>argc</code> character
 strings contained in the <code>argv</code> array.</li>
 </ul>

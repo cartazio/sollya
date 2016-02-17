@@ -316,7 +316,7 @@ structure builds scopes for declared variables. Declared variables in
 inner scopes shadow (global and declared) variables of outer
 scopes. The global free variable, i.e. the mathematical variable for
 variate functional expressions in one variable, cannot be shadowed. Variables are
-declared using the \key{var} keyword. See section \ref{labvar} for details
+declared using the \key{var} keyword. See Section~\ref{labvar} for details
 on its usage and semantic.
 
 The following code examples illustrate the use of variables.
@@ -361,7 +361,7 @@ There are two special values \key{true} and \key{false}. Boolean expressions can
 
 The comparison operators \key{<}, \key{<=}, \key{>} and \key{>=} can only be used between two numbers or constant expressions.
 
-The comparison operators \key{==} and \key{!=} are polymorphic. You can use them to compare any two objects, like two strings, two intervals, etc. As a matter of fact, polymorphism is allowed on both sides: it is possible to compare objects of different type. Such objects of different type, as they can never be syntactically equal, will always compare unequal (see exception for \key{error}, section \ref{laberror}) and never equal. It is important to remember that testing the equality between two functions will return \key{true} if and only if the expression trees representing the two functions are exactly the same or automatic simplification is activated and both functions are polynomials that are equal. See \ref{laberror} for an exception concerning the special object \key{error}. Example:
+The comparison operators \key{==} and \key{!=} are polymorphic. You can use them to compare any two objects, like two strings, two intervals, etc. As a matter of fact, polymorphism is allowed on both sides: it is possible to compare objects of different type. Such objects of different type, as they can never be syntactically equal, will always compare unequal (see exception for \key{error}, Section~\ref{laberror}) and never equal. It is important to remember that testing the equality between two functions will return \key{true} if and only if the expression trees representing the two functions are exactly the same or automatic simplification is activated and both functions are polynomials that are equal. See \ref{laberror} for an exception concerning the special object \key{error}. Example:
 
 \input{introExample13}
 
@@ -411,7 +411,7 @@ floating-point data representing infinities and Not-a-Numbers (NaNs).
 \texttt{NaN} and \texttt{@NaN@}. \sollya does not have support for NaN
 payloads, signaling or quiet NaNs or signs of NaNs. Signaling NaNs
 are supported on input for single and double precision memory
-notation (see section \ref{sec:general_principles}). However, they
+notation (see Section~\ref{sec:general_principles}). However, they
 immediately get converted to plain \sollya NaNs.
 \end{itemize}
 
@@ -494,7 +494,7 @@ the interval with its bounds evaluated to floating-point numbers.
 \sollya has a mode for printing intervals that are that thin that
 their bounds have a number of decimal digits in common when
 printed. That mode is called \com{midpointmode}; see below for an
-introduction and section \ref{labmidpointmode} for details. As \sollya
+introduction and Section~\ref{labmidpointmode} for details. As \sollya
 must be able to parse back its own output, a syntax is provided to
 input intervals in midpoint~mode. However, please pay attention to the fact that the
 notation used in midpoint~mode generally increases the width of
@@ -518,7 +518,7 @@ When the mode \com{midpointmode} is set to \com{on} (see
 \ref{labmidpointmode}), \sollya will display intervals that are
 provably reduced to one point in this extended interval syntax. It
 will use \com{midpointmode} syntax for intervals that are sufficiently
-thin but not reduced to one point (see section \ref{labmidpointmode}
+thin but not reduced to one point (see Section~\ref{labmidpointmode}
 for details):
 
 \input{introExample40}
@@ -532,7 +532,7 @@ bounds.
 
 Constant expressions get evaluated to floating-point values
 immediately; this includes $\pi$ and rational numbers, even when
-\com{rationalmode} is \com{on} (see section \ref{sec:rationalmode} for
+\com{rationalmode} is \com{on} (see Section~\ref{sec:rationalmode} for
 this mode).
 
 \input{introExample17}
@@ -580,7 +580,7 @@ some optimisations in some cases in order to make the image interval
 as thin as possible. For example, \sollya will use a Taylor expansion
 based evaluation if a composed function, call it $f$, is applied to an
 interval. In other words, in this case \sollya will behave as if the
-\com{evaluate} command (see section \ref{labevaluate}) were implicitly
+\com{evaluate} command (see Section~\ref{labevaluate}) were implicitly
 used. In most cases, the result will be different from the one obtained
 by replacing all occurences of the free variable of a function by the 
 interval the function is to be evaluated on:
@@ -638,11 +638,11 @@ meaning.
 \item \com{floating}, \com{fixed} (see sections \ref{labfloating} and \ref{labfixed})
 \item \com{halfprecision}, \com{single}, \com{double}, \com{doubleextended}, \com{doubledouble}, \com{quad}, \com{tripledouble} (see sections \ref{labhalfprecision}, \ref{labsingle}, \ref{labdouble}, \ref{labdoubleextended}, \ref{labdoubledouble}, \ref{labquad} and \ref{labtripledouble})
 \item \com{HP}, \com{SG}, \com{D}, \com{DE}, \com{DD}, \com{QD}, \com{TD} (see sections \ref{labhalfprecision}, \ref{labsingle}, \ref{labdouble}, \ref{labdoubleextended}, \ref{labdoubledouble}, \ref{labquad} and \ref{labtripledouble})
-\item \com{perturb} (see section \ref{labperturb})
-\item \com{honorcoeffprec} (see section \ref{labhonorcoeffprec})
-\item \com{default} (see section \ref{labdefault})
-\item \com{error} (see section \ref{laberror})
-\item \com{void} (see section \ref{labvoid})
+\item \com{perturb} (see Section~\ref{labperturb})
+\item \com{honorcoeffprec} (see Section~\ref{labhonorcoeffprec})
+\item \com{default} (see Section~\ref{labdefault})
+\item \com{error} (see Section~\ref{laberror})
+\item \com{void} (see Section~\ref{labvoid})
 \end{itemize}
 
 \subsection{Lists}
@@ -725,7 +725,7 @@ The following example illustrates this matter:
 Statements in \sollya can be grouped in blocks, so-called
 begin-end-blocks.  This can be done using the key tokens \key{$\lbrace$} and
 \key{$\rbrace$}. Blocks declared this way are considered to be one single
-statement. As already explained in section \ref{variables}, using
+statement. As already explained in Section~\ref{variables}, using
 begin-end-blocks also opens the possibility of declaring variables
 through the keyword \key{var}. 
 
@@ -822,11 +822,11 @@ programming objects are called \emph{procedures} in \sollya.
 
 \sollya procedures are common objects that can be, for example,
 assigned to variables or stored in lists. Procedures are declared by
-the \key{proc} keyword; see section \ref{labproc} for details. The
+the \key{proc} keyword; see Section~\ref{labproc} for details. The
 returned procedure object must then be assigned to a variable. It can
 hence be applied to arguments with common application syntax. The
 \key{procedure} keyword provides an abbreviation for declaring and
-assigning a procedure; see section \ref{labprocedure} for details.
+assigning a procedure; see Section~\ref{labprocedure} for details.
 
 \sollya procedures can return objects using the \key{return} keyword
 at the end of the begin-end-block of the procedure. Section
@@ -844,7 +844,7 @@ parameters of a procedure be variable. \sollya provides support for
 the case with procedures with an arbitrary number of actual arguments.
 When the procedure is called, those actual arguments are gathered in a
 list which is applied to the only formal list parameter of a procedure
-with an arbitrary number of arguments. See section \ref{labprocedure}
+with an arbitrary number of arguments. See Section~\ref{labprocedure}
 for the exact syntax and details; an example is given just below.
 
 Let us remark that declaring a procedure does not involve any evaluation or
@@ -1359,7 +1359,7 @@ These two functions construct a \sollya object representing the
 mathematical constant $c$ for which a pointer to a function
 \verb|c(mpfr_t rop, mp_prec_t prec)| is provided. This code must
 evaluate the constant to precision \verb|prec| and affect the result
-to \verb|rop|. See Section \ref{lablibraryconstant} for details with
+to \verb|rop|. See Section~\ref{lablibraryconstant} for details with
 respect to \verb|prec|.
 
 The same remark as above concerning the suggested displaying name
@@ -1374,7 +1374,7 @@ available through a \sollya object representing a \sollya procedure: \\
 These two functions construct a \sollya library object representing $f(e)$
 where $e$ corresponds to the mathematical function (or constant) given with argument
 \verb|e| and where $f$ is given as a \sollya procedure \verb|f(x, n, p)| evaluating the
-$n$-th derivative of $f$ over the interval $x$ with precision $p$. See Section \ref{labfunction} 
+$n$-th derivative of $f$ over the interval $x$ with precision $p$. See Section~\ref{labfunction} 
 concerning details of the arguments of that \sollya procedure.
 
 As usual, \verb|sollya_lib_build_function_procedurefunction| ``eats
@@ -1865,7 +1865,7 @@ integer as a hash for a given \sollya object:
 \verb|uint64_t sollya_lib_hash(sollya_obj_t obj).|
 \end{center}
 The \sollya library guarantees that any two objects that compare equal
-(with one of the comparison funcions provided with the \sollya
+(with one of the comparison functions provided with the \sollya
 library) will have the same hash value. The user should be aware that
 to ensure this implication, \sollya needs to compute a unique
 representation of an object when it is to be hashed. This computation
@@ -1880,7 +1880,7 @@ is not portable between platforms nor over consecutive \sollya versions.
 Objects representing procedures written in \sollya language (see also
 Section~\ref{procedures}) can be created using the \sollya library
 functions \verb|sollya_lib_parse_string| and \verb|sollya_lib_parse|
-or thru execution of a \sollya script using \verb|sollya_lib_execute|.
+or through execution of a \sollya script using \verb|sollya_lib_execute|.
 
 In order to execute such procedure objects on arguments, available as
 \sollya objects, too, the functions 
@@ -2047,7 +2047,7 @@ int main() {
 More involved examples are possible: for instance, instead of setting a flag, it is possible to keep in some variable what the last message was. One may even implement a stack mechanism and store the messages in a stack, in order to handle them later. (Please remember however that \verb|sollya_msg_t| is a pointer type and that the \verb|sollya_msg_t| object received as argument of a callback call has no more meaning once the callback call returned. If a stack mechanism is implemented it should store information such as the message ID, or the message text, as given by \verb|sollya_lib_get_msg_id| and \verb|sollya_lib_msg_to_text|, but not the \verb|sollya_msg_t| object itself.)
 
 In addition the \sollya library offers a way to print \sollya warning messages --or provoke callback calls if a callback is installed-- from a program that uses the \sollya library. The function supporting this feature
-is \verb|int sollya_lib_printmessage(int, int, const char *, ...)|. Set aside its first two arguments, this functions behaves like the function \verb|sollya_lib_printf|, i.e. its \verb|char *| argument is a format
+is \verb|int sollya_lib_printmessage(int, int, const char *, ...)|. Set aside its first two arguments, this function behaves like the function \verb|sollya_lib_printf|, i.e. its \verb|char *| argument is a format
 string, followed by a variadic number of arguments corresponding to that format string. The first argument of the \verb|sollya_lib_printmessage| function is the least verbosity level at which that warning shall be displayed.
 Its second argument is a boolean argument indicating if the given call of the function continues the message that has been started out printing with a previous call; if the boolean is true (non-zero integer value), the message
 is a continuation message, otherwise (zero integer value), the message is a new message. Calling \verb|sollya_lib_printmessage| with a non-zero value in second argument without having called the functions with a zero value
@@ -2095,7 +2095,7 @@ No access to the overloaded version of \verb|custom_realloc_with_size| and \verb
 \subsection{Passing arguments upon \sollya library initialization}
 \label{libInitArgs}
 
-As explained in Section \ref{variables}, in an interactive \sollya
+As explained in Section~\ref{variables}, in an interactive \sollya
 session the predefined variable \verb|__argv| gets set to a list of
 character strings passed to \sollya as shell arguments. Certain
 \sollya scripts may depend on this variable to be set; their execution
@@ -2118,7 +2118,7 @@ achieved with one of the following functions, which replace the usual
 \verb|         void (*custom_free_with_size)(void *, size_t),             |\\
 \verb|         int argc, char **argv)|: 
 initialize the \sollya library, using custom memory allocation
-functions as described in Section \ref{customMemoryFunctions}, and
+functions as described in Section~\ref{customMemoryFunctions}, and
 set \verb|__argv| to the list formed by the \verb|argc| character
 strings contained in the \verb|argv| array.
 \end{itemize}
