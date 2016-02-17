@@ -33,7 +33,7 @@ function printList() {
   echo "<h1>Commands available within Sollya</h1>\n";
   echo "<p><a name=\"listOfCommands\"></a>\n";
   echo "<ul id=\"listOfCommands\">\n";
-  for($i=0;$i<$GLOBALS['n']; $i++) {
+  for($i=1;$i<$GLOBALS['n']; $i++) {
     echo "  <li>";
     linkTo("normal", $GLOBALS['listOfCommands'][2*$i],$GLOBALS['listOfCommands'][1+2*$i]);
     echo "</li>\n";
@@ -56,7 +56,7 @@ if (($GLOBALS['command']=="")||($GLOBALS['command']=="allInOne")) {
   $GLOBALS['allInOne'] = 1;
   printList();
   echo "<h1>Help pages</h1>\n\n";	
-  for($i=0;$i<$GLOBALS['n']; $i++) {
+  for($i=1;$i<$GLOBALS['n']; $i++) {
     printCommand($i);
   }
 }

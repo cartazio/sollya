@@ -346,6 +346,7 @@ Two predefined variables exist when <span class="sollya">Sollya</span> is starte
   <code>__unique_id</code> variable is refreshed with a new, unique
   value.
 </li></ul>
+<p>
 Even though these variables exist upon <span class="sollya">Sollya</span> startup with predefined
 values, they behave like any other variable: the predefined value can
 be overwritten by assigning any new value to the variables, the
@@ -464,7 +465,7 @@ will change as follows:
   integers. Only if <span class="sollya">Sollya</span> is not able to simplify the constant
   expression to a rational number, it will launch the default behavior
   of evaluating constant expressions to floating-point numbers that
-  are generally faithful roundings of the expressions.
+  are generally faithful roundings of the expressions.</li>
 <li> When the global mode <code class="com">autosimplify</code> is <code class="com">on</code>, which is
   the default, <span class="sollya">Sollya</span> will additionally use rational arithmetic while
   trying to simplify expressions given in argument of commands. 
@@ -830,6 +831,7 @@ following examples:
 <?php include("introExample30.php"); ?>
 <p>
 <h1>7 - Functional language elements: procedures and pattern matching</h1>
+<p>
 <a name="sec:procedures"></a>
 <h2>7.1 - Procedures</h2>
 <p>
@@ -1842,7 +1844,7 @@ In the interactive tool, it is also possible to write <code>f(a)</code> when <co
 This function returns a boolean integer: false means failure (i.e., <code>f</code> is not a functional expression), in which case <code>res</code> is left unchanged, and true means success, in which case <code>res</code> contains the result of the evaluation. The function might succeed, and yet <code>res</code> might contain something useless such as an unbounded interval or even [NaN, NaN] (this happens for instance when <code>a</code> contains points that lie in the interior of the complement of the definition domain of <code>f</code>). It is the user's responsibility to check afterwards whether the computed interval is bounded, unbounded or NaN.
 
 <h2>10.14 - Computing hashes on <span class="sollya">Sollya</span> objects</h2>
-
+<p>
 Certain language bindings require hashes to be available for any
 object represented. In order to help with such language bindings, the
 <span class="sollya">Sollya</span> library supports a function that computes a 64 bit unsigned
@@ -1870,8 +1872,9 @@ In order to execute such procedure objects on arguments, available as
 <span class="sollya">Sollya</span> objects, too, the functions 
 <ul>
   <li><code>sollya_obj_t sollya_lib_execute_procedure(sollya_obj_t proc, ...)</code> and </li>
-  <li><code>sollya_obj_t sollya_lib_v_execute_procedure(sollya_obj_t proc, va_list arglist)</li>
+  <li><code>sollya_obj_t sollya_lib_v_execute_procedure(sollya_obj_t proc, va_list arglist)</code></li>
 </ul>
+<p>
 may be used. These functions apply the given procedure <code>proc</code> on
 the following arguments (or the elements in the argument list
 <code>arglist</code>). If no argument is needed to execute the procedure,
