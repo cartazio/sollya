@@ -16,7 +16,7 @@ int main(void) {
   L[2] = sollya_lib_double_obj();
 
   /* Empty list from an invalid pointer */
-  ptr = L+17;
+  ptr = (void *) 17;
   listobj = sollya_lib_list((sollya_obj_t *)ptr, 0);
   sollya_lib_printf("%b\n", listobj);
   sollya_lib_clear_obj(listobj);
