@@ -1754,8 +1754,8 @@ Functions are provided to allow the user to retrieve further information from li
 As a result of a call to \verb|sollya_lib_decompose_libraryfunction|, the value $n$ is stored at the address referred to by \verb|deriv|, a pointer to \verb|func| is stored at the address referred to by \verb|f| and a \sollya object representing $f_1$ is stored at the address referred to by \verb|e|. Please notice that the object stored in \verb|e| must manually be cleared once it becomes useless. Upon success, a boolean integer representing true is returned. If \verb|g| is not a library function object, nothing happens and false is returned.
 \item \verb|int sollya_lib_decompose_libraryfunction_with_data(|\\
 \phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|int (**f)(mpfi_t, mpfi_t, int, void *),|\\
-\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|int *deriv, sollya_obj_t *e, void **data,|\\
-\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|void (**dealloc)(void *),|\\
+\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|int *deriv, sollya_obj_t *e,|\\
+\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|void **data, void (**dealloc)(void *),|\\
 \phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|sollya_obj_t g)|:\\ works exactly as the previous function but additionnally returns a pointer to the \verb|void *| data field and to the pointer to the deallocation function that had been provided when the library function was created.
 \item \verb|int sollya_lib_decompose_procedurefunction(sollya_obj_t *f, int *deriv,|\\
 \phantom{\texttt{int sollya\_lib\_decompose\_procedurefunction( }}\verb|sollya_obj_t *e, sollya_obj_t g)|:\\
@@ -1766,24 +1766,20 @@ As a result of a call to \verb|sollya_lib_decompose_procedurefunction|, the valu
 assume that \verb|c| is a constant provided via an external C function \verb|void func(mpfr_t, mp_prec_t)|. As a result of a call to \verb|sollya_lib_decompose_libraryconstant|, a pointer to \verb|func| is stored at the address referred to by \verb|f| and a boolean integer representing true is returned. Otherwise, nothing happens and false is returned.
 \item \verb|int sollya_lib_decompose_libraryconstant_with_data(|\\
 \phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|void (**f)(mpfr_t, mp_prec_t, void *),|\\
-\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|void **data,|\\
-\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|void (**dealloc)(void *),|\\
+\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|void **data, void (**dealloc)(void *),|\\
 \phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|sollya_obj_t c)|:\\
 works exactly as the previous function but additionnally returns a pointer to the \verb|void *| data field and the pointer to the deallocation function that had been provided when the library constant was created.
 \item \verb|int sollya_lib_decompose_externalprocedure(sollya_externalprocedure_type_t *res,|\\
 \phantom{\texttt{int sollya\_lib\_decompose\_externalprocedure( }}\verb|sollya_externalprocedure_type_t **args,|\\
-\phantom{\texttt{int sollya\_lib\_decompose\_externalprocedure( }}\verb|int *arity,|\\
-\phantom{\texttt{int sollya\_lib\_decompose\_externalprocedure( }}\verb|void **f,|\\
+\phantom{\texttt{int sollya\_lib\_decompose\_externalprocedure( }}\verb|int *arity, void **f,|\\
 \phantom{\texttt{int sollya\_lib\_decompose\_externalprocedure( }}\verb|sollya_obj_t p)|:\\
 assume that \verb|p| is an external procedure provided via an external C function \verb|func| (of appropriate type) bound to \sollya by one of the means provided for that purpose. As a result of a call to \verb|sollya_lib_decompose_externalprocedure|, a pointer to \verb|func| is stored at the address pointed to by \verb|f|, the result type of the external procedure is stored at \verb|res|,
 an array of its argument types is allocated, filled and stored at the address pointed to by \verb|args| (unless the procedure function takes no argument in which case the \verb|args| argument is ignored), the arity of the external procedure (and hence number of elements of the array allocated and stored at \verb|args|) is stored at the integer pointed by \verb|arity| and true is returned. If \verb|p| is no external procedure object, nothing happens and false is returned.
 \item \verb|int sollya_lib_decompose_externalprocedure_with_data(|\\
 \phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|sollya_externalprocedure_type_t *res,|\\
 \phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|sollya_externalprocedure_type_t **args,|\\
-\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|int *arity,|\\
-\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|void **f,|\\
-\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|void **data,|\\
-\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|void (**dealloc)(void *),|\\
+\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|int *arity, void **f,|\\
+\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|void **data, void (**dealloc)(void *),|\\
 \phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|sollya_obj_t p)|:\\
 works exactly as the previous function but additionnally returns a pointer to the \verb|void *| data field and the pointer to the deallocation function that had been provided when the external procedure was created.
 \end{itemize}
