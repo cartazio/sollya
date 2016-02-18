@@ -6,6 +6,12 @@
 #include <unistd.h>
 #include <stddef.h>
 #include <sollya.h>
+#include "config.h"
+
+#ifdef SYSTEM_DOES_NOT_ALLOW_COMPLETE_PRINTF
+int main(void) { return 77; }
+
+#else
 
 #define SIZE 32
 #define BUFSIZE 256
@@ -698,3 +704,4 @@ int main(void) {
   sollya_lib_close();
   return 0;
 }
+#endif /* SYSTEM_DOES_NOT_ALLOW_COMPLETE_PRINTF */
