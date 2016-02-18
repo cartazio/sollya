@@ -570,7 +570,7 @@ AC_FUNC_REALLOC
 AC_CHECK_FUNCS([gettimeofday memmove memset strchr strerror strrchr strtol backtrace dup2 strstr dladdr])
 
 
-AC_MSG_CHECKING([if the system allows %n in in writable segment])
+AC_MSG_CHECKING([if the system allows %n in a writable segment])
 AC_RUN_IFELSE([AC_LANG_PROGRAM([[#define _BSD_SOURCE
                                  #include <stdio.h>
                                  #include <stdlib.h>]],
