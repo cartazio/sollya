@@ -577,12 +577,12 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM([[#define _BSD_SOURCE
                                [[ char *str;
                                   int count;
                                   str = malloc(20*sizeof(char));
-                                  sprintf(str, "ye%%ns\n");
+                                  sprintf(str, "%%n");
                                   printf(str, &count);
                                   free(str);
                                   return 0;]]
                               )],
-	      [],
+	      [ AC_MSG_RESULT(yes) ],
               [
                 AC_MSG_RESULT(no)
 		AC_DEFINE([SYSTEM_DOES_NOT_ALLOW_COMPLETE_PRINTF],[1],[The system does not allow %n in malloced strings])
