@@ -74,7 +74,7 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
   <li>Or as a C library that provides all the features of the tool within the C programming language.</li>
 </ul>
 <p>
-The installation of the tool and the library follow the same steps, desribed below. The present documentation focuses more on the interactive tool. As a matter of fact, the library works exactly the same way as the tool, so it is necessary to know a little about the tool in order to correctly use the library. The reader who is only interested in the library should at least read the following Sections&nbsp;<a href="#sec:introduction">Introduction</a>,  <a href="#sec:general_principles">General Principles</a> and <a href="#sec:data_types">Data Types</a>. A documentation specifically describing the library usage is available in <a href="#Libsollya">Appendix&nbsp;10</a> at the end of the present documentation.
+The installation of the tool and the library follow the same steps, desribed below. The present documentation focuses more on the interactive tool. As a matter of fact, the library works exactly the same way as the tool, so it is necessary to know a little about the tool in order to correctly use the library. The reader who is only interested in the library should at least read the following Sections&nbsp;<a href="#sec:introduction">Introduction</a>,  <a href="#sec:general_principles">General Principles</a> and <a href="#sec:data_types">Data Types</a>. A documentation specifically describing the library usage is available in Appendix&nbsp;<a href="#Libsollya">the <span class="sollya">Sollya</span> library</a> at the end of the present documentation.
 
 <h2>1.1 - Compilation dependencies</h2>
 <p>
@@ -125,7 +125,7 @@ commands.
 <p>
 The following options are supported when calling <span class="sollya">Sollya</span>:
 <ul>
-<li> <code>--args</code>: The special argument indicates to <span class="sollya">Sollya</span> that subsequent
+<li> <code>--args</code>: This special argument indicates to <span class="sollya">Sollya</span> that subsequent
 command line arguments are no longer to be interpreted but are to be passed as-is
 to the predefined <span class="sollya">Sollya</span> variable <code>__argv</code>. The <code>--args</code> argument
 is implicitely assumed if a <span class="sollya">Sollya</span> script filename has already been specified with a 
@@ -563,7 +563,7 @@ fail, <span class="sollya">Sollya</span> will try to interpret infinities in the
 limits. However, this is not guaranteed to work, even if it is
 guaranteed that no unsafe results will be produced. See also section
 <a href="#sec:numbers">Numbers</a> for more detail on infinities in <span class="sollya">Sollya</span>.
-   The behavior of interval arithmetic on intervals containing infinities or NaNs is subject to debate; moreover, there is no complete consensus on what should be the result of the evaluation of a function f over an interval I containing points where f is not defined. <span class="sollya">Sollya</span> has its own philosophy regarding these questions. This philosophy is explained in <a href="#IntervalArithmeticPhilopshy">Appendix&nbsp;9</a> at the end of this document.
+   The behavior of interval arithmetic on intervals containing infinities or NaNs is subject to debate; moreover, there is no complete consensus on what should be the result of the evaluation of a function f over an interval I containing points where f is not defined. <span class="sollya">Sollya</span> has its own philosophy regarding these questions. This philosophy is explained in Appendix&nbsp;<a href="#IntervalArithmeticPhilopshy">interval arithmetic philosophy in <span class="sollya">Sollya</span></a> at the end of this document.
 
 <p>
 <?php include("introExample39.php"); ?>
@@ -1863,7 +1863,7 @@ is not portable between platforms nor over consecutive <span class="sollya">Soll
 <h2>10.15 - Executing <span class="sollya">Sollya</span> procedures</h2>
 <p>
 Objects representing procedures written in <span class="sollya">Sollya</span> language (see also
-Section&nbsp;<a href="#sec:procedures">7.1 - Procedures</a>) can be created using the <span class="sollya">Sollya</span> library
+Section&nbsp;<a href="#sec:procedures">Procedures</a>) can be created using the <span class="sollya">Sollya</span> library
 functions <code>sollya_lib_parse_string</code> and <code>sollya_lib_parse</code>
 or through execution of a <span class="sollya">Sollya</span> script using <code>sollya_lib_execute</code>.
 <p>
@@ -2080,7 +2080,7 @@ Of course, even if the user registers <code>custom_malloc</code>, <code>custom_f
 <p><a name="sec:libInitArgs"></a>
 <h3>10.20 - Passing arguments upon <span class="sollya">Sollya</span> library initialization</h3>
 <p>
-As explained in Section&nbsp;<a href="#variables">4 - Variables</a>, in an interactive <span class="sollya">Sollya</span>
+As explained in Section&nbsp;<a href="#variables">Variables</a>, in an interactive <span class="sollya">Sollya</span>
 session the predefined variable <code>__argv</code> gets set to a list of
 character strings passed to <span class="sollya">Sollya</span> as shell arguments. Certain
 <span class="sollya">Sollya</span> scripts may depend on this variable to be set; their execution
@@ -2103,7 +2103,7 @@ achieved with one of the following functions, which replace the usual
 <code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void (*custom_free_with_size)(void *, size_t),             </code><br>
 <code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int argc, char **argv)</code>: 
 initialize the <span class="sollya">Sollya</span> library, using custom memory allocation
-functions as described in Section&nbsp;<a href="#customMemoryFunctions">10.19 - Using <span class="sollya">Sollya</span> in a program that has its own allocation functions</a>, and
+functions as described in Section&nbsp;<a href="#customMemoryFunctions">Using <span class="sollya">Sollya</span> in a program that has its own allocation functions</a>, and
 set <code>__argv</code> to the list formed by the <code>argc</code> character
 strings contained in the <code>argv</code> array.</li>
 </ul>
