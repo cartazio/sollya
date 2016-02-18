@@ -1946,7 +1946,7 @@ The philosophy of <span class="sollya">Sollya</span> is &ldquo;whenever somethin
 <p>
 Before describing the principle of the message callback, it seems appropriate to recall that several mechanisms are available in the interactive tool to filter the messages emitted by <span class="sollya">Sollya</span>. These mechanisms are also available in library mode for completeness. When a message is emitted, it has two characteristics: a verbosity level and an id (a number uniquely identifying the message). After it has been emitted, it passes through the following steps where it can be filtered. If it has not been filtered (and only in this case) it is displayed.
 <ol>
-  <li> If the verbosity level of the message if greater than the value of the environment variable <code>verbosity</code>, it is filtered.</li>
+  <li> If the verbosity level of the message is greater than the value of the environment variable <code>verbosity</code>, it is filtered.</li>
   <li> If the environment variable <code>roundingwarnings</code> is set to <code>off</code> and if the message informs the user that a rounding occurred, it is filtered.</li>
   <li> If the id of the message has been registered with the <code>suppressmessage</code> command, the message is filtered.</li>
   <li> If a message callback has been installed and if the message has not been previously filtered, it is handled by the callback, which decides to filter it or to permit its displaying.</li>
@@ -1964,7 +1964,7 @@ It is possible to get the currently installed callback using <code>sollya_lib_ge
 <p>
 The type <code>sollya_msg_t</code> is indeed a pointer and its content is only accessible during the callback call: it does not make sense to keep it for further use after the callback call. Currently the type has only two accessors:
 <ul>
-  <li> <code>int sollya_lib_get_msg_id(sollya_msg_t msg)</code> returns an integer that identifies the type of the message. The message types are listed in the file <code>sollya-messages.h</code>. Please note that this file not only lists the possible identifiers but only defines meaningful names to each possible message number (e.g., <code>SOLLYA_MSG_UNDEFINED_ERROR</code> is an alias for the number 2 but is more meaningful to understand what the message is about). It is recommended to use these names instead of numerical values.</li>
+  <li> <code>int sollya_lib_get_msg_id(sollya_msg_t msg)</code> returns an integer that identifies the type of the message. The message types are listed in the file <code>sollya-messages.h</code>. Please note that this file not only lists the possible identifiers but also defines meaningful names to each possible message number (e.g., <code>SOLLYA_MSG_UNDEFINED_ERROR</code> is an alias for the number 2 but is more meaningful to understand what the message is about). It is recommended to use these names instead of numerical values.</li>
   <li> <code>char *sollya_lib_msg_to_text(sollya_msg_t msg)</code> returns a generic string briefly summarizing the contents of the message. Please note that this <code>char *</code> is dynamically allocated on the heap and should manually be cleared with <code>sollya_lib_free</code> when it becomes useless.</li>
 </ul>
 <p>In the future, other accessors could be added (to get the verbosity level at which the message has been emitted, to get data associated with the message, etc.) The developers of <span class="sollya">Sollya</span> are open to suggestions and feature requests on this subject.

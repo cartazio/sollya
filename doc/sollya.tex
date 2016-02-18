@@ -1953,7 +1953,7 @@ The philosophy of \sollya is ``whenever something is not exact, explicitly warn 
 
 Before describing the principle of the message callback, it seems appropriate to recall that several mechanisms are available in the interactive tool to filter the messages emitted by \sollya. These mechanisms are also available in library mode for completeness. When a message is emitted, it has two characteristics: a verbosity level and an id (a number uniquely identifying the message). After it has been emitted, it passes through the following steps where it can be filtered. If it has not been filtered (and only in this case) it is displayed.
 \begin{enumerate}
-\item If the verbosity level of the message if greater than the value of the environment variable \verb|verbosity|, it is filtered.
+\item If the verbosity level of the message is greater than the value of the environment variable \verb|verbosity|, it is filtered.
 \item If the environment variable \verb|roundingwarnings| is set to \verb|off| and if the message informs the user that a rounding occurred, it is filtered.
 \item If the id of the message has been registered with the \verb|suppressmessage| command, the message is filtered.
 \item If a message callback has been installed and if the message has not been previously filtered, it is handled by the callback, which decides to filter it or to permit its displaying.
@@ -1971,7 +1971,7 @@ It is possible to get the current callback using \verb|sollya_lib_get_msg_callba
 
 The type \verb|sollya_msg_t| is indeed a pointer and its content is only accessible during the callback call: it does not make sense to keep it for further use after the callback call. Currently the type has only two accessors:
 \begin{itemize}
-\item \verb|int sollya_lib_get_msg_id(sollya_msg_t msg)| returns an integer that identifies the type of the message. The message types are listed in the file \verb|sollya-messages.h|. Please note that this file not only lists the possible identifiers but only defines meaningful names to each possible message number (e.g., \verb|SOLLYA_MSG_UNDEFINED_ERROR| is an alias for the number $2$ but is more meaningful to understand what the message is about). It is recommended to use these names instead of numerical values.
+\item \verb|int sollya_lib_get_msg_id(sollya_msg_t msg)| returns an integer that identifies the type of the message. The message types are listed in the file \verb|sollya-messages.h|. Please note that this file not only lists the possible identifiers but also defines meaningful names to each possible message number (e.g., \verb|SOLLYA_MSG_UNDEFINED_ERROR| is an alias for the number $2$ but is more meaningful to understand what the message is about). It is recommended to use these names instead of numerical values.
 \item \verb|char *sollya_lib_msg_to_text(sollya_msg_t msg)| returns a generic string briefly summarizing the contents of the message. Please note that this \verb|char *| is dynamically allocated on the heap and should manually be cleared with \verb|sollya_lib_free| when it becomes useless.
 \end{itemize}
 In the future, other accessors could be added (to get the verbosity level at which the message has been emitted, to get data associated with the message, etc.) The developers of \sollya are open to suggestions and feature requests on this subject.
