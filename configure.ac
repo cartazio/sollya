@@ -569,6 +569,26 @@ AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([gettimeofday memmove memset strchr strerror strrchr strtol backtrace dup2 strstr dladdr])
 
+
+AC_MSG_CHECKING([if the system allows %n in in writable segment])
+AC_RUN_IFELSE([AC_LANG_PROGRAM([[#define _BSD_SOURCE
+                                 #include <stdio.h>
+                                 #include <stdlib.h>]],
+                               [[ char *str;
+                                  int count;
+                                  str = malloc(20*sizeof(char));
+                                  sprintf(str, "ye%%ns\n");
+                                  printf(str, &count);
+                                  free(str);
+                                  return 0;]]
+                              )],
+	      [],
+              [
+                AC_MSG_RESULT(no)
+		AC_DEFINE([SYSTEM_DOES_NOT_ALLOW_COMPLETE_PRINTF],[1],[The system does not allow %n in malloced strings])
+              ])
+
+
 AC_MSG_CHECKING([if the Dl_info type is usable])
 AC_RUN_IFELSE([AC_LANG_PROGRAM([[#define _GNU_SOURCE 1
                                  #define _DARWIN_C_SOURCE 1
