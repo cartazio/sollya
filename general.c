@@ -1109,18 +1109,26 @@ int printMessage(int verb, int msgNum, const char *format, ...) {
   return res;
 }
 
-int sollyaLibPrintmessage(int verb, int cont, const char *format, va_list varlist) {
+int sollyaLibPrintmessage(int verb, int cont, const char *format, ...) {
+  va_list varlist;
+  int res;
+
+  va_start(varlist,format);
   if (cont) {
     if (sollyaLibPrintmessageCalled) {
       sollyaLibPrintmessageCalled = 1;
-      return printMessageInner(verb, SOLLYA_MSG_CONTINUATION, format, varlist);
+      res = printMessageInner(verb, SOLLYA_MSG_CONTINUATION, format, varlist);
+    } else {
+      sollyaLibPrintmessageCalled = 1;
+      res = printMessageInner(verb, SOLLYA_MSG_GENERIC_SOLLYA_LIBRARY_MSG, format, varlist);
     }
+  } else {
     sollyaLibPrintmessageCalled = 1;
-    return printMessageInner(verb, SOLLYA_MSG_GENERIC_SOLLYA_LIBRARY_MSG, format, varlist);
-  } 
+    res = printMessageInner(verb, SOLLYA_MSG_GENERIC_SOLLYA_LIBRARY_MSG, format, varlist);
+  }
+  va_end(varlist);
   
-  sollyaLibPrintmessageCalled = 1;
-  return printMessageInner(verb, SOLLYA_MSG_GENERIC_SOLLYA_LIBRARY_MSG, format, varlist);
+  return res;
 }
 
 int sollyaPrintf(const char *format, ...) {

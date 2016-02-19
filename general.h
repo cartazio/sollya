@@ -270,7 +270,7 @@ sollya_mpfi_t *getReusedGlobalMPFIVars(unsigned int, mp_prec_t);
 void returnReusedGlobalMPIVars(unsigned int);
 mpfr_t *getReusedGlobalMPFRVars(unsigned int, mp_prec_t);
 void returnReusedGlobalMPFRVars(unsigned int);
-int sollyaLibPrintmessage(int, int, const char *, va_list);
+int sollyaLibPrintmessage(int, int, const char *, ...);
 int sollya_getc(FILE *);
 int sollya_feof(FILE *);
 int sollya_ferror(FILE *);

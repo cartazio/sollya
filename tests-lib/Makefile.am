@@ -171,9 +171,7 @@ thonorcoeffprec.c \
 thorner.c \
 timplementpoly.c \
 tinf.c \
-tinit_with_arguments.c \
 tinit_with_custom_memory_functions.c \
-tinit_with_custom_memory_functions_with_arguments.c \
 tint_list_ops.c \
 tintegral.c \
 tinterval_list_ops.c \

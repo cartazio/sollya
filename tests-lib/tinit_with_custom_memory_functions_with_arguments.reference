@@ -1,4 +1,0 @@
-__argv = [|"5", "Hello world", "exp(x)", "", "Coucou"|]
-The first memory test seems to be okay.
-__argv = [|"5", "Hello world", "exp(x)", "", "Coucou"|]
-The second memory test seems to be okay.

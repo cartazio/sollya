@@ -245,21 +245,12 @@ extern "C" {
 
   /* Initialization and finalization functions */
   int sollya_lib_init(void);
-  int sollya_lib_init_with_arguments(int, char **);
   int sollya_lib_init_with_custom_memory_functions(void *(*)(size_t),
 						   void *(*)(size_t, size_t),
 						   void *(*)(void *, size_t),
 						   void (*)(void *),
 						   void *(*)(void *, size_t, size_t),
 						   void (*)(void *, size_t));
-  int sollya_lib_init_with_custom_memory_functions_with_arguments(void *(*)(size_t),
-								  void *(*)(size_t, size_t),
-								  void *(*)(void *, size_t),
-								  void (*)(void*),
-								  void *(*)(void *, size_t, size_t),
-								  void (*)(void *, size_t),
-								  int,
-								  char **);
   int sollya_lib_init_with_custom_memory_function_modifiers(void (*)(void *(*)(size_t),
 								     void *(*)(void *, size_t, size_t),
 								     void (*)(void *, size_t)),
@@ -285,20 +276,6 @@ extern "C" {
 											 void (*)(void *(**)(size_t),
 												  void *(**)(void *, size_t, size_t),
 												  void (**)(void *, size_t)));
-  int sollya_lib_init_with_custom_memory_functions_with_arguments_with_custom_memory_function_modifiers(void *(*)(size_t),
-													void *(*)(size_t, size_t),
-													void *(*)(void *, size_t),
-													void (*)(void*),
-													void *(*)(void *, size_t, size_t),
-													void (*)(void *, size_t),
-													int,
-													char **,
-													void (*)(void *(*)(size_t),
-														 void *(*)(void *, size_t, size_t),
-														 void (*)(void *, size_t)),
-													void (*)(void *(**)(size_t),
-														 void *(**)(void *, size_t, size_t),
-														 void (**)(void *, size_t)));
   int sollya_lib_close(void);
 
   /* Functions to install and uninstall a call-back for the messages
@@ -331,8 +308,8 @@ extern "C" {
   int sollya_lib_snprintf(char *, size_t, const char *, ...);
   int sollya_lib_v_snprintf(char *, size_t, const char *, va_list);
 
-  /* A function to display Sollya messages */
-  int sollya_lib_printmessage(int, int, const char *, ...);
+  /* A function to display Sollya message out of library code */
+  void sollya_lib_printlibrarymessage(int, const char *);
 
   /* A function to clear Sollya_objects */
   void sollya_lib_clear_obj(sollya_obj_t);
