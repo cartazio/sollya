@@ -80,6 +80,10 @@ h(0.25);
 prec = 72;
 "h(0.25) = ";
 h(0.25);
+prec = 165;
+"h(0.25) = ";
+h(0.25);
+
 
 #SEEALSO $TAYLORFORM
 #SEEALSO $REMEZ

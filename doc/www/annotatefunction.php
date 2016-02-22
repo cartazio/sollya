@@ -88,6 +88,13 @@ annotation, that derivative needs to be annotated using <?php linkTo("command","
 &nbsp;&nbsp;&nbsp;h(0.25) = <br> 
 &nbsp;&nbsp;&nbsp;&gt; h(0.25);<br> 
 &nbsp;&nbsp;&nbsp;1.2840254166877414840735<br> 
+&nbsp;&nbsp;&nbsp;&gt; prec = 165;<br> 
+&nbsp;&nbsp;&nbsp;The precision has been set to 165 bits.<br> 
+&nbsp;&nbsp;&nbsp;&gt; "h(0.25) = ";<br> 
+&nbsp;&nbsp;&nbsp;h(0.25) = <br> 
+&nbsp;&nbsp;&nbsp;&gt; h(0.25);<br> 
+&nbsp;&nbsp;&nbsp;Using procedure function exponential<br> 
+&nbsp;&nbsp;&nbsp;1.28402541668774148407342056806243645833628086528147<br> 
 </div> 
 </div> 
 <div class="divSeeAlso"> 
