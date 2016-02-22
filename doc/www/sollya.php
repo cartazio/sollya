@@ -1941,6 +1941,7 @@ void my_function(sollya_obj_t f, sollya_obj_t I, ...) {<br>
 <p>
 <a name="callbacks"></a>
 <h2>10.18 - Warning messages in library mode</h2>
+<h3>10.18.1 - Catching warning messages</h3>
 <p>
 The philosophy of <span class="sollya">Sollya</span> is &ldquo;whenever something is not exact, explicitly warn about that&rdquo;. This is a nice feature since this ensures that the user always perfectly knows the degree of confidence they can have in a result (is it exact? or only faithful? or even purely numerical, without any warranty?) However, it is sometimes desirable to hide some (or all) of these messages. This is especially true in library mode where messages coming from <span class="sollya">Sollya</span> are intermingled with the messages of the main program. The library hence provides a specific mechanism to catch all messages emitted by the <span class="sollya">Sollya</span> core and handle each of them specifically: installation of a callback for messages.
 <p>
@@ -2031,13 +2032,15 @@ int main() {<br>
 
 <p>
 More involved examples are possible: for instance, instead of setting a flag, it is possible to keep in some variable what the last message was. One may even implement a stack mechanism and store the messages in a stack, in order to handle them later. (Please remember however that <code>sollya_msg_t</code> is a pointer type and that the <code>sollya_msg_t</code> object received as argument of a callback call has no more meaning once the callback call returned. If a stack mechanism is implemented it should store information such as the message ID, or the message text, as given by <code>sollya_lib_get_msg_id</code> and <code>sollya_lib_msg_to_text</code>, but not the <code>sollya_msg_t</code> object itself.)
+
+<h3>10.18.2 - Emitting warning messages</h3>
 <p>
-    In addition the <span class="sollya">Sollya</span> library offers a way to print <span class="sollya">Sollya</span> warning messages &ndash;&nbsp;or provoke callback calls if a callback is installed&nbsp;&ndash; from a program that uses the <span class="sollya">Sollya</span> library. The function supporting this feature
-is <code>int sollya_lib_printmessage(int, int, const char *, ...)</code>. Set aside its first two arguments, this function behaves like the function <code>sollya_lib_printf</code>, i.e. its <code>char *</code> argument is a format
-string, followed by a variadic number of arguments corresponding to that format string. The first argument of the <code>sollya_lib_printmessage</code> function is the least verbosity level at which that warning shall be displayed.
-Its second argument is a boolean argument indicating if the given call of the function continues the message that has been started out printing with a previous call; if the boolean is true (non-zero integer value), the message
-is a continuation message, otherwise (zero integer value), the message is a new message. Calling <code>sollya_lib_printmessage</code> with a non-zero value in second argument without having called the functions with a zero value
-in second argument results in undefined behavior.
+The <span class="sollya">Sollya</span> library offers a way to print a message, as if it were produced by the <span class="sollya">Sollya</span> core. Such a message will go through the entire process described in the previous section, and can eventually provoke a callback call if a callback is installed. The function supporting this feature is<br>
+<code>void sollya_lib_printlibrarymessage(int verb, const char *str)</code>.<br>
+The first argument <code>verb</code> is the least verbosity level at which that warning shall be displayed. The second argument <code>str</code> is the message to be displayed.
+
+<p>
+  When a message is produced with this function, its message&nbsp;ID (when caught by a callback) is <code>SOLLYA_MSG_GENERIC_SOLLYA_LIBRARY_MSG</code>. An important notice is that the character string returned by <code>sollya_lib_msg_to_text</code> when such a message is caught by a callback <strong>is currently not</strong> the argument <code>str</code> provided to <code>sollya_lib_printlibrarymessage</code>, but is instead a generic message. This behavior might change in the future.
 
 <a name="customMemoryFunctions"></a>
 <h2>10.19 - Using <span class="sollya">Sollya</span> in a program that has its own allocation functions</h2>

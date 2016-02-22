@@ -1948,6 +1948,7 @@ void my_function(sollya_obj_t f, sollya_obj_t I, ...) {
 
 \subsection{Warning messages in library mode}
 \label{callbacks}
+\subsubsection{Catching warning messages}
 The philosophy of \sollya is ``whenever something is not exact, explicitly warn about that''. This is a nice feature since this ensures that the user always perfectly knows the degree of confidence they can have in a result (is it exact? or only faithful? or even purely numerical, without any warranty?) However, it is sometimes desirable to hide some (or all) of these messages. This is especially true in library mode where messages coming from \sollya are intermingled with the messages of the main program. The library hence provides a specific mechanism to catch all messages emitted by the \sollya core and handle each of them specifically: installation of a callback for messages.
 
 Before describing the principle of the message callback, it seems appropriate to recall that several mechanisms are available in the interactive tool to filter the messages emitted by \sollya. These mechanisms are also available in library mode for completeness. When a message is emitted, it has two characteristics: a verbosity level and an id (a number uniquely identifying the message). After it has been emitted, it passes through the following steps where it can be filtered. If it has not been filtered (and only in this case) it is displayed.
@@ -2041,12 +2042,14 @@ int main() {
 
 More involved examples are possible: for instance, instead of setting a flag, it is possible to keep in some variable what the last message was. One may even implement a stack mechanism and store the messages in a stack, in order to handle them later. (Please remember however that \verb|sollya_msg_t| is a pointer type and that the \verb|sollya_msg_t| object received as argument of a callback call has no more meaning once the callback call returned. If a stack mechanism is implemented it should store information such as the message ID, or the message text, as given by \verb|sollya_lib_get_msg_id| and \verb|sollya_lib_msg_to_text|, but not the \verb|sollya_msg_t| object itself.)
 
-In addition the \sollya library offers a way to print \sollya warning messages --or provoke callback calls if a callback is installed-- from a program that uses the \sollya library. The function supporting this feature
-is \verb|int sollya_lib_printmessage(int, int, const char *, ...)|. Set aside its first two arguments, this function behaves like the function \verb|sollya_lib_printf|, i.e. its \verb|char *| argument is a format
-string, followed by a variadic number of arguments corresponding to that format string. The first argument of the \verb|sollya_lib_printmessage| function is the least verbosity level at which that warning shall be displayed.
-Its second argument is a boolean argument indicating if the given call of the function continues the message that has been started out printing with a previous call; if the boolean is true (non-zero integer value), the message
-is a continuation message, otherwise (zero integer value), the message is a new message. Calling \verb|sollya_lib_printmessage| with a non-zero value in second argument without having called the functions with a zero value
-in second argument results in undefined behavior.
+\subsubsection{Emitting warning messages}
+The \sollya library offers a way to print a message, as if it were produced by the \sollya core. Such a message will go through the entire process described in the previous section, and can eventually provoke a callback call if a callback is installed. The function supporting this feature is
+\begin{center}
+  \verb|void sollya_lib_printlibrarymessage(int verb, const char *str)|.
+\end{center}
+The first argument \verb|verb| is the least verbosity level at which that warning shall be displayed. The second argument \verb|str| is the message to be displayed.
+
+When a message is produced with this function, its message~ID (when caught by a callback) is \verb|SOLLYA_MSG_GENERIC_SOLLYA_LIBRARY_MSG|. An important notice is that the character string returned by \verb|sollya_lib_msg_to_text| when such a message is caught by a callback \textbf{is currently not} the argument \verb|str| provided to \verb|sollya_lib_printlibrarymessage|, but is instead a generic message. This behavior might change in the future.
 
 \subsection{Using \sollya in a program that has its own allocation functions}
 \label{customMemoryFunctions}
