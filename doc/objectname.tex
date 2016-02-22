@@ -10,23 +10,19 @@
 \end{center}
 \noindent Description: \begin{itemize}
 
-\item The \textbf{objectname} command allows a textual representation to be recovered
-   for any type of \sollya object \emph{obj}, given in argument to
-   \textbf{objectname}. This textual representation is returned as a string
-   formatted in such a way that, when given to the \textbf{parse} command, the
-   original object \emph{obj} is recovered.
+\item \textbf{objectname}(\emph{obj}) queries the \sollya symbol table in order to recover the
+   name of an identifier the object \emph{obj} is assigned to. If it succeeds, it
+   returns a string containing the recovered identifier. In contrast, if it
+   does not succeed, it returns a string simply containing a textual
+   representation of~\emph{obj}.
 
-\item In contrast to any other way of "printing" a \sollya object into a
-   string, such as by concatenating it to an empty string with the use of
-   the \textbf{@} operator, \textbf{objectname} queries the \sollya symbol table in order
-   to recover, the name of an identifier the object \emph{obj} is assigned to.
-   The only condition for an identifier the object \emph{obj} is assigned to
-   to be eligible to be returned by \textbf{objectname} is to be accessible in the
-   scope \textbf{objectname} is executed in, i.e. not to be shadowed by an identifier
-   of the same name which does not hold the object \emph{obj}. Only in cases
-   when no such eligible identifier exists, \textbf{objectname} returns an unnamed
-   textual representation of the object \emph{obj}, in a similar fashion to
-   "printing" the object.
+\item The only condition for an identifier to be eligible to be returned by
+   \textbf{objectname}(\emph{obj}) is to be accessible in the scope \textbf{objectname} is executed in,
+   \emph{i.e.}, not to be shadowed by an identifier of the same name which does not
+   hold the object \emph{obj}.
+
+\item In any case, if the string returned by \textbf{objectname} is given to the \textbf{parse}
+   command in the same scope, the original object \emph{obj} is recovered.
 
 \item \textbf{objectname} is particularly useful in combination with \textbf{getbacktrace}, when
    the \sollya procedure stack is to be displayed in a fashion, where
@@ -34,6 +30,10 @@
 
 \item \textbf{objectname} may also be used to get a string representation of the free
    mathematical variable.
+
+\item If an object is simply to be cast into a string, without trying to
+   retrieve an identifier for it, \textbf{objectname} is not appropriate. In this case,
+   it suffices to concatenate it to an empty string with the \textbf{@} operator.
 \end{itemize}
 \noindent Example 1: 
 \begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
@@ -53,9 +53,14 @@ s
 \noindent Example 3: 
 \begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > o = { .f = exp(x), .I = [-1;1] };
-> s = objectname(o);
-> write("s = \"", s, "\" parses to ", parse(s), "\n");
-s = "o" parses to { .f = exp(x), .I = [-1;1] }
+> s1 = o@""; s1;
+{ .f = exp(x), .I = [-1;1] }
+> s2 = objectname({ .I = [-1;1], .f = exp(x)}); s2;
+o
+> parse(s1) == parse(s2);
+true
+> write("s2 = \"", s2, "\" parses to ", parse(s2), "\n");
+s2 = "o" parses to { .f = exp(x), .I = [-1;1] }
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 4: 
@@ -74,10 +79,11 @@ n
       var h;
       f = tan(x);
       h = cos(x);
-      [| objectname(exp(x)), objectname(sin(x)), objectname(cos(x)) |];
+      [| objectname(exp(x)), objectname(sin(x)), objectname(cos(x)), objectname(
+tan(x)) |];
   };
 > test();
-[|"exp(x)", "g", "h"|]
+[|"exp(x)", "g", "h", "f"|]
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 6: 
@@ -93,7 +99,7 @@ n
           write("   Procedure ", objectname((bt[i]).called_proc), " called with 
 ", length((bt[i]).passed_args), " arguments\n");
       };
-      write("\n");      
+      write("\n");
       return n + m;
   };
 > procedure show_and_succ(u) {

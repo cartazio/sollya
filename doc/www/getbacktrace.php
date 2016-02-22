@@ -22,7 +22,7 @@ passed_args and an element called_proc. The element called_proc
 contains the Sollya object representing the procedure being run. The 
 element passed_args contains an ordered list of all effective 
 arguments passed to the procedure when it was called. The procedure called 
-last (i.e. on top of the stack) comes first in the list returned 
+last (i.e., on top of the stack) comes first in the list returned 
 by <?php linkTo("command","getbacktrace","getbacktrace");?>. When any of the procedure called takes no arguments, the 
 passed_arg element of the corresponding structure evaluates to an empty 
 list. 
@@ -77,8 +77,13 @@ passed_args element evaluates to an end-elliptic list.
 <div class="divExample"> 
 <h2 class="category">Example 3: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; procedure printnumargs(X) {<br> 
+&nbsp;&nbsp;&nbsp;&nbsp; 	&nbsp;&nbsp;var L, t;<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; 	&nbsp;&nbsp;"number of arguments: ", X;<br> 
-&nbsp;&nbsp;&nbsp;&nbsp; 	&nbsp;&nbsp;getbacktrace();<br> 
+&nbsp;&nbsp;&nbsp;&nbsp; 	&nbsp;&nbsp;L = getbacktrace();<br> 
+&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"Backtrace:";<br> 
+&nbsp;&nbsp;&nbsp;&nbsp; 	&nbsp;&nbsp;for t in L do {<br> 
+&nbsp;&nbsp;&nbsp;&nbsp; 	&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;&nbsp;" @ objectname(t.called_proc) @ ", ", t.passed_args;<br> 
+&nbsp;&nbsp;&nbsp;&nbsp; 	&nbsp;&nbsp;};<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; };<br> 
 &nbsp;&nbsp;&nbsp;&gt; procedure numargs(l = ...) {<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; 	&nbsp;&nbsp;"l[17] = ", l[17];<br> 
@@ -90,21 +95,10 @@ passed_args element evaluates to an end-elliptic list.
 &nbsp;&nbsp;&nbsp;&gt; test();<br> 
 &nbsp;&nbsp;&nbsp;l[17] = 42<br> 
 &nbsp;&nbsp;&nbsp;number of arguments: infty<br> 
-&nbsp;&nbsp;&nbsp;[|{ .passed_args = [|infty|], .called_proc = proc(X)<br> 
-&nbsp;&nbsp;&nbsp;{<br> 
-&nbsp;&nbsp;&nbsp;"number of arguments: ", X;<br> 
-&nbsp;&nbsp;&nbsp;getbacktrace();<br> 
-&nbsp;&nbsp;&nbsp;return void;<br> 
-&nbsp;&nbsp;&nbsp;} }, { .passed_args = [|25|], .called_proc = proc(l = ...)<br> 
-&nbsp;&nbsp;&nbsp;{<br> 
-&nbsp;&nbsp;&nbsp;"l[17] = ", l[17];<br> 
-&nbsp;&nbsp;&nbsp;printnumargs(length(l));<br> 
-&nbsp;&nbsp;&nbsp;return void;<br> 
-&nbsp;&nbsp;&nbsp;} }, { .passed_args = [| |], .called_proc = proc()<br> 
-&nbsp;&nbsp;&nbsp;{<br> 
-&nbsp;&nbsp;&nbsp;(numargs) @ ([|25...|]);<br> 
-&nbsp;&nbsp;&nbsp;return void;<br> 
-&nbsp;&nbsp;&nbsp;} }|]<br> 
+&nbsp;&nbsp;&nbsp;Backtrace:<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printnumargs, [|infty|]<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;numargs, [|25|]<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;test, [| |]<br> 
 </div> 
 </div> 
 <div class="divSeeAlso"> 

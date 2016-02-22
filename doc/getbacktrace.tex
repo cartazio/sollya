@@ -13,13 +13,13 @@
 \item The \textbf{getbacktrace} command allows the stack of \sollya procedures that are
    currently run to be inspected. When called, \textbf{getbacktrace} returns an
    ordered list of structures, each of which contains an element
-   passed\_args and an element called\_proc. The element called\_proc
+   \verb|passed_args| and an element \verb|called_proc|. The element \verb|called_proc|
    contains the \sollya object representing the procedure being run. The
-   element passed\_args contains an ordered list of all effective
+   element \verb|passed_args| contains an ordered list of all effective
    arguments passed to the procedure when it was called. The procedure called
-   last (i.e. on top of the stack) comes first in the list returned
+   last (\emph{i.e.}, on top of the stack) comes first in the list returned
    by \textbf{getbacktrace}. When any of the procedure called takes no arguments, the
-   passed\_args element of the corresponding structure evaluates to an empty
+   \verb|passed_args| element of the corresponding structure evaluates to an empty
    list.
 
 \item When called from outside any procedure (at toplevel), \textbf{getbacktrace} returns
@@ -27,7 +27,7 @@
 
 \item When called for a stack containing a call to a variadic procedure that was
    called with an infinite number of effective arguments, the corresponding
-   passed\_args element evaluates to an end-elliptic list.
+   \verb|passed_args| element evaluates to an end-elliptic list.
 \end{itemize}
 \noindent Example 1: 
 \begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
@@ -74,8 +74,13 @@ return void;
 \noindent Example 3: 
 \begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > procedure printnumargs(X) {
+        var L, t;
         "number of arguments: ", X;
-        getbacktrace();
+        L = getbacktrace();
+            "Backtrace:";
+        for t in L do {
+          "  " @ objectname(t.called_proc) @ ", ", t.passed_args;
+        };
   };
 > procedure numargs(l = ...) {
         "l[17] = ", l[17];
@@ -87,21 +92,10 @@ return void;
 > test();
 l[17] = 42
 number of arguments: infty
-[|{ .passed_args = [|infty|], .called_proc = proc(X)
-{
-"number of arguments: ", X;
-getbacktrace();
-return void;
-} }, { .passed_args = [|25|], .called_proc = proc(l = ...)
-{
-"l[17] = ", l[17];
-printnumargs(length(l));
-return void;
-} }, { .passed_args = [| |], .called_proc = proc()
-{
-(numargs) @ ([|25...|]);
-return void;
-} }|]
+Backtrace:
+  printnumargs, [|infty|]
+  numargs, [|25|]
+  test, [| |]
 \end{Verbatim}
 \end{minipage}\end{center}
 See also: \textbf{proc} (\ref{labproc}), \textbf{procedure} (\ref{labprocedure}), \textbf{objectname} (\ref{labobjectname}), \textbf{bind} (\ref{labbind}), \textbf{@} (\ref{labconcat})

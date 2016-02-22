@@ -3,12 +3,12 @@
 \noindent Name: \textbf{annotatefunction}\\
 \phantom{aaa}Annotates a \sollya function object with an approximation that is faster to evaluate\\[0.2cm]
 \noindent Library name:\\
-\verb|   sollya_obj_t sollya_lib_annotatefunction(sollya_obj_t, sollya_obj_t, |\\
+\verb|   sollya_obj_t sollya_lib_annotatefunction(sollya_obj_t, sollya_obj_t,|\\
 \verb|                                            sollya_obj_t, sollya_obj_t, ...);|\\[0.2cm]
 \noindent Usage: 
 \begin{center}
 \textbf{annotatefunction}(\emph{f}, \emph{g}, \emph{I}, \emph{d}) : (\textsf{function}, \textsf{function}, \textsf{range}, \textsf{range}) $\rightarrow$ \textsf{function}\\
-\textbf{annotatefunction}(\emph{f}, \emph{g}, \emph{I}, \emph{d}, \emph{t}) : (\textsf{function}, \textsf{function}, \textsf{range}, \textsf{range}, \textsf{constant}) $\rightarrow$ \textsf{function}\\
+\textbf{annotatefunction}(\emph{f}, \emph{g}, \emph{I}, \emph{d}, \emph{$x_0$}) : (\textsf{function}, \textsf{function}, \textsf{range}, \textsf{range}, \textsf{constant}) $\rightarrow$ \textsf{function}\\
 \end{center}
 Parameters: 
 \begin{itemize}
@@ -16,56 +16,72 @@ Parameters:
 \item \emph{g} is a function, in most cases a polynomial.
 \item \emph{I} is an interval.
 \item \emph{d} is an interval.
-\item \emph{t} is a constant.
+\item \emph{$x_0$} is a constant (default value is $0$ when not provided).
 \end{itemize}
 \noindent Description: \begin{itemize}
 
-\item \textbf{annotatefunction}(\emph{f}, \emph{g}, \emph{I}, \emph{d}, \emph{t}) resp. \textbf{annotatefunction}(\emph{f}, \emph{g}, \emph{I}, \emph{d}) 
-   (where \emph{t} is assumed to be zero) annotates the given \sollya
-   function object \emph{f} with an approximation \emph{g} in such a way that upon
-   evaluation of \emph{f} at a point in \emph{I}, \emph{g} is used instead of \emph{f} as
-   long as the error between \emph{f} and \emph{g}, which must be bounded over all
-   \emph{I} by \emph{d}, is not too large. The approximation \emph{g} is not evaluated
-   at the same point as \emph{f} would be evaluated but after subtraction of 
-   \emph{t} from that point.
+\item When a given function \emph{f} is to be evaluated at several points of a given
+   interval \emph{I} to a given precision, it might be useful to precompute a good
+   approximant \emph{g} of \emph{f} and further evaluate it instead of \emph{f} when the
+   approximation is good enough to provide the desire precision. If \emph{f} is a
+   complicated expression, whereas \emph{g} is, \emph{e.g.}, a polynomial of low degree,
+   the cost of precomputing \emph{g} can be well compensated by the gain of time in
+   each subsequent evaluation. The purpose of \textbf{annotatefunction} is to provide
+   such a mechanism to the user.
 
-\item In order not to provoke any incorrect behavior, the given \emph{f}, \emph{g},
-   \emph{I}, \emph{d} and \emph{t} must satisfy the following property:
-   $$\forall x \in I, f(x) - g(x - t) \in d.$$
+\item When using \textbf{annotatefunction}(\emph{f}, \emph{g}, \emph{I}, \emph{d}, \emph{$x_0$}),
+   resp. \textbf{annotatefunction}(\emph{f}, \emph{g}, \emph{I}, \emph{d}) (where \emph{$x_0$} is assumed to be
+   zero), it is assumed that
+   $$\forall x \in I, f(x) - g(x - x_0) \in d.$$
+   It is the user responsability to ensure this property. Otherwise, any
+   subsequent use of \emph{f} on points of \emph{I} might lead to incorrect values.
+
+\item A call to \textbf{annotatefunction}(\emph{f}, \emph{g}, \emph{I}, \emph{d}, \emph{$x_0$}) annotates the given
+   \sollya function object \emph{f} with the approximation \emph{g}. In further use, when
+   asked to evaluate \emph{f} on a point $x$ of \emph{I}, \sollya will first evaluate \emph{g}
+   on $x-x_0$ and check if the result is accurate enough in the given context
+   (accounting for the fact that the error of approximation between the true
+   value and $g(x-x_0)$ belongs to \emph{d}). If not (and only in this case), an
+   evaluation of the expression of \emph{f} on $x$ is performed.
 
 \item The approximation \emph{g} can be any \sollya function but particular
-   performance is expected when \emph{g} is a polynomial. Upon annotation with
-   a polynomial, precomputations are performed to analyze certain
-   properties of the given approximation polynomial.
+   performance is expected when \emph{g} is a polynomial. Upon annotation with a
+   polynomial, precomputations are performed to analyze certain properties of
+   the given approximation polynomial.
 
-\item The \textbf{annotatefunction} command returns the annotated \sollya function
-   object. This object is indistinguishable from the original \emph{f} with
-   respect to \sollya comparisons, printing and so on. Unless \sollya has
-   been compiled in some particular debug mode, the \textbf{annotatefunction} command does
-   not deeply copy the function object \emph{f}, so the original function
-   object \emph{f} also bears the annotation.
+\item \textbf{annotatefunction} updates the internal representation of \emph{f} so as to
+   persistently keep this information attached with the \sollya object
+   representing \emph{f}. In particular, the annotation is persistent through copy
+   or use of \emph{f} as a subexpression to build up bigger expressions. Notice
+   however, that there is no way of deducing an annotation for the derivative
+   of \emph{f} from an annotation of \emph{f}. So, in general, it should not be expected
+   that \textbf{diff}(\emph{f}) will be automatically annotated (notice, however that \emph{f}
+   might be a subexpression of its derivative, \emph{e.g.}, for \emph{f}=\textbf{exp} or \emph{f}=\textbf{tan}, in
+   which case the corresponding subexpressions of the derivative will
+   automatically inherit the annotations from \emph{f}).
 
-\item \sollya function objects can be annotated more than once with
-   different approximations on different domains, that do not need to be
-   disjoint. Upon evaluation of the annotated function object, \sollya
-   chooses the approximation annotation that provides for sufficient
-   accuracy at the evaluation point.
+\item \textbf{annotatefunction} really is an imperative statement that modifies the
+   internal representation of~\emph{f}. However, for convenience \textbf{annotatefunction}
+   returns \emph{f} itself.
 
-\item As an absolute error bound \emph{d} is given for annotation, \sollya cannot
-   reuse an approximation annotation for the derivative of the annotated
-   function. If any (higher) derivative of a function needs to bear an
-   annotation, that derivative needs to be annotated using \textbf{annotatefunction}.
+\item \sollya function objects can be annotated more than once with different
+   approximations on different domains, that do not need to be disjoint. Upon
+   evaluation of the annotated function object, \sollya chooses an
+   approximation annotation (if any) that provides for sufficient accuracy at
+   the evaluation point. It is not specified in which order \sollya tries
+   different possible annotations when several are available for a given
+   point \emph{x}.
 \end{itemize}
 \noindent Example 1: 
 \begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> verbosity=1!;
 > procedure EXP(X,n,p) {
             var res, oldPrec;
             oldPrec = prec;
             prec = p!;
-            
-            "Using procedure function exponential";
+            "Using procedure function exponential with X=" @ X @ ", n=" @ n @ ",
+ and p=" @ p;
             res = exp(X);
-            
             prec = oldPrec!;
             return res;
        };
@@ -85,25 +101,22 @@ Parameters:
 x * 2467888542176675658523627105540996778984959471957b-201))))))))))))));
 > h = annotatefunction(g, p, [-1/2;1/2], [-475294848522543b-124;475294848522543b
 -124]);
+> h == g;
+true
 > prec = 24;
 The precision has been set to 24 bits.
-> "h(0.25) = ";
-h(0.25) = 
 > h(0.25);
+Warning: rounding has happened. The value displayed is a faithful rounding to 24
+ bits of the true result.
 1.2840254
-> prec = 72;
-The precision has been set to 72 bits.
-> "h(0.25) = ";
-h(0.25) = 
-> h(0.25);
-1.2840254166877414840735
 > prec = 165;
 The precision has been set to 165 bits.
-> "h(0.25) = ";
-h(0.25) = 
 > h(0.25);
-Using procedure function exponential
+Using procedure function exponential with X=[0.25;0.25], n=0, and p=167
+Warning: rounding has happened.
+The displayed value is *NOT* guaranteed to be a faithful rounding of the true re
+sult.
 1.28402541668774148407342056806243645833628086528147
 \end{Verbatim}
 \end{minipage}\end{center}
-See also: \textbf{taylorform} (\ref{labtaylorform}), \textbf{remez} (\ref{labremez}), \textbf{supnorm} (\ref{labsupnorm}), \textbf{infnorm} (\ref{labinfnorm})
+See also: \textbf{chebyshevform} (\ref{labchebyshevform}), \textbf{taylorform} (\ref{labtaylorform}), \textbf{remez} (\ref{labremez}), \textbf{supnorm} (\ref{labsupnorm}), \textbf{infnorm} (\ref{labinfnorm})

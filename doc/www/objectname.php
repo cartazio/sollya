@@ -15,27 +15,25 @@
 </div> 
 <div class="divDescription"> 
 <h2 class="category">Description: </h2><ul> 
-<li>The <?php linkTo("command","objectname","objectname");?> command allows a textual representation to be recovered 
-for any type of Sollya object <span class="arg">obj</span>, given in argument to 
-<?php linkTo("command","objectname","objectname");?>. This textual representation is returned as a string 
-formatted in such a way that, when given to the <?php linkTo("command","parse","parse");?> command, the 
-original object <span class="arg">obj</span> is recovered. 
-</li><li>In contrast to any other way of "printing" a Sollya object into a 
-string, such as by concatenating it to an empty string with the use of 
-the <?php linkTo("command","concat","@");?> operator, <?php linkTo("command","objectname","objectname");?> queries the Sollya symbol table in order 
-to recover, the name of an identifier the object <span class="arg">obj</span> is assigned to. 
-The only condition for an identifier the object <span class="arg">obj</span> is assigned to 
-to be eligible to be returned by <?php linkTo("command","objectname","objectname");?> is to be accessible in the 
-scope <?php linkTo("command","objectname","objectname");?> is executed in, i.e. not to be shadowed by an identifier 
-of the same name which does not hold the object <span class="arg">obj</span>. Only in cases 
-when no such eligible identifier exists, <?php linkTo("command","objectname","objectname");?> returns an unnamed 
-textual representation of the object <span class="arg">obj</span>, in a similar fashion to 
-"printing" the object. 
+<li><?php linkTo("command","objectname","objectname");?>(<span class="arg">obj</span>) queries the Sollya symbol table in order to recover the 
+name of an identifier the object <span class="arg">obj</span> is assigned to. If it succeeds, it 
+returns a string containing the recovered identifier. In contrast, if it 
+does not succeed, it returns a string simply containing a textual 
+representation of <span class="arg">obj</span>. 
+</li><li>The only condition for an identifier to be eligible to be returned by 
+<?php linkTo("command","objectname","objectname");?>(<span class="arg">obj</span>) is to be accessible in the scope <?php linkTo("command","objectname","objectname");?> is executed in, 
+i.e., not to be shadowed by an identifier of the same name which does not 
+hold the object <span class="arg">obj</span>. 
+</li><li>In any case, if the string returned by <?php linkTo("command","objectname","objectname");?> is given to the <?php linkTo("command","parse","parse");?> 
+command in the same scope, the original object <span class="arg">obj</span> is recovered. 
 </li><li><?php linkTo("command","objectname","objectname");?> is particularly useful in combination with <?php linkTo("command","getbacktrace","getbacktrace");?>, when 
 the Sollya procedure stack is to be displayed in a fashion, where 
 procedures are identified by their name and not their procedural content. 
 </li><li><?php linkTo("command","objectname","objectname");?> may also be used to get a string representation of the free 
 mathematical variable. 
+</li><li>If an object is simply to be cast into a string, without trying to 
+retrieve an identifier for it, <?php linkTo("command","objectname","objectname");?> is not appropriate. In this case, 
+it suffices to concatenate it to an empty string with the <?php linkTo("command","concat","@");?> operator. 
 </ul> 
 </div> 
 <div class="divExamples"> 
@@ -55,9 +53,14 @@ mathematical variable.
 <div class="divExample"> 
 <h2 class="category">Example 3: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; o = { .f = exp(x), .I = [-1;1] };<br> 
-&nbsp;&nbsp;&nbsp;&gt; s = objectname(o);<br> 
-&nbsp;&nbsp;&nbsp;&gt; write("s = \"", s, "\" parses to ", parse(s), "\n");<br> 
-&nbsp;&nbsp;&nbsp;s = "o" parses to { .f = exp(x), .I = [-1;1] }<br> 
+&nbsp;&nbsp;&nbsp;&gt; s1 = o@""; s1;<br> 
+&nbsp;&nbsp;&nbsp;{ .f = exp(x), .I = [-1;1] }<br> 
+&nbsp;&nbsp;&nbsp;&gt; s2 = objectname({ .I = [-1;1], .f = exp(x)}); s2;<br> 
+&nbsp;&nbsp;&nbsp;o<br> 
+&nbsp;&nbsp;&nbsp;&gt; parse(s1) == parse(s2);<br> 
+&nbsp;&nbsp;&nbsp;true<br> 
+&nbsp;&nbsp;&nbsp;&gt; write("s2 = \"", s2, "\" parses to ", parse(s2), "\n");<br> 
+&nbsp;&nbsp;&nbsp;s2 = "o" parses to { .f = exp(x), .I = [-1;1] }<br> 
 </div> 
 <div class="divExample"> 
 <h2 class="category">Example 4: </h2> 
@@ -74,10 +77,10 @@ mathematical variable.
 &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;var h;<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;f = tan(x);<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;h = cos(x);<br> 
-&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;[| objectname(exp(x)), objectname(sin(x)), objectname(cos(x)) |];<br> 
+&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;[| objectname(exp(x)), objectname(sin(x)), objectname(cos(x)), objectname(tan(x)) |];<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; };<br> 
 &nbsp;&nbsp;&nbsp;&gt; test();<br> 
-&nbsp;&nbsp;&nbsp;[|"exp(x)", "g", "h"|]<br> 
+&nbsp;&nbsp;&nbsp;[|"exp(x)", "g", "h", "f"|]<br> 
 </div> 
 <div class="divExample"> 
 <h2 class="category">Example 6: </h2> 
@@ -91,7 +94,7 @@ mathematical variable.
 &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;for i from 0 to length(bt) - 1 do {<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;	write("&nbsp;&nbsp;&nbsp;Procedure ", objectname((bt[i]).called_proc), " called with ", length((bt[i]).passed_args), " arguments\n");<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;};<br> 
-&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;write("\n");	&nbsp;&nbsp;<br> 
+&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;write("\n");<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;return n + m;<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; };<br> 
 &nbsp;&nbsp;&nbsp;&gt; procedure show_and_succ(u) {<br> 
