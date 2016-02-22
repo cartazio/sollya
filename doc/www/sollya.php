@@ -1849,16 +1849,18 @@ object represented. In order to help with such language bindings, the
 <span class="sollya">Sollya</span> library supports a function that computes a 64 bit unsigned
 integer as a hash for a given <span class="sollya">Sollya</span> object: <br>
 <code>uint64_t sollya_lib_hash(sollya_obj_t obj)</code>.<br>
-The <span class="sollya">Sollya</span> library guarantees that any two objects that compare equal
-(with one of the comparison functions provided with the <span class="sollya">Sollya</span>
-library) will have the same hash value. The user should be aware that
-to ensure this implication, <span class="sollya">Sollya</span> needs to compute a unique
-representation of an object when it is to be hashed. This computation
-step can be pretty expensive for certain objects. However, this cost
-must be paid only once: <span class="sollya">Sollya</span> will cache an object's hash value for
-further use. The user should also be aware that the hash value for a
-given object is bound to a certain <span class="sollya">Sollya</span> session and, in particular,
-is not portable between platforms nor over consecutive <span class="sollya">Sollya</span> versions.
+The <span class="sollya">Sollya</span> library guarantees that any two objects that are structurally equal
+(as when compared with <code>sollya_lib_cmp_objs_structurally</code>)
+will have the same hash value. In contrast, objects that are not structurally equal are likely to have different hashes (although this is not guaranteed, of course).
+
+<p>
+Computing the hash of an object takes a time proportional to the size of the directed acyclic graph internally used to represent that object. However,
+<span class="sollya">Sollya</span> will cache an object's hash value for further use after it has been computed, so the cost of computing the hash of a given object is paid only once.
+
+<p>
+The user should also be aware that the hash value for a
+given object is currently not guaranteed to be
+portable between platforms nor over consecutive <span class="sollya">Sollya</span> versions.
 
 <h2>10.15 - Executing <span class="sollya">Sollya</span> procedures</h2>
 <p>

@@ -1859,16 +1859,16 @@ integer as a hash for a given \sollya object:
 \begin{center}
 \verb|uint64_t sollya_lib_hash(sollya_obj_t obj).|
 \end{center}
-The \sollya library guarantees that any two objects that compare equal
-(with one of the comparison functions provided with the \sollya
-library) will have the same hash value. The user should be aware that
-to ensure this implication, \sollya needs to compute a unique
-representation of an object when it is to be hashed. This computation
-step can be pretty expensive for certain objects. However, this cost
-must be paid only once: \sollya will cache an object's hash value for
-further use. The user should also be aware that the hash value for a
-given object is bound to a certain \sollya session and, in particular,
-is not portable between platforms nor over consecutive \sollya versions.
+The \sollya library guarantees that any two objects that are structurally equal
+(as when compared with \verb|sollya_lib_cmp_objs_structurally|)
+will have the same hash value. In contrast, objects that are not structurally equal are likely to have different hashes (although this is not guaranteed, of course).
+
+Computing the hash of an object takes a time proportional to the size of the directed acyclic graph internally used to represent that object. However,
+\sollya will cache an object's hash value for further use after it has been computed, so the cost of computing the hash of a given object is paid only once.
+
+The user should also be aware that the hash value for a
+given object is currently not guaranteed to be
+portable between platforms nor over consecutive \sollya versions.
 
 \subsection{Executing \sollya procedures}
 
