@@ -247,7 +247,7 @@ processExampleFile() {
      else printf "  " >> $target
    fi
    cat $exampleFile | head -n $ilocal | tail -n 1 | sed -n 's/\t/    /g;p' | sed -n 's/\(..............................................................................\)/\1\n/g;p' >> $target
-   printf "verbosity=0!; roundingwarnings=on!;""`head -n $ilocal $exampleFile`\n"| $sollyaBin > $tempfile2
+   (printf "verbosity=0!; roundingwarnings=on!;" && head -n $ilocal $exampleFile && printf "\n") | $sollyaBin > $tempfile2
    if [ $? -eq 4 ]
      then printPrompt=0
      else printPrompt=1

@@ -285,7 +285,7 @@ processExampleFile() {
      else printf "&nbsp;&nbsp;&nbsp;&nbsp; " >> $target
    fi
    cat $exampleFile | head -n $ilocal | tail -n 1 | sed -n 's/</\&lt;/g;p' | sed -n 's/>/\&gt;/g;p' | sed -n 's/$/<br>/;p' | sed -n 's/  /\&nbsp;\&nbsp;/g;p' | sed -n 's/\&nbsp; /\&nbsp;\&nbsp;/g;p'  >> $target
-   printf "verbosity=0!; roundingwarnings=on!;""`head -n $ilocal $exampleFile`\n" | $sollyaBin > $tempfile2
+   (printf "verbosity=0!; roundingwarnings=on!;" && head -n $ilocal $exampleFile && printf "\n") | $sollyaBin > $tempfile2
    if [ $? -eq 4 ]
      then printPrompt=0
      else printPrompt=1
