@@ -2330,6 +2330,20 @@ rangetype guessDegree(node *func, node *weight, mpfr_t a, mpfr_t b, mpfr_t eps, 
   sollya_mpfi_t tmp1, tmp2;
   mp_prec_t prec_tmp;
 
+  if (mpfr_number_p(a) && mpfr_number_p(b) && (mpfr_cmp(a,b) == 0)) {
+    tempMpfr = (mpfr_t *)safeMalloc(sizeof(mpfr_t));
+    mpfr_init2(*tempMpfr,12);
+    mpfr_set_si(*tempMpfr, 0, GMP_RNDN);
+    range.a = tempMpfr;
+    
+    tempMpfr = (mpfr_t *)safeMalloc(sizeof(mpfr_t));
+    mpfr_init2(*tempMpfr,12);
+    mpfr_set_si(*tempMpfr, 0, GMP_RNDN);
+    range.b = tempMpfr;
+    
+    return range;
+  }
+
   mpfr_init2(h, prec);
 
   if (messageHasEnoughVerbosityAndIsNotSuppressed(1, SOLLYA_MSG_GUESSDEGREE_POSSIBLE_SINGULAR_WEIGHT)) {
