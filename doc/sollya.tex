@@ -340,8 +340,8 @@ Two predefined variables exist when \sollya is started:
   character string that uniquely identifies the given \sollya session
   on a system. It hence allows for concurrent execution of \sollya
   scripts that use temporary files for communication with other
-  tools. The character string does not contain any spaces and only
-  contains characters that are suitable for *nix filenames. After the
+  tools. The character string is made of alphanumeric characters ([0-9a-zA-Z]) and dashes~(-) and underscores~(\_). In particular, it does not contain any space.
+  After the
   execution of the \texttt{restart} command, the
   \texttt{\_\_unique\_id} variable is refreshed with a new, unique
   value.

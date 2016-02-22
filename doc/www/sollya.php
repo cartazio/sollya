@@ -340,8 +340,8 @@ Two predefined variables exist when <span class="sollya">Sollya</span> is starte
   character string that uniquely identifies the given <span class="sollya">Sollya</span> session
   on a system. It hence allows for concurrent execution of <span class="sollya">Sollya</span>
   scripts that use temporary files for communication with other
-  tools. The character string does not contain any spaces and only
-  contains characters that are suitable for *nix filenames. After the
+  tools. The character string is made of alphanumeric characters ([0-9a-zA-Z]) and dashes&nbsp;(-) and underscores&nbsp;(_). In particular, it does not contain any space.
+  After the
   execution of the <code class="key">restart</code> command, the
   <code>__unique_id</code> variable is refreshed with a new, unique
   value.
