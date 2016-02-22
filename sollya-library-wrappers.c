@@ -136,20 +136,20 @@ void sollya_lib_internal_double_zero_sign_normalize(double *op) {
 
 /* Actual wrapper functions */
 
-int __sollya_lib_init_with_custom_memory_functions_with_arguments_with_custom_memory_function_modifiers(void *(*myMalloc)(size_t),
-													void *(*myCalloc)(size_t, size_t),
-													void *(*myRealloc)(void *, size_t),
-													void (*myFree)(void*),
-													void *(*myReallocWithSize)(void *, size_t, size_t),
-													void (*myFreeWithSize)(void *, size_t),
-													int argc,
-													char **argv,
-													void (*my_mp_set_func)(void *(*)(size_t),
-															       void *(*)(void *, size_t, size_t),
-															       void (*)(void *, size_t)),
-													void (*my_mp_get_func)(void *(**)(size_t),
-															       void *(**)(void *, size_t, size_t),
-															       void (**)(void *, size_t))) {
+static int __sollya_lib_init_with_custom_memory_functions_with_arguments_with_custom_memory_function_modifiers(void *(*myMalloc)(size_t),
+													       void *(*myCalloc)(size_t, size_t),
+													       void *(*myRealloc)(void *, size_t),
+													       void (*myFree)(void*),
+													       void *(*myReallocWithSize)(void *, size_t, size_t),
+													       void (*myFreeWithSize)(void *, size_t),
+													       int argc,
+													       char **argv,
+													       void (*my_mp_set_func)(void *(*)(size_t),
+																      void *(*)(void *, size_t, size_t),
+																      void (*)(void *, size_t)),
+													       void (*my_mp_get_func)(void *(**)(size_t),
+																      void *(**)(void *, size_t, size_t),
+																      void (**)(void *, size_t))) {
   if (__sollya_lib_initialized < 0) __sollya_lib_initialized = 0;
   __sollya_lib_initialized++;
   if (__sollya_lib_initialized > 1) return 0;
@@ -173,13 +173,13 @@ int sollya_lib_init_with_custom_memory_functions_with_custom_memory_function_mod
 													     my_mp_set_func, my_mp_get_func);
 }
 
-int __sollya_lib_init_with_arguments_with_custom_memory_function_modifiers(int argc, char **argv,
-									   void (*my_mp_set_func)(void *(*)(size_t),
-												  void *(*)(void *, size_t, size_t),
-												  void (*)(void *, size_t)),
-									   void (*my_mp_get_func)(void *(**)(size_t),
-												  void *(**)(void *, size_t, size_t),
-												  void (**)(void *, size_t))) {
+static int __sollya_lib_init_with_arguments_with_custom_memory_function_modifiers(int argc, char **argv,
+										  void (*my_mp_set_func)(void *(*)(size_t),
+													 void *(*)(void *, size_t, size_t),
+													 void (*)(void *, size_t)),
+										  void (*my_mp_get_func)(void *(**)(size_t),
+													 void *(**)(void *, size_t, size_t),
+													 void (**)(void *, size_t))) {
   return __sollya_lib_init_with_custom_memory_functions_with_arguments_with_custom_memory_function_modifiers(NULL, NULL, NULL, NULL, NULL, NULL, argc, argv, my_mp_set_func, my_mp_get_func);
 }
 
@@ -189,17 +189,17 @@ int sollya_lib_init_with_custom_memory_function_modifiers(void (*my_mp_set_func)
 							  void (*my_mp_get_func)(void *(**)(size_t),
 										 void *(**)(void *, size_t, size_t),
 										 void (**)(void *, size_t))) {
-  return sollya_lib_init_with_custom_memory_functions_with_custom_memory_function_modifiers(NULL, NULL, NULL, NULL, NULL, NULL, my_mp_set_func, my_mp_get_func);
+  return __sollya_lib_init_with_arguments_with_custom_memory_function_modifiers(0, NULL, my_mp_set_func, my_mp_get_func);
 }
 
-int __sollya_lib_init_with_custom_memory_functions_with_arguments(void *(*myMalloc)(size_t),
-								  void *(*myCalloc)(size_t, size_t),
-								  void *(*myRealloc)(void *, size_t),
-								  void (*myFree)(void*),
-								  void *(*myReallocWithSize)(void *, size_t, size_t),
-								  void (*myFreeWithSize)(void *, size_t),
-								  int argc,
-								  char **argv) {
+static int __sollya_lib_init_with_custom_memory_functions_with_arguments(void *(*myMalloc)(size_t),
+									 void *(*myCalloc)(size_t, size_t),
+									 void *(*myRealloc)(void *, size_t),
+									 void (*myFree)(void*),
+									 void *(*myReallocWithSize)(void *, size_t, size_t),
+									 void (*myFreeWithSize)(void *, size_t),
+									 int argc,
+									 char **argv) {
   return __sollya_lib_init_with_custom_memory_functions_with_arguments_with_custom_memory_function_modifiers(myMalloc, myCalloc, myRealloc, myFree, myReallocWithSize, myFreeWithSize, argc, argv, NULL, NULL);
 }
 
@@ -209,15 +209,15 @@ int sollya_lib_init_with_custom_memory_functions(void *(*myMalloc)(size_t),
 						 void (*myFree)(void*),
 						 void *(*myReallocWithSize)(void *, size_t, size_t),
 						 void (*myFreeWithSize)(void *, size_t)) {
-  return sollya_lib_init_with_custom_memory_functions_with_custom_memory_function_modifiers(myMalloc, myCalloc, myRealloc, myFree, myReallocWithSize, myFreeWithSize, NULL, NULL);
+  return __sollya_lib_init_with_custom_memory_functions_with_arguments(myMalloc, myCalloc, myRealloc, myFree, myReallocWithSize, myFreeWithSize, 0, NULL);
 }
 
-int __sollya_lib_init_with_arguments(int argc, char **argv) {
+static int __sollya_lib_init_with_arguments(int argc, char **argv) {
   return __sollya_lib_init_with_arguments_with_custom_memory_function_modifiers(argc, argv, NULL, NULL);
 }
 
 int sollya_lib_init() {
-  return sollya_lib_init_with_custom_memory_function_modifiers(NULL, NULL);
+  return __sollya_lib_init_with_arguments(0, NULL);
 }
 
 int sollya_lib_close() {
@@ -3975,53 +3975,53 @@ int sollya_lib_decompose_externalprocedure(sollya_externalprocedure_type_t *resT
   if (obj->libProc->signature->next == NULL) return 0;
 
   switch (*((int *) (obj->libProc->signature->value))) {
-    case VOID_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_VOID;
-      break;
-    case CONSTANT_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_CONSTANT;
-      break;
-    case FUNCTION_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_FUNCTION;
-      break;
-    case OBJECT_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_OBJECT;
-      break;
-    case RANGE_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_RANGE;
-      break;
-    case INTEGER_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_INTEGER;
-      break;
-    case STRING_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_STRING;
-      break;
-    case BOOLEAN_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_BOOLEAN;
-      break;
-    case CONSTANT_LIST_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_CONSTANT_LIST;
-      break;
-    case FUNCTION_LIST_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_FUNCTION_LIST;
-      break;
-    case OBJECT_LIST_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_OBJECT_LIST;
-      break;
-    case RANGE_LIST_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_RANGE_LIST;
-      break;
-    case INTEGER_LIST_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_INTEGER_LIST;
-      break;
-    case STRING_LIST_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_STRING_LIST;
-      break;
-    case BOOLEAN_LIST_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_BOOLEAN_LIST;
-      break;
-    default:
-      return 0;
+  case VOID_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_VOID;
+    break;
+  case CONSTANT_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_CONSTANT;
+    break;
+  case FUNCTION_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_FUNCTION;
+    break;
+  case OBJECT_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_OBJECT;
+    break;
+  case RANGE_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_RANGE;
+    break;
+  case INTEGER_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_INTEGER;
+    break;
+  case STRING_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_STRING;
+    break;
+  case BOOLEAN_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_BOOLEAN;
+    break;
+  case CONSTANT_LIST_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_CONSTANT_LIST;
+    break;
+  case FUNCTION_LIST_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_FUNCTION_LIST;
+    break;
+  case OBJECT_LIST_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_OBJECT_LIST;
+    break;
+  case RANGE_LIST_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_RANGE_LIST;
+    break;
+  case INTEGER_LIST_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_INTEGER_LIST;
+    break;
+  case STRING_LIST_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_STRING_LIST;
+    break;
+  case BOOLEAN_LIST_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_BOOLEAN_LIST;
+    break;
+  default:
+    return 0;
   }
 
   if ((*((int *) (obj->libProc->signature->next->value))) == VOID_TYPE) {
@@ -4122,53 +4122,53 @@ int sollya_lib_decompose_externalprocedure_with_data(sollya_externalprocedure_ty
   if (obj->libProc->signature->next == NULL) return 0;
 
   switch (*((int *) (obj->libProc->signature->value))) {
-    case VOID_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_VOID;
-      break;
-    case CONSTANT_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_CONSTANT;
-      break;
-    case FUNCTION_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_FUNCTION;
-      break;
-    case OBJECT_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_OBJECT;
-      break;
-    case RANGE_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_RANGE;
-      break;
-    case INTEGER_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_INTEGER;
-      break;
-    case STRING_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_STRING;
-      break;
-    case BOOLEAN_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_BOOLEAN;
-      break;
-    case CONSTANT_LIST_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_CONSTANT_LIST;
-      break;
-    case FUNCTION_LIST_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_FUNCTION_LIST;
-      break;
-    case OBJECT_LIST_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_OBJECT_LIST;
-      break;
-    case RANGE_LIST_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_RANGE_LIST;
-      break;
-    case INTEGER_LIST_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_INTEGER_LIST;
-      break;
-    case STRING_LIST_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_STRING_LIST;
-      break;
-    case BOOLEAN_LIST_TYPE:
-      myResType = SOLLYA_EXTERNALPROC_TYPE_BOOLEAN_LIST;
-      break;
-    default:
-      return 0;
+  case VOID_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_VOID;
+    break;
+  case CONSTANT_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_CONSTANT;
+    break;
+  case FUNCTION_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_FUNCTION;
+    break;
+  case OBJECT_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_OBJECT;
+    break;
+  case RANGE_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_RANGE;
+    break;
+  case INTEGER_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_INTEGER;
+    break;
+  case STRING_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_STRING;
+    break;
+  case BOOLEAN_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_BOOLEAN;
+    break;
+  case CONSTANT_LIST_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_CONSTANT_LIST;
+    break;
+  case FUNCTION_LIST_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_FUNCTION_LIST;
+    break;
+  case OBJECT_LIST_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_OBJECT_LIST;
+    break;
+  case RANGE_LIST_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_RANGE_LIST;
+    break;
+  case INTEGER_LIST_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_INTEGER_LIST;
+    break;
+  case STRING_LIST_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_STRING_LIST;
+    break;
+  case BOOLEAN_LIST_TYPE:
+    myResType = SOLLYA_EXTERNALPROC_TYPE_BOOLEAN_LIST;
+    break;
+  default:
+    return 0;
   }
 
   if ((*((int *) (obj->libProc->signature->next->value))) == VOID_TYPE) {

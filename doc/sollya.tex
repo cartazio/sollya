@@ -1098,8 +1098,7 @@ The header file of the \sollya library is \texttt{sollya.h}. Its inclusion may p
 
 The library provides a virtual \sollya session that is perfectly similar to an interactive session: global variables such as \texttt{verbosity}, \texttt{prec}, \texttt{display}, \texttt{midpointmode}, etc. are maintained and affect the behavior of the library, warning messages are displayed when something is not exact, etc. Please notice that the \sollya library currently is \textbf{not} re-entrant and can only be opened once. A process using the library must hence not be multi-threaded and is limited to one single virtual \sollya session.
 
-In order to get started with the \sollya library, the first thing to do is hence to initialize this virtual session. This is performed with the \verb|sollya_lib_init| function. Accordingly, one should close the session at the end of the program (which has the effect of releasing all the memory used by \sollya). Please notice that \sollya uses its own allocation functions and registers them to \verb|GMP| using the custom allocation functions provided by \verb|GMP|. Particular precautions should hence be taken when using the \sollya library in a program that also registers its own functions to \verb|GMP|: in that case \verb|sollya_lib_init_with_custom_memory_functions| should be used instead of \verb|sollya_lib_init| for initializing the library. This is discussed in Section~\ref{customMemoryFunctions}. In addition, variants of the \verb|sollya_lib_init| function exist that allow the predefined \sollya variable \verb|__argv| (see Section~\ref{variables}) to be set upon library startup. These variants are discussed in Section~\ref{libInitArgs}.
-
+In order to get started with the \sollya library, the first thing to do is hence to initialize this virtual session. This is performed with the \verb|sollya_lib_init| function. Accordingly, one should close the session at the end of the program (which has the effect of releasing all the memory used by \sollya). Please notice that \sollya uses its own allocation functions and registers them to \verb|GMP| using the custom allocation functions provided by \verb|GMP|. Particular precautions should hence be taken when using the \sollya library in a program that also registers its own functions to \verb|GMP|: in that case \verb|sollya_lib_init_with_custom_memory_functions| should be used instead of \verb|sollya_lib_init| for initializing the library. This is discussed in Section~\ref{customMemoryFunctions}. 
 
 In the usual case when \sollya is used in a program that does not register allocation functions to~\verb|GMP|, a minimal file using the library is hence the following.
 
@@ -2087,37 +2086,6 @@ Of course, even if the user registers \verb|custom_malloc|, \verb|custom_free|, 
 \item \verb|void *sollya_lib_realloc(void *, size_t)|.
 \end{itemize}
 No access to the overloaded version of \verb|custom_realloc_with_size| and \verb|custom_free_with_size| is provided, but if the user really wants to retrieve them, they can do it with \verb|mp_get_memory_functions| since they are registered to \verb|GMP|.
-
-\subsection{Passing arguments upon \sollya library initialization}
-\label{libInitArgs}
-
-As explained in Section~\ref{variables}, in an interactive \sollya
-session the predefined variable \verb|__argv| gets set to a list of
-character strings passed to \sollya as shell arguments. Certain
-\sollya scripts may depend on this variable to be set; their execution
-with \verb|sollya_lib_execute| function in the \sollya library hence
-requires a similar setting of the \verb|__argv| variable. This can be
-achieved with one of the following functions, which replace the usual
-\verb|sollya_lib_init| call:
-\begin{itemize}
-\item
-  \verb|int sollya_lib_init_with_arguments(int argc, char **argv)|:
-  initialize the \sollya library and set \verb|__argv| to the list
-  formed by the \verb|argc| character strings contained in the
-  \verb|argv| array,
-\item \verb|int sollya_lib_init_with_custom_memory_functions_with_arguments(                   |\\
-\verb|         void *(*custom_malloc)(size_t),                            |\\
-\verb|         void *(*custom_calloc)(size_t, size_t),                    |\\
-\verb|         void *(*custom_realloc)(void *, size_t),                   |\\
-\verb|         void (*custom_free)(void *),                               |\\
-\verb|         void *(*custom_realloc_with_size)(void *, size_t, size_t), |\\
-\verb|         void (*custom_free_with_size)(void *, size_t),             |\\
-\verb|         int argc, char **argv)|: 
-initialize the \sollya library, using custom memory allocation
-functions as described in Section~\ref{customMemoryFunctions}, and
-set \verb|__argv| to the list formed by the \verb|argc| character
-strings contained in the \verb|argv| array.
-\end{itemize}
 
 
 \end{document}

@@ -1125,7 +1125,7 @@ The header file of the <span class="sollya">Sollya</span> library is <code>solly
 The library provides a virtual <span class="sollya">Sollya</span> session that is perfectly similar to an interactive session: global variables such as <code>verbosity</code>, <code>prec</code>, <code>display</code>, <code>midpointmode</code>, etc. are maintained and affect the behavior of the library, warning messages are displayed when something is not exact, etc. Please notice that the <span class="sollya">Sollya</span> library currently is <strong>not</strong> re-entrant and can only be opened once. A process using the library must hence not be multi-threaded and is limited to one single virtual <span class="sollya">Sollya</span> session.
 
 <p>
-In order to get started with the <span class="sollya">Sollya</span> library, the first thing to do is hence to initialize this virtual session. This is performed with the <code>sollya_lib_init</code> function. Accordingly, one should close the session at the end of the program (which has the effect of releasing all the memory used by <span class="sollya">Sollya</span>). Please notice that <span class="sollya">Sollya</span> uses its own allocation functions and registers them to <code>GMP</code> using the custom allocation functions provided by <code>GMP</code>. Particular precautions should hence be taken when using the <span class="sollya">Sollya</span> library in a program that also registers its own functions to <code>GMP</code>: in that case <code>sollya_lib_init_with_custom_memory_functions</code> should be used instead of <code>sollya_lib_init</code> for initializing the library. This is discussed in <a href="#customMemoryFunctions">a specific section.</a> In addition, variants of the <code>sollya_lib_init</code> function exist that allow the predefined <span class="sollya">Sollya</span> variable <code>__argv</code> (see Section&nbsp;<a href="#variables">Variables</a>) to be set upon library startup. These variants are discussed in Section&nbsp;<a href="#sec:libInitArgs">Passing arguments upon <span class="sollya">Sollya</span> library initialization</a>.
+In order to get started with the <span class="sollya">Sollya</span> library, the first thing to do is hence to initialize this virtual session. This is performed with the <code>sollya_lib_init</code> function. Accordingly, one should close the session at the end of the program (which has the effect of releasing all the memory used by <span class="sollya">Sollya</span>). Please notice that <span class="sollya">Sollya</span> uses its own allocation functions and registers them to <code>GMP</code> using the custom allocation functions provided by <code>GMP</code>. Particular precautions should hence be taken when using the <span class="sollya">Sollya</span> library in a program that also registers its own functions to <code>GMP</code>: in that case <code>sollya_lib_init_with_custom_memory_functions</code> should be used instead of <code>sollya_lib_init</code> for initializing the library. This is discussed in <a href="#customMemoryFunctions">a specific section.</a> 
 <p>
 In the usual case when <span class="sollya">Sollya</span> is used in a program that does not register allocation functions to&nbsp;<code>GMP</code>, a minimal file using the library is hence the following.
 
@@ -2076,36 +2076,5 @@ Of course, even if the user registers <code>custom_malloc</code>, <code>custom_f
   <li> <code>void *sollya_lib_realloc(void *, size_t)</code>.</li>
 </ul>
 <p>No access to the overloaded version of <code>custom_realloc_with_size</code> and <code>custom_free_with_size</code> is provided, but if the user really wants to retrieve them, they can do it with <code>mp_get_memory_functions</code> since they are registered to <code>GMP</code>.
-
-<p><a name="sec:libInitArgs"></a>
-<h3>10.20 - Passing arguments upon <span class="sollya">Sollya</span> library initialization</h3>
-<p>
-As explained in Section&nbsp;<a href="#variables">Variables</a>, in an interactive <span class="sollya">Sollya</span>
-session the predefined variable <code>__argv</code> gets set to a list of
-character strings passed to <span class="sollya">Sollya</span> as shell arguments. Certain
-<span class="sollya">Sollya</span> scripts may depend on this variable to be set; their execution
-with <code>sollya_lib_execute</code> function in the <span class="sollya">Sollya</span> library hence
-requires a similar setting of the <code>__argv</code> variable. This can be
-achieved with one of the following functions, which replace the usual
-<code>sollya_lib_init</code> call:
-<ul>
-<li>
-  <code>int sollya_lib_init_with_arguments(int argc, char **argv)</code>:
-  initialize the <span class="sollya">Sollya</span> library and set <code>__argv</code> to the list
-  formed by the <code>argc</code> character strings contained in the
-  <code>argv</code> array,</li>
-<li> <code>int sollya_lib_init_with_custom_memory_functions_with_arguments(</code><br>
-<code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void *(*custom_malloc)(size_t),                            </code><br>
-<code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void *(*custom_calloc)(size_t, size_t),                    </code><br>
-<code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void *(*custom_realloc)(void *, size_t),                   </code><br>
-<code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void (*custom_free)(void *),                               </code><br>
-<code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void *(*custom_realloc_with_size)(void *, size_t, size_t), </code><br>
-<code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void (*custom_free_with_size)(void *, size_t),             </code><br>
-<code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int argc, char **argv)</code>: 
-initialize the <span class="sollya">Sollya</span> library, using custom memory allocation
-functions as described in Section&nbsp;<a href="#customMemoryFunctions">Using <span class="sollya">Sollya</span> in a program that has its own allocation functions</a>, and
-set <code>__argv</code> to the list formed by the <code>argc</code> character
-strings contained in the <code>argv</code> array.</li>
-</ul>
 
 </body>
