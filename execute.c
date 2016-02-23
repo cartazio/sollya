@@ -133,6 +133,7 @@ typedef struct __backtrace_frame_struct_t * backtrace_frame_t;
 struct __backtrace_frame_struct_t {
   node *procedure;
   chain *arguments;
+  int argsAreEndElliptic;
 };
 
 /* Performs a fast check if a < b or a > b
@@ -18432,7 +18433,7 @@ void freeBacktraceStack() {
   freeChain(backtraceStack, safeFree);
 }
 
-void backtracePushFrame(node *procedure, chain *args) {
+void backtracePushFrame(node *procedure, chain *args, int elliptic) {
   backtrace_frame_t frame;
 
   frame = (backtrace_frame_t) safeMalloc(sizeof(struct __backtrace_frame_struct_t));
@@ -18440,7 +18441,9 @@ void backtracePushFrame(node *procedure, chain *args) {
 
   if (accessThruMemRef(procedure)->nodeType == PROCILLIM) {
     frame->arguments = args;
+    frame->argsAreEndElliptic = !!elliptic;
   } else {
+    frame->argsAreEndElliptic = 0;
     if ((args != NULL) && 
 	(args->next == NULL) &&
 	(isUnit((node *) (args->value)))) {
@@ -18489,8 +18492,13 @@ node *getBacktrace() {
     if (((backtrace_frame_t) (curr->value))->arguments == NULL) {
       argumentsNode = addMemRef(makeEmptyList());
     } else {
-      argumentsNode = addMemRef(makeList(copyChainWithoutReversal(((backtrace_frame_t) (curr->value))->arguments, 
-								  copyThingOnVoid)));
+      if (((backtrace_frame_t) (curr->value))->argsAreEndElliptic) {
+	argumentsNode = addMemRef(makeFinalEllipticList(copyChainWithoutReversal(((backtrace_frame_t) (curr->value))->arguments, 
+										 copyThingOnVoid)));
+      } else {
+	argumentsNode = addMemRef(makeList(copyChainWithoutReversal(((backtrace_frame_t) (curr->value))->arguments, 
+								    copyThingOnVoid)));
+      }
     }
     tempString = "passed_args";
     structEntry->name = (char *) safeCalloc(strlen(tempString)+1,sizeof(char));
@@ -18653,7 +18661,7 @@ int executeProcedure(node **resultThing, node *proc, chain *args, int elliptic) 
   int res;
 
   pushTimeCounter();
-  backtracePushFrame(proc, args);
+  backtracePushFrame(proc, args, elliptic);
   res = executeProcedureInner(resultThing, proc, args, elliptic);
   backtracePopFrame();
   popTimeCounter("executing a procedure");

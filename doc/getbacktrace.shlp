@@ -64,7 +64,7 @@ procedure numargs(l = ...) {
 };
 
 procedure test() {
-	  numargs @ [|25 ...|];
+	  numargs @ [|25, 26, 27 ...|];
 };
 
 test();

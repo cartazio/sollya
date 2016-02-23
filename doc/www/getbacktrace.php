@@ -90,14 +90,14 @@ passed_args element evaluates to an end-elliptic list.
 &nbsp;&nbsp;&nbsp;&nbsp; 	&nbsp;&nbsp;printnumargs(length(l));<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; };<br> 
 &nbsp;&nbsp;&nbsp;&gt; procedure test() {<br> 
-&nbsp;&nbsp;&nbsp;&nbsp; 	&nbsp;&nbsp;numargs @ [|25 ...|];<br> 
+&nbsp;&nbsp;&nbsp;&nbsp; 	&nbsp;&nbsp;numargs @ [|25, 26, 27 ...|];<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; };<br> 
 &nbsp;&nbsp;&nbsp;&gt; test();<br> 
 &nbsp;&nbsp;&nbsp;l[17] = 42<br> 
 &nbsp;&nbsp;&nbsp;number of arguments: infty<br> 
 &nbsp;&nbsp;&nbsp;Backtrace:<br> 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printnumargs, [|infty|]<br> 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;numargs, [|25|]<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;numargs, [|25, 26, 27...|]<br> 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;test, [| |]<br> 
 </div> 
 </div> 

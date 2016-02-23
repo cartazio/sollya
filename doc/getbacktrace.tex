@@ -87,14 +87,14 @@ return void;
         printnumargs(length(l));
   };
 > procedure test() {
-        numargs @ [|25 ...|];
+        numargs @ [|25, 26, 27 ...|];
   };
 > test();
 l[17] = 42
 number of arguments: infty
 Backtrace:
   printnumargs, [|infty|]
-  numargs, [|25|]
+  numargs, [|25, 26, 27...|]
   test, [| |]
 \end{Verbatim}
 \end{minipage}\end{center}

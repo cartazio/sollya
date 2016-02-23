@@ -11778,3 +11778,10 @@ true
 The tool has been restarted.
 =============== Test number 9 ================
 [0;0]
+The tool has been restarted.
+=============== Test number 10 ================
+[|{ .passed_args = [|1, "Coucou", 3...|], .called_proc = proc(l = ...)
+{
+getbacktrace();
+return void;
+} }|]
