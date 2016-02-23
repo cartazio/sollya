@@ -62,8 +62,9 @@ however, that there is no way of deducing an annotation for the derivative
 of <span class="arg">f</span> from an annotation of <span class="arg">f</span>. So, in general, it should not be expected 
 that <?php linkTo("command","diff","diff");?>(<span class="arg">f</span>) will be automatically annotated (notice, however that <span class="arg">f</span> 
 might be a subexpression of its derivative, e.g., for <span class="arg">f</span>=<?php linkTo("command","exp","exp");?> or <span class="arg">f</span>=<?php linkTo("command","tan","tan");?>, in 
-which case the corresponding subexpressions of the derivative will 
-automatically inherit the annotations from <span class="arg">f</span>). 
+which case the corresponding subexpressions of the derivative could inherit 
+the annotations from <span class="arg">f</span>. It is currently not specified whether Sollya does 
+this automatically or not). 
 </li><li><?php linkTo("command","annotatefunction","annotatefunction");?> really is an imperative statement that modifies the 
 internal representation of <span class="arg">f</span>. However, for convenience <?php linkTo("command","annotatefunction","annotatefunction");?> 
 returns <span class="arg">f</span> itself. 

@@ -60,8 +60,9 @@ however, that there is no way of deducing an annotation for the derivative
 of <f> from an annotation of <f>. So, in general, it should not be expected
 that $DIFF(<f>) will be automatically annotated (notice, however that <f>
 might be a subexpression of its derivative, §§e.g.§\emph{e.g.}§§, for <f>=$EXP or <f>=$TAN, in
-which case the corresponding subexpressions of the derivative will
-automatically inherit the annotations from <f>).
+which case the corresponding subexpressions of the derivative could inherit
+the annotations from <f>. It is currently not specified whether $SOLLYA does
+this automatically or not).
 
 #DESCRIPTION
 $COMMAND really is an imperative statement that modifies the

@@ -57,8 +57,9 @@ Parameters:
    of \emph{f} from an annotation of \emph{f}. So, in general, it should not be expected
    that \textbf{diff}(\emph{f}) will be automatically annotated (notice, however that \emph{f}
    might be a subexpression of its derivative, \emph{e.g.}, for \emph{f}=\textbf{exp} or \emph{f}=\textbf{tan}, in
-   which case the corresponding subexpressions of the derivative will
-   automatically inherit the annotations from \emph{f}).
+   which case the corresponding subexpressions of the derivative could inherit
+   the annotations from \emph{f}. It is currently not specified whether \sollya does
+   this automatically or not).
 
 \item \textbf{annotatefunction} really is an imperative statement that modifies the
    internal representation of~\emph{f}. However, for convenience \textbf{annotatefunction}

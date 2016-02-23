@@ -1,15 +1,11 @@
 Bugs fixed
 ----------
-17197 -- VPATH build [x] worth mentioning
 12665 -- [ ] tests added    [ ] is closed    [ ] worth mentioning
-19925 -- [ ] tests added    [ ] is closed    [ ] worth mentioning
-18992 -- degree(x^(2^(2^80)))=-1 [x] worth mentioning
 
 
 Problems solved, without bug report number
 ------------------------------------------
 @rev:
-4b89b29 -- [x] should create a bug report   [x] worth mentioning
 95ccf7f -- [ ] should create a bug report   [ ] worth mentioning   ---> must be understood
 0513d99 -- [x] should create a bug report   [x] worth mentioning
 
@@ -19,32 +15,47 @@ New features
 "Well-documented" implies existence of documentation, clarity, existence of shlp file if needed, and listed in `help help`
 "Well-tested" implies existence of tests, more or less completeness of their coverage, check also in library mode if necessary, and timechecks if appropriate
 
-printmessage available in library mode                                           -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 Global improvement of the evaluations within Sollya                              -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
-Annotations                                                                      -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 Improvement of interval-arithmetic pow function                                  -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
-Support to pass command line (bash) arguments to a Sollya script                 -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
-New feature uniqueId                                                             -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
-New features backtrace and objectname                                            -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
-Command 'execute' now available in library mode                                  -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
-Feature 'execute_procedure' in library mode                                      -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
-New API sollya_lib_obj_is_procedure (see @rev e00e45c)                           -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
-New API sollya_lib_obj_is_external_procedure (see @rev c629)                     -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
-New API sollya_lib_obj_is_library_constant (see @rev c59)                        -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
-New feature hash in library mode                                                 -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
-In library mode (void *) argument to externalproc, library_fun and library_cons  -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
+Fixed problem of persisting gnuplot files (see @ref 8cb140c)                     -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
+Command 'execute' now available in library mode                                  -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning --> TODO SC
+Feature 'execute_procedure' in library mode                                      -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning --> TODO SC
+New API sollya_lib_obj_is_procedure (see @rev e00e45c b53566d3 )                 -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning --> TODO SC
+New API sollya_lib_obj_is_external_procedure (see @rev c629)                     -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning --> TODO SC
+New API sollya_lib_obj_is_library_constant (see @rev c59)                        -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning --> TODO SC
+In library mode (void *) argument to externalproc, library_fun and library_cons  -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning --> TODO SC
 New API sollya_lib_get_subfunction and sollya_lib_[v]construct_function          -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 New API for deallocation in sollya_lib_decompose*_with_data                      -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 Unified externalprocedure and procedure with respect to list argument with @     -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
-Fixed problem of persisting gnuplot files (see @ref 8cb140c)                     -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
+
+
 
 Further TODOs
 -------------
 Add tests for the code of faithful/correct rounding evaluation of f(x)
 Add tests for patch of @rev 670fa3d
 Timecheck does not work anymore on some particular architectures
-Test what version of GMP, MPFR, Bison, MPFI are required and update documentation accordingly
+Test what version of GMP, MPFR, MPFI are required and update documentation accordingly
+
+Write tests for sollya_lib_printlibrary_message (try below/above current verbosity level and with/without a callback. Also, in the tool with a externalproc and suppressmessage) [SC]
+Write tests for __unique_id (change after a restart, is made of [0-9a-zA-Z_\-]) [SC]
+Modify the doc of == [SC]
+Document sollya_lib_cmp_objs_structurrally and add tests for the comparison of error and nan [SC]
+Check tests for annotatefunction [SC]
+Check tests for getbacktrace [SC]
+Make proper tests for objectname (when scope overwrite each other) [SC]
 
 NEWS file
 ---------
 Suppress option for compiling without memrefs
+New function void sollya_lib_printlibrarymessage(int verb, const char *str) in the library
+New --args option to pass command line (bash) arguments to a Sollya script
+New feature __unique_id
+New function sollya_lib_hash in the library
+New function annotatefunction.
+New function getbacktrace
+New function objectname
+Fixed bug [#18992]: degree(x^(2^(2^80))) returns -1 without a warning
+Fixed bug [#17197]: tests do not work on VPATH build
+Fixed bug [#20056]: division by zero in degree(diff((1+x)^3000))
+Fixed bug [#19925]: convention used in hexadecimal display
