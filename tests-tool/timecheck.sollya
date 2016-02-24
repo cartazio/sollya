@@ -104,30 +104,30 @@ t4 = time(test=(log2(10)>=1/log10(2)));
 t5 = time(test=(log2(10)>1/log10(2)));
 
 /* Non-regression of timings */
-if 1.25*t1 >= t2 then "Okay" else print("t1 = ", round(t1,12,RN), " and t2 = ", round(t2, 12, RN));
-if 1.25*t1 >= t3 then "Okay" else print("t1 = ", round(t1,12,RN), " and t3 = ", round(t3, 12, RN));
-if 1.25*t1 >= t4 then "Okay" else print("t1 = ", round(t1,12,RN), " and t4 = ", round(t4, 12, RN));
-if 1.25*t1 >= t5 then "Okay" else print("t1 = ", round(t1,12,RN), " and t5 = ", round(t5, 12, RN));
+if 1.33*t1 >= t2 then "Okay" else print("t1 = ", round(t1,12,RN), " and t2 = ", round(t2, 12, RN));
+if 1.33*t1 >= t3 then "Okay" else print("t1 = ", round(t1,12,RN), " and t3 = ", round(t3, 12, RN));
+if 1.33*t1 >= t4 then "Okay" else print("t1 = ", round(t1,12,RN), " and t4 = ", round(t4, 12, RN));
+if 1.33*t1 >= t5 then "Okay" else print("t1 = ", round(t1,12,RN), " and t5 = ", round(t5, 12, RN));
 
-if 1.25*t2 >= t1 then "Okay" else print("t2 = ", round(t2,12,RN), " and t1 = ", round(t1, 12, RN));
-if 1.25*t2 >= t3 then "Okay" else print("t2 = ", round(t2,12,RN), " and t3 = ", round(t3, 12, RN));
-if 1.25*t2 >= t4 then "Okay" else print("t2 = ", round(t2,12,RN), " and t4 = ", round(t4, 12, RN));
-if 1.25*t2 >= t5 then "Okay" else print("t2 = ", round(t2,12,RN), " and t5 = ", round(t5, 12, RN));
+if 1.33*t2 >= t1 then "Okay" else print("t2 = ", round(t2,12,RN), " and t1 = ", round(t1, 12, RN));
+if 1.33*t2 >= t3 then "Okay" else print("t2 = ", round(t2,12,RN), " and t3 = ", round(t3, 12, RN));
+if 1.33*t2 >= t4 then "Okay" else print("t2 = ", round(t2,12,RN), " and t4 = ", round(t4, 12, RN));
+if 1.33*t2 >= t5 then "Okay" else print("t2 = ", round(t2,12,RN), " and t5 = ", round(t5, 12, RN));
 
-if 1.25*t3 >= t1 then "Okay" else print("t3 = ", round(t3,12,RN), " and t1 = ", round(t1, 12, RN));
-if 1.25*t3 >= t2 then "Okay" else print("t3 = ", round(t3,12,RN), " and t2 = ", round(t2, 12, RN));
-if 1.25*t3 >= t4 then "Okay" else print("t3 = ", round(t3,12,RN), " and t4 = ", round(t4, 12, RN));
-if 1.25*t3 >= t5 then "Okay" else print("t3 = ", round(t3,12,RN), " and t5 = ", round(t5, 12, RN));
+if 1.33*t3 >= t1 then "Okay" else print("t3 = ", round(t3,12,RN), " and t1 = ", round(t1, 12, RN));
+if 1.33*t3 >= t2 then "Okay" else print("t3 = ", round(t3,12,RN), " and t2 = ", round(t2, 12, RN));
+if 1.33*t3 >= t4 then "Okay" else print("t3 = ", round(t3,12,RN), " and t4 = ", round(t4, 12, RN));
+if 1.33*t3 >= t5 then "Okay" else print("t3 = ", round(t3,12,RN), " and t5 = ", round(t5, 12, RN));
 
-if 1.25*t4 >= t1 then "Okay" else print("t4 = ", round(t4,12,RN), " and t1 = ", round(t1, 12, RN));
-if 1.25*t4 >= t2 then "Okay" else print("t4 = ", round(t4,12,RN), " and t2 = ", round(t2, 12, RN));
-if 1.25*t4 >= t3 then "Okay" else print("t4 = ", round(t4,12,RN), " and t3 = ", round(t3, 12, RN));
-if 1.25*t4 >= t5 then "Okay" else print("t4 = ", round(t4,12,RN), " and t5 = ", round(t5, 12, RN));
+if 1.33*t4 >= t1 then "Okay" else print("t4 = ", round(t4,12,RN), " and t1 = ", round(t1, 12, RN));
+if 1.33*t4 >= t2 then "Okay" else print("t4 = ", round(t4,12,RN), " and t2 = ", round(t2, 12, RN));
+if 1.33*t4 >= t3 then "Okay" else print("t4 = ", round(t4,12,RN), " and t3 = ", round(t3, 12, RN));
+if 1.33*t4 >= t5 then "Okay" else print("t4 = ", round(t4,12,RN), " and t5 = ", round(t5, 12, RN));
 
-if 1.25*t5 >= t1 then "Okay" else print("t5 = ", round(t5,12,RN), " and t1 = ", round(t1, 12, RN));
-if 1.25*t5 >= t2 then "Okay" else print("t5 = ", round(t5,12,RN), " and t2 = ", round(t2, 12, RN));
-if 1.25*t5 >= t3 then "Okay" else print("t5 = ", round(t5,12,RN), " and t3 = ", round(t3, 12, RN));
-if 1.25*t5 >= t4 then "Okay" else print("t5 = ", round(t5,12,RN), " and t4 = ", round(t4, 12, RN));
+if 1.33*t5 >= t1 then "Okay" else print("t5 = ", round(t5,12,RN), " and t1 = ", round(t1, 12, RN));
+if 1.33*t5 >= t2 then "Okay" else print("t5 = ", round(t5,12,RN), " and t2 = ", round(t2, 12, RN));
+if 1.33*t5 >= t3 then "Okay" else print("t5 = ", round(t5,12,RN), " and t3 = ", round(t3, 12, RN));
+if 1.33*t5 >= t4 then "Okay" else print("t5 = ", round(t5,12,RN), " and t4 = ", round(t4, 12, RN));
 i := i+1;
 
 /* Test #12 */
