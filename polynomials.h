@@ -83,6 +83,7 @@ void polynomialFree(polynomial_t);
 /* Comparisons */
 int polynomialEqual(polynomial_t, polynomial_t, int);
 int polynomialIsIdentity(polynomial_t, int);
+int polynomialStructurallyEqual(polynomial_t, polynomial_t, int);
 
 /* Arithmetical operations */
 polynomial_t polynomialAdd(polynomial_t, polynomial_t);
@@ -110,6 +111,7 @@ struct nodeStruct *polynomialGetIthCoefficient(polynomial_t, mpz_t);
 struct nodeStruct *polynomialGetIthCoefficientIntIndex(polynomial_t, int);
 int polynomialGetCoefficients(struct nodeStruct ***, unsigned int *, polynomial_t); 
 struct nodeStruct *polynomialGetExpression(polynomial_t);
+struct nodeStruct *polynomialGetExpressionExplicit(polynomial_t);
 
 /* Displaying and conversion to strings */
 void polynomialFPrintf(FILE *, polynomial_t);

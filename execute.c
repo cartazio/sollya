@@ -16084,6 +16084,915 @@ int isEqualThingOnVoid(void *tree, void *tree2) {
   return isEqualThing((node *) tree, (node *) tree2);
 }
 
+static inline int isEqualThingLibraryInner(node *tree, node *tree2);
+
+static inline int isEqualThingLibraryInnerOnVoid(void *tree, void *tree2) {
+  return isEqualThingLibraryInner((node *) tree, (node *) tree2);
+}
+
+static inline int isEqualThingLibraryInner(node *tree, node *tree2) {
+  chain *curri, *currj;
+  int found;
+
+  if (tree == NULL) return 0;
+  if (tree2 == NULL) return 0;
+
+  if (tree == tree2) return 1;
+
+  if (((tree->nodeType == MEMREF) &&
+       (tree2->nodeType == MEMREF)) &&
+      ((tree->hashComputed) &&
+       (tree2->hashComputed))) {
+    if (tree->hash != tree2->hash) return 0;
+  }
+
+  if ((tree->nodeType == MEMREF) && 
+      (tree2->nodeType == MEMREF) &&
+      (tree->polynomialRepresentation != NULL) &&
+      (tree2->polynomialRepresentation != NULL) &&
+      (tree->child1 == NULL) &&
+      (tree2->child2 == NULL)) {
+    return polynomialStructurallyEqual(tree->polynomialRepresentation, 
+				       tree2->polynomialRepresentation, 0);
+  }
+
+  if (tree->nodeType == MEMREF) {
+    return isEqualThingLibraryInner(getMemRefChild(tree), tree2);
+  }
+
+  if (tree2->nodeType == MEMREF) {
+    return isEqualThingLibraryInner(tree, getMemRefChild(tree2));
+  }
+
+  if (tree->nodeType != tree2->nodeType) return 0;
+
+  switch (tree->nodeType) {
+  case VARIABLE:
+    break;
+  case CONSTANT:
+    if (!mpfr_equal_p(*(tree->value),*(tree2->value))) return 0;
+    break;
+  case ADD:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case SUB:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case MUL:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case DIV:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case SQRT:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case EXP:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case LOG:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case LOG_2:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case LOG_10:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case SIN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case COS:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case TAN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case ASIN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case ACOS:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case ATAN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case SINH:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case COSH:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case TANH:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case ASINH:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case ACOSH:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case ATANH:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case POW:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case NEG:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case ABS:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case DOUBLE:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case SINGLE:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case HALFPRECISION:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case QUAD:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case DOUBLEDOUBLE:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case TRIPLEDOUBLE:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case ERF:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case ERFC:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case LOG_1P:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case EXP_M1:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case DOUBLEEXTENDED:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case LIBRARYFUNCTION:
+    if (tree->libFun != tree2->libFun) return 0;
+    if (tree->libFunDeriv != tree2->libFunDeriv) return 0;
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case LIBRARYCONSTANT:
+    if (tree->libFun != tree2->libFun) return 0;
+    break;
+  case PROCEDUREFUNCTION:
+    if (tree->libFunDeriv != tree2->libFunDeriv) return 0;
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case CEIL:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case FLOOR:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case NEARESTINT:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case PI_CONST:
+    break;
+  case COMMANDLIST:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case WHILE:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case IFELSE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case IF:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case FOR:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case FORIN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case QUIT:
+    break;
+  case NOP:
+    break;
+  case NOPARG:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case FALSEQUIT:
+    break;
+  case FALSERESTART:
+    break;
+  case RESTART:
+    break;
+  case VARIABLEDECLARATION:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
+    break;
+  case PRINT:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case SUPPRESSMESSAGE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case UNSUPPRESSMESSAGE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case NEWFILEPRINT:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case APPENDFILEPRINT:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case PLOT:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case PRINTHEXA:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case PRINTFLOAT:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case PRINTBINARY:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case PRINTEXPANSION:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case BASHEXECUTE:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case EXTERNALPLOT:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case WRITE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case NEWFILEWRITE:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case APPENDFILEWRITE:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case ASCIIPLOT:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case PRINTXML:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case PRINTXMLNEWFILE:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case PRINTXMLAPPENDFILE:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case WORSTCASE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case RENAME:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
+    break;
+  case AUTOPRINT:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case ASSIGNMENT:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case FLOATASSIGNMENT:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case EXTERNALPROC:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualIntPtrOnVoid)) return 0;
+  case LIBRARYBINDING:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case LIBRARYCONSTANTBINDING:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case PRECASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case POINTSASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case DIAMASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case DISPLAYASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case VERBOSITYASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case CANONICALASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case AUTOSIMPLIFYASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case SHOWMESSAGENUMBERSASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case TAYLORRECURSASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case TIMINGASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case FULLPARENASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case MIDPOINTASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case DIEONERRORMODEASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case RATIONALMODEASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case SUPPRESSWARNINGSASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case HOPITALRECURSASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case PRECSTILLASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case POINTSSTILLASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case DIAMSTILLASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case DISPLAYSTILLASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case VERBOSITYSTILLASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case CANONICALSTILLASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case AUTOSIMPLIFYSTILLASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case SHOWMESSAGENUMBERSSTILLASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case TAYLORRECURSSTILLASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case TIMINGSTILLASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case FULLPARENSTILLASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case MIDPOINTSTILLASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case DIEONERRORMODESTILLASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case RATIONALMODESTILLASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case SUPPRESSWARNINGSSTILLASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case HOPITALRECURSSTILLASSIGN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case AND:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case OR:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case NEGATION:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case INDEX:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case COMPAREEQUAL:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case COMPAREIN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case COMPARELESS:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case COMPAREGREATER:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case COMPARELESSEQUAL:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case COMPAREGREATEREQUAL:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case COMPARENOTEQUAL:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case CONCAT:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case ADDTOLIST:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case APPEND:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case PREPEND:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case ON:
+    break;
+  case OFF:
+    break;
+  case DYADIC:
+    break;
+  case POWERS:
+    break;
+  case BINARY:
+    break;
+  case HEXADECIMAL:
+    break;
+  case FILESYM:
+    break;
+  case POSTSCRIPT:
+    break;
+  case POSTSCRIPTFILE:
+    break;
+  case PERTURB:
+    break;
+  case ROUNDDOWN:
+    break;
+  case ROUNDUP:
+    break;
+  case ROUNDTOZERO:
+    break;
+  case ROUNDTONEAREST:
+    break;
+  case HONORCOEFF:
+    break;
+  case TRUE:
+    break;
+  case UNIT:
+    break;
+  case FALSE:
+    break;
+  case DEFAULT:
+    break;
+  case DECIMAL:
+    break;
+  case ABSOLUTESYM:
+    break;
+  case RELATIVESYM:
+    break;
+  case FIXED:
+    break;
+  case FLOATING:
+    break;
+  case ERRORSPECIAL:
+    break;
+  case DOUBLESYMBOL:
+    break;
+  case SINGLESYMBOL:
+    break;
+  case HALFPRECISIONSYMBOL:
+    break;
+  case QUADSYMBOL:
+    break;
+  case DOUBLEEXTENDEDSYMBOL:
+    break;
+  case DOUBLEDOUBLESYMBOL:
+    break;
+  case TRIPLEDOUBLESYMBOL:
+    break;
+  case STRING:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case TABLEACCESS:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case ISBOUND:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case TABLEACCESSWITHSUBSTITUTE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case STRUCTACCESS:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case APPLY:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0; break;
+  case DECIMALCONSTANT:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case MIDPOINTCONSTANT:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case DYADICCONSTANT:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case HEXCONSTANT:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case HEXADECIMALCONSTANT:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case BINARYCONSTANT:
+    if (strcmp(tree->string,tree2->string) != 0) return 0;    break;
+  case EMPTYLIST:
+    break;
+  case LIST:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    setupRandomAccessOnLists(tree);
+    setupRandomAccessOnLists(tree2);
+    break;
+  case STRUCTURE:
+    if (lengthChain(tree->arguments) != lengthChain(tree2->arguments)) return 0;
+    for (curri=tree->arguments;curri!=NULL;curri=curri->next) {
+      found = 0;
+      currj = tree2->arguments;
+      while ((!found) &&
+	     (currj != NULL)) {
+	if ((!strcmp(((entry *) (curri->value))->name,
+		     ((entry *) (currj->value))->name)) &&
+	    (isEqualThingLibraryInner(((node *) ((entry *) (curri->value))->value),
+			  ((node *) ((entry *) (currj->value))->value)))) {
+	  found = 1;
+	}
+	currj = currj->next;
+      }
+      if (!found) return 0;
+    }
+    break;
+  case FINALELLIPTICLIST:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    setupRandomAccessOnLists(tree);
+    setupRandomAccessOnLists(tree2);
+    break;
+  case ELLIPTIC:
+    break;
+  case RANGE:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case DEBOUNDMAX:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case EVALCONST:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case DEBOUNDMIN:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case DEBOUNDMID:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case DIFF:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case BASHEVALUATE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case GETSUPPRESSEDMESSAGES:
+    break;
+  case GETBACKTRACE:
+    break;
+  case DIRTYSIMPLIFY:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case SIMPLIFYSAFE:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case TIME:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case REMEZ:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case ANNOTATEFUNCTION:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case MATCH:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case MATCHELEMENT:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case MIN:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case MAX:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case FPMINIMAX:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case HORNER:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case CANONICAL:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case EXPAND:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case TAYLOR:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case TAYLORFORM:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case CHEBYSHEVFORM:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case AUTODIFF:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case DEGREE:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case NUMERATOR:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case DENOMINATOR:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case SUBSTITUTE:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case COMPOSEPOLYNOMIALS:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case COEFF:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case SUBPOLY:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case ROUNDCOEFFICIENTS:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case RATIONALAPPROX:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case ACCURATEINFNORM:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case ROUNDTOFORMAT:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case EVALUATE:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case PARSE:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case READXML:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case EXECUTE:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case INFNORM:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case SUPNORM:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case FINDZEROS:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case FPFINDZEROS:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case DIRTYINFNORM:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case NUMBERROOTS:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case INTEGRAL:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case DIRTYINTEGRAL:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case IMPLEMENTPOLY:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case IMPLEMENTCONST:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case CHECKINFNORM:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case ZERODENOMINATORS:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case ISEVALUABLE:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case SEARCHGAL:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case GUESSDEGREE:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case ASSIGNMENTININDEXING:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case FLOATASSIGNMENTININDEXING:
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    break;
+  case ASSIGNMENTINSTRUCTURE:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
+    break;
+  case FLOATASSIGNMENTINSTRUCTURE:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
+    break;
+  case PROTOASSIGNMENTINSTRUCTURE:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case PROTOFLOATASSIGNMENTINSTRUCTURE:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case DIRTYFINDZEROS:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
+  case HEAD:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case ROUNDCORRECTLY:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case READFILE:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case REVERT:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case SORT:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case MANTISSA:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case EXPONENT:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case PRECISION:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case TAIL:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case LENGTH:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case OBJECTNAME:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    break;
+  case EXTERNALPROCEDUREUSAGE:
+    if (tree->libProc != tree2->libProc) return 0;
+    break;
+  case PROC:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
+    break;
+  case BIND:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;
+    break;
+  case PROCILLIM:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualStringOnVoid)) return 0;
+    break;
+  case PRECDEREF:
+    break;
+  case POINTSDEREF:
+    break;
+  case DIAMDEREF:
+    break;
+  case DISPLAYDEREF:
+    break;
+  case VERBOSITYDEREF:
+    break;
+  case CANONICALDEREF:
+    break;
+  case AUTOSIMPLIFYDEREF:
+    break;
+  case SHOWMESSAGENUMBERSDEREF:
+    break;
+  case TAYLORRECURSDEREF:
+    break;
+  case TIMINGDEREF:
+    break;
+  case FULLPARENDEREF:
+    break;
+  case MIDPOINTDEREF:
+    break;
+  case DIEONERRORMODEDEREF:
+    break;
+  case RATIONALMODEDEREF:
+    break;
+  case SUPPRESSWARNINGSDEREF:
+    break;
+  case HOPITALRECURSDEREF:
+    break;
+  default:
+    sollyaFprintf(stderr,"Error: isEqualThingLibraryInner: unknown identifier (%d) in the tree\n",tree->nodeType);
+    exit(1);
+  }
+
+  return 1;
+}
+
+int isEqualThingLibrary(node *tree, node *tree2) {
+  uint64_t hashTree, hashTree2;
+
+  /* Stupid inputs */
+  if (tree == NULL) return 0;
+  if (tree2 == NULL) return 0;
+
+  /* Pointer equality */
+  if (tree == tree2) return 1;
+
+  /* Decide many cases by the use of hashes */
+  hashTree = hashThing(tree);
+  hashTree2 = hashThing(tree2);
+  if (hashTree != hashTree2) return 0;
+
+  /* Call inner function */
+  return isEqualThingLibraryInner(tree, tree2);
+}
+
 int isEqualThing(node *tree, node *tree2) {
   chain *curri, *currj;
   int found;
@@ -16093,6 +17002,13 @@ int isEqualThing(node *tree, node *tree2) {
 
   if (tree == tree2) return 1;
 
+  if (((tree->nodeType == MEMREF) &&
+       (tree2->nodeType == MEMREF)) &&
+      ((tree->hashComputed) &&
+       (tree2->hashComputed))) {
+    if (tree->hash != tree2->hash) return 0;
+  }
+  
   if ((tree->nodeType == MEMREF) && 
       (tree2->nodeType == MEMREF) &&
       (tree->polynomialRepresentation != NULL) &&
@@ -16266,7 +17182,8 @@ int isEqualThing(node *tree, node *tree2) {
     if (!isEqualThing(tree->child2,tree2->child2)) return 0;
     break;
   case FOR:
-    if (strcmp(tree->string,tree2->string) != 0) return 0;    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
     break;
   case FORIN:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;

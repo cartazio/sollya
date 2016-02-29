@@ -233,7 +233,7 @@ static inline node* getMemRefChild(node *tree) {
   if (tree->nodeType != MEMREF) return tree->child1;
   if (tree->child1 != NULL) return tree->child1;
   if (tree->polynomialRepresentation == NULL) return NULL;
-  tree->child1 = polynomialGetExpression(tree->polynomialRepresentation);
+  tree->child1 = polynomialGetExpressionExplicit(tree->polynomialRepresentation);
   tree->memRefChildFromPolynomial = 1;
   return tree->child1;
 }

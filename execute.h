@@ -550,6 +550,7 @@ node *parseString(char *str);
 void computeFunctionWithProcedure(sollya_mpfi_t y, node *proc, sollya_mpfi_t x, unsigned int derivN);
 void computeFunctionWithProcedureMpfr(mpfr_t rop, node *proc, mpfr_t op, unsigned int derivN);
 int isEqualThing(node *tree, node *tree2);
+int isEqualThingLibrary(node *tree, node *tree2);
 void fPrintThing(FILE *fd, node *thing);
 void printThing(node *thing);
 char *sPrintThing(node *thing);

@@ -7550,6 +7550,92 @@ int polynomialEqual(polynomial_t p, polynomial_t q, int defVal) {
   return 1;
 }
 
+int polynomialStructurallyEqual(polynomial_t p, polynomial_t q, int defVal) {
+  
+  /* Handle stupid inputs */
+  if (p == NULL) return defVal;
+  if (q == NULL) return defVal;
+
+  /* Pointer equality */
+  if (p == q) return 1;
+
+  /* If the polynomials are not mathematically equal, they cannot be
+     structurally equal.
+  */
+  if (!polynomialEqual(p, q, 1)) return 0;
+
+  /* Try with the other default value */
+  if (!polynomialEqual(p, q, 0)) {
+	__polynomialSparsify(p);
+	__polynomialSparsify(q);    
+  }
+
+  /* Retry */
+  if (!polynomialEqual(p, q, 1)) return 0;
+  
+  /* Here the polynomials are mathematically equal or their
+     mathematical equality cannot be decided.
+
+     Start by assuring us that we know that they are mathematically
+     equal.
+     
+  */
+  if (polynomialEqual(p, q, 0)) {
+    /* Here, the polynomials are mathematically equal. 
+
+       If they have the same output form and that output form 
+       is canonical or hornerized, they are structurally equal.
+       
+       If they have the same output form and that output form is
+       ANY_FORM, we sparsify both polynomials and can then answer that
+       they are structurally equal.
+
+    */
+    if (p->outputType == q->outputType) {
+      if (p->outputType == ANY_FORM) {
+	__polynomialSparsify(p);
+	__polynomialSparsify(q);
+      }
+      return 1;
+    }
+
+    /* Here, the polynomials have different output forms. 
+       If none of these output forms is ANY_FORM, they are
+       structurally different.
+    */
+    if ((p->outputType != ANY_FORM) &&
+	(q->outputType != ANY_FORM)) {
+      return 0;
+    }
+
+    /* Here at least one of the output forms is ANY_FORM and
+       the other output form is not ANY_FORM.
+
+       We sparsify both polynomials. Then they are structurally equal
+       iff none of them is in CANONICAL_FORM as the output for
+       sparsified ANY_FORMS is HORNER_FORM.
+
+    */
+    __polynomialSparsify(p);
+    __polynomialSparsify(q);
+    if ((p->outputType != CANONICAL_FORM) &&
+	(q->outputType != CANONICAL_FORM)) {
+      return 1;
+    }
+    
+    /* Here the polynomials are structurally different */
+    return 0;
+  }
+
+  /* Here, we don't know if the polynomials are 
+     mathematically the same and we already retried. 
+
+     We return the default answer.
+
+  */
+  return defVal;
+}
+
 int polynomialIsIdentity(polynomial_t p, int defVal) {
   int dp;
 
@@ -8095,7 +8181,7 @@ static inline node *__polynomialGetExpressionAnyForm(polynomial_t p) {
   /* General case */
   switch (p->type) {
   case SPARSE:
-    return sparsePolynomialGetExpression(p->value.sparse, 0);
+    return sparsePolynomialGetExpression(p->value.sparse, 0); /* This must be Horner form */
     break;
   case ADDITION:
     return addMemRef(makeAdd(__polynomialGetExpressionAnyForm(p->value.pair.g),
@@ -8124,7 +8210,7 @@ static inline node *__polynomialGetExpressionAnyForm(polynomial_t p) {
   return NULL;
 }
 
-node *polynomialGetExpression(polynomial_t p) {
+node *polynomialGetExpressionExplicit(polynomial_t p) {
 
   /* Handle stupid input */
   if (p == NULL) return NULL;
@@ -8143,6 +8229,27 @@ node *polynomialGetExpression(polynomial_t p) {
 				       (p->outputType == CANONICAL_FORM));
 }
 
+node *polynomialGetExpression(polynomial_t p) {
+  node *res;
+
+  /* Handle stupid input */
+  if (p == NULL) return polynomialGetExpressionExplicit(p);
+
+  /* Try to build a lazy memrefed expression */
+  res = addMemRefEvenOnNull(NULL);
+  if (res != NULL) {
+    if (res->nodeType == MEMREF) {
+      res->polynomialRepresentation = polynomialFromCopy(p);
+      return res;
+    } else {
+      freeThing(res);
+    }
+  }
+
+  /* Could not create a lazy memrefed expression */
+  return polynomialGetExpressionExplicit(p);
+}
+
 void polynomialFPrintf(FILE *fd, polynomial_t p) {
   node *t;
 
@@ -8156,7 +8263,7 @@ void polynomialFPrintf(FILE *fd, polynomial_t p) {
      Can be optimized.
 
   */
-  t = polynomialGetExpression(p);
+  t = polynomialGetExpressionExplicit(p);
   sollyaFprintf(fd, "%b", t);
   freeThing(t);
 }
@@ -8175,7 +8282,7 @@ char *polynomialToString(polynomial_t p) {
      Can be optimized.
 
   */
-  t = polynomialGetExpression(p);
+  t = polynomialGetExpressionExplicit(p);
   size = sollya_snprintf(staticStr,8,"%b",t);
   if (size < 0) {
     freeThing(t);
