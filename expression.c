@@ -762,28 +762,26 @@ char *sPrintHexadecimal(mpfr_t x) {
     curr[2] = '1';
     curr[3] = 'p';
     curr += 4;
-    if (E != ((mpfr_exp_t) 0)) {
-      if (sizeof(mpfr_exp_t) <= sizeof(int)) {
-	__sprintfValue_sprintf(curr, "%d", (int) E);
+    if (sizeof(mpfr_exp_t) <= sizeof(int)) {
+      __sprintfValue_sprintf(curr, "%d", (int) E);
+    } else {
+      if (sizeof(mpfr_exp_t) <= sizeof(long int)) {
+	__sprintfValue_sprintf(curr, "%ld", (long int) E);
       } else {
-	if (sizeof(mpfr_exp_t) <= sizeof(long int)) {
-	  __sprintfValue_sprintf(curr, "%ld", (long int) E);
+	if (sizeof(mpfr_exp_t) <= sizeof(long long int)) {
+	  __sprintfValue_sprintf(curr, "%lld", (long long int) E);
 	} else {
-	  if (sizeof(mpfr_exp_t) <= sizeof(long long int)) {
-	    __sprintfValue_sprintf(curr, "%lld", (long long int) E);
+	  tmp = (long long int) E;
+	  Et = (mpfr_exp_t) tmp;
+	  if (E == Et) {
+	    __sprintfValue_sprintf(curr, "%lld", tmp);
 	  } else {
-	    tmp = (long long int) E;
-	    Et = (mpfr_exp_t) tmp;
-	    if (E == Et) {
-	      __sprintfValue_sprintf(curr, "%lld", tmp);
-	    } else {
-	      sollyaFprintf(stderr,"Error: sPrintHexadecimal: mpfr_exp_t variable too large to be displayed.\n");
-	      exit(1);
-	    }
+	    sollyaFprintf(stderr,"Error: sPrintHexadecimal: mpfr_exp_t variable too large to be displayed.\n");
+	    exit(1);
 	  }
 	}
       }
-    }
+    }    
   } else {
     /* Here, we have n = 0, so we have to display 
 
@@ -851,24 +849,22 @@ char *sPrintHexadecimal(mpfr_t x) {
     curr += a;
     curr[0] = 'p';
     curr++;
-    if (E != ((mpfr_exp_t) 0)) {
-      if (sizeof(mpfr_exp_t) <= sizeof(int)) {
-	__sprintfValue_sprintf(curr, "%d", (int) E);
+    if (sizeof(mpfr_exp_t) <= sizeof(int)) {
+      __sprintfValue_sprintf(curr, "%d", (int) E);
+    } else {
+      if (sizeof(mpfr_exp_t) <= sizeof(long int)) {
+	__sprintfValue_sprintf(curr, "%ld", (long int) E);
       } else {
-	if (sizeof(mpfr_exp_t) <= sizeof(long int)) {
-	  __sprintfValue_sprintf(curr, "%ld", (long int) E);
+	if (sizeof(mpfr_exp_t) <= sizeof(long long int)) {
+	  __sprintfValue_sprintf(curr, "%lld", (long long int) E);
 	} else {
-	  if (sizeof(mpfr_exp_t) <= sizeof(long long int)) {
-	    __sprintfValue_sprintf(curr, "%lld", (long long int) E);
+	  tmp = (long long int) E;
+	  Et = (mpfr_exp_t) tmp;
+	  if (E == Et) {
+	    __sprintfValue_sprintf(curr, "%lld", tmp);
 	  } else {
-	    tmp = (long long int) E;
-	    Et = (mpfr_exp_t) tmp;
-	    if (E == Et) {
-	      __sprintfValue_sprintf(curr, "%lld", tmp);
-	    } else {
-	      sollyaFprintf(stderr,"Error: sPrintHexadecimal: mpfr_exp_t variable too large to be displayed.\n");
-	      exit(1);
-	    }
+	    sollyaFprintf(stderr,"Error: sPrintHexadecimal: mpfr_exp_t variable too large to be displayed.\n");
+	    exit(1);
 	  }
 	}
       }

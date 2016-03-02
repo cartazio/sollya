@@ -67,7 +67,7 @@ The tool has been restarted.
 =============== Test number 6 ================
 Display mode is hexadecimal numbers.
 0
-0x1p
+0x1p0
 0x1p1
 0x1.8p1
 0x1p2
@@ -103,7 +103,7 @@ true
 -0x1.22f5c2p-3
 0x1.997748p-3
 -0x1.5554d8p-2
--0x1.5554d8p
+-0x1.5554d8p0
 -0x1.5554d8p20
 -0x1.5554d8p19
 The tool has been restarted.

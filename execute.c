@@ -16130,6 +16130,7 @@ static inline int isEqualThingLibraryInner(node *tree, node *tree2) {
   case VARIABLE:
     break;
   case CONSTANT:
+    if (mpfr_nan_p(*(tree->value)) && mpfr_nan_p(*(tree2->value))) return 1;
     if (!mpfr_equal_p(*(tree->value),*(tree2->value))) return 0;
     break;
   case ADD:

@@ -7559,6 +7559,16 @@ int polynomialStructurallyEqual(polynomial_t p, polynomial_t q, int defVal) {
   /* Pointer equality */
   if (p == q) return 1;
 
+  /* Use hashes if we have them already computed */
+  if (p->hash.hasHash && q->hash.hasHash) {
+    /* Both polynomials have a hash.
+       
+       If the hashes are different, they are structurally different.
+       
+    */
+    if (p->hash.hash != q->hash.hash) return 0;
+  }
+  
   /* If the polynomials are not mathematically equal, they cannot be
      structurally equal.
   */
@@ -7599,7 +7609,20 @@ int polynomialStructurallyEqual(polynomial_t p, polynomial_t q, int defVal) {
       return 1;
     }
 
-    /* Here, the polynomials have different output forms. 
+    /* Here, the polynomials have different output forms.
+
+       Start by checking if one of them is constant. As the other one
+       is mathematically equal, it is constant, too.
+
+       If the polynomials are constant, they are structurally the
+       same.
+
+    */
+    if (polynomialIsConstant(p, 0)) return 1;
+
+    /* Here, the polynomials have different output forms and are not
+       constant.
+
        If none of these output forms is ANY_FORM, they are
        structurally different.
     */
@@ -7649,7 +7672,7 @@ int polynomialIsIdentity(polynomial_t p, int defVal) {
     return sparsePolynomialIsIdentity(p->value.sparse, defVal);
   
   /* If the polynomial is constant, it is not the identity function */
-  if (__polynomialIsConstantCheap(p)) return 1;
+  if (__polynomialIsConstantCheap(p)) return 0;
 
   /* If the degree of the polynomial can be computed easily and it is
      not 1, the polynomial can't be the identity function. 
@@ -7664,6 +7687,83 @@ int polynomialIsIdentity(polynomial_t p, int defVal) {
   */
   __polynomialSparsify(p);
   return sparsePolynomialIsIdentity(p->value.sparse, defVal);  
+}
+
+int polynomialIsConstant(polynomial_t p, int defVal) {
+  int deg;
+  constant_t c;
+  
+  /* Handle stupid inputs */
+  if (p == NULL) return defVal;
+
+  /* If the polynomial is sparse, just use the test function on sparse
+     polynomials.
+  */
+  if (p->type == SPARSE) 
+    return sparsePolynomialIsConstant(p->value.sparse, defVal);
+  
+  /* Try a cheap function to determine if the polynomial is
+     constant 
+  */
+  if (__polynomialIsConstantCheap(p)) return 1;
+
+  /* Here, we still do not know if the polynomial is constant.
+
+     We compute its degree.
+
+     If the degree is larger than the largest machine integer, the
+     function will return a negative value instead of the degree. 
+
+     In this case, we sparsify the polynomial and call the test 
+     function on the sparsified polynomial.
+
+     Otherwise, 
+
+     * if the degree is zero, we are sure the polynomial is 
+       constant,
+
+     * otherwise, we get the coefficient corresponding to the 
+       degree and check if it is non-zero. If we cannot show it 
+       is non-zero, we return the default answer. Otherwise, we
+       are sure that the polynomial is not constant.
+
+  */
+  deg = polynomialGetDegreeAsInt(p);
+  if (deg < 0) {
+    __polynomialSparsify(p);    
+    return sparsePolynomialIsConstant(p->value.sparse, defVal);
+  }
+
+  /* Here the degree of the polynomial holds on a machine integer. 
+
+     If it is zero, the polynomial is constant.
+  */
+  if (deg == 0) return 1;
+
+  /* Get the coefficient of the degree of the polynomial */
+  c = __polynomialGetIthCoefficientAsConstantIntIndex(p, deg);
+
+  /* Check if coefficient of degree is zero. */
+  if (constantIsZero(c, 1)) {
+    /* Here the coefficient of the polynomial corresponding 
+       to its degree is said to be zero. This means it cannot
+       be shown to be non-zero.
+
+       We return the default value, as we do not know if the 
+       polynomial is constant or not.
+
+    */
+    constantFree(c);
+    return defVal;
+  }
+
+  /* Free the constant corresponding to coefficient */
+  constantFree(c);
+  
+  /* Here the coefficient of degree deg != 0 is shown to be
+     non-zero. Hence, the polynomial is not constant.
+  */
+  return 0;
 }
 
 void polynomialDiv(polynomial_t *quot, polynomial_t *rest, polynomial_t a, polynomial_t b) {

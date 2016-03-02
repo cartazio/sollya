@@ -83,6 +83,7 @@ void polynomialFree(polynomial_t);
 /* Comparisons */
 int polynomialEqual(polynomial_t, polynomial_t, int);
 int polynomialIsIdentity(polynomial_t, int);
+int polynomialIsConstant(polynomial_t, int);
 int polynomialStructurallyEqual(polynomial_t, polynomial_t, int);
 
 /* Arithmetical operations */
