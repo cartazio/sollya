@@ -103,9 +103,8 @@ point <span class="arg">x</span>.
 &nbsp;&nbsp;&nbsp;&gt; prec = 165;<br> 
 &nbsp;&nbsp;&nbsp;The precision has been set to 165 bits.<br> 
 &nbsp;&nbsp;&nbsp;&gt; h(0.25);<br> 
-&nbsp;&nbsp;&nbsp;Using procedure function exponential with X=[0.25;0.25], n=0, and p=167<br> 
-&nbsp;&nbsp;&nbsp;Warning: rounding has happened.<br> 
-&nbsp;&nbsp;&nbsp;The displayed value is *NOT* guaranteed to be a faithful rounding of the true result.<br> 
+&nbsp;&nbsp;&nbsp;Using procedure function exponential with X=[0.25;0.25], n=0, and p=185<br> 
+&nbsp;&nbsp;&nbsp;Warning: rounding has happened. The value displayed is a faithful rounding to 165 bits of the true result.<br> 
 &nbsp;&nbsp;&nbsp;1.28402541668774148407342056806243645833628086528147<br> 
 </div> 
 </div> 

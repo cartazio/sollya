@@ -258,3 +258,12 @@ g(0.25);
 prec=80!;
 g(1/3);
 
+restart;
+print("=============== Test number 12 ================");
+/* Non regression test for bug [#20094] NaN comparisons do not work as expected. */
+NaN == NaN;
+NaN != NaN;
+b = NaN;
+b == b;
+b != b;
+

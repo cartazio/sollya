@@ -18757,7 +18757,24 @@ int isEqualThingNoPoly(node *tree, node *tree2) {
 }
 
 int isEqualThingEnhanced(node *tree, node *tree2, int simplify) {
-
+  if (tree == NULL) return 0;
+  if (tree2 == NULL) return 0;
+  if (tree == tree2) {
+    switch (tree->nodeType) {
+    case MEMREF:
+      if (tree->child1 != NULL) {
+	if (accessThruMemRef(tree)->nodeType == CONSTANT) {
+	  if (mpfr_nan_p(*(accessThruMemRef(tree)->value))) return 0;
+	}
+      }
+      break;
+    case CONSTANT:
+      if (mpfr_nan_p(*(tree->value))) return 0;
+      break;
+    default:
+      break;
+    }
+  }
   if (simplify) return isEqualThing(tree, tree2);
   return isEqualThingNoPoly(tree, tree2);
 }

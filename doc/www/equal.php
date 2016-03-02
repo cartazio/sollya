@@ -87,7 +87,7 @@ automatic simplification using <?php linkTo("command","autosimplify","autosimpli
 &nbsp;&nbsp;&nbsp;&gt; a == a;<br> 
 &nbsp;&nbsp;&nbsp;true<br> 
 &nbsp;&nbsp;&nbsp;&gt; b == b;<br> 
-&nbsp;&nbsp;&nbsp;true<br> 
+&nbsp;&nbsp;&nbsp;false<br> 
 </div> 
 <div class="divExample"> 
 <h2 class="category">Example 7: </h2> 

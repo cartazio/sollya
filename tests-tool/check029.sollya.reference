@@ -155,3 +155,9 @@ Warning: rounding has happened. The value displayed is a faithful rounding to 53
 Using procedure function exponential with X = [0.333333333333333333333333333333333333333333333333333333333;0.3333333333333333333333333333333333333333333333333333333334], n = 0, p = 190
 Warning: rounding has happened. The value displayed is a faithful rounding to 80 bits of the true result.
 1.395612425086089528628125
+The tool has been restarted.
+=============== Test number 12 ================
+false
+false
+false
+false
