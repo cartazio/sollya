@@ -2336,6 +2336,9 @@ static inline int constantIsEqual(constant_t a, constant_t b, int defVal) {
   if (a == NULL) return defVal;
   if (b == NULL) return defVal;
   if (a == b) return 1;
+  if (a->hash.hasHash && b->hash.hasHash) {
+    if (a->hash.hash != b->hash.hash) return 0;
+  }
   if (a->type != b->type) {
     /* If the constants are not of the same type, compute their
        difference and compare to zero. 
@@ -4897,6 +4900,9 @@ static inline int sparsePolynomialEqual(sparse_polynomial_t p, sparse_polynomial
   if (p == NULL) return defVal;
   if (q == NULL) return defVal;
   if (p == q) return 1;
+  if (p->hash.hasHash && q->hash.hasHash) {
+    if (p->hash.hash != q->hash.hash) return 0;
+  }
   if (p->monomialCount == 0u) {
     return sparsePolynomialIsConstantZero(q, defVal);
   }
