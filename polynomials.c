@@ -2332,13 +2332,16 @@ static inline int constantIsEqual(constant_t a, constant_t b, int defVal) {
   int res, sa, sb;
   mpq_t t;
   mp_exp_t G;
-  
+
+  /* Trivial answers */
   if (a == NULL) return defVal;
   if (b == NULL) return defVal;
   if (a == b) return 1;
-  if (a->hash.hasHash && b->hash.hasHash) {
-    if (a->hash.hash != b->hash.hash) return 0;
-  }
+
+  /* Using a hash here is actually a bad idea as we are talking about 
+     mathematical identity not the structural one.
+  */
+  
   if (a->type != b->type) {
     /* If the constants are not of the same type, compute their
        difference and compare to zero. 
@@ -7416,6 +7419,34 @@ static inline int __polynomialEqualCheap(polynomial_t p, polynomial_t q) {
   return 0;
 }
 
+static inline int __polynomialStructurallyEqualCheap(polynomial_t p, polynomial_t q) {
+  if (p == NULL) return 0;
+  if (q == NULL) return 0;
+  if (p == q) return 1;
+  if (p->type != q->type) return 0;
+  if (p->outputType != q->outputType) return 0;
+  switch (p->type) {
+  case SPARSE:
+    return sparsePolynomialEqual(p->value.sparse, q->value.sparse, 0);
+    break;
+  case ADDITION:
+  case SUBTRACTION:
+  case MULTIPLICATION:
+  case COMPOSITION:
+    return (__polynomialStructurallyEqualCheap(p->value.pair.g, q->value.pair.g) &&
+	    __polynomialStructurallyEqualCheap(p->value.pair.h, q->value.pair.h));
+    break;
+  case NEGATE:
+    return __polynomialStructurallyEqualCheap(p->value.g, q->value.g);
+    break;
+  case POWER:
+    return (__polynomialStructurallyEqualCheap(p->value.powering.g, q->value.powering.g) &&
+	    constantIsEqual(p->value.powering.c, q->value.powering.c, 0));    
+    break;
+  }
+  return 0;
+}
+
 static inline int __polynomialIsConstantCheap(polynomial_t p) {
   if (p == NULL) return 0;
   switch (p->type) {
@@ -7574,6 +7605,9 @@ int polynomialStructurallyEqual(polynomial_t p, polynomial_t q, int defVal) {
     */
     if (p->hash.hash != q->hash.hash) return 0;
   }
+
+  /* Do a first check using a cheap function */
+  if (__polynomialStructurallyEqualCheap(p, q)) return 1;
   
   /* If the polynomials are not mathematically equal, they cannot be
      structurally equal.
