@@ -1,5 +1,16 @@
+The tool has been restarted.
+=============== Test number 1 ================
 The verbosity level has been set to 9.
 Information: expression '(diff(foo))(x + 1) * 1' has been simplified to expression '(diff(foo))(x + 1)'.
 Warning: evaluateFaithful returned NaN.
 Information: expression '(diff(diff(foo)))(x + 1) * 1' has been simplified to expression '(diff(diff(foo)))(x + 1)'.
 [0;1]
+The tool has been restarted.
+=============== Test number 2 ================
+Checkingthat __unique_id is made of [0-9a-zA-Z_-]... 
+Done.
+The tool has been restarted.
+Checking that __unique_id is made of [0-9a-zA-Z_-]... 
+Done.
+Checking that __unique_id changes after restart... 
+Done.
