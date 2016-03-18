@@ -7,22 +7,55 @@
 #PARAMETERS <expr1> and <expr2> represent expressions
 
 
-#DESCRIPTION 
-The operator $COMMAND evaluates to true iff its operands <expr1> and
-<expr2> are syntactically equal and different from $ERROR, constant
-expressions that are not constants and that evaluate to the same
-floating-point number with the global precision $PREC or polynomials 
-that are equal while automatic expression simplification is activated. 
-The user should be aware of the fact that because of floating-point 
-evaluation, the operator $COMMAND is not exactly the same as the 
-mathematical equality. Further remark that according to IEEE 754-2008 
-floating-point rules, which $SOLLYA emulates, floating-point data 
-which are NaN do not compare equal to any other floating-point datum, 
-including NaN. Further, expressions that are polynomials may not
-be structurally equal when $COMMAND evaluates to $TRUE; in order
-to obtain purely structural tests, the user should deactivate
-automatic simplification using $AUTOSIMPLIFY.
+#DESCRIPTION
+The test <expr1> $COMMAND <expr2> returns $TRUE when <expr1> and <expr2> are
+syntactically equal and different from $ERROR and @NaN@. Conversely if <expr1>
+and <expr2> are objects that are mathematically different and $SOLLYA manages
+to figure it out, the test returns $FALSE. In between these two cases, there
+is the grey zone of expressions that are not syntactically equal but are
+mathematically equal. In such a case, $SOLLYA normally tries to determine if
+the expressions are mathematically equal and if it manages to prove it, it
+returns $TRUE, without a warning. In the case when <expr1> and <expr2> are
+two constant expressions, $SOLLYA will in particular try to evaluate their
+difference: in the case when the difference is 0 or is so small that $SOLLYA
+does not manage to obtain a faithful rounding of the real value, it will
+return $TRUE (with a warning if it has not been possible to actually prove
+that the real value is 0). In any other case, when both expressions are not
+syntactically equal and $SOLLYA has not been able to prove that they are
+mathematically equal, it returns $FALSE.
 
+#DESCRIPTION
+The level of simplifications performed by $SOLLYA to determine if
+expressions are mathematically equal depends on the value of $AUTOSIMPLIFY.
+If it is $OFF, no formal simplification is performed, hence expression trees
+as simple as x+1 and 1+x will be considered not equal. Conversely, if
+$AUTOSIMPLIFY is set to $ON, polynomial subexpressions that are mathematically
+equal will in general be recognized as being equal.
+
+#DESCRIPTION
+The user should always keep in mind that a litteral constant written in
+decimal arithmetic (such as 0.1 for instance) is not considered as an exact
+constant by $SOLLYA (unless it is exactly representable in binary without
+requiring too much precision) and is first correctly rounded at precision
+$PREC, prior to any other operation. Of course, this leads to a rounding
+warning, but it is important to remember that this is done before the
+expression trees are compared, possibly leading to two expressions comparing
+equal, while they are obviously mathematically different, just because they
+contain different constants that have been rounded to the same value at
+precision $PREC. As a general rule, to avoid this behavior, the user should
+represent constants in an exact format such as hexadecimal or represent
+decimal constants as integer fractions (e.g., 0.1 represented by the constant
+expression 1/10).
+
+#DESCRIPTION
+Notice that @NaN@ and $ERROR share the property that they both compare equal
+and different to anything, i.e., if the variable <a> contains @NaN@ or $ERROR
+and whatever the content of variable <b> is, the tests <a> $EQUAL <b> and
+<a> $NEQ <b> both return $FALSE. The standard way of testing if <a> contains
+@NaN@ or $ERROR is indeed to check if <a> $EQUAL <a> returns false. In such a
+case, it is however impossible to determine what is the actual value of <a>
+amongst both possibilities using only $EQUAL or $NEQ. The standard way to
+discriminate this situation is to use the match ... with ... construct.
 
 #EXAMPLE
 "Hello" == "Hello";
@@ -31,34 +64,42 @@ automatic simplification using $AUTOSIMPLIFY.
 5 + x == 5 + x;
 
 #EXAMPLE
-1 == exp(0);
+verbosity = 1!;
 asin(1) * 2 == pi;
+cos(3)^2 == 1 - sin(3)^2;
 exp(5) == log(4);
 
 #EXAMPLE
-sin(pi/6) == 1/4;
+autosimplify=off;
+exp(1+x) == exp(x+1);
+autosimplify=on;
+exp(1+x) == exp(x+1);
+(1/3+x)^2 == x^2 + 1/9 + (5-3)*x/3;
+log(x)/log(10) == log10(x);
 
 #EXAMPLE
 prec = 12;
 verbosity = 1!;
 16384.1 == 16385.1;
+16384 == 16384.25;
+0.1 == 1/10;
+0.1 == round(1/10, prec, RN);
 
 #EXAMPLE
 error == error;
-
-#EXAMPLE
-a = "Biba";
-b = NaN;
-a == a;
-b == b;
-
-#EXAMPLE
-p = x + x^2;
-q = x * (1 + x);
-autosimplify = on;
-p == q;
-autosimplify = off;
-p == q;
+error != error;
+@NaN@ == @NaN@;
+@NaN@ != @NaN@;
+error == @NaN@;
+error != @NaN@;
+a = error;
+match a with
+ @NaN@ : ("a contains @NaN@")
+ default:("a contains something else");
+a = @NaN@;
+match a with
+ @NaN@ : ("a contains @NaN@")
+ default:("a contains something else");
 
 #SEEALSO $NEQ
 #SEEALSO $GT
