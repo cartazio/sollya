@@ -111,6 +111,7 @@ mp_prec_t defaultprecision = DEFAULTPRECISION;
 mp_prec_t tools_precision = DEFAULTPRECISION;
 char *temporyDirectory = NULL;
 char *uniqueIdentifier = NULL;
+unsigned int globalSeed = 0;
 int defaultpoints = DEFAULTPOINTS;
 int taylorrecursions = DEFAULTTAYLORRECURSIONS;
 int dyadic = 0;
@@ -1426,8 +1427,9 @@ void initToolDefaults() {
   freeThing(tempNode);
   pidStr = getUniqueId();
   uniqueStr = (char *) safeCalloc(strlen(PACKAGE_STRING) + 1 + strlen(pidStr) + 1 + 8 * sizeof(int) + 1, sizeof(char));
-  mySeed = (unsigned int) time(NULL);
-  sollya_snprintf(uniqueStr, strlen(PACKAGE_STRING) + 1 + strlen(pidStr) + 1 + 8 * sizeof(int) + 1, "%s-%s-%d", PACKAGE_STRING, pidStr, rand_r(&mySeed));
+  mySeed = (unsigned int) ((unsigned int) time(NULL)) + ((unsigned int) globalSeed);
+  globalSeed = rand_r(&mySeed);
+  sollya_snprintf(uniqueStr, strlen(PACKAGE_STRING) + 1 + strlen(pidStr) + 1 + 8 * sizeof(int) + 1, "%s-%s-%08d", PACKAGE_STRING, pidStr, rand_r(&mySeed));
   for (c=uniqueStr;*c!='\0';c++) {
     if ((*c == ' ') || 
 	(*c == '\t') || 
