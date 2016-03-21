@@ -161,3 +161,40 @@ false
 false
 false
 false
+false
+false
+Warning: the evaluation of one of the sides of an equality test yields error due to a syntax error or an error on a side-effect.
+The other side either also yields error due to an syntax or side-effect error or does not evaluate to error.
+The boolean returned may be meaningless.
+false
+Warning: the evaluation of one of the sides of an equality test yields error due to a syntax error or an error on a side-effect.
+The other side either also yields error due to an syntax or side-effect error or does not evaluate to error.
+The boolean returned may be meaningless.
+false
+Warning: the evaluation of one of the sides of an equality test yields error due to a syntax error or an error on a side-effect.
+The other side either also yields error due to an syntax or side-effect error or does not evaluate to error.
+The boolean returned may be meaningless.
+false
+Warning: the evaluation of one of the sides of an equality test yields error due to a syntax error or an error on a side-effect.
+The other side either also yields error due to an syntax or side-effect error or does not evaluate to error.
+The boolean returned may be meaningless.
+false
+false
+false
+Warning: the evaluation of one of the sides of an equality test yields error due to a syntax error or an error on a side-effect.
+The other side either also yields error due to an syntax or side-effect error or does not evaluate to error.
+The boolean returned may be meaningless.
+false
+Warning: the evaluation of one of the sides of an equality test yields error due to a syntax error or an error on a side-effect.
+The other side either also yields error due to an syntax or side-effect error or does not evaluate to error.
+The boolean returned may be meaningless.
+false
+Warning: at least one of the given expressions or a subexpression is not correctly typed
+or its evaluation has failed because of some error on a side-effect.
+error
+Warning: at least one of the given expressions or a subexpression is not correctly typed
+or its evaluation has failed because of some error on a side-effect.
+error
+Is a NaN
+Is a NaN
+Is not a NaN
