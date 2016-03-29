@@ -19604,7 +19604,7 @@ int executeProcedure(node **resultThing, node *proc, chain *args, int elliptic) 
   return res;
 }
 
-void computeFunctionWithProcedure(sollya_mpfi_t y, node *proc, sollya_mpfi_t x, unsigned int derivN) {
+void computeFunctionWithProcedureInner(sollya_mpfi_t y, node *proc, sollya_mpfi_t x, unsigned int derivN) {
   mpfr_t derivNAsMpfr, xleft, xright, precAsMpfr;
   chain *args;
   int res;
@@ -19655,6 +19655,24 @@ void computeFunctionWithProcedure(sollya_mpfi_t y, node *proc, sollya_mpfi_t x, 
   }
 }
 
+void computeFunctionWithProcedure(sollya_mpfi_t y, node *proc, sollya_mpfi_t x, unsigned int derivN, node *mr) {
+  if ((mr != NULL) &&
+      (mr->nodeType == MEMREF) &&
+      (mr->child1 != NULL) &&
+      (mr->child1->nodeType == PROCEDUREFUNCTION) &&
+      (mr->child1->child2 == proc) &&
+      (mr->evalCacheX != NULL) &&
+      (mr->evalCacheY != NULL) &&
+      (accessThruMemRef(mr->child1->child1)->nodeType == VARIABLE) &&
+      (sollya_mpfi_get_prec(*(mr->evalCacheY)) >= sollya_mpfi_get_prec(y)) &&
+      (mr->evalCachePrec >= sollya_mpfi_get_prec(y)) &&
+      (sollya_mpfi_equal_p(*(mr->evalCacheX), x))) {
+    sollya_mpfi_set(y, *(mr->evalCacheY));
+    return;
+  }
+  computeFunctionWithProcedureInner(y, proc, x, derivN);
+}
+
 void computeFunctionWithProcedureMpfr(mpfr_t rop, node *proc, mpfr_t op, unsigned int derivN) {
   sollya_mpfi_t opI, ropI;
 
@@ -19662,7 +19680,7 @@ void computeFunctionWithProcedureMpfr(mpfr_t rop, node *proc, mpfr_t op, unsigne
   sollya_mpfi_init2(ropI,mpfr_get_prec(rop)+2);
   sollya_mpfi_set_fr(opI,op);
 
-  computeFunctionWithProcedure(ropI,proc,opI,derivN);
+  computeFunctionWithProcedure(ropI,proc,opI,derivN,NULL);
 
   sollya_mpfi_mid(rop,ropI);
 
@@ -23658,7 +23676,7 @@ node *evaluateThingInnerst(node *tree) {
       sollya_mpfi_init2(tempIA,pTemp);
       sollya_mpfi_interv_fr(tempIA,*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value),*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
       sollya_mpfi_init2(tempIC,tools_precision);
-      computeFunctionWithProcedure(tempIC, copy->child2, tempIA, (unsigned int) copy->libFunDeriv);
+      computeFunctionWithProcedure(tempIC, copy->child2, tempIA, (unsigned int) copy->libFunDeriv, copy);
       freeThing(copy);
       mpfr_init2(a,tools_precision);
       mpfr_init2(b,tools_precision);

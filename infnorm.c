@@ -2380,7 +2380,7 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
     break;
   case PROCEDUREFUNCTION:
     excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
-    computeFunctionWithProcedure(stack3, tree->child2, stack1, (unsigned int) tree->libFunDeriv);
+    computeFunctionWithProcedure(stack3, tree->child2, stack1, (unsigned int) tree->libFunDeriv, tree);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
@@ -5098,7 +5098,7 @@ static inline void clearChosenMpfrPtr(mpfr_t *ptr, mpfr_t *localPtr) {
   returnReusedGlobalMPFRVars(1);
 }
 
-static inline point_eval_t __tryFaithEvaluationOptimizedDoIt(mpfr_t, node *, mpfr_t, mp_exp_t, mp_prec_t, mp_prec_t *);
+static inline point_eval_t __tryFaithEvaluationOptimizedDoIt(mpfr_t, node *, mpfr_t, mp_exp_t, mp_prec_t, mp_prec_t *, node *);
 
 static inline void __tryFaithEvaluationOptimizedUpdateMaxPrec(mp_prec_t *maxPrec, mp_prec_t prec) {
   if (maxPrec == NULL) return;
@@ -5146,7 +5146,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
 
   gy = chooseAndInitMpfrPtr(&v_gy, precG);
   recMaxPrecUsedG = 0;
-  resG = __tryFaithEvaluationOptimizedDoIt(*gy, g, x, recCutoffG, minPrec, &recMaxPrecUsedG);
+  resG = __tryFaithEvaluationOptimizedDoIt(*gy, g, x, recCutoffG, minPrec, &recMaxPrecUsedG, g);
   switch (resG) {
   case POINT_EVAL_EXACT:
   case POINT_EVAL_CORRECTLY_ROUNDED:
@@ -5164,7 +5164,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
   }
   hy = chooseAndInitMpfrPtr(&v_hy, precH);
   recMaxPrecUsedH = 0;
-  resH = __tryFaithEvaluationOptimizedDoIt(*hy, h, x, recCutoffH, minPrec, &recMaxPrecUsedH);
+  resH = __tryFaithEvaluationOptimizedDoIt(*hy, h, x, recCutoffH, minPrec, &recMaxPrecUsedH, h);
   if (resG == POINT_EVAL_FAILURE) {
     switch (resH) {
     case POINT_EVAL_EXACT:
@@ -5178,7 +5178,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedAddSubInner(int *retry, 
 	if (recCutoffGP > recCutoffG) { 
 	  recCutoffG = recCutoffGP;
 	  recMaxPrecUsedH = 0;
-	  resG = __tryFaithEvaluationOptimizedDoIt(*gy, g, x, recCutoffG, minPrec, &recMaxPrecUsedG);
+	  resG = __tryFaithEvaluationOptimizedDoIt(*gy, g, x, recCutoffG, minPrec, &recMaxPrecUsedG, g);
 	}
       }
       break;
@@ -5573,7 +5573,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedMulDivInner(int *retry, 
   gy = chooseAndInitMpfrPtr(&v_gy, precG);
   hy = chooseAndInitMpfrPtr(&v_hy, precH);
   recMaxPrecUsed = 0;
-  resG = __tryFaithEvaluationOptimizedDoIt(*gy, g, x, recCutoff, minPrec, &recMaxPrecUsed); 
+  resG = __tryFaithEvaluationOptimizedDoIt(*gy, g, x, recCutoff, minPrec, &recMaxPrecUsed, g); 
   __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsed);
   if (resG == POINT_EVAL_FAILURE) {
     clearChosenMpfrPtr(hy, &v_hy);
@@ -5583,7 +5583,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedMulDivInner(int *retry, 
     return POINT_EVAL_FAILURE;
   }
   recMaxPrecUsed = 0;
-  resH = __tryFaithEvaluationOptimizedDoIt(*hy, h, x, (divide ? mpfr_get_emin_min() : recCutoff), minPrec, &recMaxPrecUsed); 
+  resH = __tryFaithEvaluationOptimizedDoIt(*hy, h, x, (divide ? mpfr_get_emin_min() : recCutoff), minPrec, &recMaxPrecUsed, h); 
   __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsed);
   if (resH == POINT_EVAL_FAILURE) {
     clearChosenMpfrPtr(hy, &v_hy);
@@ -5822,7 +5822,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedPow(mpfr_t y, node *g, n
   gy = chooseAndInitMpfrPtr(&v_gy, precG);
   hy = chooseAndInitMpfrPtr(&v_hy, precH);
   recMaxPrecUsed = 0;
-  resG = __tryFaithEvaluationOptimizedDoIt(*gy, g, x, mpfr_get_emin_min(), minPrec, &recMaxPrecUsed);
+  resG = __tryFaithEvaluationOptimizedDoIt(*gy, g, x, mpfr_get_emin_min(), minPrec, &recMaxPrecUsed, g);
   __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsed);
   if ((resG == POINT_EVAL_FAILURE) ||
       (resG == POINT_EVAL_BELOW_CUTOFF)) {
@@ -5833,7 +5833,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedPow(mpfr_t y, node *g, n
   cutoffH = -(2 * mpfr_get_prec(y) + 25);
   if ((cutoffH >= 0) || (cutoffH < mpfr_get_emin_min())) cutoffH = mpfr_get_emin_min();
   recMaxPrecUsed = 0;
-  resH = __tryFaithEvaluationOptimizedDoIt(*hy, h, x, cutoffH, minPrec, &recMaxPrecUsed);
+  resH = __tryFaithEvaluationOptimizedDoIt(*hy, h, x, cutoffH, minPrec, &recMaxPrecUsed, h);
   __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsed);
   if (resH == POINT_EVAL_FAILURE) {
     clearChosenMpfrPtr(hy, &v_hy);
@@ -6203,7 +6203,7 @@ static inline mp_prec_t __tryFaithEvaluationOptimizedUnivariateGetRecursePrec(in
   return prec + 10; 
 }
 
-static inline point_eval_t __tryFaithEvaluationOptimizedUnivariateImpreciseArg(mpfr_t y, int nodeType, mpfr_t x, point_eval_t err, mp_exp_t cutoffY, mp_exp_t cutoffX, node *g) {
+static inline point_eval_t __tryFaithEvaluationOptimizedUnivariateImpreciseArg(mpfr_t y, int nodeType, mpfr_t x, point_eval_t err, mp_exp_t cutoffY, mp_exp_t cutoffX, node *g, node *mr) {
   sollya_mpfi_t v_X, v_Y;
   sollya_mpfi_t *X, *Y;
   point_eval_t res;
@@ -6315,7 +6315,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedUnivariateImpreciseArg(m
     mpfi_clear(temp);
     break;
   case PROCEDUREFUNCTION:
-    computeFunctionWithProcedure(*Y, g->child2, *X, (unsigned int) g->libFunDeriv);
+    computeFunctionWithProcedure(*Y, g->child2, *X, (unsigned int) g->libFunDeriv, mr);
     break;
   default:
     clearChosenMpfiPtr(Y, &v_Y);
@@ -6380,7 +6380,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedUnivariateImpreciseArg(m
   return res;
 }
 
-static inline point_eval_t __tryFaithEvaluationOptimizedUnivariate(mpfr_t y, int nodeType, node *g, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_exp_t *maxPrecUsed, node *f) {
+static inline point_eval_t __tryFaithEvaluationOptimizedUnivariate(mpfr_t y, int nodeType, node *g, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_exp_t *maxPrecUsed, node *f, node *mr) {
   mpfr_srcptr gyptr;
   int ternary;
   mp_prec_t prec;
@@ -6491,7 +6491,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedUnivariate(mpfr_t y, int
   if ((cutoffX >= 0) || (cutoffX < mpfr_get_emin_min())) cutoffX = mpfr_get_emin_min();
   t = chooseAndInitMpfrPtr(&v_t, prec);
   recMaxPrecUsed = 0;
-  resG = __tryFaithEvaluationOptimizedDoIt(*t, g, x, cutoffX, minPrec, &recMaxPrecUsed);
+  resG = __tryFaithEvaluationOptimizedDoIt(*t, g, x, cutoffX, minPrec, &recMaxPrecUsed, g);
   __tryFaithEvaluationOptimizedUpdateMaxPrec(maxPrecUsed, recMaxPrecUsed);
   switch (resG) {
   case POINT_EVAL_FAILURE:
@@ -6565,7 +6565,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedUnivariate(mpfr_t y, int
       break;
     case LIBRARYFUNCTION:
     case PROCEDUREFUNCTION:
-      res = __tryFaithEvaluationOptimizedUnivariateImpreciseArg(y, nodeType, *t, resG, cutoff, cutoffX, f);
+      res = __tryFaithEvaluationOptimizedUnivariateImpreciseArg(y, nodeType, *t, resG, cutoff, cutoffX, f, mr);
       clearChosenMpfrPtr(t, &v_t);
       return res;
       break;
@@ -6583,7 +6583,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedUnivariate(mpfr_t y, int
   case POINT_EVAL_FAITHFULLY_ROUNDED:
   case POINT_EVAL_FAITHFULLY_ROUNDED_PROVEN_INEXACT:
   case POINT_EVAL_BELOW_CUTOFF:
-    res = __tryFaithEvaluationOptimizedUnivariateImpreciseArg(y, nodeType, *t, resG, cutoff, cutoffX, f);
+    res = __tryFaithEvaluationOptimizedUnivariateImpreciseArg(y, nodeType, *t, resG, cutoff, cutoffX, f, mr);
     clearChosenMpfrPtr(t, &v_t);
     return res;
     break;
@@ -6974,7 +6974,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedDeducedLowerPrecResult(m
   return res;
 }
 
-static inline point_eval_t __tryFaithEvaluationOptimizedDoIt(mpfr_t y, node *f, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_prec_t *maxPrecUsed) { 
+static inline point_eval_t __tryFaithEvaluationOptimizedDoIt(mpfr_t y, node *f, mpfr_t x, mp_exp_t cutoff, mp_prec_t minPrec, mp_prec_t *maxPrecUsed, node *mr) { 
   point_eval_t res;
   int hookGivesSomeAccuracy;
 
@@ -7004,7 +7004,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedDoIt(mpfr_t y, node *f, 
       res = __tryFaithEvaluationOptimizedHooks(y, f->evaluationHook, x, cutoff, minPrec, maxPrecUsed, &hookGivesSomeAccuracy);
       if (hookGivesSomeAccuracy) return res;
       if (res == POINT_EVAL_FAILURE) {
-	res = __tryFaithEvaluationOptimizedDoIt(y, getMemRefChild(f), x, cutoff, minPrec, maxPrecUsed);
+	res = __tryFaithEvaluationOptimizedDoIt(y, getMemRefChild(f), x, cutoff, minPrec, maxPrecUsed, f);
       }
     } 
     if ((res != POINT_EVAL_FAILURE) && (f->libFunDeriv >= 2) && mpfr_number_p(y)) {
@@ -7053,7 +7053,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedDoIt(mpfr_t y, node *f, 
     break;
   case NEG:
     /* So terribly trivial that we do it here */
-    res = __tryFaithEvaluationOptimizedDoIt(y, f->child1, x, cutoff, minPrec, maxPrecUsed);
+    res = __tryFaithEvaluationOptimizedDoIt(y, f->child1, x, cutoff, minPrec, maxPrecUsed, f->child1);
     if (res != POINT_EVAL_FAILURE) {
       mpfr_neg(y, y, GMP_RNDN); /* exact */
     }
@@ -7082,7 +7082,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedDoIt(mpfr_t y, node *f, 
   case EXP_M1:
   case LIBRARYFUNCTION:
   case PROCEDUREFUNCTION:
-    return __tryFaithEvaluationOptimizedUnivariate(y, f->nodeType, f->child1, x, cutoff, minPrec, maxPrecUsed, f);
+    return __tryFaithEvaluationOptimizedUnivariate(y, f->nodeType, f->child1, x, cutoff, minPrec, maxPrecUsed, f, mr);
     break;
   default:
     return POINT_EVAL_FAILURE;
@@ -7103,7 +7103,7 @@ static inline int __tryFaithEvaluationOptimized(int *retVal, mpfr_t y, node *fun
   if (!mpfr_number_p(x)) return 0;
   
   /* Call inner function and translate the success information */
-  res = __tryFaithEvaluationOptimizedDoIt(y, func, x, cutoff, minPrec, maxPrecUsed);
+  res = __tryFaithEvaluationOptimizedDoIt(y, func, x, cutoff, minPrec, maxPrecUsed, func);
   switch (res) {
   case POINT_EVAL_FAILURE:
     return 0;

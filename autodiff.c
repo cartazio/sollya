@@ -1416,7 +1416,7 @@ void procedureFunction_diff(sollya_mpfi_t *res, node *f, sollya_mpfi_t x, int n,
   sollya_mpfi_set_ui(fact, 1);
 
   for(i=0;i<=n;i++) {
-    computeFunctionWithProcedure(res[i], accessThruMemRef(f)->child2, x, (unsigned int) (accessThruMemRef(f)->libFunDeriv + i));
+    computeFunctionWithProcedure(res[i], accessThruMemRef(f)->child2, x, (unsigned int) (accessThruMemRef(f)->libFunDeriv + i), f);
     sollya_mpfi_div(res[i], res[i], fact);
     sollya_mpfi_mul_ui(fact, fact, i+1);
   }
