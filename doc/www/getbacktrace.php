@@ -80,7 +80,7 @@ passed_args element evaluates to an end-elliptic list.
 &nbsp;&nbsp;&nbsp;&nbsp; 	&nbsp;&nbsp;var L, t;<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; 	&nbsp;&nbsp;"number of arguments: ", X;<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; 	&nbsp;&nbsp;L = getbacktrace();<br> 
-&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"Backtrace:";<br> 
+&nbsp;&nbsp;&nbsp;&nbsp; 	&nbsp;&nbsp;"Backtrace:";<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; 	&nbsp;&nbsp;for t in L do {<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; 	&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;&nbsp;" @ objectname(t.called_proc) @ ", ", t.passed_args;<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; 	&nbsp;&nbsp;};<br> 

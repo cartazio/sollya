@@ -77,7 +77,7 @@ return void;
         var L, t;
         "number of arguments: ", X;
         L = getbacktrace();
-            "Backtrace:";
+        "Backtrace:";
         for t in L do {
           "  " @ objectname(t.called_proc) @ ", ", t.passed_args;
         };
