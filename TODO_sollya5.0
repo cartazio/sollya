@@ -6,16 +6,6 @@ Bugs fixed
 Problems solved, without bug report number
 ------------------------------------------
 @rev:
-95ccf7f -- [ ] should create a bug report   [ ] worth mentioning   ---> must be understood
-
-Understood, see my message on ICQ:
-
-(04:21:51 PM) Christoph: Alors, le 95ccf7f n'est pas un bogue proprement dit: c'est un bogue d'inefficacité
-(04:22:34 PM) Christoph: Sans le test rajouté à ce commit on fait deux fois une évaluatuion sur [-infty;infty] au lieu d'une seule
-(04:23:30 PM) Christoph: comme ça a été fait sur la branche "impriovedEvaluate", c'était ce type de problèùes que j'étais en train de regarder
-(04:23:52 PM) Christoph: mais je ne pense plus qu'il s'agisse d'un bogue proprement dit
- 
-
 0513d99 -- [x] should create a bug report   [x] worth mentioning
 
 
@@ -47,8 +37,6 @@ Timecheck does not work anymore on some particular architectures
 Test what version of GMP, MPFR, MPFI are required and update documentation accordingly
 
 Write tests for sollya_lib_printlibrary_message (try below/above current verbosity level and with/without a callback. Also, in the tool with a externalproc and suppressmessage) [SC]
-Write tests for __unique_id (change after a restart, is made of [0-9a-zA-Z_\-]) [SC]
-Modify the doc of == [SC]
 Document sollya_lib_cmp_objs_structurrally and add tests for the comparison of error and nan [SC]
 Check tests for annotatefunction [SC]
 Check tests for getbacktrace [SC]
