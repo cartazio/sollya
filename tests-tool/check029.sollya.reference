@@ -144,6 +144,43 @@ getbacktrace();
 return void;
 } }|]
 The tool has been restarted.
+=============== Test number 10b ================
+X = 17, Y = 42
+X = 42
+Current backtrace:
+[|{ .passed_args = [| |], .called_proc = proc()
+{
+"Current backtrace:";
+getbacktrace();
+return void;
+} }, { .passed_args = [|42|], .called_proc = proc(X)
+{
+"X = ", X;
+testA();
+return void;
+} }, { .passed_args = [|17, 42|], .called_proc = proc(X, Y)
+{
+"X = ", X, ", Y = ", Y;
+testB(Y);
+return void;
+} }|]
+The tool has been restarted.
+=============== Test number 10c ================
+[| |]
+The tool has been restarted.
+=============== Test number 10d ================
+l[17] = 42
+number of arguments: infty
+Backtrace:
+  printnumargs, [|infty|]
+  numargs, [|25, 26, 27...|]
+  test1, [| |]
+number of arguments: 3
+Backtrace:
+  printnumargs, [|3|]
+  numargs, [|1, 2, 3|]
+  test2, [|[|1, 2, 3|]|]
+The tool has been restarted.
 =============== Test number 11 ================
 Using procedure function exponential with X = [0.25;0.25], n = 0, p = 100
 Warning: rounding has happened. The value displayed is a faithful rounding to 80 bits of the true result.

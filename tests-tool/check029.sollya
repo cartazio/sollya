@@ -231,6 +231,40 @@ procedure test(l=...) { getbacktrace(); };
 test @ [|1, "Coucou", 3...|];
 
 restart;
+print("=============== Test number 10b ================");
+/* Elementary test for getbacktrace */
+procedure testA() { "Current backtrace:"; getbacktrace(); };
+procedure testB(X) {"X = ", X; testA(); };
+procedure testC(X, Y) {"X = ", X, ", Y = ", Y; testB(Y); };
+testC(17, 42);
+
+restart;
+print("=============== Test number 10c ================");
+/* getbacktrace at top level returns an empty list */
+getbacktrace();
+
+restart;
+print("=============== Test number 10d ================");
+/* getbacktrace togther with objectname. Example of a procedure accepting a list as argument, and of a procedure with an arbitrary number of arguments */
+procedure printnumargs(X) {
+  var L, t;
+  "number of arguments: ", X;
+  L = getbacktrace();
+  "Backtrace:";
+  for t in L do {
+    "  " @ objectname(t.called_proc) @ ", ", t.passed_args;
+  };
+};
+procedure numargs(l = ...) {
+  if (length(l)>17) then "l[17] = ", l[17];
+  printnumargs(length(l));
+};
+procedure test1() { numargs @ [|25, 26, 27 ...|]; };
+procedure test2(x) { numargs @ x; };
+test1();
+test2([|1,2,3|]);
+
+restart;
 print("=============== Test number 11 ================");
 /* Non regression test for bug [#20071] Using annotatefunction leads to a unexpected approximation warning. */
 verbosity = 1!;
