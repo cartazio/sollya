@@ -148,7 +148,7 @@ void freeEvaluationHook(eval_hook_t **hookPtr) {
 
 int evaluateWithEvaluationHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec, int tight, eval_hook_t *hook) {
   eval_hook_t *curr;
-  int res, resCurr;
+  int res, resCurr, yOnceSet, inconsistency;
 
   if (hook == NULL) return 0;
 
@@ -167,6 +167,8 @@ int evaluateWithEvaluationHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec,
 
   /* Loose evaluation */
   res = 0;
+  yOnceSet = 0;
+  inconsistency = 0;
   for (curr=hook;curr!=NULL;curr=curr->nextHook) {
     if (curr->gettingUsed <= 0) {
       curr->gettingUsed = 1;
@@ -178,20 +180,27 @@ int evaluateWithEvaluationHook(sollya_mpfi_t y, sollya_mpfi_t x, mp_prec_t prec,
       }
       resCurr = curr->evaluateHook(curr->reuseMPFI,x,prec,tight,curr->data);
       if (resCurr) {
-	if (res) {
+	res = 1;
+	if (yOnceSet) {
 	  sollya_mpfi_intersect(y, y, curr->reuseMPFI);
 	  if (sollya_mpfi_is_empty(y)) {
+	    printMessage(1,SOLLYA_MSG_ANNOTATION_INCOHERENT,"Warning: an inconsistency has been detected between the results obtained with the evaluation of two distinct annotations of the same function.\n");
+	    sollya_mpfi_set(y, curr->reuseMPFI);
 	    res = 0;
+	    inconsistency = 1;
 	  }
 	} else {
-	  res = 1;
+	  yOnceSet = 1;
 	  sollya_mpfi_set(y, curr->reuseMPFI);
 	}
       }
       curr->gettingUsed = 0;
     } 
   }
-
+  if (inconsistency) {
+    res = 0;
+  }
+  
   return res;
 }
 
