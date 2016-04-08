@@ -38,9 +38,6 @@ Test what version of GMP, MPFR, MPFI are required and update documentation accor
 
 Write tests for sollya_lib_printlibrary_message (try below/above current verbosity level and with/without a callback. Also, in the tool with a externalproc and suppressmessage) [SC]
 Document sollya_lib_cmp_objs_structurrally and add tests for the comparison of error and nan [SC]
-Check tests for annotatefunction [SC]
-Check tests for getbacktrace [SC]
-Make proper tests for objectname (when scope overwrite each other) [SC]
 
 NEWS file
 ---------
