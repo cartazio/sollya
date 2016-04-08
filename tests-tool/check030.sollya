@@ -100,7 +100,7 @@ t(133/100);
          oldPrec=prec; prec=p!;
          res=f(X);
          prec=oldPrec!;
-         print(s @ " (X=" @ X @ ", p=" @ p @ " res="@ res @ ")");
+         print(s @ " (X=" @ X @ ", f=" @ f @ ", p=" @ p @ " res="@ res @ ")");
        }
        else res = proc_aux(X,n-1,p,s,diff(f));
        return res;
@@ -110,7 +110,8 @@ t(133/100);
 /* In this test we create two annotations with overlapping domains and with inconsistent values */
 print("=============== Check #3 ================");
 restart;
-procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
+roundingwarnings=on;
+procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", f=" @ f @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
 f = cos(x);
 procedure main_g(X,n,p) { return proc_aux(X,n,p, "Main function", f); };
 procedure g1(X,n,p) { return proc_aux(X,n,p, "Annotation 1", 1); };
@@ -124,7 +125,8 @@ g(0.75);
 /* Same as check #3 but with more accurate annotations */
 print("=============== Check #4 ================");
 restart;
-procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
+roundingwarnings=on;
+procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", f=" @ f @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
 f = cos(x);
 procedure main_g(X,n,p) { return proc_aux(X,n,p, "Main function", f); };
 procedure g1(X,n,p) { return proc_aux(X,n,p, "Annotation 1", 1); };
@@ -138,7 +140,8 @@ g(0.75);
 /* Same as check #3 but with a first call before setting the second annotation in order to cache the value */
 print("=============== Check #5 ================");
 restart;
-procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
+roundingwarnings=on;
+procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", f=" @ f @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
 f = cos(x);
 procedure main_g(X,n,p) { return proc_aux(X,n,p, "Main function", f); };
 procedure g1(X,n,p) { return proc_aux(X,n,p, "Annotation 1", 1); };
@@ -153,7 +156,8 @@ g(0.75);
 /* Same as check #4 but with a first call before setting the second annotation in order to cache the value */
 print("=============== Check #6 ================");
 restart;
-procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
+roundingwarnings=on;
+procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", f=" @ f @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
 f = cos(x);
 procedure main_g(X,n,p) { return proc_aux(X,n,p, "Main function", f); };
 procedure g1(X,n,p) { return proc_aux(X,n,p, "Annotation 1", 1); };
@@ -169,7 +173,8 @@ g(0.75);
 /* Same as check #3 but the evaluation is made at a precision where the annotations are useless */
 print("=============== Check #7 ================");
 restart;
-procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
+roundingwarnings=on;
+procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", f=" @ f @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
 f = cos(x);
 procedure main_g(X,n,p) { return proc_aux(X,n,p, "Main function", f); };
 procedure g1(X,n,p) { return proc_aux(X,n,p, "Annotation 1", 1); };
@@ -188,7 +193,8 @@ g(0.75);
 /* In this test we create two annotations with overlapping domains and with consistent values */
 print("=============== Check #8 ================");
 restart;
-procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
+roundingwarnings=on;
+procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", f=" @ f @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
 f = cos(x);
 procedure main_g(X,n,p) { return proc_aux(X,n,p, "Main function", f); };
 procedure g1(X,n,p) { return proc_aux(X,n,p, "Annotation 1", f); };
@@ -202,7 +208,8 @@ g(0.75);
 /* Same as check #8 but with more accurate annotations */
 print("=============== Check #9 ================");
 restart;
-procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
+roundingwarnings=on;
+procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", f=" @ f @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
 f = cos(x);
 procedure main_g(X,n,p) { return proc_aux(X,n,p, "Main function", f); };
 procedure g1(X,n,p) { return proc_aux(X,n,p, "Annotation 1", f); };
@@ -216,7 +223,8 @@ g(0.75);
 /* Same as check #8 but with a first call before setting the second annotation in order to cache the value */
 print("=============== Check #10 ================");
 restart;
-procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
+roundingwarnings=on;
+procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", f=" @ f @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
 f = cos(x);
 procedure main_g(X,n,p) { return proc_aux(X,n,p, "Main function", f); };
 procedure g1(X,n,p) { return proc_aux(X,n,p, "Annotation 1", f); };
@@ -231,7 +239,8 @@ g(0.75);
 /* Same as check #9 but with a first call before setting the second annotation in order to cache the value */
 print("=============== Check #11 ================");
 restart;
-procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
+roundingwarnings=on;
+procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", f=" @ f @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
 f = cos(x);
 procedure main_g(X,n,p) { return proc_aux(X,n,p, "Main function", f); };
 procedure g1(X,n,p) { return proc_aux(X,n,p, "Annotation 1", f); };
@@ -247,7 +256,8 @@ g(0.75);
 /* Same as check #8 but the evaluation is made at a precision where the annotations are useless */
 print("=============== Check #12 ================");
 restart;
-procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
+roundingwarnings=on;
+procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", f=" @ f @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
 f = cos(x);
 procedure main_g(X,n,p) { return proc_aux(X,n,p, "Main function", f); };
 procedure g1(X,n,p) { return proc_aux(X,n,p, "Annotation 1", f); };
@@ -263,7 +273,8 @@ g(0.75);
 /* In this check, we define two concurrent annotations providing approximations with different accuracies for the same domain */
 print("=============== Check #13 ================");
 restart;
-procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
+roundingwarnings=on;
+procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", f=" @ f @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
 f = cos(x);
 procedure main_g(X,n,p) { return proc_aux(X,n,p, "Main function", f); };
 procedure g1(X,n,p) { return proc_aux(X,n,p, "Annotation 1", f); };
@@ -277,7 +288,8 @@ g(0.75);
 /* Same as check #13, but the annotations are registered in reverse order */
 print("=============== Check #14 ================");
 restart;
-procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
+roundingwarnings=on;
+procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", f=" @ f @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
 f = cos(x);
 procedure main_g(X,n,p) { return proc_aux(X,n,p, "Main function", f); };
 procedure g1(X,n,p) { return proc_aux(X,n,p, "Annotation 1", f); };
@@ -291,8 +303,9 @@ g(0.75);
 /* In this test, we check how functions compare when annotated (or not) and how annotations are transmitted through composition and differentiation */
 print("=============== Check #15 ================");
 restart;
+roundingwarnings=on;
 f = cos(x);
-procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
+procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", f=" @ f @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
 procedure g1(X,n,p) { return proc_aux(X,n,p, "Annotation 1", f); };
 g = annotatefunction(f, function(g1), [0,1], [-1b-40, 1b-40]);
 h = cos(x);

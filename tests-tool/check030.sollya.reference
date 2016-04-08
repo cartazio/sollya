@@ -92,116 +92,150 @@ The precision has been set to 24 bits.
 0.6412912
 =============== Check #3 ================
 The tool has been restarted.
+Rounding warning mode has been activated.
 The precision has been set to 15 bits.
-Annotation 2 (X=[0.75;0.75], p=45 res=[2;2])
-Annotation 1 (X=[0.75;0.75], p=45 res=[1;1])
+Annotation 2 (X=[0.75;0.75], f=2, p=45 res=[2;2])
+Annotation 1 (X=[0.75;0.75], f=1, p=45 res=[1;1])
 Warning: an inconsistency has been detected between the results obtained with the evaluation of two distinct annotations of the same function.
 Warning: an inconsistency has been detected between the results obtained with the evaluation of two distinct annotations of the same function.
-Main function (X=[0.75;0.75], p=35 res=[0.73168886887;0.7316888689])
-Annotation 2 (X=[0.75;0.75], p=62 res=[2;2])
-Annotation 1 (X=[0.75;0.75], p=62 res=[1;1])
+Main function (X=[0.75;0.75], f=cos(x), p=35 res=[0.73168886887;0.7316888689])
+Annotation 2 (X=[0.75;0.75], f=2, p=62 res=[2;2])
+Annotation 1 (X=[0.75;0.75], f=1, p=62 res=[1;1])
 Warning: an inconsistency has been detected between the results obtained with the evaluation of two distinct annotations of the same function.
+Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
 0.7317
 =============== Check #4 ================
 The tool has been restarted.
+Rounding warning mode has been activated.
 The precision has been set to 15 bits.
-Annotation 2 (X=[0.75;0.75], p=45 res=[2;2])
+Annotation 2 (X=[0.75;0.75], f=2, p=45 res=[2;2])
+Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
 2
 =============== Check #5 ================
 The tool has been restarted.
+Rounding warning mode has been activated.
 The precision has been set to 15 bits.
-Annotation 1 (X=[0.75;0.75], p=45 res=[1;1])
-Annotation 1 (X=[0.75;0.75], p=62 res=[1;1])
+Annotation 1 (X=[0.75;0.75], f=1, p=45 res=[1;1])
+Annotation 1 (X=[0.75;0.75], f=1, p=62 res=[1;1])
+Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
 1
-Annotation 2 (X=[0.75;0.75], p=45 res=[2;2])
+Annotation 2 (X=[0.75;0.75], f=2, p=45 res=[2;2])
 Warning: an inconsistency has been detected between the results obtained with the evaluation of two distinct annotations of the same function.
 Warning: an inconsistency has been detected between the results obtained with the evaluation of two distinct annotations of the same function.
-Main function (X=[0.75;0.75], p=35 res=[0.73168886887;0.7316888689])
+Main function (X=[0.75;0.75], f=cos(x), p=35 res=[0.73168886887;0.7316888689])
+Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
 1
 =============== Check #6 ================
 The tool has been restarted.
+Rounding warning mode has been activated.
 The precision has been set to 15 bits.
-Annotation 1 (X=[0.75;0.75], p=45 res=[1;1])
+Annotation 1 (X=[0.75;0.75], f=1, p=45 res=[1;1])
+Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
 1
-Annotation 2 (X=[0.75;0.75], p=45 res=[2;2])
+Annotation 2 (X=[0.75;0.75], f=2, p=45 res=[2;2])
+Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
 1
 =============== Check #7 ================
 The tool has been restarted.
+Rounding warning mode has been activated.
 The precision has been set to 50 bits.
-Annotation 2 (X=[0.75;0.75], p=80 res=[2;2])
-Annotation 1 (X=[0.75;0.75], p=80 res=[1;1])
+Annotation 2 (X=[0.75;0.75], f=2, p=80 res=[2;2])
+Annotation 1 (X=[0.75;0.75], f=1, p=80 res=[1;1])
 Warning: an inconsistency has been detected between the results obtained with the evaluation of two distinct annotations of the same function.
 Warning: an inconsistency has been detected between the results obtained with the evaluation of two distinct annotations of the same function.
-Main function (X=[0.75;0.75], p=70 res=[0.7316888688738208863116;0.731688868873820886312])
-Annotation 2 (X=[0.75;0.75], p=115 res=[2;2])
-Annotation 1 (X=[0.75;0.75], p=115 res=[1;1])
+Main function (X=[0.75;0.75], f=cos(x), p=70 res=[0.7316888688738208863116;0.731688868873820886312])
+Annotation 2 (X=[0.75;0.75], f=2, p=115 res=[2;2])
+Annotation 1 (X=[0.75;0.75], f=1, p=115 res=[1;1])
 Warning: an inconsistency has been detected between the results obtained with the evaluation of two distinct annotations of the same function.
+Warning: rounding has happened. The value displayed is a faithful rounding to 50 bits of the true result.
 0.731688868873821
 =============== Check #8 ================
 The tool has been restarted.
+Rounding warning mode has been activated.
 The precision has been set to 15 bits.
-Annotation 2 (X=[0.75;0.75], p=45 res=[0.73168886887382;0.73168886887385])
-Annotation 1 (X=[0.75;0.75], p=45 res=[0.73168886887382;0.73168886887385])
-Annotation 2 (X=[0.75;0.75], p=62 res=[0.7316888688738208862;0.7316888688738208864])
-Annotation 1 (X=[0.75;0.75], p=62 res=[0.7316888688738208862;0.7316888688738208864])
+Annotation 2 (X=[0.75;0.75], f=cos(x), p=45 res=[0.73168886887382;0.73168886887385])
+Annotation 1 (X=[0.75;0.75], f=cos(x), p=45 res=[0.73168886887382;0.73168886887385])
+Annotation 2 (X=[0.75;0.75], f=cos(x), p=62 res=[0.7316888688738208862;0.7316888688738208864])
+Annotation 1 (X=[0.75;0.75], f=cos(x), p=62 res=[0.7316888688738208862;0.7316888688738208864])
+Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
 0.7317
 =============== Check #9 ================
 The tool has been restarted.
+Rounding warning mode has been activated.
 The precision has been set to 15 bits.
-Annotation 2 (X=[0.75;0.75], p=45 res=[0.73168886887382;0.73168886887385])
+Annotation 2 (X=[0.75;0.75], f=cos(x), p=45 res=[0.73168886887382;0.73168886887385])
+Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
 0.7317
 =============== Check #10 ================
 The tool has been restarted.
+Rounding warning mode has been activated.
 The precision has been set to 15 bits.
-Annotation 1 (X=[0.75;0.75], p=45 res=[0.73168886887382;0.73168886887385])
-Annotation 1 (X=[0.75;0.75], p=62 res=[0.7316888688738208862;0.7316888688738208864])
+Annotation 1 (X=[0.75;0.75], f=cos(x), p=45 res=[0.73168886887382;0.73168886887385])
+Annotation 1 (X=[0.75;0.75], f=cos(x), p=62 res=[0.7316888688738208862;0.7316888688738208864])
+Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
 0.7317
-Annotation 2 (X=[0.75;0.75], p=45 res=[0.73168886887382;0.73168886887385])
+Annotation 2 (X=[0.75;0.75], f=cos(x), p=45 res=[0.73168886887382;0.73168886887385])
+Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
 0.7317
 =============== Check #11 ================
 The tool has been restarted.
+Rounding warning mode has been activated.
 The precision has been set to 15 bits.
-Annotation 1 (X=[0.75;0.75], p=45 res=[0.73168886887382;0.73168886887385])
+Annotation 1 (X=[0.75;0.75], f=cos(x), p=45 res=[0.73168886887382;0.73168886887385])
+Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
 0.7317
-Annotation 2 (X=[0.75;0.75], p=45 res=[0.73168886887382;0.73168886887385])
+Annotation 2 (X=[0.75;0.75], f=cos(x), p=45 res=[0.73168886887382;0.73168886887385])
+Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
 0.7317
 =============== Check #12 ================
 The tool has been restarted.
+Rounding warning mode has been activated.
 The precision has been set to 50 bits.
-Annotation 2 (X=[0.75;0.75], p=80 res=[0.731688868873820886311838;0.731688868873820886311839])
-Annotation 1 (X=[0.75;0.75], p=80 res=[0.731688868873820886311838;0.731688868873820886311839])
-Annotation 2 (X=[0.75;0.75], p=115 res=[0.73168886887382088631183875300008453;0.73168886887382088631183875300008455])
-Annotation 1 (X=[0.75;0.75], p=115 res=[0.73168886887382088631183875300008453;0.73168886887382088631183875300008455])
-Annotation 2 (X=[0.75;0.75], p=125 res=[0.73168886887382088631183875300008454383;0.73168886887382088631183875300008454385])
-Annotation 1 (X=[0.75;0.75], p=125 res=[0.73168886887382088631183875300008454383;0.73168886887382088631183875300008454385])
-Main function (X=[0.75;0.75], p=70 res=[0.7316888688738208863116;0.731688868873820886312])
+Annotation 2 (X=[0.75;0.75], f=cos(x), p=80 res=[0.731688868873820886311838;0.731688868873820886311839])
+Annotation 1 (X=[0.75;0.75], f=cos(x), p=80 res=[0.731688868873820886311838;0.731688868873820886311839])
+Annotation 2 (X=[0.75;0.75], f=cos(x), p=115 res=[0.73168886887382088631183875300008453;0.73168886887382088631183875300008455])
+Annotation 1 (X=[0.75;0.75], f=cos(x), p=115 res=[0.73168886887382088631183875300008453;0.73168886887382088631183875300008455])
+Annotation 2 (X=[0.75;0.75], f=cos(x), p=125 res=[0.73168886887382088631183875300008454383;0.73168886887382088631183875300008454385])
+Annotation 1 (X=[0.75;0.75], f=cos(x), p=125 res=[0.73168886887382088631183875300008454383;0.73168886887382088631183875300008454385])
+Main function (X=[0.75;0.75], f=cos(x), p=70 res=[0.7316888688738208863116;0.731688868873820886312])
+Warning: rounding has happened. The value displayed is a faithful rounding to 50 bits of the true result.
 0.731688868873821
 =============== Check #13 ================
 The tool has been restarted.
+Rounding warning mode has been activated.
 The precision has been set to 15 bits.
-Annotation 2 (X=[0.75;0.75], p=45 res=[0.73168886887382;0.73168886887385])
+Annotation 2 (X=[0.75;0.75], f=cos(x), p=45 res=[0.73168886887382;0.73168886887385])
+Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
 0.7317
 =============== Check #14 ================
 The tool has been restarted.
+Rounding warning mode has been activated.
 The precision has been set to 15 bits.
-Annotation 1 (X=[0.75;0.75], p=45 res=[0.73168886887382;0.73168886887385])
+Annotation 1 (X=[0.75;0.75], f=cos(x), p=45 res=[0.73168886887382;0.73168886887385])
+Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
 0.7317
 =============== Check #15 ================
 The tool has been restarted.
+Rounding warning mode has been activated.
 The precision has been set to 15 bits.
 true
 true
 true
 true
-Annotation 1 (X=[0;0], p=45 res=[1;1])
+Annotation 1 (X=[0;0], f=cos(x), p=45 res=[1;1])
 1
-Annotation 1 (X=[0.125;0.125], p=45 res=[0.9921976672293;0.99219766722933])
+Annotation 1 (X=[0.125;0.125], f=cos(x), p=45 res=[0.9921976672293;0.99219766722933])
+Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
 0.9922
+Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
 0.9689
-Annotation 1 (X=[0.5;0.5], p=55 res=[0.8775825618903727;0.87758256189037273])
-Annotation 1 (X=[0.5;0.5], p=65 res=[0.8775825618903727161;0.87758256189037271613])
-Annotation 1 (X=[0.5;0.5], p=92 res=[0.8775825618903727161162815826;0.8775825618903727161162815828])
+Annotation 1 (X=[0.5;0.5], f=cos(x), p=55 res=[0.8775825618903727;0.87758256189037273])
+Annotation 1 (X=[0.5;0.5], f=cos(x), p=65 res=[0.8775825618903727161;0.87758256189037271613])
+Annotation 1 (X=[0.5;0.5], f=cos(x), p=92 res=[0.8775825618903727161162815826;0.8775825618903727161162815828])
+Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
 1.87756
+Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
 -0.81097
-Annotation 1 (X=[0.75;0.75], p=55 res=[0.73168886887382087;0.7316888688738209])
+Annotation 1 (X=[0.75;0.75], f=cos(x), p=55 res=[0.73168886887382087;0.7316888688738209])
+Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
 -0.9975
