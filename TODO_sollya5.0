@@ -17,7 +17,6 @@ New features
 Global improvement of the evaluations within Sollya                              -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 Improvement of interval-arithmetic pow function                                  -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 Fixed problem of persisting gnuplot files (see @ref 8cb140c)                     -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
-Command 'execute' now available in library mode                                  -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning --> TODO SC
 Feature 'execute_procedure' in library mode                                      -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning --> TODO SC
 New API sollya_lib_obj_is_procedure (see @rev e00e45c b53566d3 )                 -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning --> TODO SC
 New API sollya_lib_obj_is_external_procedure (see @rev c629)                     -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning --> TODO SC
@@ -49,6 +48,7 @@ New function sollya_lib_hash in the library
 New function annotatefunction.
 New function getbacktrace
 New function objectname
+Command 'execute' is now available in library mode
 Fixed bug [#18992]: degree(x^(2^(2^80))) returns -1 without a warning
 Fixed bug [#17197]: tests do not work on VPATH build
 Fixed bug [#20056]: division by zero in degree(diff((1+x)^3000))
