@@ -17,7 +17,6 @@ New features
 Global improvement of the evaluations within Sollya                              -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 Improvement of interval-arithmetic pow function                                  -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 Fixed problem of persisting gnuplot files (see @ref 8cb140c)                     -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
-Feature 'execute_procedure' in library mode                                      -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning --> TODO SC
 New API sollya_lib_obj_is_procedure (see @rev e00e45c b53566d3 )                 -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning --> TODO SC
 New API sollya_lib_obj_is_external_procedure (see @rev c629)                     -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning --> TODO SC
 New API sollya_lib_obj_is_library_constant (see @rev c59)                        -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning --> TODO SC
@@ -42,6 +41,7 @@ NEWS file
 ---------
 Suppress option for compiling without memrefs
 New function void sollya_lib_printlibrarymessage(int verb, const char *str) in the library
+New functions sollya_lib_execute_procedure and sollya_lib_v_execute_procedure in the library
 New --args option to pass command line (bash) arguments to a Sollya script
 New feature __unique_id
 New function sollya_lib_hash in the library

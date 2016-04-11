@@ -1,11 +1,22 @@
 a = 1, b = 2
 Coucou
 l = [|1, 2, 3|]
+l = [|void|]
 proc1 = proc(a, b)
 {
 "a = ", a, ", b = ", b;
 return (a) + (b);
 }, args = 1, 2: result = 3
+proc1 = proc(a, b)
+{
+"a = ", a, ", b = ", b;
+return (a) + (b);
+}, args = 1: result = error
+proc1 = proc(a, b)
+{
+"a = ", a, ", b = ", b;
+return (a) + (b);
+}, args = 1, 2, 3: result = error
 proc2 = proc()
 {
 write("Coucou\n");
@@ -16,3 +27,8 @@ proc3 = proc(l = ...)
 "l = ", l;
 return exp(_x_);
 }, args = 1, 2, 3: result = exp(_x_)
+proc3 = proc(l = ...)
+{
+"l = ", l;
+return exp(_x_);
+}: result = 1
