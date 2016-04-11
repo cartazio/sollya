@@ -316,3 +316,66 @@ match error with @NaN@: ("Is a NaN") default: ("Is not a NaN");
 match b with @NaN@: ("Is a NaN") default: ("Is not a NaN");
 match @NaN@ with @NaN@: ("Is a NaN") default: ("Is not a NaN");
 match [||] with @NaN@: ("Is a NaN") default: ("Is not a NaN");
+
+restart;
+print("=============== Test number 13 ================");
+filename = "tmpFile-check029.sollya";
+count = 0;
+print("procedure contains(elem, L) {") > filename;
+print("  var t, res;") >> filename;
+print("  res = false;") >> filename;
+print("  for t in L do {") >> filename;
+print("    if elem == t then res = true;") >> filename;
+print("  };") >> filename;
+print("  return res;") >> filename;
+print("};\n") >> filename;
+for a1 in [|true,false|] do { for a2 in [|true,false|] do { for a3 in [|true,false|] do {
+  for b1 in [|true,false|] do { for b2 in [|true,false|] do { for b3 in [|true,false|] do {
+    for c1 in [|true,false|] do { for c2 in [|true,false|] do { for c3 in [|true,false|] do {
+      count = count + 1;
+      if a1 then print("a" @ count @ " = exp(x) + " @ count @ ";") >> filename;
+      if b1 then print("b" @ count @ " = cos(x);") >> filename;
+      if c1 then print("c" @ count @ " = cos(x);") >> filename;
+      print("procedure test() {") >> filename;
+      if a2 then print("  var a" @ count @ ";") >> filename;
+      if b2 then print("  var b" @ count @ ";") >> filename;
+      if c2 then print("  var c" @ count @ ";") >> filename;
+      if a2 then print("  a" @ count @ " = cos(x);") >> filename;
+      if b2 then print("  b" @ count @ " = exp(x) + " @ count @ ";") >> filename;
+      if c2 then print("  c" @ count @ " = cos(x);") >> filename;
+      print("  procedure test_inner() {") >> filename;
+      print("    var s, expected;") >> filename;
+      if a3 then print("    var a" @ count @ ";") >> filename;
+      if b3 then print("    var b" @ count @ ";") >> filename;
+      if c3 then print("    var c" @ count @ ";") >> filename;
+      if a3 then print("    a" @ count @ " = cos(x);") >> filename;
+      if b3 then print("    b" @ count @ " = cos(x);") >> filename;
+      if c3 then print("    c" @ count @ " = exp(x) + " @ count @ ";") >> filename;
+
+      expected = [||];
+      if c3 then expected = expected :. ("c" @ count);
+      if (b2 && (!b3)) then expected = expected :. ("b" @ count);
+      if (a1 && (!a2) && (!a3)) then expected = expected :. ("a" @ count);
+      display = hexadecimal!;
+      if expected == [||] then expected = [|"(exp(x)) + (" @ count @ ")"|];
+      print("    s = objectname(exp(x) + " @ count @ ");") >> filename;
+      display = decimal!;
+
+      print("    expected = " @ expected @ ";") >> filename;
+      print("    if (exp(x) + " @ count @ " != parse(s)) then print(\"Error detected [|a1,a2,a3,b1,b2,b3,c1,c2,c3|] = \", " @ [|a1,a2,a3,b1,b2,b3,c1,c2,c3|] @ ");") >> filename;
+      print("    if !contains(s, expected) then print(\"Unexpected \",s,\"(should belong to \", expected, \"). [|a1,a2,a3,b1,b2,b3,c1,c2,c3|] = \", " @ [|a1,a2,a3,b1,b2,b3,c1,c2,c3|] @ ");") >> filename;
+      print("    return void;") >> filename;
+      print("  };") >> filename;
+      print("  test_inner();") >> filename;
+      print("  return void;") >> filename;
+      print("};") >> filename;
+      print("test();\n") >> filename;
+    };};};
+  };};};
+};};};
+
+restart;
+print("Running systematic tests for objectname...");
+execute("tmpFile-check029.sollya");
+bashexecute("rm -rf tmpFile-check029.sollya");
+print("End of tests for objectname.");

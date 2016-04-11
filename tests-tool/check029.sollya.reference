@@ -235,3 +235,8 @@ error
 Is a NaN
 Is a NaN
 Is not a NaN
+The tool has been restarted.
+=============== Test number 13 ================
+The tool has been restarted.
+Running systematic tests for objectname...
+End of tests for objectname.
