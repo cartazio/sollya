@@ -4111,7 +4111,7 @@ static inline uint64_t constantHash(constant_t c) {
     hash = hashCombine(hash, hashInt(c->value.integer));
     break;
   case EXPRESSION:
-    hash = hashCombine(hash, hashThing(c->value.expr));
+    hash = hashCombine(hash, hashThingNoPolynomialHandling(c->value.expr));
     break;
   case MPFR:
     hash = hashCombine(hash, hashMpfr(c->value.mpfr));

@@ -586,6 +586,7 @@ int tryRepresentAsPolynomial(node *);
 int tryRepresentAsPolynomialNoConstants(node *);
 
 uint64_t hashThing(node *);
+uint64_t hashThingNoPolynomialHandling(node *);
 
 void freeBacktraceStack();
 
