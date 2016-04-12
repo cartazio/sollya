@@ -17,10 +17,24 @@ New features
 Global improvement of the evaluations within Sollya                              -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 Improvement of interval-arithmetic pow function                                  -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 Fixed problem of persisting gnuplot files (see @ref 8cb140c)                     -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
-New API sollya_lib_obj_is_procedure (see @rev e00e45c b53566d3 )                 -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning --> TODO SC
-New API sollya_lib_obj_is_external_procedure (see @rev c629)                     -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning --> TODO SC
-New API sollya_lib_obj_is_library_constant (see @rev c59)                        -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning --> TODO SC
-In library mode (void *) argument to externalproc, library_fun and library_cons  -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning --> TODO SC
+
+
+New API  (see @rev c629c562)                                                     -- [N] well-documented   [N] well-tested   [X] worth mentioning --> TODO SC
+  sollya_lib_obj_is_externalprocedure
+  sollya_lib_is_libraryconstant
+
+In library mode (void *) argument to                                             -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning --> TODO SC
+  sollya_lib_libraryconstant_with_data
+  sollya_lib_libraryfunction_with_data
+  sollya_lib_externalprocedure_with_data
+
+  sollya_lib_decompose_libraryfunction_with_data
+  sollya_lib_decompose_libraryconstant_with_data
+  sollya_lib_decompose_externalprocedure_with_data
+
+  sollya_lib_build_function_libraryconstant_with_data
+  sollya_lib_build_function_libraryfunction_with_data
+
 New API sollya_lib_get_subfunction and sollya_lib_[v]construct_function          -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 New API for deallocation in sollya_lib_decompose*_with_data                      -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 Unified externalprocedure and procedure with respect to list argument with @     -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
@@ -35,13 +49,13 @@ Timecheck does not work anymore on some particular architectures
 Test what version of GMP, MPFR, MPFI are required and update documentation accordingly
 
 Write tests for sollya_lib_printlibrary_message (try below/above current verbosity level and with/without a callback. Also, in the tool with a externalproc and suppressmessage) [SC]
-Document sollya_lib_cmp_objs_structurrally and add tests for the comparison of error and nan [SC]
 
 NEWS file
 ---------
 Suppress option for compiling without memrefs
 New function void sollya_lib_printlibrarymessage(int verb, const char *str) in the library
 New functions sollya_lib_execute_procedure and sollya_lib_v_execute_procedure in the library
+Added forgotten function sollya_lib_obj_is_procedure to the library
 New --args option to pass command line (bash) arguments to a Sollya script
 New feature __unique_id
 New function sollya_lib_hash in the library
