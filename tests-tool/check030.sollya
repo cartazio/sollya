@@ -323,3 +323,19 @@ h(0.25);
 u(0.5);
 v(0.625);
 s(0.75);
+
+restart;
+roundingwarnings=on;
+f = exp(x);
+procedure proc_aux(X,n,p,s,f) { var oldPrec, res; if n==0 then { oldPrec=prec; prec=p!; res=f(X); prec=oldPrec!; print(s @ " (X=" @ X @ ", f=" @ f @ ", p=" @ p @ " res="@ res @ ")"); } else res = proc_aux(X,n-1,p,s,diff(f)); return res; };
+procedure g1(X,n,p) { return proc_aux(X,n,p, "Annotation 1", f); };
+g = annotatefunction(f, function(g1), [0,1], [-1b-40, 1b-40]);
+prec=15;
+f(1b-1);
+g(1b-2);
+h = exp(x);
+h(1b-3);
+s = diff(g);
+s(1b-4);
+s == g;
+

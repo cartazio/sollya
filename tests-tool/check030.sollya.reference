@@ -239,3 +239,17 @@ Warning: rounding has happened. The value displayed is a faithful rounding to 15
 Annotation 1 (X=[0.75;0.75], f=cos(x), p=55 res=[0.73168886887382087;0.7316888688738209])
 Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
 -0.9975
+The tool has been restarted.
+Rounding warning mode has been activated.
+The precision has been set to 15 bits.
+Annotation 1 (X=[0.5;0.5], f=exp(x), p=45 res=[1.6487212707001;1.64872127070015])
+Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
+1.64874
+Annotation 1 (X=[0.25;0.25], f=exp(x), p=45 res=[1.2840254166877;1.28402541668777])
+Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
+1.284
+Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
+1.1332
+Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
+1.0645
+true
