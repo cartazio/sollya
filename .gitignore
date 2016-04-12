@@ -732,3 +732,4 @@ tests-tool/implementation.gappa
 tests-tool/libraryexample.a
 tests-tool/proof.txt
 tests-tool/timecheck.sh
+tests-tool/external_structural_cmp

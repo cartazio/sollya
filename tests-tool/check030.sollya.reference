@@ -253,3 +253,124 @@ Warning: rounding has happened. The value displayed is a faithful rounding to 15
 Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
 1.0645
 true
+=============== Check #16 ================
+The tool has been restarted.
+Comparing 1 and 1:
+true
+true
+Comparing 1 and 2:
+false
+false
+Comparing [||] and [||]:
+true
+true
+Comparing [||] and [|1|]:
+false
+false
+Comparing [1,2] and [1,2]:
+true
+true
+Comparing [1,2] and [1,3]:
+false
+false
+Comparing "Hello" and "Hello":
+true
+true
+Comparing "Hello" and "Hello!":
+false
+false
+Comparing [|1,2,3...|] and [|1,2,3|]:
+false
+false
+Comparing [|1,2,3...|] and [|1,2,3,4...|]:
+false
+false
+1
+1
+11
+11
+false
+false
+Comparing [|D,D...|] and [|D...|]:
+false
+false
+double
+double
+double
+double
+false
+false
+true
+true
+Comparing [|1,...,5|] and [|1,2,3,4,5|]:
+true
+true
+1
+1
+4
+4
+true
+true
+Comparing [||] and 1:
+false
+false
+Comparing [|1|] and 1:
+false
+false
+Comparing @NaN@ and @NaN@:
+true
+true
+Comparing @Inf@ and @Inf@:
+true
+true
+Comparing error and error:
+true
+true
+Comparing error and @NaN@:
+false
+false
+Comparing log(x) and log(x):
+true
+true
+Comparing exp(x)+1 and 1+exp(x):
+false
+false
+Comparing cmp(cos(x)^sin(x) and exp(sin(x)*log(cos(x)))):
+false
+false
+Comparing exp(x)*sin(x) and sin(x)*exp(x):
+false
+false
+Comparing (x+1)^3 and x^3+3*x^2+3*x+1:
+false
+true
+216
+216
+Comparing (x+1)^3 and x^3+3*x^2+3*x+1:
+false
+true
+true
+false
+true
+true
+true
+false
+true
+The precision has been set to 15 bits.
+Annotation 1 (X=[0.5;0.5], f=exp(x), p=45 res=[1.6487212707001;1.64872127070015])
+1.64874
+Annotation 1 (X=[0.25;0.25], f=exp(x), p=45 res=[1.2840254166877;1.28402541668777])
+1.284
+1.1332
+Comparison of an annotated function and its non-annotated version:
+true
+true
+true
+true
+1.0645
+Same comparison with diff(exp):
+true
+true
+true
+true
+true
