@@ -1,8 +1,8 @@
 #include <sollya.h>
 
 int main(void) {
-  sollya_obj_t a[51];
-  int t[51];
+  sollya_obj_t a[52];
+  int t[52];
   int i;
 
   sollya_lib_init();
@@ -58,8 +58,9 @@ int main(void) {
   a[48] = sollya_lib_build_function_cos(sollya_lib_constant_from_int(5));
   a[49] = sollya_lib_end_elliptic_list(NULL, 0);
   a[50] = sollya_lib_parse_string("{.a = 5; .b = exp(_x_)}");
+  a[51] = sollya_lib_parse_string("proc (a) { return a+1; }");
 
-  for(i=0;i<51;i++)  t[i] = sollya_lib_is_relative(a[i]);
+  for(i=0;i<52;i++)  t[i] = sollya_lib_is_relative(a[i]);
 
   if (t[0]) sollya_lib_printf("sollya_lib_is_relative detects absolute\n");
   if (t[1]) sollya_lib_printf("sollya_lib_is_relative detects binary\n");
@@ -111,9 +112,10 @@ int main(void) {
   if (t[47]) sollya_lib_printf("sollya_lib_is_relative detects TD(_x_).\n");
   if (t[48]) sollya_lib_printf("sollya_lib_is_relative detects a constant expression.\n");
   if (t[49]) sollya_lib_printf("sollya_lib_is_relative detects an empty end-elliptic list.\n");
-  if (t[50]) sollya_lib_printf("sollya_lib_obj_is_structure detects structure { .a = 5; .b = exp(_x_)}.\n");
+  if (t[50]) sollya_lib_printf("sollya_lib_is_relative detects structure { .a = 5; .b = exp(_x_)}.\n");
+  if (t[51]) sollya_lib_printf("sollya_lib_is_relative detects procedure proc(a) { return a+1; }.\n");
 
-  for(i=0;i<51;i++) sollya_lib_clear_obj(a[i]);
+  for(i=0;i<52;i++) sollya_lib_clear_obj(a[i]);
   sollya_lib_close();
   return 0;
 }

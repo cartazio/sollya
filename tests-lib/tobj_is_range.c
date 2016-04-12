@@ -111,7 +111,8 @@ int main(void) {
   if (t[47]) sollya_lib_printf("sollya_lib_obj_is_range detects TD(_x_).\n");
   if (t[48]) sollya_lib_printf("sollya_lib_obj_is_range detects a constant expression.\n");
   if (t[49]) sollya_lib_printf("sollya_lib_obj_is_range detects an empty end-elliptic list.\n");
-  if (t[50]) sollya_lib_printf("sollya_lib_obj_is_structure detects structure { .a = 5; .b = exp(_x_)}.\n");
+  if (t[50]) sollya_lib_printf("sollya_lib_obj_is_range detects structure { .a = 5; .b = exp(_x_)}.\n");
+  if (t[51]) sollya_lib_printf("sollya_lib_obj_is_range detects procedure proc(a) { return a+1; }.\n");
 
   for(i=0;i<51;i++) sollya_lib_clear_obj(a[i]);
   sollya_lib_close();

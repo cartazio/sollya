@@ -234,6 +234,7 @@ tobj_is_end_elliptic_list.c \
 tobj_is_error.c \
 tobj_is_function.c \
 tobj_is_list.c \
+tobj_is_procedure.c \
 tobj_is_range.c \
 tobj_is_string.c \
 tobj_is_structure.c \
