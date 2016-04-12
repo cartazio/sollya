@@ -346,68 +346,72 @@ externalproc(cmp, "./external_structural_cmp", (object, object) -> boolean);
 externalproc(hcmp, "./external_structural_cmp", (object, object) -> boolean);
 
 /* Comparing basic object of the same type */
-print("Comparing 1 and 1:"); cmp(1,1); hcmp(1,1);
-print("Comparing 1 and 2:"); cmp(1,2); hcmp(1,2);
-print("Comparing [||] and [||]:"); cmp([||], [||]); hcmp([||], [||]);
-print("Comparing [||] and [|1|]:"); cmp([||], [|1|]); hcmp([||], [|1|]);
-print("Comparing [1,2] and [1,2]:"); cmp([1,2], [1,2]); hcmp([1,2], [1,2]);
-print("Comparing [1,2] and [1,3]:"); cmp([1,2], [1,3]); hcmp([1,2], [1,3]);
-print("Comparing \"Hello\" and \"Hello\":"); cmp("Hello", "Hello"); hcmp("Hello", "Hello");
-print("Comparing \"Hello\" and \"Hello!\":"); cmp("Hello", "Hello!"); hcmp("Hello", "Hello!");
+print("Comparing 1 and 1:"); a = 1; b = 1; cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
+print("Comparing 1 and 2:"); a = 1; b = 2; cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
+print("Comparing [||] and [||]:"); a = [||]; b = [||]; cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
+print("Comparing [||] and [|1|]:"); a = [||]; b = [|1|]; cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
+print("Comparing [1,2] and [1,2]:"); a = [1,2]; b = [1,2]; cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
+print("Comparing [1,2] and [1,3]:"); a = [1,2]; b = [1,3]; cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
+print("Comparing \"Hello\" and \"Hello\":"); a = "Hello"; b = "Hello"; cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
+print("Comparing \"Hello\" and \"Hello!\":"); a = "Hello"; b = "Hello!"; cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
 
 /* Playing with ellipses in lists */
-print("Comparing [|1,2,3...|] and [|1,2,3|]:"); cmp([|1,2,3...|], [|1,2,3|]); hcmp([|1,2,3...|], [|1,2,3|]);
-print("Comparing [|1,2,3...|] and [|1,2,3,4...|]:");
-L = [|1,2,3...|]; L2 = [|1,2,3,4...|];
-cmp(L, L2); hcmp(L, L2);
-L[0]; L2[0];
-L[10]; L2[10];
-cmp(L, L2); hcmp(L, L2); /* Does the result change after expanding part of the list? */
+print("Comparing [|1,2,3...|] and [|1,2,3|]:"); a = [|1,2,3...|]; b = [|1,2,3|]; cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
+print("Comparing [|1,2,3...|] and [|1,2,3,4...|]:"); a = [|1,2,3...|]; b = [|1,2,3,4...|]; cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
+a[0]; b[0];
+a[10]; b[10];
+/* Does the result change after expanding part of the list? */
+cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
 
-print("Comparing [|D,D...|] and [|D...|]:");
-L = [|D,D...|]; L2 = [|D...|];
-cmp(L, L2); hcmp(L,L2);
-L[0]; L2[0];
-L[10]; L2[10];
-cmp(L, L2); hcmp(L, L2); /* Does the result change after expanding part of the list? */
+print("Comparing [|D,D...|] and [|D...|]:"); a = [|D,D...|]; b = [|D...|]; cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
+a[0]; b[0];
+a[10]; b[10];
+/* Does the result change after expanding part of the list? */
+cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
 
-cmp([|D,D...|], [|D,D...|]); hcmp([|D,D...|], [|D,D...|]); /* And if we provide exactly the same? */
+/* And if we provide exactly the same? */
+a = [|D,D...|]; b = [|D,D...|]; cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
 
-print("Comparing [|1,...,5|] and [|1,2,3,4,5|]:");
-L = [|1,...,5|]; L2 = [|1,2,3,4,5|];
-cmp(L, L2); hcmp(L,L2);
-L[0]; L2[0];
-L[3]; L2[3];
-cmp(L, L2); hcmp(L, L2); /* Does the result change after expanding part of the list? */
+print("Comparing [|1,...,5|] and [|1,2,3,4,5|]:"); a = [|1,...,5|]; b = [|1,2,3,4,5|];
+cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
+a[0]; b[0];
+a[3]; b[3];
+/* Does the result change after expanding part of the list? */
+cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
 
 /* Things obviously not equal because having different types */
-print("Comparing [||] and 1:"); cmp([||], 1); hcmp([||], 1);
-print("Comparing [|1|] and 1:"); cmp([|1|], 1); hcmp([|1|], 1);
+print("Comparing [||] and 1:"); a = [||]; b = 1; cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
+print("Comparing [|1|] and 1:"); a = [|1|]; b = 1; cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
 
 /* Do NaN, error and Inf compare equal to themselves? */
-print("Comparing @NaN@ and @NaN@:"); cmp(@NaN@, @NaN@); hcmp(@NaN@, @NaN@);
-print("Comparing @Inf@ and @Inf@:"); cmp(@Inf@, @Inf@); hcmp(@Inf@, @Inf@);
-print("Comparing error and error:"); cmp(error, error); hcmp(error, error);
-print("Comparing error and @NaN@:"); cmp(error, @NaN@); hcmp(error, @NaN@);
+print("Comparing @NaN@ and @NaN@:"); a = @NaN@; b = @NaN@; cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
+print("Comparing @Inf@ and @Inf@:"); a = @Inf@; b = @Inf@; cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
+print("Comparing error and error:"); a = error; b = error; cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
+print("Comparing error and @NaN@:"); a = error; b = @NaN@; cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
 
 /* Expressions mathematically equal */
-print("Comparing log(x) and log(x):"); cmp(log(x), log(x)); hcmp(log(x), log(x));
-//print("Comparing log10(x) and log(x)/log(10):"); cmp(log10(x), log(x)/log(10)); hcmp(log10(x), log(x)/log(10));
-print("Comparing exp(x)+1 and 1+exp(x):"); cmp(exp(x)+1, 1+exp(x)); hcmp(exp(x)+1, 1+exp(x));
-print("Comparing cmp(cos(x)^sin(x) and exp(sin(x)*log(cos(x)))):"); cmp(cos(x)^sin(x), exp(sin(x)*log(cos(x)))); hcmp(cos(x)^sin(x), exp(sin(x)*log(cos(x))));
-print("Comparing exp(x)*sin(x) and sin(x)*exp(x):"); cmp(exp(x)*sin(x), sin(x)*exp(x)); hcmp(exp(x)*sin(x), sin(x)*exp(x));
+print("Comparing log(x) and log(x):"); a = log(x); b = log(x); cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
+print("Comparing log10(x) and log(x)/log(10):"); a = log10(x); b = log(x)/log(10); cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
+print("Comparing exp(x)+1 and 1+exp(x):"); a = exp(x)+1; b = 1+exp(x); cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
+print("Comparing a = cos(x)^sin(x) and exp(sin(x)*log(cos(x)))):"); a = cos(x)^sin(x); b = exp(sin(x)*log(cos(x))); cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
+print("Comparing exp(x)*sin(x) and sin(x)*exp(x):"); a = exp(x)*sin(x); b = sin(x)*exp(x); cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
 
-f = (x+1)^3;
-g = x^3+3*x^2+3*x+1;
-print("Comparing (x+1)^3 and x^3+3*x^2+3*x+1:"); cmp(f,g); hcmp(f,g);
-f(5); g(5);
-print("Comparing (x+1)^3 and x^3+3*x^2+3*x+1:");
-cmp(f,g); hcmp(f,g); /* Does it change after an evaluation? */
-f == g;
-cmp(f,g); hcmp(f,g); /* And after an equality test? */
-df = diff(f); dg = diff(g);
-cmp(df,dg); hcmp(df,dg);
-cmp(f,g); hcmp(f,g); /* And after differentiating */
+/* Testing polynomials */
+print("Comparing (x+1)^3 and x^3+3*x^2+3*x+1:"); a = (x+1)^3; b = x^3+3*x^2+3*x+1;
+cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
+
+a(5); b(5);
+/* Does it change after an evaluation? */
+cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
+
+a == b;
+/* And after an equality test? */
+cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
+
+da = diff(a); db = diff(b);
+cmp(da,db); cmp(db,da); hcmp(da,db); cmp(da,db); cmp(db,da);
+/* And after differentiating */
+cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
 
 /* Structural comparison of annotated functions */
 f = exp(x);
@@ -419,10 +423,12 @@ f(1b-1);
 g(1b-2);
 h = exp(x);
 h(1b-3);
-print("Comparison of an annotated function and its non-annotated version:"); cmp(f,g); hcmp(f,g); cmp(g,h); hcmp(g,h);
+print("Comparison of an annotated function and its non-annotated version:");
+cmp(f,g); cmp(g,f); hcmp(f,g); cmp(f,g); cmp(g,f);
+cmp(g,h); cmp(h,g); hcmp(g,h); cmp(g,h); cmp(h,g);
 s = diff(g);
 s(1b-4);
 print("Same comparison with diff(exp):");
 s == g;
-cmp(s,g); hcmp(s,g);
-cmp(s,h); hcmp(s,h);
+cmp(s,g); cmp(g,s); hcmp(s,g); cmp(s,g); cmp(g,s);
+cmp(s,h); cmp(h,s); hcmp(s,h); cmp(s,h); cmp(h,s);
