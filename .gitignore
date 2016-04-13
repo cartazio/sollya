@@ -476,6 +476,8 @@ tests-lib/tobj_is_function
 tests-lib/tobj_is_function.sh
 tests-lib/tobj_is_list
 tests-lib/tobj_is_list.sh
+tests-lib/tobj_is_procedure
+tests-lib/tobj_is_procedure.sh
 tests-lib/tobj_is_range
 tests-lib/tobj_is_range.sh
 tests-lib/tobj_is_string
