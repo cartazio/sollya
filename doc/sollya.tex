@@ -1850,7 +1850,12 @@ In the interactive tool, it is also possible to write \verb|f(a)| when \verb|a| 
 
 This function returns a boolean integer: false means failure (i.e., \verb|f| is not a functional expression), in which case \verb|res| is left unchanged, and true means success, in which case \verb|res| contains the result of the evaluation. The function might succeed, and yet \verb|res| might contain something useless such as an unbounded interval or even $[\textrm{NaN},\textrm{NaN}]$ (this happens for instance when \verb|a| contains points that lie in the interior of the complement of the definition domain of \verb|f|). It is the user's responsibility to check afterwards whether the computed interval is bounded, unbounded or NaN.
 
-\subsection{Computing hashes on \sollya objects}
+\subsection{Comparing objects structurally and computing hashes on \sollya objects}
+The library provides function
+\begin{center}
+  \verb|int sollya_lib_cmp_objs_structurally(sollya_obj_t obj1, sollya_obj_t obj2)|
+\end{center}
+to allow the user to perform a structural comparison of any two \sollya objects. It returns an integer (interpreted as a boolean) that is true if and only if \verb|obj1| and \verb|obj2| are syntactically the same (as opposed to mathematically). For instance the fractions $2/3$ and $4/6$ are recognized as mathematically equal by \sollya when compared with \key{==} (or \verb|sollya_lib_cmp_equal| with the library) but are syntactically different.
 
 Certain language bindings require hashes to be available for any
 object represented. In order to help with such language bindings, the
@@ -1859,9 +1864,9 @@ integer as a hash for a given \sollya object:
 \begin{center}
 \verb|uint64_t sollya_lib_hash(sollya_obj_t obj).|
 \end{center}
-The \sollya library guarantees that any two objects that are structurally equal
+The \sollya library guarantees that any two objects that are syntactically equal
 (as when compared with \verb|sollya_lib_cmp_objs_structurally|)
-will have the same hash value. In contrast, objects that are not structurally equal are likely to have different hashes (although this is not guaranteed, of course).
+will have the same hash value. For some particular objects (\emph{e.g.}, polynomials) \sollya can normalize the expression before computing the hash value and in this case two objects that are mathematically equal (even though they are not structurally equal) will have the same hash value. However, except in such particular cases, two objects that are syntactically different are likely to have different hashes (although this is not guaranteed, of course).
 
 Computing the hash of an object takes a time proportional to the size of the directed acyclic graph internally used to represent that object. However,
 \sollya will cache an object's hash value for further use after it has been computed, so the cost of computing the hash of a given object is paid only once.

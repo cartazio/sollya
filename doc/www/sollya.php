@@ -1842,16 +1842,20 @@ In the interactive tool, it is also possible to write <code>f(a)</code> when <co
 <p>
 This function returns a boolean integer: false means failure (i.e., <code>f</code> is not a functional expression), in which case <code>res</code> is left unchanged, and true means success, in which case <code>res</code> contains the result of the evaluation. The function might succeed, and yet <code>res</code> might contain something useless such as an unbounded interval or even [NaN, NaN] (this happens for instance when <code>a</code> contains points that lie in the interior of the complement of the definition domain of <code>f</code>). It is the user's responsibility to check afterwards whether the computed interval is bounded, unbounded or NaN.
 
-<h2>10.14 - Computing hashes on <span class="sollya">Sollya</span> objects</h2>
+<h2>10.14 - Comparing objects structurally and computing hashes on <span class="sollya">Sollya</span> objects</h2>
+<p>The library provides function <br>
+<code>int sollya_lib_cmp_objs_structurally(sollya_obj_t obj1, sollya_obj_t obj2)</code><br>
+to allow the user to perform a structural comparison of any two <span class="sollya">Sollya</span> objects. It returns an integer (interpreted as a boolean) that is true if and only if <code>obj1</code> and <code>obj2</code> are syntactically the same (as opposed to mathematically). For instance the fractions 2/3 and 4/6 are recognized as mathematically equal by <span class="sollya">Sollya</span> when compared with <code class="key">==</code> (or <code>sollya_lib_cmp_equal</code> with the library) but are syntactically different.
+
 <p>
 Certain language bindings require hashes to be available for any
 object represented. In order to help with such language bindings, the
 <span class="sollya">Sollya</span> library supports a function that computes a 64 bit unsigned
 integer as a hash for a given <span class="sollya">Sollya</span> object: <br>
 <code>uint64_t sollya_lib_hash(sollya_obj_t obj)</code>.<br>
-The <span class="sollya">Sollya</span> library guarantees that any two objects that are structurally equal
+The <span class="sollya">Sollya</span> library guarantees that any two objects that are syntactically equal
 (as when compared with <code>sollya_lib_cmp_objs_structurally</code>)
-will have the same hash value. In contrast, objects that are not structurally equal are likely to have different hashes (although this is not guaranteed, of course).
+will have the same hash value. For some particular objects (<em>e.g.</em>, polynomials) <span class="sollya">Sollya</span> can normalize the expression before computing the hash value and in this case two objects that are mathematically equal (even though they are not structurally equal) will have the same hash value. However, except in such particular cases, two objects that are syntactically different are likely to have different hashes (although this is not guaranteed, of course).
 
 <p>
 Computing the hash of an object takes a time proportional to the size of the directed acyclic graph internally used to represent that object. However,
