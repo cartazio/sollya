@@ -432,3 +432,603 @@ print("Same comparison with diff(exp):");
 s == g;
 cmp(s,g); cmp(g,s); hcmp(s,g); cmp(s,g); cmp(g,s);
 cmp(s,h); cmp(h,s); hcmp(s,h); cmp(s,h); cmp(h,s);
+
+/* Structural comparison of polynomials in different
+   representation froms when they have no expression attached.
+*/
+k = 15;
+p = (1 + x)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 3;
+p = (1 + x)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 2;
+p = (1 + x)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 1;
+p = (1 + x)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 15;
+p = (1 + x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 14;
+p = (1 + x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 3;
+p = (1 + x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 2;
+p = (1 + x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 1;
+p = (1 + x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 15;
+p = x^3 * (1 + x)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 3;
+p = x^3 * (1 + x)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 2;
+p = x^3 * (1 + x)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 1;
+p = x^3 * (1 + x)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 15;
+p = x^3 * (1 + x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 14;
+p = x^3 * (1 + x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 3;
+p = x^3 * (1 + x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 2;
+p = x^3 * (1 + x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 1;
+p = x^3 * (1 + x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 15;
+p = x^4 * (1 + x)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 3;
+p = x^4 * (1 + x)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 2;
+p = x^4 * (1 + x)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 1;
+p = x^4 * (1 + x)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 15;
+p = x^4 * (1 + x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 14;
+p = x^4 * (1 + x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 3;
+p = x^4 * (1 + x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 2;
+p = x^4 * (1 + x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 1;
+p = x^4 * (1 + x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 15;
+p = (1 + 17 * x)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 3;
+p = (1 + 17 * x)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 2;
+p = (1 + 17 * x)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 1;
+p = (1 + 17 * x)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 15;
+p = (1 + 17 * x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 14;
+p = (1 + 17 * x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 3;
+p = (1 + 17 * x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 2;
+p = (1 + 17 * x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 1;
+p = (1 + 17 * x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 15;
+p = x^3 * (1 + 17 * x)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 3;
+p = x^3 * (1 + 17 * x)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 2;
+p = x^3 * (1 + 17 * x)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 1;
+p = x^3 * (1 + 17 * x)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 15;
+p = x^3 * (1 + 17 * x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 14;
+p = x^3 * (1 + 17 * x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 3;
+p = x^3 * (1 + 17 * x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 2;
+p = x^3 * (1 + 17 * x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 1;
+p = x^3 * (1 + 17 * x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 15;
+p = x^4 * (1 + 17 * x)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 3;
+p = x^4 * (1 + 17 * x)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 2;
+p = x^4 * (1 + 17 * x)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 1;
+p = x^4 * (1 + 17 * x)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 15;
+p = x^4 * (1 + 17 * x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 14;
+p = x^4 * (1 + 17 * x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 3;
+p = x^4 * (1 + 17 * x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 2;
+p = x^4 * (1 + 17 * x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+k = 1;
+p = x^4 * (1 + 17 * x^2)^k;
+a = horner(p);
+b = canonical(p);
+
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("a =", a);
+print("b =", b);
+cmp(a, b); cmp(b, a); hcmp(a, b); cmp(a, b); cmp(b, a);
+print("-----------------");
+
+
+

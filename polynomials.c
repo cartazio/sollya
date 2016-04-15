@@ -7660,6 +7660,8 @@ int polynomialStructurallyEqual(polynomial_t p, polynomial_t q, int defVal) {
     */
     if (polynomialIsConstant(p, 0)) return 1;
 
+    /* TODO */
+
     /* Here, the polynomials have different output forms and are not
        constant.
 
