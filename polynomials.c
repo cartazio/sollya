@@ -1811,6 +1811,7 @@ static inline int try_mpfr_pow_exact(mpfr_t c, mpfr_t a, unsigned long int b) {
 /* Part for constants */
 
 static inline constant_t __polynomialGetIthCoefficientAsConstantIntIndex(polynomial_t, int);
+static inline constant_t __polynomialGetIthCoefficientAsConstant(polynomial_t, mpz_t);
 
 static inline void constantEvalMpfi(sollya_mpfi_t, constant_t); 
 static inline constant_t constantAdd(constant_t, constant_t);
@@ -5805,22 +5806,21 @@ static inline int sparsePolynomialGetDegreeAsInt(sparse_polynomial_t p) {
   return deg;
 }
 
-static inline node *sparsePolynomialGetIthCoefficient(sparse_polynomial_t p, mpz_t i) {
+static inline constant_t sparsePolynomialGetIthCoefficientAsConstant(sparse_polynomial_t p, mpz_t i) {
   constant_t ic, coeffsum, t;
   unsigned int j, k;
-  node *res;
 
   /* Handle stupid inputs */
   if (p == NULL) return NULL;
 
   /* The index must be non-negative */
   if (mpz_sgn(i) < 0) {
-    return addMemRef(makeConstantInt(0));
+    return constantFromInt(0);
   }
 
   /* Handle the strange case when p has no monomials */
   if (p->monomialCount == 0u) {
-    return addMemRef(makeConstantInt(0));
+    return constantFromInt(0);
   }
 
   /* Construct a constant from i */
@@ -5829,7 +5829,7 @@ static inline node *sparsePolynomialGetIthCoefficient(sparse_polynomial_t p, mpz
   /* The index must be no greater than the degree of p */
   if (constantIsGreater(ic, p->deg, 0)) {
     constantFree(ic);
-    return addMemRef(makeConstantInt(0));
+    return constantFromInt(0);
   }
 
   /* Get the index j where the coefficients for degree i might
@@ -5842,7 +5842,7 @@ static inline node *sparsePolynomialGetIthCoefficient(sparse_polynomial_t p, mpz
   */
   if (j >= p->monomialCount) {
     constantFree(ic);
-    return addMemRef(makeConstantInt(0));
+    return constantFromInt(0);
   }
 
   /* Here, we know that 0 <= j <= n - 1.
@@ -5859,9 +5859,24 @@ static inline node *sparsePolynomialGetIthCoefficient(sparse_polynomial_t p, mpz
     coeffsum = t;
   }
   constantFree(ic);
-  res = constantToExpression(coeffsum);
-  constantFree(coeffsum);
-  
+  return coeffsum;
+}
+
+static inline node *sparsePolynomialGetIthCoefficient(sparse_polynomial_t p, mpz_t i) {
+  constant_t c;
+  node *res;
+
+  /* Handle stupid inputs */
+  if (p == NULL) return NULL;
+
+  /* Get coefficient as a constant */
+  c = sparsePolynomialGetIthCoefficientAsConstant(p, i);
+
+  /* Convert to an expression */
+  res = addMemRef(constantToExpression(c));
+  constantFree(c);
+
+  /* Return the result */
   return res;
 }
 
@@ -6075,6 +6090,17 @@ static inline int sparsePolynomialGetCoefficients(node ***coeffs, unsigned int *
   *coeffs = coefficients;
   *deg = degree;
   return 1;
+}
+
+static inline unsigned int sparsePolynomialGetNumberOfNonZeroCoefficients(sparse_polynomial_t p) {
+
+  /* Handle stupid inputs */
+  if (p == NULL) {
+    return 0u;
+  }
+
+  /* General case */
+  return p->monomialCount;
 }
 
 static inline void __sparsePolynomialEvalMpfr(mpfr_t y, sparse_polynomial_t p, mpfr_t x, mpfr_t scratch) {
@@ -7587,7 +7613,20 @@ int polynomialEqual(polynomial_t p, polynomial_t q, int defVal) {
   return 1;
 }
 
+unsigned int polynomialGetNumberOfNonZeroCoefficients(polynomial_t p) {
+
+  /* Handle stupid inputs */
+  if (p == NULL) return 0u;
+
+  /* General case */
+  __polynomialSparsify(p);
+  return sparsePolynomialGetNumberOfNonZeroCoefficients(p->value.sparse);
+}
+
 int polynomialStructurallyEqual(polynomial_t p, polynomial_t q, int defVal) {
+  constant_t c0, cd;
+  mpz_t deg;
+  unsigned int nzc;
   
   /* Handle stupid inputs */
   if (p == NULL) return defVal;
@@ -7660,7 +7699,30 @@ int polynomialStructurallyEqual(polynomial_t p, polynomial_t q, int defVal) {
     */
     if (polynomialIsConstant(p, 0)) return 1;
 
-    /* TODO */
+    /* Now check if the polynomials (testing one is sufficient as they
+       are mathematically equal) have a non-zero constant coefficient, 
+       a leading coefficient equal to 1 and only two non-zero coefficients.
+       
+       In this particular case the hornerized form c_0 + x^d is
+       structurally the same as the canonical form c_0 + x^d.
+    */
+    c0 = __polynomialGetIthCoefficientAsConstantIntIndex(p, 0);
+    if (!constantIsZero(c0, 1)) {
+      mpz_init(deg);
+      polynomialGetDegree(deg, p);
+      cd = __polynomialGetIthCoefficientAsConstant(p, deg);
+      mpz_clear(deg);
+      if (constantIsOne(cd, 0)) {
+	nzc = polynomialGetNumberOfNonZeroCoefficients(p);
+	if (nzc == 2u) {
+	  constantFree(cd);
+	  constantFree(c0);
+	  return 1;
+	}
+      }
+      constantFree(cd);
+    }
+    constantFree(c0);
 
     /* Here, the polynomials have different output forms and are not
        constant.
@@ -8298,6 +8360,31 @@ static inline constant_t __polynomialGetIthCoefficientAsConstantIntIndex(polynom
   /* General case */
   __polynomialSparsify(p);
   return sparsePolynomialGetIthCoefficientAsConstantIntIndex(p->value.sparse, i);
+}
+
+static inline constant_t __polynomialGetIthCoefficientAsConstant(polynomial_t p, mpz_t i) {
+  mpz_t deg;
+
+  /* Handle stupid input */
+  if (p == NULL) return NULL;
+
+  /* Handle case when i < 0 */
+  if (mpz_sgn(i) < 0) {
+    return constantFromInt(0);
+  }
+
+  /* Handle case when i > degree */
+  mpz_init(deg);
+  polynomialGetDegree(deg, p);
+  if ((mpz_sgn(deg) >= 0) && 
+      (mpz_cmp(i,deg) > 0)) {
+    mpz_clear(deg);
+    return constantFromInt(0);
+  }
+  
+  /* General case */
+  __polynomialSparsify(p);
+  return sparsePolynomialGetIthCoefficientAsConstant(p->value.sparse, i);
 }
 
 int polynomialGetCoefficients(node ***coeffs, unsigned int *deg, polynomial_t p) {
