@@ -1348,6 +1348,7 @@ void freeTool() {
   freeFunctionSpecialVariables();
   freeGlobalReusedMPFIVars();
   freeGlobalReusedMPFRVars();
+  polynomialFreeCaches();
   declaredSymbolTable = NULL;
   backtraceStack = NULL;
   mpfr_clear(statediam);
@@ -1411,6 +1412,7 @@ void initToolDefaults() {
   globalReusedMPFRVarsUsed = 0;
   globalReusedMPFRVarsInitialized = 0;
   globalReusedMPFRVarsMaxAllocated = GLOBAL_REUSED_VARS_MAX_ALLOC;
+  polynomialInitializeCaches();
   sollyaLibPrintmessageCalled = 0;
 
   if ((argsArgc < 1) || (argsArgv == NULL)) {
@@ -1454,6 +1456,7 @@ void restartTool() {
   freeFunctionSpecialVariables();
   freeGlobalReusedMPFIVars();
   freeGlobalReusedMPFRVars();
+  polynomialFreeCaches();
   declaredSymbolTable = NULL;
   backtraceStack = NULL;
   freeFunctionLibraries();
@@ -1808,6 +1811,7 @@ int finalizeLibraryMode() {
   freeFunctionSpecialVariables();
   freeGlobalReusedMPFIVars();
   freeGlobalReusedMPFRVars();
+  polynomialFreeCaches();
   declaredSymbolTable = NULL;
   backtraceStack = NULL;
   mpfr_clear(statediam);

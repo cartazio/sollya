@@ -63,6 +63,11 @@ typedef struct __polynomial_struct_t * polynomial_t;
 
 /* Operations on polynomials */
 
+/* Cache handling */
+
+void polynomialInitializeCaches();
+void polynomialFreeCaches();
+
 /* Constructors */
 polynomial_t polynomialFromMpfrConstant(mpfr_t);
 polynomial_t polynomialFromMpzConstant(mpz_t);

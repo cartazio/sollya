@@ -1,6 +1,6 @@
 /*
 
-  Copyright 2014-2015 by
+  Copyright 2014-2016 by
 
   Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
   UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France
@@ -162,6 +162,22 @@ struct __polynomial_struct_t {
     } powering;
   } value;
 };
+
+/* Globally defined constants and caches */
+
+#define CONSTANT_INTEGER_CACHE_MIN (-16384)
+#define CONSTANT_INTEGER_CACHE_MAX (16383)
+#define CONSTANT_INTEGER_CACHE_SIZE ((CONSTANT_INTEGER_CACHE_MAX) - (CONSTANT_INTEGER_CACHE_MIN) + 1)
+
+typedef struct __cached_constant_struct_t __cached_constant_t;
+struct __cached_constant_struct_t {
+  constant_t constant;
+  int initialized;
+};
+
+static int __constant_integer_cache_initialized = 0;
+static __cached_constant_t __constant_integer_cache[CONSTANT_INTEGER_CACHE_SIZE];
+
 
 /* Helper functions */
 
@@ -1813,6 +1829,8 @@ static inline int try_mpfr_pow_exact(mpfr_t c, mpfr_t a, unsigned long int b) {
 static inline constant_t __polynomialGetIthCoefficientAsConstantIntIndex(polynomial_t, int);
 static inline constant_t __polynomialGetIthCoefficientAsConstant(polynomial_t, mpz_t);
 
+static inline void constantFree(constant_t);
+static inline constant_t constantFromCopy(constant_t);
 static inline void constantEvalMpfi(sollya_mpfi_t, constant_t); 
 static inline constant_t constantAdd(constant_t, constant_t);
 static inline constant_t constantSub(constant_t, constant_t);
@@ -1821,7 +1839,32 @@ static inline constant_t constantDiv(constant_t, constant_t);
 static inline constant_t constantPow(constant_t, constant_t);
 static inline constant_t constantNeg(constant_t);
 
+static inline void constantInitializeCaches() {
+  int i;
+  
+  if (__constant_integer_cache_initialized) return;
+  for (i=0;i<CONSTANT_INTEGER_CACHE_SIZE;i++) {
+    __constant_integer_cache[i].constant = NULL;
+    __constant_integer_cache[i].initialized = 0;
+  }
+  __constant_integer_cache_initialized = 1;
+}
+
+static inline void constantFreeCaches() {
+  int i;
+
+  if (!__constant_integer_cache_initialized) return;
+  for (i=0;i<CONSTANT_INTEGER_CACHE_SIZE;i++) {
+    if (__constant_integer_cache[i].initialized) {
+      constantFree(__constant_integer_cache[i].constant);
+      __constant_integer_cache[i].initialized = 0;
+    }
+  }
+  __constant_integer_cache_initialized = 0;
+}
+
 static inline constant_t __constantAllocate() {
+  constantInitializeCaches();
   return (constant_t) safeMalloc(sizeof(struct __constant_struct_t));
 }
 
@@ -1829,34 +1872,20 @@ static inline void __constantFreeMem(constant_t c) {
   safeFree(c);
 }
 
-static inline constant_t constantFromMpfr(mpfr_t c) {
-  constant_t res;
-  int intval;
-
-  res = __constantAllocate();
-  res->refCount = 1;
-  res->isZero.cached = 0;
-  res->isOne.cached = 0;
-  res->isNonNegativeInteger.cached = 0;
-  res->isPositive.cached = 0;
-  res->isDyadic.cached = 0;
-  res->isRational.cached = 0;
-  res->hash.hasHash = 0;
-  if (mpfr_is_machine_integer(&intval, c)) {
-    res->type = INTEGER;
-    res->value.integer = intval;
-    return res;
-  } 
-  res->type = MPFR;
-  mpfr_init2(res->value.mpfr, mpfr_get_prec(c));
-  mpfr_set(res->value.mpfr, c, GMP_RNDN); /* exact, same precision */
-  
-  return res;
+static inline constant_t __constantAllocatePostTreatment(constant_t c) {
+  return c;
 }
 
 static inline constant_t constantFromInt(int c) {
   constant_t res;
 
+  if ((CONSTANT_INTEGER_CACHE_MIN <= c) && (c <= CONSTANT_INTEGER_CACHE_MAX)) {
+    constantInitializeCaches();
+    if (__constant_integer_cache[c - (CONSTANT_INTEGER_CACHE_MIN)].initialized) {
+      return constantFromCopy(__constant_integer_cache[c - (CONSTANT_INTEGER_CACHE_MIN)].constant);
+    }
+  }
+  
   res = __constantAllocate();
   res->refCount = 1;
   res->isZero.cached = 0;
@@ -1868,8 +1897,41 @@ static inline constant_t constantFromInt(int c) {
   res->type = INTEGER;
   res->value.integer = c;
   res->hash.hasHash = 0;
+  res = __constantAllocatePostTreatment(res);
+
+  if ((CONSTANT_INTEGER_CACHE_MIN <= c) && (c <= CONSTANT_INTEGER_CACHE_MAX)) {
+    constantInitializeCaches();
+    if (!(__constant_integer_cache[c - (CONSTANT_INTEGER_CACHE_MIN)].initialized)) {
+      __constant_integer_cache[c - (CONSTANT_INTEGER_CACHE_MIN)].constant = constantFromCopy(res);
+      __constant_integer_cache[c - (CONSTANT_INTEGER_CACHE_MIN)].initialized = 1;
+    }
+  }
   
   return res;
+}
+
+static inline constant_t constantFromMpfr(mpfr_t c) {
+  constant_t res;
+  int intval;
+
+  if (mpfr_is_machine_integer(&intval, c)) {
+    return constantFromInt(intval);
+  }
+  
+  res = __constantAllocate();
+  res->refCount = 1;
+  res->isZero.cached = 0;
+  res->isOne.cached = 0;
+  res->isNonNegativeInteger.cached = 0;
+  res->isPositive.cached = 0;
+  res->isDyadic.cached = 0;
+  res->isRational.cached = 0;
+  res->hash.hasHash = 0;
+  res->type = MPFR;
+  mpfr_init2(res->value.mpfr, mpfr_get_prec(c));
+  mpfr_set(res->value.mpfr, c, GMP_RNDN); /* exact, same precision */
+  
+  return __constantAllocatePostTreatment(res);
 }
 
 static inline constant_t constantFromUnsignedInt(unsigned int c) {
@@ -1951,7 +2013,7 @@ static inline constant_t constantFromScaledMpq(mp_exp_t e, mpq_t c) {
   mpz_clear(den);
   mpz_clear(num);
   
-  return res;
+  return __constantAllocatePostTreatment(res);
 }
 
 static inline constant_t constantFromMpq(mpq_t c) {
@@ -2037,7 +2099,7 @@ static inline constant_t constantFromExpression(node *c) {
   res->value.expr = simplified;
   res->hash.hasHash = 0;
   
-  return res;
+  return __constantAllocatePostTreatment(res);
 }
 
 
@@ -4148,6 +4210,14 @@ static inline sparse_polynomial_t __sparsePolynomialAllocate() {
 
 static inline void __sparsePolynomialFreeMem(sparse_polynomial_t p) {
   safeFree(p);
+}
+
+static inline void sparsePolynomialInitializeCaches() {
+  constantInitializeCaches();
+}
+
+static inline void sparsePolynomialFreeCaches() {
+  constantFreeCaches();
 }
 
 static inline void __sparsePolynomialAdjustDegree(sparse_polynomial_t p) {
@@ -6973,6 +7043,14 @@ static inline polynomial_t __polynomialAllocate() {
 
 static inline void __polynomialFreeMem(polynomial_t p) {
   safeFree(p);
+}
+
+void polynomialInitializeCaches() {
+  sparsePolynomialInitializeCaches();
+}
+
+void polynomialFreeCaches() {
+  sparsePolynomialFreeCaches();
 }
 
 static inline polynomial_t __polynomialBuildFromSparse(sparse_polynomial_t p) {
