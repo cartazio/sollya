@@ -16500,6 +16500,123 @@ static inline int isEqualThingLibraryInnerOnVoid(void *tree, void *tree2) {
   return isEqualThingLibraryInner((node *) tree, (node *) tree2);
 }
 
+static inline int finalEllipticListEndIsSuperfluousGeneral(node *last, chain *ch, int (*cmpFunc)(node *, node *)) {
+  chain *curr;
+  
+  if (last == NULL) return 0;
+  if (ch == NULL) return 1;
+  for (curr=ch;curr!=NULL;curr=curr->next) {
+    if (!cmpFunc(last, ((node *) (curr->value)))) return 0;
+  }
+  return 1;
+}
+
+static inline int finalEllipticListEndIsSuperfluousInteger(mpz_t last, chain *ch) {
+  chain *curr;
+  mpfr_t t;
+  mpz_t l, z;
+  node *cn;
+  
+  if (ch == NULL) return 1;
+  mpz_init(l);
+  mpz_add_ui(l, last, 1u);
+  mpfr_init2(t, tools_precision);
+  mpz_init(z);
+  curr = ch;
+  while (curr != NULL) {
+    cn = (node *) (curr->value);
+    if (isPureTree(cn)) {
+      if (evaluateThingToConstant(t, cn, NULL, 0, 0)) {
+	if (mpfr_number_p(t) && mpfr_integer_p(t)) {
+	  mpfr_get_z(z, t, GMP_RNDN);
+	  if (mpz_cmp(z, l) != 0) {
+	    mpfr_clear(t);
+	    mpz_clear(z);
+	    mpz_clear(l);
+	    return 0;
+	  }
+	} else {
+	  mpfr_clear(t);
+	  mpz_clear(z);
+	  mpz_clear(l);
+	  return 0;
+	}
+      } else {
+	mpfr_clear(t);
+	mpz_clear(z);
+	mpz_clear(l);
+	return 0;
+      }
+    } else {
+      mpfr_clear(t);
+      mpz_clear(z);
+      mpz_clear(l);
+      return 0;
+    }
+    curr = curr->next;
+    mpz_add_ui(l, l, 1u);
+  }
+  mpfr_clear(t);
+  mpz_clear(z);
+  mpz_clear(l);
+  return 1;
+}
+
+static inline int finalEllipticListEndIsSuperfluous(node *last, chain *ch, int (*cmpFunc)(node *, node *)) {
+  mpfr_t temp;
+  mpz_t z;
+  int res;
+  
+  if (last == NULL) return 0;
+  if (ch == NULL) return 1;
+  if (isPureTree(last)) {
+    mpfr_init2(temp, tools_precision);
+    if (evaluateThingToConstant(temp, last, NULL, 0, 0)) {
+      if (mpfr_number_p(temp) && mpfr_integer_p(temp)) {
+	mpz_init(z);
+	mpfr_get_z(z, temp, GMP_RNDN);
+	mpfr_clear(temp);
+	res = finalEllipticListEndIsSuperfluousInteger(z, ch);
+	mpz_clear(z);
+	return res;
+      } else {
+	mpfr_clear(temp);
+	return finalEllipticListEndIsSuperfluousGeneral(last, ch, cmpFunc);
+      }
+    } else {
+      mpfr_clear(temp);
+      return finalEllipticListEndIsSuperfluousGeneral(last, ch, cmpFunc);
+    }
+  } else {
+    return finalEllipticListEndIsSuperfluousGeneral(last, ch, cmpFunc);
+  }
+  return 0;
+}
+
+static inline int isEqualFinalEllipticList(chain *c1, chain *c2, int (*cmpFunc)(node *, node *)) {
+  chain *curr1, *curr2, *curr, *prev1, *prev2, *prev;
+
+  curr1=c1; curr2=c2; prev1=NULL; prev2=NULL;
+  while ((curr1!=NULL)&&(curr2!=NULL)) {
+    if (!cmpFunc(((node *) (curr1->value)), ((node *) (curr2->value)))) return 0;
+    prev1=curr1; prev2=curr2; curr1=curr1->next; curr2=curr2->next;
+  }
+  if (curr1!=NULL) {
+    curr = curr1;
+    prev = prev1;
+  } else {
+    if (curr2!=NULL) {
+      curr = curr2;
+      prev = prev2;
+    } else {
+      return 1;
+    }
+  }
+  if (prev == NULL) return 1;
+  if (curr == NULL) return 1;
+  return finalEllipticListEndIsSuperfluous((node *) (prev->value), curr, cmpFunc);
+}
+
 static inline int isEqualThingLibraryInner(node *tree, node *tree2) {
   chain *curri, *currj;
   int found;
@@ -17077,7 +17194,7 @@ static inline int isEqualThingLibraryInner(node *tree, node *tree2) {
     }
     break;
   case FINALELLIPTICLIST:
-    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingLibraryInnerOnVoid)) return 0;
+    if (!isEqualFinalEllipticList(tree->arguments,tree2->arguments,isEqualThingLibraryInner)) return 0;
     setupRandomAccessOnLists(tree);
     setupRandomAccessOnLists(tree2);
     break;
@@ -17978,7 +18095,7 @@ int isEqualThing(node *tree, node *tree2) {
     }
     break;
   case FINALELLIPTICLIST:
-    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingOnVoid)) return 0;
+    if (!isEqualFinalEllipticList(tree->arguments,tree2->arguments,isEqualThing)) return 0;
     setupRandomAccessOnLists(tree);
     setupRandomAccessOnLists(tree2);
     break;
@@ -18474,7 +18591,8 @@ int isEqualThingNoPoly(node *tree, node *tree2) {
     if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
     break;
   case FOR:
-    if (strcmp(tree->string,tree2->string) != 0) return 0;    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    if (strcmp(tree->string,tree2->string) != 0) return 0;
+    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
     break;
   case FORIN:
     if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
@@ -18858,7 +18976,7 @@ int isEqualThingNoPoly(node *tree, node *tree2) {
     }
     break;
   case FINALELLIPTICLIST:
-    if (!isEqualChain(tree->arguments,tree2->arguments,isEqualThingNoPolyOnVoid)) return 0;
+    if (!isEqualFinalEllipticList(tree->arguments,tree2->arguments,isEqualThingNoPoly)) return 0;
     setupRandomAccessOnLists(tree);
     setupRandomAccessOnLists(tree2);
     break;
