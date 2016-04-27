@@ -67,7 +67,7 @@ int strange_bis(int *res, void **args, void *ptr) {
 }
 
 int main(void) {
-  sollya_obj_t f[11];
+  sollya_obj_t f[16];
   sollya_externalprocedure_type_t argTypes[3];
   int i;
   char str1[1024];
@@ -114,8 +114,8 @@ int main(void) {
   argTypes[0] = SOLLYA_EXTERNALPROC_TYPE_STRING;
   argTypes[1] = SOLLYA_EXTERNALPROC_TYPE_INTEGER;
   argTypes[2] = SOLLYA_EXTERNALPROC_TYPE_CONSTANT;
-  f[6] = sollya_lib_externalprocedure_with_data(SOLLYA_EXTERNALPROC_TYPE_BOOLEAN, argTypes, 3, NULL, strange_bis, &data, NULL);
-  sollya_lib_sprintf(str1, "%b", f[6]);
+  f[11] = sollya_lib_externalprocedure_with_data(SOLLYA_EXTERNALPROC_TYPE_BOOLEAN, argTypes, 3, NULL, strange_bis, &data, NULL);
+  sollya_lib_sprintf(str1, "%b", f[11]);
   sollya_lib_sprintf(str2, "proc_%p_%p", strange_bis, &data);
   sollya_lib_sprintf(str3, "%s_%p", "strange_bis", &data);
   if ((strcmp(str1, str2) == 0) || (strcmp(str1, str3) == 0)) {
@@ -123,13 +123,13 @@ int main(void) {
   } else {
     sollya_lib_printf("FAILURE: the external procedure prints as \"%s\"\n",str1);
   }
-  f[7] = sollya_lib_string("Coucou");
-  f[8] = SOLLYA_CONST_SI64(42);
-  f[9] = SOLLYA_EXP(SOLLYA_CONST_SI64(1));
-  f[10] = sollya_lib_apply(f[6], f[7], f[8], f[9], NULL);
-  sollya_lib_printf("%b\n", f[10]);
+  f[12] = sollya_lib_string("Coucou");
+  f[13] = SOLLYA_CONST_SI64(42);
+  f[14] = SOLLYA_EXP(SOLLYA_CONST_SI64(1));
+  f[15] = sollya_lib_apply(f[11], f[12], f[13], f[14], NULL);
+  sollya_lib_printf("%b\n", f[15]);
   
-  for(i=0;i<=10;i++) sollya_lib_clear_obj(f[i]);
+  for(i=0;i<=15;i++) sollya_lib_clear_obj(f[i]);
   
   sollya_lib_close();
   
