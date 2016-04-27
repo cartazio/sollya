@@ -169,15 +169,19 @@ struct __polynomial_struct_t {
 #define CONSTANT_INTEGER_CACHE_MAX (16383)
 #define CONSTANT_INTEGER_CACHE_SIZE ((CONSTANT_INTEGER_CACHE_MAX) - (CONSTANT_INTEGER_CACHE_MIN) + 1)
 
+#define CONSTANT_MALLOC_CACHE_SIZE (4096)
+
 typedef struct __cached_constant_struct_t __cached_constant_t;
 struct __cached_constant_struct_t {
   constant_t constant;
   int initialized;
 };
 
-static int __constant_integer_cache_initialized = 0;
+static int __constant_cache_initialized = 0;
 static __cached_constant_t __constant_integer_cache[CONSTANT_INTEGER_CACHE_SIZE];
 
+static constant_t __constant_malloc_cache[CONSTANT_MALLOC_CACHE_SIZE];
+static int __constant_malloc_cache_index = 0;
 
 /* Helper functions */
 
@@ -1842,33 +1846,51 @@ static inline constant_t constantNeg(constant_t);
 static inline void constantInitializeCaches() {
   int i;
   
-  if (__constant_integer_cache_initialized) return;
+  if (__constant_cache_initialized) return;
   for (i=0;i<CONSTANT_INTEGER_CACHE_SIZE;i++) {
     __constant_integer_cache[i].constant = NULL;
     __constant_integer_cache[i].initialized = 0;
   }
-  __constant_integer_cache_initialized = 1;
+  __constant_malloc_cache_index = 0;
+  __constant_cache_initialized = 1;
 }
 
 static inline void constantFreeCaches() {
   int i;
 
-  if (!__constant_integer_cache_initialized) return;
+  if (!__constant_cache_initialized) return;
   for (i=0;i<CONSTANT_INTEGER_CACHE_SIZE;i++) {
     if (__constant_integer_cache[i].initialized) {
       constantFree(__constant_integer_cache[i].constant);
       __constant_integer_cache[i].initialized = 0;
     }
   }
-  __constant_integer_cache_initialized = 0;
+  for (i=0;i<__constant_malloc_cache_index;i++) {
+    safeFree(__constant_malloc_cache[i]);
+  }
+  __constant_malloc_cache_index = 0;
+  __constant_cache_initialized = 0;
 }
 
 static inline constant_t __constantAllocate() {
   constantInitializeCaches();
+  if (__constant_cache_initialized) {
+    if ((0 < __constant_malloc_cache_index) && (__constant_malloc_cache_index <= CONSTANT_MALLOC_CACHE_SIZE)) {
+      __constant_malloc_cache_index--;
+      return __constant_malloc_cache[__constant_malloc_cache_index];
+    }
+  }
   return (constant_t) safeMalloc(sizeof(struct __constant_struct_t));
 }
 
 static inline void __constantFreeMem(constant_t c) {
+  if (__constant_cache_initialized) {
+    if ((0 <= __constant_malloc_cache_index) && (__constant_malloc_cache_index < CONSTANT_MALLOC_CACHE_SIZE)) {
+      __constant_malloc_cache[__constant_malloc_cache_index] = c;
+      __constant_malloc_cache_index++;
+      return;
+    }
+  }
   safeFree(c);
 }
 
@@ -1910,6 +1932,15 @@ static inline constant_t constantFromInt(int c) {
   return res;
 }
 
+static inline mp_prec_t mpfr_get_needed_prec(mpfr_t c) {
+  mp_prec_t p;
+
+  p = mpfr_min_prec(c);
+  if (p < ((mp_prec_t) 12)) p = ((mp_prec_t) 12);
+
+  return p;
+}
+
 static inline constant_t constantFromMpfr(mpfr_t c) {
   constant_t res;
   int intval;
@@ -1928,8 +1959,8 @@ static inline constant_t constantFromMpfr(mpfr_t c) {
   res->isRational.cached = 0;
   res->hash.hasHash = 0;
   res->type = MPFR;
-  mpfr_init2(res->value.mpfr, mpfr_get_prec(c));
-  mpfr_set(res->value.mpfr, c, GMP_RNDN); /* exact, same precision */
+  mpfr_init2(res->value.mpfr, mpfr_get_needed_prec(c));
+  mpfr_set(res->value.mpfr, c, GMP_RNDN); /* exact, enough precision */
   
   return __constantAllocatePostTreatment(res);
 }
