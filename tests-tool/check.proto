@@ -1,3 +1,8 @@
+if test -z "${srcdir}"
+then
+    srcdir=`dirname "$0"`
+    SOLLYA="${srcdir}/${SOLLYA}"
+fi
 TEST=0
 for i in $TESTFILES
 do

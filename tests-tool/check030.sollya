@@ -342,8 +342,8 @@ s == g;
 /* Tests for hash and sollya_lib_cmp_objs_structurally */
 print("=============== Check #16 ================");
 restart;
-externalproc(cmp, "./external_structural_cmp", (object, object) -> boolean);
-externalproc(hcmp, "./external_structural_cmp", (object, object) -> boolean);
+externalproc(cmp, "./libexternal_structural_cmp.a", (object, object) -> boolean);
+externalproc(hcmp, "./libexternal_structural_cmp.a", (object, object) -> boolean);
 
 /* Comparing basic object of the same type */
 print("Comparing 1 and 1:"); a = 1; b = 1; cmp(a,b); cmp(b,a); hcmp(a,b); cmp(a,b); cmp(b,a);
