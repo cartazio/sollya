@@ -1324,7 +1324,93 @@ For instance, after the instructions <code>a = SOLLYA_CONST(0); b = sollya_lib_e
 <p>
 Actually, <code>sollya_lib_foo</code> has exactly the same behavior as writing an expression at the prompt within the interactive tool. In particular, it is possible to give a range as an argument to <code>sollya_lib_foo</code>: the returned object will be the result of the evaluation of function <code>foo</code> on that range by interval arithmetic. In contrast, trying to use <code>sollya_lib_build_function_foo</code> on a range would result in a typing error.
 
-<h3>10.5.3 - Library functions, library constants and procedure functions</h3>
+<h3>10.5.3 - Other simple objects</h3>
+<p>
+Other simple objects are created with functions listed in Table&nbsp;<a href="#creating_sollya_obj_t">Creating <span class="sollya">Sollya</span> objects from scratch</a>. The functions with a name of the form <code>sollya_lib_range_something</code> follow the same convention as <code>sollya_lib_constant</code>: they build a new object from a copy of their argument, and the conversion is always exact, whatever the value of <code>prec</code> is.
+<p>
+Please note that in the interactive tool, <code>D</code> either denotes the discrete mathematical function that maps a real number to its closest <code>double</code> number, or is used as a symbolic constant to indicate that the <code>double</code> format must be used (as an argument of <code>round</code> for instance). In the library, they are completely distinct objects, the mathematical function being obtained with <code>sollya_lib_build_function_double</code> and the symbolic constant with <code>sollya_lib_double_obj</code>. The same holds for other formats (<code>DD</code>, <code>SG</code>, etc.)
+    <a name="creating_sollya_obj_t"></a>
+    <table border="1" rules="cols">
+    <caption>Creating <span class="sollya">Sollya</span> objects from scratch (Returns a new <code>sollya_obj_t</code>)</caption>
+    <tr><th align="center">Name in the interactive tool</th> <th align="center">Function to create it</th> </tr>
+<tr> <td align="center"><code>on</code> </td> <td align="left"> <code>sollya_lib_on();</code> </td> </tr>
+<tr> <td align="center"><code>off</code> </td> <td align="left"> <code>sollya_lib_off();</code> </td> </tr>
+<tr> <td align="center"><code>dyadic</code> </td> <td align="left"> <code>sollya_lib_dyadic();</code> </td> </tr>
+<tr> <td align="center"><code>powers</code> </td> <td align="left"> <code>sollya_lib_powers();</code> </td> </tr>
+<tr> <td align="center"><code>binary</code> </td> <td align="left"> <code>sollya_lib_binary();</code> </td> </tr>
+<tr> <td align="center"><code>hexadecimal</code> </td> <td align="left"> <code>sollya_lib_hexadecimal();</code> </td> </tr>
+<tr> <td align="center"><code>file</code> </td> <td align="left"> <code>sollya_lib_file();</code> </td> </tr>
+<tr> <td align="center"><code>postscript</code> </td> <td align="left"> <code>sollya_lib_postscript();</code> </td> </tr>
+<tr> <td align="center"><code>postscriptfile</code> </td> <td align="left"> <code>sollya_lib_postscriptfile();</code> </td> </tr>
+<tr> <td align="center"><code>perturb</code> </td> <td align="left"> <code>sollya_lib_perturb();</code> </td> </tr>
+<tr> <td align="center"><code>RD</code> </td> <td align="left"> <code>sollya_lib_round_down();</code> </td> </tr>
+<tr> <td align="center"><code>RU</code> </td> <td align="left"> <code>sollya_lib_round_up();</code> </td> </tr>
+<tr> <td align="center"><code>RZ</code> </td> <td align="left"> <code>sollya_lib_round_towards_zero();</code> </td> </tr>
+<tr> <td align="center"><code>RN</code> </td> <td align="left"> <code>sollya_lib_round_to_nearest();</code> </td> </tr>
+<tr> <td align="center"><code>honorcoeffprec</code> </td> <td align="left"> <code>sollya_lib_honorcoeffprec();</code> </td> </tr>
+<tr> <td align="center"><code>true</code> </td> <td align="left"> <code>sollya_lib_true();</code> </td> </tr>
+<tr> <td align="center"><code>false</code> </td> <td align="left"> <code>sollya_lib_false();</code> </td> </tr>
+<tr> <td align="center"><code>void</code> </td> <td align="left"> <code>sollya_lib_void();</code> </td> </tr>
+<tr> <td align="center"><code>default</code> </td> <td align="left"> <code>sollya_lib_default();</code> </td> </tr>
+<tr> <td align="center"><code>decimal</code> </td> <td align="left"> <code>sollya_lib_decimal();</code> </td> </tr>
+<tr> <td align="center"><code>absolute</code> </td> <td align="left"> <code>sollya_lib_absolute();</code> </td> </tr>
+<tr> <td align="center"><code>relative</code> </td> <td align="left"> <code>sollya_lib_relative();</code> </td> </tr>
+<tr> <td align="center"><code>fixed</code> </td> <td align="left"> <code>sollya_lib_fixed();</code> </td> </tr>
+<tr> <td align="center"><code>floating</code> </td> <td align="left"> <code>sollya_lib_floating();</code> </td> </tr>
+<tr> <td align="center"><code>error</code> </td> <td align="left"> <code>sollya_lib_error();</code> </td> </tr>
+<tr> <td align="center"><code>D, double</code> </td> <td align="left"> <code>sollya_lib_double_obj();</code> </td> </tr>
+<tr> <td align="center"><code>SG, single</code> </td> <td align="left"> <code>sollya_lib_single_obj();</code> </td> </tr>
+<tr> <td align="center"><code>QD, quad</code> </td> <td align="left"> <code>sollya_lib_quad_obj();</code> </td> </tr>
+<tr> <td align="center"><code>HP, halfprecision</code> </td> <td align="left"> <code>sollya_lib_halfprecision_obj();</code> </td> </tr>
+<tr> <td align="center"><code>DE, doubleextended</code> </td> <td align="left"> <code>sollya_lib_doubleextended_obj();</code> </td> </tr>
+<tr> <td align="center"><code>DD, doubledouble</code> </td> <td align="left"> <code>sollya_lib_double_double_obj();</code> </td> </tr>
+<tr> <td align="center"><code>TD, tripledouble</code> </td> <td align="left"> <code>sollya_lib_triple_double_obj();</code> </td> </tr>
+<tr> <td align="center"><code>"Hello"</code> </td> <td align="left">  <code>sollya_lib_string("Hello")</code> </td> </tr>
+<tr> <td align="center"><code>[1, 3.5]</code> </td> <td align="left">  <code>sollya_lib_range_from_interval(a);</code> </td> </tr>
+    <tr> <td align="center"><code>[1, 3.5]</code> </td> <td align="left">  <code>sollya_lib_range_from_bounds(b, c);</code></td> </tr>
+  </table>
+<p>In the last lines of the table, <code>a</code> is a <code>mpfi_t</code> containing the interval [1, 3.5], <code>b</code> and <code>c</code> are <code>mpfr_t</code> respectively containing the numbers 1 and 3.5. Conversion from a <code>mpfi_t</code> or a <code>mpfr_t</code> to a <code>sollya_obj_t</code> is always exact.
+
+<a name="creating_lists"></a>
+<h3>10.5.4 - Lists</h3>
+<p>
+There are actually two kinds of lists: regular lists (such as, e.g., <code>[|1, 2, 3|]</code>) and semi-infinite lists (such as, e.g. <code>[|1, 2...|]</code>). Withing the interactive tool, the ellipsis &ldquo;<code>...</code>&rdquo; can sometimes be used as a shortcut to define regular lists, e.g. <code>[|1, 2, ..., 10|]</code>.
+<p>
+In the library, there is no symbol for the ellipsis, and there are two distinct types: one for regular lists and one for semi-infinite lists (called end-elliptic). Defining a regular list with an ellipsis is not possible in the library (except of course with <code>sollya_lib_parse_string</code>).
+<p>
+Constructing regular lists is achieved through three functions:
+<ul>
+  <li> <code>sollya_obj_t sollya_lib_list(sollya_obj_t[] L, int n)</code>: this function returns a new object that is a list the elements of which are copies of <code>L[0]</code>, ..., <code>L[n-1]</code>.</li>
+  <li> <code>sollya_obj_t sollya_lib_build_list(sollya_obj_t obj1, ...)</code>: this function accepts a variable number of arguments. The last one <strong>must</strong> be <code>NULL</code>. It &ldquo;eats up&rdquo; its arguments and returns a list containing the objects given as arguments. Since arguments are eaten up, they may be directly produced by function calls, without being stored in variables. A typical use could be<br>
+    <code>sollya_lib_build_list(SOLLYA_CONST(1), SOLLYA_CONST(2), SOLLYA_CONST(3), NULL);</code><br></li>
+  <li> <code>sollya_obj_t sollya_lib_v_build_list(va_list)</code>: the same as the previous functions, but with a <code>va_list</code>.</li>
+</ul>
+<p>
+Following the same conventions, end-elliptic lists can be constructed with the following functions:
+<ul>
+  <li> <code>sollya_obj_t sollya_lib_end_elliptic_list(sollya_obj_t[] L, int n)</code>.</li>
+  <li> <code>sollya_obj_t sollya_lib_build_end_elliptic_list(sollya_obj_t obj1, ...)</code>.</li>
+  <li> <code>sollya_obj_t sollya_lib_v_build_end_elliptic_list(va_list)</code>.</li>
+</ul>
+
+<p><a name="creating_structures"></a>
+<h3>10.5.5 - Structures</h3>
+<p>
+<span class="sollya">Sollya</span> structures are also available in library mode as any other <span class="sollya">Sollya</span> object. The support for <span class="sollya">Sollya</span> structures is however minimal and creating them might seem cumbersome (users are encouraged to make well-founded feature requests if they feel the need for better support of structures). The only function available to create structures is<br>
+<code>int sollya_lib_create_structure(sollya_obj_t *res, sollya_obj_t s, char *name,</code><br>
+<code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sollya_obj_t val).</code>
+
+<p>
+This function returns a boolean integer: false means failure, and true means success. Three cases of success are possible. In all cases, the function creates a new object and stores it at the address referred to by <code>res</code>.
+<ul>
+  <li>  If <code>s</code> is <code>NULL</code>: <code>*res</code> is filled with a structure with only one field. This field is named after the string <code>name</code> and contains a copy of the object <code>val</code>.</li>
+  <li> If <code>s</code> is an already existing structure that has a field named after the string <code>name</code>: <code>*res</code> is filled with a newly created structure. This structure is the same as <code>s</code> except that the field corresponding to <code>name</code> contains a copy of <code>val</code>.</li>
+  <li> If <code>s</code> is an already existing structure that does <strong>not</strong> have a field named after the string <code>name</code>: <code>*res</code> is filled with a newly created structure. This structure is the same as <code>s</code> except that it has been augmented with a field corresponding to <code>name</code> and that contains a copy of <code>val</code>.</li>
+</ul>
+<p>
+Please notice that <code>s</code> is not changed by this function: the structure stored in <code>*res</code> is a new one that does not refer to any of the components of <code>s</code>. As a consequence, one should not forget to explicitly clear <code>s</code> as well as <code>*res</code> when they become useless.
+
+<h3>10.5.6 - Library functions, library constants and procedure functions</h3>
 <p>
 In addition to the mathematical base functions and constants provided
 by <span class="sollya">Sollya</span> and listed in the Section above, the user may bind other
@@ -1409,91 +1495,8 @@ representing a <span class="sollya">Sollya</span> procedure is to use
 </li>
 </ul>
 
-<h3>10.5.4 - Other simple objects</h3>
+<h3>10.5.7 - External procedures</h3>
 <p>
-Other simple objects are created with functions listed in Table&nbsp;<a href="#creating_sollya_obj_t">Creating <span class="sollya">Sollya</span> objects from scratch</a>. The functions with a name of the form <code>sollya_lib_range_something</code> follow the same convention as <code>sollya_lib_constant</code>: they build a new object from a copy of their argument, and the conversion is always exact, whatever the value of <code>prec</code> is.
-<p>
-Please note that in the interactive tool, <code>D</code> either denotes the discrete mathematical function that maps a real number to its closest <code>double</code> number, or is used as a symbolic constant to indicate that the <code>double</code> format must be used (as an argument of <code>round</code> for instance). In the library, they are completely distinct objects, the mathematical function being obtained with <code>sollya_lib_build_function_double</code> and the symbolic constant with <code>sollya_lib_double_obj</code>. The same holds for other formats (<code>DD</code>, <code>SG</code>, etc.)
-    <a name="creating_sollya_obj_t"></a>
-    <table border="1" rules="cols">
-    <caption>Creating <span class="sollya">Sollya</span> objects from scratch (Returns a new <code>sollya_obj_t</code>)</caption>
-    <tr><th align="center">Name in the interactive tool</th> <th align="center">Function to create it</th> </tr>
-<tr> <td align="center"><code>on</code> </td> <td align="left"> <code>sollya_lib_on();</code> </td> </tr>
-<tr> <td align="center"><code>off</code> </td> <td align="left"> <code>sollya_lib_off();</code> </td> </tr>
-<tr> <td align="center"><code>dyadic</code> </td> <td align="left"> <code>sollya_lib_dyadic();</code> </td> </tr>
-<tr> <td align="center"><code>powers</code> </td> <td align="left"> <code>sollya_lib_powers();</code> </td> </tr>
-<tr> <td align="center"><code>binary</code> </td> <td align="left"> <code>sollya_lib_binary();</code> </td> </tr>
-<tr> <td align="center"><code>hexadecimal</code> </td> <td align="left"> <code>sollya_lib_hexadecimal();</code> </td> </tr>
-<tr> <td align="center"><code>file</code> </td> <td align="left"> <code>sollya_lib_file();</code> </td> </tr>
-<tr> <td align="center"><code>postscript</code> </td> <td align="left"> <code>sollya_lib_postscript();</code> </td> </tr>
-<tr> <td align="center"><code>postscriptfile</code> </td> <td align="left"> <code>sollya_lib_postscriptfile();</code> </td> </tr>
-<tr> <td align="center"><code>perturb</code> </td> <td align="left"> <code>sollya_lib_perturb();</code> </td> </tr>
-<tr> <td align="center"><code>RD</code> </td> <td align="left"> <code>sollya_lib_round_down();</code> </td> </tr>
-<tr> <td align="center"><code>RU</code> </td> <td align="left"> <code>sollya_lib_round_up();</code> </td> </tr>
-<tr> <td align="center"><code>RZ</code> </td> <td align="left"> <code>sollya_lib_round_towards_zero();</code> </td> </tr>
-<tr> <td align="center"><code>RN</code> </td> <td align="left"> <code>sollya_lib_round_to_nearest();</code> </td> </tr>
-<tr> <td align="center"><code>honorcoeffprec</code> </td> <td align="left"> <code>sollya_lib_honorcoeffprec();</code> </td> </tr>
-<tr> <td align="center"><code>true</code> </td> <td align="left"> <code>sollya_lib_true();</code> </td> </tr>
-<tr> <td align="center"><code>false</code> </td> <td align="left"> <code>sollya_lib_false();</code> </td> </tr>
-<tr> <td align="center"><code>void</code> </td> <td align="left"> <code>sollya_lib_void();</code> </td> </tr>
-<tr> <td align="center"><code>default</code> </td> <td align="left"> <code>sollya_lib_default();</code> </td> </tr>
-<tr> <td align="center"><code>decimal</code> </td> <td align="left"> <code>sollya_lib_decimal();</code> </td> </tr>
-<tr> <td align="center"><code>absolute</code> </td> <td align="left"> <code>sollya_lib_absolute();</code> </td> </tr>
-<tr> <td align="center"><code>relative</code> </td> <td align="left"> <code>sollya_lib_relative();</code> </td> </tr>
-<tr> <td align="center"><code>fixed</code> </td> <td align="left"> <code>sollya_lib_fixed();</code> </td> </tr>
-<tr> <td align="center"><code>floating</code> </td> <td align="left"> <code>sollya_lib_floating();</code> </td> </tr>
-<tr> <td align="center"><code>error</code> </td> <td align="left"> <code>sollya_lib_error();</code> </td> </tr>
-<tr> <td align="center"><code>D, double</code> </td> <td align="left"> <code>sollya_lib_double_obj();</code> </td> </tr>
-<tr> <td align="center"><code>SG, single</code> </td> <td align="left"> <code>sollya_lib_single_obj();</code> </td> </tr>
-<tr> <td align="center"><code>QD, quad</code> </td> <td align="left"> <code>sollya_lib_quad_obj();</code> </td> </tr>
-<tr> <td align="center"><code>HP, halfprecision</code> </td> <td align="left"> <code>sollya_lib_halfprecision_obj();</code> </td> </tr>
-<tr> <td align="center"><code>DE, doubleextended</code> </td> <td align="left"> <code>sollya_lib_doubleextended_obj();</code> </td> </tr>
-<tr> <td align="center"><code>DD, doubledouble</code> </td> <td align="left"> <code>sollya_lib_double_double_obj();</code> </td> </tr>
-<tr> <td align="center"><code>TD, tripledouble</code> </td> <td align="left"> <code>sollya_lib_triple_double_obj();</code> </td> </tr>
-<tr> <td align="center"><code>"Hello"</code> </td> <td align="left">  <code>sollya_lib_string("Hello")</code> </td> </tr>
-<tr> <td align="center"><code>[1, 3.5]</code> </td> <td align="left">  <code>sollya_lib_range_from_interval(a);</code> </td> </tr>
-    <tr> <td align="center"><code>[1, 3.5]</code> </td> <td align="left">  <code>sollya_lib_range_from_bounds(b, c);</code></td> </tr>
-  </table>
-<p>In the last lines of the table, <code>a</code> is a <code>mpfi_t</code> containing the interval [1, 3.5], <code>b</code> and <code>c</code> are <code>mpfr_t</code> respectively containing the numbers 1 and 3.5. Conversion from a <code>mpfi_t</code> or a <code>mpfr_t</code> to a <code>sollya_obj_t</code> is always exact.
-
-<a name="creating_lists"></a>
-<h3>10.5.5 - Lists</h3>
-<p>
-There are actually two kinds of lists: regular lists (such as, e.g., <code>[|1, 2, 3|]</code>) and semi-infinite lists (such as, e.g. <code>[|1, 2...|]</code>). Withing the interactive tool, the ellipsis &ldquo;<code>...</code>&rdquo; can sometimes be used as a shortcut to define regular lists, e.g. <code>[|1, 2, ..., 10|]</code>.
-<p>
-In the library, there is no symbol for the ellipsis, and there are two distinct types: one for regular lists and one for semi-infinite lists (called end-elliptic). Defining a regular list with an ellipsis is not possible in the library (except of course with <code>sollya_lib_parse_string</code>).
-<p>
-Constructing regular lists is achieved through three functions:
-<ul>
-  <li> <code>sollya_obj_t sollya_lib_list(sollya_obj_t[] L, int n)</code>: this function returns a new object that is a list the elements of which are copies of <code>L[0]</code>, ..., <code>L[n-1]</code>.</li>
-  <li> <code>sollya_obj_t sollya_lib_build_list(sollya_obj_t obj1, ...)</code>: this function accepts a variable number of arguments. The last one <strong>must</strong> be <code>NULL</code>. It &ldquo;eats up&rdquo; its arguments and returns a list containing the objects given as arguments. Since arguments are eaten up, they may be directly produced by function calls, without being stored in variables. A typical use could be<br>
-    <code>sollya_lib_build_list(SOLLYA_CONST(1), SOLLYA_CONST(2), SOLLYA_CONST(3), NULL);</code><br></li>
-  <li> <code>sollya_obj_t sollya_lib_v_build_list(va_list)</code>: the same as the previous functions, but with a <code>va_list</code>.</li>
-</ul>
-<p>
-Following the same conventions, end-elliptic lists can be constructed with the following functions:
-<ul>
-  <li> <code>sollya_obj_t sollya_lib_end_elliptic_list(sollya_obj_t[] L, int n)</code>.</li>
-  <li> <code>sollya_obj_t sollya_lib_build_end_elliptic_list(sollya_obj_t obj1, ...)</code>.</li>
-  <li> <code>sollya_obj_t sollya_lib_v_build_end_elliptic_list(va_list)</code>.</li>
-</ul>
-
-<p><a name="creating_structures"></a>
-<h3>10.5.6 - Structures</h3>
-<p>
-<span class="sollya">Sollya</span> structures are also available in library mode as any other <span class="sollya">Sollya</span> object. The support for <span class="sollya">Sollya</span> structures is however minimal and creating them might seem cumbersome (users are encouraged to make well-founded feature requests if they feel the need for better support of structures). The only function available to create structures is<br>
-<code>int sollya_lib_create_structure(sollya_obj_t *res, sollya_obj_t s, char *name,</code><br>
-<code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sollya_obj_t val).</code>
-
-<p>
-This function returns a boolean integer: false means failure, and true means success. Three cases of success are possible. In all cases, the function creates a new object and stores it at the address referred to by <code>res</code>.
-<ul>
-  <li>  If <code>s</code> is <code>NULL</code>: <code>*res</code> is filled with a structure with only one field. This field is named after the string <code>name</code> and contains a copy of the object <code>val</code>.</li>
-  <li> If <code>s</code> is an already existing structure that has a field named after the string <code>name</code>: <code>*res</code> is filled with a newly created structure. This structure is the same as <code>s</code> except that the field corresponding to <code>name</code> contains a copy of <code>val</code>.</li>
-  <li> If <code>s</code> is an already existing structure that does <strong>not</strong> have a field named after the string <code>name</code>: <code>*res</code> is filled with a newly created structure. This structure is the same as <code>s</code> except that it has been augmented with a field corresponding to <code>name</code> and that contains a copy of <code>val</code>.</li>
-</ul>
-<p>
-Please notice that <code>s</code> is not changed by this function: the structure stored in <code>*res</code> is a new one that does not refer to any of the components of <code>s</code>. As a consequence, one should not forget to explicitly clear <code>s</code> as well as <code>*res</code> when they become useless.
 
 <h2>10.6 - Getting the type of an object</h2>
 <p>

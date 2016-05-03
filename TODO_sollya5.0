@@ -23,17 +23,18 @@ New API  (see @rev c629c562)                                                    
   sollya_lib_obj_is_externalprocedure
   sollya_lib_is_libraryconstant
 
-In library mode (void *) argument to                                             -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning --> TODO SC
-  sollya_lib_libraryconstant_with_data
-  sollya_lib_libraryfunction_with_data
-  sollya_lib_externalprocedure_with_data
+In library mode (void *) argument to
+  sollya_lib_libraryconstant_with_data                                           -- [N] well-documented   [ ] well-tested   [ ] worth mentioning
+  sollya_lib_build_function_libraryconstant_with_data                            -- [N] well-documented   [ ] well-tested   [ ] worth mentioning
+  sollya_lib_libraryfunction_with_data                                           -- [N] well-documented   [ ] well-tested   [ ] worth mentioning
+  sollya_lib_build_function_libraryfunction_with_data                            -- [N] well-documented   [ ] well-tested   [ ] worth mentioning
+  sollya_lib_externalprocedure                                                   -- [N] well-documented   [ ] well-tested   [ ] worth mentioning
+  sollya_lib_externalprocedure_with_data                                         -- [N] well-documented   [ ] well-tested   [ ] worth mentioning
 
-  sollya_lib_decompose_libraryfunction_with_data
-  sollya_lib_decompose_libraryconstant_with_data
-  sollya_lib_decompose_externalprocedure_with_data
+  sollya_lib_decompose_libraryfunction_with_data                                 -- [X] well-documented   [ ] well-tested   [ ] worth mentioning
+  sollya_lib_decompose_libraryconstant_with_data                                 -- [X] well-documented   [ ] well-tested   [ ] worth mentioning
+  sollya_lib_decompose_externalprocedure_with_data                               -- [X] well-documented   [ ] well-tested   [ ] worth mentioning
 
-  sollya_lib_build_function_libraryconstant_with_data
-  sollya_lib_build_function_libraryfunction_with_data
 
 New API sollya_lib_get_subfunction and sollya_lib_[v]construct_function          -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 New API for deallocation in sollya_lib_decompose*_with_data                      -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
