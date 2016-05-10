@@ -1393,6 +1393,7 @@ This function returns a boolean integer: false means failure, and true means suc
 Please notice that \texttt{s} is not changed by this function: the structure stored in \texttt{*res} is a new one that does not refer to any of the components of \texttt{s}. As a consequence, one should not forget to explicitly clear \texttt{s} as well as \texttt{*res} when they become useless.
 
 \subsubsection{Library functions, library constants and procedure functions}
+\label{library_functions}
 
 In addition to the mathematical base functions and constants provided
 by \sollya and listed in the Section above, the user may bind other
@@ -1413,17 +1414,32 @@ code is available through a {\tt C} pointer to a function: \\
 \verb|                                        int (*f)(mpfi_t, mpfi_t, int));| \\
 \verb|sollya_obj_t sollya_lib_build_function_libraryfunction(sollya_obj_t e, | \\
 \verb|                                        char *name, | \\
-\verb|                                        int (*f)(mpfi_t, mpfi_t, int));| 
+\verb|                                        int (*f)(mpfi_t, mpfi_t, int));| \\
+\verb|sollya_obj_t sollya_lib_libraryfunction_with_data(|\\
+\verb|                                        sollya_obj_t e, | \\
+\verb|                                        char *name, | \\
+\verb|                                        int (*f)(mpfi_t, mpfi_t, int, void *),|\\
+\verb|                                        void *data,|\\
+\verb|                                        void (*dealloc_func)(void *));| \\
+\verb|sollya_obj_t sollya_lib_build_function_libraryfunction_with_data(|\\
+\verb|                                        sollya_obj_t e, | \\
+\verb|                                        char *name, | \\
+\verb|                                        int (*f)(mpfi_t, mpfi_t, int, void *),|\\
+\verb|                                        void *data,|\\
+\verb|                                        void (*dealloc_func)(void *));|
 
-These two functions construct a \sollya object representing $f(e)$
+These four functions construct a \sollya object representing $f(e)$
 where $e$ is given as the \sollya object {\tt e} and $f$ is given as
-the pointer to a function \verb|f(mpfi_t y, mpfi_t x, int n)|. This
-code must evaluate the $n$-th derivative of $f$ over the interval $x$,
-yielding $y$. 
+the pointer to a function \verb|f(mpfi_t y, mpfi_t x, int n)|
+(resp. \verb|f(mpfi_t y, mpfi_t x, int n, void *data)|). This code
+must evaluate the $n$-th derivative of $f$ over the interval $x$,
+yielding $y$.
 
-As usual, \verb|sollya_lib_build_function_libraryfunction| ``eats up''
-the object {\tt e}, while the function
-\verb|sollya_lib_libraryfunction| does not.
+As usual, the functions \verb|sollya_lib_build_function_libraryfunction|
+and \\ \verb|sollya_lib_build_function_libraryfunction_with_data| ``eat
+up'' the object {\tt e}, while the functions
+\verb|sollya_lib_libraryfunction| and
+\verb|sollya_lib_libraryfunction_with_data| do not.
 
 The \verb|name| argument of the function is taken as a suggestion to
 the name the \sollya object representing the function should be
@@ -1440,22 +1456,67 @@ unique number to it. The \verb|name| argument is never ``eaten up'',
 i.e., it is up to the user to free any memory allocated to that
 pointer.
 
+In addition to the functionality provided by one of the
+\verb|sollya_lib_libraryfunction| and \\
+\verb|sollya_lib_build_function_libraryfunction| functions, the \\
+\verb|sollya_lib_libraryfunction_with_data| and \\
+\verb|sollya_lib_build_function_libraryfunction_with_data| functions
+allow for the same binding of an external function to a \sollya object
+but additionnally permit an opaque data pointer \verb|data| to be
+registered together with the function pointer \verb|f|. The data
+pointer \verb|data| will be represented to the function \verb|f| on
+each call, in a additional (last) argument of type \verb|void *| that
+the function \verb|f| is supposed to take.
+
+Such opaque data pointers are traditionnally used to distinguish
+between several different external procedure objects when only
+unique function pointer is available and the actual procedural code
+is contained in a closure represented thru the data pointer.
+
+As the data field the \verb|data| pointer points to may require
+deallocation once the \sollya object built thru invokation of the
+functions described inhere and all of its copies eventually get
+deallocated, a data-field-deallocation function \verb|dealloc_func|
+may be registered together with the data field. That function will be
+called with the \verb|data| pointer in argument when the \sollya
+object is deallocated. When the user does not need such a deallocation
+function, they may provide \verb|NULL| as the \verb|dealloc_func|
+argument to the \verb|sollya_lib_libraryfunction_with_data| function
+or \verb|sollya_lib_build_function_libraryfunction_with_data|
+function, in which case the argument is ignored and no deallocation
+function gets called for the \sollya object built.
+
 \item Binding of a mathematical constant for which evaluation code is 
 available through a {\tt C} pointer to a function: \\
 \verb|sollya_obj_t sollya_lib_libraryconstant(char *name, | \\
 \verb|                                        void (*c)(mpfr_t, mp_prec_t));| \\
 \verb|sollya_obj_t sollya_lib_build_function_libraryconstant(char *name, | \\
-\verb|                                        void (*c)(mpfr_t, mp_prec_t));| 
+\verb|                                        void (*c)(mpfr_t, mp_prec_t));| \\
+\verb|sollya_obj_t sollya_lib_libraryconstant_with_data(|\\
+\verb|                                        char *name, | \\
+\verb|                                        void (*c)(mpfr_t, mp_prec_t, void *),|\\
+\verb|                                        void *data,|\\
+\verb|                                        void (*dealloc_func)(void *));| \\
+\verb|sollya_obj_t sollya_lib_build_function_libraryconstant_with_data(|\\
+\verb|                                        char *name, | \\
+\verb|                                        void (*c)(mpfr_t, mp_prec_t, void *),|\\
+\verb|                                        void *data,|\\
+\verb|                                        void (*dealloc_func)(void *));| 
 
-These two functions construct a \sollya object representing the
+These four functions construct a \sollya object representing the
 mathematical constant $c$ for which a pointer to a function
-\verb|c(mpfr_t rop, mp_prec_t prec)| is provided. This code must
-evaluate the constant to precision \verb|prec| and affect the result
-to \verb|rop|. See Section~\ref{lablibraryconstant} for details with
-respect to \verb|prec|.
+\verb|c(mpfr_t rop, mp_prec_t prec)|
+(resp. \\ \verb|c(mpfr_t rop, mp_prec_t prec, void *data)|) is
+provided. This code must evaluate the constant to precision
+\verb|prec| and affect the result to \verb|rop|. See
+Section~\ref{lablibraryconstant} for details with respect to
+\verb|prec|.
 
 The same remark as above concerning the suggested displaying name
 of the \sollya object applies for the \verb|name| argument.
+
+In the same manner, the same remarks as above concerning the functions
+taking a data field pointer \verb|data| apply.
 
 \item Binding of a mathematical function for which evaluation code is 
 available through a \sollya object representing a \sollya procedure: \\
@@ -1481,6 +1542,126 @@ representing a \sollya procedure is to use
 
 \subsubsection{External procedures}
 
+Similarly to library functions or library constants, the binding of
+which is discussed in Section~\ref{library_functions}, \sollya allows
+external procedural code to be bound and then used inside \sollya in a
+procedure-like manner. This functionality is the \sollya library
+equivalent to the interactive \com{externalproc} command, described in
+Section \ref{labexternalproc}.
+
+The following functions are provided in the \sollya library to bind
+external code to a \sollya procedure:
+\begin{itemize}
+\item To bind a function pointer \verb|p| as a procedure named
+  \verb|name|, having arity \verb|arity|, returning a result of type
+  \verb|res_type| and accepting arguments of types \verb|arg_types[0]|
+  thru \verb|arg_types[arity - 1]|, the function \\
+  \verb|sollya_obj_t|\\
+  \verb|    sollya_lib_externalprocedure(sollya_externalprocedure_type_t res_type,|\\
+  \verb|                                 sollya_externalprocedure_type_t *arg_types,|\\
+  \verb|                                 int arity,|\\
+  \verb|                                 char *name,|\\
+  \verb|                                 void *p);|\\
+  may be used.
+
+  The \verb|name| argument of the function is only taken as a
+  suggestion to the name the \sollya object representing the function
+  should be printed as when displayed. The user may choose to provide
+  \verb|NULL| instead.  In any case, upon the binding, the \sollya
+  library will determine a unique displaying name for the procedure. If
+  it is not yet taken as a name (for some other \sollya object or
+  \sollya keyword), the suggested name will be used. If no suggested
+  name is provided, the name of the dynamic object behind the pointer
+  to the function will be used if it can be determined. Otherwise, a
+  more-or-less random name is used. If the (suggested) base name is
+  already taken, the name is unified appending an underscore and a
+  unique number to it. The \verb|name| argument is never ``eaten up'',
+  i.e. it is up to the user to free any memory allocated for that
+  pointer.
+
+  The result type \verb|res_type| as well as the argument types
+  \verb|arg_types| take one of the values defined by the enumeration
+  type \verb|sollya_externalprocedure_type_t|, detailed in
+  Table~\ref{type_external_proc}. The array (resp. pointer) to the
+  argument types \verb|arg_types| provided to the
+  \verb|sollya_lib_externalprocedure| function is not ``eaten up'' by
+  the function, i.e. it is up to the user to free any memory allocated
+  for that pointer (where applicable). When the external procedure
+  does not take any argument, its arity is to be set to zero. In this
+  case, the argument type pointer \verb|arg_types| is ignored by the
+  \verb|sollya_lib_externalprocedure| function; it hence may be
+  invalid or \verb|NULL| in this case.
+
+  The actual {\tt C} function to be bound is supposed to have a
+  function type corresponding to the result and argument types
+  indicated. It is supposed to be provided to the
+  \verb|sollya_lib_externalprocedure| function as a \verb|void *|
+  function pointer, though, for the sake of unification of the \sollya
+  library interface. A detailed description of the actual type of the
+  {\tt C} function is given in Section~\ref{labexternalproc}.
+  
+\item In addition to the basic binding function described above, the \\
+  \verb|sollya_obj_t|\\
+  \verb|    sollya_lib_externalprocedure_with_data(|\\
+  \verb|                            sollya_externalprocedure_type_t res_type,|\\
+  \verb|                            sollya_externalprocedure_type_t *arg_types,|\\
+  \verb|                            int arity,|\\
+  \verb|                            char *name,|\\
+  \verb|                            void *p,|\\
+  \verb|                            void *data,|\\
+  \verb|                            void (*dealloc_func)(void *));|\\
+  function allows for the same binding of an external procedure to a
+  \sollya object but additionnally permits an opaque data pointer
+  \verb|data| to be registered together with the function pointer
+  \verb|p|. The data pointer \verb|data| will be represented to the
+  function \verb|p| on each call, in a additional (last) argument of
+  type \verb|void *| that the function \verb|p| is supposed to take.
+
+  Such opaque data pointers are traditionnally used to distinguish
+  between several different external procedure objects when only
+  unique function pointer is available and the actual procedural code
+  is contained in a closure represented thru the data pointer.
+
+  As the data field the \verb|data| pointer points to may require
+  deallocation once the \sollya object built thru invokation of the
+  \verb|sollya_lib_externalprocedure_with_data| and all of its copies
+  eventually get deallocated, a data-field-deallocation function
+  \verb|dealloc_func| may be registered together with the data
+  field. That function will be called with the \verb|data| pointer in
+  argument when the \sollya object is deallocated. When the user does
+  not need such a deallocation function, they may provide \verb|NULL|
+  as the \verb|dealloc_func| argument to the
+  \verb|sollya_lib_externalprocedure_with_data| function, in which
+  case the argument is ignored and no deallocation function gets
+  called for the \sollya object built.
+\end{itemize}
+
+\begin{table}[htp]
+  \caption{Possible return and argument types for external procedures}
+  \label{type_external_proc}
+  \begin{center}
+    \begin{tabular}{|l|}
+      \hline
+      \verb|SOLLYA_EXTERNALPROC_TYPE_VOID|\\
+      \verb|SOLLYA_EXTERNALPROC_TYPE_CONSTANT|\\
+      \verb|SOLLYA_EXTERNALPROC_TYPE_FUNCTION|\\
+      \verb|SOLLYA_EXTERNALPROC_TYPE_RANGE|\\
+      \verb|SOLLYA_EXTERNALPROC_TYPE_INTEGER|\\
+      \verb|SOLLYA_EXTERNALPROC_TYPE_STRING|\\
+      \verb|SOLLYA_EXTERNALPROC_TYPE_BOOLEAN|\\
+      \verb|SOLLYA_EXTERNALPROC_TYPE_OBJECT|\\
+      \verb|SOLLYA_EXTERNALPROC_TYPE_CONSTANT_LIST|\\
+      \verb|SOLLYA_EXTERNALPROC_TYPE_FUNCTION_LIST|\\
+      \verb|SOLLYA_EXTERNALPROC_TYPE_RANGE_LIST|\\
+      \verb|SOLLYA_EXTERNALPROC_TYPE_INTEGER_LIST|\\
+      \verb|SOLLYA_EXTERNALPROC_TYPE_STRING_LIST|\\
+      \verb|SOLLYA_EXTERNALPROC_TYPE_BOOLEAN_LIST|\\
+      \verb|SOLLYA_EXTERNALPROC_TYPE_OBJECT_LIST|\\
+      \hline
+    \end{tabular}
+  \end{center}
+\end{table}
+
 \subsection{Getting the type of an object}
 Functions are provided that allow the user to test the type of a \sollya object. They are listed in Table~\ref{type_of_an_object}. They all return an \verb|int| interpreted as the boolean result of the test. Please note that from a typing point of view, a mathematical constant and a non-constant functional expression are both functions.
 
@@ -1497,9 +1678,8 @@ Functions are provided that allow the user to test the type of a \sollya object.
       \verb|sollya_lib_obj_is_end_elliptic_list(obj)| \\
       \verb|sollya_lib_obj_is_structure(obj)| \\
       \verb|sollya_lib_obj_is_procedure(obj)| \\
-      \verb|sollya_lib_obj_is_error(obj)|\\[0.1cm]
-      \hline
-      \verb|sollya_lib_is_on(obj)|\phantom{\Large{$A^A$}} \\
+      \verb|sollya_lib_obj_is_error(obj)|\\
+      \verb|sollya_lib_is_on(obj)| \\
       \verb|sollya_lib_is_off(obj)| \\
       \verb|sollya_lib_is_dyadic(obj)| \\
       \verb|sollya_lib_is_powers(obj)| \\

@@ -6,9 +6,11 @@
 \verb|     sollya_obj_t sollya_lib_externalprocedure(sollya_externalprocedure_type_t, |\\
 \verb|                                               sollya_externalprocedure_type_t *,|\\
 \verb|                                               int, char *, void *);|\\
-\verb|     sollya_obj_t sollya_lib_externalprocedure_with_data(sollya_externalprocedure_type_t, |\\
-\verb|                                                         sollya_externalprocedure_type_t *,|\\
-\verb|                                                         int, char *, void *, void *, void (*)(void *));|\\[0.2cm]
+\verb|     sollya_obj_t sollya_lib_externalprocedure_with_data(|\\
+\verb|                                               sollya_externalprocedure_type_t, |\\
+\verb|                                               sollya_externalprocedure_type_t *,|\\
+\verb|                                               int, char *, void *, void *,|\\
+\verb|                                               void (*)(void *));|\\[0.2cm]
 \noindent Usage: 
 \begin{center}
 \textbf{externalproc}(\emph{identifier}, \emph{filename}, \emph{argumenttype} \texttt{->} \emph{resulttype}) : (\textsf{identifier type}, \textsf{string}, \textsf{type type}, \textsf{type type}) $\rightarrow$ \textsf{void}\\

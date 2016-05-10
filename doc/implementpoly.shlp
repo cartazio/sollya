@@ -86,7 +86,7 @@ in §§Gappa§\texttt{Gappa}§§.
 
 #EXAMPLE
 implementpoly(1 - 1/6 * x^2 + 1/120 * x^4, [-1b-10;1b-10], 1b-30, D, "p","implementation.c");
-readfile("implementation.c");
+bashevaluate("tail -n -29 implementation.c");
 
 #EXAMPLE
 implementpoly(1 - 1/6 * x^2 + 1/120 * x^4, [-1b-10;1b-10], 1b-30, D, "p","implementation.c","implementation.gappa");
@@ -109,7 +109,7 @@ if (q != p) then print("During implementation, rounding has happened.") else pri
 #SEEALSO $DOUBLE
 #SEEALSO $DOUBLEDOUBLE
 #SEEALSO $TRIPLEDOUBLE
-#SEEALSO $READFILE
+#SEEALSO $BASHEVALUATE
 #SEEALSO $PRINTEXPANSION
 #SEEALSO $ERROR
 #SEEALSO $REMEZ
