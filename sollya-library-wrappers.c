@@ -1244,14 +1244,6 @@ sollya_obj_t sollya_lib_simplify(sollya_obj_t obj1) {
   return evaluatedThing;
 }
 
-sollya_obj_t sollya_lib_simplifysafe(sollya_obj_t obj1) {
-  node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeSimplifySafe(copyThing(obj1));
-  evaluatedThing = evaluateThing(thingToEvaluate);
-  freeThing(thingToEvaluate);
-  return evaluatedThing;
-}
-
 sollya_obj_t sollya_lib_taylor(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3) {
   node *thingToEvaluate, *evaluatedThing;
   thingToEvaluate = makeTaylor(copyThing(obj1),copyThing(obj2),copyThing(obj3));
@@ -1492,14 +1484,6 @@ sollya_obj_t sollya_lib_v_implementpoly(sollya_obj_t obj1, sollya_obj_t obj2, so
 sollya_obj_t sollya_lib_checkinfnorm(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj3) {
   node *thingToEvaluate, *evaluatedThing;
   thingToEvaluate = makeCheckInfnorm(copyThing(obj1),copyThing(obj2),copyThing(obj3));
-  evaluatedThing = evaluateThing(thingToEvaluate);
-  freeThing(thingToEvaluate);
-  return evaluatedThing;
-}
-
-sollya_obj_t sollya_lib_zerodenominators(sollya_obj_t obj1, sollya_obj_t obj2) {
-  node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeZeroDenominators(copyThing(obj1),copyThing(obj2));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;

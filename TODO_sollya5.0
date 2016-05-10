@@ -39,7 +39,9 @@ In library mode (void *) argument to
 New API sollya_lib_get_subfunction and sollya_lib_[v]construct_function          -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 New API for deallocation in sollya_lib_decompose*_with_data                      -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 Unified externalprocedure and procedure with respect to list argument with @     -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
-
+sollya_lib_construct_function
+sollya_lib_v_construct_function
+sollya_lib_evaluate_function_at_object
 
 
 Further TODOs
@@ -51,6 +53,7 @@ Test what version of GMP, MPFR, MPFI are required and update documentation accor
 
 Write tests for sollya_lib_printlibrary_message (try below/above current verbosity level and with/without a callback. Also, in the tool with a externalproc and suppressmessage) [SC]
 
+Double dashes in *.tex documentation
 
 To be double-checked in the documentation
 -----------------------------------------
@@ -58,61 +61,12 @@ To be double-checked in the documentation
 The following functions do not seem to be documented. We should
 double-check that this is done on purpose and not by accident.
 
-sollya_lib_init_with_custom_memory_function_modifiers
-sollya_lib_init_with_arguments_with_custom_memory_function_modifiers
-sollya_lib_init_with_custom_memory_functions_with_custom_memory_function_modifiers
-sollya_lib_copy_obj
-sollya_lib_get_free_variable_name
 sollya_lib_v_suppressmessage
 sollya_lib_v_unsuppressmessage
-sollya_lib_free_variable
-sollya_lib_apply
-sollya_lib_v_apply
 sollya_lib_v_annotatefunction
-sollya_lib_simplifysafe
-sollya_lib_zerodenominators
-sollya_lib_obj_is_externalprocedure
 sollya_lib_construct_function
 sollya_lib_v_construct_function
-sollya_lib_is_libraryconstant
 sollya_lib_evaluate_function_at_object
-sollya_lib_get_object_list_head
-sollya_lib_get_object_list_tail
-sollya_lib_construct_object_list
-sollya_lib_copy_object_list
-sollya_lib_clear_object_list
-sollya_lib_is_empty_object_list
-sollya_lib_get_constant_list_head
-sollya_lib_get_constant_list_tail
-sollya_lib_construct_constant_list
-sollya_lib_copy_constant_list
-sollya_lib_clear_constant_list
-sollya_lib_is_empty_constant_list
-sollya_lib_get_interval_list_head
-sollya_lib_get_interval_list_tail
-sollya_lib_construct_interval_list
-sollya_lib_copy_interval_list
-sollya_lib_clear_interval_list
-sollya_lib_is_empty_interval_list
-sollya_lib_get_int_list_head
-sollya_lib_get_int_list_tail
-sollya_lib_construct_int_list
-sollya_lib_copy_int_list
-sollya_lib_clear_int_list
-sollya_lib_is_empty_int_list
-sollya_lib_get_boolean_list_head
-sollya_lib_get_boolean_list_tail
-sollya_lib_construct_boolean_list
-sollya_lib_copy_boolean_list
-sollya_lib_clear_boolean_list
-sollya_lib_is_empty_boolean_list
-sollya_lib_get_string_list_head
-sollya_lib_get_string_list_tail
-sollya_lib_construct_string_list
-sollya_lib_copy_string_list
-sollya_lib_clear_string_list
-sollya_lib_is_empty_string_list
-
 
 
 NEWS file
@@ -122,6 +76,7 @@ New function void sollya_lib_printlibrarymessage(int verb, const char *str) in t
 New functions sollya_lib_execute_procedure and sollya_lib_v_execute_procedure in the library
 Added forgotten function sollya_lib_obj_is_procedure to the library
 New --args option to pass command line (bash) arguments to a Sollya script
+New --oldexternalprocprint option
 New feature __unique_id
 New function sollya_lib_hash in the library
 New function annotatefunction.
