@@ -1,0 +1,70 @@
+\subsection{\_x\_}
+\label{labxfreevariable}
+\noindent Name: \textbf{\_x\_}\\
+\phantom{aaa}universal name for the mathematical free variable.\\[0.2cm]
+\noindent Library names:\\
+\verb|   sollya_obj_t sollya_lib_free_variable()|\\
+\verb|   sollya_obj_t sollya_lib_build_function_free_variable()|\\
+\verb|   #define SOLLYA_X_ (sollya_lib_build_function_free_variable())|\\[0.2cm]
+\noindent Description: \begin{itemize}
+
+\item \textbf{\_x\_} is an identifier that always denotes the mathematical free variable.
+   It cannot be assigned.
+
+\item \sollya manipulates mathematical functions of a single variable. The first
+   time that a variable name is used without having been assigned before, this
+   variable name is automatically considered by \sollya as the name of the
+   free variable. Subsequently, any other unassigned variable name will be
+   considered as the free variable with a warning making this conversion
+   explicit. This is convenient for an every-day use of the interactive tool,
+   but it has the drawback that the free variable name can change from a
+   session to another. There are contexts (\emph{e.g.}, within a procedure, or for
+   doing pattern matching) when one might want to refer to the free variable
+   regardless of its name in the current session. For this purpose \textbf{\_x\_} is
+   a universal identifier, always available and always denoting the free
+   variable, whatever its name is in the current context.
+\end{itemize}
+\noindent Example 1: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> verbosity=1!;
+> sin(a);
+sin(a)
+> b;
+Warning: the identifier "b" is neither assigned to, nor bound to a library funct
+ion nor external procedure, nor equal to the current free variable.
+Will interpret "b" as "a".
+a
+> _x_;
+a
+\end{Verbatim}
+\end{minipage}\end{center}
+\noindent Example 2: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> verbosity=1!;
+> sin(y);
+sin(y)
+> f = proc(a) {
+    return sin(a + _x_);
+  };
+> rename(y,z);
+Information: the free variable has been renamed from "y" to "z".
+> f(1);
+sin(1 + z)
+\end{Verbatim}
+\end{minipage}\end{center}
+\noindent Example 3: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> f = sin(y);
+> match f with
+    sin(a) : { print("sin of a with a =", a);
+               match a with
+                 _x_ : { print("a turns out to be the free variable"); }
+             default : { print("a is some expression"); };
+             }
+    _x_ : { print("Free variable") ; }
+    default: { print("Something else"); };
+sin of a with a = y
+a turns out to be the free variable
+\end{Verbatim}
+\end{minipage}\end{center}
+See also: \textbf{rename} (\ref{labrename}), \textbf{isbound} (\ref{labisbound}), \textbf{proc} (\ref{labproc})
