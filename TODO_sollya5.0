@@ -27,12 +27,12 @@ New API  (see @rev c629c562)                                                    
   sollya_lib_evaluate_function_at_object
 
 In library mode (void *) argument to
-  sollya_lib_libraryconstant_with_data                                           -- [N] well-documented   [ ] well-tested   [ ] worth mentioning
-  sollya_lib_build_function_libraryconstant_with_data                            -- [N] well-documented   [ ] well-tested   [ ] worth mentioning
-  sollya_lib_libraryfunction_with_data                                           -- [N] well-documented   [ ] well-tested   [ ] worth mentioning
-  sollya_lib_build_function_libraryfunction_with_data                            -- [N] well-documented   [ ] well-tested   [ ] worth mentioning
-  sollya_lib_externalprocedure                                                   -- [N] well-documented   [ ] well-tested   [ ] worth mentioning
-  sollya_lib_externalprocedure_with_data                                         -- [N] well-documented   [ ] well-tested   [ ] worth mentioning
+  sollya_lib_libraryconstant_with_data                                           -- [X] well-documented   [ ] well-tested   [X] worth mentioning
+  sollya_lib_build_function_libraryconstant_with_data                            -- [X] well-documented   [ ] well-tested   [X] worth mentioning
+  sollya_lib_libraryfunction_with_data                                           -- [X] well-documented   [ ] well-tested   [X] worth mentioning
+  sollya_lib_build_function_libraryfunction_with_data                            -- [X] well-documented   [ ] well-tested   [X] worth mentioning
+  sollya_lib_externalprocedure                                                   -- [X] well-documented   [ ] well-tested   [X] worth mentioning
+  sollya_lib_externalprocedure_with_data                                         -- [X] well-documented   [ ] well-tested   [X] worth mentioning
 
   sollya_lib_decompose_libraryfunction_with_data                                 -- [X] well-documented   [ ] well-tested   [ ] worth mentioning
   sollya_lib_decompose_libraryconstant_with_data                                 -- [X] well-documented   [ ] well-tested   [ ] worth mentioning
@@ -53,7 +53,6 @@ Test what version of GMP, MPFR, MPFI are required and update documentation accor
 
 Write tests for sollya_lib_printlibrary_message (try below/above current verbosity level and with/without a callback. Also, in the tool with a externalproc and suppressmessage) [SC]
 
-Double dashes in *.tex documentation
 
 NEWS file
 ---------

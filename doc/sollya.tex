@@ -127,68 +127,68 @@ commands.
 
 The following options are supported when calling \sollya:
 \begin{itemize}
-\item \texttt{--args}: This special argument indicates to \sollya that subsequent
+\item \texttt{-{}-args}: This special argument indicates to \sollya that subsequent
 command line arguments are no longer to be interpreted but are to be passed as-is
-to the predefined \sollya variable \texttt{\_\_argv}. The \texttt{--args} argument
+to the predefined \sollya variable \texttt{\_\_argv}. The \texttt{-{}-args} argument
 is implicitely assumed if a \sollya script filename has already been specified with a 
 preceding command line argument and none of the subsequent command line arguments 
 is one of the special options given in this list.
-\item \texttt{--donotmodifystacksize}: When invoked, \sollya trys to increase
+\item \texttt{-{}-donotmodifystacksize}: When invoked, \sollya trys to increase
 the stack size that is available to a user process to the maximum size
 supported by the kernel. On some systems, the correspondent \texttt{ioctl} 
 does not work properly. Use the option to prevent \sollya from changing the 
 stack size.
-\item \texttt{--flush}: When this option is given, \sollya will flush
+\item \texttt{-{}-flush}: When this option is given, \sollya will flush
 all its input and output buffers after parsing and executing each
 command resp. sequence of commands. This option is needed when pipes
 are used to communicate with \sollya from another program.
-\item \texttt{--help}: Prints help on the usage of the tool and quits.
-\item \texttt{--nocolor}: \sollya supports coloring of the output
+\item \texttt{-{}-help}: Prints help on the usage of the tool and quits.
+\item \texttt{-{}-nocolor}: \sollya supports coloring of the output
   using ANSI X3.64/ ISO/IEC 6429 escape sequences. Coloring is
   deactivated when \sollya is connected on standard input to a file
   that is not a terminal. This option forces the deactivation of ANSI
   coloring. This might be necessary on very old grey-scale terminals or when
   encountering problems with old versions of \texttt{rlwrap}. 
-\item \texttt{--noprompt}: \sollya prints a prompt symbol when
+\item \texttt{-{}-noprompt}: \sollya prints a prompt symbol when
   connected on standard input to a pseudo-file that is a terminal. The
   option deactivates the prompt.
-\item \texttt{--oldautoprint}: The behaviour of an undocumented
+\item \texttt{-{}-oldautoprint}: The behaviour of an undocumented
 feature for displaying values has changed in \sollya from version 1.1
 to version 2.0. The old feature is deprecated. If you wish to use it
 nevertheless, use this deprecated option.
-\item \texttt{--oldexternalprocprint}: The behavior of an undocumented
+\item \texttt{-{}-oldexternalprocprint}: The behavior of an undocumented
   feature for displaying \sollya objects representing external
   procedures upon automatic printing at the \sollya prompt has been
   changed in \sollya from version 4.1 to version 5.0. The old feature
   is deprecated. If you wish to use it nevertheless, use this
   deprecated option.
-\item \texttt{--oldrlwrapcompatible}: This option is deprecated. It
+\item \texttt{-{}-oldrlwrapcompatible}: This option is deprecated. It
   makes \sollya emit a non ANSI X3.64 compliant coloring escape
   sequence for making it compatible with versions of \texttt{rlwrap}
   that do not support the \texttt{-A} option. The option is considered
   a hack since it is known to garble the output of the tool under
   some particular circumstances.
-\item \texttt{--warninfile[append] <file>}: Normally, \sollya emits
+\item \texttt{-{}-warninfile[append] <file>}: Normally, \sollya emits
   warning and information messages together with all other displayed
   information on either standard output or standard error. This option
   allows all warning and information messages to get redirected to a
   file. The filename to be used must be given after the option.  When
-  \texttt{--warninfile} is used, the existing content (if any) of the
+  \texttt{-{}-warninfile} is used, the existing content (if any) of the
   file is first removed before writing to the file. With
-  \texttt{--warninfileappend}, the messages are appended to an
+  \texttt{-{}-warninfileappend}, the messages are appended to an
   existing file. Even if coloring is used for the displaying all other
   \sollya output, no coloring sequences are ever written to the
   file. Let us emphasize on the fact that any file of a unixoid system
   can be used for output, for instance also a named pipe. This allows
   for error messaging to be performed on a separate terminal. The use
   of this option is mutually exclusive with the
-  \texttt{--warnonstderr} option.
-\item \texttt{--warnonstderr}: Normally, \sollya prints warning and
+  \texttt{-{}-warnonstderr} option.
+\item \texttt{-{}-warnonstderr}: Normally, \sollya prints warning and
   information messages on standard output, using a warning color 
   when coloring is activated. When this option is given, \sollya will 
   output all warning and information messages on standard error. Coloring
   will be used even on standard error, when activated. The use of 
-  this option is mutually exclusive with the \texttt{--warninfile[append]} 
+  this option is mutually exclusive with the \texttt{-{}-warninfile[append]} 
   option.
 \end{itemize}
 
@@ -334,7 +334,7 @@ Two predefined variables exist when \sollya is started:
   and after the execution of the \texttt{restart} command, a list of
   character strings that correspond to the command line options given
   to \sollya after the (implicit) command line argument
-  \texttt{--args} (see above).
+  \texttt{-{}-args} (see above).
 \item \texttt{\_\_unique\_id} : This variable contains, on \sollya
   startup and after the execution of the \texttt{restart} command, a
   character string that uniquely identifies the given \sollya session
@@ -1435,11 +1435,8 @@ the pointer to a function \verb|f(mpfi_t y, mpfi_t x, int n)|
 must evaluate the $n$-th derivative of $f$ over the interval $x$,
 yielding $y$.
 
-As usual, the functions \verb|sollya_lib_build_function_libraryfunction|
-and \\ \verb|sollya_lib_build_function_libraryfunction_with_data| ``eat
-up'' the object {\tt e}, while the functions
-\verb|sollya_lib_libraryfunction| and
-\verb|sollya_lib_libraryfunction_with_data| do not.
+As usual, the functions whose name contains \verb|_build_function_| ``eat
+up'' the object {\tt e}, while the corresponding functions (without \verb|_build_function_| in their name) do not.
 
 The \verb|name| argument of the function is taken as a suggestion to
 the name the \sollya object representing the function should be
@@ -1456,19 +1453,15 @@ unique number to it. The \verb|name| argument is never ``eaten up'',
 i.e., it is up to the user to free any memory allocated to that
 pointer.
 
-In addition to the functionality provided by one of the
-\verb|sollya_lib_libraryfunction| and \\
-\verb|sollya_lib_build_function_libraryfunction| functions, the \\
-\verb|sollya_lib_libraryfunction_with_data| and \\
-\verb|sollya_lib_build_function_libraryfunction_with_data| functions
-allow for the same binding of an external function to a \sollya object
+The functions whose name contains \verb|_with_data|
+allow for the same binding of an external function to a \sollya object as the corresponding functions (without \verb|_with_data| in their name),
 but additionnally permit an opaque data pointer \verb|data| to be
-registered together with the function pointer \verb|f|. The data
+registered together with the function pointer~\verb|f|. The data
 pointer \verb|data| will be represented to the function \verb|f| on
-each call, in a additional (last) argument of type \verb|void *| that
+each call, in an additional (last) argument of type \verb|void *| that
 the function \verb|f| is supposed to take.
 
-Such opaque data pointers are traditionnally used to distinguish
+Such opaque data pointers may be used, \emph{e.g.}, to distinguish
 between several different external procedure objects when only
 unique function pointer is available and the actual procedural code
 is contained in a closure represented thru the data pointer.
@@ -1509,8 +1502,7 @@ mathematical constant $c$ for which a pointer to a function
 (resp. \\ \verb|c(mpfr_t rop, mp_prec_t prec, void *data)|) is
 provided. This code must evaluate the constant to precision
 \verb|prec| and affect the result to \verb|rop|. See
-Section~\ref{lablibraryconstant} for details with respect to
-\verb|prec|.
+Section~\ref{lablibraryconstant} for details with respect to~\verb|prec|.
 
 The same remark as above concerning the suggested displaying name
 of the \sollya object applies for the \verb|name| argument.
@@ -1545,12 +1537,8 @@ representing a \sollya procedure is to use
 Similarly to library functions or library constants, the binding of
 which is discussed in Section~\ref{library_functions}, \sollya allows
 external procedural code to be bound and then used inside \sollya in a
-procedure-like manner. This functionality is the \sollya library
-equivalent to the interactive \com{externalproc} command, described in
-Section \ref{labexternalproc}.
-
-The following functions are provided in the \sollya library to bind
-external code to a \sollya procedure:
+procedure-like manner. This is provided in the interactive tool with the \com{externalproc} command, described in
+Section~\ref{labexternalproc}. The same mechanism is available in the \sollya library thanks to the following functions:
 \begin{itemize}
 \item To bind a function pointer \verb|p| as a procedure named
   \verb|name|, having arity \verb|arity|, returning a result of type
@@ -1614,10 +1602,10 @@ external code to a \sollya procedure:
   \sollya object but additionnally permits an opaque data pointer
   \verb|data| to be registered together with the function pointer
   \verb|p|. The data pointer \verb|data| will be represented to the
-  function \verb|p| on each call, in a additional (last) argument of
+  function \verb|p| on each call, in an additional (last) argument of
   type \verb|void *| that the function \verb|p| is supposed to take.
 
-  Such opaque data pointers are traditionnally used to distinguish
+  Such opaque data pointers may be used, \emph{e.g.}, to distinguish
   between several different external procedure objects when only
   unique function pointer is available and the actual procedural code
   is contained in a closure represented thru the data pointer.
@@ -1678,8 +1666,9 @@ Functions are provided that allow the user to test the type of a \sollya object.
       \verb|sollya_lib_obj_is_end_elliptic_list(obj)| \\
       \verb|sollya_lib_obj_is_structure(obj)| \\
       \verb|sollya_lib_obj_is_procedure(obj)| \\
-      \verb|sollya_lib_obj_is_error(obj)|\\
-      \verb|sollya_lib_is_on(obj)| \\
+      \verb|sollya_lib_obj_is_error(obj)|\\[0.1cm]
+      \hline
+      \verb|sollya_lib_is_on(obj)|\phantom{\Large{$A^A$}} \\
       \verb|sollya_lib_is_off(obj)| \\
       \verb|sollya_lib_is_dyadic(obj)| \\
       \verb|sollya_lib_is_powers(obj)| \\
