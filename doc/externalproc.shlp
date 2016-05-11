@@ -124,6 +124,29 @@ considered to be objects inside $SOLLYA that can be assigned to other
 variables, stored in list etc.
 
 #DESCRIPTION
+The user should be aware that they may use the $SOLLYA library in
+external codes to be dynamically bound to $SOLLYA using $COMMAND. On
+most systems, it suffices to include the header of the $SOLLYA library
+into the source code of the external procedure. Linking with the
+actual $SOLLYA library is not necessary on most systems; as the
+interactive $SOLLYA executable contains a superset of the $SOLLYA
+library functions. On some systems, linking with the $SOLLYA library
+or some of its dependencies may be necessary.
+§§ § §§
+In particular, the $SOLLYA library -and, of course, its header file-
+contain a certain set of functions to manipulate lists with elements
+of certain types, such as
+§§sollya_constant_list_t§\verb|sollya_constant_list_t|§§,
+§§sollya_obj_list_t§\verb|sollya_obj_list_t|§§ and so on. As explained
+above, these types are passed in argument to (and received back thru a
+reference from) an external procedure. These list manipulation
+functions are not strictly necessary to the use of the $SOLLYA library
+in free-standing applications that do not use the functionality
+provided with $COMMAND. They are therefore provided as-is without any
+further documentation, besides the comments given in the $SOLLYA
+library header file.
+
+#DESCRIPTION
 The dynamic object file whose name is given to $COMMAND for binding of an
 external procedure may also define a destructor function §§int sollya_external_lib_close(void)§\verb|int sollya_external_lib_close(void)|§§.
 If $SOLLYA finds such a destructor function in the dynamic object file, it will call 

@@ -6,6 +6,7 @@
 #TYPE $LIST_TYPE -> $VOID_TYPE
 
 #LIBRARYNAME void sollya_lib_suppressmessage(sollya_obj_t, ...);
+#LIBRARYNAME void sollya_lib_v_suppressmessage(sollya_obj_t, va_list);
 
 #PARAMETERS <msg num 1> thru <msg num n> represent the numbers of §§n§$n$§§ messages to be suppressed
 #PARAMETERS <msg list> represents a list with numbers of messages to be suppressed

@@ -22,6 +22,9 @@ Fixed problem of persisting gnuplot files (see @ref 8cb140c)                    
 New API  (see @rev c629c562)                                                     -- [N] well-documented   [N] well-tested   [X] worth mentioning --> TODO SC
   sollya_lib_obj_is_externalprocedure
   sollya_lib_is_libraryconstant
+  sollya_lib_construct_function
+  sollya_lib_v_construct_function
+  sollya_lib_evaluate_function_at_object
 
 In library mode (void *) argument to
   sollya_lib_libraryconstant_with_data                                           -- [N] well-documented   [ ] well-tested   [ ] worth mentioning
@@ -39,9 +42,6 @@ In library mode (void *) argument to
 New API sollya_lib_get_subfunction and sollya_lib_[v]construct_function          -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 New API for deallocation in sollya_lib_decompose*_with_data                      -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 Unified externalprocedure and procedure with respect to list argument with @     -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
-sollya_lib_construct_function
-sollya_lib_v_construct_function
-sollya_lib_evaluate_function_at_object
 
 
 Further TODOs
@@ -61,12 +61,7 @@ To be double-checked in the documentation
 The following functions do not seem to be documented. We should
 double-check that this is done on purpose and not by accident.
 
-sollya_lib_v_suppressmessage
-sollya_lib_v_unsuppressmessage
 sollya_lib_v_annotatefunction
-sollya_lib_construct_function
-sollya_lib_v_construct_function
-sollya_lib_evaluate_function_at_object
 
 
 NEWS file
