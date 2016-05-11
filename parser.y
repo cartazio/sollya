@@ -2619,12 +2619,12 @@ help:                   CONSTANTTOKEN
                           }
                       | FREEVARTOKEN
                           {
-#ifdef HELP_FREEVAR_TEXT
-			    outputMode(); sollyaPrintf(HELP_FREEVAR_TEXT);
+#ifdef HELP_XFREEVARIABLE_TEXT
+			    outputMode(); sollyaPrintf(HELP_XFREEVARIABLE_TEXT);
 #else
 			    outputMode(); sollyaPrintf("Reserved default free variable _x_.\n");
 #if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
-#warning "No help text for FREEVAR"
+#warning "No help text for XFREEVARIABLE"
 #endif
 #endif
                           }

@@ -1,0 +1,56 @@
+#NAME $XFREEVARIABLE
+#QUICK_DESCRIPTION universal name for the mathematical free variable.
+
+#LIBRARYNAME sollya_obj_t sollya_lib_free_variable()
+#LIBRARYNAME sollya_obj_t sollya_lib_build_function_free_variable()
+#LIBRARYNAME #define SOLLYA_X_ (sollya_lib_build_function_free_variable())
+
+#DESCRIPTION
+$COMMAND is an identifier that always denotes the mathematical free variable.
+It cannot be assigned.
+
+#DESCRIPTION
+$SOLLYA manipulates mathematical functions of a single variable. The first
+time that a variable name is used without having been assigned before, this
+variable name is automatically considered by $SOLLYA as the name of the
+free variable. Subsequently, any other unassigned variable name will be
+considered as the free variable with a warning making this conversion
+explicit. This is convenient for an every-day use of the interactive tool,
+but it has the drawback that the free variable name can change from a
+session to another. There are contexts (§§e.g.§\emph{e.g.}§§, within a procedure, or for
+doing pattern matching) when one might want to refer to the free variable
+regardless of its name in the current session. For this purpose $COMMAND is
+a universal identifier, always available and always denoting the free
+variable, whatever its name is in the current context.
+
+#EXAMPLE
+verbosity=1!;
+sin(a);
+b;
+_x_;
+
+#EXAMPLE
+verbosity=1!;
+sin(y);
+f = proc(a) {
+  return sin(a + _x_);
+};
+rename(y,z);
+f(1);
+
+#EXAMPLE
+f = sin(y);
+match f with
+  sin(a) : { print("sin of a with a =", a);
+             match a with
+               _x_ : { print("a turns out to be the free variable"); }
+	       default : { print("a is some expression"); };
+           }
+  _x_ : { print("Free variable") ; }
+  default: { print("Something else"); };
+
+#SEEALSO $RENAME
+#SEEALSO $ISBOUND
+#SEEALSO $PROC
+
+

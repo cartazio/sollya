@@ -195,6 +195,7 @@ $listOfCommands=array(
 "verbosity","verbosity",
 "void","void",
 "worstcase","worstcase",
-"write","write"
+"write","write",
+"xfreevariable","_x_"
 );
 ?>
