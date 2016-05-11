@@ -1,12 +1,12 @@
 Bugs fixed
 ----------
-12665 -- [ ] tests added    [ ] is closed    [ ] worth mentioning
+12665 -- [ ] tests added    [ ] is closed    [ ] worth mentioning CQL
 
 
 Problems solved, without bug report number
 ------------------------------------------
 @rev:
-0513d99 -- [x] should create a bug report   [x] worth mentioning
+0513d99 -- [x] should create a bug report   [x] worth mentioning CQL
 
 
 New features
