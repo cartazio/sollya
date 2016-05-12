@@ -284,6 +284,15 @@ static const char* sollyaKeywords[] = { "D",
 					"worstcase",
 					"write",
 					"zerodenominators",
+					"_x_",
+					"quad",
+					"halfprecision",
+					"QD",
+					"HP",
+					"bashevaluate",
+					"help",
+					"match",
+					"with",
 					NULL }; /* The last entry must be NULL */
 
 chain *openedFunctionLibraries = NULL;
