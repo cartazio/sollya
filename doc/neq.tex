@@ -31,7 +31,7 @@ Parameters:
    for details.
 \end{itemize}
 \noindent Example 1: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > "Hello" != "Hello";
 false
 > "Hello" != "Salut";
@@ -43,7 +43,7 @@ false
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 2: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > 1 != exp(0);
 false
 > asin(1) * 2 != pi;
@@ -53,13 +53,13 @@ true
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 3: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > sin(pi/6) != 1/2 * sqrt(3);
 true
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 4: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > prec = 12;
 The precision has been set to 12 bits.
 > 16384.1 != 16385.1;
@@ -67,13 +67,13 @@ false
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 5: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > error != error;
 false
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 6: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > p = x + x^2;
 > q = x * (1 + x);
 > autosimplify = on;

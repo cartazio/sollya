@@ -22,17 +22,17 @@ Parameters:
    command is measured and displayed (for \textbf{verbosity} levels higher than 1).
 \end{itemize}
 \noindent Example 1: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > verbosity=1!;
 > timing=on;
 Timing has been activated.
 > p=remez(sin(x),10,[-1;1]);
-Information: Remez: computing the quality of approximation spent 4 ms
-Information: Remez: computing the quality of approximation spent 4 ms
-Information: Remez: computing the quality of approximation spent 4 ms
-Information: computing a minimax approximation spent 27 ms
-Information: assignment spent 32 ms
-Information: full execution of the last parse chunk spent 37 ms
+Information: Remez: computing the quality of approximation spent 6 ms
+Information: Remez: computing the quality of approximation spent 5 ms
+Information: Remez: computing the quality of approximation spent 5 ms
+Information: computing a minimax approximation spent 39 ms
+Information: assignment spent 46 ms
+Information: full execution of the last parse chunk spent 52 ms
 \end{Verbatim}
 \end{minipage}\end{center}
 See also: \textbf{on} (\ref{labon}), \textbf{off} (\ref{laboff}), \textbf{time} (\ref{labtime})

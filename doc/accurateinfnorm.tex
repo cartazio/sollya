@@ -38,7 +38,7 @@ Parameters:
    \textbf{supnorm} command.
 \end{itemize}
 \noindent Example 1: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > p = remez(exp(x), 5, [-1;1]);
 > accurateinfnorm(p - exp(x), [-1;1], 20);
 4.52055246569216251373291015625e-5
@@ -49,7 +49,7 @@ Parameters:
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 2: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > p = remez(exp(x), 5, [-1;1]);
 > midpointmode = on!;
 > infnorm(p - exp(x), [-1;1]);

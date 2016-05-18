@@ -38,7 +38,7 @@ Parameters:
    NaNs. This means that NaNs may disappear during computations.
 \end{itemize}
 \noindent Example 1: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > max(1,2,3,exp(5),log(0.25));
 148.41315910257660342111558004055227962348766759388
 > max(17);
@@ -46,20 +46,20 @@ Parameters:
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 2: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > l = [|1,2,3,exp(5),log(0.25)|];
 > max(l);
 148.41315910257660342111558004055227962348766759388
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 3: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > print(max(exp(17),sin(62)));
 exp(17)
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 4: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > verbosity = 1!;
 > print(max(17 + log2(13)/log2(9),17 + log(13)/log(9)));
 Warning: the tool is unable to decide a maximum computation by evaluation even t

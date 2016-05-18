@@ -164,7 +164,7 @@ Parameters:
    currently \textbf{fpminimax} has to be run with a sufficiently high working precision.
 \end{itemize}
 \noindent Example 1: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > P = fpminimax(cos(x),6,[|DD, DD, D...|],[-1b-5;1b-5]);
 > printexpansion(P);
 (0x3ff0000000000000 + 0xbc09fda15e029b00) + x * ((0x3af9eb57163024a8 + 0x37942c2
@@ -173,7 +173,7 @@ f3f3e3839) + x * (0xbfdfffffffffff98 + x * (0xbbd1693f9c028849 + x * (0x3fa55555
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 2: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > P = fpminimax(sin(x),6,[|32...|],[-1b-5;1b-5], fixed, absolute);
 > display = powers!;
 > P;
@@ -181,7 +181,7 @@ x * (1 + x^2 * (-357913941 * 2^(-31) + x^2 * (35789873 * 2^(-32))))
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 3: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > P = fpminimax(exp(x), [|3,4|], [|D,24|], [-1/256; 1/246], 1+x+x^2/2);
 > display = powers!;
 > P;
@@ -190,7 +190,7 @@ x * (1 + x^2 * (-357913941 * 2^(-31) + x^2 * (35789873 * 2^(-32))))
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 4: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > f = cos(exp(x));
 > pstar = remez(f, 5, [-1b-7;1b-7]);
 > listpoints = dirtyfindzeros(f-pstar, [-1b-7; 1b-7]);
@@ -211,7 +211,7 @@ Error of P3:     1.08454277156993282593701156841863009789063333951055e-15
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 5: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > L = [|exp(x), sin(x), cos(x)-1, sin(x^3)|];
 > g = (2^x-1)/x;
 > p = fpminimax(g, L, [|D...|], [-1/16;1/16],absolute);
@@ -222,7 +222,7 @@ Error of P3:     1.08454277156993282593701156841863009789063333951055e-15
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 6: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > n = 9;
 > T = [|1, x|];
 > for i from 2 to n do T[i] = canonical(2*x*T[i-1]-T[i-2]);

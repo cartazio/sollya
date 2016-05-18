@@ -81,7 +81,7 @@ Parameters:
    that may be composed.
 \end{itemize}
 \noindent Example 1: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > succ = proc(n) { return n + 1; };
 > succ(5);
 6
@@ -96,7 +96,7 @@ return (n) + (1);
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 2: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > add = proc(m,n) { var res; res := m + n; return res; };
 > add(5,6);
 11
@@ -122,7 +122,7 @@ error
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 3: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > succ = proc(n) { return n + 1; };
 > succ(5);
 6
@@ -131,7 +131,7 @@ error
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 4: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > hey = proc() { print("Hello world."); };
 > hey();
 Hello world.
@@ -147,7 +147,7 @@ return void;
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 5: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > fac = proc(n) { var res; if (n == 0) then res := 1 else res := n * fac(n - 1);
  return res; };
 > fac(5);
@@ -167,7 +167,7 @@ return res;
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 6: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > myprocs = [| proc(m,n) { return m + n; }, proc(m,n) { return m - n; } |];
 > (myprocs[0])(5,6);
 11
@@ -183,7 +183,7 @@ return res;
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 7: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > verbosity = 1!;
 > myquit = proc(n) { print(n); quit; };
 > myquit;
@@ -202,7 +202,7 @@ error
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 8: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > printsucc = proc(n) { var succ; succ = proc(n) { return n + 1; }; print("Succe
 ssor of",n,"is",succ(n)); };
 > printsucc(5);
@@ -210,7 +210,7 @@ Successor of 5 is 6
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 9: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > makeadd = proc(n) { var add; print("n =",n); add = proc(m,n) { return n + m; }
 ; return add; };
 > makeadd(4);
@@ -226,7 +226,7 @@ n = 4
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 10: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > sumall = proc(L = ...) { var acc, i; acc = 0; for i in L do acc = acc + i; ret
 urn acc; };
 > sumall;

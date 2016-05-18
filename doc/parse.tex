@@ -27,13 +27,13 @@ Parameters:
    sequence \emph{string}.
 \end{itemize}
 \noindent Example 1: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > parse("exp(x)");
 exp(x)
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 2: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > text = "remez(exp(x),5,[-1;1])";
 > print("The string", text, "gives", parse(text));
 The string remez(exp(x),5,[-1;1]) gives 8.73819098827562036768683157316876049039
@@ -44,7 +44,7 @@ x^4 + 0.16642465614952768185129433844012193925654065755905 * x^3 + 0.49919698262
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 3: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > verbosity = 1!;
 > parse("5 + * 3");
 Warning: syntax error, unexpected *. Will try to continue parsing (expecting ";"

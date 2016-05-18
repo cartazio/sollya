@@ -36,7 +36,7 @@ Parameters:
    character sequences are interpreted immediately.
 \end{itemize}
 \noindent Example 1: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > print(x + 2 + exp(sin(x))); 
 x + 2 + exp(sin(x))
 > print("Hello","world");
@@ -46,7 +46,7 @@ Hello you 7 other persons.
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 2: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > print("Hello");
 Hello
 > print([|"Hello"|]);
@@ -60,7 +60,7 @@ Hello    you [|"Hello\tyou"|]
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 3: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > print(x + 2 + exp(sin(x))) > "foo.sol";
 > readfile("foo.sol");
 x + 2 + exp(sin(x))
@@ -68,12 +68,12 @@ x + 2 + exp(sin(x))
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 4: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > print(x + 2 + exp(sin(x))) >> "foo.sol";
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 5: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > display = decimal;
 Display mode is decimal numbers.
 > a = evaluate(sin(pi * x), 0.25);

@@ -36,7 +36,7 @@ Parameters:
    natural behavior.
 \end{itemize}
 \noindent Example 1: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > p=exp(1) + x*(exp(2) + x*exp(3));
 > display=binary!;
 > roundcoefficients(p,[|DD,D,D|]);
@@ -52,7 +52,7 @@ Parameters:
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 2: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > f=sin(exp(1)*x);
 > display=binary!;
 > f;
@@ -66,7 +66,7 @@ sin(x * (1.010110111111000010101000101100010100010101110110100101010011010101011
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 3: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > p=exp(1) + x*(exp(2) + x*exp(3));
 > verbosity=1!;
 > display=binary!;

@@ -24,7 +24,7 @@ Parameters:
    as shown below in the last example.
 \end{itemize}
 \noindent Example 1: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > isevaluable(sin(pi * 1/x), 0.75);
 true
 > print(evaluate(sin(pi * 1/x), 0.75));
@@ -32,7 +32,7 @@ true
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 2: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > isevaluable(sin(pi * 1/x), 0.5);
 true
 > print(evaluate(sin(pi * 1/x), 0.5));
@@ -41,7 +41,7 @@ true
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 3: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > isevaluable(sin(pi * 1/x), 0);
 true
 > print(evaluate(sin(pi * 1/x), 0));
@@ -49,7 +49,7 @@ true
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 4: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > procedure isEvaluableEmulation(f, c) {
         return match evaluate(f, c) with 
                    NaN : (false)

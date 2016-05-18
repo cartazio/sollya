@@ -33,14 +33,14 @@ Parameters:
    bounding the coefficients of the error polynomial is returned empty.
 \end{itemize}
 \noindent Example 1: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > composepolynomials(1 + 2 * x + 3 * x^2 + 4 * x^3, 5 + 6 * x + 7 * x^2);
 { .radii = [|[0;0], [0;0], [0;0], [0;0], [0;0], [0;0], [0;0]|], .poly = 586 + x 
 * (1992 + x * (4592 + x * (6156 + x * (6111 + x * (3528 + x * 1372))))) }
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 2: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > print(composepolynomials(1/5 * x + exp(17) + log(2) * x^2, x^4 + 1/3 * x^2));
 { .radii = [|[-3.5873240686715317015647477332221852960774705712039e-43;3.5873240
 686715317015647477332221852960774705712039e-43], [0;0], [-2.67276471009219564614
@@ -57,7 +57,7 @@ Parameters:
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 3: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > composepolynomials(sin(x),x + x^2);
 { .radii = [| |], .poly = sin(x * (1 + x)) }
 \end{Verbatim}

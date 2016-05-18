@@ -293,7 +293,10 @@ processExamples() {
        then rm $exampleFile; touch $exampleFile
      fi
      printf "\\\\noindent Example "$count": \n" >> $target
-     printf "\\\\begin{center}\\\\begin{minipage}{15cm}\\\\begin{Verbatim}[frame=single,commandchars=\\\\\\\\\\\\|\\\\~]\n" >> $target
+     if grep "/\* Skip" $tempfile > /dev/null   # This is a brutal test to avoid using the fragile commandchars option when it is obviously not necessary
+       then printf "\\\\begin{center}\\\\begin{minipage}{15cm}\\\\begin{Verbatim}[frame=single,commandchars=\\\\\\\\\\\\|\\\\~]\n" >> $target
+       else printf "\\\\begin{center}\\\\begin{minipage}{15cm}\\\\begin{Verbatim}[frame=single]\n" >> $target
+     fi
      count=`expr $count + 1`
    else
      if [ $mode = "on" -a -n "$line" ]

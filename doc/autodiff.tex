@@ -47,7 +47,7 @@ Parameters:
    computing an accurate enclosure of the image of a function over an interval.
 \end{itemize}
 \noindent Example 1: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > L = autodiff(exp(cos(x))+sin(exp(x)), 5, 0);
 > midpointmode = on!;
 > for f_i in L do f_i;
@@ -60,7 +60,7 @@ Parameters:
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 2: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > f = log(cos(x)+x);
 > L = autodiff(log(cos(x)+x), 5, [2,4]);
 > L[0];
@@ -78,7 +78,7 @@ Parameters:
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 3: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > L = autodiff(sin(x)/x, 0, [-1,1]);
 > L[0];
 [-infty;infty]

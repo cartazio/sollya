@@ -38,7 +38,7 @@ Parameters:
    the range is bounded by the given bound.
 \end{itemize}
 \noindent Example 1: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > checkinfnorm(sin(x),[0;1.75], 1);
 true
 > checkinfnorm(sin(x),[0;1.75], 1/2); checkinfnorm(sin(x),[0;20/39],1/2);
@@ -47,7 +47,7 @@ true
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 2: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > p = remez(exp(x), 5, [-1;1]);
 > b = dirtyinfnorm(p - exp(x), [-1;1]);
 > checkinfnorm(p - exp(x), [-1;1], b);

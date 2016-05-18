@@ -36,14 +36,14 @@
    it suffices to concatenate it to an empty string with the \textbf{@} operator.
 \end{itemize}
 \noindent Example 1: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > s = "Hello";
 > objectname("Hello");
 s
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 2: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > f = exp(x);
 > g = sin(x);
 > [| objectname(exp(x)), objectname(sin(x)), objectname(cos(x)) |];
@@ -51,7 +51,7 @@ s
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 3: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > o = { .f = exp(x), .I = [-1;1] };
 > s1 = o@""; s1;
 { .f = exp(x), .I = [-1;1] }
@@ -64,14 +64,14 @@ s2 = "o" parses to { .f = exp(x), .I = [-1;1] }
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 4: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > n = 1664;
 > objectname(n);
 n
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 5: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > f = exp(x);
 > g = sin(x);
 > procedure test() {
@@ -87,7 +87,7 @@ tan(x)) |];
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 6: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > procedure apply_proc(p, a, b) {
       return p(a, b);
   };
@@ -115,7 +115,7 @@ Procedure stack:
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 7: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > f = exp(three_decker_sauerkraut_and_toadstool_sandwich_with_arsenic_sauce);
 > g = sin(_x_);
 > h = f(g);
