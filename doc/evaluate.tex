@@ -50,7 +50,7 @@ Parameters:
    function \emph{function} by function \emph{function2}.
 \end{itemize}
 \noindent Example 1: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > midpointmode=on!;
 > print(evaluate(sin(pi * x), 2.25));
 0.70710678118654752440084436210484903928483593768847
@@ -59,27 +59,27 @@ Parameters:
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 2: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > print(evaluate(sin(pi * x), 2));
 [-1.7298645251438126951650861503109812954283676799168e-12715;7.59411982011879631
 45069564314525661706039084390068e-12716]
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 3: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > print(evaluate(sin(pi * x), [2, 2.25]));
 [-5.143390272677254630046998919961912407349224165421e-50;0.707106781186547524400
 84436210484903928483593768866]
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 4: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > print(evaluate(sin(pi * x), 2 + 0.25 * x));
 sin((pi) * 2 + x * (pi) * 0.25)
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 5: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > print(evaluate(sin(pi * 1/x), 0));
 [-1;1]
 \end{Verbatim}

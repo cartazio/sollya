@@ -20,7 +20,7 @@ Parameters:
    floating-point arithmetic with the global precision \textbf{prec}.
 \end{itemize}
 \noindent Example 1: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > print(dirtysimplify(sin(pi * x)));
 sin(3.1415926535897932384626433832795028841971693993751 * x)
 > print(dirtysimplify(erf(exp(3) + x * log(4))));
@@ -29,7 +29,7 @@ erf(20.0855369231876677409285296545817178969879078385544 + x * 1.386294361119890
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 2: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > prec = 20!;
 > t = erf(0.5);
 > s = dirtysimplify(erf(0.5));

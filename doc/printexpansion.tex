@@ -33,7 +33,7 @@ Parameters:
    \textbf{printexpansion} since they are polynomials of degree $0$.
 \end{itemize}
 \noindent Example 1: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > printexpansion(roundcoefficients(taylor(exp(x),5,0),[|DD...|]));
 0x3ff0000000000000 + x * (0x3ff0000000000000 + x * (0x3fe0000000000000 + x * ((0
 x3fc5555555555555 + 0x3c65555555555555) + x * ((0x3fa5555555555555 + 0x3c4555555
@@ -41,7 +41,7 @@ x3fc5555555555555 + 0x3c65555555555555) + x * ((0x3fa5555555555555 + 0x3c4555555
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 2: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > printexpansion(remez(exp(x),5,[-1;1]));
 (0x3ff0002eec90e5a6 + 0x3c9ea6a6a0087757 + 0xb8eb3e644ef44998) + x * ((0x3ff0002
 8358fd3ac + 0x3c8ffa7d96c95f7a + 0xb91da9809b13dd54 + 0x35c0000000000000) + x * 
@@ -53,7 +53,7 @@ c0589c2cae6caf + 0x3564000000000000)))))
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 3: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > verbosity = 1!;
 > prec = 3500!;
 > printexpansion(pi);

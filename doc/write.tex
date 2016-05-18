@@ -39,7 +39,7 @@ Parameters:
    character sequences are interpreted immediately.
 \end{itemize}
 \noindent Example 1: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > write(x + 2 + exp(sin(x))); 
 > write("Hello\n");
 x + 2 + exp(sin(x))Hello
@@ -50,7 +50,7 @@ Helloyou7other persons.
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 2: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > write("Hello","\n");
 Hello
 > write([|"Hello"|],"\n");
@@ -64,14 +64,14 @@ Hello    you[|"Hello\tyou"|]
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 3: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > write(x + 2 + exp(sin(x))) > "foo.sol";
 > readfile("foo.sol");
 x + 2 + exp(sin(x))
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 4: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > write(x + 2 + exp(sin(x))) >> "foo.sol";
 \end{Verbatim}
 \end{minipage}\end{center}

@@ -38,14 +38,14 @@
    details.
 \end{itemize}
 \noindent Example 1: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > print(void);
 void
 > void;
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 2: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > hey = proc() { print("Hello world."); };
 > hey;
 proc()
@@ -63,7 +63,7 @@ void
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 3: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > bashexecute("gcc -fPIC -Wall -c externalprocvoidexample.c");
 > bashexecute("gcc -fPIC -shared -o externalprocvoidexample externalprocvoidexam
 ple.o");
@@ -80,7 +80,7 @@ void
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 4: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > procedure blub(L = ...) { print("Argument list:", L); };
 > blub(1);
 Argument list: [|1|]

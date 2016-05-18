@@ -86,7 +86,7 @@
    in \texttt{Gappa}.
 \end{itemize}
 \noindent Example 1: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > implementpoly(1 - 1/6 * x^2 + 1/120 * x^4, [-1b-10;1b-10], 1b-30, D, "p","impl
 ementation.c");
 1 + x^2 * (-0.166666666666666657414808128123695496469736099243164 + x^2 * 8.3333
@@ -127,7 +127,7 @@ p_t_5_0h = p_coeff_0h + p_t_4_0h;
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 2: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > implementpoly(1 - 1/6 * x^2 + 1/120 * x^4, [-1b-10;1b-10], 1b-30, D, "p","impl
 ementation.c","implementation.gappa");
 1 + x^2 * (-0.166666666666666657414808128123695496469736099243164 + x^2 * 8.3333
@@ -135,7 +135,7 @@ ementation.c","implementation.gappa");
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 3: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > verbosity = 1!;
 > q = implementpoly(1 - dirtysimplify(TD(1/6)) * x^2,[-1b-10;1b-10],1b-60,DD,"p"
 ,"implementation.c");
@@ -159,7 +159,7 @@ of precisions useless.
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 4: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > p = 0x3ff0000000000000 + x * (0x3ff0000000000000 + x * (0x3fe0000000000000 + x
  * (0x3fc5555555555559 + x * (0x3fa55555555555bd + x * (0x3f811111111106e2 + x
  * (0x3f56c16c16bf5eb7 + x * (0x3f2a01a01a292dcd + x * (0x3efa01a0218a016a + x

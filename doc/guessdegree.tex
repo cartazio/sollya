@@ -41,19 +41,19 @@ Parameters:
    form $[\cdot,\,+\infty]$ is returned. Note that \emph{bound} must be a positive integer.
 \end{itemize}
 \noindent Example 1: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > guessdegree(exp(x),[-1;1],1e-10);
 [10;10]
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 2: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > guessdegree(exp(x),[-1;1],1e-10,default, 9);
 [10;infty]
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 3: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > guessdegree(1, [-1;1], 1e-8, 1/exp(x));
 [8;9]
 \end{Verbatim}

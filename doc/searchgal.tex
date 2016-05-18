@@ -42,7 +42,7 @@ Parameters:
    evaluates to an empty list.
 \end{itemize}
 \noindent Example 1: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > searchgal(log(x),2,53,15,DD,1b-112);
 [| |]
 > searchgal(log(x),2,53,18,DD,1b-112);
@@ -50,7 +50,7 @@ Parameters:
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 2: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > f = exp(x);
 > s = searchgal(f,2,53,18,DD,1b-112);
 > if (s != [||]) then {
@@ -62,7 +62,7 @@ The rounding error is 2^( -112.106878438809380148206984258358542322113874177832
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 3: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > searchgal([|sin(x),cos(x)|],1,53,15,[|D,D|],[|1b-62,1b-60|]);
 [|1.00000000000159494639717649988597258925437927246094|]
 \end{Verbatim}

@@ -98,7 +98,7 @@ Parameters:
    The same difference exists between commands \textbf{diff} and \textbf{autodiff}.
 \end{itemize}
 \noindent Example 1: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > TL=taylorform(sin(x)/x, 10, 0, [-1,1], relative);
 > p=TL[0];
 > Delta=TL[2];
@@ -130,7 +130,7 @@ Parameters:
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 2: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > TL=taylorform(exp(x), 10, 0, [-1,1], absolute);
 > p=TL[0];
 > Delta=TL[2];
@@ -147,7 +147,7 @@ Parameters:
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 3: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > TL1 = taylorform(exp(x), 10, log2(10), [-1,1], absolute);
 > TL2 = taylorform(exp(x), 10, [log2(10)], [-1,1], absolute);
 > TL1==TL2;
@@ -155,7 +155,7 @@ false
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 4: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > TL1 = taylorform(exp(x), 3, 0, [0,1], relative);
 > TL2 = taylorform(exp(x), 3, 0, relative);
 > TL1[0]==TL2[0];
@@ -169,7 +169,7 @@ true
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 5: 
-\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single,commandchars=\\\|\~]
 > f = exp(cos(x)); x0 = 0;
 > TL = taylorform(f, 3, x0);
 > T1 = TL[0];
