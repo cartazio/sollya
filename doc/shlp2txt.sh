@@ -258,7 +258,7 @@ processExampleFile() {
      then countWithSkipped=0
    fi
    if [ $countWithSkipped -ne $countlocal ]
-     then printf "\n           \\033[31;01m[ The first "`expr $countlocal - $countWithSkipped`" lines of the output have been removed  ]\\033[0;34m\n\n" >> $target
+     then printf "\n           [ The first "`expr $countlocal - $countWithSkipped`" lines of the output have been removed  ]\n\n" >> $target
    fi
    tail -n $countWithSkipped $tempfile2 >> $target
    countlocal=$total
