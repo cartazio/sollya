@@ -235,10 +235,16 @@ processExampleFile() {
  while [ $ilocal -le $nLineslocal ]
  do
    if [ $printPrompt -eq 1 ]
-     then printf "   > " >> $target
+     then printf "   > " >> $target; skipSomeLines=0
      else printf "     " >> $target
    fi
-   cat $exampleFile | head -n $ilocal | tail -n 1 >> $target
+   cat $exampleFile | head -n $ilocal | tail -n 1 | sed -n 's/\/\*[[:space:]]*Skip.*//;p' >> $target
+
+   if cat $exampleFile | head -n $ilocal | tail -n 1 | grep "/\*[[:space:]]*Skip" > /dev/null
+   then
+     skipSomeLines=`cat $exampleFile | head -n $ilocal | tail -n 1 |  sed -n 's/.*\/\*[[:space:]]*Skip[[:space:]]*\([0-9]*\)[^0-9].*/\1/;p'`
+   fi
+
    (printf "verbosity=0!; roundingwarnings=on!;" && head -n $ilocal $exampleFile && printf "\n") | $sollyaBin > $tempfile2
    if [ $? -eq 4 ]
      then printPrompt=0
@@ -247,7 +253,14 @@ processExampleFile() {
    sed -i -n 's/^/   /;p' $tempfile2
    total=`cat $tempfile2 | wc -l`
    countlocal=`expr $total - $countlocal`
-   tail -n $countlocal $tempfile2 >> $target
+   countWithSkipped=`expr $countlocal - $skipSomeLines`
+   if [ $countWithSkipped -le 0 ]
+     then countWithSkipped=0
+   fi
+   if [ $countWithSkipped -ne $countlocal ]
+     then printf "\n           \\033[31;01m[ The first "`expr $countlocal - $countWithSkipped`" lines of the output have been removed  ]\\033[0;34m\n\n" >> $target
+   fi
+   tail -n $countWithSkipped $tempfile2 >> $target
    countlocal=$total
    ilocal=`expr $ilocal + 1`
  done

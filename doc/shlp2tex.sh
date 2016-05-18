@@ -240,13 +240,17 @@ processExampleFile() {
  countlocal=0;
  total=0;
  printPrompt=1;
- while [ $ilocal -le $nLineslocal ]
+  while [ $ilocal -le $nLineslocal ]
  do
    if [ $printPrompt -eq 1 ]
-     then printf "> " >> $target
+     then printf "> " >> $target; skipSomeLines=0
      else printf "  " >> $target
    fi
-   cat $exampleFile | head -n $ilocal | tail -n 1 | sed -n 's/\t/    /g;p' | sed -n 's/\(..............................................................................\)/\1\n/g;p' >> $target
+   cat $exampleFile | head -n $ilocal | tail -n 1 | sed -n 's/\t/    /g;p' | sed -n 's/\/\*[[:space:]]*Skip.*//;p' | sed -n 's/\(..............................................................................\)/\1\n/g;p' >> $target
+   if  cat $exampleFile | head -n $ilocal | tail -n 1 | grep "/\*[[:space:]]*Skip" > /dev/null
+   then
+     skipSomeLines=`cat $exampleFile | head -n $ilocal | tail -n 1 |  sed -n 's/.*\/\*[[:space:]]*Skip[[:space:]]*\([0-9]*\)[^0-9].*/\1/;p'`
+   fi
    (printf "verbosity=0!; roundingwarnings=on!;" && head -n $ilocal $exampleFile && printf "\n") | $sollyaBin > $tempfile2
    if [ $? -eq 4 ]
      then printPrompt=0
@@ -255,7 +259,14 @@ processExampleFile() {
    sed -i -n 's/^//;p' $tempfile2
    total=`cat $tempfile2 | wc -l`
    countlocal=`expr $total - $countlocal`
-   tail -n $countlocal $tempfile2 | sed -n 's/\t/    /g;p' | sed -n 's/\(................................................................................\)/\1\n/g;p' >> $target
+   countWithSkipped=`expr $countlocal - $skipSomeLines`
+   if [ $countWithSkipped -le 0 ]
+     then countWithSkipped=0
+   fi
+   if [ $countWithSkipped -ne $countlocal ]
+     then printf "                   \\\\alert|\\\\textrm|\\\\emph|[ The first "`expr $countlocal - $countWithSkipped`" lines of the output have been removed ]~~~\n" >> $target
+   fi
+   tail -n $countWithSkipped $tempfile2 | sed -n 's/\t/    /g;p' | sed -n 's/\(................................................................................\)/\1\n/g;p' >> $target
    countlocal=$total
    ilocal=`expr $ilocal + 1`
  done
@@ -282,7 +293,7 @@ processExamples() {
        then rm $exampleFile; touch $exampleFile
      fi
      printf "\\\\noindent Example "$count": \n" >> $target
-     printf "\\\\begin{center}\\\\begin{minipage}{15cm}\\\\begin{Verbatim}[frame=single]\n" >> $target
+     printf "\\\\begin{center}\\\\begin{minipage}{15cm}\\\\begin{Verbatim}[frame=single,commandchars=\\\\\\\\\\\\|\\\\~]\n" >> $target
      count=`expr $count + 1`
    else
      if [ $mode = "on" -a -n "$line" ]

@@ -272,6 +272,16 @@ processDescriptions() {
 # be displayed for the next line.
 # Once the example is completely processed, it closes the <div> (that has been opened by
 # function processExamples.
+#
+# It is possible to put a special comment in the Sollya code of an example to skip the
+# first N lines of the output. The comment must be of the form
+#                                      /* Skip NN */
+# at the end of a Sollya line. The (at most) NN first lines of the output of this
+# particular Sollya line will not be displayed and a phrase saying that some lines of the
+# output have been removed is displayed instead.
+# Also, the special comment itself is of course not displayed.
+# This behavior is controlled by the variable skipSomeLines which counts how many lines
+# should be skipped. This counter is reset each time we display a new prompt.
 processExampleFile() {
  nLineslocal=`cat $exampleFile | wc -l`
  ilocal=1;
@@ -281,10 +291,15 @@ processExampleFile() {
  while [ $ilocal -le $nLineslocal ]
  do
    if [ $printPrompt -eq 1 ]
-     then printf "&nbsp;&nbsp;&nbsp;&gt; " >> $target
+     then printf "&nbsp;&nbsp;&nbsp;&gt; " >> $target; skipSomeLines=0
      else printf "&nbsp;&nbsp;&nbsp;&nbsp; " >> $target
    fi
-   cat $exampleFile | head -n $ilocal | tail -n 1 | sed -n 's/</\&lt;/g;p' | sed -n 's/>/\&gt;/g;p' | sed -n 's/$/<br>/;p' | sed -n 's/  /\&nbsp;\&nbsp;/g;p' | sed -n 's/\&nbsp; /\&nbsp;\&nbsp;/g;p'  >> $target
+   cat $exampleFile | head -n $ilocal | tail -n 1 | sed -n 's/\/\*[[:space:]]*Skip.*//;p' | sed -n 's/</\&lt;/g;p' | sed -n 's/>/\&gt;/g;p' | sed -n 's/$/<br>/;p' | sed -n 's/  /\&nbsp;\&nbsp;/g;p' | sed -n 's/\&nbsp; /\&nbsp;\&nbsp;/g;p'  >> $target
+
+   if  cat $exampleFile | head -n $ilocal | tail -n 1 | grep "/\*[[:space:]]*Skip" > /dev/null
+   then
+     skipSomeLines=`cat $exampleFile | head -n $ilocal | tail -n 1 |  sed -n 's/.*\/\*[[:space:]]*Skip[[:space:]]*\([0-9]*\)[^0-9].*/\1/;p'`
+   fi
    (printf "verbosity=0!; roundingwarnings=on!;" && head -n $ilocal $exampleFile && printf "\n") | $sollyaBin > $tempfile2
    if [ $? -eq 4 ]
      then printPrompt=0
@@ -293,7 +308,14 @@ processExampleFile() {
    sed -i -n 's/^/   /;p' $tempfile2
    total=`cat $tempfile2 | wc -l`
    countlocal=`expr $total - $countlocal`
-   tail -n $countlocal $tempfile2 | sed -n 's/  /\&nbsp;\&nbsp;/g;p' | sed -n 's/\&nbsp; /\&nbsp;\&nbsp;/g;p' | sed -n 's/</\&lt;/g;p' | sed -n 's/>/\&gt;/g;p' | sed -n 's/$/<br>/;p' >> $target
+   countWithSkipped=`expr $countlocal - $skipSomeLines`
+    if [ $countWithSkipped -le 0 ]
+     then countWithSkipped=0
+   fi
+   if [ $countWithSkipped -ne $countlocal ]
+     then printf "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class=\"specialcomment\">[ The first "`expr $countlocal - $countWithSkipped`" lines of the output have been removed ]</span><br>\n" >> $target
+   fi
+   tail -n $countWithSkipped $tempfile2 | sed -n 's/  /\&nbsp;\&nbsp;/g;p' | sed -n 's/\&nbsp; /\&nbsp;\&nbsp;/g;p' | sed -n 's/</\&lt;/g;p' | sed -n 's/>/\&gt;/g;p' | sed -n 's/$/<br>/;p' >> $target
    countlocal=$total
    ilocal=`expr $ilocal + 1`
  done
