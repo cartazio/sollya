@@ -10,7 +10,7 @@ check_LIBRARIES = libraryexample.a libexternal_structural_cmp.a # the libraries 
 
 force_compilation_SOURCES =
 
-MOSTLYCLEANFILES = $(TESTS) libraryexample.a
+MOSTLYCLEANFILES = $(TESTS) libraryexample.a libexternal_structural_cmp.a
 
 libraryexample.$(OBJEXT): libraryexample.c
 	$(CC) $(CFLAGS) $(AM_CPPFLAGS) -fPIC -Wall -c '$(srcdir)/libraryexample.c'
@@ -23,11 +23,11 @@ libraryexample.a: libraryexample.$(OBJEXT)
 force_compilation$(EXEEXT):
 	@echo "Recompiling sollya";cd $(top_builddir); $(MAKE) sollya$(EXEEXT)
 
-external_structural_cmp.o: external_structural_cmp.c
-	$(CC) $(CFLAGS) $(AM_CPPFLAGS) -fPIC -Wall -c '$(srcdir)/external_structural_cmp.c'
+libexternal_structural_cmp.$(OBJEXT): libexternal_structural_cmp.c
+	$(CC) $(CFLAGS) $(AM_CPPFLAGS) -fPIC -Wall -c '$(srcdir)/libexternal_structural_cmp.c'
 
-libexternal_structural_cmp.a: external_structural_cmp.o
-	$(CC) -fPIC -shared -o libexternal_structural_cmp.a external_structural_cmp.o
+libexternal_structural_cmp.a: libexternal_structural_cmp.$(OBJEXT)
+	$(CC) $(LDFLAGS) $(AM_LDFLAGS) -shared -o libexternal_structural_cmp.a libexternal_structural_cmp.$(OBJEXT) -lmpfi -lmpfr -lgmp
 
 $(TESTS): check.proto
 	@echo "Building "$@

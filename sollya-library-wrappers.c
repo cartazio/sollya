@@ -356,6 +356,9 @@ sollya_obj_t sollya_lib_copy_obj(sollya_obj_t obj1) {
 }
 
 int sollya_lib_cmp_objs_structurally(sollya_obj_t obj1, sollya_obj_t obj2) {
+  if (obj1 == NULL) return 0;
+  if (obj2 == NULL) return 0;
+  if (obj1 == obj2) return 1;
   return isEqualThingLibrary(obj1, obj2);
 }
 
