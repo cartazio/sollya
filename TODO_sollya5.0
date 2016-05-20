@@ -8,6 +8,8 @@ Problems solved, without bug report number
 @rev:
 0513d99 -- [x] should create a bug report   [x] worth mentioning CQL
 
+Created "[#20369] Double-rounding issue with round() operator" for this one. -> SC
+
 
 New features
 -------------
