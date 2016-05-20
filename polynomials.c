@@ -1843,6 +1843,11 @@ static inline constant_t constantDiv(constant_t, constant_t);
 static inline constant_t constantPow(constant_t, constant_t);
 static inline constant_t constantNeg(constant_t);
 
+static inline int constantIsNonNegativeInteger(constant_t, int);
+static inline int tryConstantToUnsignedInt(unsigned int *, constant_t);
+static inline int tryConstantToMpz(mpz_t, constant_t);
+static inline int constantIsGreater(constant_t, constant_t, int);
+
 static inline void constantInitializeCaches() {
   int i;
   
@@ -2073,6 +2078,96 @@ static inline constant_t constantFromBinomialUnsignedInt(unsigned int n, unsigne
   mpz_clear(bin);
 
   return res;
+}
+
+static inline int __constantFromBinomialConstantAndUnsignedIntUnsafe(constant_t *res, constant_t n, unsigned int k) {
+  mpz_t nz, bin;
+
+  mpz_init(nz);
+  if (!tryConstantToMpz(nz, n)) {
+    mpz_clear(nz);
+    return 0;
+  }
+
+  mpz_init(bin);
+  mpz_bin_ui(bin, nz, k);
+  *res = constantFromMpz(bin);
+  mpz_clear(bin);
+  mpz_clear(nz);
+  return 1;
+}
+
+static inline int __constantFromBinomialUnsafe(constant_t *bin, constant_t n, constant_t k) {
+  unsigned int nu, ku, ju;
+  constant_t j;
+  
+  /* Check whether both n and k are representable as unsigned machine
+     integers. 
+  */
+  
+  if (tryConstantToUnsignedInt(&nu, n) &&
+      tryConstantToUnsignedInt(&ku, k)) {
+    /* Here we can use the special function on machine integers. */
+    *bin = constantFromBinomialUnsignedInt(nu, ku);
+    return 1;
+  }
+
+  /* Here, at least one of n or k is not representable as an unsigned
+     machine integer. 
+
+     Continue by checking whether at least k is representable as an
+     unsigned machine integer.
+
+  */
+  if (tryConstantToUnsignedInt(&ku, k)) {
+    /* Use the special function for bin(n, k) with k unsigned int */
+    return __constantFromBinomialConstantAndUnsignedIntUnsafe(bin, n, ku);
+  }
+
+  /* Compute j = n - k and check if j (and n) are representable as
+     unsigned machine integers. 
+  */
+  j = constantSub(n, k);
+  if (!constantIsNonNegativeInteger(j, 0)) {
+    constantFree(j);
+    return 0;
+  }
+
+  if (!tryConstantToUnsignedInt(&ju, j)) {
+    constantFree(j);
+    return 0;    
+  }
+  constantFree(j);
+  
+  if (tryConstantToUnsignedInt(&nu, n)) {
+    *bin = constantFromBinomialUnsignedInt(nu, ju);
+    return 1;
+  }
+
+  return __constantFromBinomialConstantAndUnsignedIntUnsafe(bin, n, ju);
+}
+
+static inline int constantFromBinomial(constant_t *bin, constant_t n, constant_t k) {
+
+  /* Handle stupid input */
+  if (n == NULL) return 0;
+  if (k == NULL) return 0;
+
+  /* Check if n and k are both non-negative integers and if k is no
+     greater than n. 
+  */
+  if (constantIsNonNegativeInteger(n, 0) &&
+      constantIsNonNegativeInteger(k, 0) &&
+      (!constantIsGreater(k, n, 1))) {
+    /* Both n and k are non-negative integers.
+
+       Use an auxilliary function and return its return value.
+    */
+    return __constantFromBinomialUnsafe(bin, n, k);
+  }
+
+  /* Here one of n or k is negative or no integer. Signal failure. */  
+  return 0;
 }
 
 static inline constant_t constantFromCopy(constant_t c) {
@@ -5504,6 +5599,34 @@ static inline void __sparsePolynomialCutIntoHalves(sparse_polynomial_t *r, spars
   *q = res;
 }
 
+/* If p is of the form p(x) = x^m * (c + d * x^n) then decompose p into
+   c, m, d and n and return a non-zero value.
+   
+   Otherwise return 0 and don't touch the pointers c, m, d and n.
+*/
+static inline int sparsePolynomialDecomposeTwoMonomials(constant_t *c, constant_t *m, constant_t *d, constant_t *n,
+							sparse_polynomial_t p) {
+
+  /* Handle stupid input */
+  if (p == NULL) return 0;
+
+  /* Check if there are really just two monomials */
+  if (p->monomialCount != 2u) return 0;
+
+  /* Here we are sure that we only have two monomials.
+
+     Do the decomposition work.
+
+  */
+  *c = constantFromCopy(p->coeffs[0]);
+  *d = constantFromCopy(p->coeffs[1]);
+  *m = constantFromCopy(p->monomialDegrees[0]);
+  *n = constantSub(p->monomialDegrees[1],p->monomialDegrees[0]);
+
+  /* Signal success */
+  return 1;
+}
+
 static inline sparse_polynomial_t __sparsePolynomialPowUnsignedIntAlternate(sparse_polynomial_t p, unsigned int n) {
   constant_t nC, bin;
   unsigned int i;
@@ -8400,56 +8523,167 @@ int polynomialGetDegreeAsInt(polynomial_t p) {
   return res;
 }
 
-node *polynomialGetIthCoefficient(polynomial_t p, mpz_t i) {
-  mpz_t deg;
-
-  /* Handle stupid input */
-  if (p == NULL) return NULL;
-
-  /* Handle case when i < 0 */
-  if (mpz_sgn(i) < 0) {
-    return addMemRef(makeConstantInt(0));
-  }
-
-  /* Handle case when i > degree */
-  mpz_init(deg);
-  polynomialGetDegree(deg, p);
-  if ((mpz_sgn(deg) >= 0) && 
-      (mpz_cmp(i,deg) > 0)) {
-    mpz_clear(deg);
-    return addMemRef(makeConstantInt(0));
-  }
+/* Try to compute the i-th coefficient c of p^k, fail if this
+   computation is not easy to perform.
+*/
+static inline int __polynomialGetIthCoefficientAsConstantIntIndexPowerCheap(constant_t *c, polynomial_t p, constant_t k, int i) {
+  constant_t ic, mk, t, j, a, b, m, n, r, bin, aPowj, bPowr, prod;
   
-  /* General case */
+  /* Handle stupid inputs */
+  if (p == NULL) return 0;
+  if (k == NULL) return 0;
+  if (i < 0) return 0;
+
+  /* Sparsify the polynomial p */
   __polynomialSparsify(p);
-  return sparsePolynomialGetIthCoefficient(p->value.sparse, i);
-}
 
-node *polynomialGetIthCoefficientIntIndex(polynomial_t p, int i) {
-  int deg;
+  /* Try to decompose p into p = x^m * (a + b * x^n) */
+  if (!sparsePolynomialDecomposeTwoMonomials(&a, &m, &b, &n, p->value.sparse))
+    return 0;
 
-  /* Handle stupid input */
-  if (p == NULL) return NULL;
+  /* Here we have to compute the coefficient of degree i of 
 
-  /* Handle case when i < 0 */
-  if (i < 0) {
-    return addMemRef(makeConstantInt(0));
+     x^(m * k) * (a + b * x^n)^k
+
+     This means we have to get the coefficient of degree
+
+     t = i - m * k
+
+     of the polynomial 
+
+     (a + b * x^n)^k.
+
+     If t = i - m * k is less than 0, we can simply return 0.
+
+  */
+  ic = constantFromInt(i);
+  mk = constantMul(m, k);
+  t = constantSub(ic, mk);
+
+  /* Check if t is less than 0 */
+  if (!(constantIsPositive(t, 1) || constantIsZero(t, 1))) {
+    /* Here t = i - m * k is less than 0. 
+       
+       Assign 0 to c and return success.
+       
+    */
+    *c = constantFromInt(0);
+    constantFree(ic);
+    constantFree(mk);
+    constantFree(t);
+    constantFree(a);
+    constantFree(m);
+    constantFree(b);
+    constantFree(n);
+    return 1;
   }
 
-  /* Handle case when i > degree */
-  deg = polynomialGetDegreeAsInt(p);
-  if ((deg >= 0) && 
-      (i > deg)) {
-    return addMemRef(makeConstantInt(0));
+  /* Here t = i - m * k is greater than or equal to 0 
+
+     We have to compute the coefficient of degree t of the polynomial
+
+     (a + b * x^n)^k.
+
+     Since 
+
+     (a + b * x^n)^k = sum_j=0^k bin(k,j) * a^j * b^(k - j) * x^(n * j)
+
+     the coefficient of degree t is 
+
+     * equal to bin(k,j) * a^j * b^(k - j) if t is divisible by n and j = t / n
+     * equal to 0                          if t is not divisible by n.
+
+     We start by computing j = t / n and then test if j is a
+     non-negative integer (hence if t is divisible by n).
+
+  */
+  j = constantDiv(t, n);
+
+  /* Check if j is integer */
+  if (constantIsNonNegativeInteger(j, 0)) {
+    /* The value j = t / n is a non-negative integer. Hence t is divisible by n.
+
+       We have to return c = bin(k,j) * a^j * b^(k - j).
+
+       We first start by computing r = k - j. 
+
+       We then check if r is positive or zero. 
+       In this case we compute and return
+
+       c = bin(k,j) * a^j * b^(k - j).
+
+       Otherwise we return c = 0.
+
+    */
+    r = constantSub(k, j);
+    if (constantIsZero(r, 0) || constantIsPositive(r,0)) {
+      /* Here r >= 0 and we have to return 
+
+	 c = bin(k,j) * a^j * b^r.
+
+	 If we can compute the binomial coefficient bin(k,j)
+	 we use it, otherwise we simply signal failure.
+      */
+      if (constantFromBinomial(&bin, k, j)) {
+	/* We have 
+
+	   bin = bin(k, j).
+	   
+	   Compute 
+
+	   c = bin * a^j * b^r.
+
+	*/
+	aPowj = constantPow(a, j);
+	bPowr = constantPow(b, r);
+	prod = constantMul(aPowj, bPowr);
+	*c = constantMul(bin, prod);
+	constantFree(bin);
+	constantFree(aPowj);
+	constantFree(bPowr);
+	constantFree(prod);
+      } else {
+	/* Signal failure. */
+	constantFree(ic);
+	constantFree(mk);
+	constantFree(t);
+	constantFree(a);
+	constantFree(m);
+	constantFree(b);
+	constantFree(n);
+	constantFree(j);
+	constantFree(r);
+	return 0;
+      }
+    } else {
+      /* Here, r < 0 and we have to return c = 0. */
+      *c = constantFromInt(0);
+    }
+    constantFree(r);
+  } else {
+    /* The value j = t / n is no non-negative integer. Hence t is not
+       divisible by n and the coefficient of degree t of (a + b * x^n)^k is zero. 
+    */
+    *c = constantFromInt(0);
   }
-  
-  /* General case */
-  __polynomialSparsify(p);
-  return sparsePolynomialGetIthCoefficientIntIndex(p->value.sparse, i);
+
+  /* Free the intermediate values */
+  constantFree(ic);
+  constantFree(mk);
+  constantFree(t);
+  constantFree(a);
+  constantFree(m);
+  constantFree(b);
+  constantFree(n);
+  constantFree(j);
+
+  /* Return success */
+  return 1;
 }
 
 static inline constant_t __polynomialGetIthCoefficientAsConstantIntIndex(polynomial_t p, int i) {
   int deg;
+  constant_t a, b, res;
 
   /* Handle stupid input */
   if (p == NULL) return NULL;
@@ -8465,14 +8699,52 @@ static inline constant_t __polynomialGetIthCoefficientAsConstantIntIndex(polynom
       (i > deg)) {
     return constantFromInt(0);
   }
-  
+
   /* General case */
+  switch (p->type) {
+  case SPARSE:
+    return sparsePolynomialGetIthCoefficientAsConstantIntIndex(p->value.sparse, i);
+    break;
+  case ADDITION:
+  case SUBTRACTION:
+    a = __polynomialGetIthCoefficientAsConstantIntIndex(p->value.pair.g,i);
+    b = __polynomialGetIthCoefficientAsConstantIntIndex(p->value.pair.h,i);
+    if (p->type == ADDITION) {
+      res = constantAdd(a, b);
+    } else {
+      res = constantSub(a, b);
+    }
+    constantFree(a);
+    constantFree(b);
+    return res;
+    break;
+  case NEGATE:
+    a = __polynomialGetIthCoefficientAsConstantIntIndex(p->value.g,i);
+    res = constantNeg(a);
+    constantFree(a);
+    return res;
+    break;
+  case POWER:
+    if (__polynomialGetIthCoefficientAsConstantIntIndexPowerCheap(&res,
+								  p->value.powering.g,
+								  p->value.powering.c,
+								  i)) {
+      return res;
+    }
+    break;
+  default:
+    break;
+  }
+    
+  /* Fall-back case */
   __polynomialSparsify(p);
   return sparsePolynomialGetIthCoefficientAsConstantIntIndex(p->value.sparse, i);
 }
 
 static inline constant_t __polynomialGetIthCoefficientAsConstant(polynomial_t p, mpz_t i) {
   mpz_t deg;
+  signed long int t, ttt;
+  int tt;
 
   /* Handle stupid input */
   if (p == NULL) return NULL;
@@ -8490,10 +8762,59 @@ static inline constant_t __polynomialGetIthCoefficientAsConstant(polynomial_t p,
     mpz_clear(deg);
     return constantFromInt(0);
   }
-  
+
+  /* Check if index i holds on a machine int */
+  if (mpz_fits_slong_p(i)) {
+    t = mpz_get_si(i);
+    tt = (int) t;
+    ttt = (signed long int) tt;
+    if (ttt == t) {
+      /* Here i holds on a signed long int and is equal t, which is
+	 equal to tt. 
+      */
+      return __polynomialGetIthCoefficientAsConstantIntIndex(p, tt);
+    }
+  }
+
   /* General case */
   __polynomialSparsify(p);
   return sparsePolynomialGetIthCoefficientAsConstant(p->value.sparse, i);
+}
+
+node *polynomialGetIthCoefficient(polynomial_t p, mpz_t i) {
+  constant_t c;
+  node *res;
+
+  /* Handle stupid inputs */
+  if (p == NULL) return NULL;
+
+  /* Get coefficient as a constant */
+  c = __polynomialGetIthCoefficientAsConstant(p, i);
+
+  /* Convert to an expression */
+  res = addMemRef(constantToExpression(c));
+  constantFree(c);
+
+  /* Return the result */
+  return res;
+}
+
+node *polynomialGetIthCoefficientIntIndex(polynomial_t p, int i) {
+  constant_t c;
+  node *res;
+
+  /* Handle stupid inputs */
+  if (p == NULL) return NULL;
+
+  /* Get coefficient as a constant */
+  c = __polynomialGetIthCoefficientAsConstantIntIndex(p, i);
+
+  /* Convert to an expression */
+  res = addMemRef(constantToExpression(c));
+  constantFree(c);
+
+  /* Return the result */
+  return res;
 }
 
 int polynomialGetCoefficients(node ***coeffs, unsigned int *deg, polynomial_t p) {
