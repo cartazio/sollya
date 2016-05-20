@@ -1,6 +1,6 @@
 Bugs fixed
 ----------
-12665 -- [ ] tests added    [ ] is closed    [ ] worth mentioning CQL
+12665 -- [ ] tests added    [ ] is closed    [ ] worth mentioning (This is "The practical complexity of decimal display is very bad" -> SC)
 
 
 Problems solved, without bug report number

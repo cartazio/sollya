@@ -27,7 +27,7 @@ Parameters:
 \begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > t = time(p=remez(sin(x),10,[-1;1]));
 > write(t,"s were spent computing p = ",p,"\n");
-5.4742999999999999993782751062099123373627662658691e-2s were spent computing p =
+3.8432999999999999999581064280551601086699520237744e-2s were spent computing p =
  9.0486898749977990986908851357759191711354777014602e-17 * x^10 + 2.687625951151
 23596299959320959141640012683406736586e-6 * x^9 + -2.424797849252131334907323228
 9246205727856268698001e-16 * x^8 + -1.983448630209659297012456065035864612261309
@@ -44,14 +44,14 @@ Parameters:
 > write(time({ p=remez(sin(x),10,[-1;1]); write("The error is 2^(", log2(dirtyin
 fnorm(p-sin(x),[-1;1])), ")\n"); }), " s were spent\n");
 The error is 2^(log2(2.39601979446524486606649528289933482070294808074097e-11))
-9.8178999999999999994185206908525742619531229138374e-2 s were spent
+6.7356999999999999989216958873328167101135477423668e-2 s were spent
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 3: 
 \begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > t = time(bashexecute("sleep 10"));
 > write(~(t-10),"s of execution overhead.\n");
-2.3749999999999986399767948341832379810512065887451e-3s of execution overhead.
+3.0519999999999991580068581242812797427177429199219e-3s of execution overhead.
 \end{Verbatim}
 \end{minipage}\end{center}
 \noindent Example 4: 
@@ -59,8 +59,8 @@ The error is 2^(log2(2.39601979446524486606649528289933482070294808074097e-11))
 > ratio := time(p=remez(sin(x),10,[-1;1]))/time(nop(10));
 > write("This ratio = ", ratio, " should somehow be independent of the type of m
 achine.\n");
-This ratio = 1.69520055065390150819834996210543777112872218471803 should somehow
- be independent of the type of machine.
+This ratio = 2.1429137199434229132877800278763948644681987369139 should somehow 
+be independent of the type of machine.
 \end{Verbatim}
 \end{minipage}\end{center}
 See also: \textbf{timing} (\ref{labtiming}), \textbf{nop} (\ref{labnop})
