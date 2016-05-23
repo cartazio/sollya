@@ -9408,7 +9408,11 @@ void autoprint(node *thing, int inList, node *func, node *cst) {
 	    mpfr_number_p(*(accessThruMemRef(accessThruMemRef(tempNode2)->child1)->value)) &&
 	    mpfr_number_p(*(accessThruMemRef(accessThruMemRef(tempNode2)->child2)->value)) &&
 	    (!mpfr_zero_p(*(accessThruMemRef(accessThruMemRef(tempNode2)->child2)->value)))) {
-          printTree(tempNode2);
+	  if (mpfr_cmp_si(*(accessThruMemRef(accessThruMemRef(tempNode2)->child2)->value),1) == 0) {
+	    printTree(accessThruMemRef(tempNode2)->child1);
+	  } else {
+	    printTree(tempNode2);
+	  }
 	} else {
 	  mpfr_init2(a,tools_precision);
 	  mpfr_init2(b,tools_precision);
