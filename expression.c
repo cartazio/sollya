@@ -8519,7 +8519,7 @@ node* simplifyAllButDivisionInnerst(node *tree) {
 	return res;
       }
     }
-    return addMemRef(simplifyTreeInner(getMemRefChild(tree)));
+    return addMemRef(simplifyAllButDivisionInner(getMemRefChild(tree)));
   }
 
   switch (tree->nodeType) {
@@ -8531,7 +8531,7 @@ node* simplifyAllButDivisionInnerst(node *tree) {
     simplified = (node*) safeMalloc(sizeof(node));
     simplified->nodeType = CONSTANT;
     value = (mpfr_t*) safeMalloc(sizeof(mpfr_t));
-    mpfr_init2(temp,tools_precision);
+    mpfr_init2(temp,((tools_precision > mpfr_get_prec(*(tree->value))) ? (tools_precision) : (mpfr_get_prec(*(tree->value)))));
     simplifyMpfrPrec(temp,*(tree->value));
     mpfr_init2(*value,mpfr_get_prec(temp));
     mpfr_set(*value,temp,GMP_RNDN);
@@ -9242,12 +9242,16 @@ node *simplifyTree(node *tree) {
 }
 
 node *simplifyAllButDivision(node *tree) {
-  node *temp, *temp2;
+  node *temp, *temp2, *temp3, *temp4;
 
   temp = simplifyTreeErrorfree(tree);
-  temp2 = simplifyAllButDivisionInner(temp);
+  temp2 = simplifyRationalErrorfree(temp);
+  temp3 = simplifyTreeErrorfree(temp2);
+  temp4 = simplifyAllButDivisionInner(temp3);
   free_memory(temp);
-  return temp2;
+  free_memory(temp2);
+  free_memory(temp3);
+  return temp4;
 }
 
 
