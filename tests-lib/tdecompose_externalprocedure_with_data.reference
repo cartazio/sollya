@@ -46,3 +46,14 @@ Trying out the function
 >>>>Grias Eahna Good.<<<<>>>>20<<<<
 >>>Hello world<<<>>>42<<<>>>1664<<<
 The function has signaled success, the result is false, the data counter is 21
+>>>>Hello world<<<<>>>>4<<<<
+External procedure only doing a side effect
+void
+sollya_lib_decompose_externalprocedure_with_data has worked: arity = 0, result type = void, argument types = 
+The function pointer is okay
+The data pointer is okay
+The deallocation function pointer is okay
+External procedure only doing a side effect number 2
+void
+sollya_lib_decompose_externalprocedure_with_data did not work (as expected) on something not constructed with sollya_lib_externalprocedure_with_data
+Deallocation function called for the data pointer (Hello world<<<>>>5)

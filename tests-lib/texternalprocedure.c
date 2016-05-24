@@ -33,8 +33,14 @@ int strange_bis(int *res, void **args) {
   return 1;
 }
 
+int empty_func(void **args) {
+  (void)(args); /* Compiler happiness */
+  sollya_lib_printf("External procedure only doing a side effect\n");
+  return 1;
+}
+
 int main(void) {
-  sollya_obj_t f[16];
+  sollya_obj_t f[18];
   sollya_externalprocedure_type_t argTypes[3];
   int i;
   char str1[1024];
@@ -91,10 +97,20 @@ int main(void) {
   f[14] = SOLLYA_EXP(SOLLYA_CONST_SI64(1));
   f[15] = sollya_lib_apply(f[11], f[12], f[13], f[14], NULL);
   sollya_lib_printf("%b\n", f[15]);
-  
-  for(i=0;i<=15;i++) sollya_lib_clear_obj(f[i]);
-  
+
+  f[16] = sollya_lib_externalprocedure(SOLLYA_EXTERNALPROC_TYPE_VOID, NULL, 0, NULL, empty_func);
+  sollya_lib_sprintf(str1, "%b", f[16]);
+  sollya_lib_sprintf(str2, "proc_%p", empty_func);
+  if ((strcmp(str1, str2) == 0) || (strcmp(str1, "empty_func") == 0)) {
+    sollya_lib_printf("The behavior when no name is suggested is conform to the semantic\n");
+  } else {
+    sollya_lib_printf("FAILURE: the external procedure prints as \"%s\"\n",str1);
+  }
+  f[17] = sollya_lib_apply(f[16], NULL);
+
+  for(i=0;i<=17;i++) sollya_lib_clear_obj(f[i]);
+
   sollya_lib_close();
-  
+
   return 0;
 }

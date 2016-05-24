@@ -17,10 +17,10 @@ int successor(int *res, void **args, void *ptr) {
   data_t *data;
 
   data = (data_t *) ptr;
-  
+
   sollya_lib_printf(">>>>%s<<<<>>>>%d<<<<\n", data->text, data->counter);
   (data->counter)++;
-  
+
   *res = successor_impl(*((int *) (args[0])));
   return 1;
 }
@@ -29,10 +29,10 @@ int successor_bis(int *res, void **args, void *ptr) {
   data_t *data;
 
   data = (data_t *) ptr;
-  
+
   sollya_lib_printf(">>>>%s<<<<>>>>%d<<<<\n", data->text, data->counter);
   (data->counter)++;
-  
+
   *res = successor_impl(*((int *) (args[0])));
   return 1;
 }
@@ -46,10 +46,10 @@ int strange(int *res, void **args, void *ptr) {
   data_t *data;
 
   data = (data_t *) ptr;
-  
+
   sollya_lib_printf(">>>>%s<<<<>>>>%d<<<<\n", data->text, data->counter);
   (data->counter)++;
-  
+
   *res = strange_impl(((char *) (args[0])), *((int *) (args[1])), *((mpfr_t *) (args[2])));
   return 1;
 }
@@ -58,16 +58,16 @@ int strange_bis(int *res, void **args, void *ptr) {
   data_t *data;
 
   data = (data_t *) ptr;
-  
+
   sollya_lib_printf(">>>>%s<<<<>>>>%d<<<<\n", data->text, data->counter);
   (data->counter)++;
-  
+
   *res = strange_impl(((char *) (args[0])), *((int *) (args[1])), *((mpfr_t *) (args[2])));
   return 1;
 }
 
 int empty_func(void *ptr) {
-   data_t *data;
+  data_t *data;
 
   data = (data_t *) ptr;
 
@@ -150,8 +150,9 @@ int main(void) {
 
   f[16] = sollya_lib_externalprocedure_with_data(SOLLYA_EXTERNALPROC_TYPE_VOID, NULL, 0, NULL, empty_func, &data, dealloc);
   sollya_lib_sprintf(str1, "%b", f[16]);
-  sollya_lib_sprintf(str2, "proc_%p", empty_func);
-  if ((strcmp(str1, str2) == 0) || (strcmp(str1, "empty_func") == 0)) {
+  sollya_lib_sprintf(str2, "proc_%p_%p", empty_func, &data);
+  sollya_lib_sprintf(str3, "%s_%p", "empty_func", &data);
+  if ((strcmp(str1, str2) == 0) || (strcmp(str1, str3) == 0)) {
     sollya_lib_printf("The behavior when no name is suggested is conform to the semantic\n");
   } else {
     sollya_lib_printf("FAILURE: the external procedure prints as \"%s\"\n",str1);

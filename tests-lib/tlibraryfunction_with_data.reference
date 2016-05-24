@@ -5,3 +5,8 @@ superfunc (expecting: superfunc)
 diff(superfunc) (expecting: diff(superfunc))
 >>>>Hello world<<<<>>>>1<<<<
 0.25 (expecting: approximate value of 1/4)
+superfunc2 (expecting: superfunc2)
+>>>>Hello world<<<<>>>>2<<<<
+0.6931471805599453972490664455108344554901123046875 (expecting: approximate value of log(2))
+Deallocation function must not yet have been called
+Deallocation function called for the data pointer (Hello world<<<>>>3)

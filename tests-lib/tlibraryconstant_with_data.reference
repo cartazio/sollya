@@ -4,3 +4,8 @@ superconst (expecting: superconst)
 superconst (expecting: superconst)
 >>>>Hello world<<<<>>>>1<<<<
 0.57721566490153275452712477999739348888397216796875 (expecting: 0.5772...)
+superconst2 (expecting: superconst2)
+>>>>Hello world<<<<>>>>2<<<<
+0.57721566490153275452712477999739348888397216796875 (expecting: 0.5772...)
+Deallocation function must not yet have been called
+Deallocation function called for the data pointer (Hello world<<<>>>3)

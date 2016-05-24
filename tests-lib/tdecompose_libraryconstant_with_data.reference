@@ -12,3 +12,12 @@ Decomposition of superconst succeeded
 The function pointer is okay
 The data pointer is okay
 The deallocation function pointer is okay
+pi (expecting: pi)
+Could not decompose pi
+superconst2 (expecting: superconst2)
+Could not decompose superconst2
+superconst (expecting: superconst)
+Decomposition of superconst succeeded
+The function pointer is okay
+The data pointer is okay
+The deallocation function pointer is okay

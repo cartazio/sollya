@@ -12,3 +12,5 @@ The behavior when no name is suggested is conform to the semantic
 Warning: the given expression is not a constant but an expression to evaluate. A faithful evaluation to 165 bits will be used.
 >>>Coucou<<<>>>42<<<>>>2.7182818284590452353602874713526624977572470937<<<
 false
+The behavior when no name is suggested is conform to the semantic
+External procedure only doing a side effect

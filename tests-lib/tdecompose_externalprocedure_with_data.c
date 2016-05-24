@@ -109,8 +109,32 @@ int strange_bis(int *res, void **args, void *ptr) {
   return 1;
 }
 
+int empty_func(void *ptr) {
+  data_t *data;
+
+  data = (data_t *) ptr;
+
+  sollya_lib_printf(">>>>%s<<<<>>>>%d<<<<\n", data->text, data->counter);
+  (data->counter)++;
+
+  sollya_lib_printf("External procedure only doing a side effect\n");
+  return 1;
+}
+
+int empty_func2() {
+  sollya_lib_printf("External procedure only doing a side effect number 2\n");
+  return 1;
+}
+
+void dealloc2(void *ptr) {
+  data_t *data;
+  data = (data_t *) ptr;
+  sollya_lib_printf("Deallocation function called for the data pointer (%s<<<>>>%d)\n", data->text, data->counter);
+  return;
+}
+
 int main(void) {
-  sollya_obj_t f[16];
+  sollya_obj_t f[20];
   sollya_externalprocedure_type_t argTypes[3];
   sollya_externalprocedure_type_t result_type;
   sollya_externalprocedure_type_t *argument_types;
@@ -140,7 +164,7 @@ int main(void) {
   f[2] = sollya_lib_apply(f[0], f[1], NULL);
   sollya_lib_printf("%b\n", f[2]);
 
-  argument_types = NULL;
+  result_type = -1; argument_types = NULL; arity = -1; func = NULL; resData = NULL; resDealloc = NULL;
   res = sollya_lib_decompose_externalprocedure_with_data(&result_type, &argument_types, &arity, &func, &resData, &resDealloc, f[0]);
   if (res) {
     sollya_lib_printf("sollya_lib_decompose_externalprocedure_with_data has worked on \"%b\": arity = %d, result type = %s, argument types = ", f[0], arity, externalprocTypeToString(result_type));
@@ -177,7 +201,7 @@ int main(void) {
   f[5] = sollya_lib_apply(f[3], f[4], NULL);
   sollya_lib_printf("%b\n", f[5]);
 
-  argument_types = NULL;
+  result_type = -1; argument_types = NULL; arity = -1; func = NULL; resData = NULL; resDealloc = NULL;
   res = sollya_lib_decompose_externalprocedure_with_data(&result_type, &argument_types, &arity, &func, &resData, &resDealloc, f[3]);
   if (res) {
     sollya_lib_printf("sollya_lib_decompose_externalprocedure_with_data has worked: arity = %d, result type = %s, argument types = ", arity, externalprocTypeToString(result_type));
@@ -212,7 +236,7 @@ int main(void) {
   f[10] = sollya_lib_apply(f[6], f[7], f[8], f[9], NULL);
   sollya_lib_printf("%b\n", f[10]);
 
-  argument_types = NULL;
+  result_type = -1; argument_types = NULL; arity = -1; func = NULL; resData = NULL; resDealloc = NULL;
   res = sollya_lib_decompose_externalprocedure_with_data(&result_type, &argument_types, &arity, &func, &resData, &resDealloc, f[6]);
   if (res) {
     sollya_lib_printf("sollya_lib_decompose_externalprocedure_with_data has worked on \"%b\": arity = %d, result type = %s, argument types = ", f[6], arity, externalprocTypeToString(result_type));
@@ -260,7 +284,7 @@ int main(void) {
   f[15] = sollya_lib_apply(f[11], f[12], f[13], f[14], NULL);
   sollya_lib_printf("%b\n", f[15]);
 
-  argument_types = NULL;
+  result_type = -1; argument_types = NULL; arity = -1; func = NULL; resData = NULL; resDealloc = NULL;
   res = sollya_lib_decompose_externalprocedure_with_data(&result_type, &argument_types, &arity, &func, &resData, &resDealloc, f[11]);
   if (res) {
     sollya_lib_printf("sollya_lib_decompose_externalprocedure_with_data has worked: arity = %d, result type = %s, argument types = ", arity, externalprocTypeToString(result_type));
@@ -289,8 +313,34 @@ int main(void) {
     }    
     sollya_lib_free(argument_types);
   }
-  
-  for(i=0;i<=15;i++) sollya_lib_clear_obj(f[i]);
+
+  f[16] = sollya_lib_externalprocedure_with_data(SOLLYA_EXTERNALPROC_TYPE_VOID, NULL, 0, NULL, empty_func, &data, dealloc2);
+  f[17] = sollya_lib_apply(f[16], NULL);
+  sollya_lib_printf("%b\n", f[17]);
+
+  result_type = -1; argument_types = NULL; arity = -1; func = NULL; resData = NULL; resDealloc = NULL;
+  res = sollya_lib_decompose_externalprocedure_with_data(&result_type, &argument_types, &arity, &func, &resData, &resDealloc, f[16]);
+  if (res) {
+    sollya_lib_printf("sollya_lib_decompose_externalprocedure_with_data has worked: arity = %d, result type = %s, argument types = ", arity, externalprocTypeToString(result_type));
+    for (i=0;i<arity;i++) {
+      sollya_lib_printf("%s ", externalprocTypeToString(argument_types[i]));
+    }
+    sollya_lib_printf("\n");
+    sollya_lib_printf("The function pointer is %s\n", ((((void *) func) == ((void *) empty_func)) ? "okay" : "wrong"));
+    sollya_lib_printf("The data pointer is %s\n", ((resData == ((void *) (&data))) ? "okay" : "wrong"));
+    sollya_lib_printf("The deallocation function pointer is %s\n", ((((void *) resDealloc) == ((void *) dealloc2)) ? "okay" : "wrong"));
+  }
+
+  f[18] = sollya_lib_externalprocedure(SOLLYA_EXTERNALPROC_TYPE_VOID, NULL, 0, NULL, empty_func2);
+  f[19] = sollya_lib_apply(f[18], NULL);
+  sollya_lib_printf("%b\n", f[19]);
+
+  result_type = -1; argument_types = NULL; arity = -1; func = NULL; resData = NULL; resDealloc = NULL;
+  res = sollya_lib_decompose_externalprocedure_with_data(&result_type, &argument_types, &arity, &func, &resData, &resDealloc, f[18]);
+  if (!res) sollya_lib_printf("sollya_lib_decompose_externalprocedure_with_data did not work (as expected) on something not constructed with sollya_lib_externalprocedure_with_data\n");
+  else sollya_lib_printf("sollya_lib_decompose_externalprocedure_with_data worked in an unexpected case\n"); 
+
+  for(i=0;i<=19;i++) sollya_lib_clear_obj(f[i]);
   
   sollya_lib_close();
   
