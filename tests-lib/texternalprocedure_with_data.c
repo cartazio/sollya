@@ -66,8 +66,27 @@ int strange_bis(int *res, void **args, void *ptr) {
   return 1;
 }
 
+int empty_func(void *ptr) {
+   data_t *data;
+
+  data = (data_t *) ptr;
+
+  sollya_lib_printf(">>>>%s<<<<>>>>%d<<<<\n", data->text, data->counter);
+  (data->counter)++;
+
+  sollya_lib_printf("External procedure only doing a side effect\n");
+  return 1;
+}
+
+void dealloc(void *ptr) {
+  data_t *data;
+  data = (data_t *) ptr;
+  sollya_lib_printf("Deallocation function called for the data pointer (%s<<<>>>%d)\n", data->text, data->counter);
+  return;
+}
+
 int main(void) {
-  sollya_obj_t f[16];
+  sollya_obj_t f[19];
   sollya_externalprocedure_type_t argTypes[3];
   int i;
   char str1[1024];
@@ -128,10 +147,24 @@ int main(void) {
   f[14] = SOLLYA_EXP(SOLLYA_CONST_SI64(1));
   f[15] = sollya_lib_apply(f[11], f[12], f[13], f[14], NULL);
   sollya_lib_printf("%b\n", f[15]);
-  
-  for(i=0;i<=15;i++) sollya_lib_clear_obj(f[i]);
-  
+
+  f[16] = sollya_lib_externalprocedure_with_data(SOLLYA_EXTERNALPROC_TYPE_VOID, NULL, 0, NULL, empty_func, &data, dealloc);
+  sollya_lib_sprintf(str1, "%b", f[16]);
+  sollya_lib_sprintf(str2, "proc_%p", empty_func);
+  if ((strcmp(str1, str2) == 0) || (strcmp(str1, "empty_func") == 0)) {
+    sollya_lib_printf("The behavior when no name is suggested is conform to the semantic\n");
+  } else {
+    sollya_lib_printf("FAILURE: the external procedure prints as \"%s\"\n",str1);
+  }
+  f[17] = sollya_lib_apply(f[16], NULL);
+  f[18] = sollya_lib_copy_obj(f[16]);
+  sollya_lib_clear_obj(f[16]);
+  sollya_lib_printf("Deallocation function must not yet have been called\n");
+  f[16] = SOLLYA_X_;
+
+  for(i=0;i<=18;i++) sollya_lib_clear_obj(f[i]);
+
   sollya_lib_close();
-  
+
   return 0;
 }
