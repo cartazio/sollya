@@ -924,21 +924,31 @@ sollya_obj_t sollya_lib_prepend(sollya_obj_t obj1, sollya_obj_t obj2) {
   return evaluatedThing;
 }
 
-sollya_obj_t sollya_lib_apply(sollya_obj_t obj1, sollya_obj_t obj2, ...) {
+sollya_obj_t sollya_lib_apply(sollya_obj_t obj1, ...) {
   node *thingToEvaluate, *evaluatedThing;
   MAKE_THINGLIST_DECLS(thinglist);
-  MAKE_THINGLIST_FROM_VARIADIC(obj2);
-  thingToEvaluate = makeApply(copyThing(obj1),thinglist);
+  MAKE_THINGLIST_FROM_VARIADIC(obj1);
+  if (thinglist->next == NULL) {
+    thinglist->next = (chain *) safeMalloc(sizeof(chain));
+    thinglist->next->value = makeUnit();
+    thinglist->next->next = NULL;
+  }
+  thingToEvaluate = makeApply((node *) (thinglist->value), thinglist->next);
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
 }
 
-sollya_obj_t sollya_lib_v_apply(sollya_obj_t obj1, sollya_obj_t obj2, va_list varlist) {
+sollya_obj_t sollya_lib_v_apply(sollya_obj_t obj1, va_list varlist) {
   node *thingToEvaluate, *evaluatedThing;
   MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
-  MAKE_THINGLIST_FROM_VA_LIST(obj2,varlist);
-  thingToEvaluate = makeApply(copyThing(obj1),thinglist);
+  MAKE_THINGLIST_FROM_VA_LIST(obj1,varlist);
+  if (thinglist->next == NULL) {
+    thinglist->next = (chain *) safeMalloc(sizeof(chain));
+    thinglist->next->value = makeUnit();
+    thinglist->next->next = NULL;
+  }
+  thingToEvaluate = makeApply((node *) (thinglist->value), thinglist->next);
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
