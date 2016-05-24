@@ -55,6 +55,7 @@ Test what version of GMP, MPFR, MPFI are required and update documentation accor
 
 Write tests for sollya_lib_printlibrary_message (try below/above current verbosity level and with/without a callback. Also, in the tool with a externalproc and suppressmessage) [SC]
 
+Double-check 'help help' list.
 
 NEWS file
 ---------
