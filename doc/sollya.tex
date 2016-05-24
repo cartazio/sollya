@@ -1928,7 +1928,7 @@ As a result of a call to \verb|sollya_lib_decompose_libraryfunction|, the value 
 \phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|int (**f)(mpfi_t, mpfi_t, int, void *),|\\
 \phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|int *deriv, sollya_obj_t *e,|\\
 \phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|void **data, void (**dealloc)(void *),|\\
-\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|sollya_obj_t g)|:\\ works exactly as the previous function but additionnally returns a pointer to the \verb|void *| data field and to the pointer to the deallocation function that had been provided when the library function was created.
+\phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|sollya_obj_t g)|:\\ works exactly as the previous function but additionnally returns a pointer to the \verb|void *| data field and to the pointer to the deallocation function that had been provided when the library function was created. Notice that, in the case when \verb|g| represents an expression $f_0(f_1)$ where $f_0$ is indeed a library function, but has been constructed with \verb|sollya_lib_libraryfunction| or \verb|sollya_lib_build_function_libraryfunction| and not with one of the \verb|_with_data| variants, this function will fail and return false without touching any of its argument.
 \item \verb|int sollya_lib_decompose_procedurefunction(sollya_obj_t *f, int *deriv,|\\
 \phantom{\texttt{int sollya\_lib\_decompose\_procedurefunction( }}\verb|sollya_obj_t *e, sollya_obj_t g)|:\\
 assume that \verb|g| represents an expression $f_0(f_1)$ where $f_0$ is a procedure function. Then, $f_0$ is the $n$-th derivative (for some $n$) of a function provided within \sollya via a procedure \verb|proc(X, n, p) {...}|.\\
@@ -1940,7 +1940,7 @@ assume that \verb|c| is a constant provided via an external C function \verb|voi
 \phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|void (**f)(mpfr_t, mp_prec_t, void *),|\\
 \phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|void **data, void (**dealloc)(void *),|\\
 \phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|sollya_obj_t c)|:\\
-works exactly as the previous function but additionnally returns a pointer to the \verb|void *| data field and the pointer to the deallocation function that had been provided when the library constant was created.
+works exactly as the previous function but additionnally returns a pointer to the \verb|void *| data field and the pointer to the deallocation function that had been provided when the library constant was created. Similarly to \verb|sollya_lib_decompose_libraryfunction_with_data|, this function fails on library constants that have been created with \verb|sollya_lib_libraryconstant| or \verb|sollya_lib_build_function_libraryconstant| instead of using the \verb|_with_data| variant of these constructors.
 \item \verb|int sollya_lib_decompose_externalprocedure(sollya_externalprocedure_type_t *res,|\\
 \phantom{\texttt{int sollya\_lib\_decompose\_externalprocedure( }}\verb|sollya_externalprocedure_type_t **args,|\\
 \phantom{\texttt{int sollya\_lib\_decompose\_externalprocedure( }}\verb|int *arity, void **f,|\\
@@ -1953,7 +1953,7 @@ an array of its argument types is allocated, filled and stored at the address po
 \phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|int *arity, void **f,|\\
 \phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|void **data, void (**dealloc)(void *),|\\
 \phantom{\texttt{mmmmmmmmmmmmmmmmmmmmmm}}\verb|sollya_obj_t p)|:\\
-works exactly as the previous function but additionnally returns a pointer to the \verb|void *| data field and the pointer to the deallocation function that had been provided when the external procedure was created.
+works exactly as the previous function but additionnally returns a pointer to the \verb|void *| data field and the pointer to the deallocation function that had been provided when the external procedure was created. The same remark as with \verb|sollya_lib_decompose_libraryfunction_with_data| and  \verb|sollya_lib_decompose_libraryconstant_with_data| also applies: this function fails when used on an external procedure that has been constructed without the \verb|_with_data| variant of the constructor.
 \end{itemize}
 \subsection{Faithfully evaluate a functional expression}
 Let us suppose that \verb|f| is a functional expression and \verb|a| is a numerical value or a constant expression. One of the very convenient features of the interactive tool is that the user can simply write \verb|f(a)| at the prompt: the tool automatically adapts its internal precision in order to compute a value that is a faithful rounding (at the current tool precision) of the true value $f(a)$. Sometimes it does not achieve to find a faithful rounding, but in any case, if the result is not proved to be exact, a warning is displayed explaining how confident one should be with respect to the returned value. This feature is made available within the library with the two following functions:
