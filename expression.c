@@ -4466,7 +4466,7 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   node *simplChild1, *simplChild2, *simplified, *recsimplified;
   mpfr_t *value;
   mpfr_t temp;
-  mp_prec_t prec, p;
+  mp_prec_t prec, p, pppp;
   int alpha, beta;
   node *temp1, *temp2, *temp3, *temp4;
   rangetype xrange, yrange;
@@ -4533,7 +4533,10 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
       mpfr_init2(denom,getMpzPrecision(mpq_denref(resMpq)));
       mpfr_set_z(num,mpq_numref(resMpq),GMP_RNDN); /* exact */
       mpfr_set_z(denom,mpq_denref(resMpq),GMP_RNDN); /* exact */
-      mpfr_init2(resDiv,defaultprecision);
+      pppp = defaultprecision;
+      if (mpfr_get_prec(num) > pppp) pppp = mpfr_get_prec(num);
+      if (mpfr_get_prec(denom) > pppp) pppp = mpfr_get_prec(denom);
+      mpfr_init2(resDiv,pppp);
       if ((mpfr_div(resDiv,num,denom,GMP_RNDN) == 0) &&
 	  mpfr_number_p(resDiv)) {
 	mpfr_init2(resA,mpfr_get_prec(resDiv)+10);
@@ -9244,14 +9247,14 @@ node *simplifyTree(node *tree) {
 node *simplifyAllButDivision(node *tree) {
   node *temp, *temp2, *temp3, *temp4;
 
-  temp = simplifyTreeErrorfree(tree);
-  temp2 = simplifyRationalErrorfree(temp);
-  temp3 = simplifyTreeErrorfree(temp2);
-  temp4 = simplifyAllButDivisionInner(temp3);
+  temp = addMemRef(simplifyTreeErrorfree(tree));
+  temp2 = addMemRef(simplifyRationalErrorfree(temp));
+  temp3 = addMemRef(simplifyTreeErrorfree(temp2));
+  temp4 = addMemRef(simplifyAllButDivisionInner(temp3));
   free_memory(temp);
   free_memory(temp2);
   free_memory(temp3);
-  return temp4;
+  return addMemRef(temp4);
 }
 
 
