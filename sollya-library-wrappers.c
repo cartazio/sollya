@@ -935,6 +935,7 @@ sollya_obj_t sollya_lib_apply(sollya_obj_t obj1, ...) {
   }
   thingToEvaluate = makeApply((node *) (thinglist->value), thinglist->next);
   evaluatedThing = evaluateThing(thingToEvaluate);
+  safeFree(thinglist);
   freeThing(thingToEvaluate);
   return evaluatedThing;
 }
@@ -950,6 +951,7 @@ sollya_obj_t sollya_lib_v_apply(sollya_obj_t obj1, va_list varlist) {
   }
   thingToEvaluate = makeApply((node *) (thinglist->value), thinglist->next);
   evaluatedThing = evaluateThing(thingToEvaluate);
+  safeFree(thinglist);
   freeThing(thingToEvaluate);
   return evaluatedThing;
 }
