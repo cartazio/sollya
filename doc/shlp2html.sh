@@ -110,6 +110,8 @@ preprocessTeX() {
                                          | sed -n 's/§§\([^§]*\)§\\begin{itemize}§§/<ul><LI>/g;p' \
 	                                 | sed -n 's/§§\([^§]*\)§\\end{itemize}§§/<\/li><\/ul>/g;p' \
 	                                 | sed -n 's/§§\([^§]*\)§\\item§§/<\/li><li>/g;p' \
+	                                 | sed -n 's/§§-- §--~§§/\&ndash;\&nbsp;/g;p' \
+	                                 | sed -n 's/§§ --§~--§§/\&nbsp;\&ndash;/g;p' \
 	                                 | sed -n 's/§§\([^§]*\)§\([^§]*\)§§/\1/g;p' >> $tempfile2
     else head -n $i $tempfile | tail -n 1 >> $tempfile2
     fi

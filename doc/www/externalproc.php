@@ -133,38 +133,36 @@ by NULL pointers.
 Similarly to internal procedures, externally bounded procedures can be 
 considered to be objects inside Sollya that can be assigned to other 
 variables, stored in list etc. 
-</li><li>The user should be aware that they may use the Sollya library in 
-external codes to be dynamically bound to Sollya using <?php linkTo("command","externalproc","externalproc");?>. On 
-most systems, it suffices to include the header of the Sollya library 
-into the source code of the external procedure. Linking with the 
-actual Sollya library is not necessary on most systems; as the 
-interactive Sollya executable contains a superset of the Sollya 
-library functions. On some systems, linking with the Sollya library 
-or some of its dependencies may be necessary. 
+</li><li>The user should be aware that they may use the Sollya library in external 
+codes to be dynamically bound to Sollya using <?php linkTo("command","externalproc","externalproc");?>. On most systems, 
+it suffices to include the header of the Sollya library into the source code 
+of the external procedure. Linking with the actual Sollya library is not 
+necessary on most systems; as the interactive Sollya executable contains a 
+superset of the Sollya library functions. On some systems, linking with the 
+Sollya library or some of its dependencies may be necessary. 
 <br><br> 
-In particular, the Sollya library -and, of course, its header file- 
-contain a certain set of functions to manipulate lists with elements 
-of certain types, such as 
-sollya_constant_list_t, 
-sollya_obj_list_t and so on. As explained 
-above, these types are passed in argument to (and received back thru a 
-reference from) an external procedure. These list manipulation 
-functions are not strictly necessary to the use of the Sollya library 
-in free-standing applications that do not use the functionality 
-provided with <?php linkTo("command","externalproc","externalproc");?>. They are therefore provided as-is without any 
-further documentation, besides the comments given in the Sollya 
-library header file. 
-</li><li>The dynamic object file whose name is given to <?php linkTo("command","externalproc","externalproc");?> for binding of an 
-external procedure may also define a destructor function int sollya_external_lib_close(void). 
-If Sollya finds such a destructor function in the dynamic object file, it will call  
-that function when closing the dynamic object file again. This happens when Sollya 
-is terminated or when the current Sollya session is restarted using <?php linkTo("command","restart","restart");?>. 
-The purpose of the destructor function is to allow the dynamically bound code 
-to free any memory that it might have allocated before Sollya is terminated  
-or restarted.  
+In particular, the Sollya library &ndash;&nbsp;and, of course, its header file&nbsp;&ndash; 
+contain a certain set of functions to manipulate lists with elements of 
+certain types, such as sollya_constant_list_t, sollya_obj_list_t and so on. 
+As explained above, these types are passed in argument to (and received back 
+thru a reference from) an external procedure. These list manipulation 
+functions are not strictly necessary to the use of the Sollya library in 
+free-standing applications that do not use the functionality provided with 
+<?php linkTo("command","externalproc","externalproc");?>. They are therefore provided as-is without any further 
+documentation, besides the comments given in the Sollya library header file. 
+</li><li>The dynamic object file whose name is given to <?php linkTo("command","externalproc","externalproc");?> for binding of 
+an external procedure may also define a destructor function 
+int sollya_external_lib_close(void). If Sollya finds such a destructor 
+function in the dynamic object file, it will call that function when closing 
+the dynamic object file again. This happens when Sollya is terminated or when 
+the current Sollya session is restarted using <?php linkTo("command","restart","restart");?>. The purpose of the 
+destructor function is to allow the dynamically bound code to free any memory 
+that it might have allocated before Sollya is terminated or restarted. 
+<br><br> 
 The dynamic object file is not necessarily needed to define a destructor 
-function. This ensure backward compatibility with older Sollya external  
+function. This ensure backward compatibility with older Sollya external 
 library function object files. 
+<br><br> 
 When defined, the destructor function is supposed to return an integer 
 value indicating if an error has happened. Upon success, the destructor 
 functions is to return a zero value, upon error a non-zero value. 
