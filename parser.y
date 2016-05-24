@@ -4614,6 +4614,8 @@ help:                   CONSTANTTOKEN
 			    sollyaPrintf("- D\n");
 			    sollyaPrintf("- DD\n");
 			    sollyaPrintf("- DE\n");
+			    sollyaPrintf("- HP\n");
+			    sollyaPrintf("- QD\n");
 			    sollyaPrintf("- Pi\n");
 			    sollyaPrintf("- RD\n");
 			    sollyaPrintf("- RN\n");
@@ -4634,6 +4636,7 @@ help:                   CONSTANTTOKEN
 			    sollyaPrintf("- atanh\n");
 			    sollyaPrintf("- autodiff\n");
 			    sollyaPrintf("- autosimplify\n");
+			    sollyaPrintf("- bashevaluate\n");
 			    sollyaPrintf("- bashexecute\n");
 			    sollyaPrintf("- begin\n");
 			    sollyaPrintf("- binary\n");
@@ -4694,7 +4697,9 @@ help:                   CONSTANTTOKEN
 			    sollyaPrintf("- getsuppressedmessages\n");
 			    sollyaPrintf("- getbacktrace\n");
 			    sollyaPrintf("- guessdegree\n");
+			    sollyaPrintf("- halfprecision\n");
 			    sollyaPrintf("- head\n");
+			    sollyaPrintf("- help\n");
 			    sollyaPrintf("- hexadecimal\n");
 			    sollyaPrintf("- honorcoeffprec\n");
 			    sollyaPrintf("- hopitalrecursions\n");
@@ -4718,6 +4723,7 @@ help:                   CONSTANTTOKEN
 			    sollyaPrintf("- log1p\n");
 			    sollyaPrintf("- log2\n");
 			    sollyaPrintf("- mantissa\n");
+			    sollyaPrintf("- match\n");
 			    sollyaPrintf("- max\n");
 			    sollyaPrintf("- mid\n");
 			    sollyaPrintf("- midpointmode\n");
@@ -4751,6 +4757,7 @@ help:                   CONSTANTTOKEN
 			    sollyaPrintf("- printxml\n");
 			    sollyaPrintf("- proc\n");
 			    sollyaPrintf("- procedure\n");
+			    sollyaPrintf("- quad\n");
 			    sollyaPrintf("- quit\n");
 			    sollyaPrintf("- range\n");
 			    sollyaPrintf("- rationalapprox\n");
@@ -4799,6 +4806,7 @@ help:                   CONSTANTTOKEN
 			    sollyaPrintf("- version\n");
 			    sollyaPrintf("- void\n");
 			    sollyaPrintf("- while\n");
+			    sollyaPrintf("- with\n");
 			    sollyaPrintf("- worstcase\n");
 			    sollyaPrintf("- write\n");
 			    sollyaPrintf("- zerodenominators\n");
