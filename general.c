@@ -81,9 +81,9 @@
 
 #include "parser.h"
 #include <termios.h>
+#include <time.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-#include <time.h>
 #include <unistd.h>
 #include "execute.h"
 #include "sollya-messaging.h"

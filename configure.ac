@@ -29,10 +29,11 @@ if test "$LEX" != flex; then
   AC_SUBST(LEXLIB, '')
 fi
 AC_LIBTOOL_DLOPEN
-AC_PROG_LIBTOOL
+LT_INIT([dlopen shared])
 AC_SUBST(LIBTOOL_DEPS)
 AC_CONFIG_MACRO_DIR([m4])
 AC_SUBST(AR_FLAGS, "cr")
+
 
 
 #Check whether flex and bison support interactive and pure parsers
@@ -470,19 +471,46 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
                   ])
 
 
-LDFLAGS="$AM_LDFLAGS -Wl,-export-dynamic $USER_LDFLAGS"
-AC_MSG_CHECKING([for -export-dynamic support])
+LDFLAGS="$AM_LDFLAGS -Wl,--export-dynamic $USER_LDFLAGS"
+AC_MSG_CHECKING([for --export-dynamic support])
 AC_RUN_IFELSE([AC_LANG_PROGRAM([[#include <stdlib.h>]],
                                [[exit(0);]]
                               )],
               [
                  AC_MSG_RESULT(yes)
-                 AM_LDFLAGS="$AM_LDFLAGS -Wl,-export-dynamic"
+                 AM_LDFLAGS="$AM_LDFLAGS -Wl,--export-dynamic"
               ],
               [
                  AC_MSG_RESULT(no)
                  LDFLAGS="$AM_LDFLAGS $USER_LDFLAGS"
               ])
+
+AC_MSG_CHECKING([for --export-all-symbols support])
+AC_RUN_IFELSE([AC_LANG_PROGRAM([[#include <stdlib.h>]],
+                               [[exit(0);]]
+                              )],
+              [
+                 AC_MSG_RESULT(yes)
+                 AM_LDFLAGS="$AM_LDFLAGS -Wl,--export-all-symbols"
+              ],
+              [
+                 AC_MSG_RESULT(no)
+                 LDFLAGS="$AM_LDFLAGS $USER_LDFLAGS"
+              ])
+
+AC_MSG_CHECKING([for --enable-auto-import support])
+AC_RUN_IFELSE([AC_LANG_PROGRAM([[#include <stdlib.h>]],
+                               [[exit(0);]]
+                              )],
+              [
+                 AC_MSG_RESULT(yes)
+                 AM_LDFLAGS="$AM_LDFLAGS -Wl,--enable-auto-import"
+              ],
+              [
+                 AC_MSG_RESULT(no)
+                 LDFLAGS="$AM_LDFLAGS $USER_LDFLAGS"
+              ])
+
 
 LDFLAGS="$AM_LDFLAGS -Xlinker --allow-multiple-definition $USER_LDFLAGS"
 AC_MSG_CHECKING([for -Xlinker --allow-multiple-definition support])
