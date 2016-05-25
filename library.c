@@ -655,8 +655,17 @@ static libraryFunction *__bindFunctionByPtrImpl(char *suggestedName, void *func,
   char *unifiedName, *basename, *filteredSuggestedName, *filteredBaseName;
 
   res = getFunctionByPtr(func, hasData, data);
-  if (res != NULL) return res;
-
+  if (res != NULL) {
+    if (hasData) {
+      if (res->hasData) {
+	if (res->dealloc != dealloc) {
+	  res->dealloc = dealloc;
+	}
+      }
+    }
+    return res;
+  }
+    
   if (suggestedName != NULL) {
     filteredSuggestedName = filterSymbolName(suggestedName);
     if (filteredSuggestedName[0] == '\0') {
@@ -878,7 +887,16 @@ static libraryFunction *__bindConstantFunctionByPtrImpl(char *suggestedName, voi
   char *unifiedName, *basename, *filteredBaseName, *filteredSuggestedName;
 
   res = getConstantFunctionByPtr(func, hasData, data);
-  if (res != NULL) return res;
+  if (res != NULL) {
+    if (hasData) {
+      if (res->hasData) {
+	if (res->dealloc != dealloc) {
+	  res->dealloc = dealloc;
+	}
+      }
+    }
+    return res;
+  }
 
   if (suggestedName != NULL) {
     filteredSuggestedName = filterSymbolName(suggestedName);
@@ -1107,7 +1125,16 @@ static libraryProcedure *__bindProcedureByPtrImpl(int resType, int *argTypes, in
   }
   
   res = getProcedureByPtr(func, hasData, data);
-  if (res != NULL) return res;
+  if (res != NULL) {
+    if (hasData) {
+      if (res->hasData) {
+	if (res->dealloc != dealloc) {
+	  res->dealloc = dealloc;
+	}
+      }
+    }
+    return res;
+  }
 
   signature = NULL;
   t = (int *) safeMalloc(sizeof(int));
