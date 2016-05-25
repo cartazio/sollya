@@ -28,21 +28,7 @@ New API  (see @rev c629c562)                                                    
   sollya_lib_v_construct_function
   sollya_lib_evaluate_function_at_object
 
-In library mode (void *) argument to
-  sollya_lib_libraryconstant_with_data                                           -- [X] well-documented   [ ] well-tested   [X] worth mentioning
-  sollya_lib_build_function_libraryconstant_with_data                            -- [X] well-documented   [ ] well-tested   [X] worth mentioning
-  sollya_lib_libraryfunction_with_data                                           -- [X] well-documented   [ ] well-tested   [X] worth mentioning
-  sollya_lib_build_function_libraryfunction_with_data                            -- [X] well-documented   [ ] well-tested   [X] worth mentioning
-  sollya_lib_externalprocedure                                                   -- [X] well-documented   [ ] well-tested   [X] worth mentioning
-  sollya_lib_externalprocedure_with_data                                         -- [X] well-documented   [ ] well-tested   [X] worth mentioning
-
-  sollya_lib_decompose_libraryfunction_with_data                                 -- [X] well-documented   [ ] well-tested   [ ] worth mentioning
-  sollya_lib_decompose_libraryconstant_with_data                                 -- [X] well-documented   [ ] well-tested   [ ] worth mentioning
-  sollya_lib_decompose_externalprocedure_with_data                               -- [X] well-documented   [ ] well-tested   [ ] worth mentioning
-
-
 New API sollya_lib_get_subfunction and sollya_lib_[v]construct_function          -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
-New API for deallocation in sollya_lib_decompose*_with_data                      -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 Unified externalprocedure and procedure with respect to list argument with @     -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 
 
@@ -70,6 +56,8 @@ New function sollya_lib_hash in the library
 New function annotatefunction.
 New function getbacktrace
 New function objectname
+New API sollya_lib_libraryconstant_with_data, sollya_lib_libraryconstant_with_data, sollya_lib_libraryfunction_with_data, sollya_lib_build_function_libraryfunction_with_data and corresponding sollya_lib_decompose_libraryconstant_with_data and sollya_lib_decompose_libraryfunction_with_data in the library.
+New API sollya_lib_externalprocedure, sollya_lib_externalprocedure_with_data and corresponding sollya_lib_decompose_externalprocedure_with_data in the library.
 Command 'execute' is now available in library mode
 Fixed bug [#18992]: degree(x^(2^(2^80))) returns -1 without a warning
 Fixed bug [#17197]: tests do not work on VPATH build
