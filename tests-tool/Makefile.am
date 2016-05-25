@@ -5,12 +5,12 @@ EXTRA_DIST = check.proto $(TESTFILES) $(TESTFILES:.sollya=.sollya.reference)
 TESTS = $(TESTFILES:.sollya=.sh)
 
 check_PROGRAMS = force_compilation 
-check_LIBRARIES = libraryexample.a libexternal_structural_cmp.a # the libraries will be shared libraries actually,
-                                                                # but we do not know how to explain it to automake.
+check_LIBRARIES = libraryexample.a # the library will be a shared library actually,
+                                   # but we do not know how to explain this to automake.
 
 force_compilation_SOURCES =
 
-MOSTLYCLEANFILES = $(TESTS) libraryexample.a libexternal_structural_cmp.a
+MOSTLYCLEANFILES = $(TESTS) libraryexample.a
 
 libraryexample.$(OBJEXT): libraryexample.c
 	$(CC) $(CFLAGS) $(AM_CPPFLAGS) -fPIC -Wall -c '$(srcdir)/libraryexample.c'
@@ -22,12 +22,6 @@ libraryexample.a: libraryexample.$(OBJEXT)
 
 force_compilation$(EXEEXT):
 	@echo "Recompiling sollya";cd $(top_builddir); $(MAKE) sollya$(EXEEXT)
-
-libexternal_structural_cmp.$(OBJEXT): libexternal_structural_cmp.c
-	$(CC) $(CFLAGS) $(AM_CPPFLAGS) -fPIC -Wall -c '$(srcdir)/libexternal_structural_cmp.c'
-
-libexternal_structural_cmp.a: libexternal_structural_cmp.$(OBJEXT)
-	$(CC) $(LDFLAGS) $(AM_LDFLAGS) -shared -o libexternal_structural_cmp.a libexternal_structural_cmp.$(OBJEXT) -lmpfi -lmpfr -lgmp
 
 $(TESTS): check.proto
 	@echo "Building "$@
