@@ -1682,6 +1682,7 @@ Functions are provided that allow the user to test the type of a <span class="so
       <tr> <td align="left"><code>sollya_lib_obj_is_end_elliptic_list(obj)</code> </td></tr>
       <tr> <td align="left"><code>sollya_lib_obj_is_structure(obj)</code> </td></tr>
       <tr> <td align="left"><code>sollya_lib_obj_is_procedure(obj)</code> </td></tr>
+      <tr> <td align="left"><code>sollya_lib_obj_is_externalprocedure(obj)</code> </td></tr>
       <tr style="border-bottom: 1px solid black;"> <td align="left"><code>sollya_lib_obj_is_error(obj)</code></td></tr>
       <tr> <td style="padding-top: 5px;" align="left"><code>sollya_lib_is_on(obj)</code></td></tr>
       <tr> <td align="left"><code>sollya_lib_is_off(obj)</code> </td></tr>
