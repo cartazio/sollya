@@ -1,8 +1,15 @@
 #include <sollya.h>
 
+int empty_func(void **args) {
+  (void)(args); /* Compiler happiness */
+  sollya_lib_printf("External procedure only doing a side effect\n");
+  return 1;
+}
+
 int main(void) {
-  sollya_obj_t a[52];
-  int t[52];
+
+  sollya_obj_t a[53];
+  int t[53];
   int i;
 
   sollya_lib_init();
@@ -59,8 +66,9 @@ int main(void) {
   a[49] = sollya_lib_end_elliptic_list(NULL, 0);
   a[50] = sollya_lib_parse_string("{.a = 5; .b = exp(_x_)}");
   a[51] = sollya_lib_parse_string("proc (a) { return a+1; }");
+  a[52] = sollya_lib_externalprocedure(SOLLYA_EXTERNALPROC_TYPE_VOID, NULL, 0, NULL, empty_func);
 
-  for(i=0;i<52;i++)  t[i] = sollya_lib_obj_is_procedure(a[i]);
+  for(i=0;i<53;i++)  t[i] = sollya_lib_obj_is_procedure(a[i]);
 
   if (t[0]) sollya_lib_printf("sollya_lib_obj_is_procedure detects absolute\n");
   if (t[1]) sollya_lib_printf("sollya_lib_obj_is_procedure detects binary\n");
@@ -114,8 +122,9 @@ int main(void) {
   if (t[49]) sollya_lib_printf("sollya_lib_obj_is_procedure detects an empty end-elliptic list.\n");
   if (t[50]) sollya_lib_printf("sollya_lib_obj_is_procedure detects structure { .a = 5; .b = exp(_x_)}.\n");
   if (t[51]) sollya_lib_printf("sollya_lib_obj_is_procedure detects procedure proc(a) { return a+1; }.\n");
+  if (t[52]) sollya_lib_printf("sollya_lib_obj_is_procedure detects external procedure based on empty_func.\n");
 
-  for(i=0;i<52;i++) sollya_lib_clear_obj(a[i]);
+  for(i=0;i<53;i++) sollya_lib_clear_obj(a[i]);
   sollya_lib_close();
   return 0;
 }
