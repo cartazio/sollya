@@ -783,7 +783,6 @@ extern "C" {
   int sollya_lib_is_double_double_obj(sollya_obj_t);
   int sollya_lib_is_triple_double_obj(sollya_obj_t);
   int sollya_lib_is_pi(sollya_obj_t);
-  int sollya_lib_is_libraryconstant(sollya_obj_t);
 
   /* Functions to evaluate Sollya objects that are mathematical
      functions at points, over intervals or at points given by constant expressions

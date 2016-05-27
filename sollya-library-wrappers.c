@@ -4417,10 +4417,6 @@ int sollya_lib_obj_is_externalprocedure(sollya_obj_t obj1) {
   return isExternalProcedureUsage(obj1);
 }
 
-int sollya_lib_is_libraryconstant(sollya_obj_t obj1) {
-  return isLibraryConstant(obj1);
-}
-
 uint64_t sollya_lib_hash(sollya_obj_t obj1) {
   return hashThing(obj1);
 }
