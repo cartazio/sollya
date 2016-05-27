@@ -150,6 +150,7 @@ tget_hopitalrecursions.c \
 tget_interval_from_range.c \
 tget_list_elements.c \
 tget_midpointmode.c \
+tget_nth_subfunction.c \
 tget_points.c \
 tget_prec.c \
 tget_rationalmode.c \
