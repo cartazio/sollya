@@ -1301,6 +1301,11 @@ For instance, after the instructions \verb|a = SOLLYA_CONST(0); b = sollya_lib_e
 \end{itemize}
 Actually, \verb|sollya_lib_foo| has exactly the same behavior as writing an expression at the prompt within the interactive tool. In particular, it is possible to give a range as an argument to \verb|sollya_lib_foo|: the returned object will be the result of the evaluation of function \verb|foo| on that range by interval arithmetic. In contrast, trying to use \verb|sollya_lib_build_function_foo| on a range would result in a typing error.
 
+Alternatively, one may create functional expressions with the functions\\
+  \verb|int sollya_lib_construct_function(sollya_obj_t *res, sollya_base_function_t type, ...)|\\
+  \verb|int sollya_lib_v_construct_function(sollya_obj_t *, sollya_base_function_t, va_list)|.\\
+The advantage of these functions with respect to the others presented above lies in the fact that they offer a way to create any functional expression, the basic function that one wants to construct being provided with the argument \verb|type|. Since these functions are indeed doing  the exact contrary of \verb|sollya_lib_decompose_function|, they are described in details in the corresponding Section~\ref{decomposing_a_functional_expression}.
+
 \subsubsection{Other simple objects}
 Other simple objects are created with functions listed in Table~\ref{creating_sollya_obj_t}. The functions with a name of the form \texttt{sollya\_lib\_range\_something} follow the same convention as \texttt{sollya\_lib\_constant}: they build a new object from a copy of their argument, and the conversion is always exact, whatever the value of \texttt{prec} is.
 
@@ -1833,6 +1838,7 @@ It is also possible to get all the field names and their contents. This is achie
 If \verb|arg| really is a structure, say with $N$ fields called ``fieldA'', \dots, ``fieldZ'', this functions sets \verb|*n| to~$N$, allocates and fills an array of $N$ strings and sets \verb|*names| so that it points to that segment of memory (hence \verb|(*names)[0]| is the string ``fieldA'', \dots, \verb|(*names)[N-1]| is the string ``fieldZ''). Moreover, it allocates memory for $N$ \verb|sollya_obj_t|, sets \verb|*objs| so that it points on that memory segment, and copies the contents of each of the $N$ fields at \verb|(*objs)[0]|, \dots, \verb|(*objs)[N-1]|. Finally it returns true. If \verb|arg| is not a structure, the function simply returns false without doing anything. Please note that since \verb|*names| and \verb|*objs| point to memory segments that have been dynamically allocated, they should manually be cleared by the user with \verb|sollya_lib_free| once they become useless.
 
 \subsection{Decomposing a functional expression}
+ \label{decomposing_a_functional_expression}
 If a \texttt{sollya\_obj\_t} contains a functional expression, one can decompose the expression tree using the following functions. These functions all return a boolean integer: true in case of success (\emph{i.e.}, if the \texttt{sollya\_obj\_t} argument really contains a functional expression) and false otherwise.
 
 \begin{table}[htp]
@@ -1882,7 +1888,16 @@ this function is a all-in-one function equivalent to using \verb|sollya_lib_get_
 the same as the previous function, but with a \texttt{va\_list}.
 \end{itemize}
 
-As an example of use of these functions, the following code returns $1$ if \texttt{f} denotes a functional expression made only of constants (\emph{i.e.}, without the free variable), and returns $0$ otherwise:
+To construct a functional expression, functions are provided that precisely undo what\\
+\verb|sollya_lib_decompose_function| does. These functions are the following:
+\begin{itemize}
+\item \verb|int sollya_lib_construct_function(sollya_obj_t *res, sollya_base_function_t type, ...)|: let us denote by \verb|g_1|, ..., \verb|g_k| the arguments following the argument \verb|type|. They must be of type \verb|sollya_obj_t|. The function creates a functional expression whose head function corresponds to the basic function represented by variable \verb|type| and whose arguments are \verb|g_1|, ..., \verb|g_s| where $s$ denotes the arity of the considered basic function. It is the responsibility of the user to provide enough arguments with respect to the required arity. As a particular case, when the desired type corresponds to a library function, a constant, a library constant or a procedure function, the user must provide an extra argument \verb|g_t| after \verb|g_s| corresponding to what \verb|sollya_lib_decompose_function| would store in this extra argument on such a case (namely, a \sollya object corresponding to the expression $f_0(x)$ in the case of a library function or procedure function, and $f_0$ itself in the case of a constant or library constant). If everything goes well the functional expression is created and stored at the address referred to by \verb|res| and a boolean integer representing true is returned. Notice that the arguments \verb|g_1|, \dots, \verb|g_k| are not eaten up by this function and the user must subsequently manually clear these objects. If something goes wrong (bad number of arguments, arguments not having the proper type, etc.) \verb|res| is left unchanged and a boolean integer representing false is returned.
+\item \verb|int sollya_lib_v_construct_function(sollya_obj_t *res, sollya_base_function_t type,|\\
+      \verb|                                    va_list varlist)|:\\
+the same as the previous function, but with a \verb|va_list|.
+\end{itemize}
+
+As an example of use of the functions described in the present section, the following code returns $1$ if \texttt{f} denotes a functional expression made only of constants (\emph{i.e.}, without the free variable), and returns~$0$ otherwise:
 
 \begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 #include <sollya.h>
