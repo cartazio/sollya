@@ -1873,6 +1873,7 @@ it stores the type of \texttt{f} at the address referred to by \texttt{type}. Th
 Please note that the objects that have been stored in variables \texttt{g\_i} must manually be cleared once they become useless.
 
 \item \verb|int sollya_lib_v_get_subfunctions(sollya_obj_t f, int *n, va_list va)|: the same as the previous function, but with a \texttt{va\_list} argument.
+\item \verb|int sollya_lib_get_nth_subfunction(sollya_obj_t *res, sollya_obj_t f, int n)|: if \verb|f| is a functional expression of arity $s$ and if $1 \le n \le s$, this function stores the expression corresponding to the $n$-th argument of \verb|f| into the address referred to by \verb|res| and returns a boolean integer representing true. In any other case, \verb|res| is left unchanged and a boolean integer representing false is returned. Notice that the subfunctions are numbered starting from~$1$ (as opposed to, \emph{e.g.}, arrays in~C), hence in the expression $f = e_1 + e_2$, the subexpression $e_1$ corresponds to $n=1$ and the subexpression $e_2$ corresponds to $n=2$. Accordingly, in an expression like $f = \sin(e)$, the subexpression $e$ corresponds to $n=1$.
 \item \verb|int sollya_lib_decompose_function(sollya_obj_t f, sollya_base_function_t *type,|\\
       \verb|                                  int *n, ...)|:\\
 this function is a all-in-one function equivalent to using \verb|sollya_lib_get_head_function| and \verb|sollya_lib_get_subfunctions| in only one function call.
