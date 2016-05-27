@@ -686,7 +686,7 @@ extern "C" {
   */
   int sollya_lib_get_subfunctions(sollya_obj_t, int *, ...);
   int sollya_lib_v_get_subfunctions(sollya_obj_t, int *, va_list);
-  int sollya_lib_get_subfunction(sollya_obj_t *, sollya_obj_t, int);
+  int sollya_lib_get_nth_subfunction(sollya_obj_t *, sollya_obj_t, int);
 
   /* A one-does-it-all function */
   int sollya_lib_decompose_function(sollya_obj_t, sollya_base_function_t *, int *, ...);
@@ -790,11 +790,6 @@ extern "C" {
   sollya_fp_result_t sollya_lib_evaluate_function_at_point(mpfr_t, sollya_obj_t, mpfr_t, mpfr_t *);
   sollya_fp_result_t sollya_lib_evaluate_function_at_constant_expression(mpfr_t, sollya_obj_t, sollya_obj_t, mpfr_t *);
   int sollya_lib_evaluate_function_over_interval(mpfi_t, sollya_obj_t, mpfi_t);
-
-  /* A short-cut function for "evaluation" of functions represented as
-     Sollya objects at points (or intervals) represented as Sollya objects 
-  */
-  sollya_obj_t sollya_lib_evaluate_function_at_object(sollya_obj_t, sollya_obj_t);
   
   /* Functions to manipulate lists
 

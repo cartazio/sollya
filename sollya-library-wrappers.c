@@ -3822,10 +3822,13 @@ int sollya_lib_get_subfunctions(sollya_obj_t obj1, int *ari, ...) {
   return res;
 }
 
-int sollya_lib_get_subfunction(sollya_obj_t *subfunc, sollya_obj_t obj, int n) {
+int sollya_lib_get_nth_subfunction(sollya_obj_t *subfunc, sollya_obj_t obj, int nIndexOne) {
   int res, arity, myarity;
   sollya_obj_t c1, c2;
+  int n;
 
+  n = nIndexOne - 1;
+  
   if (n < 0) return 0;
   if (n > 1) return 0;
 
@@ -5001,11 +5004,6 @@ int sollya_lib_evaluate_function_over_interval(mpfi_t y, sollya_obj_t obj1, mpfi
   /* Indicate success, independently if we produced NaN or an interval */
   return 1;
 }
-
-sollya_obj_t sollya_lib_evaluate_function_at_object(sollya_obj_t obj1, sollya_obj_t obj2) {
-  return sollya_lib_apply(obj1, obj2, NULL);
-}
-
 
 sollya_obj_t sollya_lib_externalprocedure(sollya_externalprocedure_type_t res_type, sollya_externalprocedure_type_t *arg_types, int arity, char *name, void *func) {
   libraryProcedure *libProc;
