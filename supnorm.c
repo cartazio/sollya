@@ -2157,6 +2157,15 @@ int supremumNormBisectInner(sollya_mpfi_t result, node *poly, node *func, mpfr_t
   return SUPNORM_NO_ERROR;
 }
 
+mp_prec_t mp_prec_abs(mp_prec_t p) {
+  int64_t t;
+  mp_prec_t pp;
+  t = (int64_t) p;
+  if (t < ((int64_t) 0)) t = -t;
+  pp = (mp_prec_t) t;
+  return pp;
+}
+
 /* Compute the supremum norm on eps = p - f resp. eps = p/f - 1 over [a,b]
 
    eps is defined according to the mode parameter:
@@ -2201,7 +2210,7 @@ int supremumNormBisect(sollya_mpfi_t result, node *poly, node *func, mpfr_t a, m
   mpfr_clear(temp);
 
   /*if the requested accuracy (p) is close to prec, increase prec*/
-  if ((mp_prec_t) abs(p-prec) < (mp_prec_t) (p/2)) {
+  if ((mp_prec_t) mp_prec_abs(p-prec) < (mp_prec_t) (p/2)) {
     if (p>prec)  prec = p + (p/2);
     if (p<=prec)  prec = prec + (p/2);
   }
