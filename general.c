@@ -81,8 +81,6 @@
 
 #include "parser.h"
 #include <termios.h>
-#include <time.h>
-#include <sys/time.h>
 #include <sys/resource.h>
 #include <unistd.h>
 #include "execute.h"
@@ -90,6 +88,22 @@
 #include "bitfields.h"
 #include "printf.h"
 #include "assignment.h"
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#if TIME_WITH_SYS_TIME
+#include <sys/time.h>
+#include <time.h>
+#else
+#if HAVE_SYS_TIME_H
+#include <sys/time.h>
+#else
+#include <time.h>
+#endif
+#endif
+
 
 #if HAVE_BACKTRACE
 #include <execinfo.h>
@@ -1972,7 +1986,9 @@ int general(int argc, char *argv[]) {
   struct rlimit rlim;
   char *error;
   int doNotModifyStackSize;
+#if !defined(__CYGWIN__)
   int repeatSetRLimit;
+#endif
   volatile int lastWasError;
   int finishedBeforeParsing;
   int argsArgRead;

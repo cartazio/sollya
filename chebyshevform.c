@@ -160,6 +160,7 @@ chebModel* createEmptycModelPrecomp(int n,sollya_mpfi_t x, sollya_mpfi_t **chebP
 */
 void clearcModelLight(chebModel *t){
   int i;
+  if (t == NULL) return;
   for(i=0;i<t->n;i++) sollya_mpfi_clear(t->poly_array[i]);
   safeFree(t->poly_array);
 
@@ -425,7 +426,7 @@ void composition_CM(chebModel *t,chebModel *g, chebModel *f, int boundLevel, mpf
   int i;
   int n,m;
 
-  chebModel *tt,*tinterm,*tadd, *tcheb0,*tcheb1 ;
+  chebModel *tt,*tinterm,*tadd = NULL, *tcheb0 = NULL,*tcheb1 = NULL;
   sollya_mpfi_t z, zz, z1,doi,minusOne, one;
   mpfr_t a, b;
 

@@ -48,6 +48,7 @@
 */
 
 #define _POSIX_SOURCE
+#define _POSIX_C_SOURCE (200312L)
 
 #include "signalhandling.h"
 #include <stdlib.h>
