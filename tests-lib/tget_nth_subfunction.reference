@@ -16,9 +16,9 @@ No subfunction of stupid1(cos(_x_)) such that n=0
 No subfunction of _x_ + stupid1 such that n=0
 No subfunction of absolute such that n=0
 No subfunction of [1;2] such that n=0
-No subfunction of pi such that n=1
-No subfunction of 3 such that n=1
-No subfunction of superconst such that n=1
+Subfunction of pi (n=1): pi
+Subfunction of 3 (n=1): 3
+Subfunction of superconst (n=1): superconst
 Subfunction of _x_ (n=1): _x_
 Subfunction of exp(sin(_x_) + 17) (n=1): sin(_x_) + 17
 Subfunction of (diff(function(proc(X, n, p)
@@ -39,7 +39,7 @@ No subfunction of 3 such that n=2
 No subfunction of superconst such that n=2
 No subfunction of _x_ such that n=2
 No subfunction of exp(sin(_x_) + 17) such that n=2
-No subfunction of (diff(function(proc(X, n, p)
+Subfunction of (diff(function(proc(X, n, p)
 {
 var res, oldPrec;
 oldPrec = prec;
@@ -47,8 +47,16 @@ prec = p!;
 res = exp(X);
 prec = oldPrec!;
 return res;
-})))(sin(_x_)) sucht that n=2
-No subfunction of stupid1(cos(_x_)) such that n=2
+})))(sin(_x_)) (n=2): diff(function(proc(X, n, p)
+{
+var res, oldPrec;
+oldPrec = prec;
+prec = p!;
+res = exp(X);
+prec = oldPrec!;
+return res;
+}))
+Subfunction of stupid1(cos(_x_)) (n=2): stupid1
 Subfunction of _x_ + stupid1 (n=2): stupid1
 No subfunction of absolute such that n=2
 No subfunction of [1;2] such that n=2

@@ -3499,6 +3499,7 @@ int sollya_lib_v_decompose_function(sollya_obj_t obj1, sollya_base_function_t *b
   switch (obj1->nodeType) {
   case CONSTANT:
   case LIBRARYCONSTANT:
+  case PI_CONST:
     funcArity = 1;
     break;
   case LIBRARYFUNCTION:
@@ -3517,6 +3518,7 @@ int sollya_lib_v_decompose_function(sollya_obj_t obj1, sollya_base_function_t *b
 	switch (obj1->nodeType) {
 	case CONSTANT:
 	case LIBRARYCONSTANT:
+	case PI_CONST:
 	case VARIABLE:
 	  *elem = copyThing(obj1);
 	  break;
