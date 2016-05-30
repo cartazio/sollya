@@ -9931,7 +9931,7 @@ int tryOptimizedCommandExecution(int *res, node *tree) {
 int executeCommandInner(node *tree);
 
 int executeCommand(node *tree) {
-  int res;
+  int res = 0;
 
   if (tryOptimizedCommandExecution(&res, tree))
     return res;
@@ -9942,7 +9942,7 @@ int executeCommand(node *tree) {
 }
 
 int timeCommand(mpfr_t time, node *tree) {
-  int res;
+  int res = 0;
   struct timeval *before;
   struct timeval *after;
   long int seconds, microseconds;
