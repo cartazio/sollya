@@ -6849,6 +6849,7 @@ static inline point_eval_t __tryFaithEvaluationOptimizedHooks(mpfr_t y, eval_hoo
   if (hook == NULL) return POINT_EVAL_FAILURE;
 
   extraPrec = 0;
+  firstPrec = 0;
   hookWorked = 0;
   res = __tryFaithEvaluationOptimizedHooksInner(y, hook, x, cutoff, minPrec, maxPrecUsed, 1, extraPrec, &hookWorked, NULL, NULL);
   if (res != POINT_EVAL_FAILURE) return res;
