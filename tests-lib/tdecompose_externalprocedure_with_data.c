@@ -164,7 +164,7 @@ int main(void) {
   f[2] = sollya_lib_apply(f[0], f[1], NULL);
   sollya_lib_printf("%b\n", f[2]);
 
-  result_type = -1; argument_types = NULL; arity = -1; func = NULL; resData = NULL; resDealloc = NULL;
+  result_type = (sollya_externalprocedure_type_t) -1; argument_types = NULL; arity = -1; func = NULL; resData = NULL; resDealloc = NULL;
   res = sollya_lib_decompose_externalprocedure_with_data(&result_type, &argument_types, &arity, &func, &resData, &resDealloc, f[0]);
   if (res) {
     sollya_lib_printf("sollya_lib_decompose_externalprocedure_with_data has worked on \"%b\": arity = %d, result type = %s, argument types = ", f[0], arity, externalprocTypeToString(result_type));
@@ -201,7 +201,7 @@ int main(void) {
   f[5] = sollya_lib_apply(f[3], f[4], NULL);
   sollya_lib_printf("%b\n", f[5]);
 
-  result_type = -1; argument_types = NULL; arity = -1; func = NULL; resData = NULL; resDealloc = NULL;
+  result_type = (sollya_externalprocedure_type_t) -1; argument_types = NULL; arity = -1; func = NULL; resData = NULL; resDealloc = NULL;
   res = sollya_lib_decompose_externalprocedure_with_data(&result_type, &argument_types, &arity, &func, &resData, &resDealloc, f[3]);
   if (res) {
     sollya_lib_printf("sollya_lib_decompose_externalprocedure_with_data has worked: arity = %d, result type = %s, argument types = ", arity, externalprocTypeToString(result_type));
@@ -236,7 +236,7 @@ int main(void) {
   f[10] = sollya_lib_apply(f[6], f[7], f[8], f[9], NULL);
   sollya_lib_printf("%b\n", f[10]);
 
-  result_type = -1; argument_types = NULL; arity = -1; func = NULL; resData = NULL; resDealloc = NULL;
+  result_type = (sollya_externalprocedure_type_t) -1; argument_types = NULL; arity = -1; func = NULL; resData = NULL; resDealloc = NULL;
   res = sollya_lib_decompose_externalprocedure_with_data(&result_type, &argument_types, &arity, &func, &resData, &resDealloc, f[6]);
   if (res) {
     sollya_lib_printf("sollya_lib_decompose_externalprocedure_with_data has worked on \"%b\": arity = %d, result type = %s, argument types = ", f[6], arity, externalprocTypeToString(result_type));
@@ -284,7 +284,7 @@ int main(void) {
   f[15] = sollya_lib_apply(f[11], f[12], f[13], f[14], NULL);
   sollya_lib_printf("%b\n", f[15]);
 
-  result_type = -1; argument_types = NULL; arity = -1; func = NULL; resData = NULL; resDealloc = NULL;
+  result_type = (sollya_externalprocedure_type_t) -1; argument_types = NULL; arity = -1; func = NULL; resData = NULL; resDealloc = NULL;
   res = sollya_lib_decompose_externalprocedure_with_data(&result_type, &argument_types, &arity, &func, &resData, &resDealloc, f[11]);
   if (res) {
     sollya_lib_printf("sollya_lib_decompose_externalprocedure_with_data has worked: arity = %d, result type = %s, argument types = ", arity, externalprocTypeToString(result_type));
@@ -318,7 +318,7 @@ int main(void) {
   f[17] = sollya_lib_apply(f[16], NULL);
   sollya_lib_printf("%b\n", f[17]);
 
-  result_type = -1; argument_types = NULL; arity = -1; func = NULL; resData = NULL; resDealloc = NULL;
+  result_type = (sollya_externalprocedure_type_t) -1; argument_types = NULL; arity = -1; func = NULL; resData = NULL; resDealloc = NULL;
   res = sollya_lib_decompose_externalprocedure_with_data(&result_type, &argument_types, &arity, &func, &resData, &resDealloc, f[16]);
   if (res) {
     sollya_lib_printf("sollya_lib_decompose_externalprocedure_with_data has worked: arity = %d, result type = %s, argument types = ", arity, externalprocTypeToString(result_type));
@@ -335,7 +335,7 @@ int main(void) {
   f[19] = sollya_lib_apply(f[18], NULL);
   sollya_lib_printf("%b\n", f[19]);
 
-  result_type = -1; argument_types = NULL; arity = -1; func = NULL; resData = NULL; resDealloc = NULL;
+  result_type = (sollya_externalprocedure_type_t) -1; argument_types = NULL; arity = -1; func = NULL; resData = NULL; resDealloc = NULL;
   res = sollya_lib_decompose_externalprocedure_with_data(&result_type, &argument_types, &arity, &func, &resData, &resDealloc, f[18]);
   if (!res) sollya_lib_printf("sollya_lib_decompose_externalprocedure_with_data did not work (as expected) on something not constructed with sollya_lib_externalprocedure_with_data\n");
   else sollya_lib_printf("sollya_lib_decompose_externalprocedure_with_data worked in an unexpected case\n"); 

@@ -126,16 +126,16 @@ int main(void) {
   sollya_lib_printf("%b (expecting a)\n", f[10]);
 
   /* Pointer to non-valid functions, together with NULL/illicit as second argument */
-  f[11] = sollya_lib_build_function_libraryconstant(NULL, stupid6+17);
+  f[11] = sollya_lib_build_function_libraryconstant(NULL, (void (*)(mpfr_t, mp_prec_t)) (((char *) stupid6)+((int) 17)));
   sollya_lib_sprintf(str, "%b", f[11]);
-  sollya_lib_sprintf(str2, "const_%p", stupid6+17);
+  sollya_lib_sprintf(str2, "const_%p", (void (*)(mpfr_t, mp_prec_t)) (((char *) stupid6)+((int) 17)));
   if (strcmp(str, str2)==0) sollya_lib_printf("Testing NULL/invalid ptr combination: OK\n");
   else sollya_lib_printf("Testing NULL/invalid ptr combination: *NOT* OK: %b versus %s\n", f[11], str2);
 
 
-  f[12] = sollya_lib_build_function_libraryconstant(NULL, stupid7-17);
+  f[12] = sollya_lib_build_function_libraryconstant(NULL, (void (*)(mpfr_t, mp_prec_t)) (((char *) stupid7)-((int) 17)));
   sollya_lib_sprintf(str, "%b", f[12]);
-  sollya_lib_sprintf(str2, "const_%p", stupid7-17);
+  sollya_lib_sprintf(str2, "const_%p", (void (*)(mpfr_t, mp_prec_t)) (((char *) stupid7)-((int) 17)));
   if (strcmp(str, str2)==0) sollya_lib_printf("Testing NULL/invalid ptr combination: OK\n");
   else sollya_lib_printf("Testing NULL/invalid ptr combination: *NOT* OK: %b versus %s\n", f[12], str2);
 
