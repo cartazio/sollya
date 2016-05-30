@@ -82,6 +82,7 @@ tconstant_from_mpq.c \
 tconstant_from_mpz.c \
 tconstant_from_uint64.c \
 tconstant_list_ops.c \
+tconstruct_function.c \
 tcopy_obj.c \
 tcos.c \
 tcosh.c \
@@ -323,6 +324,7 @@ ttrue.c \
 tv_annotatefunction.c \
 tv_build_end_elliptic_list.c \
 tv_build_list.c \
+tv_construct_function.c \
 tv_decompose_function.c \
 tv_execute_procedure.c \
 tv_fpminimax.c \
