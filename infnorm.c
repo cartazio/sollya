@@ -8312,6 +8312,8 @@ int evaluateSign(int *s, node *rawFunc) {
 	okay = compareConstant(&sign, accessThruMemRef(func)->child1, accessThruMemRef(func)->child2, func, 0);
 	break;
       case MUL:
+	signA = 0;
+	signB = 0;
 	okay = (evaluateSign(&signA, accessThruMemRef(func)->child1) && evaluateSign(&signB, accessThruMemRef(func)->child2));
 	sign = signA * signB;
 	break;

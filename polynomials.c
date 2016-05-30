@@ -3071,7 +3071,7 @@ void constantFPrintf(FILE *fd, constant_t c) {
   }
 }
 
-static inline char *constantToString(constant_t c) {
+char *constantToString(constant_t c) {
   char staticStr[8];
   char *str;
   int size, r;
@@ -5916,7 +5916,7 @@ static inline sparse_polynomial_t sparsePolynomialDeriv(sparse_polynomial_t p) {
   return res;
 }
 
-static inline int sparsePolynomialFromExpression(sparse_polynomial_t *r, node *p) {
+int sparsePolynomialFromExpression(sparse_polynomial_t *r, node *p) {
   sparse_polynomial_t a, b, quot, rest;
   int res;
 
@@ -6086,7 +6086,7 @@ static inline constant_t sparsePolynomialGetIthCoefficientAsConstant(sparse_poly
   return coeffsum;
 }
 
-static inline node *sparsePolynomialGetIthCoefficient(sparse_polynomial_t p, mpz_t i) {
+node *sparsePolynomialGetIthCoefficient(sparse_polynomial_t p, mpz_t i) {
   constant_t c;
   node *res;
 
@@ -6104,7 +6104,7 @@ static inline node *sparsePolynomialGetIthCoefficient(sparse_polynomial_t p, mpz
   return res;
 }
 
-static inline node *sparsePolynomialGetIthCoefficientIntIndex(sparse_polynomial_t p, int i) {
+node *sparsePolynomialGetIthCoefficientIntIndex(sparse_polynomial_t p, int i) {
   constant_t ic, coeffsum, t;
   unsigned int j, k;
   node *res;
@@ -6833,7 +6833,7 @@ static inline node *sparsePolynomialGetExpression(sparse_polynomial_t p, int can
   return __sparsePolynomialGetExpressionHorner(p);
 }
 
-static inline void sparsePolynomialFPrintf(FILE *fd, sparse_polynomial_t p, int canonical) {
+void sparsePolynomialFPrintf(FILE *fd, sparse_polynomial_t p, int canonical) {
   node *t;
 
   /* Handle stupid cases */
@@ -6851,7 +6851,7 @@ static inline void sparsePolynomialFPrintf(FILE *fd, sparse_polynomial_t p, int 
   freeThing(t);
 }
 
-static inline char *sparsePolynomialToString(sparse_polynomial_t p, int canonical) {
+char *sparsePolynomialToString(sparse_polynomial_t p, int canonical) {
   node *t;
   char *str;
   char staticStr[8];
@@ -9175,41 +9175,6 @@ static inline int __polynomialCheapCheckConstantZero(polynomial_t p) {
     break;
   case POWER:
     return __polynomialCheapCheckConstantZero(p->value.powering.g);
-    break;
-  }
-  return 0;
-}
-
-static inline int __polynomialCheapCheckConstantOne(polynomial_t p) {
-  
-  /* Handle stupid inputs */
-  if (p == NULL) return 0;
-  
-  /* General case */
-  switch (p->type) {
-  case SPARSE:
-    return sparsePolynomialIsConstantOne(p->value.sparse, 0);
-    break;
-  case ADDITION:
-  case SUBTRACTION:
-    /* We don't know easily */
-    return 0;
-    break;
-  case MULTIPLICATION:
-    return (__polynomialCheapCheckConstantOne(p->value.pair.g) &&
-	    __polynomialCheapCheckConstantOne(p->value.pair.h));
-    break;
-  case NEGATE:
-    /* We don't know easily */
-    return 0;    
-    break;
-  case COMPOSITION:
-    /* We don't know easily */
-    return 0;    
-    break;
-  case POWER:
-    if (constantIsZero(p->value.powering.c,0)) return 1;
-    return __polynomialCheapCheckConstantOne(p->value.powering.g);
     break;
   }
   return 0;
