@@ -82,6 +82,7 @@ tconstant_from_mpq.c \
 tconstant_from_mpz.c \
 tconstant_from_uint64.c \
 tconstant_list_ops.c \
+tconstruct_function.c \
 tcopy_obj.c \
 tcos.c \
 tcosh.c \
@@ -150,6 +151,7 @@ tget_hopitalrecursions.c \
 tget_interval_from_range.c \
 tget_list_elements.c \
 tget_midpointmode.c \
+tget_nth_subfunction.c \
 tget_points.c \
 tget_prec.c \
 tget_rationalmode.c \
@@ -322,6 +324,7 @@ ttrue.c \
 tv_annotatefunction.c \
 tv_build_end_elliptic_list.c \
 tv_build_list.c \
+tv_construct_function.c \
 tv_decompose_function.c \
 tv_execute_procedure.c \
 tv_fpminimax.c \

@@ -19,16 +19,6 @@ New features
 Global improvement of the evaluations within Sollya                              -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 Improvement of interval-arithmetic pow function                                  -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 Fixed problem of persisting gnuplot files (see @ref 8cb140c)                     -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
-
-
-New API  (see @rev c629c562)                                                     -- [N] well-documented   [N] well-tested   [X] worth mentioning --> TODO SC
-  sollya_lib_is_libraryconstant
-
-  sollya_lib_construct_function
-  sollya_lib_v_construct_function
-  sollya_lib_evaluate_function_at_object
-
-New API sollya_lib_get_subfunction and sollya_lib_[v]construct_function          -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 Unified externalprocedure and procedure with respect to list argument with @     -- [ ] well-documented   [ ] well-tested   [ ] worth mentioning
 
 
@@ -58,6 +48,8 @@ New function getbacktrace
 New function objectname
 New API sollya_lib_libraryconstant_with_data, sollya_lib_libraryconstant_with_data, sollya_lib_libraryfunction_with_data, sollya_lib_build_function_libraryfunction_with_data and corresponding sollya_lib_decompose_libraryconstant_with_data and sollya_lib_decompose_libraryfunction_with_data in the library.
 New API sollya_lib_externalprocedure, sollya_lib_externalprocedure_with_data and corresponding sollya_lib_decompose_externalprocedure_with_data and sollya_lib_obj_is_externalprocedure in the library.
+New API sollya_lib_construct_function and sollya_lib_v_construct_function in the library.
+New API sollya_lib_get_nth_subfunction in the library.
 Command 'execute' is now available in library mode
 Fixed bug [#18992]: degree(x^(2^(2^80))) returns -1 without a warning
 Fixed bug [#17197]: tests do not work on VPATH build

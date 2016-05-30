@@ -1323,6 +1323,11 @@ For instance, after the instructions <code>a = SOLLYA_CONST(0); b = sollya_lib_e
 </ul>
 <p>
 Actually, <code>sollya_lib_foo</code> has exactly the same behavior as writing an expression at the prompt within the interactive tool. In particular, it is possible to give a range as an argument to <code>sollya_lib_foo</code>: the returned object will be the result of the evaluation of function <code>foo</code> on that range by interval arithmetic. In contrast, trying to use <code>sollya_lib_build_function_foo</code> on a range would result in a typing error.
+<p>
+Alternatively, one may create functional expressions with the functions<br>
+&nbsp;&nbsp;&nbsp;<code>int sollya_lib_construct_function(sollya_obj_t *res, sollya_base_function_t type, ...)</code><br>
+&nbsp;&nbsp;&nbsp;<code>int sollya_lib_v_construct_function(sollya_obj_t *, sollya_base_function_t, va_list).</code><br>
+The advantage of these functions with respect to the others presented above lies in the fact that they offer a way to create any functional expression, the basic function that one wants to construct being provided with the argument <code>type</code>. Since these functions are indeed doing  the exact contrary of <code>sollya_lib_decompose_function</code>, they are described in details in the corresponding Section <a href="#decomposing_a_functional_expression">Decomposing a functional expression</a>.
 
 <h3>10.5.3 - Other simple objects</h3>
 <p>
@@ -1836,6 +1841,7 @@ It is also possible to get all the field names and their contents. This is achie
 <code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sollya_obj_t arg).</code><br>
 If <code>arg</code> really is a structure, say with N fields called &ldquo;fieldA&rdquo;, ..., &ldquo;fieldZ&rdquo;, this functions sets <code>*n</code> to&nbsp;N, allocates and fills an array of N strings and sets <code>*names</code> so that it points to that segment of memory (hence <code>(*names)[0]</code> is the string &ldquo;fieldA&rdquo;, ..., <code>(*names)[N-1]</code> is the string &ldquo;fieldZ&rdquo;). Moreover, it allocates memory for N <code>sollya_obj_t</code>, sets <code>*objs</code> so that it points on that memory segment, and copies the contents of each of the N fields at <code>(*objs)[0]</code>, ..., <code>(*objs)[N-1]</code>. Finally it returns true. If <code>arg</code> is not a structure, the function simply returns false without doing anything. Please note that since <code>*names</code> and <code>*objs</code> point to memory segments that have been dynamically allocated, they should manually be cleared by the user with <code>sollya_lib_free</code> once they become useless.
 
+<a name="decomposing_a_functional_expression"></a>
 <h2>10.12 - Decomposing a functional expression</h2>
 <p>
 If a <code>sollya_obj_t</code> contains a functional expression, one can decompose the expression tree using the following functions. These functions all return a boolean integer: true in case of success (<em>i.e.</em>, if the <code>sollya_obj_t</code> argument really contains a functional expression) and false otherwise.
@@ -1872,6 +1878,7 @@ it stores the type of <code>f</code> at the address referred to by <code>type</c
   </ul>
 Please note that the objects that have been stored in variables <code>g_i</code> must manually be cleared once they become useless.</li>
   <li> <code>int sollya_lib_v_get_subfunctions(sollya_obj_t f, int *n, va_list va)</code>: the same as the previous function, but with a <code>va_list</code> argument.</li>
+  <li> <code>int sollya_lib_get_nth_subfunction(sollya_obj_t *res, sollya_obj_t f, int n)</code>: if <code>f</code> is a functional expression of arity s and if 1 <= n <= s, this function stores the expression corresponding to the n-th argument of <code>f</code> into the address referred to by <code>res</code> and returns a boolean integer representing true. In any other case, <code>res</code> is left unchanged and a boolean integer representing false is returned. Notice that the subfunctions are numbered starting from&nbsp;1 (as opposed to, <em>e.g.</em>, arrays in&nbsp;C), hence in the expression f = e<sub>1</sub> + e<sub>2</sub>, the subexpression e<sub>1</sub> corresponds to n=1 and the subexpression e<sub>2</sub> corresponds to n=2. Accordingly, in an expression like f = sin(e), the subexpression e corresponds to n=1.</li>
   <li> <code>int sollya_lib_decompose_function(sollya_obj_t f, sollya_base_function_t *type,</code><br>
        <code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int *n, ...)</code>:<br>
 this function is a all-in-one function equivalent to using <code>sollya_lib_get_head_function</code> and <code>sollya_lib_get_subfunctions</code> in only one function call.</li>
@@ -1879,8 +1886,17 @@ this function is a all-in-one function equivalent to using <code>sollya_lib_get_
       <code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int *n, va_list va)</code>:<br>
 the same as the previous function, but with a <code>va_list</code>.</li>
 </ul>
+
 <p>
-As an example of use of these functions, the following code returns 1 if <code>f</code> denotes a functional expression made only of constants (<em>i.e.</em>, without the free variable), and returns 0 otherwise:
+To construct a functional expression, functions are provided that precisely undo what <code>sollya_lib_decompose_function</code> does. These functions are the following:
+<ul>
+<li><code>int sollya_lib_construct_function(sollya_obj_t *res, sollya_base_function_t type, ...)</code>: let us denote by <code>g_1</code>, ..., <code>g_k</code> the arguments following the argument <code>type</code>. They must be of type <code>sollya_obj_t</code>. The function creates a functional expression whose head function corresponds to the basic function represented by variable <code>type</code> and whose arguments are <code>g_1</code>, ..., <code>g_s</code> where s denotes the arity of the considered basic function. It is the responsibility of the user to provide enough arguments with respect to the required arity. As a particular case, when the desired type corresponds to a library function, a constant, a library constant or a procedure function, the user must provide an extra argument <code>g_t</code> after <code>g_s</code> corresponding to what <code>sollya_lib_decompose_function</code> would store in this extra argument on such a case (namely, a <span class="sollya">Sollya</span> object corresponding to the expression f<sub>0</sub>(x) in the case of a library function or procedure function, and f<sub>0</sub> itself in the case of a constant or library constant). If everything goes well the functional expression is created and stored at the address referred to by <code>res</code> and a boolean integer representing true is returned. Notice that the arguments <code>g_1</code>, ..., <code>g_k</code> are not eaten up by this function and the user must subsequently manually clear these objects. If something goes wrong (bad number of arguments, arguments not having the proper type, etc.) <code>res</code> is left unchanged and a boolean integer representing false is returned.</li>
+<li><code>int sollya_lib_v_construct_function(sollya_obj_t *res, sollya_base_function_t type,</code><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>va_list varlist)</code>:<br>
+the same as the previous function, but with a <code>va_list</code>.</li>
+</ul>
+<p>
+As an example of use of the functions described in the present section, the following code returns 1 if <code>f</code> denotes a functional expression made only of constants (<em>i.e.</em>, without the free variable), and returns&nbsp;0 otherwise:
 <p>
 <div class="divExample">
 #include &lt;sollya.h&gt;<br>
