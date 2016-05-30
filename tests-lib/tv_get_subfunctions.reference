@@ -1,4 +1,4 @@
-Subfunction of pi: NULL, NULL and NULL (n=0)
+Subfunction of pi: pi, NULL and NULL (n=0)
 Subfunction of 3: 3, NULL and NULL (n=0)
 Subfunction of superconst: superconst, NULL and NULL (n=0)
 Subfunction of _x_: _x_, NULL and NULL (n=1)
