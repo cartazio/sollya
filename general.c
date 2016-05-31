@@ -320,19 +320,23 @@ void freeTool();
 int sollya_gettime(sollya_time_t *t) {
 #if defined(HAVE_CLOCK_GETTIME) && HAVE_CLOCK_GETTIME
   struct timespec ts;
+#if !defined(__CYGWIN__)
 #if defined(HAVE_GETTIMEOFDAY) && HAVE_GETTIMEOFDAY
   struct timeval tv;
+#endif
 #endif
   int res;
   res = clock_gettime(CLOCK_MONOTONIC, &ts);
   t->seconds = (int64_t) (ts.tv_sec);
   t->nano_seconds = (int64_t) (ts.tv_nsec);
   if (res == 0) return 1;
+#if !defined(__CYGWIN__)
 #if defined(HAVE_GETTIMEOFDAY) && HAVE_GETTIMEOFDAY
   res = gettimeofday(&tv,NULL);
   t->seconds = (int64_t) (tv.tv_sec);
   t->nano_seconds = ((int64_t) (tv.tv_usec)) * ((int64_t) 1000);
   if (res == 0) return 1;
+#endif
 #endif
 #if defined(HAVE_TIME) && HAVE_TIME
   t->seconds = (int64_t) time(NULL);
