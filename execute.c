@@ -9995,14 +9995,9 @@ void doNothing(int n) {
   volatile unsigned long int t;
   int i, j;
   gmp_randstate_t random_state;
-  sollya_time_t buf;
-  unsigned long int seed;
+  volatile unsigned long int seed;
 
-  if (!sollya_gettime(&buf)) {
-    seed = (unsigned long int) (buf.seconds);
-  } else {
-    seed = 17;
-  }
+  seed = 17;
 
   gmp_randinit_default(random_state);
   gmp_randseed_ui(random_state, seed);

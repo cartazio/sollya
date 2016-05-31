@@ -78,7 +78,7 @@ int deferredCount = 0;
 
 int sollyaFprintf(FILE *fd, const char *format, ...);
 
-RETSIGTYPE signalHandler(int i) {
+void signalHandler(int i) {
   
   if (deferredMode) {
     if (deferredSignalIsDeferred) return;
@@ -117,6 +117,11 @@ RETSIGTYPE signalHandler(int i) {
   }
 }
 
+RETSIGTYPE signalHandlerForSignal(int i) {
+  signalHandler(i);
+  return (RETSIGTYPE) 1;
+}
+
 static inline void deferSignalHandlingInner() {
   if (deferredMode) return;
   deferredMode = 1;
@@ -146,13 +151,20 @@ void resumeSignalHandling() {
 }
 
 void initSignalHandler(int nointeract) {
+#if (defined(HAVE_SIGACTION) && HAVE_SIGACTION) && (defined(HAVE_SIGADDSET) && HAVE_SIGADDSET) && (defined(HAVE_SIGEMPTYSET) && HAVE_SIGEMPTYSET) && (defined(HAVE_SIGPROCMASK) && HAVE_SIGPROCMASK) && (!defined(__CYGWIN__)) 
+
   sigset_t mask;
   struct sigaction action;
+  
+#endif
 
+  
   blockedSignalCounter = 0;
 
   if (libraryMode) return;
 
+#if (defined(HAVE_SIGACTION) && HAVE_SIGACTION) && (defined(HAVE_SIGADDSET) && HAVE_SIGADDSET) && (defined(HAVE_SIGEMPTYSET) && HAVE_SIGEMPTYSET) && (defined(HAVE_SIGPROCMASK) && HAVE_SIGPROCMASK) && (!defined(__CYGWIN__)) 
+  
   action.sa_handler = signalHandler;
   action.sa_flags = 0;
   sigemptyset(&(action.sa_mask));
@@ -174,15 +186,43 @@ void initSignalHandler(int nointeract) {
   sigaddset(&mask,SIGFPE);
   sigaddset(&mask,SIGPIPE);
   sigprocmask(SIG_UNBLOCK, &mask, NULL);
+
+#else
+  if (!nointeract) {
+    if (signal(SIGINT, signalHandlerForSignal) == SIG_IGN) {
+      signal(SIGINT, SIG_IGN);
+    }
+  }
+  if (signal(SIGSEGV, signalHandlerForSignal) == SIG_IGN) {
+      signal(SIGSEGV, SIG_IGN);
+  }
+  if (signal(SIGBUS, signalHandlerForSignal) == SIG_IGN) {
+      signal(SIGBUS, SIG_IGN);
+  }
+  if (signal(SIGFPE, signalHandlerForSignal) == SIG_IGN) {
+      signal(SIGFPE, SIG_IGN);
+  }
+  if (signal(SIGPIPE, signalHandlerForSignal) == SIG_IGN) {
+      signal(SIGPIPE, SIG_IGN);
+  }
+    
+#endif
+  
 }
 
 void blockSignals(int nointeract) {
+#if (defined(HAVE_SIGACTION) && HAVE_SIGACTION) && (defined(HAVE_SIGADDSET) && HAVE_SIGADDSET) && (defined(HAVE_SIGEMPTYSET) && HAVE_SIGEMPTYSET) && (defined(HAVE_SIGPROCMASK) && HAVE_SIGPROCMASK) && (!defined(__CYGWIN__))
+  
   sigset_t mask;
 
+#endif
+  
   blockedSignalCounter = 0;
 
   if (libraryMode) return;
 
+#if (defined(HAVE_SIGACTION) && HAVE_SIGACTION) && (defined(HAVE_SIGADDSET) && HAVE_SIGADDSET) && (defined(HAVE_SIGEMPTYSET) && HAVE_SIGEMPTYSET) && (defined(HAVE_SIGPROCMASK) && HAVE_SIGPROCMASK) && (!defined(__CYGWIN__))
+  
   sigemptyset(&mask);
   if (!nointeract) sigaddset(&mask,SIGINT);
   sigaddset(&mask,SIGSEGV);
@@ -190,6 +230,13 @@ void blockSignals(int nointeract) {
   sigaddset(&mask,SIGFPE);
   sigaddset(&mask,SIGPIPE);
   sigprocmask(SIG_BLOCK, &mask, NULL);
+
+#else
+
+  /* We could block the signals here */
+
+#endif
+  
 }
 
 void initSignalHandlerCounted(int nointeract) {
