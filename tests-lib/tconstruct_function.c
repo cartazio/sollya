@@ -92,19 +92,6 @@ int main(void) {
 
   f = NULL; obj1 = NULL; obj2 = NULL; obj3 = NULL; res = -1;
   type = SOLLYA_BASE_FUNC_LIBRARYCONSTANT;
-  res = sollya_lib_construct_function(&f, type);
-  if (res)
-    sollya_lib_printf("Constructed %b from type=%s, obj1=%b, obj2=%b and obj3=%b\n", f, type_to_string(type), obj1, obj2, obj3);
-  else
-    sollya_lib_printf("Impossible to construct (f=%b) from type=%s, obj1=%b, obj2=%b and obj3=%b\n", f, type_to_string(type), obj1, obj2, obj3);
-  if (f != NULL) sollya_lib_clear_obj(f);
-  if (obj1 != NULL) sollya_lib_clear_obj(obj1);
-  if (obj2 != NULL) sollya_lib_clear_obj(obj2);
-  if (obj3 != NULL) sollya_lib_clear_obj(obj3);
-
-
-  f = NULL; obj1 = NULL; obj2 = NULL; obj3 = NULL; res = -1;
-  type = SOLLYA_BASE_FUNC_LIBRARYCONSTANT;
   obj1 = SOLLYA_X_;
   res = sollya_lib_construct_function(&f, type, obj1);
   if (res)
@@ -144,20 +131,6 @@ int main(void) {
   if (obj2 != NULL) sollya_lib_clear_obj(obj2);
   if (obj3 != NULL) sollya_lib_clear_obj(obj3);
 
-
-  f = NULL; obj1 = NULL; obj2 = NULL; obj3 = NULL; res = -1;
-  type = SOLLYA_BASE_FUNC_CONSTANT;
-  res = sollya_lib_construct_function(&f, type);
-  if (res)
-    sollya_lib_printf("Constructed %b from type=%s, obj1=%b, obj2=%b and obj3=%b\n", f, type_to_string(type), obj1, obj2, obj3);
-  else
-    sollya_lib_printf("Impossible to construct (f=%b) from type=%s, obj1=%b, obj2=%b and obj3=%b\n", f, type_to_string(type), obj1, obj2, obj3);
-  if (f != NULL) sollya_lib_clear_obj(f);
-  if (obj1 != NULL) sollya_lib_clear_obj(obj1);
-  if (obj2 != NULL) sollya_lib_clear_obj(obj2);
-  if (obj3 != NULL) sollya_lib_clear_obj(obj3);
-
-
   f = NULL; obj1 = NULL; obj2 = NULL; obj3 = NULL; res = -1;
   type = SOLLYA_BASE_FUNC_CONSTANT;
   obj1 = sollya_lib_libraryconstant("superconst", euler_gamma);
@@ -188,7 +161,7 @@ int main(void) {
 
   f = NULL; obj1 = NULL; obj2 = NULL; obj3 = NULL; res = -1;
   type = SOLLYA_BASE_FUNC_PI;
-  res = sollya_lib_construct_function(&f, type);
+  res = sollya_lib_construct_function(&f, type, NULL);
   if (res)
     sollya_lib_printf("Constructed %b from type=%s, obj1=%b, obj2=%b and obj3=%b\n", f, type_to_string(type), obj1, obj2, obj3);
   else
@@ -201,20 +174,6 @@ int main(void) {
 
   f = NULL; obj1 = NULL; obj2 = NULL; obj3 = NULL; res = -1;
   type = SOLLYA_BASE_FUNC_PI;
-  obj1 = SOLLYA_CONST(3.0);
-  res = sollya_lib_construct_function(&f, type, obj1);
-  if (res)
-    sollya_lib_printf("Constructed %b from type=%s, obj1=%b, obj2=%b and obj3=%b\n", f, type_to_string(type), obj1, obj2, obj3);
-  else
-    sollya_lib_printf("Impossible to construct (f=%b) from type=%s, obj1=%b, obj2=%b and obj3=%b\n", f, type_to_string(type), obj1, obj2, obj3);
-  if (f != NULL) sollya_lib_clear_obj(f);
-  if (obj1 != NULL) sollya_lib_clear_obj(obj1);
-  if (obj2 != NULL) sollya_lib_clear_obj(obj2);
-  if (obj3 != NULL) sollya_lib_clear_obj(obj3);
-
-
-  f = NULL; obj1 = NULL; obj2 = NULL; obj3 = NULL; res = -1;
-  type = SOLLYA_BASE_FUNC_LIBRARYFUNCTION;
   obj1 = SOLLYA_CONST(3.0);
   res = sollya_lib_construct_function(&f, type, obj1);
   if (res)

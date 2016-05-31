@@ -122,18 +122,16 @@ int main(void) {
     else sollya_lib_printf("No subfunction of %b such that n=%d\n", f, n);
     sollya_lib_clear_obj(f);
     if (g != NULL)  sollya_lib_clear_obj(g);
-  }
 
-  /* What if f is NULL? */
-  /* for(n=0;n<=3;n++) { */
-  /*   f = NULL; */
-  /*   g = NULL; res = -1; */
-  /*   res = sollya_lib_get_nth_subfunction(&g, f, n); */
-  /*   if (res) sollya_lib_printf("Subfunction of %b (n=%d): %b\n", f, n, g); */
-  /*   else sollya_lib_printf("No subfunction of %b such that n=%d\n", f, n); */
-  /*   sollya_lib_clear_obj(f); */
-  /*   if (g != NULL)  sollya_lib_clear_obj(g); */
-  /* } */
+    /* What if f is NULL? */
+    f = NULL;
+    g = NULL; res = -1;
+    res = sollya_lib_get_nth_subfunction(&g, f, n);
+    if (res) sollya_lib_printf("Subfunction of %b (n=%d): %b\n", f, n, g);
+    else sollya_lib_printf("No subfunction of %b such that n=%d\n", f, n);
+    sollya_lib_clear_obj(f);
+    if (g != NULL)  sollya_lib_clear_obj(g);
+  }
 
   sollya_lib_close();
   return 0;
