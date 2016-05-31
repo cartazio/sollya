@@ -175,6 +175,11 @@ extern int    __sparsePolynomialEvalMpfi_var_used;
 extern int    __sparsePolynomialEvalMpfi_scratch_initialized;
 extern sollya_mpfi_t __sparsePolynomialEvalMpfi_scratch;
 
+struct __sollya_time_struct_t {
+  int64_t seconds;
+  int64_t nano_seconds;
+};
+typedef struct __sollya_time_struct_t sollya_time_t;
 
 int general(int argc, char *argv[]);
 void printPrompt(void);
@@ -276,7 +281,7 @@ int sollya_feof(FILE *);
 int sollya_ferror(FILE *);
 size_t sollya_fread(void *, size_t, size_t, FILE *);
 size_t sollya_fwrite(const void *, size_t, size_t, FILE *);
-
+int sollya_gettime(sollya_time_t *);
 
 
 #endif /* ifdef GENERAL_H*/

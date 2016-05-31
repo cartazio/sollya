@@ -59,6 +59,7 @@
 #include "signalhandling.h"
 
 #define _POSIX_SOURCE
+#define _POSIX_C_SOURCE 199309L
 
 #include <sys/types.h>
 #include <gmp.h>
@@ -315,6 +316,57 @@ extern int parserCheckEof();
 void freeGlobalReusedMPFIVars();
 void freeGlobalReusedMPFRVars();
 void freeTool();
+
+int sollya_gettime(sollya_time_t *t) {
+#if defined(HAVE_CLOCK_GETTIME) && HAVE_CLOCK_GETTIME
+  struct timespec ts;
+#if defined(HAVE_GETTIMEOFDAY) && HAVE_GETTIMEOFDAY
+  struct timeval tv;
+#endif
+  int res;
+  res = clock_gettime(CLOCK_MONOTONIC, &ts);
+  t->seconds = (int64_t) (ts.tv_sec);
+  t->nano_seconds = (int64_t) (ts.tv_nsec);
+  if (res == 0) return 1;
+#if defined(HAVE_GETTIMEOFDAY) && HAVE_GETTIMEOFDAY
+  res = gettimeofday(&tv,NULL);
+  t->seconds = (int64_t) (tv.tv_sec);
+  t->nano_seconds = ((int64_t) (tv.tv_usec)) * ((int64_t) 1000);
+  if (res == 0) return 1;
+#endif
+#if defined(HAVE_TIME) && HAVE_TIME
+  t->seconds = (int64_t) time(NULL);
+  t->nano_seconds = (int64_t) 0;  
+  return 1;
+#else
+  return 0;
+#endif
+#else
+#if defined(HAVE_GETTIMEOFDAY) && HAVE_GETTIMEOFDAY
+  struct timeval tv;
+  int res;
+  res = gettimeofday(&tv,NULL);
+  t->seconds = (int64_t) (tv.tv_sec);
+  t->nano_seconds = ((int64_t) (tv.tv_usec)) * ((int64_t) 1000);
+  if (res == 0) return 1;
+#if defined(HAVE_TIME) && HAVE_TIME
+  t->seconds = (int64_t) time(NULL);
+  t->nano_seconds = (int64_t) 0;  
+  return 1;
+#else
+  return 0;
+#endif  
+#else
+#if defined(HAVE_TIME) && HAVE_TIME
+  t->seconds = (int64_t) time(NULL);
+  t->nano_seconds = (int64_t) 0;
+  return 1;
+#else
+  return 0;
+#endif    
+#endif
+#endif
+}
 
 size_t sollya_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *fd) {
   size_t res;
@@ -1227,10 +1279,10 @@ void freeCounter(void) {
 }
 
 void pushTimeCounter(void) {
-  struct timeval *buf;
+  sollya_time_t *buf;
   if(timecounting==1) {
     buf = safeMalloc(sizeof(struct timeval));
-    if(gettimeofday(buf,NULL)!=0)
+    if(!sollya_gettime(buf))
       sollyaFprintf(stderr, "Error: unable to use the timer. Measures may be untrustable\n");
     timeStack = addElement(timeStack, buf);
   }
@@ -1238,27 +1290,27 @@ void pushTimeCounter(void) {
 }
 
 void popTimeCounter(char *s) {
-  struct timeval *buf_init;
-  struct timeval *buf_final;
+  sollya_time_t *buf_init;
+  sollya_time_t *buf_final;
 
-  long int days, hours, minutes, seconds, milliseconds, microseconds;
+  long long int days, hours, minutes, seconds, milliseconds, nanoseconds;
 
   chain *prev;
   if((timecounting==1)&&(timeStack!=NULL)) {
     buf_final = safeMalloc(sizeof(struct timeval));
-    if(gettimeofday(buf_final,NULL)!=0)
+    if(!sollya_gettime(buf_final))
       sollyaFprintf(stderr, "Error: unable to use the timer. Measures may be untrustable\n");
     buf_init = timeStack->value;
 
-    seconds = (long int)(buf_final->tv_sec) - (long int)(buf_init->tv_sec);
-    microseconds = (long int)(buf_final->tv_usec) - (long int)(buf_init->tv_usec);
+    seconds = (long long int)(buf_final->seconds) - (long long int)(buf_init->seconds);
+    nanoseconds = (long long int)(buf_final->nano_seconds) - (long long int)(buf_init->nano_seconds);
 
-    if (microseconds < 0) {
-      microseconds += 1000000l;
+    if (nanoseconds < 0) {
+      nanoseconds += 1000000000ll;
       seconds--;
     }
 
-    milliseconds = microseconds / 1000;
+    milliseconds = nanoseconds / 1000000ll;
 
     if((milliseconds>0)||(seconds>0)) {
       changeToWarningMode();

@@ -100,18 +100,6 @@
 #include "config.h"
 #endif
 
-#if TIME_WITH_SYS_TIME
-#include <sys/time.h>
-#include <time.h>
-#else
-#if HAVE_SYS_TIME_H
-#include <sys/time.h>
-#else
-#include <time.h>
-#endif
-#endif
-
-
 #define READBUFFERSIZE 16000
 
 
@@ -9957,39 +9945,43 @@ int executeCommand(node *tree) {
 
 int timeCommand(mpfr_t time, node *tree) {
   int res = 0;
-  struct timeval *before;
-  struct timeval *after;
-  long int seconds, microseconds;
-  unsigned int sec, usec;
+  sollya_time_t *before;
+  sollya_time_t *after;
+  long long int seconds, nanoseconds;
+  unsigned int sec, nsec;
   mpfr_t tmp;
 
   before = safeMalloc(sizeof(struct timeval));
   after = safeMalloc(sizeof(struct timeval));
-  if(gettimeofday(before,NULL)!=0)
+  if(!sollya_gettime(before))
     printMessage(1, SOLLYA_MSG_TIMER_UNUSABLE, "Warning: unable to use the timer. Measures may be untrustable\n");
   res = executeCommand(tree);
-  if(gettimeofday(after,NULL)!=0)
+  if(!sollya_gettime(after))
     printMessage(1, SOLLYA_MSG_TIMER_UNUSABLE, "Warning: unable to use the timer. Measures may be untrustable\n");
 
-  seconds = (long int)(after->tv_sec) - (long int)(before->tv_sec);
-  microseconds = (long int)(after->tv_usec) - (long int)(before->tv_usec);
+  seconds = (long long int)(after->seconds) - (long long int)(before->seconds);
+  nanoseconds = (long long int)(after->nano_seconds) - (long long int)(before->nano_seconds);
   safeFree(before);
   safeFree(after);
 
-  if (microseconds < 0) {
-    microseconds += 1000000l;
+  if (nanoseconds < 0) {
+    nanoseconds += 1000000000l;
     seconds--;
   }
 
   sec = seconds;
-  usec = microseconds;
+  nsec = nanoseconds;
 
-  mpfr_init2(tmp,10 + 20 + 8 * sizeof(sec));
+  mpfr_init2(tmp,10 + 20 + 29 + 2 * 8 * sizeof(sec));
 
   mpfr_set_ui(tmp,sec,GMP_RNDN);
-  mpfr_mul_ui(tmp,tmp,1000000,GMP_RNDN);
-  mpfr_add_ui(tmp,tmp,usec,GMP_RNDN);
-  mpfr_div_ui(tmp,tmp,1000000,GMP_RNDN);
+  mpfr_mul_ui(tmp,tmp,1000,GMP_RNDN);
+  mpfr_mul_ui(tmp,tmp,1000,GMP_RNDN);
+  mpfr_mul_ui(tmp,tmp,1000,GMP_RNDN);
+  mpfr_add_ui(tmp,tmp,nsec,GMP_RNDN);
+  mpfr_div_ui(tmp,tmp,1000,GMP_RNDN);
+  mpfr_div_ui(tmp,tmp,1000,GMP_RNDN);
+  mpfr_div_ui(tmp,tmp,1000,GMP_RNDN);
 
   mpfr_set(time,tmp,GMP_RNDN);
   mpfr_clear(tmp);
@@ -10003,11 +9995,11 @@ void doNothing(int n) {
   volatile unsigned long int t;
   int i, j;
   gmp_randstate_t random_state;
-  struct timeval buf;
+  sollya_time_t buf;
   unsigned long int seed;
 
-  if (gettimeofday(&buf, NULL) == 0) {
-    seed = (unsigned long int) (buf.tv_sec);
+  if (!sollya_gettime(&buf)) {
+    seed = (unsigned long int) (buf.seconds);
   } else {
     seed = 17;
   }
