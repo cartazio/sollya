@@ -6,7 +6,11 @@
 #include <unistd.h>
 #include <stddef.h>
 #include <sollya.h>
+
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
 
 #ifdef SYSTEM_DOES_NOT_ALLOW_COMPLETE_PRINTF
 int main(void) { return 77; }

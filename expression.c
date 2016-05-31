@@ -71,7 +71,10 @@
 #include "execute.h"
 #include "infnorm.h"
 #include "signalhandling.h"
+
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #define MAXDIFFSIMPLSIZE 100
 #define MAXDIFFSIMPLDEGREE 25
