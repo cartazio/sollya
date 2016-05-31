@@ -1285,7 +1285,7 @@ void freeCounter(void) {
 void pushTimeCounter(void) {
   sollya_time_t *buf;
   if(timecounting==1) {
-    buf = safeMalloc(sizeof(struct timeval));
+    buf = safeMalloc(sizeof(sollya_time_t));
     if(!sollya_gettime(buf))
       sollyaFprintf(stderr, "Error: unable to use the timer. Measures may be untrustable\n");
     timeStack = addElement(timeStack, buf);
@@ -1301,7 +1301,7 @@ void popTimeCounter(char *s) {
 
   chain *prev;
   if((timecounting==1)&&(timeStack!=NULL)) {
-    buf_final = safeMalloc(sizeof(struct timeval));
+    buf_final = safeMalloc(sizeof(sollya_time_t));
     if(!sollya_gettime(buf_final))
       sollyaFprintf(stderr, "Error: unable to use the timer. Measures may be untrustable\n");
     buf_init = timeStack->value;
