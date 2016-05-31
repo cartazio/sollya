@@ -50,11 +50,16 @@
 #define _POSIX_SOURCE
 #define _POSIX_C_SOURCE (200312L)
 
-#include "signalhandling.h"
 #include <stdlib.h>
 #include <signal.h>
 #include <setjmp.h>
 #include <stdio.h>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "signalhandling.h"
 
 extern jmp_buf recoverEnvironment;
 extern int handlingCtrlC;
@@ -73,7 +78,7 @@ int deferredCount = 0;
 
 int sollyaFprintf(FILE *fd, const char *format, ...);
 
-void signalHandler(int i) {
+RETSIGTYPE signalHandler(int i) {
   
   if (deferredMode) {
     if (deferredSignalIsDeferred) return;
