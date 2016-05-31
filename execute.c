@@ -9951,8 +9951,8 @@ int timeCommand(mpfr_t time, node *tree) {
   unsigned int sec, nsec;
   mpfr_t tmp;
 
-  before = safeMalloc(sizeof(struct timeval));
-  after = safeMalloc(sizeof(struct timeval));
+  before = safeMalloc(sizeof(sollya_time_t));
+  after = safeMalloc(sizeof(sollya_time_t));
   if(!sollya_gettime(before))
     printMessage(1, SOLLYA_MSG_TIMER_UNUSABLE, "Warning: unable to use the timer. Measures may be untrustable\n");
   res = executeCommand(tree);

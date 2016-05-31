@@ -76,6 +76,8 @@ int deferredSignalIsDeferred = 0;
 
 int deferredCount = 0;
 
+int emulatedBlockedSignalCounter = 0;
+
 int sollyaFprintf(FILE *fd, const char *format, ...);
 
 void signalHandler(int i) {
@@ -118,7 +120,9 @@ void signalHandler(int i) {
 }
 
 RETSIGTYPE signalHandlerForSignal(int i) {
-  signalHandler(i);
+  if (!emulatedBlockedSignalCounter) {
+    signalHandler(i);
+  }
   return (RETSIGTYPE) 1;
 }
 
@@ -188,6 +192,7 @@ void initSignalHandler(int nointeract) {
   sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
 #else
+  emulatedBlockedSignalCounter = 1;
   if (!nointeract) {
     if (signal(SIGINT, signalHandlerForSignal) == SIG_IGN) {
       signal(SIGINT, SIG_IGN);
@@ -205,7 +210,7 @@ void initSignalHandler(int nointeract) {
   if (signal(SIGPIPE, signalHandlerForSignal) == SIG_IGN) {
       signal(SIGPIPE, SIG_IGN);
   }
-    
+  emulatedBlockedSignalCounter = 0;
 #endif
   
 }
@@ -233,7 +238,7 @@ void blockSignals(int nointeract) {
 
 #else
 
-  /* We could block the signals here */
+  emulatedBlockedSignalCounter = 1;
 
 #endif
   
