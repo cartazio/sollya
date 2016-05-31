@@ -458,7 +458,7 @@ AC_LANG_POP([C++])
 
 
 #Check for -Wl,-export-dynamic etc.
-CFLAGS="$AM_CFLAGS -fPIC $USER_CFLAGS"
+CFLAGS="$AM_CFLAGS -fPIC -Werror $USER_CFLAGS"
 AC_MSG_CHECKING([for -fPIC support])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
                   [

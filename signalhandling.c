@@ -61,6 +61,8 @@
 
 #include "signalhandling.h"
 
+#define UNUSED_PARAM(_unused_param_x) ((void)(_unused_param_x))
+
 extern jmp_buf recoverEnvironment;
 extern int handlingCtrlC;
 extern int lastHandledSignal;
@@ -237,7 +239,7 @@ void blockSignals(int nointeract) {
   sigprocmask(SIG_BLOCK, &mask, NULL);
 
 #else
-
+  UNUSED_PARAM(nointeract);
   emulatedBlockedSignalCounter = 1;
 
 #endif
