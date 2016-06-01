@@ -59,6 +59,10 @@
 
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "mpfi-compat.h"
 #include "general.h"
 #include "sollya-messaging.h"

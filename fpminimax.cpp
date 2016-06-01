@@ -62,6 +62,12 @@ implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #include "config.h"
 #endif
 
+/* const mess */
+#if defined(const)
+#undef const
+#endif
+/* End of the const mess */
+
 #undef malloc
 #undef realloc
 
@@ -94,23 +100,27 @@ extern "C" {
 
 #define MAXLOOP 10
 
-extern "C" void printFPLLLMat(ZZ_mat<mpz_t> *M) { M->print(); }
-
-extern "C" void printMpqMatrix(mpq_t *M, int p, int n) {
-  int i,j;
-  sollyaPrintf("[");
-  for(i=1;i<=p;i++) {
-    for(j=1;j<=n;j++) {
-      mpq_out_str(stdout, 10, M[coeff(i,j,n)]); if(j!=n) sollyaPrintf(", ");
-    }
-    if(i!=n) sollyaPrintf(";\n");
-  }
-  sollyaPrintf("]\n");
-  return;
+extern "C" {
+void printFPLLLMat(ZZ_mat<mpz_t> *M) { M->print(); }
 }
 
+extern "C" {
+void printMpqMatrix(mpq_t *M, int p, int n) {
+  int i,j;
+  sollyaPrintf((const char *) "[");
+  for(i=1;i<=p;i++) {
+    for(j=1;j<=n;j++) {
+      mpq_out_str(stdout, 10, M[coeff(i,j,n)]); if(j!=n) sollyaPrintf((const char *) ", ");
+    }
+    if(i!=n) sollyaPrintf((const char *) ";\n");
+  }
+  sollyaPrintf((const char *) "]\n");
+  return;
+}
+}
 
-extern "C" int mpq_cmpabs(mpq_t a, mpq_t b) {
+extern "C" {
+int mpq_cmpabs(mpq_t a, mpq_t b) {
   mpq_t temp1, temp2;
   int res;
 
@@ -126,8 +136,10 @@ extern "C" int mpq_cmpabs(mpq_t a, mpq_t b) {
 
   return res;
 }
+}
 
-extern "C" void mpq_fma(mpq_t r, mpq_t a, mpq_t b, mpq_t c) {
+extern "C" {
+void mpq_fma(mpq_t r, mpq_t a, mpq_t b, mpq_t c) {
   mpq_t temp;
   mpq_init(temp);
 
@@ -136,7 +148,7 @@ extern "C" void mpq_fma(mpq_t r, mpq_t a, mpq_t b, mpq_t c) {
   mpq_clear(temp);
   return;
 }
-
+}
 
 /* n is the number of columns                */
 /* p is the number of lines (p>=n)           */
@@ -197,7 +209,7 @@ extern "C" int exact_system_solve(mpq_t *res, mpq_t *M, mpq_t *b, int p, int n) 
     order_j[k-1] = j0;
 
     if(mpq_cmp_ui(M[coeff(i0,j0,n)], 0, 1)==0) {
-      printMessage(1, SOLLYA_MSG_FPMINIMAX_SINGULAR_MATRIX, "Error: fpminimax: singular matrix\n");
+      printMessage(1, SOLLYA_MSG_FPMINIMAX_SINGULAR_MATRIX, (const char *) "Error: fpminimax: singular matrix\n");
       freeChain(i_list, freeIntPtr);
       freeChain(j_list, freeIntPtr);
       mpq_clear(max);
@@ -417,8 +429,8 @@ extern "C" chain *computeExponents(chain *formats, mpfr_t* coefficients, int dim
     intptr = (int *)safeMalloc(sizeof(int));
 
     if(mpfr_zero_p(coefficients[i])) {
-      printMessage(1, SOLLYA_MSG_FPMINIMAX_A_CERTAIN_COEFF_IS_EXACT_ZERO, "Information: fpminimax: the %dth coefficient of the minimax is an exact zero\n", i);
-      printMessage(1, SOLLYA_MSG_CONTINUATION, "You should probably take this into account\n");
+      printMessage(1, SOLLYA_MSG_FPMINIMAX_A_CERTAIN_COEFF_IS_EXACT_ZERO, (const char *) "Information: fpminimax: the %dth coefficient of the minimax is an exact zero\n", i);
+      printMessage(1, SOLLYA_MSG_CONTINUATION, (const char *) "You should probably take this into account\n");
       *intptr=*(int *)(curr->value);
     }
     else *intptr = *(int *)(curr->value) - mpfr_get_exp(coefficients[i]);
@@ -517,13 +529,13 @@ extern "C" node *FPminimax(node *f,
       mpfr_init2(quality, 53); mpfr_set_d(quality, 0.00001, GMP_RNDN);
       pstar = remez(g, w, monomials, a, b, quality, zero, infinity, tools_precision);
       mpfr_clear(quality);
-      popTimeCounter((char *)"FPminimax: computing minimax approximation");
+      popTimeCounter((char *) "FPminimax: computing minimax approximation");
     }
     else pstar = copyTree(minimax);
   }
 
   if (isError(pstar)) {
-      printMessage(1, SOLLYA_MSG_FPMINIMAX_FAILED_TO_RECOVER_COEFFS_FROM_POLY, "Warning: fpminimax failed to recover the coefficients from the minimax pseudo-polynomial\n");
+      printMessage(1, SOLLYA_MSG_FPMINIMAX_FAILED_TO_RECOVER_COEFFS_FROM_POLY, (const char *) "Warning: fpminimax failed to recover the coefficients from the minimax pseudo-polynomial\n");
       free_memory(g); free_memory(w); freeThing(pstar);
       mpfr_clear(zero); mpfr_clear(infinity);
       return NULL;
@@ -548,8 +560,8 @@ extern "C" node *FPminimax(node *f,
     // Tests if there is enough points
     // if not, Chebychev points are used and we approximate pstar instead of f
     if(lengthChain(pointslist)< dim) {
-      printMessage(2, SOLLYA_MSG_FPMINIMAX_MINIMAX_DOES_NOT_GIVE_ENOUGH_POINTS, "Information: FPminimax: the minimax does not provide enough points.\n");
-      printMessage(2, SOLLYA_MSG_CONTINUATION, "Switching to Chebyshev points.\n");
+      printMessage(2, SOLLYA_MSG_FPMINIMAX_MINIMAX_DOES_NOT_GIVE_ENOUGH_POINTS, (const char *) "Information: FPminimax: the minimax does not provide enough points.\n");
+      printMessage(2, SOLLYA_MSG_CONTINUATION, (const char *) "Switching to Chebyshev points.\n");
 
       freeChain(pointslist, freeMpfrPtr);
       pointslist = ChebychevPoints(a,b, dim);
@@ -581,10 +593,10 @@ extern "C" node *FPminimax(node *f,
 
 
   curr = pointslist;
-  printMessage(4,SOLLYA_MSG_FPMINIMAX_THE_POINTS_ARE_CERTAIN_VALUES,"points list: [");
+  printMessage(4,SOLLYA_MSG_FPMINIMAX_THE_POINTS_ARE_CERTAIN_VALUES,(const char *) "points list: [");
   while(curr != NULL) {
-    printMessage(4, SOLLYA_MSG_CONTINUATION, "%v", *(mpfr_t *)(curr->value));
-    if(curr->next != NULL) printMessage(4, SOLLYA_MSG_CONTINUATION, ", ");
+    printMessage(4, SOLLYA_MSG_CONTINUATION, (const char *) "%v", *(mpfr_t *)(curr->value));
+    if(curr->next != NULL) printMessage(4, SOLLYA_MSG_CONTINUATION, (const char *) ", ");
     curr = curr->next;
   }
 
@@ -598,7 +610,7 @@ extern "C" node *FPminimax(node *f,
     for(i=0; i<dim; i++) mpfr_init2(coefficients[i], tools_precision);
 
     if (!getCoefficientsInPseudoPolynomial(coefficients, pstar, monomials)) {
-      printMessage(1, SOLLYA_MSG_FPMINIMAX_FAILED_TO_RECOVER_COEFFS_FROM_POLY, "Warning: fpminimax failed to recover the coefficients from the minimax pseudo-polynomial\n");
+      printMessage(1, SOLLYA_MSG_FPMINIMAX_FAILED_TO_RECOVER_COEFFS_FROM_POLY, (const char *) "Warning: fpminimax failed to recover the coefficients from the minimax pseudo-polynomial\n");
       res = NULL;
       test = 0;
       correctedFormats = NULL;
@@ -608,14 +620,14 @@ extern "C" node *FPminimax(node *f,
     }
 
     while(test) {
-      printMessage(3,SOLLYA_MSG_FPMINIMAX_THE_EXPONENTS_ARE_CERTAIN_VALUES,"Information: fpminimax: computed exponents: [|");
+      printMessage(3,SOLLYA_MSG_FPMINIMAX_THE_EXPONENTS_ARE_CERTAIN_VALUES,(const char *) "Information: fpminimax: computed exponents: [|");
       curr = correctedFormats;
       while(curr != NULL) {
-	printMessage(3,SOLLYA_MSG_CONTINUATION,"%d", *(int *)(curr->value));
-	if (curr->next != NULL) printMessage(3,SOLLYA_MSG_CONTINUATION,", ");
+	printMessage(3,SOLLYA_MSG_CONTINUATION,(const char *) "%d", *(int *)(curr->value));
+	if (curr->next != NULL) printMessage(3,SOLLYA_MSG_CONTINUATION,(const char *) ", ");
 	curr = curr->next;
       }
-      printMessage(3,SOLLYA_MSG_CONTINUATION,"|]\n");
+      printMessage(3,SOLLYA_MSG_CONTINUATION,(const char *) "|]\n");
 
       res = FPminimaxMain(g, monomials, correctedFormats, pointslist, w);
       count++;
@@ -623,7 +635,7 @@ extern "C" node *FPminimax(node *f,
       if(res==NULL) test=0;
       else {
 	if (!getCoefficientsInPseudoPolynomial(coefficients, res, monomials)) {
-	  printMessage(1, SOLLYA_MSG_FPMINIMAX_FAILED_TO_RECOVER_COEFFS_FROM_POLY, "Warning: fpminimax failed to recover the coefficients from the minimax pseudo-polynomial\n");
+	  printMessage(1, SOLLYA_MSG_FPMINIMAX_FAILED_TO_RECOVER_COEFFS_FROM_POLY, (const char *) "Warning: fpminimax failed to recover the coefficients from the minimax pseudo-polynomial\n");
 	  res = NULL;
 	  test = 0;
 	  correctedFormats = NULL;
@@ -638,7 +650,7 @@ extern "C" node *FPminimax(node *f,
 	    if( (count > 2*MAXLOOP) ) {
 	      res=NULL;
 	      test=0;
-	      printMessage(1,SOLLYA_MSG_FPMINIMAX_DID_NOT_CONVERGE, "Warning: fpminimax did not converge.\n");
+	      printMessage(1,SOLLYA_MSG_FPMINIMAX_DID_NOT_CONVERGE, (const char *) "Warning: fpminimax did not converge.\n");
 	    }
 	    else {
 	      free_memory(res);
@@ -705,11 +717,11 @@ extern "C" node *FPminimaxMain(node *f,
 
 
   if(nbpoints < dim) {
-    printMessage(1,SOLLYA_MSG_FPMINIMAX_NOT_ENOUGH_POINTS,"Error: FPminimax: not enough points!\n");
+    printMessage(1,SOLLYA_MSG_FPMINIMAX_NOT_ENOUGH_POINTS,(const char *) "Error: FPminimax: not enough points!\n");
     return NULL;
   }
   if(lengthChain(formats) < dim) {
-    printMessage(1,SOLLYA_MSG_FPMINIMAX_NOT_ENOUGH_FORMATS,"Error: FPminimax: not enough formats!\n");
+    printMessage(1,SOLLYA_MSG_FPMINIMAX_NOT_ENOUGH_FORMATS,(const char *) "Error: FPminimax: not enough formats!\n");
     return NULL;
   }
 
@@ -781,7 +793,7 @@ extern "C" node *FPminimaxMain(node *f,
 	}
       }
       if((test==0) || (r==0) || (!mpfr_number_p(var2))) {
-	printMessage(2,SOLLYA_MSG_FPMINIMAX_COMP_OF_MATRIX_ENTRY_USES_SLOWER_ALGO,"Information: the construction of M[%d,%d] uses a slower algorithm\n",i,j);
+	printMessage(2,SOLLYA_MSG_FPMINIMAX_COMP_OF_MATRIX_ENTRY_USES_SLOWER_ALGO,(const char *) "Information: the construction of M[%d,%d] uses a slower algorithm\n",i,j);
 	temp_tree = (node *)safeMalloc(sizeof(node));
 	temp_tree->nodeType = MUL;
 	temp_tree->child1 = copyTree(monomials_tree[j-1]);

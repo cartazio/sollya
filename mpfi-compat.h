@@ -60,6 +60,10 @@
 #ifndef MPFI_COMPAT_H
 #define MPFI_COMPAT_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <gmp.h>
 #include <mpfr.h>
 #include <mpfi.h>

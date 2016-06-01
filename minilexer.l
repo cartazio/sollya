@@ -99,6 +99,12 @@ extern void parserFree(void *);
 #define fwrite sollya_fwrite
 /* End of getc, feof, ferror, fwrite and fread mess */
 
+/* const mess */
+#if defined(const)
+#undef const
+#endif
+/* End of the const mess */
+
 %}
 
 %option noyyalloc noyyrealloc noyyfree
