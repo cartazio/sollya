@@ -35,10 +35,9 @@ fi
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
-AC_PROG_RANLIB
 AC_PROG_MKDIR_P
 AC_LIBTOOL_DLOPEN
-LT_INIT([dlopen shared])
+LT_INIT([dlopen shared])   # AC_PROG_RANLIB is superseede by LT_INIT
 AC_SUBST(LIBTOOL_DEPS)
 AC_CONFIG_MACRO_DIR([m4])  # To please autoconf. See c8fd07aa1d2bd54f8c1b519052849aed1ec39663
 AC_SUBST(AR_FLAGS, "cr")   # To prevent a warning on some Ubuntu. See fbb8016beff7b45734e53ef8b80d2c306334c248
