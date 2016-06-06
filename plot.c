@@ -64,7 +64,6 @@
 #include <gmp.h>
 #include <mpfr.h>
 #include <stdio.h> /* fprintf, fopen, fclose, */
-#include <sys/types.h> /* pid_t */
 #include <sys/wait.h> /* wait */
 #include <unistd.h> /* execve, fork, daemon */
 #include <stdlib.h> /* exit, free, mktemp */
