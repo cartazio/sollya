@@ -546,7 +546,14 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM([[#include <stdint.h>]],
 AC_FUNC_ALLOCA
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([inttypes.h libintl.h malloc.h stddef.h stdint.h stdlib.h string.h sys/ioctl.h sys/time.h termios.h unistd.h limits.h wchar.h])
+
+# If we do not have these ones, we consider that we cannot work properly.
+# As for termios.h we might do something even if it is missing (e.g., build the
+# library and provide the tool able to read files but not working
+# interactively). The current position is: we do not.
+AC_CHECK_HEADERS([inttypes.h stddef.h stdint.h stdlib.h string.h termios.h unistd.h limits.h wchar.h], [ ], AC_MSG_ERROR([Necessary header is missing]))
+# If we do not have these ones, we can survive, protecting corresponding calls by a #ifdef HAVE_....
+AC_CHECK_HEADERS([sys/ioctl.h sys/time.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -574,6 +581,8 @@ AC_TYPE_SIGNAL
 AC_FUNC_VPRINTF
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
+
+# If we do not have these functions we should survive because they shall be reimplemented in Sollya if necessaray if they are not provided by the system. In any case a test #ifdef HAVE_ shall protect any call to a function listed here.
 AC_CHECK_FUNCS(gettimeofday memmove memset strchr strerror strrchr strtol dup2 strstr dladdr clock_gettime time sigaction sigaddset sigemptyset sigprocmask)
 
 AC_MSG_CHECKING([if the system allows %n in a writable segment])
