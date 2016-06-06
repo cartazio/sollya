@@ -37,7 +37,7 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_PROG_MKDIR_P
 AC_LIBTOOL_DLOPEN
-LT_INIT([dlopen shared])   # AC_PROG_RANLIB is superseede by LT_INIT
+LT_INIT([dlopen shared])   # AC_PROG_RANLIB is superseeded by LT_INIT
 AC_SUBST(LIBTOOL_DEPS)
 AC_CONFIG_MACRO_DIR([m4])  # To please autoconf. See c8fd07aa1d2bd54f8c1b519052849aed1ec39663
 AC_SUBST(AR_FLAGS, "cr")   # To prevent a warning on some Ubuntu. See fbb8016beff7b45734e53ef8b80d2c306334c248
@@ -303,7 +303,6 @@ AC_CHECK_LIB([c], [dlopen], [], [dlopen_ok="no"])
 if test "x${dlopen_ok}y" = "xnoy" ; then
   AC_CHECK_LIB([dl], [dlopen], [], AC_MSG_ERROR([libdl unusable]))
 fi
-AC_CHECK_LIB([fl], [main])
 AC_CHECK_LIB([gmp], [__gmpz_init], [true], AC_MSG_ERROR([libgmp unusable]))
 AC_CHECK_LIB([gmp], [__gmpz_fac_ui], [true], AC_MSG_ERROR([libgmp version too old]))
 AC_CHECK_LIB([gmp], [__gmpz_bin_uiui], [true], AC_MSG_ERROR([libgmp version too old]))
