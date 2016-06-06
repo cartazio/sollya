@@ -69,7 +69,6 @@
 #include <stdlib.h> /* exit, free, mktemp */
 #include <errno.h>
 #include <string.h>
-#include <sys/ioctl.h>
 #include "plot.h"
 #include "expression.h"
 #include "general.h"
@@ -79,6 +78,10 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
+#ifdef HAVE_SYS_IOCTL_H
+#include <sys/ioctl.h>
 #endif
 
 extern int fileNumber;
@@ -399,7 +402,7 @@ void asciiPlotTree(node *tree, mpfr_t a, mpfr_t b, mp_prec_t prec) {
   }
 
 
-#if defined(TIOCGWINSZ) && defined(STDOUT_FILENO)
+#if defined(TIOCGWINSZ) && defined(STDOUT_FILENO) && defined(HAVE_SYS_IOCTL_H)
   if ((eliminatePromptBackup == 1) && (!libraryMode)) {
     sizeX = 77;
     sizeY = 25;
