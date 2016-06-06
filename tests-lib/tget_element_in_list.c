@@ -10,10 +10,10 @@ int main(void) {
   sollya_obj_t tab[8000];
   sollya_obj_t a;
   int i, k;
-  struct timeval t1;
-  struct timeval t2;
-  double length1;
-  double length2;
+  sollya_time_t *t1;
+  sollya_time_t *t2;
+  int64_t length1;
+  int64_t length2;
 
   sollya_lib_init();
 
@@ -279,31 +279,33 @@ int main(void) {
   for(i=0;i<8000;i++) tab[i] = SOLLYA_CONST(i);
 
   listobj = sollya_lib_list(tab, 4000);
-  gettimeofday(&t1, NULL);
-  for(k=0;k<10000;k++) {
+  t1 = sollya_gettime_var();
+  t2 = sollya_gettime_var();
+  sollya_gettime(t1);
+  for(k=0;k<100000;k++) {
     sollya_lib_get_element_in_list(&a, listobj, 3999);
     sollya_lib_clear_obj(a);
   }
-  gettimeofday(&t2, NULL);
-  length1 = (double)(t2.tv_sec - t1.tv_sec) * 1000000. +
-    (double)(t2.tv_usec - t1.tv_usec);
+  sollya_gettime(t2);
+  length1 = sollya_timediff_ms(t1,t2);
   sollya_lib_clear_obj(listobj);
 
   listobj = sollya_lib_list(tab, 8000);
-  gettimeofday(&t1, NULL);
-  for(k=0;k<10000;k++) {
+  sollya_gettime(t1);
+  for(k=0;k<100000;k++) {
     sollya_lib_get_element_in_list(&a, listobj, 7999);
     sollya_lib_clear_obj(a);
   }
-  gettimeofday(&t2, NULL);
-  length2 = (double)(t2.tv_sec - t1.tv_sec) * 1000000. +
-    (double)(t2.tv_usec - t1.tv_usec);
+  sollya_gettime(t2);
+  length2 = sollya_timediff_ms(t1,t2);
   sollya_lib_clear_obj(listobj);
+  sollya_lib_free(t1);
+  sollya_lib_free(t2);
 
-  if ((0.75 <= length2/length1) && (length2/length1 <= 1.25))
+  if ((0.75 <= ((double)length2)/((double)length1)) && (((double)length2)/((double)length1) <= 1.25))
     sollya_lib_printf("Testing that a call to get_element_in_list has complexity O(1): OK\n");
   else
-    sollya_lib_printf("Testing that a call to get_element_in_list has complexity O(1): not OK. Observed ratio: %g (should be close to 1 for O(1) complexity, and close to 2 for linear complexity)\n", length2/length1);
+    sollya_lib_printf("Testing that a call to get_element_in_list has complexity O(1): not OK. Observed ratio: %g (should be close to 1 for O(1) complexity, and close to 2 for linear complexity)\n", ((double)length2)/((double)length1));
 
   for(i=0;i<8000;i++) sollya_lib_clear_obj(tab[i]);
 
