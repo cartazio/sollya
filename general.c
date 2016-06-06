@@ -105,11 +105,6 @@
 #endif
 #endif
 
-
-#if HAVE_BACKTRACE
-#include <execinfo.h>
-#endif
-
 /* A constant for the global reused MPFI and MPFR variables */
 #define GLOBAL_REUSED_VARS_MAX_ALLOC 2048
 
@@ -310,8 +305,6 @@ extern int yylex_init(void **);
 extern int yylex(void *);
 extern void yyset_in(FILE *, void *);
 extern int parserCheckEof();
-
-#define BACKTRACELENGTH 100
 
 void freeGlobalReusedMPFIVars();
 void freeGlobalReusedMPFRVars();
