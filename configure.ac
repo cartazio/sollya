@@ -587,6 +587,7 @@ AC_CHECK_FUNCS(gettimeofday memmove memset strchr strerror strrchr strtol dup2 s
 
 AC_MSG_CHECKING([if the system allows %n in a writable segment])
 AC_RUN_IFELSE([AC_LANG_PROGRAM([[#define _BSD_SOURCE
+				 #define _DEFAULT_SOURCE
                                  #include <stdio.h>
                                  #include <stdlib.h>]],
                                [[ char *str;

@@ -60,6 +60,7 @@
 */
 
 #define _BSD_SOURCE
+#define _DEFAULT_SOURCE
 
 #include <gmp.h>
 #include <mpfr.h>
