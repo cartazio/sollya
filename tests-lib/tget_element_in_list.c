@@ -1,5 +1,8 @@
 #include <sollya.h>
-#include <sys/time.h>
+
+typedef struct __sollya_time_struct_t sollya_time_t;
+int sollya_gettime(sollya_time_t *);
+int64_t sollya_timediff_ms(sollya_time_t *, sollya_time_t *);
 
 int main(void) {
   sollya_obj_t listobj;
