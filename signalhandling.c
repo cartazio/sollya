@@ -125,7 +125,11 @@ RETSIGTYPE signalHandlerForSignal(int i) {
   if (!emulatedBlockedSignalCounter) {
     signalHandler(i);
   }
-  return (RETSIGTYPE) 1;
+  return (RETSIGTYPE) 1; /* RETSIGTYPE is either int or void. When it
+			    is int, nothing happens. When it is void,
+			    C supports that cast and returns
+			    nothing. 
+			 */
 }
 
 static inline void deferSignalHandlingInner() {
