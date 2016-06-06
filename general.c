@@ -2134,6 +2134,12 @@ long int sollya_strtol_impl(const char *nptr, char **endptr, int base) {
 	b = 10;
       }
     }
+  } else {
+    if (base == 16) {
+      if ((*curr == '0') && (*(curr + 1) == 'x')) {
+	curr += 2;
+      }
+    }
   }
   if ((b < 2) || (b > 36)) {
     if (endptr != NULL) {
@@ -2143,7 +2149,7 @@ long int sollya_strtol_impl(const char *nptr, char **endptr, int base) {
   }
   v = (uint64_t) 0;
   value = (long int) 0;
-  for (;*curr!='0';curr++) {
+  for (;*curr!='\0';curr++) {
     if (!__sollya_strtol_impl_aux(&c, *curr, b))
       break;
     v = v * ((uint64_t) b) + c;

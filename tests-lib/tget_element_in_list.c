@@ -3,7 +3,7 @@
 
 int main(void) {
   sollya_obj_t listobj;
-  sollya_obj_t tab[2000];
+  sollya_obj_t tab[8000];
   sollya_obj_t a;
   int i, k;
   struct timeval t1;
@@ -272,12 +272,12 @@ int main(void) {
 
 
   /* Time Complexity */
-  for(i=0;i<2000;i++) tab[i] = SOLLYA_CONST(i);
+  for(i=0;i<8000;i++) tab[i] = SOLLYA_CONST(i);
 
-  listobj = sollya_lib_list(tab, 1000);
+  listobj = sollya_lib_list(tab, 4000);
   gettimeofday(&t1, NULL);
   for(k=0;k<10000;k++) {
-    sollya_lib_get_element_in_list(&a, listobj, 999);
+    sollya_lib_get_element_in_list(&a, listobj, 3999);
     sollya_lib_clear_obj(a);
   }
   gettimeofday(&t2, NULL);
@@ -285,10 +285,10 @@ int main(void) {
     (double)(t2.tv_usec - t1.tv_usec);
   sollya_lib_clear_obj(listobj);
 
-  listobj = sollya_lib_list(tab, 2000);
+  listobj = sollya_lib_list(tab, 8000);
   gettimeofday(&t1, NULL);
   for(k=0;k<10000;k++) {
-    sollya_lib_get_element_in_list(&a, listobj, 1999);
+    sollya_lib_get_element_in_list(&a, listobj, 7999);
     sollya_lib_clear_obj(a);
   }
   gettimeofday(&t2, NULL);
@@ -301,7 +301,7 @@ int main(void) {
   else
     sollya_lib_printf("Testing that a call to get_element_in_list has complexity O(1): not OK. Observed ratio: %g (should be close to 1 for O(1) complexity, and close to 2 for linear complexity)\n", length2/length1);
 
-  for(i=0;i<2000;i++) sollya_lib_clear_obj(tab[i]);
+  for(i=0;i<8000;i++) sollya_lib_clear_obj(tab[i]);
 
  sollya_lib_close();
 
