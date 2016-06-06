@@ -460,7 +460,7 @@ static inline int sollyaInternalBaseSnFprintf(FILE *fd, int useFd, char *str, si
     buf = (char *) safeCalloc(frmtLen + 1, sizeof(char));
   } else {
     buf = staticBuf;
-    memset(buf, '\0', frmtLen + 1 + 7);
+    sollya_memset(buf, '\0', frmtLen + 1 + 7);
   }
 
   currBuf = buf;

@@ -283,5 +283,80 @@ size_t sollya_fread(void *, size_t, size_t, FILE *);
 size_t sollya_fwrite(const void *, size_t, size_t, FILE *);
 int sollya_gettime(sollya_time_t *);
 
+/* Compatibility macros */
+
+#if defined(HAVE_MEMMOVE) && HAVE_MEMMOVE
+#define sollya_memmove(dest, src, n) memmove((dest),(src),(n))
+#else
+void *sollya_memmove_impl(void *, const void *, size_t);
+#define sollya_memmove(dest, src, n) sollya_memmove_impl((dest),(src),(n))
+#endif
+
+#if defined(HAVE_MEMSET) && HAVE_MEMSET
+#define sollya_memset(s, c, n) memset((s),(c),(n))
+#else
+void *sollya_memset_impl(void *, int, size_t);
+#define sollya_memset(s, c, n) sollya_memset_impl((s),(c),(n))
+#endif
+
+#if defined(HAVE_STRCHR) && HAVE_STRCHR
+#define sollya_strchr(s, c) strchr((s),(c))
+#else
+char *sollya_strchr_impl(const char *, int);
+#define sollya_strchr(s, c) sollya_strchr_impl((s),(c))
+#endif
+
+#if defined(HAVE_STRRCHR) && HAVE_STRRCHR
+#define sollya_strrchr(s, c) strrchr((s),(c))
+#else
+char *sollya_strrchr_impl(const char *, int);
+#define sollya_strrchr(s, c) sollya_strrchr_impl((s),(c))
+#endif
+
+#if defined(HAVE_STRTOL) && HAVE_STRTOL
+#define sollya_strtol(nptr, endptr, base) strtol((nptr),(endptr),(base))
+#else
+long int sollya_strtol_impl(const char *, char **, int);
+#define sollya_strtol(nptr, endptr, base) sollya_strtol_impl((nptr),(endptr),(base))
+#endif
+
+#if defined(HAVE_DUP2) && HAVE_DUP2
+#define sollya_dup2(oldfd, newfd) dup2((oldfd), (newfd))
+#else
+int sollya_dup2_impl(int, int);
+#define sollya_dup2(oldfd, newfd) sollya_dup2_impl((oldfd), (newfd))
+#endif
+
+#if defined(HAVE_STRSTR) && HAVE_STRSTR
+#define sollya_strstr(haystack, needle) strstr((haystack),(needle))
+#else
+char *sollya_strstr_impl(const char *, const char *);
+#define sollya_strstr(haystack, needle) sollya_strstr_impl((haystack),(needle))
+#endif
+
+#undef sollya_memmove
+#undef sollya_memset
+#undef sollya_strchr
+#undef sollya_strrchr
+#undef sollya_strtol
+#undef sollya_dup2
+#undef sollya_strstr
+
+
+void *sollya_memmove_impl(void *, const void *, size_t);
+void *sollya_memset_impl(void *, int, size_t);
+char *sollya_strchr_impl(const char *, int);
+char *sollya_strrchr_impl(const char *, int);
+long int sollya_strtol_impl(const char *, char **, int);
+int sollya_dup2_impl(int, int);
+char *sollya_strstr_impl(const char *, const char *);
+
+#define sollya_memmove(dest, src, n) sollya_memmove_impl((dest),(src),(n))
+#define sollya_memset(s, c, n) sollya_memset_impl((s),(c),(n))
+#define sollya_strchr(s, c) sollya_strchr_impl((s),(c))
+#define sollya_strrchr(s, c) sollya_strrchr_impl((s),(c))
+#define sollya_strtol(nptr, endptr, base) sollya_strtol_impl((nptr),(endptr),(base))
+#define sollya_dup2(oldfd, newfd) sollya_dup2_impl((oldfd), (newfd))
+#define sollya_strstr(haystack, needle) sollya_strstr_impl((haystack),(needle))
 
 #endif /* ifdef GENERAL_H*/

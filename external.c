@@ -148,11 +148,11 @@ char *evaluateStringAsBashCommand(char *command, char *input) {
 	  /* Connect my input and output to the pipe
 	   */
 	  if (input != NULL) {
-	    if (dup2(pipesToBash[0],0) == -1) {
+	    if (sollya_dup2(pipesToBash[0],0) == -1) {
 	      _exit(1);
 	    }
 	  }
-	  if (dup2(pipesFromBash[1],1) == -1) {
+	  if (sollya_dup2(pipesFromBash[1],1) == -1) {
 	    _exit(1);
 	  }
 

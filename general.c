@@ -71,6 +71,7 @@
 #include <unistd.h>
 #include <setjmp.h>
 #include <stdarg.h>
+#include <limits.h>
 #include "main.h"
 #include "plot.h"
 #include "expression.h"
@@ -869,7 +870,7 @@ void demaskString(char *dest, char *src) {
 	    internalBuf[i] = (internalBuf[i] - 'a') + 'A';
 	  }
 	}
-	*curr2++ = (char) strtol(internalBuf,NULL,16);
+	*curr2++ = (char) sollya_strtol(internalBuf,NULL,16);
 	break;
       default:
 	i = 0;
@@ -878,7 +879,7 @@ void demaskString(char *dest, char *src) {
 	  curr++; i++;
 	}
 	curr--;
-	*curr2++ = (char) strtol(internalBuf,NULL,8);
+	*curr2++ = (char) sollya_strtol(internalBuf,NULL,8);
       }
     }
   }
@@ -1112,7 +1113,7 @@ int printMessageInner(int verb, int msgNum, const char *format, va_list varlist)
   if (activateMessageNumbers && (msgNum != SOLLYA_MSG_CONTINUATION) && (msgNum != SOLLYA_MSG_NO_MSG)) {
     myFormat = format;
     res = 0;
-    if (((tempStr = strstr(format,"Warning")) != NULL) && (tempStr == format)) {
+    if (((tempStr = sollya_strstr(format,"Warning")) != NULL) && (tempStr == format)) {
       if (verb >= 0) {
 	res += sollyaFprintf(stdout,"Warning (%d)",msgNum);
       } else {
@@ -1120,7 +1121,7 @@ int printMessageInner(int verb, int msgNum, const char *format, va_list varlist)
       }
       myFormat = tempStr + strlen("Warning");
     } else {
-      if (((tempStr = strstr(format,"Error")) != NULL) && (tempStr == format)) {
+      if (((tempStr = sollya_strstr(format,"Error")) != NULL) && (tempStr == format)) {
 	if (verb >= 0) {
 	  res += sollyaFprintf(stdout,"Error (%d)",msgNum);
 	} else {
@@ -1128,7 +1129,7 @@ int printMessageInner(int verb, int msgNum, const char *format, va_list varlist)
 	}
 	myFormat = tempStr + strlen("Error");
       } else {
-	if (((tempStr = strstr(format,"Information")) != NULL) && (tempStr == format)) {
+	if (((tempStr = sollya_strstr(format,"Information")) != NULL) && (tempStr == format)) {
 	  if (verb >= 0) {
 	    res += sollyaFprintf(stdout,"Information (%d)",msgNum);
 	  } else {
@@ -1749,7 +1750,7 @@ void setRationalMode(int newRationalMode) {
 }
 
 void setRecoverEnvironment(jmp_buf *env) {
-  memmove(&recoverEnvironment,env,sizeof(recoverEnvironment));
+  sollya_memmove(&recoverEnvironment,env,sizeof(recoverEnvironment));
   exitInsteadOfRecover = 0;
 }
 
@@ -2026,6 +2027,194 @@ void freeGlobalReusedMPFRVars() {
   globalReusedMPFRVarsUsed = 0;
   globalReusedMPFRVarsInitialized = 0;
 }
+
+/* Compatibility functions */
+
+void *sollya_memmove_impl(void *dest, const void *src, size_t n) {
+  void *tmp;
+  tmp = safeMalloc(n);
+  memcpy(tmp, src, n);
+  memcpy(dest, tmp, n);
+  safeFree(tmp);
+  return dest;
+}
+
+void *sollya_memset_impl(void *s, int c, size_t n) {
+  char b;
+  char *a;
+  size_t i;
+  b = (char) c;
+  a = (char *) s;
+  for (i=((size_t) 0);i<n;i++) {
+    a[i] = b;
+  }
+  return s;
+}
+
+char *sollya_strchr_impl(const char *s, int c) {
+  char b;
+  char *curr;
+  b = (char) c;
+  for (curr=((char *) s);*curr!='\0';curr++) {
+    if (*curr == b) return curr;
+  }
+  if (b == '\0') return curr;
+  return NULL;
+}
+
+char *sollya_strrchr_impl(const char *s, int c) {
+  char b;
+  char *curr;
+  b = (char) c;
+  for (curr=((char *) s);*curr!='\0';curr++);
+  for (;curr>=s;curr--) {
+    if (*curr == b) return curr;
+  }
+  return NULL;
+}
+
+static inline int __sollya_strtol_impl_aux(uint64_t *v, char c, int b) {
+  uint64_t t;
+  if (b < 2) return 0;
+  if (b > 36) return 0;
+  if ((c >= '0') && (c <= '9')) {
+    t = (uint64_t) (c - '0');
+    if (t >= ((uint64_t) b)) return 0;
+    *v = t;
+    return 1;
+  }
+  if ((c >= 'A') && (c <= 'Z')) {
+    t = ((uint64_t) (c - 'A')) + ((uint64_t) 10);
+    if (t >= ((uint64_t) b)) return 0;
+    *v = t;
+    return 1;
+  }
+  if ((c >= 'a') && (c <= 'z')) {
+    t = ((uint64_t) (c - 'z')) + ((uint64_t) 10);
+    if (t >= ((uint64_t) b)) return 0;
+    *v = t;
+    return 1;
+  }
+  return 0;
+}
+
+long int sollya_strtol_impl(const char *nptr, char **endptr, int base) {
+  int b;
+  char *curr;
+  int sign;
+  uint64_t v, c;
+  long int value;
+  b = base;
+  sign = 1;
+  for (curr = ((char *) nptr);*curr!='\0';curr++) {
+    if (!((*curr == ' ') ||
+	  (*curr == '\f') ||
+	  (*curr == '\n') ||
+	  (*curr == '\r') ||
+	  (*curr == '\t') ||
+	  (*curr == '\v'))) break;
+  }
+  if (*curr == '+') {
+    curr++;
+  } else {
+    if (*curr == '-') {
+      sign = -1;
+      curr++;
+    }
+  }
+  if (base == 0) {
+    if ((*curr == '0') && (*(curr + 1) == 'x')) {
+      b = 16;
+      curr += 2;
+    } else {
+      if (*curr == '0') {
+	b = 8;
+	curr++;
+      } else {
+	b = 10;
+      }
+    }
+  }
+  if ((b < 2) || (b > 36)) {
+    if (endptr != NULL) {
+      *endptr = curr;
+    }
+    return 0;
+  }
+  v = (uint64_t) 0;
+  value = (long int) 0;
+  for (;*curr!='0';curr++) {
+    if (!__sollya_strtol_impl_aux(&c, *curr, b))
+      break;
+    v = v * ((uint64_t) b) + c;
+    if (sign > 0) {
+      if (v > ((uint64_t) LONG_MAX)) {
+	value = LONG_MAX;
+	break;
+      } else {
+	value = (long int) v;
+      }
+    } else {
+      if (v > (((uint64_t) (-(LONG_MIN + ((long int) 16)))) + ((uint64_t) 16))) {
+	value = LONG_MIN;
+	break;
+      } else {
+	value = (long int) v;
+      }
+    }
+  }
+  if (endptr != NULL) {
+    *endptr = curr;
+  }
+  return value;
+}
+
+int sollya_dup2_impl(int oldfd, int newfd) {
+  int tmp1, tmp2;
+  /* This is a lazy reimplementation that will not work all the
+     time 
+  */
+  if (oldfd == newfd) return newfd;
+  tmp1 = dup(oldfd);
+  if (tmp1 == -1) return -1;
+  if (close(newfd) != 0) return -1;
+  tmp2 = dup(oldfd);
+  if (close(tmp1) != 0) {
+    if (tmp2 != -1) close(tmp2);
+    return -1;
+  }
+  if (tmp2 == -1) return -1;
+  if (tmp2 != newfd) {
+    close(tmp2);
+    tmp2 = dup(oldfd);
+    if (tmp2 == -1) return -1;
+    if (tmp2 != newfd) return -1;
+  }
+  return tmp2;
+}
+
+static inline char *__sollya_strstr_impl_aux(char *haystack, char *needle) {
+  char *currHaystack, *currNeedle;
+  for (currHaystack=haystack, currNeedle=needle;
+       ((*currHaystack != '\0') && (*currNeedle != '\0'));
+       currHaystack++, currNeedle++) {
+    if (*currHaystack != *currNeedle) return NULL;
+  }
+  if ((*currHaystack == '\0') && (*currNeedle != '\0')) return NULL;
+  return haystack;
+}
+
+char *sollya_strstr_impl(const char *haystack, const char *needle) {
+  char *curr, *tmp;
+  for (curr=((char *) haystack);*curr!='\0';curr++) {
+    tmp = __sollya_strstr_impl_aux(curr, ((char *) needle));
+    if (tmp != NULL) return tmp;
+  }
+  return NULL;
+}
+
+
+/* End of compatibility functions */
 
 int general(int argc, char *argv[]) {
   struct termios termAttr;

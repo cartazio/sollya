@@ -396,7 +396,7 @@ int isInfix(node *tree) {
     if (mpfr_sgn(*(tree->value)) < 0) return 1;
     if ((dyadic == 2) || (dyadic == 3)) {
       str = sprintValue(tree->value);
-      res = (strchr(str,'*') != NULL);
+      res = (sollya_strchr(str,'*') != NULL);
       safeFree(str);
       return res;
     }
@@ -1739,20 +1739,20 @@ static inline char *__sprintfValue_print_decimal(mpfr_t x) {
 	K = H + D;
 	d = (size_t) D;
 	if (d == mantLen) {
-	  memmove((void *) (((curr + mantLen) - d) + 2), (void *) ((curr + mantLen) - d), d * sizeof(char));
+	  sollya_memmove((void *) (((curr + mantLen) - d) + 2), (void *) ((curr + mantLen) - d), d * sizeof(char));
 	  ((curr + mantLen) - d)[0] = '0';
 	  ((curr + mantLen) - d)[1] = '.';
 	  curr += mantLen;
 	  curr += 2;
 	} else {
-	  memmove((void *) (((curr + mantLen) - d) + 1), (void *) ((curr + mantLen) - d), d * sizeof(char));
+	  sollya_memmove((void *) (((curr + mantLen) - d) + 1), (void *) ((curr + mantLen) - d), d * sizeof(char));
 	  ((curr + mantLen) - d)[0] = '.';
 	  curr += mantLen;
 	  curr++;
 	}
       } else {
 	d = (size_t) D;
-	memmove((void *) (((curr + mantLen) - d) + 1), (void *) ((curr + mantLen) - d), d * sizeof(char));
+	sollya_memmove((void *) (((curr + mantLen) - d) + 1), (void *) ((curr + mantLen) - d), d * sizeof(char));
 	((curr + mantLen) - d)[0] = '.';
 	curr += mantLen;
 	curr++;

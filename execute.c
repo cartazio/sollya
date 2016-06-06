@@ -26268,8 +26268,8 @@ node *evaluateThingInnerst(node *tree) {
   case DECIMALCONSTANT:
     if (timingString != NULL) pushTimeCounter();
     resA = 0;
-    tempString2 = strchr(tree->string,'%');
-    tempString3 = strrchr(tree->string,'%');
+    tempString2 = sollya_strchr(tree->string,'%');
+    tempString3 = sollya_strrchr(tree->string,'%');
     if ((tempString2 != NULL) &&
 	(tempString3 != NULL) &&
 	(tempString2 != tempString3) &&
@@ -26302,7 +26302,7 @@ node *evaluateThingInnerst(node *tree) {
       if (tools_precision > pTemp) pTemp = tools_precision;
       pTemp2 = tools_precision;
     }
-    if (strchr(tempString,'%') == NULL) {
+    if (sollya_strchr(tempString,'%') == NULL) {
       mpfr_init2(a,pTemp);
       mpfr_init2(b,pTemp);
       mpfr_set_str(a,tempString,10,GMP_RNDD);
@@ -26616,8 +26616,8 @@ node *evaluateThingInnerst(node *tree) {
 	}
       }
       resA = 0;
-      tempString2 = strchr(decString,'%');
-      tempString3 = strrchr(decString,'%');
+      tempString2 = sollya_strchr(decString,'%');
+      tempString3 = sollya_strrchr(decString,'%');
       if ((tempString2 != NULL) &&
           (tempString3 != NULL) &&
           (tempString2 != tempString3) &&
@@ -26650,7 +26650,7 @@ node *evaluateThingInnerst(node *tree) {
         if (tools_precision > pTemp) pTemp = tools_precision;
         pTemp2 = tools_precision;
       }
-      if (strchr(tempString,'%') == NULL) {
+      if (sollya_strchr(tempString,'%') == NULL) {
         mpfr_init2(a,pTemp);
         mpfr_init2(b,pTemp);
         mpfr_set_str(a,tempString,10,GMP_RNDD);
@@ -26710,8 +26710,8 @@ node *evaluateThingInnerst(node *tree) {
 	decString = accessThruMemRef(tree->child2)->string;
       }
       resA = 0;
-      tempString2 = strchr(decString,'%');
-      tempString3 = strrchr(decString,'%');
+      tempString2 = sollya_strchr(decString,'%');
+      tempString3 = sollya_strrchr(decString,'%');
       if ((tempString2 != NULL) &&
           (tempString3 != NULL) &&
           (tempString2 != tempString3) &&
@@ -26744,7 +26744,7 @@ node *evaluateThingInnerst(node *tree) {
         if (tools_precision > pTemp) pTemp = tools_precision;
         pTemp2 = tools_precision;
       }
-      if (strchr(tempString,'%') == NULL) {
+      if (sollya_strchr(tempString,'%') == NULL) {
         mpfr_init2(a,pTemp);
         mpfr_init2(b,pTemp);
         mpfr_set_str(a,tempString,10,GMP_RNDD);
