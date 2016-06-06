@@ -382,6 +382,10 @@ int64_t sollya_timediff_ms(sollya_time_t *before, sollya_time_t *after) {
   return millisecdiff;
 }
 
+sollya_time_t *sollya_gettime_var() {
+  return (sollya_time_t *) safeMalloc(sizeof(sollya_time_t));
+}
+
 size_t sollya_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *fd) {
   size_t res;
 
