@@ -4,6 +4,9 @@ EXTRA_DIST = sollya.h libsollyaexample.c externalfun.c externalproc.c
 AM_YFLAGS = -d
 AM_LFLAGS = -o$(LEX_OUTPUT_ROOT).c
 
+# The following line is added to follow a suggestion from libtoolize.
+ACLOCAL_AMFLAGS = -I m4
+
 BUILT_SOURCES = \
 miniparser.h \
 parser.h \

@@ -1,8 +1,9 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
-
+# Skeleton initially generated with autoscan
 AC_PREREQ(2.59)
 AC_INIT([sollya], [git-devel], [christoph.lauter@ens-lyon.org, sylvain.chevillard@ens-lyon.org, joldes@laas.fr])
+AC_CONFIG_SRCDIR([sollya-library-wrappers.h]) # Checks that we are really trying to configure Sollya and not something else...
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE([1.6 no-define dist-zip dist-bzip2])
 
@@ -10,9 +11,12 @@ AM_INIT_AUTOMAKE([1.6 no-define dist-zip dist-bzip2])
 # Checks for programs.
 AC_PROG_YACC
 AC_PROG_CC
+AC_PROG_CPP
 AC_PROG_CXX
-AC_PROG_SED
-AM_PROG_CC_C_O
+AC_PROG_AWK  # Used by ltmain.sh
+AC_PROG_SED  # Used in some tests (although we do not currently use its replacement variable $SED)
+AM_PROG_CC_C_O  # To please autoconf. See 68da652992422c073b8bd2fe0814cd1cf37ee1fc
+
 AC_LANG_PUSH([C++])
 AC_MSG_CHECKING([whether C++ compiler works])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdlib.h>]], [[exit(0);]])],
@@ -28,11 +32,15 @@ if test "$LEX" != flex; then
   AC_SUBST(LEX_OUTPUT_ROOT, lex.yy)
   AC_SUBST(LEXLIB, '')
 fi
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+AC_PROG_MKDIR_P
 AC_LIBTOOL_DLOPEN
-LT_INIT([dlopen shared])
+LT_INIT([dlopen shared])   # AC_PROG_RANLIB is superseede by LT_INIT
 AC_SUBST(LIBTOOL_DEPS)
-AC_CONFIG_MACRO_DIR([m4])
-AC_SUBST(AR_FLAGS, "cr")
+AC_CONFIG_MACRO_DIR([m4])  # To please autoconf. See c8fd07aa1d2bd54f8c1b519052849aed1ec39663
+AC_SUBST(AR_FLAGS, "cr")   # To prevent a warning on some Ubuntu. See fbb8016beff7b45734e53ef8b80d2c306334c248
 
 
 
@@ -295,6 +303,7 @@ AC_CHECK_LIB([c], [dlopen], [], [dlopen_ok="no"])
 if test "x${dlopen_ok}y" = "xnoy" ; then
   AC_CHECK_LIB([dl], [dlopen], [], AC_MSG_ERROR([libdl unusable]))
 fi
+AC_CHECK_LIB([fl], [main])
 AC_CHECK_LIB([gmp], [__gmpz_init], [true], AC_MSG_ERROR([libgmp unusable]))
 AC_CHECK_LIB([gmp], [__gmpz_fac_ui], [true], AC_MSG_ERROR([libgmp version too old]))
 AC_CHECK_LIB([gmp], [__gmpz_bin_uiui], [true], AC_MSG_ERROR([libgmp version too old]))
@@ -304,7 +313,7 @@ AC_CHECK_LIB([mpfr], [mpfr_set_z_2exp], [true], AC_MSG_ERROR([libmpfr version to
 AC_CHECK_LIB([mpfr], [mpfr_erfc], [], AC_MSG_ERROR([libmpfr version too old])) # This one adds -lmpfr in case of success
 AC_CHECK_LIB([mpfi], [mpfi_init], [], AC_MSG_ERROR([libmpfi unusable]))
 AC_CHECK_LIB([z], [gzdopen], [], [])
-AC_CHECK_LIB([iconv], [libiconv_open], [], [])
+AC_CHECK_LIB([iconv], [libiconv_open], [], []) # This for providing a statically linked program under Cygwin. See e0d7171f9daf0027e075723d21fb40a864578cd5
 AC_CHECK_LIB([m],[cos])
 AC_CHECK_LIB([xml2], [xmlTextReaderIsEmptyElement], [], AC_MSG_ERROR([libxml2 unusable]))
 
@@ -538,39 +547,35 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM([[#include <stdint.h>]],
 AC_FUNC_ALLOCA
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([inttypes.h libintl.h malloc.h stddef.h stdlib.h string.h sys/ioctl.h sys/time.h termios.h unistd.h limits.h wchar.h])
+AC_CHECK_HEADERS([inttypes.h libintl.h malloc.h stddef.h stdint.h stdlib.h string.h sys/ioctl.h sys/time.h termios.h unistd.h limits.h wchar.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_HEADER_STDBOOL
+AC_TYPE_INT8_T
+AC_TYPE_INT16_T
 AC_TYPE_INT32_T
 AC_TYPE_INT64_T
-AC_TYPE_SSIZE_T
-AC_TYPE_UINT64_T
-AC_TYPE_SIZE_T
-AC_HEADER_TIME
-AC_TYPE_INT16_T
-AC_TYPE_INT8_T
-AC_TYPE_SIZE_T
-AC_HEADER_TIME
+AC_TYPE_UINT8_T
 AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
-AC_TYPE_UINT8_T
+AC_TYPE_UINT64_T
+AC_HEADER_TIME
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+AC_TYPE_SSIZE_T
 AC_C_VOLATILE
 AC_C_INLINE
-AC_C_CONST
 AC_CHECK_TYPES([ptrdiff_t])
 
 # Checks for library functions.
-AC_FUNC_ERROR_AT_LINE
 AC_FUNC_FORK
-AC_PROG_GCC_TRADITIONAL
+AC_PROG_GCC_TRADITIONAL  # To support very old versions of gcc
 AC_TYPE_SIGNAL
 AC_FUNC_VPRINTF
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS(gettimeofday memmove memset strchr strerror strrchr strtol dup2 strstr dladdr clock_gettime time sigaction sigaddset sigemptyset sigprocmask)
-
 
 AC_MSG_CHECKING([if the system allows %n in a writable segment])
 AC_RUN_IFELSE([AC_LANG_PROGRAM([[#define _BSD_SOURCE
