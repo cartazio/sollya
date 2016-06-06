@@ -374,6 +374,7 @@ void removePlotFiles(void) {
 void asciiPlotTree(node *tree, mpfr_t a, mpfr_t b, mp_prec_t prec) {
   mpfr_t y, x, step, minValue, maxValue;
   int sizeX, sizeY, i, k, drawXAxis, drawYAxis, xAxis, yAxis;
+#if defined(TIOCGWINSZ) && defined(STDOUT_FILENO) && defined(HAVE_SYS_IOCTL_H)
 #if defined(__CYGWIN__)
   struct winsize {
     unsigned short  ws_row;     /* rows in characters */
@@ -383,6 +384,7 @@ void asciiPlotTree(node *tree, mpfr_t a, mpfr_t b, mp_prec_t prec) {
   } size;
 #else
   struct winsize size;
+#endif
 #endif
   mpfr_t *values;
   char **lines;
