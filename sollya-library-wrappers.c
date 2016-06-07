@@ -393,7 +393,7 @@ void sollya_lib_plot(sollya_obj_t obj1, sollya_obj_t obj2, ...) {
   if (obj1 == NULL) return;
   if (obj2 == NULL) return;
   MAKE_THINGLIST_FROM_VARIADIC(obj2);
-  thingToExecute = makePlot(addElement(thinglist, copyThing(obj1)));
+  thingToExecute = addMemRef(makePlot(addElement(thinglist, copyThing(obj1))));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -404,7 +404,7 @@ void sollya_lib_v_plot(sollya_obj_t obj1, sollya_obj_t obj2, va_list varlist) {
   if (obj1 == NULL) return;
   if (obj2 == NULL) return;
   MAKE_THINGLIST_FROM_VA_LIST(obj2,varlist);
-  thingToExecute = makePlot(addElement(thinglist, copyThing(obj1)));
+  thingToExecute = addMemRef(makePlot(addElement(thinglist, copyThing(obj1))));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -412,7 +412,7 @@ void sollya_lib_v_plot(sollya_obj_t obj1, sollya_obj_t obj2, va_list varlist) {
 void sollya_lib_printdouble(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makePrintHexa(copyThing(obj1));
+  thingToExecute = addMemRef(makePrintHexa(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -420,7 +420,7 @@ void sollya_lib_printdouble(sollya_obj_t obj1) {
 void sollya_lib_printsingle(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makePrintFloat(copyThing(obj1));
+  thingToExecute = addMemRef(makePrintFloat(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -428,7 +428,7 @@ void sollya_lib_printsingle(sollya_obj_t obj1) {
 void sollya_lib_printexpansion(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makePrintExpansion(copyThing(obj1));
+  thingToExecute = addMemRef(makePrintExpansion(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -436,7 +436,7 @@ void sollya_lib_printexpansion(sollya_obj_t obj1) {
 void sollya_lib_bashexecute(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeBashExecute(copyThing(obj1));
+  thingToExecute = addMemRef(makeBashExecute(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -450,7 +450,7 @@ void sollya_lib_externalplot(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t 
   if (obj4 == NULL) return;
   if (obj5 == NULL) return;
   MAKE_THINGLIST_FROM_VARIADIC(obj5);
-  thingToExecute = makeExternalPlot(addElement(addElement(addElement(addElement(thinglist, copyThing(obj4)),copyThing(obj3)),copyThing(obj2)),copyThing(obj1)));
+  thingToExecute = addMemRef(makeExternalPlot(addElement(addElement(addElement(addElement(thinglist, copyThing(obj4)),copyThing(obj3)),copyThing(obj2)),copyThing(obj1))));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -464,7 +464,7 @@ void sollya_lib_v_externalplot(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_
   if (obj4 == NULL) return;
   if (obj5 == NULL) return;
   MAKE_THINGLIST_FROM_VA_LIST(obj5,varlist);
-  thingToExecute = makeExternalPlot(addElement(addElement(addElement(addElement(thinglist, copyThing(obj4)),copyThing(obj3)),copyThing(obj2)),copyThing(obj1)));
+  thingToExecute = addMemRef(makeExternalPlot(addElement(addElement(addElement(addElement(thinglist, copyThing(obj4)),copyThing(obj3)),copyThing(obj2)),copyThing(obj1))));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -473,7 +473,7 @@ void sollya_lib_asciiplot(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToExecute;
   if (obj1 == NULL) return;
   if (obj2 == NULL) return;
-  thingToExecute = makeAsciiPlot(copyThing(obj1),copyThing(obj2));
+  thingToExecute = addMemRef(makeAsciiPlot(copyThing(obj1),copyThing(obj2)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -481,7 +481,7 @@ void sollya_lib_asciiplot(sollya_obj_t obj1, sollya_obj_t obj2) {
 void sollya_lib_execute(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeExecute(copyThing(obj1));
+  thingToExecute = addMemRef(makeExecute(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -489,7 +489,7 @@ void sollya_lib_execute(sollya_obj_t obj1) {
 void sollya_lib_printxml(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makePrintXml(copyThing(obj1));
+  thingToExecute = addMemRef(makePrintXml(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -498,7 +498,7 @@ void sollya_lib_printxml_newfile(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToExecute;
   if (obj1 == NULL) return;
   if (obj2 == NULL) return;
-  thingToExecute = makePrintXmlNewFile(copyThing(obj1),copyThing(obj2));
+  thingToExecute = addMemRef(makePrintXmlNewFile(copyThing(obj1),copyThing(obj2)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -507,7 +507,7 @@ void sollya_lib_printxml_appendfile(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToExecute;
   if (obj1 == NULL) return;
   if (obj2 == NULL) return;
-  thingToExecute = makePrintXmlAppendFile(copyThing(obj1),copyThing(obj2));
+  thingToExecute = addMemRef(makePrintXmlAppendFile(copyThing(obj1),copyThing(obj2)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -521,7 +521,7 @@ void sollya_lib_worstcase(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t obj
   if (obj4 == NULL) return;
   if (obj5 == NULL) return;
   MAKE_THINGLIST_FROM_VARIADIC(obj5);
-  thingToExecute = makeWorstCase(addElement(addElement(addElement(addElement(thinglist, copyThing(obj4)),copyThing(obj3)),copyThing(obj2)),copyThing(obj1)));
+  thingToExecute = addMemRef(makeWorstCase(addElement(addElement(addElement(addElement(thinglist, copyThing(obj4)),copyThing(obj3)),copyThing(obj2)),copyThing(obj1))));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -535,7 +535,7 @@ void sollya_lib_v_worstcase(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t o
   if (obj4 == NULL) return;
   if (obj5 == NULL) return;
   MAKE_THINGLIST_FROM_VA_LIST(obj5,varlist);
-  thingToExecute = makeWorstCase(addElement(addElement(addElement(addElement(thinglist, copyThing(obj4)),copyThing(obj3)),copyThing(obj2)),copyThing(obj1)));
+  thingToExecute = addMemRef(makeWorstCase(addElement(addElement(addElement(addElement(thinglist, copyThing(obj4)),copyThing(obj3)),copyThing(obj2)),copyThing(obj1))));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -545,7 +545,7 @@ void sollya_lib_autoprint(sollya_obj_t obj1, ...) {
   MAKE_THINGLIST_DECLS(thinglist);
  if (obj1 == NULL) return;
   MAKE_THINGLIST_FROM_VARIADIC(obj1);
-  thingToExecute = makeAutoprint(thinglist);
+  thingToExecute = addMemRef(makeAutoprint(thinglist));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -555,7 +555,7 @@ void sollya_lib_suppressmessage(sollya_obj_t obj1, ...) {
   MAKE_THINGLIST_DECLS(thinglist);
   if (obj1 == NULL) return;
   MAKE_THINGLIST_FROM_VARIADIC(obj1);
-  thingToExecute = makeSuppressMessage(thinglist);
+  thingToExecute = addMemRef(makeSuppressMessage(thinglist));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -565,7 +565,7 @@ void sollya_lib_unsuppressmessage(sollya_obj_t obj1, ...) {
   MAKE_THINGLIST_DECLS(thinglist);
   if (obj1 == NULL) return;
   MAKE_THINGLIST_FROM_VARIADIC(obj1);
-  thingToExecute = makeUnsuppressMessage(thinglist);
+  thingToExecute = addMemRef(makeUnsuppressMessage(thinglist));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -575,7 +575,7 @@ void sollya_lib_implementconstant(sollya_obj_t obj1, ...) {
   MAKE_THINGLIST_DECLS(thinglist);
   if (obj1 == NULL) return;
   MAKE_THINGLIST_FROM_VARIADIC(obj1);
-  thingToExecute = makeImplementConst(thinglist);
+  thingToExecute = addMemRef(makeImplementConst(thinglist));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -585,7 +585,7 @@ void sollya_lib_v_implementconstant(sollya_obj_t obj1, va_list varlist) {
   MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
   if (obj1 == NULL) return;
   MAKE_THINGLIST_FROM_VA_LIST(obj1,varlist);
-  thingToExecute = makeImplementConst(thinglist);
+  thingToExecute = addMemRef(makeImplementConst(thinglist));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -595,7 +595,7 @@ void sollya_lib_v_autoprint(sollya_obj_t obj1, va_list varlist) {
   MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
   if (obj1 == NULL) return;
   MAKE_THINGLIST_FROM_VA_LIST(obj1,varlist);
-  thingToExecute = makeAutoprint(thinglist);
+  thingToExecute = addMemRef(makeAutoprint(thinglist));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -605,7 +605,7 @@ void sollya_lib_v_suppressmessage(sollya_obj_t obj1, va_list varlist) {
   MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
   if (obj1 == NULL) return;
   MAKE_THINGLIST_FROM_VA_LIST(obj1,varlist);
-  thingToExecute = makeSuppressMessage(thinglist);
+  thingToExecute = addMemRef(makeSuppressMessage(thinglist));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -615,7 +615,7 @@ void sollya_lib_v_unsuppressmessage(sollya_obj_t obj1, va_list varlist) {
   MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
   if (obj1 == NULL) return;
   MAKE_THINGLIST_FROM_VA_LIST(obj1,varlist);
-  thingToExecute = makeUnsuppressMessage(thinglist);
+  thingToExecute = addMemRef(makeUnsuppressMessage(thinglist));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -623,7 +623,7 @@ void sollya_lib_v_unsuppressmessage(sollya_obj_t obj1, va_list varlist) {
 void sollya_lib_set_prec_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makePrecAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makePrecAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -631,7 +631,7 @@ void sollya_lib_set_prec_and_print(sollya_obj_t obj1) {
 void sollya_lib_set_points_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makePointsAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makePointsAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -639,7 +639,7 @@ void sollya_lib_set_points_and_print(sollya_obj_t obj1) {
 void sollya_lib_set_diam_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeDiamAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeDiamAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -647,7 +647,7 @@ void sollya_lib_set_diam_and_print(sollya_obj_t obj1) {
 void sollya_lib_set_display_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeDisplayAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeDisplayAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -655,7 +655,7 @@ void sollya_lib_set_display_and_print(sollya_obj_t obj1) {
 void sollya_lib_set_verbosity_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeVerbosityAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeVerbosityAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -663,7 +663,7 @@ void sollya_lib_set_verbosity_and_print(sollya_obj_t obj1) {
 void sollya_lib_set_canonical_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeCanonicalAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeCanonicalAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -671,7 +671,7 @@ void sollya_lib_set_canonical_and_print(sollya_obj_t obj1) {
 void sollya_lib_set_autosimplify_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeAutoSimplifyAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeAutoSimplifyAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -679,7 +679,7 @@ void sollya_lib_set_autosimplify_and_print(sollya_obj_t obj1) {
 void sollya_lib_set_fullparentheses_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeFullParenAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeFullParenAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -687,7 +687,7 @@ void sollya_lib_set_fullparentheses_and_print(sollya_obj_t obj1) {
 void sollya_lib_set_showmessagenumbers_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeShowMessageNumbersAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeShowMessageNumbersAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -695,7 +695,7 @@ void sollya_lib_set_showmessagenumbers_and_print(sollya_obj_t obj1) {
 void sollya_lib_set_taylorrecursions_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeTaylorRecursAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeTaylorRecursAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -703,7 +703,7 @@ void sollya_lib_set_taylorrecursions_and_print(sollya_obj_t obj1) {
 void sollya_lib_set_timing_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeTimingAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeTimingAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -711,7 +711,7 @@ void sollya_lib_set_timing_and_print(sollya_obj_t obj1) {
 void sollya_lib_set_midpointmode_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeMidpointAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeMidpointAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -719,7 +719,7 @@ void sollya_lib_set_midpointmode_and_print(sollya_obj_t obj1) {
 void sollya_lib_set_dieonerrormode_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeDieOnErrorAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeDieOnErrorAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -727,7 +727,7 @@ void sollya_lib_set_dieonerrormode_and_print(sollya_obj_t obj1) {
 void sollya_lib_set_rationalmode_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeRationalModeAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeRationalModeAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -735,7 +735,7 @@ void sollya_lib_set_rationalmode_and_print(sollya_obj_t obj1) {
 void sollya_lib_set_roundingwarnings_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeSuppressWarningsAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeSuppressWarningsAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -743,7 +743,7 @@ void sollya_lib_set_roundingwarnings_and_print(sollya_obj_t obj1) {
 void sollya_lib_set_hopitalrecursions_and_print(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeHopitalRecursAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeHopitalRecursAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -751,7 +751,7 @@ void sollya_lib_set_hopitalrecursions_and_print(sollya_obj_t obj1) {
 void sollya_lib_set_prec(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makePrecStillAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makePrecStillAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -759,7 +759,7 @@ void sollya_lib_set_prec(sollya_obj_t obj1) {
 void sollya_lib_set_points(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makePointsStillAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makePointsStillAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -767,7 +767,7 @@ void sollya_lib_set_points(sollya_obj_t obj1) {
 void sollya_lib_set_diam(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeDiamStillAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeDiamStillAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -775,7 +775,7 @@ void sollya_lib_set_diam(sollya_obj_t obj1) {
 void sollya_lib_set_display(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeDisplayStillAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeDisplayStillAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -783,7 +783,7 @@ void sollya_lib_set_display(sollya_obj_t obj1) {
 void sollya_lib_set_verbosity(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeVerbosityStillAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeVerbosityStillAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -791,7 +791,7 @@ void sollya_lib_set_verbosity(sollya_obj_t obj1) {
 void sollya_lib_set_canonical(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeCanonicalStillAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeCanonicalStillAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -799,7 +799,7 @@ void sollya_lib_set_canonical(sollya_obj_t obj1) {
 void sollya_lib_set_autosimplify(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeAutoSimplifyStillAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeAutoSimplifyStillAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -807,7 +807,7 @@ void sollya_lib_set_autosimplify(sollya_obj_t obj1) {
 void sollya_lib_set_fullparentheses(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeFullParenStillAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeFullParenStillAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -815,7 +815,7 @@ void sollya_lib_set_fullparentheses(sollya_obj_t obj1) {
 void sollya_lib_set_showmessagenumbers(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeShowMessageNumbersStillAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeShowMessageNumbersStillAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -823,7 +823,7 @@ void sollya_lib_set_showmessagenumbers(sollya_obj_t obj1) {
 void sollya_lib_set_taylorrecursions(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeTaylorRecursStillAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeTaylorRecursStillAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -831,7 +831,7 @@ void sollya_lib_set_taylorrecursions(sollya_obj_t obj1) {
 void sollya_lib_set_timing(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeTimingStillAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeTimingStillAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -839,7 +839,7 @@ void sollya_lib_set_timing(sollya_obj_t obj1) {
 void sollya_lib_set_midpointmode(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeMidpointStillAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeMidpointStillAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -847,7 +847,7 @@ void sollya_lib_set_midpointmode(sollya_obj_t obj1) {
 void sollya_lib_set_dieonerrormode(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeDieOnErrorStillAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeDieOnErrorStillAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -855,7 +855,7 @@ void sollya_lib_set_dieonerrormode(sollya_obj_t obj1) {
 void sollya_lib_set_rationalmode(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeRationalModeStillAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeRationalModeStillAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -863,7 +863,7 @@ void sollya_lib_set_rationalmode(sollya_obj_t obj1) {
 void sollya_lib_set_roundingwarnings(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeSuppressWarningsStillAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeSuppressWarningsStillAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
@@ -871,14 +871,14 @@ void sollya_lib_set_roundingwarnings(sollya_obj_t obj1) {
 void sollya_lib_set_hopitalrecursions(sollya_obj_t obj1) {
   node *thingToExecute;
   if (obj1 == NULL) return;
-  thingToExecute = makeHopitalRecursStillAssign(copyThing(obj1));
+  thingToExecute = addMemRef(makeHopitalRecursStillAssign(copyThing(obj1)));
   executeCommand(thingToExecute);
   freeThing(thingToExecute);
 }
 
 sollya_obj_t sollya_lib_free_variable() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeVariable();
+  thingToEvaluate = addMemRef(makeVariable());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -888,7 +888,7 @@ sollya_obj_t sollya_lib_and(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeAnd(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeAnd(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -898,7 +898,7 @@ sollya_obj_t sollya_lib_or(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeOr(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeOr(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -907,7 +907,7 @@ sollya_obj_t sollya_lib_or(sollya_obj_t obj1, sollya_obj_t obj2) {
 sollya_obj_t sollya_lib_negate(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeNegation(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeNegation(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -917,7 +917,7 @@ sollya_obj_t sollya_lib_cmp_equal(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeCompareEqual(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeCompareEqual(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -927,7 +927,7 @@ sollya_obj_t sollya_lib_cmp_in(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeCompareIn(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeCompareIn(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -937,7 +937,7 @@ sollya_obj_t sollya_lib_cmp_less(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeCompareLess(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeCompareLess(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -947,7 +947,7 @@ sollya_obj_t sollya_lib_cmp_greater(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeCompareGreater(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeCompareGreater(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -957,7 +957,7 @@ sollya_obj_t sollya_lib_cmp_less_equal(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeCompareLessEqual(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeCompareLessEqual(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -967,7 +967,7 @@ sollya_obj_t sollya_lib_cmp_greater_equal(sollya_obj_t obj1, sollya_obj_t obj2) 
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeCompareGreaterEqual(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeCompareGreaterEqual(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -977,7 +977,7 @@ sollya_obj_t sollya_lib_cmp_not_equal(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeCompareNotEqual(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeCompareNotEqual(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -987,7 +987,7 @@ sollya_obj_t sollya_lib_add(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeAdd(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeAdd(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -997,7 +997,7 @@ sollya_obj_t sollya_lib_sub(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeSub(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeSub(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1007,7 +1007,7 @@ sollya_obj_t sollya_lib_concat(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeConcat(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeConcat(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1017,7 +1017,7 @@ sollya_obj_t sollya_lib_append(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeAppend(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeAppend(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1027,7 +1027,7 @@ sollya_obj_t sollya_lib_prepend(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makePrepend(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makePrepend(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1043,7 +1043,7 @@ sollya_obj_t sollya_lib_apply(sollya_obj_t obj1, ...) {
     thinglist->next->value = makeUnit();
     thinglist->next->next = NULL;
   }
-  thingToEvaluate = makeApply((node *) (thinglist->value), thinglist->next);
+  thingToEvaluate = addMemRef(makeApply((node *) (thinglist->value), thinglist->next));
   evaluatedThing = evaluateThing(thingToEvaluate);
   safeFree(thinglist);
   freeThing(thingToEvaluate);
@@ -1060,7 +1060,7 @@ sollya_obj_t sollya_lib_v_apply(sollya_obj_t obj1, va_list varlist) {
     thinglist->next->value = makeUnit();
     thinglist->next->next = NULL;
   }
-  thingToEvaluate = makeApply((node *) (thinglist->value), thinglist->next);
+  thingToEvaluate = addMemRef(makeApply((node *) (thinglist->value), thinglist->next));
   evaluatedThing = evaluateThing(thingToEvaluate);
   safeFree(thinglist);
   freeThing(thingToEvaluate);
@@ -1091,7 +1091,7 @@ sollya_obj_t sollya_lib_execute_procedure(sollya_obj_t obj1, ...) {
     }
   }
   va_end(varlist);
-  thingToEvaluate = makeApply(copyThing(obj1),thinglist);
+  thingToEvaluate = addMemRef(makeApply(copyThing(obj1),thinglist));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1118,7 +1118,7 @@ sollya_obj_t sollya_lib_v_execute_procedure(sollya_obj_t obj1, va_list varlist) 
       curr->next = NULL;
     }
   }
-  thingToEvaluate = makeApply(copyThing(obj1),thinglist);
+  thingToEvaluate = addMemRef(makeApply(copyThing(obj1),thinglist));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1127,7 +1127,7 @@ sollya_obj_t sollya_lib_v_execute_procedure(sollya_obj_t obj1, va_list varlist) 
 sollya_obj_t sollya_lib_approx(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeEvalConst(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeEvalConst(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1137,7 +1137,7 @@ sollya_obj_t sollya_lib_mul(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeMul(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeMul(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1147,7 +1147,7 @@ sollya_obj_t sollya_lib_div(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeDiv(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeDiv(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1157,7 +1157,7 @@ sollya_obj_t sollya_lib_pow(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makePow(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makePow(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1166,7 +1166,7 @@ sollya_obj_t sollya_lib_pow(sollya_obj_t obj1, sollya_obj_t obj2) {
 sollya_obj_t sollya_lib_neg(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeNeg(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeNeg(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1175,7 +1175,7 @@ sollya_obj_t sollya_lib_neg(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_sup(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeDeboundMax(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeDeboundMax(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1184,7 +1184,7 @@ sollya_obj_t sollya_lib_sup(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_mid(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeDeboundMid(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeDeboundMid(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1193,7 +1193,7 @@ sollya_obj_t sollya_lib_mid(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_inf(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeDeboundMin(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeDeboundMin(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1202,7 +1202,7 @@ sollya_obj_t sollya_lib_inf(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_diff(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeDiff(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeDiff(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1213,7 +1213,7 @@ sollya_obj_t sollya_lib_bashevaluate(sollya_obj_t obj1, ...) {
   MAKE_THINGLIST_DECLS(thinglist);
   if (obj1 == NULL) return NULL;
   MAKE_THINGLIST_FROM_VARIADIC(obj1);
-  thingToEvaluate = makeBashevaluate(thinglist);
+  thingToEvaluate = addMemRef(makeBashevaluate(thinglist));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1224,7 +1224,7 @@ sollya_obj_t sollya_lib_v_bashevaluate(sollya_obj_t obj1, va_list varlist) {
   MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
   if (obj1 == NULL) return NULL;
   MAKE_THINGLIST_FROM_VA_LIST(obj1,varlist);
-  thingToEvaluate = makeBashevaluate(thinglist);
+  thingToEvaluate = addMemRef(makeBashevaluate(thinglist));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1232,7 +1232,7 @@ sollya_obj_t sollya_lib_v_bashevaluate(sollya_obj_t obj1, va_list varlist) {
 
 sollya_obj_t sollya_lib_getsuppressedmessages() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeGetSuppressedMessages();
+  thingToEvaluate = addMemRef(makeGetSuppressedMessages());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1240,7 +1240,7 @@ sollya_obj_t sollya_lib_getsuppressedmessages() {
 
 sollya_obj_t sollya_lib_getbacktrace() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeGetBacktrace();
+  thingToEvaluate = addMemRef(makeGetBacktrace());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1253,7 +1253,7 @@ sollya_obj_t sollya_lib_remez(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t
   if (obj2 == NULL) return NULL;
   if (obj3 == NULL) return NULL;
   MAKE_THINGLIST_FROM_VARIADIC(obj3);
-  thingToEvaluate = makeRemez(addElement(addElement(thinglist, copyThing(obj2)),copyThing(obj1)));
+  thingToEvaluate = addMemRef(makeRemez(addElement(addElement(thinglist, copyThing(obj2)),copyThing(obj1))));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1266,7 +1266,7 @@ sollya_obj_t sollya_lib_v_remez(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj
   if (obj2 == NULL) return NULL;
   if (obj3 == NULL) return NULL;
   MAKE_THINGLIST_FROM_VA_LIST(obj3,varlist);
-  thingToEvaluate = makeRemez(addElement(addElement(thinglist, copyThing(obj2)),copyThing(obj1)));
+  thingToEvaluate = addMemRef(makeRemez(addElement(addElement(thinglist, copyThing(obj2)),copyThing(obj1))));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1280,7 +1280,7 @@ sollya_obj_t sollya_lib_annotatefunction(sollya_obj_t obj1, sollya_obj_t obj2, s
   if (obj3 == NULL) return NULL;
   if (obj4 == NULL) return NULL;
   MAKE_THINGLIST_FROM_VARIADIC(obj4);
-  thingToEvaluate = makeAnnotateFunction(addElement(addElement(addElement(thinglist, copyThing(obj3)), copyThing(obj2)),copyThing(obj1)));
+  thingToEvaluate = addMemRef(makeAnnotateFunction(addElement(addElement(addElement(thinglist, copyThing(obj3)), copyThing(obj2)),copyThing(obj1))));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1294,7 +1294,7 @@ sollya_obj_t sollya_lib_v_annotatefunction(sollya_obj_t obj1, sollya_obj_t obj2,
   if (obj3 == NULL) return NULL;
   if (obj4 == NULL) return NULL;
   MAKE_THINGLIST_FROM_VA_LIST(obj4,varlist);
-  thingToEvaluate = makeAnnotateFunction(addElement(addElement(addElement(thinglist, copyThing(obj3)), copyThing(obj2)),copyThing(obj1)));
+  thingToEvaluate = addMemRef(makeAnnotateFunction(addElement(addElement(addElement(thinglist, copyThing(obj3)), copyThing(obj2)),copyThing(obj1))));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1305,7 +1305,7 @@ sollya_obj_t sollya_lib_min(sollya_obj_t obj1, ...) {
   MAKE_THINGLIST_DECLS(thinglist);
   if (obj1 == NULL) return NULL;
   MAKE_THINGLIST_FROM_VARIADIC(obj1);
-  thingToEvaluate = makeMin(thinglist);
+  thingToEvaluate = addMemRef(makeMin(thinglist));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1316,7 +1316,7 @@ sollya_obj_t sollya_lib_v_min(sollya_obj_t obj1, va_list varlist) {
   MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
   if (obj1 == NULL) return NULL;
   MAKE_THINGLIST_FROM_VA_LIST(obj1,varlist);
-  thingToEvaluate = makeMin(thinglist);
+  thingToEvaluate = addMemRef(makeMin(thinglist));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1327,7 +1327,7 @@ sollya_obj_t sollya_lib_max(sollya_obj_t obj1, ...) {
   MAKE_THINGLIST_DECLS(thinglist);
   if (obj1 == NULL) return NULL;
   MAKE_THINGLIST_FROM_VARIADIC(obj1);
-  thingToEvaluate = makeMax(thinglist);
+  thingToEvaluate = addMemRef(makeMax(thinglist));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1338,7 +1338,7 @@ sollya_obj_t sollya_lib_v_max(sollya_obj_t obj1, va_list varlist) {
   MAKE_THINGLIST_DECLS_FROM_VA_LIST(thinglist);
   if (obj1 == NULL) return NULL;
   MAKE_THINGLIST_FROM_VA_LIST(obj1,varlist);
-  thingToEvaluate = makeMax(thinglist);
+  thingToEvaluate = addMemRef(makeMax(thinglist));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1352,7 +1352,7 @@ sollya_obj_t sollya_lib_fpminimax(sollya_obj_t obj1, sollya_obj_t obj2, sollya_o
   if (obj3 == NULL) return NULL;
   if (obj4 == NULL) return NULL;
   MAKE_THINGLIST_FROM_VARIADIC(obj4);
-  thingToEvaluate = makeFPminimax(addElement(addElement(addElement(thinglist, copyThing(obj3)), copyThing(obj2)),copyThing(obj1)));
+  thingToEvaluate = addMemRef(makeFPminimax(addElement(addElement(addElement(thinglist, copyThing(obj3)), copyThing(obj2)),copyThing(obj1))));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1366,7 +1366,7 @@ sollya_obj_t sollya_lib_v_fpminimax(sollya_obj_t obj1, sollya_obj_t obj2, sollya
   if (obj3 == NULL) return NULL;
   if (obj4 == NULL) return NULL;
   MAKE_THINGLIST_FROM_VA_LIST(obj4,varlist);
-  thingToEvaluate = makeFPminimax(addElement(addElement(addElement(thinglist, copyThing(obj3)), copyThing(obj2)),copyThing(obj1)));
+  thingToEvaluate = addMemRef(makeFPminimax(addElement(addElement(addElement(thinglist, copyThing(obj3)), copyThing(obj2)),copyThing(obj1))));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1375,7 +1375,7 @@ sollya_obj_t sollya_lib_v_fpminimax(sollya_obj_t obj1, sollya_obj_t obj2, sollya
 sollya_obj_t sollya_lib_horner(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeHorner(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeHorner(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1384,7 +1384,7 @@ sollya_obj_t sollya_lib_horner(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_canonical(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeCanonicalThing(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeCanonicalThing(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1393,7 +1393,7 @@ sollya_obj_t sollya_lib_canonical(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_expand(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeExpand(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeExpand(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1402,7 +1402,7 @@ sollya_obj_t sollya_lib_expand(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_dirtysimplify(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeDirtysimplify(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeDirtysimplify(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1411,7 +1411,7 @@ sollya_obj_t sollya_lib_dirtysimplify(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_simplify(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeSimplifySafe(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeSimplifySafe(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1422,7 +1422,7 @@ sollya_obj_t sollya_lib_taylor(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
   if (obj3 == NULL) return NULL;
-  thingToEvaluate = makeTaylor(copyThing(obj1),copyThing(obj2),copyThing(obj3));
+  thingToEvaluate = addMemRef(makeTaylor(copyThing(obj1),copyThing(obj2),copyThing(obj3)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1435,7 +1435,7 @@ sollya_obj_t sollya_lib_taylorform(sollya_obj_t obj1, sollya_obj_t obj2, sollya_
   if (obj2 == NULL) return NULL;
   if (obj3 == NULL) return NULL;
   MAKE_THINGLIST_FROM_VARIADIC(obj3);
-  thingToEvaluate = makeTaylorform(addElement(addElement(thinglist, copyThing(obj2)),copyThing(obj1)));
+  thingToEvaluate = addMemRef(makeTaylorform(addElement(addElement(thinglist, copyThing(obj2)),copyThing(obj1))));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1448,7 +1448,7 @@ sollya_obj_t sollya_lib_v_taylorform(sollya_obj_t obj1, sollya_obj_t obj2, solly
   if (obj2 == NULL) return NULL;
   if (obj3 == NULL) return NULL;
   MAKE_THINGLIST_FROM_VA_LIST(obj3,varlist);
-  thingToEvaluate = makeTaylorform(addElement(addElement(thinglist, copyThing(obj2)),copyThing(obj1)));
+  thingToEvaluate = addMemRef(makeTaylorform(addElement(addElement(thinglist, copyThing(obj2)),copyThing(obj1))));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1459,7 +1459,7 @@ sollya_obj_t sollya_lib_chebyshevform(sollya_obj_t obj1, sollya_obj_t obj2, soll
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
   if (obj3 == NULL) return NULL;
-  thingToEvaluate = makeChebyshevform(addElement(addElement(addElement(NULL,copyThing(obj3)),copyThing(obj2)),copyThing(obj1)));
+  thingToEvaluate = addMemRef(makeChebyshevform(addElement(addElement(addElement(NULL,copyThing(obj3)),copyThing(obj2)),copyThing(obj1))));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1470,7 +1470,7 @@ sollya_obj_t sollya_lib_autodiff(sollya_obj_t obj1, sollya_obj_t obj2, sollya_ob
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
   if (obj3 == NULL) return NULL;
-  thingToEvaluate = makeAutodiff(addElement(addElement(addElement(NULL,copyThing(obj3)),copyThing(obj2)),copyThing(obj1)));
+  thingToEvaluate = addMemRef(makeAutodiff(addElement(addElement(addElement(NULL,copyThing(obj3)),copyThing(obj2)),copyThing(obj1))));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1479,7 +1479,7 @@ sollya_obj_t sollya_lib_autodiff(sollya_obj_t obj1, sollya_obj_t obj2, sollya_ob
 sollya_obj_t sollya_lib_degree(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeDegree(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeDegree(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1488,7 +1488,7 @@ sollya_obj_t sollya_lib_degree(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_numerator(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeNumerator(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeNumerator(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1497,7 +1497,7 @@ sollya_obj_t sollya_lib_numerator(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_denominator(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeDenominator(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeDenominator(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1507,7 +1507,7 @@ sollya_obj_t sollya_lib_substitute(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeSubstitute(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeSubstitute(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1517,7 +1517,7 @@ sollya_obj_t sollya_lib_composepolynomials(sollya_obj_t obj1, sollya_obj_t obj2)
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeComposePolynomials(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeComposePolynomials(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1527,7 +1527,7 @@ sollya_obj_t sollya_lib_coeff(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeCoeff(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeCoeff(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1537,7 +1537,7 @@ sollya_obj_t sollya_lib_subpoly(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeSubpoly(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeSubpoly(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1547,7 +1547,7 @@ sollya_obj_t sollya_lib_roundcoefficients(sollya_obj_t obj1, sollya_obj_t obj2) 
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeRoundcoefficients(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeRoundcoefficients(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1557,7 +1557,7 @@ sollya_obj_t sollya_lib_rationalapprox(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeRationalapprox(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeRationalapprox(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1568,7 +1568,7 @@ sollya_obj_t sollya_lib_round(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj_t
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
   if (obj3 == NULL) return NULL;
-  thingToEvaluate = makeRoundToFormat(copyThing(obj1),copyThing(obj2),copyThing(obj3));
+  thingToEvaluate = addMemRef(makeRoundToFormat(copyThing(obj1),copyThing(obj2),copyThing(obj3)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1578,7 +1578,7 @@ sollya_obj_t sollya_lib_evaluate(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeEvaluate(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeEvaluate(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1587,7 +1587,7 @@ sollya_obj_t sollya_lib_evaluate(sollya_obj_t obj1, sollya_obj_t obj2) {
 sollya_obj_t sollya_lib_parse(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeParse(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeParse(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1596,7 +1596,7 @@ sollya_obj_t sollya_lib_parse(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_readxml(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeReadXml(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeReadXml(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1608,7 +1608,7 @@ sollya_obj_t sollya_lib_infnorm(sollya_obj_t obj1, sollya_obj_t obj2, ...) {
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
   MAKE_THINGLIST_FROM_VARIADIC(obj2);
-  thingToEvaluate = makeInfnorm(addElement(thinglist, copyThing(obj1)));
+  thingToEvaluate = addMemRef(makeInfnorm(addElement(thinglist, copyThing(obj1))));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1620,7 +1620,7 @@ sollya_obj_t sollya_lib_v_infnorm(sollya_obj_t obj1, sollya_obj_t obj2, va_list 
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
   MAKE_THINGLIST_FROM_VA_LIST(obj2,varlist);
-  thingToEvaluate = makeInfnorm(addElement(thinglist, copyThing(obj1)));
+  thingToEvaluate = addMemRef(makeInfnorm(addElement(thinglist, copyThing(obj1))));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1633,8 +1633,8 @@ sollya_obj_t sollya_lib_supnorm(sollya_obj_t obj1, sollya_obj_t obj2, sollya_obj
   if (obj3 == NULL) return NULL;
   if (obj4 == NULL) return NULL;
   if (obj5 == NULL) return NULL;
-  thingToEvaluate = makeSupnorm(addElement(addElement(addElement(addElement(addElement(NULL,copyThing(obj5)),copyThing(obj4)),
-                                                                 copyThing(obj3)),copyThing(obj2)),copyThing(obj1)));
+  thingToEvaluate = addMemRef(makeSupnorm(addElement(addElement(addElement(addElement(addElement(NULL,copyThing(obj5)),copyThing(obj4)),
+									   copyThing(obj3)),copyThing(obj2)),copyThing(obj1))));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1644,7 +1644,7 @@ sollya_obj_t sollya_lib_findzeros(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeFindZeros(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeFindZeros(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1654,7 +1654,7 @@ sollya_obj_t sollya_lib_dirtyinfnorm(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeDirtyInfnorm(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeDirtyInfnorm(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1664,7 +1664,7 @@ sollya_obj_t sollya_lib_numberroots(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeNumberRoots(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeNumberRoots(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1674,7 +1674,7 @@ sollya_obj_t sollya_lib_integral(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeIntegral(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeIntegral(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1684,7 +1684,7 @@ sollya_obj_t sollya_lib_dirtyintegral(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeDirtyIntegral(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeDirtyIntegral(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1700,7 +1700,7 @@ sollya_obj_t sollya_lib_implementpoly(sollya_obj_t obj1, sollya_obj_t obj2, soll
   if (obj5 == NULL) return NULL;
   if (obj6 == NULL) return NULL;
   MAKE_THINGLIST_FROM_VARIADIC(obj6);
-  thingToEvaluate = makeImplementPoly(addElement(addElement(addElement(addElement(addElement(thinglist, copyThing(obj5)), copyThing(obj4)),copyThing(obj3)),copyThing(obj2)),copyThing(obj1)));
+  thingToEvaluate = addMemRef(makeImplementPoly(addElement(addElement(addElement(addElement(addElement(thinglist, copyThing(obj5)), copyThing(obj4)),copyThing(obj3)),copyThing(obj2)),copyThing(obj1))));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1716,7 +1716,7 @@ sollya_obj_t sollya_lib_v_implementpoly(sollya_obj_t obj1, sollya_obj_t obj2, so
   if (obj5 == NULL) return NULL;
   if (obj6 == NULL) return NULL;
   MAKE_THINGLIST_FROM_VA_LIST(obj6,varlist);
-  thingToEvaluate = makeImplementPoly(addElement(addElement(addElement(addElement(addElement(thinglist, copyThing(obj5)), copyThing(obj4)),copyThing(obj3)),copyThing(obj2)),copyThing(obj1)));
+  thingToEvaluate = addMemRef(makeImplementPoly(addElement(addElement(addElement(addElement(addElement(thinglist, copyThing(obj5)), copyThing(obj4)),copyThing(obj3)),copyThing(obj2)),copyThing(obj1))));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1727,7 +1727,7 @@ sollya_obj_t sollya_lib_checkinfnorm(sollya_obj_t obj1, sollya_obj_t obj2, solly
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
   if (obj3 == NULL) return NULL; 
-  thingToEvaluate = makeCheckInfnorm(copyThing(obj1),copyThing(obj2),copyThing(obj3));
+  thingToEvaluate = addMemRef(makeCheckInfnorm(copyThing(obj1),copyThing(obj2),copyThing(obj3)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1741,8 +1741,8 @@ sollya_obj_t sollya_lib_searchgal(sollya_obj_t obj1, sollya_obj_t obj2, sollya_o
   if (obj4 == NULL) return NULL;
   if (obj5 == NULL) return NULL;
   if (obj6 == NULL) return NULL;
-  thingToEvaluate = makeSearchGal(addElement(addElement(addElement(addElement(addElement(addElement(NULL,copyThing(obj6)),copyThing(obj5)),copyThing(obj4)),
-								   copyThing(obj3)),copyThing(obj2)),copyThing(obj1)));
+  thingToEvaluate = addMemRef(makeSearchGal(addElement(addElement(addElement(addElement(addElement(addElement(NULL,copyThing(obj6)),copyThing(obj5)),copyThing(obj4)),
+									     copyThing(obj3)),copyThing(obj2)),copyThing(obj1))));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1755,7 +1755,7 @@ sollya_obj_t sollya_lib_guessdegree(sollya_obj_t obj1, sollya_obj_t obj2, sollya
   if (obj2 == NULL) return NULL;
   if (obj3 == NULL) return NULL;
   MAKE_THINGLIST_FROM_VARIADIC(obj3);
-  thingToEvaluate = makeGuessDegree(addElement(addElement(thinglist, copyThing(obj2)),copyThing(obj1)));
+  thingToEvaluate = addMemRef(makeGuessDegree(addElement(addElement(thinglist, copyThing(obj2)),copyThing(obj1))));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1768,7 +1768,7 @@ sollya_obj_t sollya_lib_v_guessdegree(sollya_obj_t obj1, sollya_obj_t obj2, soll
   if (obj2 == NULL) return NULL;
   if (obj3 == NULL) return NULL;
   MAKE_THINGLIST_FROM_VA_LIST(obj3,varlist);
-  thingToEvaluate = makeGuessDegree(addElement(addElement(thinglist, copyThing(obj2)),copyThing(obj1)));
+  thingToEvaluate = addMemRef(makeGuessDegree(addElement(addElement(thinglist, copyThing(obj2)),copyThing(obj1))));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1778,7 +1778,7 @@ sollya_obj_t sollya_lib_dirtyfindzeros(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
   if (obj2 == NULL) return NULL;
-  thingToEvaluate = makeDirtyFindZeros(copyThing(obj1),copyThing(obj2));
+  thingToEvaluate = addMemRef(makeDirtyFindZeros(copyThing(obj1),copyThing(obj2)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1787,7 +1787,7 @@ sollya_obj_t sollya_lib_dirtyfindzeros(sollya_obj_t obj1, sollya_obj_t obj2) {
 sollya_obj_t sollya_lib_head(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeHead(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeHead(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1796,7 +1796,7 @@ sollya_obj_t sollya_lib_head(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_roundcorrectly(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeRoundCorrectly(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeRoundCorrectly(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1805,7 +1805,7 @@ sollya_obj_t sollya_lib_roundcorrectly(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_revert(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeRevert(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeRevert(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1814,7 +1814,7 @@ sollya_obj_t sollya_lib_revert(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_sort(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeSort(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeSort(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1823,7 +1823,7 @@ sollya_obj_t sollya_lib_sort(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_mantissa(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeMantissa(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeMantissa(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1832,7 +1832,7 @@ sollya_obj_t sollya_lib_mantissa(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_precision(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makePrecision(copyThing(obj1));
+  thingToEvaluate = addMemRef(makePrecision(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1841,7 +1841,7 @@ sollya_obj_t sollya_lib_precision(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_exponent(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeExponent(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeExponent(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1850,7 +1850,7 @@ sollya_obj_t sollya_lib_exponent(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_tail(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeTail(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeTail(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1863,13 +1863,13 @@ sollya_obj_t sollya_lib_range(sollya_obj_t obj1, sollya_obj_t obj2) {
   thingToEvaluate = makeRange(copyThing(obj1),copyThing(obj2));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
-  return evaluatedThing;
+  return addMemRef(evaluatedThing);
 }
 
 sollya_obj_t sollya_lib_sqrt(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeSqrt(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeSqrt(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1878,7 +1878,7 @@ sollya_obj_t sollya_lib_sqrt(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_exp(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeExp(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeExp(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1887,7 +1887,7 @@ sollya_obj_t sollya_lib_exp(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_log(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeLog(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeLog(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1896,7 +1896,7 @@ sollya_obj_t sollya_lib_log(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_log2(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeLog2(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeLog2(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1905,7 +1905,7 @@ sollya_obj_t sollya_lib_log2(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_log10(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeLog10(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeLog10(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1914,7 +1914,7 @@ sollya_obj_t sollya_lib_log10(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_sin(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeSin(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeSin(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1923,7 +1923,7 @@ sollya_obj_t sollya_lib_sin(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_cos(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeCos(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeCos(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1932,7 +1932,7 @@ sollya_obj_t sollya_lib_cos(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_tan(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeTan(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeTan(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1941,7 +1941,7 @@ sollya_obj_t sollya_lib_tan(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_asin(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeAsin(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeAsin(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1950,7 +1950,7 @@ sollya_obj_t sollya_lib_asin(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_acos(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeAcos(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeAcos(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1959,7 +1959,7 @@ sollya_obj_t sollya_lib_acos(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_atan(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeAtan(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeAtan(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1968,7 +1968,7 @@ sollya_obj_t sollya_lib_atan(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_sinh(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeSinh(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeSinh(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1977,7 +1977,7 @@ sollya_obj_t sollya_lib_sinh(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_cosh(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeCosh(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeCosh(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1986,7 +1986,7 @@ sollya_obj_t sollya_lib_cosh(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_tanh(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeTanh(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeTanh(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -1995,7 +1995,7 @@ sollya_obj_t sollya_lib_tanh(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_asinh(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeAsinh(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeAsinh(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2004,7 +2004,7 @@ sollya_obj_t sollya_lib_asinh(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_acosh(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeAcosh(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeAcosh(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2013,7 +2013,7 @@ sollya_obj_t sollya_lib_acosh(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_atanh(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeAtanh(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeAtanh(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2022,7 +2022,7 @@ sollya_obj_t sollya_lib_atanh(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_abs(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeAbs(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeAbs(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2031,7 +2031,7 @@ sollya_obj_t sollya_lib_abs(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_erf(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeErf(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeErf(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2040,7 +2040,7 @@ sollya_obj_t sollya_lib_erf(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_erfc(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeErfc(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeErfc(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2049,7 +2049,7 @@ sollya_obj_t sollya_lib_erfc(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_log1p(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeLog1p(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeLog1p(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2058,7 +2058,7 @@ sollya_obj_t sollya_lib_log1p(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_expm1(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeExpm1(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeExpm1(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2067,7 +2067,7 @@ sollya_obj_t sollya_lib_expm1(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_double(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeDouble(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeDouble(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2076,7 +2076,7 @@ sollya_obj_t sollya_lib_double(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_single(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeSingle(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeSingle(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2085,7 +2085,7 @@ sollya_obj_t sollya_lib_single(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_quad(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeQuad(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeQuad(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2094,7 +2094,7 @@ sollya_obj_t sollya_lib_quad(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_halfprecision(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeHalfPrecision(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeHalfPrecision(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2103,7 +2103,7 @@ sollya_obj_t sollya_lib_halfprecision(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_double_double(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeDoubledouble(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeDoubledouble(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2112,7 +2112,7 @@ sollya_obj_t sollya_lib_double_double(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_triple_double(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeTripledouble(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeTripledouble(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2121,7 +2121,7 @@ sollya_obj_t sollya_lib_triple_double(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_doubleextended(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeDoubleextended(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeDoubleextended(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2130,7 +2130,7 @@ sollya_obj_t sollya_lib_doubleextended(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_ceil(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeCeil(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeCeil(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2139,7 +2139,7 @@ sollya_obj_t sollya_lib_ceil(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_floor(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeFloor(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeFloor(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2148,7 +2148,7 @@ sollya_obj_t sollya_lib_floor(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_nearestint(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeNearestInt(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeNearestInt(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2158,6 +2158,7 @@ sollya_obj_t sollya_lib_libraryconstant(char *name, void (*func)(mpfr_t, mp_prec
   node *thingToEvaluate, *evaluatedThing;
   thingToEvaluate = sollya_lib_build_function_libraryconstant(name, func);
   if (thingToEvaluate == NULL) return NULL;
+  thingToEvaluate = addMemRef(thingToEvaluate);
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2168,6 +2169,7 @@ sollya_obj_t sollya_lib_libraryfunction(sollya_obj_t obj1, char *name, int (*fun
   if (obj1 == NULL) return NULL;
   thingToEvaluate = sollya_lib_build_function_libraryfunction(copyThing(obj1),name,func);
   if (thingToEvaluate == NULL) return NULL;
+  thingToEvaluate = addMemRef(thingToEvaluate);
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2177,6 +2179,7 @@ sollya_obj_t sollya_lib_libraryconstant_with_data(char *name, void (*func)(mpfr_
   node *thingToEvaluate, *evaluatedThing;
   thingToEvaluate = sollya_lib_build_function_libraryconstant_with_data(name, func, data, dealloc);
   if (thingToEvaluate == NULL) return NULL;
+  thingToEvaluate = addMemRef(thingToEvaluate);
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2187,6 +2190,7 @@ sollya_obj_t sollya_lib_libraryfunction_with_data(sollya_obj_t obj1, char *name,
   if (obj1 == NULL) return NULL;
   thingToEvaluate = sollya_lib_build_function_libraryfunction_with_data(copyThing(obj1),name,func,data,dealloc);
   if (thingToEvaluate == NULL) return NULL;
+  thingToEvaluate = addMemRef(thingToEvaluate);
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2198,6 +2202,7 @@ sollya_obj_t sollya_lib_procedurefunction(sollya_obj_t obj1, sollya_obj_t obj2) 
   if (obj2 == NULL) return NULL;
   thingToEvaluate = sollya_lib_build_function_procedurefunction(copyThing(obj1), copyThing(obj2));
   if (thingToEvaluate == NULL) return NULL;
+  thingToEvaluate = addMemRef(thingToEvaluate);
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2206,7 +2211,7 @@ sollya_obj_t sollya_lib_procedurefunction(sollya_obj_t obj1, sollya_obj_t obj2) 
 sollya_obj_t sollya_lib_length(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeLength(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeLength(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2215,7 +2220,7 @@ sollya_obj_t sollya_lib_length(sollya_obj_t obj1) {
 sollya_obj_t sollya_lib_objectname(sollya_obj_t obj1) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;
-  thingToEvaluate = makeObjectName(copyThing(obj1));
+  thingToEvaluate = addMemRef(makeObjectName(copyThing(obj1)));
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2223,7 +2228,7 @@ sollya_obj_t sollya_lib_objectname(sollya_obj_t obj1) {
 
 sollya_obj_t sollya_lib_get_prec() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makePrecDeref();
+  thingToEvaluate = addMemRef(makePrecDeref());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2231,7 +2236,7 @@ sollya_obj_t sollya_lib_get_prec() {
 
 sollya_obj_t sollya_lib_get_points() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makePointsDeref();
+  thingToEvaluate = addMemRef(makePointsDeref());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2239,7 +2244,7 @@ sollya_obj_t sollya_lib_get_points() {
 
 sollya_obj_t sollya_lib_get_diam() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeDiamDeref();
+  thingToEvaluate = addMemRef(makeDiamDeref());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2247,7 +2252,7 @@ sollya_obj_t sollya_lib_get_diam() {
 
 sollya_obj_t sollya_lib_get_display() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeDisplayDeref();
+  thingToEvaluate = addMemRef(makeDisplayDeref());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2255,7 +2260,7 @@ sollya_obj_t sollya_lib_get_display() {
 
 sollya_obj_t sollya_lib_get_verbosity() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeVerbosityDeref();
+  thingToEvaluate = addMemRef(makeVerbosityDeref());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2263,7 +2268,7 @@ sollya_obj_t sollya_lib_get_verbosity() {
 
 sollya_obj_t sollya_lib_get_canonical() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeCanonicalDeref();
+  thingToEvaluate = addMemRef(makeCanonicalDeref());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2271,7 +2276,7 @@ sollya_obj_t sollya_lib_get_canonical() {
 
 sollya_obj_t sollya_lib_get_autosimplify() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeAutoSimplifyDeref();
+  thingToEvaluate = addMemRef(makeAutoSimplifyDeref());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2279,7 +2284,7 @@ sollya_obj_t sollya_lib_get_autosimplify() {
 
 sollya_obj_t sollya_lib_get_fullparentheses() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeFullParenDeref();
+  thingToEvaluate = addMemRef(makeFullParenDeref());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2287,7 +2292,7 @@ sollya_obj_t sollya_lib_get_fullparentheses() {
 
 sollya_obj_t sollya_lib_get_showmessagenumbers() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeShowMessageNumbersDeref();
+  thingToEvaluate = addMemRef(makeShowMessageNumbersDeref());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2295,7 +2300,7 @@ sollya_obj_t sollya_lib_get_showmessagenumbers() {
 
 sollya_obj_t sollya_lib_get_taylorrecursions() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeTaylorRecursDeref();
+  thingToEvaluate = addMemRef(makeTaylorRecursDeref());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2303,7 +2308,7 @@ sollya_obj_t sollya_lib_get_taylorrecursions() {
 
 sollya_obj_t sollya_lib_get_timing() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeTimingDeref();
+  thingToEvaluate = addMemRef(makeTimingDeref());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2311,7 +2316,7 @@ sollya_obj_t sollya_lib_get_timing() {
 
 sollya_obj_t sollya_lib_get_midpointmode() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeMidpointDeref();
+  thingToEvaluate = addMemRef(makeMidpointDeref());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2319,7 +2324,7 @@ sollya_obj_t sollya_lib_get_midpointmode() {
 
 sollya_obj_t sollya_lib_get_dieonerrormode() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeDieOnErrorDeref();
+  thingToEvaluate = addMemRef(makeDieOnErrorDeref());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2327,7 +2332,7 @@ sollya_obj_t sollya_lib_get_dieonerrormode() {
 
 sollya_obj_t sollya_lib_get_rationalmode() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeRationalModeDeref();
+  thingToEvaluate = addMemRef(makeRationalModeDeref());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2335,7 +2340,7 @@ sollya_obj_t sollya_lib_get_rationalmode() {
 
 sollya_obj_t sollya_lib_get_roundingwarnings() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeSuppressWarningsDeref();
+  thingToEvaluate = addMemRef(makeSuppressWarningsDeref());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2343,7 +2348,7 @@ sollya_obj_t sollya_lib_get_roundingwarnings() {
 
 sollya_obj_t sollya_lib_get_hopitalrecursions() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeHopitalRecursDeref();
+  thingToEvaluate = addMemRef(makeHopitalRecursDeref());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2351,7 +2356,7 @@ sollya_obj_t sollya_lib_get_hopitalrecursions() {
 
 sollya_obj_t sollya_lib_on() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeOn();
+  thingToEvaluate = addMemRef(makeOn());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2359,7 +2364,7 @@ sollya_obj_t sollya_lib_on() {
 
 sollya_obj_t sollya_lib_off() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeOff();
+  thingToEvaluate = addMemRef(makeOff());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2367,7 +2372,7 @@ sollya_obj_t sollya_lib_off() {
 
 sollya_obj_t sollya_lib_dyadic() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeDyadic();
+  thingToEvaluate = addMemRef(makeDyadic());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2375,7 +2380,7 @@ sollya_obj_t sollya_lib_dyadic() {
 
 sollya_obj_t sollya_lib_powers() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makePowers();
+  thingToEvaluate = addMemRef(makePowers());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2383,7 +2388,7 @@ sollya_obj_t sollya_lib_powers() {
 
 sollya_obj_t sollya_lib_binary() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeBinaryThing();
+  thingToEvaluate = addMemRef(makeBinaryThing());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2391,7 +2396,7 @@ sollya_obj_t sollya_lib_binary() {
 
 sollya_obj_t sollya_lib_hexadecimal() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeHexadecimalThing();
+  thingToEvaluate = addMemRef(makeHexadecimalThing());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2399,7 +2404,7 @@ sollya_obj_t sollya_lib_hexadecimal() {
 
 sollya_obj_t sollya_lib_file() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeFile();
+  thingToEvaluate = addMemRef(makeFile());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2407,7 +2412,7 @@ sollya_obj_t sollya_lib_file() {
 
 sollya_obj_t sollya_lib_postscript() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makePostscript();
+  thingToEvaluate = addMemRef(makePostscript());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2415,7 +2420,7 @@ sollya_obj_t sollya_lib_postscript() {
 
 sollya_obj_t sollya_lib_postscriptfile() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makePostscriptFile();
+  thingToEvaluate = addMemRef(makePostscriptFile());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2423,7 +2428,7 @@ sollya_obj_t sollya_lib_postscriptfile() {
 
 sollya_obj_t sollya_lib_perturb() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makePerturb();
+  thingToEvaluate = addMemRef(makePerturb());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2431,7 +2436,7 @@ sollya_obj_t sollya_lib_perturb() {
 
 sollya_obj_t sollya_lib_round_down() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeRoundDown();
+  thingToEvaluate = addMemRef(makeRoundDown());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2439,7 +2444,7 @@ sollya_obj_t sollya_lib_round_down() {
 
 sollya_obj_t sollya_lib_round_up() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeRoundUp();
+  thingToEvaluate = addMemRef(makeRoundUp());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2447,7 +2452,7 @@ sollya_obj_t sollya_lib_round_up() {
 
 sollya_obj_t sollya_lib_round_towards_zero() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeRoundToZero();
+  thingToEvaluate = addMemRef(makeRoundToZero());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2455,7 +2460,7 @@ sollya_obj_t sollya_lib_round_towards_zero() {
 
 sollya_obj_t sollya_lib_round_to_nearest() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeRoundToNearest();
+  thingToEvaluate = addMemRef(makeRoundToNearest());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2463,7 +2468,7 @@ sollya_obj_t sollya_lib_round_to_nearest() {
 
 sollya_obj_t sollya_lib_honorcoeffprec() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeHonorCoeff();
+  thingToEvaluate = addMemRef(makeHonorCoeff());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2471,7 +2476,7 @@ sollya_obj_t sollya_lib_honorcoeffprec() {
 
 sollya_obj_t sollya_lib_true() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeTrue();
+  thingToEvaluate = addMemRef(makeTrue());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2479,7 +2484,7 @@ sollya_obj_t sollya_lib_true() {
 
 sollya_obj_t sollya_lib_false() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeFalse();
+  thingToEvaluate = addMemRef(makeFalse());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2487,7 +2492,7 @@ sollya_obj_t sollya_lib_false() {
 
 sollya_obj_t sollya_lib_void() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeUnit();
+  thingToEvaluate = addMemRef(makeUnit());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2495,7 +2500,7 @@ sollya_obj_t sollya_lib_void() {
 
 sollya_obj_t sollya_lib_default() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeDefault();
+  thingToEvaluate = addMemRef(makeDefault());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2503,7 +2508,7 @@ sollya_obj_t sollya_lib_default() {
 
 sollya_obj_t sollya_lib_decimal() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeDecimal();
+  thingToEvaluate = addMemRef(makeDecimal());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2511,7 +2516,7 @@ sollya_obj_t sollya_lib_decimal() {
 
 sollya_obj_t sollya_lib_absolute() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeAbsolute();
+  thingToEvaluate = addMemRef(makeAbsolute());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2519,7 +2524,7 @@ sollya_obj_t sollya_lib_absolute() {
 
 sollya_obj_t sollya_lib_relative() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeRelative();
+  thingToEvaluate = addMemRef(makeRelative());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2527,7 +2532,7 @@ sollya_obj_t sollya_lib_relative() {
 
 sollya_obj_t sollya_lib_fixed() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeFixed();
+  thingToEvaluate = addMemRef(makeFixed());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2535,7 +2540,7 @@ sollya_obj_t sollya_lib_fixed() {
 
 sollya_obj_t sollya_lib_floating() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeFloating();
+  thingToEvaluate = addMemRef(makeFloating());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2543,7 +2548,7 @@ sollya_obj_t sollya_lib_floating() {
 
 sollya_obj_t sollya_lib_error() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeError();
+  thingToEvaluate = addMemRef(makeError());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2551,7 +2556,7 @@ sollya_obj_t sollya_lib_error() {
 
 sollya_obj_t sollya_lib_double_obj() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeDoubleSymbol();
+  thingToEvaluate = addMemRef(makeDoubleSymbol());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2559,7 +2564,7 @@ sollya_obj_t sollya_lib_double_obj() {
 
 sollya_obj_t sollya_lib_single_obj() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeSingleSymbol();
+  thingToEvaluate = addMemRef(makeSingleSymbol());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2567,7 +2572,7 @@ sollya_obj_t sollya_lib_single_obj() {
 
 sollya_obj_t sollya_lib_quad_obj() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeQuadSymbol();
+  thingToEvaluate = addMemRef(makeQuadSymbol());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2575,7 +2580,7 @@ sollya_obj_t sollya_lib_quad_obj() {
 
 sollya_obj_t sollya_lib_halfprecision_obj() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeHalfPrecisionSymbol();
+  thingToEvaluate = addMemRef(makeHalfPrecisionSymbol());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2583,7 +2588,7 @@ sollya_obj_t sollya_lib_halfprecision_obj() {
 
 sollya_obj_t sollya_lib_doubleextended_obj() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeDoubleextendedSymbol();
+  thingToEvaluate = addMemRef(makeDoubleextendedSymbol());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2591,7 +2596,7 @@ sollya_obj_t sollya_lib_doubleextended_obj() {
 
 sollya_obj_t sollya_lib_double_double_obj() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeDoubleDoubleSymbol();
+  thingToEvaluate = addMemRef(makeDoubleDoubleSymbol());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2599,7 +2604,7 @@ sollya_obj_t sollya_lib_double_double_obj() {
 
 sollya_obj_t sollya_lib_triple_double_obj() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makeTripleDoubleSymbol();
+  thingToEvaluate = addMemRef(makeTripleDoubleSymbol());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2607,7 +2612,7 @@ sollya_obj_t sollya_lib_triple_double_obj() {
 
 sollya_obj_t sollya_lib_pi() {
   node *thingToEvaluate, *evaluatedThing;
-  thingToEvaluate = makePi();
+  thingToEvaluate = addMemRef(makePi());
   evaluatedThing = evaluateThing(thingToEvaluate);
   freeThing(thingToEvaluate);
   return evaluatedThing;
@@ -2631,13 +2636,13 @@ sollya_obj_t sollya_lib_string(char *str) {
     mystr = str;
     dealloc = 0;
   }
-  res = makeString(str);
+  res = addMemRef(makeString(str));
   if (dealloc) safeFree(mystr);
   return res;
 }
 
 sollya_obj_t sollya_lib_range_from_interval(mpfi_t interval) {
-  sollya_obj_t temp;
+  sollya_obj_t temp, res;
   mp_prec_t prec;
   mpfr_t left, right;
   sollya_mpfi_t myInterval;
@@ -2649,11 +2654,13 @@ sollya_obj_t sollya_lib_range_from_interval(mpfi_t interval) {
   sollya_mpfi_get_left(left,myInterval);
   sollya_mpfi_get_right(right,myInterval);
   temp = makeRange(makeConstant(left),makeConstant(right));
+  res = evaluateThing(temp);
+  freeThing(temp);  
   mpfr_clear(left);
   mpfr_clear(right);
   sollya_mpfi_clear(myInterval);
 
-  return temp;
+  return addMemRef(res);
 }
 
 sollya_obj_t sollya_lib_range_from_bounds(mpfr_t left, mpfr_t right) {
@@ -2661,11 +2668,11 @@ sollya_obj_t sollya_lib_range_from_bounds(mpfr_t left, mpfr_t right) {
   temp = makeRange(makeConstant(left),makeConstant(right));
   res = evaluateThing(temp);
   freeThing(temp);
-  return res;
+  return addMemRef(res);
 }
 
 sollya_obj_t sollya_lib_constant(mpfr_t value) {
-  return makeConstant(value);
+  return addMemRef(makeConstant(value));
 }
 
 sollya_obj_t sollya_lib_constant_from_double(double value) {
@@ -2674,7 +2681,7 @@ sollya_obj_t sollya_lib_constant_from_double(double value) {
 
   mpfr_init2(valueAsMpfr,64); /* On some systems, doubles actually are double-extended */
   mpfr_set_d(valueAsMpfr, value, GMP_RNDN);
-  temp = makeConstant(valueAsMpfr);
+  temp = addMemRef(makeConstant(valueAsMpfr));
   mpfr_clear(valueAsMpfr);
 
   return temp;
@@ -2686,7 +2693,7 @@ sollya_obj_t sollya_lib_constant_from_int(int value) {
 
   mpfr_init2(valueAsMpfr,8 * sizeof(int) + 5);
   mpfr_set_si(valueAsMpfr, value, GMP_RNDN);
-  temp = makeConstant(valueAsMpfr);
+  temp = addMemRef(makeConstant(valueAsMpfr));
   mpfr_clear(valueAsMpfr);
 
   return temp;
@@ -2777,7 +2784,7 @@ sollya_obj_t sollya_lib_constant_from_int64(int64_t value) {
 
   mpfr_init2(valueMpfr, 64);
   sollya_lib_helper_mpfr_from_int64(valueMpfr, value, GMP_RNDN); /* exact as 64 are enough */
-  temp = makeConstant(valueMpfr);
+  temp = addMemRef(makeConstant(valueMpfr));
   mpfr_clear(valueMpfr);
 
   return temp;
@@ -2789,7 +2796,7 @@ sollya_obj_t sollya_lib_constant_from_uint64(uint64_t value) {
 
   mpfr_init2(valueMpfr, 64);
   sollya_lib_helper_mpfr_from_uint64(valueMpfr, value, GMP_RNDN); /* exact as 64 are enough */
-  temp = makeConstant(valueMpfr);
+  temp = addMemRef(makeConstant(valueMpfr));
   mpfr_clear(valueMpfr);
 
   return temp;
@@ -2802,7 +2809,7 @@ sollya_obj_t sollya_lib_constant_from_mpz(mpz_t value) {
   mpfr_init2(temp, getMpzPrecision(value));
   mpfr_set_z(temp, value, GMP_RNDN); /* exact as precision determined to make it exact */
   
-  res = sollya_lib_constant(temp);
+  res = addMemRef(sollya_lib_constant(temp));
 
   mpfr_clear(temp);
 
@@ -2819,10 +2826,10 @@ sollya_obj_t sollya_lib_constant_from_mpq(mpq_t value) {
   mpq_get_num(numerator, value);
   mpq_get_den(denominator, value);
 
-  res = makeDiv(sollya_lib_constant_from_mpz(numerator),
-		sollya_lib_constant_from_mpz(denominator));
+  res = addMemRef(makeDiv(sollya_lib_constant_from_mpz(numerator),
+			  sollya_lib_constant_from_mpz(denominator)));
 
-  simplifiedRes = simplifyTreeErrorfree(res);
+  simplifiedRes = addMemRef(simplifyTreeErrorfree(res));
 
   mpz_clear(numerator);
   mpz_clear(denominator);
@@ -3447,7 +3454,7 @@ int sollya_lib_get_constant_as_int64(int64_t *value, sollya_obj_t obj1) {
   int64_t val;
 
   if (obj1 == NULL) return 0;
-  roundOp = makeNearestInt(makeVariable());
+  roundOp = addMemRef(makeNearestInt(makeVariable()));
   mpfr_init2(temp,8 * sizeof(int64_t) + 10); /* sollya_lib_get_constant_inner may change the precision afterwards */
   if (__sollya_lib_get_constant_inner(temp, obj1, roundOp, &warning)) {
     val = __sollya_lib_helper_mpfr_to_int64(temp);
@@ -3483,7 +3490,7 @@ int sollya_lib_get_constant_as_uint64(uint64_t *value, sollya_obj_t obj1) {
   uint64_t val;
 
   if (obj1 == NULL) return 0;
-  roundOp = makeNearestInt(makeVariable());
+  roundOp = addMemRef(makeNearestInt(makeVariable()));
   mpfr_init2(temp,8 * sizeof(uint64_t) + 10); /* sollya_lib_get_constant_inner may change the precision afterwards */
   if (__sollya_lib_get_constant_inner(temp, obj1, roundOp, &warning)) {
     val = __sollya_lib_helper_mpfr_to_uint64(temp);
@@ -3518,8 +3525,8 @@ sollya_obj_t sollya_lib_list(sollya_obj_t objects[], int num) {
   node *unevaluatedList;
   node *evaluatedList;
 
-  if (num < 1) return makeEmptyList();
-  if (objects == NULL) return makeEmptyList();
+  if (num < 1) return addMemRef(makeEmptyList());
+  if (objects == NULL) return addMemRef(makeEmptyList());
   tempChain = NULL;
   for (i=num-1;i>=0;i--) {
     if (objects[i] != NULL) {
@@ -3527,9 +3534,9 @@ sollya_obj_t sollya_lib_list(sollya_obj_t objects[], int num) {
     }
   }
   if (tempChain == NULL) {
-    return makeEmptyList();
+    return addMemRef(makeEmptyList());
   }
-  unevaluatedList = makeList(tempChain);
+  unevaluatedList = addMemRef(makeList(tempChain));
   evaluatedList = evaluateThing(unevaluatedList);
   freeThing(unevaluatedList);
   return evaluatedList;
@@ -3541,8 +3548,8 @@ sollya_obj_t sollya_lib_end_elliptic_list(sollya_obj_t objects[], int num) {
   node *unevaluatedList;
   node *evaluatedList;
 
-  if (num < 1) return makeError();
-  if (objects == NULL) return makeError();
+  if (num < 1) return addMemRef(makeError());
+  if (objects == NULL) return addMemRef(makeError());
   tempChain = NULL;
   for (i=num-1;i>=0;i--) {
     if (objects[i] != NULL) {
@@ -3550,9 +3557,9 @@ sollya_obj_t sollya_lib_end_elliptic_list(sollya_obj_t objects[], int num) {
     }
   }
   if (tempChain == NULL) {
-    return makeError();
+    return addMemRef(makeError());
   }
-  unevaluatedList = makeFinalEllipticList(tempChain);
+  unevaluatedList = addMemRef(makeFinalEllipticList(tempChain));
   evaluatedList = evaluateThing(unevaluatedList);
   freeThing(unevaluatedList);
   return evaluatedList;
@@ -3633,10 +3640,10 @@ int sollya_lib_get_element_in_list(sollya_obj_t *res, sollya_obj_t obj1, int n) 
 
     mpfr_init2(nAsMpfr, 8 * sizeof(n) + 10);
     mpfr_set_si(nAsMpfr, n, GMP_RNDN); /* exact */
-    indexObj = makeConstant(nAsMpfr);
+    indexObj = addMemRef(makeConstant(nAsMpfr));
     mpfr_clear(nAsMpfr);
 
-    protoObj = makeIndex(evaluatedObj, indexObj);
+    protoObj = addMemRef(makeIndex(evaluatedObj, indexObj));
     result = evaluateThing(protoObj);
     if (res != NULL) {
       *res = result;
@@ -5061,7 +5068,7 @@ int sollya_lib_create_structure(sollya_obj_t *object, sollya_obj_t obj1, char *i
     tempEntry->name = (char *) safeCalloc(strlen(identifier) + 1, sizeof(char));
     strcpy(tempEntry->name, identifier);
     tempEntry->value = copyThing(obj2);
-    myobject = makeStructure(addElement(NULL, tempEntry));
+    myobject = addMemRef(makeStructure(addElement(NULL, tempEntry)));
     if (object != NULL) {
       *object = myobject;
     } else {
@@ -5097,7 +5104,7 @@ int sollya_lib_create_structure(sollya_obj_t *object, sollya_obj_t obj1, char *i
     tempEntry->value = copyThing(obj2);
     tempObj->arguments = addElement(tempObj->arguments, tempEntry);
   }
-  myobject = tempObj;
+  myobject = addMemRef(tempObj);
   if (object != NULL) {
     *object = myobject;
   } else {
@@ -5884,7 +5891,7 @@ sollya_constant_list_t sollya_lib_copy_constant_list(sollya_constant_list_t list
 }
 
 void sollya_lib_clear_constant_list(sollya_constant_list_t list) {
-  if (list != NULL) return;
+  if (list == NULL) return;
   freeChain(list, freeMpfrPtr);
 }
 
@@ -6020,7 +6027,7 @@ sollya_obj_t sollya_lib_build_list(sollya_obj_t obj1, ...) {
   va_list varlist;
 
   if (obj1 == NULL) {
-    return makeEmptyList();
+    return addMemRef(makeEmptyList());
   }
 
   va_start(varlist,obj1);
@@ -6036,7 +6043,7 @@ sollya_obj_t sollya_lib_build_list(sollya_obj_t obj1, ...) {
   }
   va_end(varlist);
 
-  unevaluatedList = makeList(thinglist);
+  unevaluatedList = addMemRef(makeList(thinglist));
   evaluatedList = evaluateThing(unevaluatedList);
   freeThing(unevaluatedList);
   return evaluatedList;
@@ -6048,7 +6055,7 @@ sollya_obj_t sollya_lib_build_end_elliptic_list(sollya_obj_t obj1, ...) {
   va_list varlist;
 
   if (obj1 == NULL) {
-    return makeError();
+    return addMemRef(makeError());
   }
 
   va_start(varlist,obj1);
@@ -6064,7 +6071,7 @@ sollya_obj_t sollya_lib_build_end_elliptic_list(sollya_obj_t obj1, ...) {
   }
   va_end(varlist);
 
-  unevaluatedList = makeFinalEllipticList(thinglist);
+  unevaluatedList = addMemRef(makeFinalEllipticList(thinglist));
   evaluatedList = evaluateThing(unevaluatedList);
   freeThing(unevaluatedList);
   return evaluatedList;
@@ -6076,7 +6083,7 @@ sollya_obj_t sollya_lib_v_build_list(va_list varlist) {
 
   elem = va_arg(varlist,node *);
   if (elem == NULL) {
-    return makeEmptyList();
+    return addMemRef(makeEmptyList());
   }
 
   thinglist = (chain *) safeMalloc(sizeof(chain));
@@ -6090,7 +6097,7 @@ sollya_obj_t sollya_lib_v_build_list(va_list varlist) {
     curr->next = NULL;
   }
 
-  unevaluatedList = makeList(thinglist);
+  unevaluatedList = addMemRef(makeList(thinglist));
   evaluatedList = evaluateThing(unevaluatedList);
   freeThing(unevaluatedList);
   return evaluatedList;
@@ -6102,7 +6109,7 @@ sollya_obj_t sollya_lib_v_build_end_elliptic_list(va_list varlist) {
 
   elem = va_arg(varlist,node *);
   if (elem == NULL) {
-    return makeError();
+    return addMemRef(makeError());
   }
 
   thinglist = (chain *) safeMalloc(sizeof(chain));
@@ -6116,7 +6123,7 @@ sollya_obj_t sollya_lib_v_build_end_elliptic_list(va_list varlist) {
     curr->next = NULL;
   }
 
-  unevaluatedList = makeFinalEllipticList(thinglist);
+  unevaluatedList = addMemRef(makeFinalEllipticList(thinglist));
   evaluatedList = evaluateThing(unevaluatedList);
   freeThing(unevaluatedList);
   return evaluatedList;
