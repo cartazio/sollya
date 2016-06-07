@@ -138,3 +138,11 @@ restart;
 print("=============== Test number 200 ================");
 display=binary!;
 round(Pi,20,RZ);
+
+/*********************************************************************************/
+restart;
+print("=============== Test number 200b ================");
+prec=12!;
+roundingwarnings=on!;
+verbosity=1!;
+printbinary(round(1 - 2^-10000, 170, RD));
