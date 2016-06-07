@@ -8532,6 +8532,9 @@ int polynomialGetDegreeAsInt(polynomial_t p) {
 */
 static inline int __polynomialGetIthCoefficientAsConstantIntIndexPowerCheap(constant_t *c, polynomial_t p, constant_t k, int i) {
   constant_t ic, mk, t, j, a, b, m, n, r, bin, aPowj, bPowr, prod;
+
+  /* Make compiler happy */
+  bin = NULL;
   
   /* Handle stupid inputs */
   if (p == NULL) return 0;
