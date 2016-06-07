@@ -4478,8 +4478,17 @@ node* simplifyTreeErrorfreeInnerst(node *tree, int rec, int doRational) {
   int numberChilds;
   int signOkay, sign;
   node *res;
+  node *kind;
   
   if (tree == NULL) return NULL;
+  if ((tree->nodeType == MEMREF) &&
+      (tree->child1 != NULL) &&
+      (tree->polynomialRepresentation == NULL)) {
+    kind = getMemRefChild(tree);
+    if (accessThruMemRef(kind)->nodeType == CONSTANT) {
+      return copyTree(tree);
+    }
+  }
   if (tree->nodeType == MEMREF) {
     if ((tree->arguments != NULL) &&
 	(*((mp_prec_t *) tree->arguments->value) >= 12) &&
@@ -7694,7 +7703,18 @@ node* simplifyTreeInnerst(node *tree) {
   sollya_mpfi_t tempI;
   int numberChilds;
   node *res;
+  node *kind;
 
+  if ((tree->nodeType == MEMREF) &&
+      (tree->child1 != NULL) &&
+      (tree->polynomialRepresentation == NULL)) {
+    kind = getMemRefChild(tree);
+    if (accessThruMemRef(kind)->nodeType == CONSTANT) {
+      if (mpfr_get_prec(*(accessThruMemRef(kind)->value)) <= tools_precision) {
+	return copyTree(tree);
+      }
+    }
+  }
   if (tree->nodeType == MEMREF) {
     if (tree->polynomialRepresentation != NULL) {
       if (((tree->child1 == NULL) || tree->memRefChildFromPolynomial) && polynomialCoefficientsAreDyadic(tree->polynomialRepresentation, 0)) {

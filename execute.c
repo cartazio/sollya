@@ -6015,11 +6015,23 @@ int evaluateThingToConstant(mpfr_t result, node *tree, mpfr_t *defaultVal, int s
     mpfr_set_prec(result,mpfr_get_prec(*defaultVal));
     simplifyMpfrPrec(result, *defaultVal);
     freeThing(evaluatedResult);
-    return 1;
+    return 2;
   }
 
   if (isPureTree(evaluatedResult)) {
 
+    if ((evaluatedResult->nodeType != MEMREF) || (evaluatedResult->child1 != NULL)) {
+      if (accessThruMemRef(evaluatedResult)->nodeType == CONSTANT) {
+	if (mpfr_number_p(*(accessThruMemRef(evaluatedResult)->value))) {
+	  if (mpfr_get_prec(*(accessThruMemRef(evaluatedResult)->value)) <= mpfr_get_prec(result)) {
+	    simplifyMpfrPrec(result, *(accessThruMemRef(evaluatedResult)->value));
+	    freeThing(evaluatedResult);
+	    return 2;
+	  }
+	}
+      }
+    }
+    
     if (treeSize(evaluatedResult) <= MAXHORNERTREESIZE) {
       simplified2 = horner(evaluatedResult);
       freeThing(evaluatedResult);
