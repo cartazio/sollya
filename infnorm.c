@@ -2585,6 +2585,16 @@ static inline chain* evaluateITaylor(sollya_mpfi_t result, node *func, node *der
   return evaluateITaylorWrapped(result, func, deriv, x, prec, recurse, theo, noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
 }
 
+static inline chain* evaluateITaylorStart(sollya_mpfi_t result, node *func, node *deriv, sollya_mpfi_t x, mp_prec_t prec, int recurse, exprBoundTheo *theo, int noExcludes, int fastAddSub, int workForThin, int noLazyHooks, mp_exp_t *cutoff, int *lazyHookUsed) {
+  if (deriv == NULL) {
+    return evaluateITaylor(result, func, deriv, x, prec, recurse, theo, noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+  }
+  if (accessThruMemRef(func)->nodeType == DIV) {
+    return evaluateITaylorOnDiv(result, func, x, prec, recurse, theo, noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+  }
+  return evaluateITaylor(result, func, deriv, x, prec, recurse, theo, noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+}
+
 static inline chain* evaluateITaylorInner(sollya_mpfi_t result, node *func, node *deriv, sollya_mpfi_t x, mp_prec_t prec, int recurse, exprBoundTheo *theo, int noExcludes, int fastAddSub, int workForThin, int noLazyHooks, mp_exp_t *cutoff, int *lazyHookUsed) {
   mpfr_t xZ, rTl, rTr, leftX, rightX;
   sollya_mpfi_t xZI, xZI2, constantTerm, linearTerm, resultTaylor, resultDirect, temp, temp2;
@@ -3928,7 +3938,7 @@ void evaluateRangeFunctionFast(rangetype yrange, node *func, node *deriv, ranget
   sollya_mpfi_init2(y,prec);
   sollya_mpfi_interv_fr(x,*(xrange.a),*(xrange.b));
 
-  tempChain = evaluateITaylor(y, func, deriv, x, prec, taylorrecursions, NULL, 1,0,0,0,NULL,NULL);
+  tempChain = evaluateITaylorStart(y, func, deriv, x, prec, taylorrecursions, NULL, 1,0,0,0,NULL,NULL);
 
   sollya_mpfi_get_left(*(yrange.a),y);
   sollya_mpfi_get_right(*(yrange.b),y);
@@ -3946,11 +3956,11 @@ void evaluateInterval(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x)
   /* We need more precision in the first steps to get the precision in the end. */
   prec += 10;
 
-  evaluateITaylor(y, func, deriv, x, prec, taylorrecursions, NULL, 1,0,0,0,NULL,NULL);
+  evaluateITaylorStart(y, func, deriv, x, prec, taylorrecursions, NULL, 1,0,0,0,NULL,NULL);
 }
 
 void evaluateIntervalPlain(sollya_mpfi_t y, node *func, sollya_mpfi_t x) {
-  evaluateITaylor(y, func, NULL, x, sollya_mpfi_get_prec(y), taylorrecursions, NULL, 1,0,0,0,NULL,NULL);
+  evaluateITaylorStart(y, func, NULL, x, sollya_mpfi_get_prec(y), taylorrecursions, NULL, 1,0,0,0,NULL,NULL);
 }
 
 static inline void evaluateIntervalInternalFast(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x, int adaptPrecision, int noLazyHooks, mp_exp_t *cutoff, int *lazyHookUsed) {
@@ -3961,7 +3971,7 @@ static inline void evaluateIntervalInternalFast(sollya_mpfi_t y, node *func, nod
   /* We need more precision in the first steps to get the precision in the end. */
   prec += 10;
 
-  evaluateITaylor(y, func, deriv, x, prec, taylorrecursions, NULL, 1,1,adaptPrecision,noLazyHooks,cutoff,lazyHookUsed);
+  evaluateITaylorStart(y, func, deriv, x, prec, taylorrecursions, NULL, 1,1,adaptPrecision,noLazyHooks,cutoff,lazyHookUsed);
 }
 
 void evaluateConstantExpressionToInterval(sollya_mpfi_t y, node *func) {
@@ -4196,7 +4206,7 @@ int checkInfnormI(node *func, node *deriv, sollya_mpfi_t infnormval, sollya_mpfi
 
   sollya_mpfi_init2(evaluateOnRange,prec);
 
-  tempChain = evaluateITaylor(evaluateOnRange, func, deriv, range, prec, taylorrecursions, NULL, 1,0,0,0,NULL,NULL);
+  tempChain = evaluateITaylorStart(evaluateOnRange, func, deriv, range, prec, taylorrecursions, NULL, 1,0,0,0,NULL,NULL);
 
   freeChain(tempChain,freeMpfiPtr);
 
