@@ -2195,28 +2195,94 @@ long int sollya_strtol_impl(const char *nptr, char **endptr, int base) {
   return value;
 }
 
+#define __SOLLYA_DUP2_IMPL_BUF_SIZE 512
+
+/* This is a lazy reimplementation of dup2 that will not work all the
+   time
+*/
 int sollya_dup2_impl(int oldfd, int newfd) {
-  int tmp1, tmp2;
-  /* This is a lazy reimplementation that will not work all the
-     time 
-  */
+  int extraFDs[__SOLLYA_DUP2_IMPL_BUF_SIZE];
+  int extraFDsCount;
+  int tmp;
+  int i;
+  int gotIt;
+  int closingExtraOkay;
+
+  /* Handle stupid input */
   if (oldfd == newfd) return newfd;
-  tmp1 = dup(oldfd);
-  if (tmp1 == -1) return -1;
-  if (close(newfd) != 0) return -1;
-  tmp2 = dup(oldfd);
-  if (close(tmp1) != 0) {
-    if (tmp2 != -1) close(tmp2);
+
+  /* Initialize index extraFDsCount of extra file descriptors */
+  extraFDsCount = 0;
+  
+  /* Get a copy of oldfd, to see if it is a valid 
+     file descriptor 
+  */
+  tmp = dup(oldfd);
+  if (tmp == -1) {
+    /* The oldfd file descriptor does not seem to be valid */
     return -1;
   }
-  if (tmp2 == -1) return -1;
-  if (tmp2 != newfd) {
-    close(tmp2);
-    tmp2 = dup(oldfd);
-    if (tmp2 == -1) return -1;
-    if (tmp2 != newfd) return -1;
+  extraFDs[extraFDsCount] = tmp;
+  extraFDsCount++;
+
+  /* Try to get a copy of the newfd file descriptor. Hence we can
+     handle closing errors on newfd.
+
+     The call may fail, which is not necessarily an issue as the newfd
+     file descriptor may also not be open.
+
+  */
+  tmp = dup(newfd);
+  if (tmp != -1) {
+    extraFDs[extraFDsCount] = tmp;
+    extraFDsCount++;
   }
-  return tmp2;
+
+  /* Close the newfd file descriptor. 
+
+     The call may fail, which is not necessarily an issue as the newfd
+     file descriptor may also not be open.
+
+  */
+  close(newfd);
+
+  /* Try several times to get the right newfd copy of oldfd. */
+  gotIt = 0;
+  for (i=0;i<__SOLLYA_DUP2_IMPL_BUF_SIZE-2;i++) {
+    tmp = dup(oldfd);
+    if (tmp != -1) {
+      if (tmp == newfd) {
+	gotIt = 1;
+	break;
+      } else {
+	extraFDs[extraFDsCount] = tmp;
+	extraFDsCount++;
+      }
+    }
+  }
+
+  /* Close the extra file descriptors */
+  closingExtraOkay = 1;
+  for (i=0;i<extraFDsCount;i++) {
+    if (close(extraFDs[i]) != 0) {
+      closingExtraOkay = 0;
+    }
+  }
+  
+  /* Handle the case when one of the extra file descriptors could not
+     be closed 
+  */
+  if (!closingExtraOkay) {
+    return -1;
+  }
+
+  /* If we got the newfd file descriptor, return it, otherwise return
+     error.
+  */
+  if (gotIt) {
+    return newfd;
+  }
+  return -1;
 }
 
 static inline char *__sollya_strstr_impl_aux(char *haystack, char *needle) {
