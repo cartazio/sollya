@@ -76,7 +76,11 @@ then
   rm -rf "$GMP_PKG_NAME.tar.bz2"
   rm -rf "$GMP_PKG_NAME"
 
-  $GET_PRG http://ftp.gmplib.org/gmp/$GMP_PKG_NAME.tar.bz2 1> $TMPBUFFER 2>&1 ; failure_check
+  $GET_PRG http://gmplib.org/download/gmp/$GMP_PKG_NAME.tar.bz2 1> $TMPBUFFER 2>&1
+  if test "$?" -ne 0
+  then
+    $GET_PRG http://gmplib.org/download/gmp/archive/$GMP_PKG_NAME.tar.bz2 1>> $TMPBUFFER 2>&1 ; failure_check
+  fi
   printf "done.\n"
 
   tar -jxvf $GMP_PKG_NAME.tar.bz2 1> $TMPBUFFER 2>&1 ; failure_check
@@ -229,81 +233,15 @@ fi
 if test -n "$FPLLL_PKG_NAME"
 then
   printf "Downloading FPLLL... "
-  rm -rf "$FPLLL_PKG_NAME.tar.gz"
+  rm -rf "$FPLLL_PKG_NAME.modified.tar.gz"
   rm -rf "$FPLLL_PKG_NAME"
 
-  $GET_PRG http://perso.ens-lyon.fr/damien.stehle/fplll/$FPLLL_PKG_NAME.tar.gz 1> $TMPBUFFER 2>&1 ; failure_check
+  # We use packages with some patches of our own.
+  $GET_PRG http://www-sop.inria.fr/members/Sylvain.Chevillard/fplll_archive/$FPLLL_PKG_NAME.modified.tar.gz 1> $TMPBUFFER 2>&1 ; failure_check
   printf "done.\n"
 
-  tar -zxvf $FPLLL_PKG_NAME.tar.gz 1> $TMPBUFFER 2>&1 ; failure_check
+  tar -zxvf $FPLLL_PKG_NAME.modified.tar.gz 1> $TMPBUFFER 2>&1 ; failure_check
   cd $FPLLL_PKG_NAME
-
-  fplll_patch_configure="false"
-  fplll_patch_makefile="false"
-  case "$FPLLL_PKG_NAME" in
-    libfplll-4.0.4 )
-      fplll_patch_makefile="fplll.Makefile.patch"
-      ;;
-    libfplll-4.0.3 )
-      fplll_patch_configure="fplll.patch"
-      fplll_patch_makefile="fplll.Makefile.patch"
-      ;;
-    libfplll-4.0.2 )
-      fplll_patch_configure="fplll.patch"
-      ;;
-    libfplll-4.0.1 )
-      fplll_patch_configure="fplll.patch"
-      ;;
-    libfplll-3.1.3 )
-      fplll_patch_configure="fplll.patch"
-      ;;
-    libfplll-3.0.12 )
-      fplll_patch_configure="fplll-3.0.12.patch"
-      ;;
-  esac
-
-  if test \( "$fplll_patch_configure" != "false" \) -o \( "$fplll_patch_makefile" != "false" \)
-  then
-    which patch 1> $TMPBUFFER 2>&1; failure_check
-  fi
-  if test "$fplll_patch_configure" != "false"
-  then
-    printf "Downloading FPLLL configure patch... "
-    rm -rf "$fplll_patch_configure"
-    $GET_PRG "http://www-sop.inria.fr/members/Sylvain.Chevillard/$fplll_patch_configure" 1> $TMPBUFFER 2>&1 ; failure_check
-    printf "done.\n"
-    printf "Patching bug in FPLLL configure file... "
-    patch < "$fplll_patch_configure" 1> $TMPBUFFER 2>&1 ; failure_check
-    printf "done.\n"
-  fi
-  if test "$fplll_patch_makefile" != "false"
-  then
-    cd src 1> $TMPBUFFER 2>&1 ; failure_check
-    printf "Downloading FPLLL Makefile patch... "
-    rm -rf "$fplll_patch_makefile"
-    $GET_PRG "http://www-sop.inria.fr/members/Sylvain.Chevillard/$fplll_patch_makefile" 1> $TMPBUFFER 2>&1 ; failure_check
-    printf "done.\n"
-    printf "Patching bug in FPLLL Makefile... "
-    patch < "$fplll_patch_makefile" 1> $TMPBUFFER 2>&1 ; failure_check
-    cd .. 1> $TMPBUFFER 2>&1 ; failure_check
-    printf "done.\n"
-  fi
-  if test \( \( "$fplll_patch_configure" != "false" \) -o \( "$fplll_patch_makefile" != "false" \) \) -a \( "$FPLLL_PKG_NAME" != "libfplll-3.0.12" \)
-  then
-    printf "Running autotools... "
-    autoreconf --force -i 1> $TMPBUFFER 2>&1 ; failure_check
-    if which libtoolize 1> /dev/null 2>&1
-    then
-      libtoolize 1> $TMPBUFFER 2>&1 ; failure_check
-    fi
-    if which glibtoolize 1> /dev/null 2>&1
-    then
-      glibtoolize 1> $TMPBUFFER 2>&1 ; failure_check
-    fi
-    printf "done.\n"
-  fi
-  rm -rf "$fplll_patch_configure"
-  rm -rf "$fplll_patch_makefile"
 
   printf "Running configure... "
   ./configure $PREFIX $WITHGMP $WITHMPFR "$FPLLL_CONFIGURE_OPTIONS" > "$LOG_DIR/fplll_configure.log" ; failure_check
@@ -322,7 +260,7 @@ then
   printf "done.\n"
 
   cd ..
-  rm -rf "$FPLLL_PKG_NAME.tar.gz"
+  rm -rf "$FPLLL_PKG_NAME.modified.tar.gz"
   rm -rf "$FPLLL_PKG_NAME"
 
   printf "\n"
@@ -338,7 +276,7 @@ then
       git clone https://gforge.inria.fr/git/sollya/sollya.git $SOLLYA_PKG_NAME 1> $TMPBUFFER 2>&1 ; failure_check
       ;;
     sollya-4.1 )
-      SOLLYA_URL=http://www-sop.inria.fr/members/Sylvain.Chevillard/sollya-4.1.tar.bz2
+      SOLLYA_URL=https://gforge.inria.fr/frs/download.php/33150/sollya-4.1.tar.bz2
       ;;
     sollya-4.0 )
       SOLLYA_URL=https://gforge.inria.fr/frs/download.php/32548/sollya-4.0.tar.bz2
