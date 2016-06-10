@@ -91,7 +91,7 @@ code on one machine whilst it has been produced on another.
 <div class="divExample"> 
 <h2 class="category">Example 1: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; implementconstant(exp(1)+log(2)/sqrt(1/10)); <br> 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="specialcomment">[ The first 87 lines of the output have been removed ]</span><br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="specialcomment">[ The first 100 lines of the output have been removed ]</span><br> 
 &nbsp;&nbsp;&nbsp;#include &lt;mpfr.h&gt;<br> 
 &nbsp;&nbsp;&nbsp;<br> 
 &nbsp;&nbsp;&nbsp;void<br> 
@@ -185,7 +185,7 @@ code on one machine whilst it has been produced on another.
 <div class="divExample"> 
 <h2 class="category">Example 3: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; implementconstant(asin(1/3 * pi),default,"arcsin_of_one_third_pi"); <br> 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="specialcomment">[ The first 87 lines of the output have been removed ]</span><br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="specialcomment">[ The first 100 lines of the output have been removed ]</span><br> 
 &nbsp;&nbsp;&nbsp;#include &lt;mpfr.h&gt;<br> 
 &nbsp;&nbsp;&nbsp;<br> 
 &nbsp;&nbsp;&nbsp;void<br> 

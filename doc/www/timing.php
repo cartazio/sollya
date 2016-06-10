@@ -38,10 +38,10 @@ command is measured and displayed (for <?php linkTo("command","verbosity","verbo
 &nbsp;&nbsp;&nbsp;&gt; p=remez(sin(x),10,[-1;1]);<br> 
 &nbsp;&nbsp;&nbsp;Information: Remez: computing the quality of approximation spent 4 ms<br> 
 &nbsp;&nbsp;&nbsp;Information: Remez: computing the quality of approximation spent 4 ms<br> 
-&nbsp;&nbsp;&nbsp;Information: Remez: computing the quality of approximation spent 4 ms<br> 
-&nbsp;&nbsp;&nbsp;Information: computing a minimax approximation spent 27 ms<br> 
-&nbsp;&nbsp;&nbsp;Information: assignment spent 32 ms<br> 
-&nbsp;&nbsp;&nbsp;Information: full execution of the last parse chunk spent 37 ms<br> 
+&nbsp;&nbsp;&nbsp;Information: Remez: computing the quality of approximation spent 3 ms<br> 
+&nbsp;&nbsp;&nbsp;Information: computing a minimax approximation spent 26 ms<br> 
+&nbsp;&nbsp;&nbsp;Information: assignment spent 31 ms<br> 
+&nbsp;&nbsp;&nbsp;Information: full execution of the last parse chunk spent 35 ms<br> 
 </div> 
 </div> 
 <div class="divSeeAlso"> 
