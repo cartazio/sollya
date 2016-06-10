@@ -1,22 +1,33 @@
 /*
 
-  Copyright 2007-2015 by
+  Copyright 2007-2016 by
 
   Laboratoire de l'Informatique du Parallelisme,
   UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
 
   LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2)
 
+  Laboratoire d'Informatique de Paris 6 - Équipe PEQUAN
+  Sorbonne Universités
+  UPMC Univ Paris 06
+  UMR 7606, LIP6
+  Boîte Courrier 169
+  4, place Jussieu
+  F-75252 Paris Cedex 05
+  France
+
   and by
 
-  Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
-  UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.
+  CNRS, LIP6, UPMC
+  Sorbonne Universités, UPMC Univ Paris 06,
+  CNRS, LIP6 UMR 7606, 4 place Jussieu 75005 Paris
 
-  Contributors Ch. Lauter, S. Chevillard, M. Joldes
+  Contributors Ch. Lauter, S. Chevillard, M. Joldes, M. Mezzarobba
 
   christoph.lauter@ens-lyon.org
   sylvain.chevillard@ens-lyon.org
   joldes@laas.fr
+  marc@mezzarobba.net
 
   This software is a computer program whose purpose is to provide an
   environment for safe floating-point code development. It is

@@ -1,9 +1,15 @@
 /*
 
-  Copyright 2010-2012 by
+  Copyright 2010-2016 by
 
-  Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
-  UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France,
+  Laboratoire d'Informatique de Paris 6 - Équipe PEQUAN
+  Sorbonne Universités
+  UPMC Univ Paris 06
+  UMR 7606, LIP6
+  Boîte Courrier 169
+  4, place Jussieu
+  F-75252 Paris Cedex 05
+  France
 
   Laboratoire de l'Informatique du Parallelisme,
   UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668

@@ -3,7 +3,7 @@
 <head>
 <title>Users' manual for the Sollya tool - git devel</title>
 <meta name="author" content="Sylvain Chevillard" >
-<meta name="copyright" content="2009-2013 Laboratoire de l'Informatique du Parallélisme - UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668; LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2), Nancy, France; Laboratoire d'Informatique de Paris 6, Équipe PEQUAN, UPMC Université Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France; INRIA Sophia-Antipolis Méditerranée, APICS Team, Sophia-Antipolis, France">
+<meta name="copyright" content="2009-2013 Laboratoire de l'Informatique du Parallélisme - UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668; LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2), Nancy, France; Laboratoire d'Informatique de Paris 6 - Équipe PEQUAN - Sorbonne Universités - UPMC Univ Paris 06 - UMR 7606, LIP6 - Boîte Courrier 169 - 4, place Jussieu - F-75252 Paris Cedex 05 - France; CNRS, LIP6, UPMC - Sorbonne Universités, UPMC Univ Paris 06, CNRS, LIP6 UMR 7606, 4 place Jussieu 75005 Paris; INRIA Sophia-Antipolis Méditerranée, APICS Team, Sophia-Antipolis, France">
 <meta name="keywords" content="help, sollya, User's Manual">
 <meta name="description" content="This is part of Sollya User's Manual">
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
@@ -48,7 +48,8 @@ dd.omit:before { content: "\00a0\00a0\00a0\00a0"; }
 The <span class="sollya">Sollya</span> tool is Copyright &copy;&nbsp;2006-2013 by<br>
 <span style="text-indent:3em; display:block;">Laboratoire de l'Informatique du Parallélisme - UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668, Lyon, France, </span>
 <span style="text-indent:3em;display:block;">LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2), Nancy, France, </span>
-<span style="text-indent:3em;display:block;">Laboratoire d'Informatique de Paris 6, Équipe PEQUAN, UPMC Université Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France,</span>
+<span style="text-indent:3em;display:block;">Laboratoire d'Informatique de Paris 6 - Équipe PEQUAN - Sorbonne Universités - UPMC Univ Paris 06 - UMR 7606, LIP6 - Boîte Courrier 169 - 4, place Jussieu - F-75252 Paris Cedex 05 - France,</span>
+<span style="text-indent:3em;display:block;">CNRS, LIP6, UPMC - Sorbonne Universités, UPMC Univ Paris 06 - CNRS, LIP6 UMR 7606, 4 place Jussieu 75005 Paris,</span>
 <span style="text-indent:3em;display:block;">INRIA Sophia-Antipolis Méditerranée, APICS Team, Sophia-Antipolis, France.</span>
 All rights reserved.
 <p style="font-size:small;">

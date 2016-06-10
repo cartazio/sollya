@@ -1,6 +1,6 @@
 /*
 
-  Copyright 2010-2013 by
+  Copyright 2010-2015 by
 
   LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2),
 

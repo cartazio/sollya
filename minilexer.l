@@ -1,14 +1,20 @@
 /*
 
-Copyright 2007-2013 by
+Copyright 2007-2016 by
 
 Laboratoire de l'Informatique du Parallelisme,
 UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
 
 and
 
-Laboratoire d'Informatique de Paris 6, equipe PEQUAN,
-UPMC Universite Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France.
+Laboratoire d'Informatique de Paris 6 - Équipe PEQUAN
+Sorbonne Universités
+UPMC Univ Paris 06
+UMR 7606, LIP6
+Boîte Courrier 169
+4, place Jussieu
+F-75252 Paris Cedex 05
+France
 
 Contributors Ch. Lauter, S. Chevillard
 

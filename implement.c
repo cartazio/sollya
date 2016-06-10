@@ -1,6 +1,6 @@
 /*
 
-  Copyright 2006-2013 by
+  Copyright 2006-2015 by
 
   Laboratoire de l'Informatique du Parallelisme,
   UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
@@ -80,24 +80,37 @@ void emitLegalNoticeAndDisclaimer(FILE *fd) {
   sollyaFprintf(fd, "    \n"); 
   sollyaFprintf(fd, "    Sollya is\n"); 
   sollyaFprintf(fd, "    \n"); 
-  sollyaFprintf(fd, "    Copyright 2006-2013 by\n"); 
+  sollyaFprintf(fd, "    Copyright 2006-2016 by\n"); 
   sollyaFprintf(fd, "    \n"); 
   sollyaFprintf(fd, "    Laboratoire de l'Informatique du Parallelisme, UMR CNRS - ENS Lyon -\n"); 
   sollyaFprintf(fd, "    UCB Lyon 1 - INRIA 5668,\n"); 
   sollyaFprintf(fd, "    \n"); 
-  sollyaFprintf(fd, "    Laboratoire d'Informatique de Paris 6, equipe PEQUAN, UPMC Universite\n"); 
-  sollyaFprintf(fd, "    Paris 06 - CNRS - UMR 7606 - LIP6, Paris, France\n"); 
-  sollyaFprintf(fd, "    \n"); 
+  sollyaFprintf(fd, "    LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2)\n");
+  sollyaFprintf(fd, "    \n");
+  sollyaFprintf(fd, "    Laboratoire d'Informatique de Paris 6 - Équipe PEQUAN\n");
+  sollyaFprintf(fd, "    Sorbonne Universités\n");
+  sollyaFprintf(fd, "    UPMC Univ Paris 06\n");
+  sollyaFprintf(fd, "    UMR 7606, LIP6\n");
+  sollyaFprintf(fd, "    Boîte Courrier 169\n");
+  sollyaFprintf(fd, "    4, place Jussieu\n");
+  sollyaFprintf(fd, "    F-75252 Paris Cedex 05\n");
+  sollyaFprintf(fd, "    France\n");
+  sollyaFprintf(fd, "    \n");
+  sollyaFprintf(fd, "    CNRS, LIP6, UPMC\n");
+  sollyaFprintf(fd, "    Sorbonne Universités, UPMC Univ Paris 06,\n");
+  sollyaFprintf(fd, "    CNRS, LIP6 UMR 7606, 4 place Jussieu 75005 Paris\n");
+  sollyaFprintf(fd, "    \n");
   sollyaFprintf(fd, "    and by\n"); 
   sollyaFprintf(fd, "    \n"); 
   sollyaFprintf(fd, "    Centre de recherche INRIA Sophia-Antipolis Mediterranee, equipe APICS,\n"); 
   sollyaFprintf(fd, "    Sophia Antipolis, France.\n"); 
   sollyaFprintf(fd, "    \n"); 
-  sollyaFprintf(fd, "    Contributors Ch. Lauter, S. Chevillard, M. Joldes\n"); 
+  sollyaFprintf(fd, "    Contributors Ch. Lauter, S. Chevillard, M. Joldes, M. Mezzarobba\n"); 
   sollyaFprintf(fd, "    \n"); 
   sollyaFprintf(fd, "    christoph.lauter@ens-lyon.org\n"); 
   sollyaFprintf(fd, "    sylvain.chevillard@ens-lyon.org\n"); 
   sollyaFprintf(fd, "    joldes@laas.fr\n"); 
+  sollyaFprintf(fd, "    marc@mezzarobba.net\n");
   sollyaFprintf(fd, "    \n"); 
   sollyaFprintf(fd, "    The Sollya software is a computer program whose purpose is to provide\n"); 
   sollyaFprintf(fd, "    an environment for safe floating-point code development. It is\n"); 
