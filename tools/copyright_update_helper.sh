@@ -51,7 +51,7 @@ do
   # must be manually handled.
   if [ $file != "general.c" -a $file != "help.h" -a $file != "implement.c" -a $file != "xml.c" -a $file != "parser.y" ]
   then
-    git log --pretty=format:'%H | %an | %ai' $start_rev..$end_rev $file | grep -v "^\("`printf "$excluded_revs" |sed -n 's/ /\\\\|/g;p'`"\)" | sed -n 's/^/   /;p' | sed -n 's/clauter/Christoph Lauter/;p' | sed -n 's/schevill/Sylvain Chevillard/;p' | sed -n 's/\(20[0-9][0-9]\)-.*$/\1/;p' > __sollya_tmp
+    git log --full-history --pretty=format:'%H | %an | %ai' $start_rev..$end_rev $file | grep -v "^\("`printf "$excluded_revs" |sed -n 's/ /\\\\|/g;p'`"\)" | sed -n 's/^/   /;p' | sed -n 's/clauter/Christoph Lauter/;p' | sed -n 's/schevill/Sylvain Chevillard/;p' | sed -n 's/\(20[0-9][0-9]\)-.*$/\1/;p' > __sollya_tmp
 
     if grep "^[[:space:]]*[0-9a-f]" __sollya_tmp > /dev/null
     then
