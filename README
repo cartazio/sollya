@@ -16,7 +16,7 @@ installed:
 - mpfr
 - mpfi
 - libxml2-dev
-- fplll (available at url http://perso.ens-lyon.fr/damien.stehle/english.html#software)
+- fplll (available at url https://github.com/dstehle/fplll)
 - libtool
 
 In order to compile, use the makefile by invoking it using the
@@ -60,5 +60,5 @@ distribution and can be used.
 
 When compiling a fresh git clone, launch first the autogen.sh shell
 script before executing the two steps indicated above.
-Users compiling fresh git clones are recommanded to use the
+Users compiling fresh git clones are recommended to use the
 --enable-strict-lexer-parser-check option of the configure script.
