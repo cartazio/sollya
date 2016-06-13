@@ -20,20 +20,19 @@
 <ul> 
 <li><span class="arg">L1</span> and <span class="arg">L2</span> are two lists.</li> 
 <li><span class="arg">string1</span> and <span class="arg">string2</span> are two strings.</li> 
-<li><span class="arg">proc</span> is a procedure.</li> 
+<li><span class="arg">proc</span> is a procedure or an external procedure.</li> 
 </ul> 
 </div> 
 <div class="divDescription"> 
 <h2 class="category">Description: </h2><ul> 
 <li>In its first usage form, <?php linkTo("command","concat","@");?> concatenates two lists or strings. 
 </li><li>In its second usage form, <?php linkTo("command","concat","@");?> applies the elements of a list as 
-arguments to a procedure. In the case when <span class="arg">proc</span> is a procedure  
-with a fixed number of arguments, a check is done if the number of 
-elements in the list corresponds to the number of formal parameters 
-of the procedure. An empty list can therefore applied only to a  
-procedure that does not take any argument. In the case of a  
-procedure with an arbitrary number of arguments, no such check is  
-performed. 
+arguments to a procedure or an external procedure. In the case when <span class="arg">proc</span> is 
+a procedure or external procedure with a fixed number of arguments, a check 
+is done if the number of elements in the list corresponds to the number of 
+formal parameters of <span class="arg">proc</span>. An empty list can therefore be applied only to a 
+procedure that does not take any argument. In the case when <span class="arg">proc</span> accepts an 
+arbitrary number of arguments, no such check is performed. 
 </ul> 
 </div> 
 <div class="divExamples"> 
@@ -67,6 +66,16 @@ performed.
 </div> 
 <div class="divExample"> 
 <h2 class="category">Example 5: </h2> 
+&nbsp;&nbsp;&nbsp;&gt; bashexecute("gcc -fPIC -Wall -c externalprocexample.c");<br> 
+&nbsp;&nbsp;&nbsp;&gt; bashexecute("gcc -fPIC -shared -o externalprocexample externalprocexample.o");<br> 
+&nbsp;&nbsp;&nbsp;&gt; externalproc(foo, "./externalprocexample", (integer, integer) -&gt; integer);<br> 
+&nbsp;&nbsp;&nbsp;&gt; foo;<br> 
+&nbsp;&nbsp;&nbsp;foo<br> 
+&nbsp;&nbsp;&nbsp;&gt; foo @ [|5, 6|];<br> 
+&nbsp;&nbsp;&nbsp;11<br> 
+</div> 
+<div class="divExample"> 
+<h2 class="category">Example 6: </h2> 
 &nbsp;&nbsp;&nbsp;&gt; procedure add(L = ...) {<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; var acc, i;<br> 
 &nbsp;&nbsp;&nbsp;&nbsp; acc = 0;<br> 
@@ -86,5 +95,5 @@ performed.
 </div> 
 </div> 
 <div class="divSeeAlso"> 
-<span class="category">See also: </span><?php linkTo("command","prepend",".:");?>, <?php linkTo("command","append",":.");?>, <?php linkTo("command","procedure","procedure");?>, <?php linkTo("command","proc","proc");?>, <?php linkTo("command","bind","bind");?>, <?php linkTo("command","getbacktrace","getbacktrace");?> 
+<span class="category">See also: </span><?php linkTo("command","prepend",".:");?>, <?php linkTo("command","append",":.");?>, <?php linkTo("command","procedure","procedure");?>, <?php linkTo("command","externalproc","externalproc");?>, <?php linkTo("command","proc","proc");?>, <?php linkTo("command","bind","bind");?>, <?php linkTo("command","getbacktrace","getbacktrace");?> 
 </div> 

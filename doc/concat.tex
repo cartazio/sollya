@@ -14,20 +14,19 @@ Parameters:
 \begin{itemize}
 \item \emph{L1} and \emph{L2} are two lists.
 \item \emph{string1} and \emph{string2} are two strings.
-\item \emph{proc} is a procedure.
+\item \emph{proc} is a procedure or an external procedure.
 \end{itemize}
 \noindent Description: \begin{itemize}
 
 \item In its first usage form, \textbf{@} concatenates two lists or strings.
 
 \item In its second usage form, \textbf{@} applies the elements of a list as
-   arguments to a procedure. In the case when \emph{proc} is a procedure 
-   with a fixed number of arguments, a check is done if the number of
-   elements in the list corresponds to the number of formal parameters
-   of the procedure. An empty list can therefore applied only to a 
-   procedure that does not take any argument. In the case of a 
-   procedure with an arbitrary number of arguments, no such check is 
-   performed.
+   arguments to a procedure or an external procedure. In the case when \emph{proc} is
+   a procedure or external procedure with a fixed number of arguments, a check
+   is done if the number of elements in the list corresponds to the number of
+   formal parameters of \emph{proc}. An empty list can therefore be applied only to a
+   procedure that does not take any argument. In the case when \emph{proc} accepts an
+   arbitrary number of arguments, no such check is performed.
 \end{itemize}
 \noindent Example 1: 
 \begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
@@ -63,6 +62,18 @@ Hello! how are you?
 \end{minipage}\end{center}
 \noindent Example 5: 
 \begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> bashexecute("gcc -fPIC -Wall -c externalprocexample.c");
+> bashexecute("gcc -fPIC -shared -o externalprocexample externalprocexample.o");
+
+> externalproc(foo, "./externalprocexample", (integer, integer) -> integer);
+> foo;
+foo
+> foo @ [|5, 6|];
+11
+\end{Verbatim}
+\end{minipage}\end{center}
+\noindent Example 6: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
 > procedure add(L = ...) {
   var acc, i;
   acc = 0;
@@ -81,4 +92,4 @@ Hello! how are you?
 0
 \end{Verbatim}
 \end{minipage}\end{center}
-See also: \textbf{.:} (\ref{labprepend}), \textbf{:.} (\ref{labappend}), \textbf{procedure} (\ref{labprocedure}), \textbf{proc} (\ref{labproc}), \textbf{bind} (\ref{labbind}), \textbf{getbacktrace} (\ref{labgetbacktrace})
+See also: \textbf{.:} (\ref{labprepend}), \textbf{:.} (\ref{labappend}), \textbf{procedure} (\ref{labprocedure}), \textbf{externalproc} (\ref{labexternalproc}), \textbf{proc} (\ref{labproc}), \textbf{bind} (\ref{labbind}), \textbf{getbacktrace} (\ref{labgetbacktrace})

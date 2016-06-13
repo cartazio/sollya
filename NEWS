@@ -4,15 +4,15 @@ Critical bug fixes:
   * Fixed bug #20056: an integer division by zero occurred when using
     the degree() operator on certain polynomial expressions of high
     degree.
-  
+
 Major bug fixes:
   * Fixed bug #17197: when compiled in a VPATH build, Sollya did not
     allow the Sollya test infrastructure to be executed.
   * Fixed bug #20369: a double-rounding issue could occur under some
-    circumstance for the round() operator. This issue has been fixed.
+    circumstances for the round() operator. This issue has been fixed.
 
 Changes of syntax and output:
-  * Fixed bug #19925: Sollya followed not clear convention for
+  * Fixed bug #19925: Sollya followed no clear convention for
     hexadecimal output. The hexadecimal output of Sollya is now
     standardized for non-zero real numbers: they are always printed
     with a leading one before the hexadecimal point.
@@ -23,7 +23,7 @@ Major new functionnalities:
   * New --args option to pass command line (bash) arguments to a
     Sollya script.
   * New feature __unique_id. See documentation for details.
-  * New feature annotatefunction to allowing the user to add
+  * New feature annotatefunction for allowing the user to add
     annotations to functional expressions.
   * New features getbacktrace and objectname allowing the Sollya
     procedure stack to be investigated and objects to be retranslated
@@ -31,7 +31,6 @@ Major new functionnalities:
   * The Sollya execute command is now available in the Sollya library.
     Sollya scripts can hence be executed out of code using the Sollya
     library.
-
 
 Minor new functionnalities:
   * New function sollya_lib_printlibrarymessage. See documentation for
@@ -61,7 +60,7 @@ Minor new functionnalities:
       - sollya_lib_v_construct_function
       - sollya_lib_get_nth_subfunction.
     See documentation for details.
-    
+
 Improvements in internal handling:
   * Sollya is now always compiled with memory reference counting. The
     compile time option --enable-legacy-memory-management is no longer
