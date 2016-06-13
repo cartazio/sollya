@@ -13,12 +13,17 @@ Before even thinking of performing the release:
 When the release seems ready:
   * Check that 'make check' passes on several architectures:
     - powerpc (e.g. gcc110.fsffrance.org)
-    - arm hard float (e.g. maus)
-    - arm soft float hase (e.g. hase)
-    - Intel32 (e.g. cosmos)
+    - arm hard float64 (e.g. fuchs)
+    - arm hard float32 (e.g. hase)
+    - Intel32 (e.g. kosmos)
     - Intel64 with gcc
     - Intel64 with icc
-    - Cygwin
+    - Intel64 with clang
+    - Cygwin64
+    - Cygwin32 (no such machine available)
+    - Ubuntu
+    - Ubuntu 14.04LTS
+    - MacOS X (FreeBSD like)
 
   * make distcheck (this automatically includes trying to compile with a VPATH build with sources on a read-only directory). It is useful to additionally test if VPATH_BUILDs work correctly both with configure given either with a relative and absolute path.
   * Check that all modifications to sollya.tex have been reported into sollya.php.
@@ -42,7 +47,7 @@ When the release seems ready:
 
 
 ---------------------------
-^{1} : begin by compiling sollya with option --enable-legacy-memory-management. To valgrind all test-lib files for instance, do:
+^{1} : To valgrind all test-lib files for instance, do:
         cd tests-lib
         export LD_LIBRARY_PATH=../.libs/
         for i in *.c
