@@ -3,9 +3,15 @@
 # Usage: if you wish to use a particular version of GMP, MPFR, MPFI,
 # FPLLL or Sollya, set the following variables to the name of the
 # package. If the variable is left empty, the standard version
-# available on the system will be used.  The special package name
-# 'sollya-git' is available for downloading sollya from the git
-# repository.
+# available on the system will be used.
+#
+# The special package name 'sollya-git' is available for downloading sollya
+# from the git repository.
+#
+# Since fplll is not distributed as a package anymore, the special package
+# names 'libfplll-git' and 'libfplll-git-somehash' are also available to use
+# respectively the git master or some particular git commit (identified by its
+# hash 'somehash') of fplll's Github
 GMP_PKG_NAME=gmp-5.1.3
 MPFR_PKG_NAME=mpfr-3.1.2
 MPFI_PKG_NAME=mpfi-1.5.1

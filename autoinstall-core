@@ -233,15 +233,32 @@ fi
 if test -n "$FPLLL_PKG_NAME"
 then
   printf "Downloading FPLLL... "
-  rm -rf "$FPLLL_PKG_NAME.modified.tar.gz"
-  rm -rf "$FPLLL_PKG_NAME"
-
-  # We use packages with some patches of our own.
-  $GET_PRG http://www-sop.inria.fr/members/Sylvain.Chevillard/fplll_archive/$FPLLL_PKG_NAME.modified.tar.gz 1> $TMPBUFFER 2>&1 ; failure_check
+  case "$FPLLL_PKG_NAME" in
+    libfplll-git* )
+      rm -rf "$FPLLL_PKG_NAME"
+      revision=`echo $FPLLL_PKG_NAME | sed -n 's/libfplll-git-\(.*\)/\1/;p'`
+      if test "$revision" = "$FPLLL_PKG_NAME"
+      then
+        revision=master
+      fi
+      git clone https://github.com/dstehle/fplll.git $FPLLL_PKG_NAME 1> $TMPBUFFER 2>&1 ; failure_check
+      cd "$FPLLL_PKG_NAME"
+      git checkout $revision 1> $TMPBUFFER 2>&1 ; failure_check
+      ./autogen.sh 1> $TMPBUFFER 2>&1 ; failure_check
+      ;;
+    libfplll-3.0.9|libfplll-3.0.11|libfplll-3.0.12|libfplll-3.1.1|libfplll-3.1.2|libfplll-3.1.3|libfplll-4.0.2|libfplll-4.0.3|libfplll-4.0.4 )
+      # We use packages with some patches of our own.
+      rm -rf "$FPLLL_PKG_NAME.modified.tar.gz"
+      rm -rf "$FPLLL_PKG_NAME"
+      $GET_PRG http://www-sop.inria.fr/members/Sylvain.Chevillard/fplll_archive/$FPLLL_PKG_NAME.modified.tar.gz 1> $TMPBUFFER 2>&1 ; failure_check
+      tar -zxvf $FPLLL_PKG_NAME.modified.tar.gz 1> $TMPBUFFER 2>&1 ; failure_check
+      cd $FPLLL_PKG_NAME
+      ;;
+    * )
+      echo "Unknown package $FPLLL_PKG_NAME" > $TMPBUFFER; false; failure_check
+      ;;
+  esac
   printf "done.\n"
-
-  tar -zxvf $FPLLL_PKG_NAME.modified.tar.gz 1> $TMPBUFFER 2>&1 ; failure_check
-  cd $FPLLL_PKG_NAME
 
   printf "Running configure... "
   ./configure $PREFIX $WITHGMP $WITHMPFR "$FPLLL_CONFIGURE_OPTIONS" > "$LOG_DIR/fplll_configure.log" ; failure_check
