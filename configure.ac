@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 # Skeleton initially generated with autoscan
 AC_PREREQ(2.59)
-AC_INIT([sollya], [git-devel], [sollya-devl@lists.gforge.inria.fr])
+AC_INIT([sollya], [5.0], [sollya-devl@lists.gforge.inria.fr])
 AC_CONFIG_SRCDIR([sollya-library-wrappers.h]) # Checks that we are really trying to configure Sollya and not something else...
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE([1.6 no-define dist-zip dist-bzip2])

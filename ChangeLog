@@ -1,3 +1,24 @@
+2016-06-15  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* doc/www/sollya.php: Forgot an update of copyright...  PDF and PHP are synchronized.
+
+2016-06-14  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* tests-lib/tget_element_in_list.c: Made the timing tests for
+	tget_element_in_list more robust.
+
+2016-06-14  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* configure.ac: Trying to live without the -f option of readlink.
+
+2016-06-14  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* general.c: Working on __unique_id
+
+2016-06-13  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* ChangeLog: New ChangeLog.
+
 2016-06-13  Christoph Lauter <christoph.lauter@lip6.fr>
 
 	* doc/bashevaluate.tex, doc/bashexecute.tex, doc/remez.tex,
