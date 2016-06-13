@@ -1,5 +1,12 @@
 /*
+ 
   Copyright 2007-2016 by
+ 
+  Laboratoire de l'Informatique du Parallelisme,
+  UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
+ 
+  LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2),
+ 
   Laboratoire d'Informatique de Paris 6 - Équipe PEQUAN
   Sorbonne Universités
   UPMC Univ Paris 06
@@ -8,31 +15,36 @@
   4, place Jussieu
   F-75252 Paris Cedex 05
   France
-  Laboratoire de l'Informatique du Parallelisme,
-  UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668
+ 
   and by
-  Centre de recherche INRIA Sophia-Antipolis Mediterranee, equipe APICS,
-  Sophia Antipolis, France.
-  Contributors Ch. Lauter, M. Joldes, S. Chevillard
+ 
+  Centre de recherche INRIA Sophia-Antipolis Mediterranee, equipe APICS, Sophia Antipolis, France.
+ 
+  Contributors Ch. Lauter, S. Chevillard, M. Joldes
+ 
   christoph.lauter@ens-lyon.org
-  joldes@laas.fr
   sylvain.chevillard@ens-lyon.org
+  joldes@laas.fr
+ 
   This software is a computer program whose purpose is to provide an
   environment for safe floating-point code development. It is
   particularily targeted to the automatized implementation of
   mathematical floating-point libraries (libm). Amongst other features,
   it offers a certified infinity norm, an automatic polynomial
   implementer and a fast Remez algorithm.
+ 
   This software is governed by the CeCILL-C license under French law and
   abiding by the rules of distribution of free software.  You can  use,
   modify and/ or redistribute the software under the terms of the CeCILL-C
   license as circulated by CEA, CNRS and INRIA at the following URL
   "http://www.cecill.info".
+ 
   As a counterpart to the access to the source code and  rights to copy,
   modify and redistribute granted by the license, users are provided only
   with a limited warranty  and the software's author,  the holder of the
   economic rights,  and the successive licensors  have only  limited
   liability.
+ 
   In this respect, the user's attention is drawn to the risks associated
   with loading,  using,  modifying and/or developing or reproducing the
   software by the user in light of its specific status of free software,
@@ -43,11 +55,15 @@
   requirements in conditions enabling the security of their systems and/or
   data to be ensured and,  more generally, to use and operate it in the
   same conditions as regards security.
+ 
   The fact that you are presently reading this means that you have had
   knowledge of the CeCILL-C license and that you accept its terms.
+ 
   This program is distributed WITHOUT ANY WARRANTY; without even the
   implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ 
 */
+ 
 #ifndef HELP_H
 #define HELP_H
 #define HELP_PRINTFLOAT_TEXT "Name: printsingle\n==> prints a constant value as a hexadecimal single precision number\n\nUsage: \n   printsingle({constant}) : constant -> void\n\nParameters: \n   {constant} represents a constant\n\nDescription: \n   * Prints a constant value as a hexadecimal number on 8 hexadecimal\n   digits. The hexadecimal number represents the integer equivalent to\n   the 32 bit memory representation of the constant considered as a\n   single precision number.\n    \n   If the constant value does not hold on a single precision number, it\n   is first rounded to the nearest single precision number before it is\n   displayed. A warning is displayed in this case.\n\nExample 1: \n   > printsingle(3);\n   0x40400000\n\nExample 2: \n   > prec=100!;\n   > verbosity = 1!;\n   > printsingle(exp(5));\n   Warning: the given expression is not a constant but an expression to evaluate. A faithful evaluation will be used.\n   Warning: rounding down occurred before printing a value as a simple.\n   0x431469c5\n\nSee also: printdouble, single\n"

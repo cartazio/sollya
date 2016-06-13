@@ -134,7 +134,7 @@ AC_ARG_WITH(fplll-include,
             [if test "x$withval" != "xyes" -a "x$withval" != "x"
              then
 	       AM_CPPFLAGS="$AM_CPPFLAGS -I$withval"
-               FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING--with-fplll-include given as '$withval',"
+               FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING--with-fplll-include given as '$withval', "
 	     fi
             ])
 AC_ARG_WITH(fplll-lib,
@@ -143,7 +143,7 @@ AC_ARG_WITH(fplll-lib,
              then
                AM_LDFLAGS="$AM_LDFLAGS -L$withval"
                SO_LIB_PATH="${SO_LIB_PATH:+$SO_LIB_PATH:}$withval"
-               FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING--with-fplll-lib given as '$withval',"
+               FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING--with-fplll-lib given as '$withval', "
 	     fi
             ])
 AC_ARG_WITH(fplll,
@@ -153,7 +153,7 @@ AC_ARG_WITH(fplll,
                AM_CPPFLAGS="$AM_CPPFLAGS -I$withval/include"
                AM_LDFLAGS="$AM_LDFLAGS -L$withval/lib"
                SO_LIB_PATH="${SO_LIB_PATH:+$SO_LIB_PATH:}$withval/lib"
-               FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING--with-fplll given as '$withval',"
+               FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING--with-fplll given as '$withval', "
 	     fi
             ])
 
@@ -414,20 +414,20 @@ fi
 
 if test "x${FPLLLISREALLIB}y" = "xyesy"
 then
-  FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING linkage with -lfplll is compatible. Header file"
+  FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING""linkage with -lfplll is compatible. Header file "
 else
-  FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING linkage with -lfplll is not compatible. Header file"
+  FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING""linkage with -lfplll is not compatible. Header file "
 fi
 
 if test "x${FPLLLSPECIALINCLUDE}y" = "xyesy"
 then
   FPLLL_GOOD_HEADER="$FPLLL_SPECIAL_HEADER"
   AC_DEFINE([HAVE_SPECIAL_FPLLL_INCLUDE],[1],[Define for determining a special version of FPLLL])
-  FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING in a subdirectory of the include directory (Debian-like)."
+  FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING""in a subdirectory of the include directory (Debian-like)."
 else
   FPLLL_GOOD_HEADER="$FPLLL_NORMAL_HEADER"
   AC_DEFINE([HAVE_SPECIAL_FPLLL_INCLUDE],[0],[Define for determining a special version of FPLLL])
-  FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING directly in include directory."
+  FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING""directly in include directory."
 fi
 
 AC_DEFINE_UNQUOTED([HAVE_FPLLL_VERSION_STRING],["$FPLLLVERSIONSTRING"],[Define a kind of a version string for FPLLL])
