@@ -2,15 +2,6 @@ Bugs fixed
 ----------
 12665 -- [ ] tests added    [ ] is closed    [ ] worth mentioning (This is "The practical complexity of decimal display is very bad" -> SC)
 
-
-Problems solved, without bug report number
-------------------------------------------
-@rev:
-0513d99 -- [x] should create a bug report   [x] worth mentioning CQL
-
-Created "[#20369] Double-rounding issue with round() operator" for this one. -> SC
-
-
 New features
 -------------
 "Well-documented" implies existence of documentation, clarity, existence of shlp file if needed, and listed in `help help`
@@ -55,3 +46,4 @@ Fixed bug [#18992]: degree(x^(2^(2^80))) returns -1 without a warning
 Fixed bug [#17197]: tests do not work on VPATH build
 Fixed bug [#20056]: division by zero in degree(diff((1+x)^3000))
 Fixed bug [#19925]: convention used in hexadecimal display
+Fixed bug [#20369]: Double-rounding issue with round() operator
