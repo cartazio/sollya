@@ -76,10 +76,10 @@ then
   rm -rf "$GMP_PKG_NAME.tar.bz2"
   rm -rf "$GMP_PKG_NAME"
 
-  $GET_PRG http://gmplib.org/download/gmp/$GMP_PKG_NAME.tar.bz2 1> $TMPBUFFER 2>&1
+  $GET_PRG https://gmplib.org/download/gmp/$GMP_PKG_NAME.tar.bz2 1> $TMPBUFFER 2>&1
   if test "$?" -ne 0
   then
-    $GET_PRG http://gmplib.org/download/gmp/archive/$GMP_PKG_NAME.tar.bz2 1>> $TMPBUFFER 2>&1 ; failure_check
+    $GET_PRG https://gmplib.org/download/gmp/archive/$GMP_PKG_NAME.tar.bz2 1>> $TMPBUFFER 2>&1 ; failure_check
   fi
   printf "done.\n"
 
