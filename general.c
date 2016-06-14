@@ -1518,15 +1518,24 @@ void initToolDefaults() {
   symbolTable = addEntry(symbolTable, "__argv", tempNode, copyThingOnVoid);
   freeThing(tempNode);
   pidStr = getUniqueId();
-  uniqueStr = (char *) safeCalloc(strlen(PACKAGE_STRING) + 1 + strlen(pidStr) + 1 + 8 * sizeof(int) + 1, sizeof(char));
+  uniqueStr = (char *) safeCalloc(4 + strlen(PACKAGE_STRING) + 1 + strlen(pidStr) + 1 + 8 * sizeof(int) + 1, sizeof(char));
   mySeed = (unsigned int) ((unsigned int) time(NULL)) + ((unsigned int) globalSeed);
   globalSeed = rand_r(&mySeed);
-  sollya_snprintf(uniqueStr, strlen(PACKAGE_STRING) + 1 + strlen(pidStr) + 1 + 8 * sizeof(int) + 1, "%s-%s-%08d", PACKAGE_STRING, pidStr, rand_r(&mySeed));
+  sollya_snprintf(uniqueStr, 4 + strlen(PACKAGE_STRING) + 1 + strlen(pidStr) + 1 + 8 * sizeof(int) + 1, "_id_%s_%s_%08d", PACKAGE_STRING, pidStr, rand_r(&mySeed));
   for (c=uniqueStr;*c!='\0';c++) {
     if ((*c == ' ') || 
 	(*c == '\t') || 
 	(*c == '\n') ||
+	(*c == '.') ||
 	(*c == '/')) {
+      *c = '_';
+    }
+  }
+  for (c=uniqueStr;*c!='\0';c++) {
+    if (!((('A' <= *c) && (*c <= 'Z')) ||
+	  (('a' <= *c) && (*c <= 'z')) ||
+	  (('0' <= *c) && (*c <= '9')) ||
+	  (*c == '_'))) {
       *c = '_';
     }
   }
