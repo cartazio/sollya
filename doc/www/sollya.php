@@ -45,7 +45,7 @@ dd.omit:before { content: "\00a0\00a0\00a0\00a0"; }
 
 <h2 style="margin-top: 3em;">License</h2>
 <p style="font-size:small;">
-The <span class="sollya">Sollya</span> tool is Copyright &copy;&nbsp;2006-2013 by<br><br>
+The <span class="sollya">Sollya</span> tool is Copyright &copy;&nbsp;2006-2016 by<br><br>
 <span style="text-indent:3em; display:block;">Laboratoire de l'Informatique du Parallélisme</span>
 <span style="text-indent:3em; display:block;">UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668</span>
 <span style="text-indent:3em; display:block;">Lyon, France, </span><br>
