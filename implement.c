@@ -17,7 +17,7 @@
 
   This software is a computer program whose purpose is to provide an
   environment for safe floating-point code development. It is
-  particularly targeted to the automatized implementation of
+  particularly targeted to the automated implementation of
   mathematical floating-point libraries (libm). Amongst other features,
   it offers a certified infinity norm, an automatic polynomial
   implementer and a fast Remez algorithm.
@@ -114,7 +114,7 @@ void emitLegalNoticeAndDisclaimer(FILE *fd) {
   sollyaFprintf(fd, "    \n");
   sollyaFprintf(fd, "    The Sollya software is a computer program whose purpose is to provide\n");
   sollyaFprintf(fd, "    an environment for safe floating-point code development. It is\n");
-  sollyaFprintf(fd, "    particularly targeted to the automatized implementation of\n");
+  sollyaFprintf(fd, "    particularly targeted to the automated implementation of\n");
   sollyaFprintf(fd, "    mathematical floating-point libraries (libm). Amongst other features,\n");
   sollyaFprintf(fd, "    it offers a certified infinity norm, an automatic polynomial\n");
   sollyaFprintf(fd, "    implementer and a fast Remez algorithm.\n");
