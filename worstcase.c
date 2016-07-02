@@ -144,7 +144,7 @@ void printWorstCases(node *func,
   }
 
   if (mpfr_sgn(epsilon) < 0) {
-    printMessage(1,SOLLYA_MSG_GIVEN_EPS_MUST_BE_POSITIVE_TAKING_ABS,"Warning: the epsilon given is negative. Will take its abolute value.\n");
+    printMessage(1,SOLLYA_MSG_GIVEN_EPS_MUST_BE_POSITIVE_TAKING_ABS,"Warning: the epsilon given is negative. Will take its absolute value.\n");
     mpfr_abs(epsilon,epsilon,GMP_RNDN);
   }
 

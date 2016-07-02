@@ -2075,7 +2075,7 @@ int supremumNormBisectInner(sollya_mpfi_t result, node *poly, node *func, mpfr_t
     return SUPNORM_NO_ERROR;
   }
 
-  /* Some error occured, check if we still need to bisect or if we have reached diameter */
+  /* Some error occurred, check if we still need to bisect or if we have reached diameter */
   mpfr_init2(width,p1);
   mpfr_sub(width,b,a,GMP_RNDU);
   if (mpfr_cmp(width,diameter) < 0) {
@@ -2261,7 +2261,7 @@ int supremumNormBisect(sollya_mpfi_t result, node *poly, node *func, mpfr_t a, m
     printMessage(1,SOLLYA_MSG_SUPNORM_CANNOT_DETERMINE_ORDER_OF_SINGU,"Warning: during supnorm computation, it was not possible to safely determine the order of a presume zero of the given function.\n");
     break;
   default:
-    printMessage(1,SOLLYA_MSG_SUPNORM_GENERIC_ERROR,"Warning: during supnorm computation, some generic error occured. No further description is available.\n");
+    printMessage(1,SOLLYA_MSG_SUPNORM_GENERIC_ERROR,"Warning: during supnorm computation, some generic error occurred. No further description is available.\n");
   }
 
   return 0;
@@ -2528,7 +2528,7 @@ int supremumnorm(sollya_mpfi_t result, node *poly, node *func, sollya_mpfi_t dom
 
   res = supremumNormBisect(result,poly,func,a,b,mode,absAccuracy,diameter);
   if (!res) {
-    printMessage(1,SOLLYA_MSG_SUPNORM_SAFE_ENCLOSURE_COULD_NOT_BE_COMPUTED,"Warning: an error occured during supremum norm computation. A safe enclosure of the supremum norm could not be computed.\n");
+    printMessage(1,SOLLYA_MSG_SUPNORM_SAFE_ENCLOSURE_COULD_NOT_BE_COMPUTED,"Warning: an error occurred during supremum norm computation. A safe enclosure of the supremum norm could not be computed.\n");
     sollya_mpfi_set_nan(result);
   }
 

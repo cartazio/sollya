@@ -2359,7 +2359,7 @@ rangetype guessDegree(node *func, node *weight, mpfr_t a, mpfr_t b, mpfr_t eps, 
     sollya_mpfi_interv_fr(tmp1, a, b);
     evaluateInterval(tmp2, weight, NULL, tmp1);
     if (sollya_mpfi_has_infinity(tmp2)) {
-      printMessage(1, SOLLYA_MSG_GUESSDEGREE_POSSIBLE_SINGULAR_WEIGHT, "Warning: guessdegree: the weight function might not be continuous over the given interval.\nThis is not allowed but it is the user's responsability to check it.\nNo other test will be performed, but be aware that the command is allowed to return anything in this case.\n");
+      printMessage(1, SOLLYA_MSG_GUESSDEGREE_POSSIBLE_SINGULAR_WEIGHT, "Warning: guessdegree: the weight function might not be continuous over the given interval.\nThis is not allowed but it is the user's responsibility to check it.\nNo other test will be performed, but be aware that the command is allowed to return anything in this case.\n");
     }
     sollya_mpfi_clear(tmp1);
     sollya_mpfi_clear(tmp2);

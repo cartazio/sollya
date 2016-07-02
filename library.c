@@ -753,7 +753,7 @@ void freeFunctionLibraries() {
       if (dlerror() == NULL) {
 	res = myFunction();
 	if (res) {
-	  printMessage(1,SOLLYA_MSG_LIBRARY_CLOSER_ERROR,"Warning: while closing libary \"%s\", the function \"sollya_external_lib_close\" was found and called but it signaled the error %d\n",currLibHandle->libraryName,res);
+	  printMessage(1,SOLLYA_MSG_LIBRARY_CLOSER_ERROR,"Warning: while closing library \"%s\", the function \"sollya_external_lib_close\" was found and called but it signaled the error %d\n",currLibHandle->libraryName,res);
 	}
       }
     }
@@ -776,7 +776,7 @@ void freeFunctionLibraries() {
     if (!(currLibHandle->shallowCopy)) {
       dlerror();
       if (dlclose(currLibHandle->libraryDescriptor) != 0)
-	printMessage(1,SOLLYA_MSG_COULD_NOT_CLOSE_LIBRARY,"Warning: could not close libary \"%s\": %s\n",currLibHandle->libraryName,dlerror());
+	printMessage(1,SOLLYA_MSG_COULD_NOT_CLOSE_LIBRARY,"Warning: could not close library \"%s\": %s\n",currLibHandle->libraryName,dlerror());
     }
     safeFree(currLibHandle->libraryName);
     safeFree(currLibHandle);
@@ -986,7 +986,7 @@ void freeConstantLibraries() {
       if (dlerror() == NULL) {
 	res = myFunction();
 	if (res) {
-	  printMessage(1,SOLLYA_MSG_LIBRARY_CLOSER_ERROR,"Warning: while closing libary \"%s\", the function \"sollya_external_lib_close\" was found and called but it signaled the error %d\n",currLibHandle->libraryName,res);
+	  printMessage(1,SOLLYA_MSG_LIBRARY_CLOSER_ERROR,"Warning: while closing library \"%s\", the function \"sollya_external_lib_close\" was found and called but it signaled the error %d\n",currLibHandle->libraryName,res);
 	}
       }
     }
@@ -1009,7 +1009,7 @@ void freeConstantLibraries() {
     if (!(currLibHandle->shallowCopy)) {
       dlerror();
       if (dlclose(currLibHandle->libraryDescriptor) != 0)
-	printMessage(1,SOLLYA_MSG_COULD_NOT_CLOSE_LIBRARY,"Warning: could not close libary \"%s\": %s\n",currLibHandle->libraryName,dlerror());
+	printMessage(1,SOLLYA_MSG_COULD_NOT_CLOSE_LIBRARY,"Warning: could not close library \"%s\": %s\n",currLibHandle->libraryName,dlerror());
     }
     safeFree(currLibHandle->libraryName);
     safeFree(currLibHandle);
@@ -1244,7 +1244,7 @@ void freeProcLibraries() {
       if (dlerror() == NULL) {
 	res = myFunction();
 	if (res) {
-	  printMessage(1,SOLLYA_MSG_LIBRARY_CLOSER_ERROR,"Warning: while closing libary \"%s\", the function \"sollya_external_lib_close\" was found and called but it signaled the error %d\n",currLibHandle->libraryName,res);
+	  printMessage(1,SOLLYA_MSG_LIBRARY_CLOSER_ERROR,"Warning: while closing library \"%s\", the function \"sollya_external_lib_close\" was found and called but it signaled the error %d\n",currLibHandle->libraryName,res);
 	}
       }
     }
@@ -1268,7 +1268,7 @@ void freeProcLibraries() {
     if (!(currLibHandle->shallowCopy)) {
       dlerror();
       if (dlclose(currLibHandle->libraryDescriptor) != 0)
-	printMessage(1,SOLLYA_MSG_COULD_NOT_CLOSE_LIBRARY,"Warning: could not close libary \"%s\": %s\n",currLibHandle->libraryName,dlerror());
+	printMessage(1,SOLLYA_MSG_COULD_NOT_CLOSE_LIBRARY,"Warning: could not close library \"%s\": %s\n",currLibHandle->libraryName,dlerror());
     }
     safeFree(currLibHandle->libraryName);
     safeFree(currLibHandle);

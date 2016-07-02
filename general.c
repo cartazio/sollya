@@ -2406,7 +2406,7 @@ int general(int argc, char *argv[]) {
 	sollyaPrintf("--noprompt : do not print a prompt symbol\n");
 	sollyaPrintf("--oldautoprint : print commas between autoprinted elements separated by commas\n");
 	sollyaPrintf("--oldexternalprocprint : print the signature of an external procedure when autoprinting\n");
-	sollyaPrintf("--oldrlwrapcompatible : acheive some compatibilty with old rlwrap versions by emitting wrong ANSI sequences (deprecated)\n");
+	sollyaPrintf("--oldrlwrapcompatible : acheive some compatibility with old rlwrap versions by emitting wrong ANSI sequences (deprecated)\n");
 	sollyaPrintf("--warninfile[append] <file> : print warning messages into a file instead on the standard output\n");
 	sollyaPrintf("--warnonstderr : print warning messages on error output instead on the standard output\n");
 	sollyaPrintf("\nFor help on %s commands type \"help;\" on the %s prompt\n",PACKAGE_NAME,PACKAGE_NAME);
@@ -2606,13 +2606,13 @@ int general(int argc, char *argv[]) {
 	recoverEnvironmentReady = 1;
 	frameCorruptionPrinted = 0;
 	if (declaredSymbolTable != NULL) {
-	  printMessage(1,SOLLYA_MSG_FRAME_STACK_HAS_BEEN_CORRUPTED,"Warning: a preceeding command interruption corrupted the variable frame stack.\n");
+	  printMessage(1,SOLLYA_MSG_FRAME_STACK_HAS_BEEN_CORRUPTED,"Warning: a preceding command interruption corrupted the variable frame stack.\n");
 	  frameCorruptionPrinted = 1;
 	  freeDeclaredSymbolTable(declaredSymbolTable, freeThingOnVoid);
 	  declaredSymbolTable = NULL;
 	}
 	if (backtraceStack != NULL) {
-	  if (!frameCorruptionPrinted) printMessage(1,SOLLYA_MSG_FRAME_STACK_HAS_BEEN_CORRUPTED,"Warning: a preceeding command interruption corrupted the variable frame stack.\n");
+	  if (!frameCorruptionPrinted) printMessage(1,SOLLYA_MSG_FRAME_STACK_HAS_BEEN_CORRUPTED,"Warning: a preceding command interruption corrupted the variable frame stack.\n");
 	  freeBacktraceStack();
 	  backtraceStack = NULL;
 	}

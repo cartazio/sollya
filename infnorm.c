@@ -1718,7 +1718,7 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
 
       if (mpfr_number_p(al) && mpfr_number_p(ar)) {
 
-	printMessage(8,SOLLYA_MSG_DECORRELATION_INTERVAL_ADDITION_OR_SUBTRACTION,"Information: decorrelating an interval substraction.\n");
+	printMessage(8,SOLLYA_MSG_DECORRELATION_INTERVAL_ADDITION_OR_SUBTRACTION,"Information: decorrelating an interval subtraction.\n");
 
 	sollya_mpfi_intersect(stack3,stack3,temp1);
 	if (!noExcludes) {

@@ -481,7 +481,7 @@ int computeMonotoneRemainder(sollya_mpfi_t *bound, int mode, int typeOfFunction,
     if ((mode==ABSOLUTE)&&(n%2==0)) sollya_mpfi_pow(boundfx0, p_interv, x0);
     break;
   default:
-    printMessage(0, SOLLYA_MSG_ERROR_IN_TAYLORFORM_UNKNOWN_FUNC_FOR_ZUMKELLER, "Error in taylorform: unkown type of function used with Zumkeller's technique\n");
+    printMessage(0, SOLLYA_MSG_ERROR_IN_TAYLORFORM_UNKNOWN_FUNC_FOR_ZUMKELLER, "Error in taylorform: unknown type of function used with Zumkeller's technique\n");
     return 0;
   }
 
@@ -593,7 +593,7 @@ void base_TMAux(tModel *t, int typeOfFunction, int nodeType, node *f, mpfr_t p, 
     powerFunction_diff(nDeriv, p, x, (mode==RELATIVE)?(n+1):n, silent);
     break;
   default:
-    printMessage(0, SOLLYA_MSG_ERROR_IN_TAYLORFORM_UNKNOWN_FUNC_FOR_ZUMKELLER, "Error in taylorform: unkown type of function used with Zumkeller's technique\n");
+    printMessage(0, SOLLYA_MSG_ERROR_IN_TAYLORFORM_UNKNOWN_FUNC_FOR_ZUMKELLER, "Error in taylorform: unknown type of function used with Zumkeller's technique\n");
     return;
   }
 

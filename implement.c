@@ -2205,7 +2205,7 @@ int implementCoefficients(mpfr_t *coefficients, int degree, FILE *fd, char *name
       }
       if (mpfr_sub(temp,temp,temp2,GMP_RNDN) != 0) {
 	if (!noRoundingWarnings) {
-	  printMessage(1,SOLLYA_MSG_ROUNDING_ON_INTERNAL_HANDLING_OF_A_COEFFICIENT,"Warning: a rounding occurred on internal handling (on a substraction) of the %dth coefficient.\n");
+	  printMessage(1,SOLLYA_MSG_ROUNDING_ON_INTERNAL_HANDLING_OF_A_COEFFICIENT,"Warning: a rounding occurred on internal handling (on a subtraction) of the %dth coefficient.\n");
 	}
 	res = 0;
       }
@@ -2221,7 +2221,7 @@ int implementCoefficients(mpfr_t *coefficients, int degree, FILE *fd, char *name
 	}
 	if (mpfr_sub(temp,temp,temp2,GMP_RNDN) != 0) {
 	  if (!noRoundingWarnings) {
-	    printMessage(1,SOLLYA_MSG_ROUNDING_ON_INTERNAL_HANDLING_OF_A_COEFFICIENT,"Warning: a rounding occurred on internal handling (on a substraction) of the %dth coefficient.\n");
+	    printMessage(1,SOLLYA_MSG_ROUNDING_ON_INTERNAL_HANDLING_OF_A_COEFFICIENT,"Warning: a rounding occurred on internal handling (on a subtraction) of the %dth coefficient.\n");
 	  }
 	  res = 0;
 	}
@@ -2237,7 +2237,7 @@ int implementCoefficients(mpfr_t *coefficients, int degree, FILE *fd, char *name
 	  }
 	  if (mpfr_sub(temp,temp,temp2,GMP_RNDN) != 0) {
 	    if (!noRoundingWarnings) {
-	      printMessage(1,SOLLYA_MSG_ROUNDING_ON_INTERNAL_HANDLING_OF_A_COEFFICIENT,"Warning: a rounding occurred on internal handling (on a substraction) of the %dth coefficient.\n");
+	      printMessage(1,SOLLYA_MSG_ROUNDING_ON_INTERNAL_HANDLING_OF_A_COEFFICIENT,"Warning: a rounding occurred on internal handling (on a subtraction) of the %dth coefficient.\n");
 	    }
 	    res = 0;
 	  }

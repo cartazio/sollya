@@ -50,7 +50,7 @@
 #include <mpfi.h>
 #include "sollya.h"
 
-/* Example of an external functionnality linked to a function symbol in sollya
+/* Example of an external functionality linked to a function symbol in sollya
 
    Compile with
 

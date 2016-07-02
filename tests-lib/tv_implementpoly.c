@@ -26,7 +26,7 @@ int callback(sollya_msg_t msg, void *data) {
     sollya_lib_printf("Caught the message: a coefficient in a Horner scheme is not guaranteed to also be twice as large as the subpolynomial.\n");
     break;    
   case SOLLYA_MSG_ERROR_ON_DETERMINING_THE_REQUIRED_PRECISIONS:
-    sollya_lib_printf("Caught the message: an error has occured during the determination of the required precisions.\n");
+    sollya_lib_printf("Caught the message: an error has occurred during the determination of the required precisions.\n");
     break;    
   default:
     sollya_lib_printf("Unexpected warning %d.\n", message);

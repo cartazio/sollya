@@ -675,7 +675,7 @@
 
 	* doc/CommandsAndFunctions.tex, doc/keywords.def,
 	doc/www/ListOfCommands.php, doc/www/xfreevariable.php,
-	doc/xfreevariable.shlp, doc/xfreevariable.tex, help.h, parser.y: 
+	doc/xfreevariable.shlp, doc/xfreevariable.tex, help.h, parser.y:
 	Added an explicit documentation for _x_
 
 2016-05-10  Christoph Lauter <christoph.lauter@lip6.fr>
@@ -683,7 +683,7 @@
 	* TODO_sollya5.0, doc/keywords.def, sollya-library-wrappers.c,
 	sollya.h: Removed certain deprecated functions from the Sollya
 	library. Sylvain Chevillard, who authorized the removal by phone,
-	assumes the full, entire responsability of this removal forever and
+	assumes the full, entire responsibility of this removal forever and
 	until the end of time.  Added new things to do in the TODO file.
 
 2016-05-10  Christoph Lauter <christoph.lauter@lip6.fr>
@@ -2127,7 +2127,7 @@
 2014-09-22  Christoph Lauter <christoph.lauter@lip6.fr>
 
 	* execute.c, execute.h, general.c, general.h: Continuing work on
-	backtrace functionnality.
+	backtrace functionality.
 
 2014-09-22  Christoph Lauter <christoph.lauter@lip6.fr>
 
@@ -2360,12 +2360,12 @@
 
 	* infnorm.c, tests-tool/Makefile.am, tests-tool/check030.sollya,
 	tests-tool/check030.sollya.reference: Added testing for
-	annotatefunction functionnality and corrected a bug.
+	annotatefunction functionality and corrected a bug.
 
 2014-08-21  Christoph Lauter <christoph.lauter@lip6.fr>
 
-	* tests-tool/check030.sollya, tests-tool/check030.sollya.reference: 
-	Starting work on tests for the new annotate functionnality.
+	* tests-tool/check030.sollya, tests-tool/check030.sollya.reference:
+	Starting work on tests for the new annotate functionality.
 
 2014-08-09  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
 
@@ -16687,7 +16687,7 @@
 
 	* arenairetoolsexample.c, double.c, execute.c, expression.c,
 	external.c, general.c, implement.c, infnorm.c, miniparser.y,
-	pari_utils.c, plot.c, taylor.c, worstcase.c: changed *occured* into
+	pari_utils.c, plot.c, taylor.c, worstcase.c: changed *occurred* into
 	*occurred* everywhere This commit was extracted from SVN r446.  git-svn-id: svn://scm.gforge.inria.fr/svn/sollya/trunk@446
 	af37bc7e-59aa-4313-bbaf-7d19c0032f32
 
@@ -16828,7 +16828,7 @@
 2007-10-01  clauter <clauter@af37bc7e-59aa-4313-bbaf-7d19c0032f32>
 
 	* ChangeLog, Makefile.am, arenairetoolsexample.c: Corrected
-	compilation indication in libary example.  This commit was extracted from SVN r421.  git-svn-id: svn://scm.gforge.inria.fr/svn/sollya/trunk@421
+	compilation indication in library example.  This commit was extracted from SVN r421.  git-svn-id: svn://scm.gforge.inria.fr/svn/sollya/trunk@421
 	af37bc7e-59aa-4313-bbaf-7d19c0032f32
 
 2007-10-01  clauter <clauter@af37bc7e-59aa-4313-bbaf-7d19c0032f32>
@@ -17355,7 +17355,7 @@
 2007-04-06  clauter <clauter@af37bc7e-59aa-4313-bbaf-7d19c0032f32>
 
 	* infnorm.c: Added a test for preventing decorrelation trials on
-	addition and substraction evaluation on point intervals.  This commit was extracted from SVN r328.  git-svn-id: svn://scm.gforge.inria.fr/svn/sollya/trunk@328
+	addition and subtraction evaluation on point intervals.  This commit was extracted from SVN r328.  git-svn-id: svn://scm.gforge.inria.fr/svn/sollya/trunk@328
 	af37bc7e-59aa-4313-bbaf-7d19c0032f32
 
 2007-04-05  clauter <clauter@af37bc7e-59aa-4313-bbaf-7d19c0032f32>
@@ -17790,7 +17790,7 @@
 2006-12-19  clauter <clauter@af37bc7e-59aa-4313-bbaf-7d19c0032f32>
 
 	* expression.c, parser.y: Corrected a display error in print
-	functions for repeated substraction and division trees.  This commit was extracted from SVN r249.  git-svn-id: svn://scm.gforge.inria.fr/svn/sollya/trunk@249
+	functions for repeated subtraction and division trees.  This commit was extracted from SVN r249.  git-svn-id: svn://scm.gforge.inria.fr/svn/sollya/trunk@249
 	af37bc7e-59aa-4313-bbaf-7d19c0032f32
 
 2006-12-18  schevill <schevill@af37bc7e-59aa-4313-bbaf-7d19c0032f32>
