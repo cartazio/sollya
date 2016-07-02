@@ -112,6 +112,8 @@
 #endif
 #endif
 
+#include "version.h"
+
 /* A constant for the global reused MPFI and MPFR variables */
 #define GLOBAL_REUSED_VARS_MAX_ALLOC 2048
 
@@ -2411,7 +2413,10 @@ int general(int argc, char *argv[]) {
 	sollyaPrintf("--warnonstderr : print warning messages on error output instead on the standard output\n");
 	sollyaPrintf("\nFor help on %s commands type \"help;\" on the %s prompt\n",PACKAGE_NAME,PACKAGE_NAME);
 	sollyaPrintf("More documentation on %s is available on the %s website http://sollya.gforge.inria.fr/.\nFor bug reports send an email to %s.\n",PACKAGE_NAME,PACKAGE_NAME,PACKAGE_BUGREPORT);
-	sollyaPrintf("\n%s is\n\nCopyright 2006-2016 by\n\n   Laboratoire de l'Informatique du Parallelisme,\n   UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,\n\n   LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2)\n\n   Laboratoire d'Informatique de Paris 6 - Équipe PEQUAN\n   Sorbonne Universités\n   UPMC Univ Paris 06\n   UMR 7606, LIP6\n   Boîte Courrier 169\n   4, place Jussieu\n   F-75252 Paris Cedex 05\n   France\n\n   CNRS, LIP6, UPMC\n   Sorbonne Universités, UPMC Univ Paris 06,\n   CNRS, LIP6 UMR 7606, 4 place Jussieu 75005 Paris\n\nand by\n\n    INRIA Sophia-Antipolis Mediterranee, APICS Team,\n    Sophia-Antipolis, France.\n\nAll rights reserved.\n\nContributors:\n              Ch. Lauter\n	      S. Chevillard\n	      M. Joldes\n              N. Jourdan\n	      M. Mezzarobba.\n\nThis software is governed by the CeCILL-C license under French law and\nabiding by the rules of distribution of free software.  You can  use,\nmodify and/ or redistribute the software under the terms of the CeCILL-C\nlicense as circulated by CEA, CNRS and INRIA at the following URL\n\"http://www.cecill.info\".\n\nAs a counterpart to the access to the source code and  rights to copy,\nmodify and redistribute granted by the license, users are provided only\nwith a limited warranty  and the software's author,  the holder of the\neconomic rights,  and the successive licensors  have only  limited\nliability.\n\nIn this respect, the user's attention is drawn to the risks associated\nwith loading,  using,  modifying and/or developing or reproducing the\nsoftware by the user in light of its specific status of free software,\nthat may mean  that it is complicated to manipulate,  and  that  also\ntherefore means  that it is reserved for developers  and  experienced\nprofessionals having in-depth computer knowledge. Users are therefore\nencouraged to load and test the software's suitability as regards their\nrequirements in conditions enabling the security of their systems and/or\ndata to be ensured and,  more generally, to use and operate it in the\nsame conditions as regards security.\n\nThe fact that you are presently reading this means that you have had\nknowledge of the CeCILL-C license and that you accept its terms.\n\nThis program is distributed WITHOUT ANY WARRANTY; without even the\nimplied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n\nThis build of %s is based on GMP %s, MPFR %s and MPFI %s.\n",PACKAGE_STRING,PACKAGE_STRING,gmp_version,mpfr_get_version(),sollya_mpfi_get_version());
+	sollyaPrintf(
+		"\n%s is\n\n"
+		VERSION_COPYRIGHT_TEXT
+		"\nThis build of %s is based on GMP %s, MPFR %s and MPFI %s.\n",PACKAGE_STRING,PACKAGE_STRING,gmp_version,mpfr_get_version(),sollya_mpfi_get_version());
 #if defined(HAVE_FPLLL_VERSION_STRING)
 	sollyaPrintf("%s uses FPLLL as: \"%s\"\n",PACKAGE_STRING,HAVE_FPLLL_VERSION_STRING);
 #endif
