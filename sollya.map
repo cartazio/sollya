@@ -1,0 +1,14 @@
+LIBSOLLYA_5.0.0 {
+global:
+sollya_lib_*;
+##
+## sublist added by hand:
+## - needed for tests-lib/tget_element_in_list.c
+## - might be wrapped as they might be of usage interest
+##
+sollya_gettime;
+sollya_timediff_ms;
+sollya_gettime_var;
+
+local: *;
+};
