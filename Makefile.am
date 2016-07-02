@@ -1,5 +1,5 @@
 SUBDIRS = doc tests-tool tests-lib
-EXTRA_DIST = libsollyaexample.c externalfun.c externalproc.c
+EXTRA_DIST = libsollyaexample.c externalfun.c externalproc.c sollya.h2m
 
 AM_YFLAGS = -d
 AM_LFLAGS = -o$(LEX_OUTPUT_ROOT).c
@@ -144,3 +144,24 @@ check-tool: $(BUILT_SOURCES)
 	|| eval $$failcom; \
 	$(MAKE) $(AM_MAKEFLAGS) check-am || exit 1; \
 	test -z "$$fail"
+
+man_MANS = sollya.1
+
+AM_H2MFLAGS = \
+	--local=C.utf8 \
+	--libtool \
+	--no-info
+
+# Short descriptions for manpages
+sollya_DESCRIPTION =  "tool environment for safe floting-point code development -- command-line interface"
+
+%.1: %
+	 SOLLYA_BANNER_OFF=YES $(HELP2MAN) \
+			-s 1 \
+			$(AM_H2MFLAGS) \
+			-I $(top_srcdir)/$*.h2m \
+			-n $(if $($(subst -,_,$*)_DESCRIPTION), $($(subst -,_,$*)_DESCRIPTION), "manual page for $*") \
+			-o $@ \
+		$(top_builddir)/$<
+
+#EXTRA_DIST += $(man_MANS)

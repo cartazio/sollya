@@ -1,0 +1,10 @@
+help2man include file for sollya man page
+
+[DESCRIPTION]
+.B sollya
+provides an environment for for safe floating-point code development.
+
+/This is sollya 5.0 connected to a regular file./
+
+[SEE ALSO]
+.BR rlwrap (1)
