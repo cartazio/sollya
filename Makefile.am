@@ -28,6 +28,15 @@ sollya_CXXFLAGS = $(AM_CXXFLAGS)
 include_HEADERS = sollya.h sollya-messages.h
 
 lib_LTLIBRARIES = libsollya.la
+
+libsollya_la_LT_INFO = -version-info 5:0:0
+
+libsollya_la_LD_VERSION_SCRIPT =
+if HAVE_LD_VERSION_SCRIPT
+  libsollya_la_LD_VERSION_SCRIPT += -Wl,--version-script=$(top_srcdir)/sollya.map
+endif
+
+
 libsollya_la_SOURCES = \
 sollya.h \
 mpfi-compat.h \
@@ -111,7 +120,8 @@ xml.c \
 xml.h
 
 libsollya_la_LDFLAGS = \
-	-version-info 5:0:0
+	$(libsollya_la_LT_INFO) \
+	$(libsollya_la_LD_VERSION_SCRIPT)
 
 ##LIBTOOL_DEPS = @LIBTOOL_DEPS@
 ##libtool: $(LIBTOOL_DEPS)

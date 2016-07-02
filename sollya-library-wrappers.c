@@ -129,13 +129,13 @@ int __sollya_lib_initialized = 0;
    
 */
 
-void sollya_lib_internal_mpfr_zero_sign_normalize(mpfr_t op) {
+static void __sollya_lib_internal_mpfr_zero_sign_normalize(mpfr_t op) {
   if (mpfr_zero_p(op)) {
     mpfr_mul(op,op,op,GMP_RNDN); /* (+/- 0)^2 = +0 */
   }
 }
 
-void sollya_lib_internal_double_zero_sign_normalize(double *op) {
+static void __sollya_lib_internal_double_zero_sign_normalize(double *op) {
   if (*op == 0.0) {
     *op = *op * *op; /* (+/- 0)^2 = +0 */
   }
@@ -2705,7 +2705,7 @@ sollya_obj_t sollya_lib_constant_from_int(int value) {
   return temp;
 }
 
-int sollya_lib_helper_mpfr_from_int64(mpfr_t rop, int64_t value, mp_rnd_t rnd) {
+static int __sollya_lib_helper_mpfr_from_int64(mpfr_t rop, int64_t value, mp_rnd_t rnd) {
   double valueDoubleHi, valueDoubleLo;
   int64_t valueHi, valueLo, tempInt64;
   mpfr_t valueMpfr, tempMpfr;
@@ -2744,7 +2744,7 @@ int sollya_lib_helper_mpfr_from_int64(mpfr_t rop, int64_t value, mp_rnd_t rnd) {
   return res;
 }
 
-int sollya_lib_helper_mpfr_from_uint64(mpfr_t rop, uint64_t value, mp_rnd_t rnd) {
+static int __sollya_lib_helper_mpfr_from_uint64(mpfr_t rop, uint64_t value, mp_rnd_t rnd) {
   double valueDoubleHi, valueDoubleLo;
   uint64_t valueHi, valueLo, tempInt64;
   mpfr_t valueMpfr, tempMpfr;
@@ -2789,7 +2789,7 @@ sollya_obj_t sollya_lib_constant_from_int64(int64_t value) {
   mpfr_t valueMpfr;
 
   mpfr_init2(valueMpfr, 64);
-  sollya_lib_helper_mpfr_from_int64(valueMpfr, value, GMP_RNDN); /* exact as 64 are enough */
+  __sollya_lib_helper_mpfr_from_int64(valueMpfr, value, GMP_RNDN); /* exact as 64 are enough */
   temp = addMemRef(makeConstant(valueMpfr));
   mpfr_clear(valueMpfr);
 
@@ -2801,7 +2801,7 @@ sollya_obj_t sollya_lib_constant_from_uint64(uint64_t value) {
   mpfr_t valueMpfr;
 
   mpfr_init2(valueMpfr, 64);
-  sollya_lib_helper_mpfr_from_uint64(valueMpfr, value, GMP_RNDN); /* exact as 64 are enough */
+  __sollya_lib_helper_mpfr_from_uint64(valueMpfr, value, GMP_RNDN); /* exact as 64 are enough */
   temp = addMemRef(makeConstant(valueMpfr));
   mpfr_clear(valueMpfr);
 
@@ -2900,8 +2900,8 @@ int sollya_lib_get_bounds_from_range(mpfr_t left, mpfr_t right, sollya_obj_t obj
     sollya_mpfi_interv_fr(temp, a, b);
     sollya_mpfi_get_left(left, temp);
     sollya_mpfi_get_right(right, temp);
-    sollya_lib_internal_mpfr_zero_sign_normalize(left);
-    sollya_lib_internal_mpfr_zero_sign_normalize(right);
+    __sollya_lib_internal_mpfr_zero_sign_normalize(left);
+    __sollya_lib_internal_mpfr_zero_sign_normalize(right);
     sollya_mpfi_clear(temp);
     mpfr_clear(a);
     mpfr_clear(b);
@@ -3097,7 +3097,7 @@ int sollya_lib_get_constant(mpfr_t value, sollya_obj_t obj1) {
 	printMessage(1,SOLLYA_MSG_ROUNDING_ON_CONSTANT_RETRIEVAL,"Warning: rounding occurred on retrieval of a constant.\n");
       }
     }
-    sollya_lib_internal_mpfr_zero_sign_normalize(value);
+    __sollya_lib_internal_mpfr_zero_sign_normalize(value);
   }
   mpfr_clear(myValue);
 
@@ -3148,7 +3148,7 @@ int sollya_lib_get_constant_as_double(double *value, sollya_obj_t obj1) {
   mpfr_init2(temp,53); /* sollya_lib_get_constant_inner may change the precision afterwards */
   if (__sollya_lib_get_constant_inner(temp, obj1, roundOp, &warning)) {
     val = sollya_mpfr_get_d(temp, GMP_RNDN);
-    sollya_lib_internal_double_zero_sign_normalize(&val);
+    __sollya_lib_internal_double_zero_sign_normalize(&val);
     mpfr_init2(reconvert,64);
     mpfr_set_d(reconvert, val, GMP_RNDN); /* Exact as precision enough for a double */
     if ((mpfr_cmp(temp, reconvert) != 0) &&
@@ -3465,7 +3465,7 @@ int sollya_lib_get_constant_as_int64(int64_t *value, sollya_obj_t obj1) {
   if (__sollya_lib_get_constant_inner(temp, obj1, roundOp, &warning)) {
     val = __sollya_lib_helper_mpfr_to_int64(temp);
     mpfr_init2(reconvert,8 * sizeof(int64_t) + 10);
-    sollya_lib_helper_mpfr_from_int64(reconvert, val, GMP_RNDN); /* Exact as precision enough for an int64 */
+    __sollya_lib_helper_mpfr_from_int64(reconvert, val, GMP_RNDN); /* Exact as precision enough for an int64 */
     if ((mpfr_cmp(temp, reconvert) != 0) || mpfr_nan_p(temp) || mpfr_nan_p(reconvert)) {
       if (mpfr_number_p(temp) || mpfr_inf_p(temp)) {
 	if ((!noRoundingWarnings) && warning) {
@@ -3501,7 +3501,7 @@ int sollya_lib_get_constant_as_uint64(uint64_t *value, sollya_obj_t obj1) {
   if (__sollya_lib_get_constant_inner(temp, obj1, roundOp, &warning)) {
     val = __sollya_lib_helper_mpfr_to_uint64(temp);
     mpfr_init2(reconvert,8 * sizeof(uint64_t) + 10);
-    sollya_lib_helper_mpfr_from_uint64(reconvert, val, GMP_RNDN); /* Exact as precision enough for an uint64 */
+    __sollya_lib_helper_mpfr_from_uint64(reconvert, val, GMP_RNDN); /* Exact as precision enough for an uint64 */
     if ((mpfr_cmp(temp, reconvert) != 0) || mpfr_nan_p(temp) || mpfr_nan_p(reconvert)) {
       if (mpfr_number_p(temp) || mpfr_inf_p(temp)) {
 	if ((!noRoundingWarnings) && warning) {
@@ -5158,7 +5158,7 @@ sollya_fp_result_t sollya_lib_evaluate_function_at_point(mpfr_t y, sollya_obj_t 
 
   /* Try to perform faithful evaluation */
   res = evaluateFaithfulWithCutOffFast(y, obj1, NULL, x, myCutOff, prec);
-  sollya_lib_internal_mpfr_zero_sign_normalize(y);
+  __sollya_lib_internal_mpfr_zero_sign_normalize(y);
 
   /* Free cutoff */
   mpfr_clear(myCutOff);
@@ -5188,7 +5188,7 @@ sollya_fp_result_t sollya_lib_evaluate_function_at_point(mpfr_t y, sollya_obj_t 
   case 2:
     /* Result was shown to be smaller than cutoff */
     mpfr_set_ui(y,0,GMP_RNDN); /* Set to zero because we are below the cutoff */
-    sollya_lib_internal_mpfr_zero_sign_normalize(y);
+    __sollya_lib_internal_mpfr_zero_sign_normalize(y);
     return SOLLYA_FP_BELOW_CUTOFF;
     break;
   default:
@@ -5248,7 +5248,7 @@ sollya_fp_result_t sollya_lib_evaluate_function_at_point(mpfr_t y, sollya_obj_t 
     */
     mpfr_add(yLeft, yLeft, yRight, GMP_RNDN);
     mpfr_div_2ui(y, yLeft, 1, GMP_RNDN);
-    sollya_lib_internal_mpfr_zero_sign_normalize(y);
+    __sollya_lib_internal_mpfr_zero_sign_normalize(y);
     mpfr_clear(yLeft);
     mpfr_clear(yRight);
     return SOLLYA_FP_NOT_FAITHFUL_INFINITY_CONTAINED;
@@ -5278,7 +5278,7 @@ sollya_fp_result_t sollya_lib_evaluate_function_at_point(mpfr_t y, sollya_obj_t 
 
       */
       mpfr_set_ui(y,0,GMP_RNDN);
-      sollya_lib_internal_mpfr_zero_sign_normalize(y);
+      __sollya_lib_internal_mpfr_zero_sign_normalize(y);
       mpfr_clear(yLeft);
       mpfr_clear(yRight);
       return SOLLYA_FP_NOT_FAITHFUL_ZERO_CONTAINED_BELOW_THRESHOLD;
@@ -5292,7 +5292,7 @@ sollya_fp_result_t sollya_lib_evaluate_function_at_point(mpfr_t y, sollya_obj_t 
     */
     mpfr_add(yLeft, yLeft, yRight, GMP_RNDN);
     mpfr_div_2ui(y, yLeft, 1, GMP_RNDN);
-    sollya_lib_internal_mpfr_zero_sign_normalize(y);
+    __sollya_lib_internal_mpfr_zero_sign_normalize(y);
     mpfr_clear(yLeft);
     mpfr_clear(yRight);
     return SOLLYA_FP_NOT_FAITHFUL_ZERO_CONTAINED_NOT_BELOW_THRESHOLD;
@@ -5305,7 +5305,7 @@ sollya_fp_result_t sollya_lib_evaluate_function_at_point(mpfr_t y, sollya_obj_t 
 
   mpfr_add(yLeft, yLeft, yRight, GMP_RNDN);
   mpfr_div_2ui(y, yLeft, 1, GMP_RNDN);
-  sollya_lib_internal_mpfr_zero_sign_normalize(y);
+  __sollya_lib_internal_mpfr_zero_sign_normalize(y);
   mpfr_clear(yLeft);
   mpfr_clear(yRight);
   return SOLLYA_FP_NOT_FAITHFUL_ZERO_NOT_CONTAINED;
@@ -5355,7 +5355,7 @@ sollya_fp_result_t sollya_lib_evaluate_function_at_constant_expression(mpfr_t y,
 
   /* Try to perform faithful evaluation */
   res = evaluateFaithfulAtConstantExpression(y, obj1, NULL, x, myCutOff, prec);
-  sollya_lib_internal_mpfr_zero_sign_normalize(y);
+  __sollya_lib_internal_mpfr_zero_sign_normalize(y);
 
   /* Free cutoff */
   mpfr_clear(myCutOff);
@@ -5385,7 +5385,7 @@ sollya_fp_result_t sollya_lib_evaluate_function_at_constant_expression(mpfr_t y,
   case 2:
     /* Result was shown to be smaller than cutoff */
     mpfr_set_ui(y,0,GMP_RNDN); /* Set to zero because we are below the cutoff */
-    sollya_lib_internal_mpfr_zero_sign_normalize(y);
+    __sollya_lib_internal_mpfr_zero_sign_normalize(y);
     return SOLLYA_FP_BELOW_CUTOFF;
     break;
   default:
@@ -5449,7 +5449,7 @@ sollya_fp_result_t sollya_lib_evaluate_function_at_constant_expression(mpfr_t y,
     */
     mpfr_add(yLeft, yLeft, yRight, GMP_RNDN);
     mpfr_div_2ui(y, yLeft, 1, GMP_RNDN);
-    sollya_lib_internal_mpfr_zero_sign_normalize(y);
+    __sollya_lib_internal_mpfr_zero_sign_normalize(y);
     mpfr_clear(yLeft);
     mpfr_clear(yRight);
     return SOLLYA_FP_NOT_FAITHFUL_INFINITY_CONTAINED;
@@ -5479,7 +5479,7 @@ sollya_fp_result_t sollya_lib_evaluate_function_at_constant_expression(mpfr_t y,
 
       */
       mpfr_set_ui(y,0,GMP_RNDN);
-      sollya_lib_internal_mpfr_zero_sign_normalize(y);
+      __sollya_lib_internal_mpfr_zero_sign_normalize(y);
       mpfr_clear(yLeft);
       mpfr_clear(yRight);
       return SOLLYA_FP_NOT_FAITHFUL_ZERO_CONTAINED_BELOW_THRESHOLD;
@@ -5493,7 +5493,7 @@ sollya_fp_result_t sollya_lib_evaluate_function_at_constant_expression(mpfr_t y,
     */
     mpfr_add(yLeft, yLeft, yRight, GMP_RNDN);
     mpfr_div_2ui(y, yLeft, 1, GMP_RNDN);
-    sollya_lib_internal_mpfr_zero_sign_normalize(y);
+    __sollya_lib_internal_mpfr_zero_sign_normalize(y);
     mpfr_clear(yLeft);
     mpfr_clear(yRight);
     return SOLLYA_FP_NOT_FAITHFUL_ZERO_CONTAINED_NOT_BELOW_THRESHOLD;
@@ -5506,7 +5506,7 @@ sollya_fp_result_t sollya_lib_evaluate_function_at_constant_expression(mpfr_t y,
 
   mpfr_add(yLeft, yLeft, yRight, GMP_RNDN);
   mpfr_div_2ui(y, yLeft, 1, GMP_RNDN);
-  sollya_lib_internal_mpfr_zero_sign_normalize(y);
+  __sollya_lib_internal_mpfr_zero_sign_normalize(y);
   mpfr_clear(yLeft);
   mpfr_clear(yRight);
   return SOLLYA_FP_NOT_FAITHFUL_ZERO_NOT_CONTAINED;
