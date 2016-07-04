@@ -61,7 +61,7 @@ silently. The reason for this lack of functionality is that the
 produced C source code, which is supposed to be compiled, would have 
 to call back to the Sollya interpreter in order to evaluate the 
 procedure-based function. 
-</li><li>Similarily, <?php linkTo("command","implementconstant","implementconstant");?> is currently unable to implement constant 
+</li><li>Similarly, <?php linkTo("command","implementconstant","implementconstant");?> is currently unable to implement constant 
 expressions <span class="arg">expr</span> that contain library-based functions, i.e. 
 functions dynamically bound to Sollya using the <?php linkTo("command","library","library");?> construct. 
 If <span class="arg">expr</span> contains such a library-based function, <?php linkTo("command","implementconstant","implementconstant");?> prints 

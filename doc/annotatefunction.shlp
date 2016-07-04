@@ -36,7 +36,7 @@ zero), it is assumed that
 §§ §§§
 §§                forall x in I, f(x) - g(x - x0) in d.§$$\forall x \in I, f(x) - g(x - x_0) \in d.$$§§
 §§ §§§
-It is the user responsability to ensure this property. Otherwise, any
+It is the user responsibility to ensure this property. Otherwise, any
 subsequent use of <f> on points of <I> might lead to incorrect values.
 
 #DESCRIPTION

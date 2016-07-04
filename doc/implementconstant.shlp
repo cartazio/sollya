@@ -67,7 +67,7 @@ to call back to the $SOLLYA interpreter in order to evaluate the
 procedure-based function.
 
 #DESCRIPTION
-Similarily, $COMMAND is currently unable to implement constant
+Similarly, $COMMAND is currently unable to implement constant
 expressions <expr> that contain library-based functions, i.e.
 functions dynamically bound to $SOLLYA using the $LIBRARY construct.
 If <expr> contains such a library-based function, $COMMAND prints

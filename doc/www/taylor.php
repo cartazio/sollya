@@ -18,7 +18,7 @@
 <ul> 
 <li><span class="arg">function</span> represents the function to be expanded</li> 
 <li><span class="arg">degree</span> represents the degree of the expansion to be delivered</li> 
-<li><span class="arg">point</span> represents the point in which the function is to be developped</li> 
+<li><span class="arg">point</span> represents the point in which the function is to be developed</li> 
 </ul> 
 </div> 
 <div class="divDescription"> 
@@ -31,7 +31,7 @@ n be the degree <span class="arg">degree</span>. Then, <?php linkTo("command","t
 evaluates to an expression mathematically equal to 
      f(t) + f'(t) * x + ... + 1/(n!) * f[n](t) * x^n. 
 In other words, if p(x) denotes the polynomial returned by <?php linkTo("command","taylor","taylor");?>, 
-p(x-t) is the Taylor polynomial of degree n of f developped at point t. 
+p(x-t) is the Taylor polynomial of degree n of f developed at point t. 
 <br><br> 
 Remark that <?php linkTo("command","taylor","taylor");?> evaluates to 0 if the degree <span class="arg">degree</span> is negative. 
 </ul> 

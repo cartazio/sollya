@@ -26,7 +26,7 @@ Statements for returning expressions using <?php linkTo("command","return","retu
  at the end of a begin-end-block used as a Sollya procedure 
  body. Only one <?php linkTo("command","return","return");?> statement can be given per begin-end-block. 
 </li><li>If at the end of a procedure definition using <?php linkTo("command","proc","proc");?> no <?php linkTo("command","return","return");?> 
-statement is given, a <?php linkTo("command","return","return");?> <?php linkTo("command","void","void");?> statement is implicitely 
+statement is given, a <?php linkTo("command","return","return");?> <?php linkTo("command","void","void");?> statement is implicitly 
 added. Procedures, i.e. procedure objects, when printed out in Sollya 
 defined with an implicit <?php linkTo("command","return","return");?> <?php linkTo("command","void","void");?> statement are displayed with 
 this statement explicitly given. 

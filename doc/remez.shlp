@@ -45,7 +45,7 @@ cannot be end-elliptic.
 
 If <L> is given and is a list of functions §§g_k§$g_k$§§, §§p§$p$§§ is searched as a
 linear combination of the §§g_k§$g_k$§§. In that case <L> cannot contain ellipses.
-It is the user responsability to check that the §§g_k§$g_k$§§ are linearly independent
+It is the user responsibility to check that the §§g_k§$g_k$§§ are linearly independent
 over the interval <range>. Moreover, the functions §§w*g_k§$w\cdot g_k$§§ must be at least
 twice differentiable over <range>. If these conditions are not fulfilled, the
 algorithm might fail or even silently return a result as if it successfully
