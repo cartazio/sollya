@@ -2413,12 +2413,9 @@ int general(int argc, char *argv[]) {
 	sollyaPrintf("--warnonstderr : print warning messages on error output instead on the standard output\n");
 	sollyaPrintf("\nFor help on %s commands type \"help;\" on the %s prompt\n",PACKAGE_NAME,PACKAGE_NAME);
 	sollyaPrintf("More documentation on %s is available on the %s website http://sollya.gforge.inria.fr/.\nFor bug reports send an email to %s.\n",PACKAGE_NAME,PACKAGE_NAME,PACKAGE_BUGREPORT);
-	sollyaPrintf(
-		"\n%s is\n\n"
-		VERSION_COPYRIGHT_TEXT
-		"\nThis build of %s is based on GMP %s, MPFR %s and MPFI %s.\n",PACKAGE_STRING,PACKAGE_STRING,gmp_version,mpfr_get_version(),sollya_mpfi_get_version());
+	sollyaPrintf("\n%s is\n\n" VERSION_COPYRIGHT_TEXT "\nThis build of %s is based on GMP %s, MPFR %s and MPFI %s.\n",PACKAGE_STRING,PACKAGE_STRING,gmp_version,mpfr_get_version(),sollya_mpfi_get_version());
 #if defined(HAVE_FPLLL_VERSION_STRING)
-	sollyaPrintf("%s uses FPLLL as: \"%s\"\n",PACKAGE_STRING,HAVE_FPLLL_VERSION_STRING);
+	sollyaPrintf("It uses FPLLL as: \"%s\"\n",HAVE_FPLLL_VERSION_STRING);
 #endif
 	sollyaPrintf("\n");
 	return 1;
