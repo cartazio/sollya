@@ -20,7 +20,7 @@ When the release seems ready:
     - Intel64 with icc
     - Cygwin
 
-  * Check that sollya compiles with a VPATH build with sources on a read-only directory, with configure given either with a relative or absolute path.
+  * make distcheck (this automatically includes trying to compile with a VPATH build with sources on a read-only directory). It is useful to additionally test if VPATH_BUILDs work correctly both with configure given either with a relative and absolute path.
   * Check that all modifications to sollya.tex have been reported into sollya.php.
   * valgrind everything.^{1}
   * Check that copyrights and email addresses are up to date.
