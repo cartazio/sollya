@@ -268,13 +268,6 @@ extern "C" {
 							    void (*)(void *(**)(size_t),
 								     void *(**)(void *, size_t, size_t),
 								     void (**)(void *, size_t)));
-  int sollya_lib_init_with_arguments_with_custom_memory_function_modifiers(int, char **,
-									   void (*)(void *(*)(size_t),
-										    void *(*)(void *, size_t, size_t),
-										    void (*)(void *, size_t)),
-									   void (*)(void *(**)(size_t),
-										    void *(**)(void *, size_t, size_t),
-										    void (**)(void *, size_t)));
   int sollya_lib_init_with_custom_memory_functions_with_custom_memory_function_modifiers(void *(*)(size_t),
 											 void *(*)(size_t, size_t),
 											 void *(*)(void *, size_t),
