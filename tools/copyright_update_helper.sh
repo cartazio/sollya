@@ -6,12 +6,14 @@
 # in the tests.
 
 # This script explicitly exclude the following files, that must
-# hence be manually checked:
-#    general.c
-#    help.h
-#    implement.c
-#    xml.c
-#    parser.y
+# hence be manually checked and updated:
+#    implement.c  because it contains emitLegalNoticeAndDisclaimer
+#                 and there is therefore two notions of copyright
+#                 for this file (the file itself, and the tool as
+#                 a whole)
+#    version.h    because the file itself is copyrighted, but it
+#                 also contains the general copyright for the tool
+#                 as a string.
 
 # At the time of designing this script, only files of the form
 # *.h *.c *.cpp *.y *.l are copyrighted. Also, no file in the
@@ -27,7 +29,7 @@ end_rev=HEAD
 # commit changed a comma in all files of the repository
 excluded_revs=""
 
-# Methodology: the file /tmp/sollya-copyright/copyright.log contains an entry
+# Methodology: the script outputs on stdout a list with one entry
 # for each copyrighted file in Sollya. This entry first sums up the current
 # copyright and contributors notice. Then, it lists all commits where the file
 # has been modified since start_rev, together with the name of the contributor
@@ -42,14 +44,22 @@ git clone https://scm.gforge.inria.fr/anonscm/git/sollya/sollya.git sollya-copyr
 cd sollya-copyright
 
 if [ -z "$excluded_revs" ]
-  then excluded_revs=ffffffffffffffffffffffffffffffffffffffff
+then
+    excluded_revs=ffffffffffffffffffffffffffffffffffffffff
+else
+    tmp_var=""
+    for i in `printf "$excluded_revs" | sed -n 's/ /\n/g;p'`
+    do
+      tmp_var="$tmp_var"`git rev-parse $i`" "
+    done
+    excluded_revs=`printf "$tmp_var" | sed -n 's/ $//;p'`
 fi
 
 for file in *.c *.h *.cpp *.l *.y
 do
   # WARNING: due to their particular content, these files
   # must be manually handled.
-  if [ $file != "general.c" -a $file != "help.h" -a $file != "implement.c" -a $file != "xml.c" -a $file != "parser.y" ]
+  if [ $file != "implement.c" -a $file != "version.h" ]
   then
     git log --full-history --pretty=format:'%H | %an | %ai' $start_rev..$end_rev $file | grep -v "^\("`printf "$excluded_revs" |sed -n 's/ /\\\\|/g;p'`"\)" | sed -n 's/^/   /;p' | sed -n 's/clauter/Christoph Lauter/;p' | sed -n 's/schevill/Sylvain Chevillard/;p' | sed -n 's/\(20[0-9][0-9]\)-.*$/\1/;p' > __sollya_tmp
 
