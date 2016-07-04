@@ -61,20 +61,20 @@
    Compile with something similar to
 
    gcc -Wall -I. -c libsollyaexample.c
-   gcc -L./.libs -I. -Wall -o libsollyaexample libsollyaexample.o -lsollya -lmpfi -lmpfr -lxml2 -lfplll
+   gcc -L.libs -I. -Wall -o libsollyaexample libsollyaexample.o -lsollya -lmpfi -lmpfr -lxml2 -lfplll
 
+   or, if you installed sollya,
 
-   The example...
-
-   TODO
+   gcc -Wall -c libsollyaexample.c
+   gcc -Wall -o libsollyaexample libsollyaexample.o -lsollya -lmpfi -lmpfr -lxml2 -lfplll
 
 */
 
-int myMessageCallback(int msg) {
+int myMessageCallback(sollya_msg_t msg, void *data) {
   char *str;
-  str = sollya_lib_msg_number_to_text(msg);
-  sollya_lib_printf("Got message #%d - \"%s\"\n", msg, str);
-  safeFree(str);
+  str = sollya_lib_msg_to_text(msg);
+  sollya_lib_printf("Got message #%d - \"%s\"\n", sollya_lib_get_msg_id(msg), str);
+  sollya_lib_free(str);
   return 1;
 }
 
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
 
   sollya_lib_init();
 
-  sollya_lib_install_msg_callback(myMessageCallback);
+  sollya_lib_install_msg_callback(myMessageCallback, NULL);
 
   func = sollya_lib_parse_string("exp(1.7 * x)");
 
