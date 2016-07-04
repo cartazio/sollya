@@ -113,10 +113,6 @@ xml.h
 libsollya_la_LDFLAGS = \
 	-version-info 5:0:0
 
-##LIBTOOL_DEPS = @LIBTOOL_DEPS@
-##libtool: $(LIBTOOL_DEPS)
-##	$(SHELL) ./config.status --recheck
-
 check-lib: $(BUILT_SOURCES)
 	@fail= failcom='exit 1'; \
 	for f in x $$MAKEFLAGS; do \
