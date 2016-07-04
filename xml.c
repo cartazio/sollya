@@ -441,7 +441,7 @@ void fPrintXml(FILE *fd, node *tree) {
  * usage: reader1 <filename>
  * test: reader1 test2.xml > reader1.tmp ; diff reader1.tmp reader1.res ; rm reader1.tmp
  * author: Daniel Veillard
- * copy: see Copyright for the status of this software.
+ * copy: see the copyright notice for the status of this software.
  */
 
 #include <stdio.h>
