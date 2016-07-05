@@ -187,7 +187,6 @@ struct __sollya_time_struct_t {
 };
 typedef struct __sollya_time_struct_t sollya_time_t;
 
-int general(int argc, char *argv[]);
 void printPrompt(void);
 void recoverFromError(void);
 void demaskString(char*, char*);

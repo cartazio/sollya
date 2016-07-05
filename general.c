@@ -78,7 +78,7 @@
 #include <setjmp.h>
 #include <stdarg.h>
 #include <limits.h>
-#include "main.h"
+#include "general.h"
 #include "plot.h"
 #include "expression.h"
 #include "remez.h"
@@ -2323,7 +2323,7 @@ char *sollya_strstr_impl(const char *haystack, const char *needle) {
 
 /* End of compatibility functions */
 
-int general(int argc, char *argv[]) {
+static int general(int argc, char *argv[]) {
   struct termios termAttr;
   volatile int parseAbort, executeAbort;
   int i;
@@ -2743,6 +2743,10 @@ int general(int argc, char *argv[]) {
   } else {
     return 0;
   }
+}
+
+int sollya_tool_main(int argc, char *argv[]) {
+  return general(argc, argv);
 }
 
 #undef malloc

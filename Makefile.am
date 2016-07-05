@@ -71,7 +71,6 @@ integral.h \
 library.c \
 library.h \
 main.c \
-main.h \
 plot.c \
 plot.h \
 proof.c \

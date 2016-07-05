@@ -48,10 +48,9 @@
 
 */
 
-#include "general.h"
-
+int sollya_tool_main(int, char *[]);
 
 int main(int argc, char *argv[]) {
-  return general(argc,argv);
+  return sollya_tool_main(argc, argv);
 }
 
