@@ -16,7 +16,7 @@ Statements for returning expressions using $COMMAND are only possible
 
 #DESCRIPTION
 If at the end of a procedure definition using $PROC no $COMMAND
-statement is given, a $COMMAND $VOID statement is implicitely
+statement is given, a $COMMAND $VOID statement is implicitly
 added. Procedures, i.e. procedure objects, when printed out in $SOLLYA
 defined with an implicit $COMMAND $VOID statement are displayed with
 this statement explicitly given.

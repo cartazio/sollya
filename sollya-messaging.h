@@ -23,7 +23,7 @@
 
   This software is a computer program whose purpose is to provide an
   environment for safe floating-point code development. It is
-  particularily targeted to the automatized implementation of
+  particularly targeted to the automated implementation of
   mathematical floating-point libraries (libm). Amongst other features,
   it offers a certified infinity norm, an automatic polynomial
   implementer and a fast Remez algorithm.
@@ -128,7 +128,7 @@ static const messageEntry messageTextsTable[] = {
   { SOLLYA_MSG_DOUBLE_ROUNDING_IN_ROUND_TO_TRIPLE_DOUBLE              , "A double rounding occurred in round to triple-double" },
   { SOLLYA_MSG_ROUNDING_DOWN_BEFORE_PRINTING_DOUBLE                   , "A round-down occurred before printing a double precision value" },
   { SOLLYA_MSG_ROUNDING_UP_BEFORE_PRINTING_DOUBLE                     , "A round-up occurred before printing a double precision value" },
-  { SOLLYA_MSG_COULD_NOT_FIGURE_OUT_ENDIANESS                         , "Could not figure out the endianess of the system" },
+  { SOLLYA_MSG_COULD_NOT_FIGURE_OUT_ENDIANESS                         , "Could not figure out the endianness of the system" },
   { SOLLYA_MSG_ROUNDING_DOWN_BEFORE_PRINTING_SINGLE                   , "A round-down occurred before printing a single precision value" },
   { SOLLYA_MSG_ROUNDING_UP_BEFORE_PRINTING_SINGLE                     , "A round-up occurred before printing a single precision value" },
   { SOLLYA_MSG_SNAN_MIGHT_HAVE_BECOME_QNAN                            , "An sNaN might have become a qNaN" },
@@ -367,7 +367,7 @@ static const messageEntry messageTextsTable[] = {
   { SOLLYA_MSG_XML_PARSER_FAILURE                                     , "Failed to parse a certain XML file" },
   { SOLLYA_MSG_XML_SYNCHRONIZATION_LOST_TRYING_TO_RESYNCH             , "The XML parser has lost synchronization and is trying to resynchronize" },
   { SOLLYA_MSG_XML_PARSER_UNABLE_TO_OPEN_A_CERTAIN_FILE               , "The XML parser cannot open a certain file" },
-  { SOLLYA_MSG_XML_PARSE_FUNCTIONALITY_NOT_COMPILED_IN                , "A certain XML file cannot be read because XInclude functionnality has not been compiled in" },
+  { SOLLYA_MSG_XML_PARSE_FUNCTIONALITY_NOT_COMPILED_IN                , "A certain XML file cannot be read because XInclude functionality has not been compiled in" },
   { SOLLYA_MSG_EXPR_DOES_NOT_EVALUATE_TO_INTEGER                      , "A given expression does not evaluate to an integer" },
   { SOLLYA_MSG_ROUNDING_ON_CONVERTING_A_MACHINE_INTEGER               , "A rounding has occurred during the conversion of a machine integer" },
   { SOLLYA_MSG_HARMLESS_ERROR_OCCURRED_COMMAND_NOT_EXECUTED           , "An error occurred. The last command will not succeed. This is harmless" },
@@ -383,7 +383,7 @@ static const messageEntry messageTextsTable[] = {
   { SOLLYA_MSG_START_POINT_TOO_PRECISE_FOR_GIVEN_INPUT_PREC           , "The given start point is too precise for the given search precision. It gets rounded beforehand" },
   { SOLLYA_MSG_DEGREE_OF_TAYLORFORM_MUST_BE_AT_LEAST_ZERO             , "The degree of a Taylor form must be at least zero" },
   { SOLLYA_MSG_ERROR_IN_TAYLORFORM_MULTIPLYING_INCOMPAT_MODELS        , "Error in Taylor form computation: multiplication of incompatible models" },
-  { SOLLYA_MSG_ERROR_IN_TAYLORFORM_UNKNOWN_FUNC_FOR_ZUMKELLER         , "Error in Taylor form computation: unkown type of function used with Zumkeller's technique" },
+  { SOLLYA_MSG_ERROR_IN_TAYLORFORM_UNKNOWN_FUNC_FOR_ZUMKELLER         , "Error in Taylor form computation: unknown type of function used with Zumkeller's technique" },
   { SOLLYA_MSG_ERROR_IN_TAYLORFORM_TRYING_TO_INCREASE_DEGREE          , "Error in Taylor form computation: trying to increase the degree of a model" },
   { SOLLYA_MSG_DEVELOPMENT_POINT_NOT_CONSTANT                         , "The expression given as a development point is not constant" },
   { SOLLYA_MSG_ROUNDING_ON_COMPUTATION_OF_TAYLOR_COEFFICIENT          , "A rounding occurred while computing the constant factor of a Taylor coefficient" },
@@ -402,7 +402,7 @@ static const messageEntry messageTextsTable[] = {
   { SOLLYA_MSG_SUPNORM_CANNOT_COMPUTE_ABSOLUTE_INF                    , "During supnorm computation, it was not possible to determine a valid lower bound for the absolute value of the function" },
   { SOLLYA_MSG_SUPNORM_CANNOT_DETERMINE_SIGN_OF_T                     , "During supnorm computation, it was not possible to safely determine the sign of the Taylor polynomial" },
   { SOLLYA_MSG_SUPNORM_CANNOT_DETERMINE_ORDER_OF_SINGU                , "During supnorm computation, it was not possible to safely determine the order of a presume zero of the given function" },
-  { SOLLYA_MSG_SUPNORM_GENERIC_ERROR                                  , "During supnorm computation, some generic error occured. No further description is available" },
+  { SOLLYA_MSG_SUPNORM_GENERIC_ERROR                                  , "During supnorm computation, some generic error occurred. No further description is available" },
   { SOLLYA_MSG_SUPNORM_ACCURACY_TOO_HIGH                              , "For supnorm, the given accuracy depasses the current maximum precision. Try to increase the precision of the tool" },
   { SOLLYA_MSG_SUPNORM_COULD_NOT_FAITHFULLY_EVAL_ERROR_FUNC           , "During supnorm computation, the error function between the function and the polynomial could not faithfully be evaluated at some point" },
   { SOLLYA_MSG_DOMAIN_IS_NO_CLOSED_INTERVAL_ON_THE_REALS              , "The given domain is not a closed interval on the reals" },
@@ -412,7 +412,7 @@ static const messageEntry messageTextsTable[] = {
   { SOLLYA_MSG_ACCUARCY_INDICATION_IS_NOT_A_REAL_NUMBER               , "The given accuracy indication is not a real number" },
   { SOLLYA_MSG_ACCUARCY_INDICATION_IS_ZERO                            , "The given accuracy indication is zero" },
   { SOLLYA_MSG_POLYNOMIAL_HAS_NON_DYADIC_COEFFICIENTS                 , "The given polynomials contains coefficients that are no dyadic numbers" },
-  { SOLLYA_MSG_SUPNORM_SAFE_ENCLOSURE_COULD_NOT_BE_COMPUTED           , "An error occured during supremum norm computation. A safe enclosure of the supremum norm could not be computed" },
+  { SOLLYA_MSG_SUPNORM_SAFE_ENCLOSURE_COULD_NOT_BE_COMPUTED           , "An error occurred during supremum norm computation. A safe enclosure of the supremum norm could not be computed" },
   { SOLLYA_MSG_STURM_INTERVAL_A_CERTAIN_PREC_HAS_BEEN_CHOSEN          , "During execution of Sturm's algorithm in interval arithmetic, a certain precision has been chosen" },
   { SOLLYA_MSG_STURM_COEFF_EVALUATED_TO_RATIONAL_NUMBER               , "A coefficient of the given polynomial has been evaluated to a certain rational number" },
   { SOLLYA_MSG_STURM_COEFF_NOT_CONSTANT_NOR_RATIONAL_ROUNDING         , "A coefficient of the given polynomial is neither a floating point or rational constant nor can be evaluated without rounding to a floating point constant" },
@@ -556,14 +556,14 @@ static const messageEntry messageTextsTable[] = {
   { SOLLYA_MSG_CHEBYSHEVFORM_DOMAIN_MUST_NOT_BE_POINT_INTERVAL        , "The domain of a Chebyshev Model can not be a point interval"},
   { SOLLYA_MSG_CHEBYSHEVFORM_ERROR_IN_COMPUTATION                     , "An error occurred during computation of a Chebyshev form."},
   { SOLLYA_MSG_ERROR_IN_CHEBYSHEVFORM_COPYING_INCOMPAT_MODELS         , "Error in Chebyshev form computation: copy of incompatible models."},
-  { SOLLYA_MSG_ERROR_IN_CHEBYSHEVFORM_UNKNOWN_FUNC_FOR_ZUMKELLER      , "Error in Chebyshev form computation: unkown type of function used with Zumkeller's technique."},
+  { SOLLYA_MSG_ERROR_IN_CHEBYSHEVFORM_UNKNOWN_FUNC_FOR_ZUMKELLER      , "Error in Chebyshev form computation: unknown type of function used with Zumkeller's technique."},
   { SOLLYA_MSG_ERROR_IN_CHEBYSHEVFORM_NOT_A_POLYNOMIAL                , "Error in Chebyshev form computation: the given function is not a polynomial, no modification is made." },
   { SOLLYA_MSG_SPECIAL_ALGORITHM_USED_FOR_COEFF                       , "A special algorithm is used to extract the i-th coefficient of an expression that is a polynomial." },
   { SOLLYA_MSG_NO_CORRECT_ROUNDING_FOR_ROUND_OPERATOR                 , "No correctly rounded result could be obtained upon evaluation of a rounding operator." },
   { SOLLYA_MSG_ROUNDING_OF_BOUNDARY_INSTEAD_OF_CORRECT_ROUNDING       , "The returned rounding is the rounding of the rounding boundary because correct rounding has not been possible." },
   { SOLLYA_MSG_NO_CORRECT_TERNARY_VALUE_FOR_ROUND_BUT_CORRECT_ROUNDING, "A correct rounding was possible but the actual rounding direction could not be determined." },
   { SOLLYA_MSG_NO_CORRECT_TERNARY_VALUE_FOR_ROUND                     , "The actual rounding direction during a round operation could not be determined." },
-  { SOLLYA_MSG_LIBRARY_CLOSER_ERROR                                   , "While closing a libary, the function \"sollya_external_lib_close\" was found and called but it signaled an error." },
+  { SOLLYA_MSG_LIBRARY_CLOSER_ERROR                                   , "While closing a library, the function \"sollya_external_lib_close\" was found and called but it signaled an error." },
   { SOLLYA_MSG_INF_CONVERTED_TO_NUMBER_ON_CONSTANT_RETRIEVAL          , "An infinity has been converted to a number upon retrieval of a constant." },
   { SOLLYA_MSG_ANNOTATION_COULD_NOT_BE_SET_UP                         , "The annotation could not be set up. The function is returned as-is." },
   { SOLLYA_MSG_GENERIC_SOLLYA_LIBRARY_MSG                             , "An external program using the Sollya library has displayed a message." },

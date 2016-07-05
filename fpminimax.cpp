@@ -28,7 +28,7 @@
 
   This software is a computer program whose purpose is to provide an
   environment for safe floating-point code development. It is
-  particularily targeted to the automatized implementation of
+  particularly targeted to the automated implementation of
   mathematical floating-point libraries (libm). Amongst other features,
   it offers a certified infinity norm, an automatic polynomial
   implementer and a fast Remez algorithm.
@@ -386,9 +386,9 @@ extern "C" int findCoeffInPseudoPolynomial(node **c, node *poly, node *g) {
     break;
   }
 
-  /* Nothing worked. Maybe, poly = g, in which case, the coefficient is implicitely 1,
-     or poly = constant and g = constant, in which case the coefficient is implicitely poly/g,
-     or poly = 0, in which case the coefficient is implicitely 0.  */
+  /* Nothing worked. Maybe, poly = g, in which case, the coefficient is implicitly 1,
+     or poly = constant and g = constant, in which case the coefficient is implicitly poly/g,
+     or poly = 0, in which case the coefficient is implicitly 0.  */
   if (isSyntacticallyEqual(poly, g)) { *c = makeConstantDouble(1.0); return 1; }
 
   if ( (isConstant(poly)) && (isConstant(g)) ) {

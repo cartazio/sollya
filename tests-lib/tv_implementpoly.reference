@@ -45,7 +45,7 @@ implementpoly(649037107316853453566312041152512 - 108172851219475575594385340192
     
     The Sollya software is a computer program whose purpose is to provide
     an environment for safe floating-point code development. It is
-    particularily targeted to the automatized implementation of
+    particularly targeted to the automated implementation of
     mathematical floating-point libraries (libm). Amongst other features,
     it offers a certified infinity norm, an automatic polynomial
     implementer and a fast Remez algorithm.
@@ -173,7 +173,7 @@ implementpoly(649037107316853453566312041152512 - 108172851219475575594385340192
     
     The Sollya software is a computer program whose purpose is to provide
     an environment for safe floating-point code development. It is
-    particularily targeted to the automatized implementation of
+    particularly targeted to the automated implementation of
     mathematical floating-point libraries (libm). Amongst other features,
     it offers a certified infinity norm, an automatic polynomial
     implementer and a fast Remez algorithm.
@@ -267,7 +267,7 @@ Caught the message: a coefficient in a Horner scheme is not guaranteed to also b
 Caught the message: a coefficient in a Horner scheme is not guaranteed to also be twice as large as the subpolynomial.
 Caught the message: a coefficient in a Horner scheme is not guaranteed to also be twice as large as the subpolynomial.
 Caught the message: a coefficient in a Horner scheme is not guaranteed to also be twice as large as the subpolynomial.
-Caught the message: an error has occured during the determination of the required precisions.
+Caught the message: an error has occurred during the determination of the required precisions.
 implementpoly(15 + x * (14 + x * (13 + x * (12 + x * (11 + x * (10 + x * (9 + x * (8 + x * (7 + x * (6 + x * (5 + x * (4 + x * (3 + x * (2 + x))))))))))))),[-1b-1;1b-1],1b-60,doubledouble,p,"timplementpoly.implementation.c",honorcoeffprec,"timplementpoly.implementation.gappa") returns 15 + x * (14 + x * (13 + x * (12 + x * (11 + x * (10 + x * (9 + x * (8 + x * (7 + x * (6 + x * (5 + x * (4 + x * (3 + x * (2 + x))))))))))))) and produces the following code:
 
 /*
@@ -314,7 +314,7 @@ implementpoly(15 + x * (14 + x * (13 + x * (12 + x * (11 + x * (10 + x * (9 + x 
     
     The Sollya software is a computer program whose purpose is to provide
     an environment for safe floating-point code development. It is
-    particularily targeted to the automatized implementation of
+    particularly targeted to the automated implementation of
     mathematical floating-point libraries (libm). Amongst other features,
     it offers a certified infinity norm, an automatic polynomial
     implementer and a fast Remez algorithm.

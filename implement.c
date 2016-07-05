@@ -17,7 +17,7 @@
 
   This software is a computer program whose purpose is to provide an
   environment for safe floating-point code development. It is
-  particularily targeted to the automatized implementation of
+  particularly targeted to the automated implementation of
   mathematical floating-point libraries (libm). Amongst other features,
   it offers a certified infinity norm, an automatic polynomial
   implementer and a fast Remez algorithm.
@@ -70,21 +70,21 @@
 #define MIN(a,b) (a > b ? b : a)
 
 void emitLegalNoticeAndDisclaimer(FILE *fd) {
-  sollyaFprintf(fd, "/*\n"); 
-  sollyaFprintf(fd, "    This code was generated using non-trivial code generation commands of\n"); 
-  sollyaFprintf(fd, "    the Sollya software program.\n"); 
-  sollyaFprintf(fd, "    \n"); 
-  sollyaFprintf(fd, "    Before using, modifying and/or integrating this code into other\n"); 
-  sollyaFprintf(fd, "    software, review the copyright and license status of this generated\n"); 
-  sollyaFprintf(fd, "    code. In particular, see the exception below.\n"); 
-  sollyaFprintf(fd, "    \n"); 
-  sollyaFprintf(fd, "    Sollya is\n"); 
-  sollyaFprintf(fd, "    \n"); 
-  sollyaFprintf(fd, "    Copyright 2006-2016 by\n"); 
-  sollyaFprintf(fd, "    \n"); 
-  sollyaFprintf(fd, "    Laboratoire de l'Informatique du Parallelisme, UMR CNRS - ENS Lyon -\n"); 
-  sollyaFprintf(fd, "    UCB Lyon 1 - INRIA 5668,\n"); 
-  sollyaFprintf(fd, "    \n"); 
+  sollyaFprintf(fd, "/*\n");
+  sollyaFprintf(fd, "    This code was generated using non-trivial code generation commands of\n");
+  sollyaFprintf(fd, "    the Sollya software program.\n");
+  sollyaFprintf(fd, "    \n");
+  sollyaFprintf(fd, "    Before using, modifying and/or integrating this code into other\n");
+  sollyaFprintf(fd, "    software, review the copyright and license status of this generated\n");
+  sollyaFprintf(fd, "    code. In particular, see the exception below.\n");
+  sollyaFprintf(fd, "    \n");
+  sollyaFprintf(fd, "    Sollya is\n");
+  sollyaFprintf(fd, "    \n");
+  sollyaFprintf(fd, "    Copyright 2006-2016 by\n");
+  sollyaFprintf(fd, "    \n");
+  sollyaFprintf(fd, "    Laboratoire de l'Informatique du Parallelisme, UMR CNRS - ENS Lyon -\n");
+  sollyaFprintf(fd, "    UCB Lyon 1 - INRIA 5668,\n");
+  sollyaFprintf(fd, "    \n");
   sollyaFprintf(fd, "    LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2)\n");
   sollyaFprintf(fd, "    \n");
   sollyaFprintf(fd, "    Laboratoire d'Informatique de Paris 6 - Équipe PEQUAN\n");
@@ -100,76 +100,76 @@ void emitLegalNoticeAndDisclaimer(FILE *fd) {
   sollyaFprintf(fd, "    Sorbonne Universités, UPMC Univ Paris 06,\n");
   sollyaFprintf(fd, "    CNRS, LIP6 UMR 7606, 4 place Jussieu 75005 Paris\n");
   sollyaFprintf(fd, "    \n");
-  sollyaFprintf(fd, "    and by\n"); 
-  sollyaFprintf(fd, "    \n"); 
-  sollyaFprintf(fd, "    Centre de recherche INRIA Sophia-Antipolis Mediterranee, equipe APICS,\n"); 
-  sollyaFprintf(fd, "    Sophia Antipolis, France.\n"); 
-  sollyaFprintf(fd, "    \n"); 
-  sollyaFprintf(fd, "    Contributors Ch. Lauter, S. Chevillard, M. Joldes, M. Mezzarobba\n"); 
-  sollyaFprintf(fd, "    \n"); 
-  sollyaFprintf(fd, "    christoph.lauter@ens-lyon.org\n"); 
-  sollyaFprintf(fd, "    sylvain.chevillard@ens-lyon.org\n"); 
-  sollyaFprintf(fd, "    joldes@laas.fr\n"); 
+  sollyaFprintf(fd, "    and by\n");
+  sollyaFprintf(fd, "    \n");
+  sollyaFprintf(fd, "    Centre de recherche INRIA Sophia-Antipolis Mediterranee, equipe APICS,\n");
+  sollyaFprintf(fd, "    Sophia Antipolis, France.\n");
+  sollyaFprintf(fd, "    \n");
+  sollyaFprintf(fd, "    Contributors Ch. Lauter, S. Chevillard, M. Joldes, M. Mezzarobba\n");
+  sollyaFprintf(fd, "    \n");
+  sollyaFprintf(fd, "    christoph.lauter@ens-lyon.org\n");
+  sollyaFprintf(fd, "    sylvain.chevillard@ens-lyon.org\n");
+  sollyaFprintf(fd, "    joldes@laas.fr\n");
   sollyaFprintf(fd, "    marc@mezzarobba.net\n");
-  sollyaFprintf(fd, "    \n"); 
-  sollyaFprintf(fd, "    The Sollya software is a computer program whose purpose is to provide\n"); 
-  sollyaFprintf(fd, "    an environment for safe floating-point code development. It is\n"); 
-  sollyaFprintf(fd, "    particularily targeted to the automatized implementation of\n"); 
-  sollyaFprintf(fd, "    mathematical floating-point libraries (libm). Amongst other features,\n"); 
-  sollyaFprintf(fd, "    it offers a certified infinity norm, an automatic polynomial\n"); 
-  sollyaFprintf(fd, "    implementer and a fast Remez algorithm.\n"); 
-  sollyaFprintf(fd, "    \n"); 
-  sollyaFprintf(fd, "    The Sollya software is governed by the CeCILL-C license under French\n"); 
-  sollyaFprintf(fd, "    law and abiding by the rules of distribution of free software.  You\n"); 
-  sollyaFprintf(fd, "    can use, modify and/ or redistribute the software under the terms of\n"); 
-  sollyaFprintf(fd, "    the CeCILL-C license as circulated by CEA, CNRS and INRIA at the\n"); 
-  sollyaFprintf(fd, "    following URL \"http://www.cecill.info\".\n"); 
-  sollyaFprintf(fd, "    \n"); 
-  sollyaFprintf(fd, "    As a counterpart to the access to the source code and rights to copy,\n"); 
-  sollyaFprintf(fd, "    modify and redistribute granted by the license, users are provided\n"); 
-  sollyaFprintf(fd, "    only with a limited warranty and the software's author, the holder of\n"); 
-  sollyaFprintf(fd, "    the economic rights, and the successive licensors have only limited\n"); 
-  sollyaFprintf(fd, "    liability.\n"); 
-  sollyaFprintf(fd, "    \n"); 
-  sollyaFprintf(fd, "    In this respect, the user's attention is drawn to the risks associated\n"); 
-  sollyaFprintf(fd, "    with loading, using, modifying and/or developing or reproducing the\n"); 
-  sollyaFprintf(fd, "    software by the user in light of its specific status of free software,\n"); 
-  sollyaFprintf(fd, "    that may mean that it is complicated to manipulate, and that also\n"); 
-  sollyaFprintf(fd, "    therefore means that it is reserved for developers and experienced\n"); 
-  sollyaFprintf(fd, "    professionals having in-depth computer knowledge. Users are therefore\n"); 
-  sollyaFprintf(fd, "    encouraged to load and test the software's suitability as regards\n"); 
-  sollyaFprintf(fd, "    their requirements in conditions enabling the security of their\n"); 
-  sollyaFprintf(fd, "    systems and/or data to be ensured and, more generally, to use and\n"); 
-  sollyaFprintf(fd, "    operate it in the same conditions as regards security.\n"); 
-  sollyaFprintf(fd, "    \n"); 
-  sollyaFprintf(fd, "    The fact that you are presently reading this means that you have had\n"); 
-  sollyaFprintf(fd, "    knowledge of the CeCILL-C license and that you accept its terms.\n"); 
-  sollyaFprintf(fd, "    \n"); 
-  sollyaFprintf(fd, "    The Sollya program is distributed WITHOUT ANY WARRANTY; without even\n"); 
-  sollyaFprintf(fd, "    the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR\n"); 
-  sollyaFprintf(fd, "    PURPOSE.\n"); 
-  sollyaFprintf(fd, "    \n"); 
-  sollyaFprintf(fd, "    This generated program is distributed WITHOUT ANY WARRANTY; without\n"); 
-  sollyaFprintf(fd, "    even the implied warranty of MERCHANTABILITY or FITNESS FOR A\n"); 
-  sollyaFprintf(fd, "    PARTICULAR PURPOSE.\n"); 
-  sollyaFprintf(fd, "    \n"); 
-  sollyaFprintf(fd, "    As a special exception, you may create a larger work that contains\n"); 
-  sollyaFprintf(fd, "    part or all of this software generated using Sollya and distribute\n"); 
-  sollyaFprintf(fd, "    that work under terms of your choice, so long as that work isn't\n"); 
-  sollyaFprintf(fd, "    itself a numerical code generator using the skeleton of this code or a\n"); 
-  sollyaFprintf(fd, "    modified version thereof as a code skeleton.  Alternatively, if you\n"); 
-  sollyaFprintf(fd, "    modify or redistribute this generated code itself, or its skeleton,\n"); 
-  sollyaFprintf(fd, "    you may (at your option) remove this special exception, which will\n"); 
-  sollyaFprintf(fd, "    cause this generated code and its skeleton and the resulting Sollya\n"); 
-  sollyaFprintf(fd, "    output files to be licensed under the CeCILL-C licence without this\n"); 
-  sollyaFprintf(fd, "    special exception.\n"); 
-  sollyaFprintf(fd, "    \n"); 
-  sollyaFprintf(fd, "    This special exception was added by the Sollya copyright holders in\n"); 
-  sollyaFprintf(fd, "    version 4.1 of Sollya.\n"); 
-  sollyaFprintf(fd, "    \n"); 
-  sollyaFprintf(fd, "*/\n"); 
-  sollyaFprintf(fd, "\n"); 
-  sollyaFprintf(fd, "\n"); 
+  sollyaFprintf(fd, "    \n");
+  sollyaFprintf(fd, "    The Sollya software is a computer program whose purpose is to provide\n");
+  sollyaFprintf(fd, "    an environment for safe floating-point code development. It is\n");
+  sollyaFprintf(fd, "    particularly targeted to the automated implementation of\n");
+  sollyaFprintf(fd, "    mathematical floating-point libraries (libm). Amongst other features,\n");
+  sollyaFprintf(fd, "    it offers a certified infinity norm, an automatic polynomial\n");
+  sollyaFprintf(fd, "    implementer and a fast Remez algorithm.\n");
+  sollyaFprintf(fd, "    \n");
+  sollyaFprintf(fd, "    The Sollya software is governed by the CeCILL-C license under French\n");
+  sollyaFprintf(fd, "    law and abiding by the rules of distribution of free software.  You\n");
+  sollyaFprintf(fd, "    can use, modify and/ or redistribute the software under the terms of\n");
+  sollyaFprintf(fd, "    the CeCILL-C license as circulated by CEA, CNRS and INRIA at the\n");
+  sollyaFprintf(fd, "    following URL \"http://www.cecill.info\".\n");
+  sollyaFprintf(fd, "    \n");
+  sollyaFprintf(fd, "    As a counterpart to the access to the source code and rights to copy,\n");
+  sollyaFprintf(fd, "    modify and redistribute granted by the license, users are provided\n");
+  sollyaFprintf(fd, "    only with a limited warranty and the software's author, the holder of\n");
+  sollyaFprintf(fd, "    the economic rights, and the successive licensors have only limited\n");
+  sollyaFprintf(fd, "    liability.\n");
+  sollyaFprintf(fd, "    \n");
+  sollyaFprintf(fd, "    In this respect, the user's attention is drawn to the risks associated\n");
+  sollyaFprintf(fd, "    with loading, using, modifying and/or developing or reproducing the\n");
+  sollyaFprintf(fd, "    software by the user in light of its specific status of free software,\n");
+  sollyaFprintf(fd, "    that may mean that it is complicated to manipulate, and that also\n");
+  sollyaFprintf(fd, "    therefore means that it is reserved for developers and experienced\n");
+  sollyaFprintf(fd, "    professionals having in-depth computer knowledge. Users are therefore\n");
+  sollyaFprintf(fd, "    encouraged to load and test the software's suitability as regards\n");
+  sollyaFprintf(fd, "    their requirements in conditions enabling the security of their\n");
+  sollyaFprintf(fd, "    systems and/or data to be ensured and, more generally, to use and\n");
+  sollyaFprintf(fd, "    operate it in the same conditions as regards security.\n");
+  sollyaFprintf(fd, "    \n");
+  sollyaFprintf(fd, "    The fact that you are presently reading this means that you have had\n");
+  sollyaFprintf(fd, "    knowledge of the CeCILL-C license and that you accept its terms.\n");
+  sollyaFprintf(fd, "    \n");
+  sollyaFprintf(fd, "    The Sollya program is distributed WITHOUT ANY WARRANTY; without even\n");
+  sollyaFprintf(fd, "    the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR\n");
+  sollyaFprintf(fd, "    PURPOSE.\n");
+  sollyaFprintf(fd, "    \n");
+  sollyaFprintf(fd, "    This generated program is distributed WITHOUT ANY WARRANTY; without\n");
+  sollyaFprintf(fd, "    even the implied warranty of MERCHANTABILITY or FITNESS FOR A\n");
+  sollyaFprintf(fd, "    PARTICULAR PURPOSE.\n");
+  sollyaFprintf(fd, "    \n");
+  sollyaFprintf(fd, "    As a special exception, you may create a larger work that contains\n");
+  sollyaFprintf(fd, "    part or all of this software generated using Sollya and distribute\n");
+  sollyaFprintf(fd, "    that work under terms of your choice, so long as that work isn't\n");
+  sollyaFprintf(fd, "    itself a numerical code generator using the skeleton of this code or a\n");
+  sollyaFprintf(fd, "    modified version thereof as a code skeleton.  Alternatively, if you\n");
+  sollyaFprintf(fd, "    modify or redistribute this generated code itself, or its skeleton,\n");
+  sollyaFprintf(fd, "    you may (at your option) remove this special exception, which will\n");
+  sollyaFprintf(fd, "    cause this generated code and its skeleton and the resulting Sollya\n");
+  sollyaFprintf(fd, "    output files to be licensed under the CeCILL-C licence without this\n");
+  sollyaFprintf(fd, "    special exception.\n");
+  sollyaFprintf(fd, "    \n");
+  sollyaFprintf(fd, "    This special exception was added by the Sollya copyright holders in\n");
+  sollyaFprintf(fd, "    version 4.1 of Sollya.\n");
+  sollyaFprintf(fd, "    \n");
+  sollyaFprintf(fd, "*/\n");
+  sollyaFprintf(fd, "\n");
+  sollyaFprintf(fd, "\n");
 }
 
 int determinePowers(mpfr_t *coefficients, int degree, int *mulPrec, int *powPrec) {
@@ -2205,7 +2205,7 @@ int implementCoefficients(mpfr_t *coefficients, int degree, FILE *fd, char *name
       }
       if (mpfr_sub(temp,temp,temp2,GMP_RNDN) != 0) {
 	if (!noRoundingWarnings) {
-	  printMessage(1,SOLLYA_MSG_ROUNDING_ON_INTERNAL_HANDLING_OF_A_COEFFICIENT,"Warning: a rounding occurred on internal handling (on a substraction) of the %dth coefficient.\n");
+	  printMessage(1,SOLLYA_MSG_ROUNDING_ON_INTERNAL_HANDLING_OF_A_COEFFICIENT,"Warning: a rounding occurred on internal handling (on a subtraction) of the %dth coefficient.\n");
 	}
 	res = 0;
       }
@@ -2221,7 +2221,7 @@ int implementCoefficients(mpfr_t *coefficients, int degree, FILE *fd, char *name
 	}
 	if (mpfr_sub(temp,temp,temp2,GMP_RNDN) != 0) {
 	  if (!noRoundingWarnings) {
-	    printMessage(1,SOLLYA_MSG_ROUNDING_ON_INTERNAL_HANDLING_OF_A_COEFFICIENT,"Warning: a rounding occurred on internal handling (on a substraction) of the %dth coefficient.\n");
+	    printMessage(1,SOLLYA_MSG_ROUNDING_ON_INTERNAL_HANDLING_OF_A_COEFFICIENT,"Warning: a rounding occurred on internal handling (on a subtraction) of the %dth coefficient.\n");
 	  }
 	  res = 0;
 	}
@@ -2237,7 +2237,7 @@ int implementCoefficients(mpfr_t *coefficients, int degree, FILE *fd, char *name
 	  }
 	  if (mpfr_sub(temp,temp,temp2,GMP_RNDN) != 0) {
 	    if (!noRoundingWarnings) {
-	      printMessage(1,SOLLYA_MSG_ROUNDING_ON_INTERNAL_HANDLING_OF_A_COEFFICIENT,"Warning: a rounding occurred on internal handling (on a substraction) of the %dth coefficient.\n");
+	      printMessage(1,SOLLYA_MSG_ROUNDING_ON_INTERNAL_HANDLING_OF_A_COEFFICIENT,"Warning: a rounding occurred on internal handling (on a subtraction) of the %dth coefficient.\n");
 	    }
 	    res = 0;
 	  }

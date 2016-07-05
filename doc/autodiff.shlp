@@ -23,7 +23,7 @@ for each §§i§$i$§§, §§f_i§$f_i$§§ is a small interval enclosing the ex
 
 #DESCRIPTION
 Since it does not perform any symbolic differentiation, $COMMAND is much 
-more efficient than $DIFF and should be prefered when only numerical values
+more efficient than $DIFF and should be preferred when only numerical values
 are necessary.
 
 #DESCRIPTION
@@ -36,7 +36,7 @@ with the (almost) point interval §§I = [$PI]§$I = [$PI]$§§.
 #DESCRIPTION
 When §§I§$I$§§ is almost a point interval, the returned enclosures §§f_i§$f_i$§§ are also
 almost point intervals. However, when the interval §§I§$I$§§ begins to be fairly
-large, the enclosures can be deeply overestimated due to the dependecy
+large, the enclosures can be deeply overestimated due to the dependency
 phenomenon present with interval arithmetic.
 
 #DESCRIPTION

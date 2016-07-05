@@ -17,7 +17,7 @@
 
   This software is a computer program whose purpose is to provide an
   environment for safe floating-point code development. It is
-  particularily targeted to the automatized implementation of
+  particularly targeted to the automated implementation of
   mathematical floating-point libraries (libm). Amongst other features,
   it offers a certified infinity norm, an automatic polynomial
   implementer and a fast Remez algorithm.
@@ -144,7 +144,7 @@ void printWorstCases(node *func,
   }
 
   if (mpfr_sgn(epsilon) < 0) {
-    printMessage(1,SOLLYA_MSG_GIVEN_EPS_MUST_BE_POSITIVE_TAKING_ABS,"Warning: the epsilon given is negative. Will take its abolute value.\n");
+    printMessage(1,SOLLYA_MSG_GIVEN_EPS_MUST_BE_POSITIVE_TAKING_ABS,"Warning: the epsilon given is negative. Will take its absolute value.\n");
     mpfr_abs(epsilon,epsilon,GMP_RNDN);
   }
 

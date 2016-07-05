@@ -161,7 +161,7 @@ The following options are supported when calling <span class="sollya">Sollya</sp
 <li> <code>--args</code>: This special argument indicates to <span class="sollya">Sollya</span> that subsequent
 command line arguments are no longer to be interpreted but are to be passed as-is
 to the predefined <span class="sollya">Sollya</span> variable <code>__argv</code>. The <code>--args</code> argument
-is implicitely assumed if a <span class="sollya">Sollya</span> script filename has already been specified with a 
+is implicitly assumed if a <span class="sollya">Sollya</span> script filename has already been specified with a 
 preceding command line argument and none of the subsequent command line arguments 
 is one of the special options given in this list.
 </li><li> <code>--donotmodifystacksize</code>: When invoked, <span class="sollya">Sollya</span> trys to increase

@@ -31,7 +31,7 @@ of f. Yet, the computation is safe since small interval enclosures are
 produced. More precisely, <?php linkTo("command","autodiff","autodiff");?> returns a list [f_0, ..., f_n] such that, 
 for each i, f_i is a small interval enclosing the exact value of f^(i)(x0). 
 </li><li>Since it does not perform any symbolic differentiation, <?php linkTo("command","autodiff","autodiff");?> is much  
-more efficient than <?php linkTo("command","diff","diff");?> and should be prefered when only numerical values 
+more efficient than <?php linkTo("command","diff","diff");?> and should be preferred when only numerical values 
 are necessary. 
 </li><li>If an interval I is provided instead of a point x0, the list returned by 
 <?php linkTo("command","autodiff","autodiff");?> satisfies: for each i, f^(i)(I) is included in f_i. A particular use 
@@ -40,7 +40,7 @@ representable point such as pi. In this case, it suffices to call <?php linkTo("
 with the (almost) point interval I = [<?php linkTo("command","pi","pi");?>]. 
 </li><li>When I is almost a point interval, the returned enclosures f_i are also 
 almost point intervals. However, when the interval I begins to be fairly 
-large, the enclosures can be deeply overestimated due to the dependecy 
+large, the enclosures can be deeply overestimated due to the dependency 
 phenomenon present with interval arithmetic. 
 </li><li>As a particular case, f_0 is an enclosure of the image of f over I. 
 However, since the algorithm is not specially designed for this purpose it is 

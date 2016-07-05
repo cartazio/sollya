@@ -45,7 +45,7 @@ single point (such that [1;1] for instance), the evaluation
 is performed in the same way as when the second argument is a constant but 
 it produces a range as a result: <?php linkTo("command","evaluate","evaluate");?> automatically adjusts the precision 
 of the intern computations and returns a range that contains at most three floating-point 
-consecutive numbers in precision <?php linkTo("command","prec","prec");?>. This correponds to the same accuracy 
+consecutive numbers in precision <?php linkTo("command","prec","prec");?>. This corresponds to the same accuracy 
 as a faithful rounding of the actual result. If such a faithful rounding 
 is not possible, <?php linkTo("command","evaluate","evaluate");?> has the same behavior as in the case when the 
 second argument is a constant. 

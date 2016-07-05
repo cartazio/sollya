@@ -48,7 +48,7 @@ In the case when <span class="arg">L</span> is a list of integers, it may contai
 cannot be end-elliptic. 
 If <span class="arg">L</span> is given and is a list of functions g_k, p is searched as a 
 linear combination of the g_k. In that case <span class="arg">L</span> cannot contain ellipses. 
-It is the user responsability to check that the g_k are linearly independent 
+It is the user responsibility to check that the g_k are linearly independent 
 over the interval <span class="arg">range</span>. Moreover, the functions w*g_k must be at least 
 twice differentiable over <span class="arg">range</span>. If these conditions are not fulfilled, the 
 algorithm might fail or even silently return a result as if it successfully 
@@ -124,11 +124,11 @@ Examples of use:<br>
 &nbsp;&nbsp;&nbsp;&gt; f = sin(x);<br> 
 &nbsp;&nbsp;&nbsp;&gt; I = [-3b-5;-1b-1074];<br> 
 &nbsp;&nbsp;&nbsp;&gt; time(popt = remez(1, [|1, 3, 4, 5, 7, 8, 9|], I, 1/f));<br> 
-&nbsp;&nbsp;&nbsp;0.120483296999999999999999999999999999999964586963148<br> 
+&nbsp;&nbsp;&nbsp;0.19158448500000000000000000000000000000244250046666<br> 
 &nbsp;&nbsp;&nbsp;&gt; time(p1 = remez(1, [|1, 3, 4, 5, 7, 8, 9|], I, 1/f, default, [0, 1b-73]));<br> 
-&nbsp;&nbsp;&nbsp;8.802864799999999999999999999999999998868647963503e-2<br> 
+&nbsp;&nbsp;&nbsp;0.14102387199999999999999999999999999999400533841804<br> 
 &nbsp;&nbsp;&nbsp;&gt; time(p2 = remez(1, [|1, 3, 4, 5, 7, 8, 9|], I, 1/f, default, [3b-72, +@Inf@]));<br> 
-&nbsp;&nbsp;&nbsp;9.908330000000000000000000000000000000541231453356e-2<br> 
+&nbsp;&nbsp;&nbsp;0.154728376000000000000000000000000000002905012542803<br> 
 &nbsp;&nbsp;&nbsp;&gt; dirtyinfnorm(popt/f-1, I);<br> 
 &nbsp;&nbsp;&nbsp;2.06750931454112835098093903810531156576504665659064e-22<br> 
 &nbsp;&nbsp;&nbsp;&gt; dirtyinfnorm(p1/f-1, I);<br> 

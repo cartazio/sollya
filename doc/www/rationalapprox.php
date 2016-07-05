@@ -30,7 +30,7 @@ correct bits that a/b should have.
 between a/b and <span class="arg">x</span> is less than 2^(-n). 
 </li><li>The following algorithm is used: <span class="arg">x</span> is first rounded downwards and upwards to 
 a format of <span class="arg">n</span> bits, thus obtaining an interval [xl,xu]. This interval is then 
-developped into a continued fraction as far as the representation is the same 
+developed into a continued fraction as far as the representation is the same 
 for every elements of [xl,xu]. The corresponding fraction is returned. 
 </li><li>Since rational numbers are not a primitive object of Sollya, the fraction is 
 returned as a constant function. This can be quite amazing, because Sollya 

@@ -84,7 +84,7 @@ a finite remainder bound, provided that the expansion point given is the
 problematic removable singularity point. 
 </li><li>The algorithm does not guarantee that by increasing the degree of the 
 approximation, the remainder bound will become smaller. Moreover, it may  
-even become larger due to the dependecy phenomenon present with interval 
+even become larger due to the dependency phenomenon present with interval 
 arithmetic. In order to reduce this phenomenon, a possible solution is to 
 split the definition domain I into several smaller intervals.  
 </li><li>The command <?php linkTo("command","taylor","taylor");?> also computes a Taylor polynomial of a function. However 
@@ -92,7 +92,7 @@ it does not provide a bound on the remainder. Besides, <?php linkTo("command","t
 symbolic command: each coefficient of the Taylor polynomial is computed 
 exactly and returned as an expression tree exactly equal to theoretical 
 value. It is henceforth much more inefficient than <?php linkTo("command","taylorform","taylorform");?> and <?php linkTo("command","taylorform","taylorform");?> 
-should be prefered if only numercial (yet safe) computations are required. 
+should be preferred if only numercial (yet safe) computations are required. 
 The same difference exists between commands <?php linkTo("command","diff","diff");?> and <?php linkTo("command","autodiff","autodiff");?>. 
 </ul> 
 </div> 

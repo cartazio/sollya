@@ -96,7 +96,7 @@ problematic removable singularity point.
 #DESCRIPTION 
 The algorithm does not guarantee that by increasing the degree of the
 approximation, the remainder bound will become smaller. Moreover, it may 
-even become larger due to the dependecy phenomenon present with interval
+even become larger due to the dependency phenomenon present with interval
 arithmetic. In order to reduce this phenomenon, a possible solution is to
 split the definition domain §§I§$I$§§ into several smaller intervals. 
 
@@ -106,7 +106,7 @@ it does not provide a bound on the remainder. Besides, $TAYLOR is a somehow
 symbolic command: each coefficient of the Taylor polynomial is computed
 exactly and returned as an expression tree exactly equal to theoretical
 value. It is henceforth much more inefficient than $COMMAND and $COMMAND
-should be prefered if only numercial (yet safe) computations are required.
+should be preferred if only numercial (yet safe) computations are required.
 The same difference exists between commands $DIFF and $AUTODIFF.
 
 #EXAMPLE

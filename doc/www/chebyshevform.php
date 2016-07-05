@@ -62,7 +62,7 @@ where [a,b]=I, y=(2*x-b-a)/(b-a) and T_i(y) is the i-th Chebyshev polynomial
 over [-1,1]. 
 </li><li>The algorithm does not guarantee that by increasing the degree of the 
 approximation, the remainder bound will become smaller. Moreover, it may even 
-become larger due to the dependecy phenomenon present with interval 
+become larger due to the dependency phenomenon present with interval 
 arithmetic. In order to reduce this phenomenon, a possible solution is to 
 split the definition domain I into several smaller intervals. 
 </ul> 

@@ -22,7 +22,7 @@ between §§a/b§$a/b$§§ and <x> is less than §§2^(-n)§$2^{-n}$§§.
 #DESCRIPTION
 The following algorithm is used: <x> is first rounded downwards and upwards to
 a format of <n> bits, thus obtaining an interval §§[xl,xu]§$[x_l,\,x_u]$§§. This interval is then
-developped into a continued fraction as far as the representation is the same
+developed into a continued fraction as far as the representation is the same
 for every elements of §§[xl,xu]§$[x_l,\,x_u]$§§. The corresponding fraction is returned.
 
 #DESCRIPTION

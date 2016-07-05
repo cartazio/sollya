@@ -44,7 +44,7 @@ zero), it is assumed that
   
                 forall x in I, f(x) - g(x - x0) in d. 
   
-It is the user responsability to ensure this property. Otherwise, any 
+It is the user responsibility to ensure this property. Otherwise, any 
 subsequent use of <span class="arg">f</span> on points of <span class="arg">I</span> might lead to incorrect values. 
 </li><li>A call to <?php linkTo("command","annotatefunction","annotatefunction");?>(<span class="arg">f</span>, <span class="arg">g</span>, <span class="arg">I</span>, <span class="arg">d</span>, <span class="arg">x0</span>) annotates the given 
 Sollya function object <span class="arg">f</span> with the approximation <span class="arg">g</span>. In further use, when 

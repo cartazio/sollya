@@ -11,7 +11,7 @@
 
   This software is a computer program whose purpose is to provide an
   environment for safe floating-point code development. It is
-  particularily targeted to the automatized implementation of
+  particularly targeted to the automated implementation of
   mathematical floating-point libraries (libm). Amongst other features,
   it offers a certified infinity norm, an automatic polynomial
   implementer and a fast Remez algorithm.
@@ -50,7 +50,7 @@
 #include <mpfi.h>
 #include "sollya.h"
 
-/* Example of an external functionnality linked to a function symbol in sollya
+/* Example of an external functionality linked to a function symbol in sollya
 
    Compile with
 

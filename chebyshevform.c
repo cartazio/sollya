@@ -10,7 +10,7 @@
 
   This software is a computer program whose purpose is to provide an
   environment for safe floating-point code development. It is
-  particularily targeted to the automatized implementation of
+  particularly targeted to the automated implementation of
   mathematical floating-point libraries (libm). Amongst other features,
   it offers a certified infinity norm, an automatic polynomial
   implementer and a fast Remez algorithm.
@@ -613,7 +613,7 @@ void computeMonotoneRemainderCheb(sollya_mpfi_t *bound, int typeOfFunction, int 
     sollya_mpfi_pow(boundf2, p_interv, xsup);
     break;
   default:
-    printMessage(0, SOLLYA_MSG_ERROR_IN_CHEBYSHEVFORM_UNKNOWN_FUNC_FOR_ZUMKELLER, "Error in chebyshev: unkown type of function used with Zumkeller's technique\n");
+    printMessage(0, SOLLYA_MSG_ERROR_IN_CHEBYSHEVFORM_UNKNOWN_FUNC_FOR_ZUMKELLER, "Error in chebyshev: unknown type of function used with Zumkeller's technique\n");
     return;
   }
 
@@ -705,7 +705,7 @@ void base_CMAux(chebModel *t, int typeOfFunction, int nodeType, node *f, mpfr_t 
     }
     break;
   default:
-    printMessage(0, SOLLYA_MSG_ERROR_IN_CHEBYSHEVFORM_UNKNOWN_FUNC_FOR_ZUMKELLER, "Error in chebyshev: unkown type of function used with Zumkeller's technique\n");
+    printMessage(0, SOLLYA_MSG_ERROR_IN_CHEBYSHEVFORM_UNKNOWN_FUNC_FOR_ZUMKELLER, "Error in chebyshev: unknown type of function used with Zumkeller's technique\n");
     return;
   }
   /*compute the values of the coefficients*/
