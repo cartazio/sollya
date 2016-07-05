@@ -15,91 +15,6 @@ lexer.c \
 minilexer.c \
 internlexer.c 
 
-bin_PROGRAMS = sollya
-sollya_SOURCES = \
-sollya.h \
-mpfi-compat.c \
-mpfi-compat.h \
-hooks.c \
-hooks.h \
-hash.c \
-hash.h \
-polynomials.c \
-polynomials.h \
-sollya-messaging.h \
-sollya-messages.h \
-sollya-messaging.c \
-bitfields.h \
-bitfields.c \
-sollya-library-wrappers.c \
-sollya-library-wrappers.h \
-printf.c \
-printf.h \
-internparser.y \
-miniparser.y \
-parser.y \
-internlexer.l \
-lexer.l \
-minilexer.l \
-help.h \
-assignment.c \
-assignment.h \
-autodiff.c \
-autodiff.h \
-chain.c \
-chain.h \
-double.c \
-double.h \
-execute.c \
-execute.h \
-expression.c \
-expression.h \
-external.c \
-external.h \
-general.c \
-general.h \
-signalhandling.c \
-signalhandling.h \
-implement.c \
-implement.h \
-implementconst.c \
-implementconst.h \
-infnorm.c \
-infnorm.h \
-integral.c \
-integral.h \
-library.c \
-library.h \
-main.c \
-plot.c \
-plot.h \
-proof.c \
-proof.h \
-fpminimax.cpp \
-fpminimax.h \
-remez.c \
-remez.h \
-match.c \
-match.h \
-taylor.c \
-taylor.h \
-taylorform.c \
-taylorform.h \
-chebyshevform.c \
-chebyshevform.h \
-chebyshevformaux.c \
-chebyshevformaux.h \
-supnorm.c \
-supnorm.h \
-sturm.c \
-sturm.h \
-worstcase.c \
-worstcase.h \
-xml.c \
-xml.h 
-sollya_CFLAGS = $(AM_CFLAGS)
-sollya_CXXFLAGS = $(AM_CXXFLAGS)
-
 include_HEADERS = sollya.h sollya-messages.h
 
 lib_LTLIBRARIES     = libsollya.la
@@ -183,6 +98,15 @@ worstcase.c \
 worstcase.h \
 xml.c \
 xml.h 
+
+bin_PROGRAMS = sollya
+sollya_SOURCES = main.c
+
+sollya_LDADD = $(lib_LTLIBRARIES)
+
+sollya_CFLAGS = $(AM_CFLAGS)
+sollya_CXXFLAGS = $(AM_CXXFLAGS)
+
 
 libsollya_la_LDFLAGS = -version-info 5:0:0 $(AM_LDFLAGS)
 
