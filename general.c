@@ -2343,6 +2343,8 @@ int general(int argc, char *argv[]) {
   int k;
   int sollyaOptions;
   int frameCorruptionPrinted;
+  const char *sollya_banner_off;
+  int printBanner;
 
   oldGMPMalloc = NULL;
   oldGMPRealloc = NULL;
@@ -2385,8 +2387,8 @@ int general(int argc, char *argv[]) {
       strcpy(argsArgv[argsArgc-1], argv[i]);
     } else {
       if ((strcmp(argv[i],"--help") == 0) || (strcmp(argv[i],"--version") == 0)) {
-	const char *env_BANNER_OFF=getenv("SOLLYA_BANNER_OFF");
-	int printBanner = 1;
+	sollya_banner_off = getenv("SOLLYA_BANNER_OFF");
+	printBanner = 1;
 	if ((!inputFileOpened) && (!eliminatePromptBackup)) {
 	  if (tcgetattr(0,&termAttr) == -1) {
 	    eliminatePromptBackup = 1;
@@ -2396,42 +2398,43 @@ int general(int argc, char *argv[]) {
 	    }
 	  }
 	}
-	if ((env_BANNER_OFF != NULL) && (strcmp(env_BANNER_OFF,"YES") == 0)) {
-		printBanner = 0;
-		}
+	if ((sollya_banner_off != NULL) && (strcmp(sollya_banner_off,"YES") == 0)) {
+	  printBanner = 0;
+	}
 	if (printBanner) {
-		if (eliminatePromptBackup) {
-			sollyaPrintf("This is %s connected to a regular file.\n\n",PACKAGE_STRING);
-			}
-		}
-	if (strcmp(argv[i]+2,"help") == 0) {
-		sollyaPrintf("Usage: %s [options]\n\nOptions:\n",PACKAGE_NAME);
-		sollyaPrintf("  --args                       transmit the following arguments verbatim to the interpreter\n");
-		sollyaPrintf("  --donotmodifystacksize       do not attempt to set the maximal stack size to the maximum size allowed on the system\n");
-		sollyaPrintf("  --flush                      flush standard output and standard error after each command\n");
-		sollyaPrintf("  --help                       print this help text\n");
-		sollyaPrintf("  --nocolor                    do not color the output using ANSI escape sequences\n");
-		sollyaPrintf("  --noprompt                   do not print a prompt symbol\n");
-		sollyaPrintf("  --oldautoprint               print commas between autoprinted elements separated by commas\n");
-		sollyaPrintf("  --oldexternalprocprint       print the signature of an external procedure when autoprinting\n");
-		sollyaPrintf("  --oldrlwrapcompatible        acheive some compatibility with old rlwrap versions by emitting wrong ANSI sequences (deprecated)\n");
-		sollyaPrintf("  --version                    print the version of Sollya, plus the copyright, the list of authors and the no warranty notice\n");
-		sollyaPrintf("  --warninfile[append] <file>  print warning messages into a file instead on the standard output\n");
-		sollyaPrintf("  --warnonstderr               print warning messages on error output instead on the standard output\n");
-		sollyaPrintf("\nFor help on %s commands type \"help;\" on the %s prompt.\n",PACKAGE_NAME,PACKAGE_NAME);
-		sollyaPrintf("A complete documentation on %s is available on the %s website <http://sollya.gforge.inria.fr/>.\n",PACKAGE_NAME,PACKAGE_NAME);
-		sollyaPrintf("\nReport bugs to <%s>\n",PACKAGE_BUGREPORT);
-		}
-	else { /* (strcmp(argv[i]+2,"version") == 0) */
-		sollyaPrintf(
-			"%s\n\n"
-			VERSION_COPYRIGHT_TEXT
-			"\nThis build of %s is based on GMP %s, MPFR %s and MPFI %s.\n",PACKAGE_STRING,PACKAGE_STRING,gmp_version,mpfr_get_version(),sollya_mpfi_get_version());
+	  sollyaPrintf("This is %s connected to ",PACKAGE_STRING);
+	  if (eliminatePromptBackup) {
+	    sollyaPrintf("a regular file.\n\n");
+	  } else {
+	    sollyaPrintf("a terminal.\n\n");
+	  }
+	}
+	if (strcmp(argv[i],"--help") == 0) {
+	  sollyaPrintf("Usage: %s [options]\n\nOptions:\n",PACKAGE_NAME);
+	  sollyaPrintf("  --args                       transmit the following arguments verbatim to the interpreter\n");
+	  sollyaPrintf("  --donotmodifystacksize       do not attempt to set the maximal stack size to the maximum size allowed on the system\n");
+	  sollyaPrintf("  --flush                      flush standard output and standard error after each command\n");
+	  sollyaPrintf("  --help                       print this help text\n");
+	  sollyaPrintf("  --nocolor                    do not color the output using ANSI escape sequences\n");
+	  sollyaPrintf("  --noprompt                   do not print a prompt symbol\n");
+	  sollyaPrintf("  --oldautoprint               print commas between autoprinted elements separated by commas\n");
+	  sollyaPrintf("  --oldexternalprocprint       print the signature of an external procedure when autoprinting\n");
+	  sollyaPrintf("  --oldrlwrapcompatible        acheive some compatibility with old rlwrap versions by emitting wrong ANSI sequences (deprecated)\n");
+	  sollyaPrintf("  --version                    print the version of Sollya, plus the copyright, the list of authors and the no warranty notice\n");
+	  sollyaPrintf("  --warninfile[append] <file>  print warning messages into a file instead on the standard output\n");
+	  sollyaPrintf("  --warnonstderr               print warning messages on error output instead on the standard output\n");
+	  sollyaPrintf("\nFor help on %s commands type \"help;\" on the %s prompt.\n",PACKAGE_NAME,PACKAGE_NAME);
+	  sollyaPrintf("A complete documentation on %s is available on the %s website <http://sollya.gforge.inria.fr/>.\n",PACKAGE_NAME,PACKAGE_NAME);
+	  sollyaPrintf("\nReport bugs to <%s>\n",PACKAGE_BUGREPORT);
+	} else { 
+	  sollyaPrintf("%s\n\n"
+		       VERSION_COPYRIGHT_TEXT
+		       "\nThis build of %s is based on GMP %s, MPFR %s and MPFI %s.\n",PACKAGE_STRING,PACKAGE_STRING,gmp_version,mpfr_get_version(),sollya_mpfi_get_version());
 #if defined(HAVE_FPLLL_VERSION_STRING)
- 		sollyaPrintf("%s uses FPLLL as: \"%s\"\n",PACKAGE_STRING,HAVE_FPLLL_VERSION_STRING);
+	  sollyaPrintf("%s uses FPLLL as: \"%s\"\n",PACKAGE_STRING,HAVE_FPLLL_VERSION_STRING);
 #endif
- 		sollyaPrintf("\n");
-		}
+	  sollyaPrintf("\n");
+	}
  	return 1;
       } else
 	if (strcmp(argv[i],"--args") == 0) argsArgRead = 1; else
