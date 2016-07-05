@@ -42,6 +42,7 @@ internlexer.l \
 lexer.l \
 minilexer.l \
 help.h \
+version.h \
 assignment.c \
 assignment.h \
 autodiff.c \
@@ -129,6 +130,7 @@ internlexer.l \
 lexer.l \
 minilexer.l \
 help.h \
+version.h \
 assignment.c \
 assignment.h \
 autodiff.c \
