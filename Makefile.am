@@ -145,17 +145,18 @@ check-tool: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) check-am || exit 1; \
 	test -z "$$fail"
 
+if TEST_HELP2MAN
 man_MANS = sollya.1
 
 AM_H2MFLAGS = \
-	--local=C.utf8 \
+	--locale=C.utf8 \
 	--libtool \
 	--no-info
 
 # Short descriptions for manpages
 sollya_DESCRIPTION =  "tool environment for safe floting-point code development -- command-line interface"
 
-%.1: %
+sollya.1: sollya
 	 SOLLYA_BANNER_OFF=YES $(HELP2MAN) \
 			-s 1 \
 			$(AM_H2MFLAGS) \
@@ -163,5 +164,4 @@ sollya_DESCRIPTION =  "tool environment for safe floting-point code development 
 			-n $(if $($(subst -,_,$*)_DESCRIPTION), $($(subst -,_,$*)_DESCRIPTION), "manual page for $*") \
 			-o $@ \
 		$(top_builddir)/$<
-
-#EXTRA_DIST += $(man_MANS)
+endif
