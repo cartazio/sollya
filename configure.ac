@@ -543,6 +543,8 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM([[#include <stdint.h>]],
                                ])
               ])
 
+# Checks for linker script support:
+gl_LD_VERSION_SCRIPT
 
 # Checks for header files.
 AC_FUNC_ALLOCA
