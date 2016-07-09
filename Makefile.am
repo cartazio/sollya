@@ -120,7 +120,8 @@ xml.h
 
 libsollya_la_LDFLAGS = \
 	$(libsollya_la_LT_INFO) \
-	$(libsollya_la_LD_VERSION_SCRIPT)
+	$(libsollya_la_LD_VERSION_SCRIPT) \
+	$(AM_LDFLAGS)
 
 check-lib: $(BUILT_SOURCES)
 	@fail= failcom='exit 1'; \
