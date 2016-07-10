@@ -15,15 +15,6 @@ lexer.c \
 minilexer.c \
 internlexer.c
 
-bin_PROGRAMS = sollya
-
-sollya_SOURCES = \
-$(libsollya_la_SOURCES) \
-main.c
-
-sollya_CFLAGS = $(AM_CFLAGS)
-sollya_CXXFLAGS = $(AM_CXXFLAGS)
-
 include_HEADERS = sollya.h sollya-messages.h
 
 lib_LTLIBRARIES = libsollya.la
@@ -117,6 +108,14 @@ worstcase.c \
 worstcase.h \
 xml.c \
 xml.h
+
+bin_PROGRAMS = sollya
+sollya_SOURCES = main.c
+
+sollya_LDADD = $(lib_LTLIBRARIES)
+
+sollya_CFLAGS = $(AM_CFLAGS)
+sollya_CXXFLAGS = $(AM_CXXFLAGS)
 
 libsollya_la_LDFLAGS = \
 	$(libsollya_la_LT_INFO) \
