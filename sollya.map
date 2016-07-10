@@ -9,6 +9,7 @@ sollya_lib_*;
 sollya_gettime;
 sollya_timediff_ms;
 sollya_gettime_var;
+sollya_tool_main; # This one is here to allow the interactive tool to use the library
 
 local: *;
 };
