@@ -1,5 +1,5 @@
 SUBDIRS = doc tests-tool tests-lib
-EXTRA_DIST = libsollyaexample.c externalfun.c externalproc.c sollya.h2m sollya.map
+EXTRA_DIST = externalfun.c externalproc.c sollya.h2m sollya.map
 
 AM_YFLAGS = -d
 AM_LFLAGS = -o$(LEX_OUTPUT_ROOT).c
