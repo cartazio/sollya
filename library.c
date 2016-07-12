@@ -496,6 +496,9 @@ libraryHandle *getLibraryHandle(char *libraryName, int type) {
     otherLibraries[0] = openedConstantLibraries;
     otherLibraries[1] = openedFunctionLibraries;
     break;
+  default:
+    sollyaFprintf(stderr,"Error: getLibraryHandle: unknown type (%d)\n", type);
+    exit(1);
   }
   otherDlfcnHandle = NULL;
   for (i=0,foundElsewhere=0;(i<2)&&(!foundElsewhere);i++) {
