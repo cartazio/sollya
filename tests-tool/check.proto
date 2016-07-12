@@ -14,7 +14,7 @@ do
   $SOLLYA < ${srcdir}/$i > $i.output
   if ! diff $i.output ${srcdir}/$i.reference > /dev/null
   then
-     TEST=1
+     TEST=$RETURN_CODE_IN_CASE_OF_FAILURE
   else
      rm $i.output
   fi

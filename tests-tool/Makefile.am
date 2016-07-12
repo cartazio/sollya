@@ -1,10 +1,14 @@
-TESTFILES = check001.sollya check002.sollya check003.sollya check004.sollya check005.sollya check006.sollya check007.sollya check008.sollya check009.sollya check010.sollya check011.sollya check012.sollya check013.sollya check014.sollya check015.sollya check016.sollya check017.sollya check018.sollya check019.sollya check020.sollya check021.sollya check022.sollya check023.sollya check024.sollya check025.sollya check026.sollya check027.sollya check028.sollya check029.sollya check030.sollya timecheck.sollya 
+REGULAR_TESTFILES = check001.sollya check002.sollya check003.sollya check004.sollya check005.sollya check006.sollya check007.sollya check008.sollya check009.sollya check010.sollya check011.sollya check012.sollya check013.sollya check014.sollya check015.sollya check016.sollya check017.sollya check018.sollya check019.sollya check020.sollya check021.sollya check022.sollya check023.sollya check024.sollya check025.sollya check026.sollya check027.sollya check028.sollya check029.sollya check030.sollya
+MAYFAIL_TESTFILES = timecheck.sollya
+TESTFILES = $(REGULAR_TESTFILES) $(MAYFAIL_TESTFILES)
 
 EXTRA_DIST = check.proto $(TESTFILES) $(TESTFILES:.sollya=.sollya.reference)
 
-TESTS = $(TESTFILES:.sollya=.sh)
+REGULAR_TESTS = $(REGULAR_TESTFILES:.sollya=.sh)
+MAYFAIL_TESTS = $(MAYFAIL_TESTFILES:.sollya=.sh)
+TESTS = $(REGULAR_TESTS) $(MAYFAIL_TESTS)
 
-check_PROGRAMS = force_compilation 
+check_PROGRAMS = force_compilation
 check_LIBRARIES = libraryexample.a # the library will be a shared library actually,
                                    # but we do not know how to explain this to automake.
 
@@ -23,11 +27,21 @@ libraryexample.a: libraryexample.$(OBJEXT)
 force_compilation$(EXEEXT):
 	@echo "Recompiling sollya";cd $(top_builddir); $(MAKE) sollya$(EXEEXT)
 
-$(TESTS): check.proto
+$(REGULAR_TESTS): check.proto
 	@echo "Building "$@
 	@echo "#!/bin/sh" > $@
 	@echo "SOLLYA="$(top_builddir)"/sollya" >> $@
 	@echo "TESTFILES=\""$(@:.sh=.sollya)"\"" >> $@
+	@echo "RETURN_CODE_IN_CASE_OF_FAILURE=1" >> $@
+	@cat "$(srcdir)/check.proto" >> $@
+	@chmod +x $@
+
+$(MAYFAIL_TESTS): check.proto
+	@echo "Building "$@
+	@echo "#!/bin/sh" > $@
+	@echo "SOLLYA="$(top_builddir)"/sollya" >> $@
+	@echo "TESTFILES=\""$(@:.sh=.sollya)"\"" >> $@
+	@echo "RETURN_CODE_IN_CASE_OF_FAILURE=77" >> $@
 	@cat "$(srcdir)/check.proto" >> $@
 	@chmod +x $@
 
