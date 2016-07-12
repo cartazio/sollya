@@ -739,3 +739,5 @@ tests-tool/libraryexample.a
 tests-tool/proof.txt
 tests-tool/timecheck.sh
 tests-tool/external_structural_cmp
+tests-tool/*.sh.trs
+tests-tool/*.sh.log
