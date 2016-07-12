@@ -144,6 +144,7 @@ tget_diam.c \
 tget_dieonerrormode.c \
 tget_display.c \
 tget_element_in_list.c \
+tget_element_in_list_timecomplexity.c \
 tget_free_variable_name.c \
 tget_function_arity.c \
 tget_head_function.c \

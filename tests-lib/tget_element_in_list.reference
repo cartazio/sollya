@@ -31,4 +31,3 @@ Second call on [|pi, cos(_x_), 4...|] : 4 (i=2)
 Failure on cos(_x_) (i=0 and a=NULL).
 Failure on cos(_x_) (i=0 and a=NULL).
 
-Testing that a call to get_element_in_list has complexity O(1): OK

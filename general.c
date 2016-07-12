@@ -374,25 +374,6 @@ int sollya_gettime(sollya_time_t *t) {
 #endif
 }
 
-int64_t sollya_timediff_ms(sollya_time_t *before, sollya_time_t *after) {
-  int64_t secdiff, nanosecdiff, millisecdiff;
-  int64_t ten_to_nine, ten_to_six;
-  ten_to_six = (int64_t) 1000;
-  ten_to_six *= (int64_t) 1000;
-  ten_to_nine = ten_to_six * ((int64_t) 1000);
-  secdiff = after->seconds - before->seconds;
-  nanosecdiff = after->nano_seconds - before->nano_seconds;
-  while (nanosecdiff < ((int64_t) 0)) {
-    nanosecdiff += ten_to_nine;
-    secdiff--;
-  }
-  millisecdiff = (nanosecdiff / ten_to_six) + (((int64_t) 1000) * secdiff);
-  return millisecdiff;
-}
-
-sollya_time_t *sollya_gettime_var() {
-  return (sollya_time_t *) safeMalloc(sizeof(sollya_time_t));
-}
 
 size_t sollya_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *fd) {
   size_t res;

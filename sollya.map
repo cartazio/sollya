@@ -2,14 +2,8 @@ LIBSOLLYA_5.0.0 {
 global:
 sollya_lib_*;
 ##
-## sublist added by hand:
-## - needed for tests-lib/tget_element_in_list.c
-## - might be wrapped as they might be of usage interest
-##
-sollya_gettime;
-sollya_timediff_ms;
-sollya_gettime_var;
-sollya_tool_main; # This one is here to allow the interactive tool to use the library
+## symbol added by hand: here to allow the interactive tool to use the library
+sollya_tool_main;
 
 local: *;
 };
