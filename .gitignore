@@ -702,6 +702,16 @@ tests-lib/tlibraryfunction_with_data
 tests-lib/tlibraryfunction_with_data.sh
 tests-lib/tv_execute_procedure
 tests-lib/tv_execute_procedure.sh
+tests-lib/tconstruct_function
+tests-lib/tconstruct_function.sh
+tests-lib/tget_element_in_list_timecomplexity
+tests-lib/tget_element_in_list_timecomplexity.sh
+tests-lib/tget_nth_subfunction
+tests-lib/tget_nth_subfunction.sh
+tests-lib/tobj_is_externalprocedure
+tests-lib/tobj_is_externalprocedure.sh
+tests-lib/tv_construct_function
+tests-lib/tv_construct_function.sh
 tests-tool/check001.sh
 tests-tool/check002.sh
 tests-tool/check003.sh
@@ -741,3 +751,5 @@ tests-tool/timecheck.sh
 tests-tool/external_structural_cmp
 tests-tool/*.sh.trs
 tests-tool/*.sh.log
+tests-lib/*.sh.trs
+tests-lib/*.sh.log
