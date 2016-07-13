@@ -1,4 +1,4 @@
-TEX_SOURCES = absolute.tex \
+TEXSOURCES = absolute.tex \
 infnorm.tex \
 nop.tex \
 abs.tex \
@@ -258,9 +258,9 @@ nearestint.tex \
 implementpoly.tex \
 neq.tex
 
-EXTRA_DIST = sollya.pdf $(TEX_SOURCES)
+EXTRA_DIST = sollya.pdf $(TEXSOURCES)
 
-sollya.pdf: $(TEX_SOURCES)
+sollya.pdf: $(TEXSOURCES)
 	-pdflatex sollya
 	-pdflatex sollya
 	-bibtex sollya
