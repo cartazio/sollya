@@ -29,8 +29,8 @@ MPFR_CONFIGURE_OPTIONS=""
 MPFI_CONFIGURE_OPTIONS=""
 FPLLL_CONFIGURE_OPTIONS=""
 
-SOLLYA_CFLAGS="-g -g3 -gdwarf-2 -O0 -Wall -Wextra -std=c99"
-SOLLYA_CXXFLAGS="-g -g3 -gdwarf-2 -O0 -Wall -Wextra"
+SOLLYA_CFLAGS="-O2 -Wall -Wextra -std=c99"
+SOLLYA_CXXFLAGS="-O2 -Wall -Wextra"
 
 ###############################################################################
 
