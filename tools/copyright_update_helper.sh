@@ -21,8 +21,8 @@
 # copyrighted. But it might be good to check that it is still the
 # case every time this script is run.
 
-start_rev=sollya-4.1~
-end_rev=HEAD
+start_rev=sollya-5.0~1
+end_rev=master
 
 # A space separated list of hashes can be provided below. They will
 # be excluded from the search. Typically useful when a particular
@@ -65,8 +65,8 @@ do
 
     if grep "^[[:space:]]*[0-9a-f]" __sollya_tmp > /dev/null
     then
-      notice=`grep -i Copyright $file`
-      notice=$notice" "`grep -i Contributor $file`
+      notice=`grep Copyright $file`
+      notice=$notice" "`grep Contributor $file`
       printf "%s" "$file:"
       printf "\n"
       printf "%s" "$notice"
