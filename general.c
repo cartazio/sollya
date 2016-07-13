@@ -19,7 +19,7 @@
   Centre de recherche INRIA Sophia-Antipolis Mediterranee, equipe APICS,
   Sophia Antipolis, France.
 
-  Contributors Ch. Lauter, S. Chevillard
+  Contributors Ch. Lauter, S. Chevillard and J. Benoit
 
   christoph.lauter@ens-lyon.org
   sylvain.chevillard@ens-lyon.org
