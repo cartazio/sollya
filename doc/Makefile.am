@@ -260,10 +260,10 @@ neq.tex
 
 EXTRA_DIST = sollya.pdf $(TEXSOURCES)
 
+PDFLATEX = TEXINPUTS="$(srcdir):" pdflatex
+
 sollya.pdf: $(TEXSOURCES)
-	-pdflatex sollya
-	-pdflatex sollya
-	-bibtex sollya
-	-bibtex sollya
-	-pdflatex sollya
-	pdflatex sollya
+	-$(PDFLATEX) sollya
+	-$(PDFLATEX) sollya
+	-$(PDFLATEX) sollya
+	$(PDFLATEX) sollya
