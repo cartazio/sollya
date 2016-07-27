@@ -379,3 +379,20 @@ print("Running systematic tests for objectname...");
 execute("tmpFile-check029.sollya");
 bashexecute("rm -rf tmpFile-check029.sollya");
 print("End of tests for objectname.");
+
+restart;
+print("=============== Test number 14 ================");
+/* Non-regression test for bug fixed on 2016, July 27th */
+/* The following example should not fall into an infinite loop */
+prec = 350!;
+verbosity=0!;
+zero = 1b-100;
+dom = [zero;0x3fefffffffffffff];
+q = x * (2918320636831873b-51 + x^2 * (-2812036178508593b-51 + x^2 * 3308766278594951b-51));
+s = x * (9007199254740653b-53 + x^2 * (-3002399751552901b-54 + x^2 * (1200959899164001b-57 + x^2 * (-7320135585671187b-65 + x^2 * (1626678530493517b-69 + x^2 * (-7565607198486585b-78 + x^2 * 5975262180392203b-85))))));
+c = 9007199254729395b-53 + x^2 * (-9007199253965425b-54 + x^2 * (3002399733779339b-56 + x^2 * (-6405116931749881b-62 + x^2 * (7319959653218259b-68 + x^2 * (-5198970630914559b-74 + x^2 * 4809296948379375b-81)))));
+t = s(q);
+h = c(q);
+r = x * h - t * sqrt(1 - x^2);
+p= remez(1-q/asin(x), [|r/asin(x), r^3/asin(x)|], dom, 1, 1e-2);
+print("Succeeded.");

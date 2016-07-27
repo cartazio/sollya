@@ -1050,11 +1050,11 @@ void quickFindZeros(mpfr_t *res, mpfr_t *curr_points,
   mpfr_add(x2,a,h,GMP_RNDN);
 
   evaluateFaithfulWithCutOffFast(y1, tree, diff_tree, x1, zero_mpfr, prec);
-  evaluateFaithfulWithCutOffFast(y2, tree, diff_tree, x2, zero_mpfr, prec);
   evaluateFaithfulWithCutOffFast(alpha1, diff_tree, NULL, x1, zero_mpfr, prec);
-  evaluateFaithfulWithCutOffFast(alpha2, diff_tree, NULL, x2, zero_mpfr, prec);
 
   while(mpfr_lessequal_p(x2,b)) {
+    evaluateFaithfulWithCutOffFast(y2, tree, diff_tree, x2, zero_mpfr, prec);
+    evaluateFaithfulWithCutOffFast(alpha2, diff_tree, NULL, x2, zero_mpfr, prec);
     if( (mpfr_sgn(y1)==0) || (mpfr_sgn(y2)==0) || (mpfr_sgn(y1) != mpfr_sgn(y2))) {
       if (mpfr_sgn(y1)==0) {
 	evaluateFaithfulWithCutOffFast(z, error, tree, x1, zero_mpfr, prec);
@@ -1130,8 +1130,6 @@ void quickFindZeros(mpfr_t *res, mpfr_t *curr_points,
     mpfr_set(x1,x2,GMP_RNDN);
     mpfr_add(x2,x2,h,GMP_RNDN);
     mpfr_set(y1,y2,GMP_RNDN);
-    evaluateFaithfulWithCutOffFast(y2, tree, diff_tree, x2, zero_mpfr, prec);
-    evaluateFaithfulWithCutOffFast(alpha2, diff_tree, NULL, x2, zero_mpfr, prec);
   }
 
   if ((i<deg)||(i>deg+2)||(!HaarCompliant)||(!test)) {
