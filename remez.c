@@ -1011,6 +1011,9 @@ void quickFindZeros(mpfr_t *res, mpfr_t *curr_points,
 		    mpfr_t a, mpfr_t b, mp_prec_t prec) {
   long int n = 50*(deg+2);
   long int i=0;
+  int tooManyOscillations = 0; /* This variable is used to ensure that the
+                                  message "the function oscillates too much"
+                                  is displayed only once */
 
   /* The variable test is used to check that the maximum (in absolute value)
      of the error will be inserted in the new list of points.
@@ -1060,8 +1063,12 @@ void quickFindZeros(mpfr_t *res, mpfr_t *curr_points,
 	evaluateFaithfulWithCutOffFast(z, error, tree, x1, zero_mpfr, prec);
 	if (mpfr_sgn(z)*mpfr_sgn(alpha1)<0) {
 	  i++;
-	  if(i>deg+2)
-	    printMessage(1,SOLLYA_MSG_REMEZ_FUNCTION_OSCILLATES_TOO_MUCH,"Warning: the function oscillates too much. Nevertheless, we try to continue.\n");
+	  if(i>deg+2) {
+	    if (!tooManyOscillations)
+              printMessage(1,SOLLYA_MSG_REMEZ_FUNCTION_OSCILLATES_TOO_MUCH,
+                           "Warning: the function oscillates too much. Nevertheless, we try to continue.\n");
+            tooManyOscillations = 1;
+          }
 	  else mpfr_set(res[i-1], x1, GMP_RNDN);
 	}
 	if (mpfr_cmpabs(z,maxi)>0) {
@@ -1096,8 +1103,12 @@ void quickFindZeros(mpfr_t *res, mpfr_t *curr_points,
 	  evaluateFaithfulWithCutOffFast(z, error, tree, x2, zero_mpfr, prec);
 	  if (mpfr_sgn(z)*mpfr_sgn(alpha2)<0) {
 	    i++;
-	    if(i>deg+2)
-	      printMessage(1,SOLLYA_MSG_REMEZ_FUNCTION_OSCILLATES_TOO_MUCH,"Warning: the function oscillates too much. Nevertheless, we try to continue.\n");
+	    if(i>deg+2) {
+              if (!tooManyOscillations)
+                printMessage(1,SOLLYA_MSG_REMEZ_FUNCTION_OSCILLATES_TOO_MUCH,
+                             "Warning: the function oscillates too much. Nevertheless, we try to continue.\n");
+              tooManyOscillations = 1;
+            }
 	    else mpfr_set(res[i-1], x2, GMP_RNDN);
 	  }
 	  if (mpfr_cmpabs(z,maxi)>0) {
@@ -1113,8 +1124,12 @@ void quickFindZeros(mpfr_t *res, mpfr_t *curr_points,
 	  evaluateFaithfulWithCutOffFast(alpha, diff_tree, NULL, x , zero_mpfr, prec);
 	  if (mpfr_sgn(z)*mpfr_sgn(alpha)<0) {
 	    i++;
-	    if(i>deg+2)
-	      printMessage(1,SOLLYA_MSG_REMEZ_FUNCTION_OSCILLATES_TOO_MUCH,"Warning: the function oscillates too much. Nevertheless, we try to continue.\n");
+	    if(i>deg+2) {
+              if (!tooManyOscillations)
+                printMessage(1,SOLLYA_MSG_REMEZ_FUNCTION_OSCILLATES_TOO_MUCH,
+                             "Warning: the function oscillates too much. Nevertheless, we try to continue.\n");
+              tooManyOscillations = 1;
+            }
 	    else mpfr_set(res[i-1], x, GMP_RNDN);
 	  }
 	  if (mpfr_cmpabs(z,maxi)>0) {
