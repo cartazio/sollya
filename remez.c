@@ -498,20 +498,20 @@ void findZero(mpfr_t res, node *f, node *f_diff, mpfr_t a, mpfr_t b, int sgnfa, 
     }
     /* The cases (-sngfa, * *) and (* * sgnfa) can be separated into subcases : */
     if ((sgnfepsa==codeNegfa) && (sgnf0==3) && (sgnfepsb==codefa)) {
-      printMessage(3, SOLLYA_MSG_NEWTON_FUNC_APPEARS_TO_HAVE_MORE_THAN_ONE_ZERO, "Warning (Newton's algorithm): the function has more than one zero in the interval.\n");
-      printMessage(3, SOLLYA_MSG_CONTINUATION, "Warning (Newton's algorithm): 0 seems to be one of them but wa cannot prove it.\n");
+      printMessage(4, SOLLYA_MSG_NEWTON_FUNC_APPEARS_TO_HAVE_MORE_THAN_ONE_ZERO, "Warning (Newton's algorithm): the function has more than one zero in the interval.\n");
+      printMessage(4, SOLLYA_MSG_CONTINUATION, "Warning (Newton's algorithm): 0 seems to be one of them but wa cannot prove it.\n");
       mpfr_set(res, zero_mpfr, GMP_RNDN);
       stop_algo = 1;
     }
     if ((sgnfepsa==codeNegfa) && (sgnf0==codefa) && (sgnfepsb==codefa)) {
-      printMessage(3, SOLLYA_MSG_NEWTON_FUNC_APPEARS_TO_HAVE_MORE_THAN_ONE_ZERO, "Warning (Newton's algorithm): the function has more than one zero in the interval.\n");
-      printMessage(3, SOLLYA_MSG_CONTINUATION, "Warning (Newton's algorithm): one of them is too close to zero for being accurately determined.\n");
+      printMessage(4, SOLLYA_MSG_NEWTON_FUNC_APPEARS_TO_HAVE_MORE_THAN_ONE_ZERO, "Warning (Newton's algorithm): the function has more than one zero in the interval.\n");
+      printMessage(4, SOLLYA_MSG_CONTINUATION, "Warning (Newton's algorithm): one of them is too close to zero for being accurately determined.\n");
       mpfr_set(res, epsa, GMP_RNDU);
       stop_algo = 1;
     }
     if ((sgnfepsa==codeNegfa) && (sgnf0==codeNegfa) && (sgnfepsb==codefa)) {
-      printMessage(3, SOLLYA_MSG_NEWTON_FUNC_APPEARS_TO_HAVE_MORE_THAN_ONE_ZERO, "Warning (Newton's algorithm): the function has more than one zero in the interval.\n");
-      printMessage(3, SOLLYA_MSG_CONTINUATION, "Warning (Newton's algorithm): one of them is too close to zero for being accurately determined.\n");
+      printMessage(4, SOLLYA_MSG_NEWTON_FUNC_APPEARS_TO_HAVE_MORE_THAN_ONE_ZERO, "Warning (Newton's algorithm): the function has more than one zero in the interval.\n");
+      printMessage(4, SOLLYA_MSG_CONTINUATION, "Warning (Newton's algorithm): one of them is too close to zero for being accurately determined.\n");
       mpfr_set(res, epsb, GMP_RNDD);
       stop_algo = 1;
     }
@@ -965,11 +965,11 @@ void single_step_remez(mpfr_t newx, mpfr_t err_newx, mpfr_t *x,
 
   /* Introduce newx */
   if(mpfr_sgn(err_newx)*mpfr_sgn(epsilon)==1) {
-    printMessage(3,SOLLYA_MSG_REMEZ_EXCHANGE_TAKE_A_CERTAIN_MINIMUM,"Remez: exchange algorithm takes the minimum (%.16v) at place %d\n",mini,argmini);
+    printMessage(4,SOLLYA_MSG_REMEZ_EXCHANGE_TAKE_A_CERTAIN_MINIMUM,"Remez: exchange algorithm takes the minimum (%.16v) at place %d\n",mini,argmini);
     mpfr_set(x[argmini], newx, GMP_RNDN);
   }
   else {
-    printMessage(3,SOLLYA_MSG_REMEZ_EXCHANGE_TAKE_A_CERTAIN_MAXIMUM,"Remez: exchange algorithm takes the maximum (%.16v) at place %d\n",maxi,argmaxi);
+    printMessage(4,SOLLYA_MSG_REMEZ_EXCHANGE_TAKE_A_CERTAIN_MAXIMUM,"Remez: exchange algorithm takes the maximum (%.16v) at place %d\n",maxi,argmaxi);
     mpfr_set(x[argmaxi], newx, GMP_RNDN);
   }
 
@@ -1497,9 +1497,9 @@ int qualityOfError(mpfr_t computedQuality, mpfr_t infinityNorm, mpfr_t *x,
     }
   }
 
-  printMessage(3,SOLLYA_MSG_REMEZ_THE_NEW_POINTS_ARE_CERTAIN_VALUES,"The new points are: ");
-  for(i=1; i<=n; i++) printMessage(3,SOLLYA_MSG_CONTINUATION,"%v ",z[i-1]);
-  printMessage(3,SOLLYA_MSG_CONTINUATION,"\n");
+  printMessage(4,SOLLYA_MSG_REMEZ_THE_NEW_POINTS_ARE_CERTAIN_VALUES,"The new points are: ");
+  for(i=1; i<=n; i++) printMessage(4,SOLLYA_MSG_CONTINUATION,"%v ",z[i-1]);
+  printMessage(4,SOLLYA_MSG_CONTINUATION,"\n");
 
   /* Test the quality of the current error */
 
@@ -1522,7 +1522,7 @@ int qualityOfError(mpfr_t computedQuality, mpfr_t infinityNorm, mpfr_t *x,
   if(computedQuality!=NULL) mpfr_set(computedQuality, var_mpfr, GMP_RNDU);
   if(infinityNorm!=NULL) mpfr_set(infinityNorm, max_val, GMP_RNDU);
 
-  printMessage(3, SOLLYA_MSG_REMEZ_THE_CURRENT_NORM_TAKES_A_CERTAIN_VALUE, "Current norm: %v (1 +/- %.3v)\n",max_val,var_mpfr);
+  printMessage(2, SOLLYA_MSG_REMEZ_THE_CURRENT_NORM_TAKES_A_CERTAIN_VALUE, "Current norm: %v (1 +/- %.3v)\n",max_val,var_mpfr);
 
   free_memory(error);
   free_memory(error_diff);
@@ -1766,7 +1766,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
          N lets us determine the modified alternation property
          M lets us solve the interpolation problem
       */
-      printMessage(3, SOLLYA_MSG_REMEZ_COMPUTING_THE_MATRIX, "Step %d\nComputing the matrix...\n",count);
+      printMessage(4, SOLLYA_MSG_REMEZ_COMPUTING_THE_MATRIX, "Step %d\nComputing the matrix...\n",count);
       pushTimeCounter();
 
       for (i=1 ; i <= freeDegrees+1 ; i++) {
@@ -1859,8 +1859,8 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 
       poly = constructPolynomialFromArray(ai_vect, monomials_tree, freeDegrees);
 
-      printMessage(4, SOLLYA_MSG_REMEZ_THE_COMPUTED_POLY_HAS_A_CERTAIN_VALUE, "The computed polynomial is %b\n",poly);
-      printMessage(3, SOLLYA_MSG_REMEZ_CURRENT_EPSILON_HAS_A_CERTAIN_VALUE, "Current value of epsilon : %.16v\n",ai_vect[freeDegrees]);
+      printMessage(3, SOLLYA_MSG_REMEZ_THE_COMPUTED_POLY_HAS_A_CERTAIN_VALUE, "The computed polynomial is %b\n",poly);
+      printMessage(2, SOLLYA_MSG_REMEZ_CURRENT_EPSILON_HAS_A_CERTAIN_VALUE, "Current value of epsilon : %.16v\n",ai_vect[freeDegrees]);
 
       /* Plotting the error curve */
       /*     node *plotTemp; */
