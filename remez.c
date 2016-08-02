@@ -1899,7 +1899,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 	   correctly cases when the error oscillates too much
 	*/
 	temp_tree = addMemRef(makeSub(makeMul(copyTree(poly), copyTree(w)), copyTree(f)));
-	uncertifiedInfnorm(infinityNorm, temp_tree, u, v, getToolPoints(), quality_prec);
+	uncertifiedInfnorm(infinityNorm, NULL, temp_tree, u, v, getToolPoints(), quality_prec);
 
 	printMessage(1,SOLLYA_MSG_REMEZ_THE_BEST_POLY_GIVES_A_CERTAIN_ERROR,"The best polynomial obtained gives an error of %v\n",infinityNorm);
 
@@ -1986,7 +1986,8 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
       temp_tree_simplified = simplifyTreeErrorfree(temp_tree);
       free_memory(temp_tree);
       temp_tree = temp_tree_simplified;
-      uncertifiedInfnorm(infinityNorm, temp_tree, u, v, getToolPoints(), quality_prec);
+      uncertifiedInfnorm(infinityNorm, &var1, temp_tree, u, v, getToolPoints(), quality_prec); /* var1 now contains a point where the max is reached */
+      evaluateFaithfulWithCutOffFast(var2, temp_tree, NULL, var1, zero_mpfr, prec); /* var2 is the value of the error at a point where the norm is reached */
       free_memory(temp_tree);
       /* end of the temporary check */
 
@@ -2013,6 +2014,8 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
     if(res==NULL) {
       printMessage(2, SOLLYA_MSG_REMEZ_FAILS_AND_LOOPS_AGAIN, "Warning: Remez algorithm failed (too many oscillations?)\nLooping again\n");
       HaarCompliant=2;
+      /* Attempt to (somehow) fix bug #8867: in case we forgot a point during the algorithm, we force its introduction now */
+      single_step_remez(var1, var2, x, monomials_tree, w, lambdai_vect, ai_vect[freeDegrees], freeDegrees+1, prec);
     }
   }
 
@@ -2323,7 +2326,7 @@ void firstStepContinuousMinimaxChebychevsPoints(mpfr_t *h, node *func, node *wei
   poly = addMemRef(elementaryStepRemezAlgorithm(NULL, func, weight, x, monomials_tree, n, currentPrec));
 
   error = addMemRef(makeSub(makeMul(copyTree(poly), copyTree(weight)), copyTree(func)));
-  uncertifiedInfnorm(tmp, error, a, b, 3*n, 20);
+  uncertifiedInfnorm(tmp, NULL, error, a, b, 3*n, 20);
   mpfr_set(*h, tmp, GMP_RNDU);
 
   mpfr_clear(tmp);

@@ -287,7 +287,7 @@ int determinePrecisionsHelper(mpfr_t *coefficients, int degree,
   free_memory(tempNode);
   tempNode = tempNode2;
 
-  uncertifiedInfnorm(temp, tempNode, *(range.a), *(range.b), defaultpoints, prec);
+  uncertifiedInfnorm(temp, NULL, tempNode, *(range.a), *(range.b), defaultpoints, prec);
 
   free_memory(tempNode);
   mpfr_init2(temp2,prec);

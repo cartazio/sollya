@@ -72,7 +72,7 @@
 
 rangetype infnorm(node *func, rangetype range, chain *excludes, mp_prec_t prec, mpfr_t diam, FILE *proof);
 chain* findZerosFunction(node *func, rangetype range, mp_prec_t prec, mpfr_t diam);
-void uncertifiedInfnorm(mpfr_t result, node *tree, mpfr_t a, mpfr_t b, unsigned long int points, mp_prec_t prec);
+void uncertifiedInfnorm(mpfr_t result, mpfr_t *x_result, node *tree, mpfr_t a, mpfr_t b, unsigned long int points, mp_prec_t prec);
 void evaluateRangeFunction(rangetype yrange, node *func, rangetype xrange, mp_prec_t prec);
 void evaluateRangeFunctionFast(rangetype yrange, node *func, node *deriv, rangetype xrange, mp_prec_t prec);
 void evaluateInterval(sollya_mpfi_t y, node *func, node *deriv, sollya_mpfi_t x);

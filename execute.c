@@ -28384,7 +28384,7 @@ node *evaluateThingInnerst(node *tree) {
       if (evaluateThingToRange(a,b,copy->child2)) {
 	mpfr_init2(c,tools_precision);
 	if (timingString != NULL) pushTimeCounter();
-	uncertifiedInfnorm(c, copy->child1, a, b, defaultpoints, tools_precision);
+	uncertifiedInfnorm(c, NULL, copy->child1, a, b, defaultpoints, tools_precision);
 	if (timingString != NULL) popTimeCounter(timingString);
 	tempNode = makeConstant(c);
 	mpfr_clear(c);

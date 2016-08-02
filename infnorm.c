@@ -3497,8 +3497,11 @@ int isTrivialInfnormCase(rangetype result, node *func) {
   return isTrivial;
 }
 
-void uncertifiedInfnorm(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned long int points, mp_prec_t prec) {
-  mpfr_t current_x, x1, x2, x3, step, y1, y2, y3, max, cutoff;
+/* If x_result != NULL, the mpfr_t it points to is used to store the value of a point where the infnorm is reached.
+   It is supposed to be already initialized.
+*/
+void uncertifiedInfnorm(mpfr_t result, mpfr_t *x_result, node *f, mpfr_t a, mpfr_t b, unsigned long int points, mp_prec_t prec) {
+  mpfr_t current_x, argmax, x1, x2, x3, step, y1, y2, y3, max, cutoff;
   mpfr_t ystar, y1diff, y3diff, xstar;
   mpfr_t zero_mpfr;
   mpfr_t perturb;
@@ -3561,6 +3564,7 @@ void uncertifiedInfnorm(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned lon
   mpfr_init2(x1, prec_bound);
   mpfr_init2(x2, prec_bound);
   mpfr_init2(x3, prec_bound);
+  mpfr_init2(argmax, prec_bound);
   mpfr_init2(y1, prec);
   mpfr_init2(y2, prec);
   mpfr_init2(y3, prec);
@@ -3602,7 +3606,8 @@ void uncertifiedInfnorm(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned lon
   } while ( (!mpfr_number_p(y1)) && (!stop_algo) );
 
   mpfr_abs(max, y1, GMP_RNDU);
-  printMessage(3,SOLLYA_MSG_THE_CURRENT_MAXIMUM_IS_A_CERTAIN_VALUE,"Information: current max is %v and is reached at %v\n",max,x1);
+  mpfr_set(argmax, x1, GMP_RNDN);
+  printMessage(3,SOLLYA_MSG_THE_CURRENT_MAXIMUM_IS_A_CERTAIN_VALUE,"Information: current max is %v and is reached at %v\n",max,argmax);
 
   mpfr_div_2ui(cutoff, max, 1, GMP_RNDU);
 
@@ -3634,7 +3639,8 @@ void uncertifiedInfnorm(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned lon
 
   if (mpfr_cmpabs(y2, max) > 0) { /* evaluates to false when y2=NaN */
     mpfr_abs(max, y2, GMP_RNDU);
-    printMessage(3,SOLLYA_MSG_THE_CURRENT_MAXIMUM_IS_A_CERTAIN_VALUE,"Information: current max is %v and is reached at %v\n",max,x2);
+    mpfr_set(argmax, x2, GMP_RNDN);
+    printMessage(3,SOLLYA_MSG_THE_CURRENT_MAXIMUM_IS_A_CERTAIN_VALUE,"Information: current max is %v and is reached at %v\n",max,argmax);
     mpfr_div_2ui(cutoff, max, 1, GMP_RNDU);
   }
 
@@ -3674,7 +3680,8 @@ void uncertifiedInfnorm(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned lon
 
     if (mpfr_cmpabs(y3, max) > 0) { /* evaluates to false when y3=NaN */
       mpfr_abs(max, y3, GMP_RNDU);
-      printMessage(3,SOLLYA_MSG_THE_CURRENT_MAXIMUM_IS_A_CERTAIN_VALUE,"Information: current max is %v and is reached at %v\n",max,x3);
+      mpfr_set(argmax, x3, GMP_RNDN);
+      printMessage(3,SOLLYA_MSG_THE_CURRENT_MAXIMUM_IS_A_CERTAIN_VALUE,"Information: current max is %v and is reached at %v\n",max,argmax);
       mpfr_div_2ui(cutoff, max, 1, GMP_RNDU);
     }
 
@@ -3710,7 +3717,8 @@ void uncertifiedInfnorm(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned lon
 	  }
 	  if (mpfr_cmpabs(ystar, max) > 0) { /* evaluates to false when ystar=NaN */
 	    mpfr_abs(max, ystar, GMP_RNDU);
-	    printMessage(3,SOLLYA_MSG_THE_CURRENT_MAXIMUM_IS_A_CERTAIN_VALUE,"Information: current max is %v and is reached at %v\n",max,xstar);
+            mpfr_set(argmax, xstar, GMP_RNDN);
+	    printMessage(3,SOLLYA_MSG_THE_CURRENT_MAXIMUM_IS_A_CERTAIN_VALUE,"Information: current max is %v and is reached at %v\n",max,argmax);
 	    mpfr_div_2ui(cutoff, max, 1, GMP_RNDU);
 	  }
 	}
@@ -3724,6 +3732,7 @@ void uncertifiedInfnorm(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned lon
   }
 
   mpfr_set(result, max, GMP_RNDU);
+  if (x_result != NULL) mpfr_set(*x_result, argmax, GMP_RNDN);
 
   free_memory(f_diff);
   free_memory(f_diff2);
@@ -3734,6 +3743,7 @@ void uncertifiedInfnorm(mpfr_t result, node *f, mpfr_t a, mpfr_t b, unsigned lon
   mpfr_clear(x1);
   mpfr_clear(x2);
   mpfr_clear(x3);
+  mpfr_clear(argmax);
   mpfr_clear(step);
   mpfr_clear(y1);
   mpfr_clear(y2);
