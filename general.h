@@ -287,6 +287,7 @@ int sollya_ferror(FILE *);
 size_t sollya_fread(void *, size_t, size_t, FILE *);
 size_t sollya_fwrite(const void *, size_t, size_t, FILE *);
 int sollya_gettime(sollya_time_t *);
+void readManipulate();
 
 /* Compatibility macros */
 

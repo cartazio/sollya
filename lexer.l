@@ -526,7 +526,8 @@ NOP             "nop"
                        if (newReadFilename != NULL) safeFree(newReadFilename);
 		       newReadFilename = NULL;
 		       newReadFilename = (char*) safeCalloc(yyleng - 1,sizeof(char));
-		       strncpy(newReadFilename,yytext+1,yyleng-2);
+                       strncpy(newReadFilename,yytext+1,yyleng-2);
+                       readManipulate();
 		       BEGIN(readstate2);
                 }
 
@@ -560,7 +561,8 @@ NOP             "nop"
 			yyin = temp_fd;
 			yy_switch_to_buffer(yy_create_buffer(yyin, YY_BUF_SIZE, scanner), scanner);
 		      }
-		      safeFree(newReadFilenameTemp);
+                      safeFree(newReadFilenameTemp);
+                      readManipulate();
 		      BEGIN(INITIAL);
                 }
 
@@ -588,7 +590,8 @@ NOP             "nop"
 			safeFree(readStack->value);
 			readStackTemp = readStack->next;
 			safeFree(readStack);
-			readStack = readStackTemp;
+                        readStack = readStackTemp;
+                        readManipulate();
 		      }
                 }
 

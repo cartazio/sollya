@@ -413,6 +413,9 @@ void externalPlot(char *library, mpfr_t a, mpfr_t b, mp_prec_t samplingPrecision
   mpfr_clear(ulp);
   mpfr_clear(min_value);
 
+  deferSignalHandling();
+  fflush(NULL);
+  resumeSignalHandling();
   if ((name==NULL) || (type==PLOTFILE)) {
     if (fork()==0) {
       if (daemon(1,1) == 0) {
@@ -422,8 +425,10 @@ void externalPlot(char *library, mpfr_t a, mpfr_t b, mp_prec_t samplingPrecision
 	  exit(1);
 	} else {
 	  wait(NULL);
+	  sleep(1);
 	  remove(gplotname);
 	  remove(dataname);
+	  sleep(1);
 	  exit(0);
 	}
       } else {
@@ -434,11 +439,15 @@ void externalPlot(char *library, mpfr_t a, mpfr_t b, mp_prec_t samplingPrecision
 	  exit(1);
 	} else {
 	  wait(NULL);
+	  sleep(2);
 	  exit(0);
 	}	  
       }
     }
-    else wait(NULL);
+    else {
+      wait(NULL);
+      sleep(1);
+    }
   }
   else { /* Case we have an output: no daemon */
     if (fork()==0) {
@@ -452,9 +461,15 @@ void externalPlot(char *library, mpfr_t a, mpfr_t b, mp_prec_t samplingPrecision
 	remove(gplotname);
 	remove(dataname);
       }
+      sleep(1);
     }
   }
+  wait(NULL);
+  deferSignalHandling();
+  fflush(NULL);
+  resumeSignalHandling();
 
+  
   safeFree(gplotname);
   safeFree(dataname);
   safeFree(outputname);

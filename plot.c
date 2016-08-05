@@ -307,7 +307,9 @@ void plotTree(chain *treeList, mpfr_t a, mpfr_t b, unsigned long int points, mp_
 
   mpfr_clear(x); mpfr_clear(y); mpfr_clear(step);
 
-
+  deferSignalHandling();
+  fflush(NULL);
+  resumeSignalHandling();
   if (plotPossible) {
     if ((name==NULL) || (type==PLOTFILE)) {
       if (fork()==0) {
@@ -318,8 +320,10 @@ void plotTree(chain *treeList, mpfr_t a, mpfr_t b, unsigned long int points, mp_
 	    exit(1);
 	  } else {
 	    wait(NULL);
+	    sleep(1);
 	    remove(gplotname);
 	    remove(dataname);
+	    sleep(1);
 	    exit(0);
 	  }
 	} else {
@@ -330,11 +334,15 @@ void plotTree(chain *treeList, mpfr_t a, mpfr_t b, unsigned long int points, mp_
 	    exit(1);
 	  } else {
 	    wait(NULL);
+	    sleep(2);
 	    exit(0);
 	  }	  
 	}
       }
-      else wait(NULL);
+      else {
+	wait(NULL);
+	sleep(1);
+      }
     }
     else { /* Case we have an output: no daemon */
       if (fork()==0) {
@@ -348,9 +356,15 @@ void plotTree(chain *treeList, mpfr_t a, mpfr_t b, unsigned long int points, mp_
 	  remove(gplotname);
 	  remove(dataname);
 	}
+	sleep(1);
       }
     }
   }
+  wait(NULL);
+  deferSignalHandling();
+  fflush(NULL);
+  resumeSignalHandling();
+
 
   safeFree(gplotname);
   safeFree(dataname);

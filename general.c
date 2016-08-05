@@ -319,6 +319,16 @@ void freeGlobalReusedMPFIVars();
 void freeGlobalReusedMPFRVars();
 void freeTool();
 
+void readManipulate() {
+  deferSignalHandling();
+  fflush(NULL);
+  resumeSignalHandling();
+  wait(NULL);
+  deferSignalHandling();
+  fflush(NULL);
+  resumeSignalHandling();
+}
+
 int sollya_gettime(sollya_time_t *t) {
 #if defined(HAVE_CLOCK_GETTIME) && HAVE_CLOCK_GETTIME
   struct timespec ts;
