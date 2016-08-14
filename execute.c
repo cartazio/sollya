@@ -8262,7 +8262,7 @@ char *sRawPrintThingInner(node *tree, int forceDyadic) {
     break;
   case MATCHELEMENT:
     res = concatAndFree(sRawPrintThingInner(tree->child1, forceDyadic),newString(" : {\n"));
-    curr = ((node *) (tree->arguments->value))->arguments;
+    curr = tree->arguments;
     while (curr != NULL) {
       res = concatAndFree(res, sRawPrintThingInner((node *) (curr->value), forceDyadic));
       res = concatAndFree(res, newString(";\n"));
