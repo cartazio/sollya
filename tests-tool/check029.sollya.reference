@@ -243,3 +243,10 @@ End of tests for objectname.
 The tool has been restarted.
 =============== Test number 14 ================
 Succeeded.
+The tool has been restarted.
+=============== Test number 15 ================
+Loop was not infinite
+The tool has been restarted.
+=============== Test number 15bis ================
+The precision has been set to 250 bits.
+Loop was not infinite
