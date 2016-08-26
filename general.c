@@ -2417,7 +2417,8 @@ static int general(int argc, char *argv[]) {
 	  sollyaPrintf("\nFor help on %s commands type \"help;\" on the %s prompt.\n",PACKAGE_NAME,PACKAGE_NAME);
 	  sollyaPrintf("A complete documentation on %s is available on the %s website <http://sollya.gforge.inria.fr/>.\n",PACKAGE_NAME,PACKAGE_NAME);
           sollyaPrintf("\nReport bugs to <%s>\n",PACKAGE_BUGREPORT);
-	} else {
+	} else { /* argv[i] is "--version" */
+          if (!printBanner) sollyaPrintf("%s\n\n",PACKAGE_STRING); /* For help2man to recognize the name of the tool */
   	  sollyaPrintf(VERSION_COPYRIGHT_TEXT "\nThis build of %s is based on GMP %s, MPFR %s and MPFI %s.\n",PACKAGE_STRING,gmp_version,mpfr_get_version(),sollya_mpfi_get_version());
 #if defined(HAVE_FPLLL_VERSION_STRING)
 	sollyaPrintf("It uses FPLLL as: \"%s\"\n",HAVE_FPLLL_VERSION_STRING);

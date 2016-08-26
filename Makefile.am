@@ -159,7 +159,7 @@ AM_H2MFLAGS = \
 	--no-info
 
 # Short descriptions for manpages
-sollya_DESCRIPTION =  "tool environment for safe floting-point code development -- command-line interface"
+sollya_DESCRIPTION =  "tool environment for safe floating-point code development -- command-line interface"
 
 sollya.1: sollya
 	 SOLLYA_BANNER_OFF=YES $(HELP2MAN) \

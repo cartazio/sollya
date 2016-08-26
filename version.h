@@ -68,6 +68,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
+#else
+#define PACKAGE_BUGREPORT error@error.com
 #endif
 
 #define VERSION_COPYRIGHT_YEARS "2006-2016"
@@ -101,12 +103,13 @@
   "All rights reserved.\n"                                              \
   "\n"                                                                  \
   "Contributors:\n"                                                     \
-  "              Ch. Lauter\n"                                          \
-  "              S. Chevillard\n"                                       \
-  "              M. Joldes\n"                                           \
-  "              N. Jourdan\n"                                          \
-  "              M. Mezzarobba.\n"                                      \
-  "\n"                                                                  \
+  "       Ch. Lauter, \n"                                               \
+  "       S. Chevillard, \n"                                            \
+  "       M. Joldes, \n"                                                \
+  "       N. Jourdan, \n"                                               \
+  "       M. Mezzarobba, \n"                                            \
+  "       J. Benoit.\n"                                                 \
+  " \n"                                                                 \
   "Send bug reports to " PACKAGE_BUGREPORT ".\n"                        \
   "\n"                                                                  \
   "This software is governed by the CeCILL-C license under French law and\n" \
