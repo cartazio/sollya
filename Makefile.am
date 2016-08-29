@@ -86,7 +86,9 @@ plot.c \
 plot.h \
 proof.c \
 proof.h \
-fpminimax.cpp \
+fplll_wrapper.cpp \
+fplll_wrapper.h \
+fpminimax.c \
 fpminimax.h \
 remez.c \
 remez.h \

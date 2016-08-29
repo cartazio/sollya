@@ -65,7 +65,6 @@
 */
 
 
-#include <iostream>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -77,43 +76,22 @@
 #endif
 /* End of the const mess */
 
-#undef malloc
-#undef realloc
-
-#ifdef HAVE_SPECIAL_FPLLL_INCLUDE
-#if HAVE_SPECIAL_FPLLL_INCLUDE
-#include <fplll/fplll.h>
-#else
-#include <fplll.h>
-#endif
-#else
-#include <fplll.h>
-#endif
-
 #include <gmp.h>
 #include <mpfr.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-
-extern "C" {
 #include "fpminimax.h"
 #include "expression.h"
 #include "remez.h"
 #include "chain.h"
-
 #include "execute.h"
-}
+#include "fplll_wrapper.h"
 
 #define coeff(i,j,n) ((i)-1)*(n)+(j)-1
 
 #define MAXLOOP 10
 
-extern "C" {
-void printFPLLLMat(ZZ_mat<mpz_t> *M) { M->print(); }
-}
 
-extern "C" {
 void printMpqMatrix(mpq_t *M, int p, int n) {
   int i,j;
   sollyaPrintf((const char *) "[");
@@ -126,9 +104,8 @@ void printMpqMatrix(mpq_t *M, int p, int n) {
   sollyaPrintf((const char *) "]\n");
   return;
 }
-}
 
-extern "C" {
+
 int mpq_cmpabs(mpq_t a, mpq_t b) {
   mpq_t temp1, temp2;
   int res;
@@ -145,9 +122,8 @@ int mpq_cmpabs(mpq_t a, mpq_t b) {
 
   return res;
 }
-}
 
-extern "C" {
+
 void mpq_fma(mpq_t r, mpq_t a, mpq_t b, mpq_t c) {
   mpq_t temp;
   mpq_init(temp);
@@ -157,13 +133,12 @@ void mpq_fma(mpq_t r, mpq_t a, mpq_t b, mpq_t c) {
   mpq_clear(temp);
   return;
 }
-}
 
 /* n is the number of columns                */
 /* p is the number of lines (p>=n)           */
 /* the system is supposed to be invertible   */
 /* returns 1 if the system is singular       */
-extern "C" int exact_system_solve(mpq_t *res, mpq_t *M, mpq_t *b, int p, int n) {
+int exact_system_solve(mpq_t *res, mpq_t *M, mpq_t *b, int p, int n) {
   chain *i_list=NULL;
   chain *j_list=NULL;
   chain *curri;
@@ -290,7 +265,7 @@ extern "C" int exact_system_solve(mpq_t *res, mpq_t *M, mpq_t *b, int p, int n) 
 
 
 
-extern "C" chain *ChebychevPoints(mpfr_t a, mpfr_t b, int n) {
+chain *ChebychevPoints(mpfr_t a, mpfr_t b, int n) {
   chain *res=NULL;
   mpfr_t temp, temp2, u;
   mpfr_t *mpfrptr;
@@ -330,7 +305,7 @@ extern "C" chain *ChebychevPoints(mpfr_t a, mpfr_t b, int n) {
    the algorithm fails. The algorithm fails also if g(x) = (x+1) and poly = 2*(x+1)*3, whatever the way you
    put parentheses.
 */
-extern "C" int findCoeffInPseudoPolynomial(node **c, node *poly, node *g) {
+int findCoeffInPseudoPolynomial(node **c, node *poly, node *g) {
   node *a, *b;
   node *temp;
   int r1, r2;
@@ -410,7 +385,7 @@ extern "C" int findCoeffInPseudoPolynomial(node **c, node *poly, node *g) {
    Returns 1 in case of success and 0 in case of failure (in this case nothing can be said about
    the content of coefficients)
 */
-extern "C" int getCoefficientsInPseudoPolynomial(mpfr_t *coefficients, node *poly, chain *monomials) {
+int getCoefficientsInPseudoPolynomial(mpfr_t *coefficients, node *poly, chain *monomials) {
   chain *curr;
   node *coeff;
   int i = 0;
@@ -426,7 +401,7 @@ extern "C" int getCoefficientsInPseudoPolynomial(mpfr_t *coefficients, node *pol
 }
 
 
-extern "C" chain *computeExponents(chain *formats, mpfr_t* coefficients, int dim) {
+chain *computeExponents(chain *formats, mpfr_t* coefficients, int dim) {
   chain *curr;
   chain *res = NULL;
   int *intptr;
@@ -454,7 +429,7 @@ extern "C" chain *computeExponents(chain *formats, mpfr_t* coefficients, int dim
   return res;
 }
 
-extern "C" int fitInFormat(chain *formats, mpfr_t* coefficients, int dim) {
+int fitInFormat(chain *formats, mpfr_t* coefficients, int dim) {
   chain *curr;
   mpfr_t val;
   int prec, i;
@@ -485,10 +460,10 @@ extern "C" int fitInFormat(chain *formats, mpfr_t* coefficients, int dim) {
 
 
 
-extern "C" node *FPminimaxMain(node *, chain *, chain *, chain *, node *);
+node *FPminimaxMain(node *, chain *, chain *, chain *, node *);
 
 
-extern "C" node *FPminimax(node *f,
+node *FPminimax(node *f,
 		chain *monomials,
 		chain *formats,
 		chain *points,
@@ -694,7 +669,7 @@ extern "C" node *FPminimax(node *f,
   return res;
 }
 
-extern "C" node *FPminimaxMain(node *f,
+node *FPminimaxMain(node *f,
 		    chain *monomials,
 		    chain *formats,
 		    chain *points,
@@ -711,16 +686,11 @@ extern "C" node *FPminimaxMain(node *f,
   node **monomials_tree;
   mpfr_t *x;
   mp_exp_t expo_min;
-
   mpq_t *coefficients;
   mpq_t *exactMatrix;
   mpq_t *reducedVect;
   mpfr_t *mpfr_coefficients;
-
-  ZZ_mat<mpz_t> * FPlllMat;
-  Z_NR<mpz_t>  zval;
   mpz_t mpzval;
-  wrapper *LLLwrapper;
 
   mpz_init(mpzval);
 
@@ -765,7 +735,6 @@ extern "C" node *FPminimaxMain(node *f,
   for(j=1; j<=dim+1; j++)    mpq_init(coefficients[j-1]);
   for(i=1; i<=nbpoints+1; i++)   mpq_init(reducedVect[i-1]);
 
-  FPlllMat = new ZZ_mat<mpz_t>(dim+1,nbpoints+1);
 
   // Computing useful arrays
   monomials_tree = (node **)safeMalloc(dim*sizeof(node *));
@@ -859,36 +828,19 @@ extern "C" node *FPminimaxMain(node *f,
   pushTimeCounter();
   mpfr_mul_2si(M[coeff(nbpoints+1,dim+1,dim+1)], M[coeff(nbpoints+1,dim+1,dim+1)], prec-expo_min, GMP_RNDN);
 
-  for(i=1; i<=nbpoints; i++) {
+  for(i=1; i<=nbpoints+1; i++) {
     for(j=1; j<=dim+1; j++) {
       mpfr_mul_2si(M[coeff(i, j, dim+1)], M[coeff(i, j,dim+1)], prec-expo_min, GMP_RNDN);
-
-      mpfr_get_z(mpzval, M[coeff(i,j,dim+1)], GMP_RNDN);
-      zval.set(mpzval);
-      FPlllMat->Set(j-1,i-1,zval);
-      mpq_set_z(exactMatrix[coeff(i,j,dim+1)], mpzval);
+      mpfr_get_z(mpzval, M[coeff(i,j,dim+1)], GMP_RNDN); /* Casts M[i,j] into a mpz_t */
+      mpq_set_z(exactMatrix[coeff(i,j,dim+1)], mpzval); /* Casts mpzval into a mpq_t */
     }
-  }
-
-  for(j=1; j<=dim+1; j++) {
-    mpfr_get_z(mpzval, M[coeff(nbpoints+1,j,dim+1)], GMP_RNDN);
-    zval.set(mpzval);
-    FPlllMat->Set(j-1,nbpoints,zval);
-    mpq_set_z(exactMatrix[coeff(nbpoints+1,j,dim+1)], mpzval);
   }
   popTimeCounter((char *)"FPminimax: preparing exact matrices for the call to LLL");
 
   // LLL reduction
   pushTimeCounter();
-  LLLwrapper = new wrapper(FPlllMat);
-  LLLwrapper->LLL();
+  fplll_wrapper(reducedVect, exactMatrix, dim, nbpoints);
   popTimeCounter((char *)"FPminimax: LLL call");
-
-  // Converting all stuff into exact numbers
-
-  for(i=1; i<=nbpoints+1; i++) {
-    mpq_set_z(reducedVect[i-1], LLLwrapper->GetBase()->Get(dim, i-1).GetData());
-  }
 
   // Getting the coefficients
   pushTimeCounter();
@@ -920,9 +872,6 @@ extern "C" node *FPminimaxMain(node *f,
   else res = NULL;
 
   // Cleaning
-  delete FPlllMat;
-  delete LLLwrapper;
-
   mpfr_clear(zero_mpfr);
   mpfr_clear(var1);
   mpfr_clear(var2);
@@ -955,7 +904,7 @@ extern "C" node *FPminimaxMain(node *f,
   safeFree(mpfr_coefficients);
 
   mpz_clear(mpzval);
-
+  
   return res;
 }
 
