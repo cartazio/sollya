@@ -474,7 +474,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
                   [
                      AC_MSG_RESULT(yes)
                      AM_CFLAGS="$AM_CFLAGS -fPIC"
-		     CFLAGS="$AM_CFLAGS -fPIC $USER_CFLAGS"
+		     CFLAGS="$AM_CFLAGS $USER_CFLAGS"
                   ],
                   [
                      AC_MSG_RESULT(no)
