@@ -93,6 +93,8 @@
    reducedVect is supposed to point to a large enough segment of allocated and
    already initialized mpq_t
 */
+#ifdef HAVE_FPLLL_OLD_API
+#if HAVE_FPLLL_OLD_API
 extern "C" void fplll_wrapper(mpq_t *reducedVect, mpq_t *exactMatrix, int dim, int nbpoints) {
   int i,j;
   ZZ_mat<mpz_t> * FPlllMat;
@@ -129,3 +131,47 @@ extern "C" void fplll_wrapper(mpq_t *reducedVect, mpq_t *exactMatrix, int dim, i
   return;
 }
 
+
+#else /* New API */
+extern "C" void fplll_wrapper(mpq_t *reducedVect, mpq_t *exactMatrix, int dim, int nbpoints) {
+  int i,j;
+  ZZ_mat<mpz_t> * FPlllMat;
+  Z_NR<mpz_t>  zval;
+  mpz_t mpzval;
+
+  mpz_init(mpzval);
+
+  FPlllMat = new ZZ_mat<mpz_t>(dim+1,nbpoints+1);
+
+  for(j=1; j<=dim+1; j++) {
+    for(i=1; i<=nbpoints+1; i++) {
+      mpz_set_q(mpzval, exactMatrix[coeff(i,j,dim+1)]); /* Casts M[i,j] into a mpz_t */
+      zval = mpzval;
+      (*FPlllMat)[j-1][i-1] = zval;
+    }
+  }
+
+  // LLL reduction
+  lll_reduction(*FPlllMat);
+
+  // Converting all stuff into exact numbers
+  for(i=1; i<=nbpoints+1; i++) {
+    mpq_set_z(reducedVect[i-1], (*FPlllMat)[dim][i-1].get_data());
+    //    mpq_set_z(reducedVect[i-1], LLLwrapper->GetBase()->Get(dim, i-1).GetData());
+  }
+
+  // Cleaning
+  delete FPlllMat;
+
+  mpz_clear(mpzval);
+  return;
+}
+
+#endif /* #ifdef HAVE_FPLLL_OLD_API */
+
+#else
+/* This case should not happen */
+extern "C" void fplll_wrapper(mpq_t *reducedVect, mpq_t *exactMatrix, int dim, int nbpoints) {
+  return;
+}
+#endif /* #if HAVE_FPLLL_OLD_API */
