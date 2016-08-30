@@ -8,6 +8,7 @@ keywords_defs="./keywords.def"
 types_defs="./types.def"
 sollya_name="\\\\sollya"
 listOfCommands="./CommandsAndFunctions.tex"
+makefileAm="./Makefile.am"
 
 tempfile="/tmp/hlp2tex_tempfile"
 tempfile2="/tmp/hlp2tex_tempfile2"
@@ -390,6 +391,11 @@ main() {
       then printf "Nothing to change in "$listOfCommands"\n"
       else
         printf "\\\\input{"`printf $source | sed -n 's/\.shlp//;p'`"}\n" >> $listOfCommands
+      fi
+      if grep "^$target\( \\\\\)\?$" $makefileAm > /dev/null
+      then printf "Nothing to change in "$makefileAm"\n"
+      else
+	sed -n -i 's/\(.*\.tex\)$/\1 \\\n'$target'/;p' $makefileAm
       fi
     else
       printf "File "$file" does not exist!\n"
