@@ -97,7 +97,7 @@ void printMpqMatrix(mpq_t *M, int p, int n) {
   sollyaPrintf((const char *) "[");
   for(i=1;i<=p;i++) {
     for(j=1;j<=n;j++) {
-      mpq_out_str(stdout, 10, M[coeff(i,j,n)]); if(j!=n) sollyaPrintf((const char *) ", ");
+      sollyaPrintf((const char *) "%r", M[coeff(i,j,n)]); if(j!=n) sollyaPrintf((const char *) ", ");
     }
     if(i!=n) sollyaPrintf((const char *) ";\n");
   }
