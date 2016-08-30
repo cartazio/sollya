@@ -551,14 +551,15 @@ NOP             "nop"
                         }
                         promptToBePrinted = 1;
 		      } else {
-			newReadFileStarted();
+                        fflush(yyin);
+                        newReadFileStarted();
 			currStatePtr = (YY_BUFFER_STATE *) safeMalloc(sizeof(YY_BUFFER_STATE));
 			*currStatePtr = YY_CURRENT_BUFFER;
 			readStack = addElement(readStack, (void *) currStatePtr);
 			tempFDPtr = (FILE **) safeMalloc(sizeof(FILE *));
 			*tempFDPtr = yyin;
 			readStack2 = addElement(readStack2, (void *) tempFDPtr);
-			yyin = temp_fd;
+                        yyin = temp_fd;
 			yy_switch_to_buffer(yy_create_buffer(yyin, YY_BUF_SIZE, scanner), scanner);
 		      }
                       safeFree(newReadFilenameTemp);
@@ -580,7 +581,8 @@ NOP             "nop"
 			yyterminate();
 		      } else {
 			fclose(yyin);
-			yyin = *((FILE **) (readStack2->value));
+                        yyin = *((FILE **) (readStack2->value));
+                        fflush(yyin);
 			safeFree(readStack2->value);
 			readStackTemp = readStack2->next;
 			safeFree(readStack2);
@@ -904,6 +906,9 @@ NOP             "nop"
 
 %%
 
+FILE *getCurrentLexerStream() {
+  return yyget_in(scanner);
+}
 
 char *getCurrentLexSymbol() {
   char *str;

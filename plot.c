@@ -309,6 +309,7 @@ void plotTree(chain *treeList, mpfr_t a, mpfr_t b, unsigned long int points, mp_
 
   deferSignalHandling();
   fflush(NULL);
+  parserFlushInput();
   resumeSignalHandling();
   if (plotPossible) {
     if ((name==NULL) || (type==PLOTFILE)) {
@@ -363,6 +364,7 @@ void plotTree(chain *treeList, mpfr_t a, mpfr_t b, unsigned long int points, mp_
   wait(NULL);
   deferSignalHandling();
   fflush(NULL);
+  parserFlushInput();
   resumeSignalHandling();
 
 

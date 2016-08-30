@@ -315,17 +315,25 @@ extern int yylex(void *);
 extern void yyset_in(FILE *, void *);
 extern int parserCheckEof();
 
+extern FILE *getCurrentLexerStream();
+
 void freeGlobalReusedMPFIVars();
 void freeGlobalReusedMPFRVars();
 void freeTool();
 
+void parserFlushInput() {
+  fflush(getCurrentLexerStream());
+}
+
 void readManipulate() {
   deferSignalHandling();
   fflush(NULL);
+  parserFlushInput();
   resumeSignalHandling();
   wait(NULL);
   deferSignalHandling();
   fflush(NULL);
+  parserFlushInput();
   resumeSignalHandling();
 }
 
@@ -2636,6 +2644,8 @@ static int general(int argc, char *argv[]) {
 	  deferSignalHandling();
           fflush(stdout);
           fflush(stderr);
+	  fflush(NULL);
+	  parserFlushInput();
 	  resumeSignalHandling();
         }
 	libraryMode = 0;
@@ -2650,6 +2660,8 @@ static int general(int argc, char *argv[]) {
 	  deferSignalHandling();
           fflush(stdout);
           fflush(stderr);
+	  fflush(NULL);
+	  parserFlushInput();
 	  resumeSignalHandling();
         }
 	blockSignals(eliminatePromptBackup);

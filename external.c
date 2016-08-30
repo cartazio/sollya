@@ -132,6 +132,7 @@ char *evaluateStringAsBashCommand(char *command, char *input) {
       */
       deferSignalHandling();
       fflush(NULL);
+      parserFlushInput();
       resumeSignalHandling();
       if ((pid = fork()) == -1) {
 	/* Error forking */
@@ -268,6 +269,7 @@ char *evaluateStringAsBashCommand(char *command, char *input) {
 
   deferSignalHandling();
   fflush(NULL);
+  parserFlushInput();
   resumeSignalHandling();
 
   return res;
@@ -415,6 +417,7 @@ void externalPlot(char *library, mpfr_t a, mpfr_t b, mp_prec_t samplingPrecision
 
   deferSignalHandling();
   fflush(NULL);
+  parserFlushInput();
   resumeSignalHandling();
   if ((name==NULL) || (type==PLOTFILE)) {
     if (fork()==0) {
@@ -467,8 +470,8 @@ void externalPlot(char *library, mpfr_t a, mpfr_t b, mp_prec_t samplingPrecision
   wait(NULL);
   deferSignalHandling();
   fflush(NULL);
+  parserFlushInput();
   resumeSignalHandling();
-
   
   safeFree(gplotname);
   safeFree(dataname);
