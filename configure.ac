@@ -359,21 +359,20 @@ AC_MSG_CHECKING([for -std=c++11 or -std=gnu++11 support])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
                   [
                      AC_MSG_RESULT(yes)
-                     AM_CXXFLAGS="$AM_CXXFLAGS -std=c++11"
+                     STDCXX11="-std=c++11"
                   ],
                   [
 		     CXXFLAGS="$AM_CXXFLAGS -std=gnu++11 $USER_CXXFLAGS"
 		     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
                      		       [
                                           AC_MSG_RESULT(yes)
-                                          AM_CXXFLAGS="$AM_CXXFLAGS -std=gnu++11"
+					  STDCXX11="-std=gnu++11"
 				       ],
 				       [
 				          AC_MSG_RESULT(no)
+					  STDCXX11=""
 				       ])
 		  ])
-CXXFLAGS="$AM_CXXFLAGS $USER_CXXFLAGS"
-
 
 FPLLLSPECIALINCLUDE="no"
 FPLLLISREALLIB="no"
@@ -420,14 +419,18 @@ FPLLL_SPECIAL_HEADER=`printf "\
 "`
 
 AC_MSG_CHECKING([if fplll is a real library to be linked in])
-OLD_LIBS="$LIBS"; LIBS="-lfplll $LIBS"
+OLD_LIBS="$LIBS"; LIBS="-lfplll $LIBS";
+CXXFLAGS="$AM_CXXFLAGS $STDCXX11 $USER_CXXFLAGS"
+
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[$FPLLL_NORMAL_HEADER]], [[$FPLLL_PROG]])],
                [
                   FPLLLISREALLIB="yes"
 		  FPLLLMODERNAPI="yes"
+		  AM_CXXFLAGS="$AM_CXXFLAGS $STDCXX11"
 		  AC_MSG_RESULT(yes)
                ],
-               [AC_LINK_IFELSE([AC_LANG_PROGRAM([[$FPLLL_NORMAL_HEADER]], [[$FPLLL_PROGV3]])],
+               [CXXFLAGS="$AM_CXXFLAGS $USER_CXXFLAGS"
+	        AC_LINK_IFELSE([AC_LANG_PROGRAM([[$FPLLL_NORMAL_HEADER]], [[$FPLLL_PROGV3]])],
                                [
                                   FPLLLISREALLIB="yes"
 		                  AC_MSG_RESULT(yes)
