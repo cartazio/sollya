@@ -30,6 +30,7 @@ int main(void) {
   double length1;
   double length2;
   int64_t nb_iter;
+  int res = 0;
 
   sollya_lib_init();
 
@@ -80,14 +81,16 @@ int main(void) {
 
   if ((0.75 <= length2/length1) && (length2/length1 <= 1.25))
     sollya_lib_printf("Testing that a call to get_element_in_list has complexity O(1): OK\n");
-  else
+  else {
     sollya_lib_printf("Testing that a call to get_element_in_list has complexity O(1): not OK. Observed ratio: length1/length2 = %.0f/%.0f = %g (should be close to 1 for O(1) complexity, and close to 2 for linear complexity). Number of iterations: nb_iter = %" PRId64 "\n", length1, length2, length2/length1, nb_iter);
-
+    res = 77;
+  }
+  
   for(i=0;i<LIST_SIZE;i++) sollya_lib_clear_obj(tab[i]);
 
   sollya_lib_close();
 
-  return 0;
+  return res;
 }
 
 #else /* gettimeofday not available: simply skip the test */
