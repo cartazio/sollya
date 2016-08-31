@@ -1,11 +1,14 @@
 /*
 
-  Copyright 2006-2015 by
+  Copyright 2006-2016 by
 
   Laboratoire de l'Informatique du Parallelisme,
   UMR CNRS - ENS Lyon - UCB Lyon 1 - INRIA 5668,
 
-  LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2)
+  LORIA (CNRS, INPL, INRIA, UHP, U-Nancy 2),
+
+  Centre de recherche INRIA Sophia-Antipolis Mediterranee, equipe APICS,
+  Sophia Antipolis, France,
 
   and by
 
