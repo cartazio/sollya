@@ -319,65 +319,65 @@ match [||] with @NaN@: ("Is a NaN") default: ("Is not a NaN");
 
 restart;
 print("=============== Test number 13 ================");
-filename = "tmpFile-check029" @ __unique_id @ ".sollya";
-count = 0;
-print("procedure contains(elem, L) {") > filename;
-print("  var t, res;") >> filename;
-print("  res = false;") >> filename;
-print("  for t in L do {") >> filename;
-print("    if elem == t then res = true;") >> filename;
-print("  };") >> filename;
-print("  return res;") >> filename;
-print("};\n") >> filename;
-for a1 in [|true,false|] do { for a2 in [|true,false|] do { for a3 in [|true,false|] do {
-  for b1 in [|true,false|] do { for b2 in [|true,false|] do { for b3 in [|true,false|] do {
-    for c1 in [|true,false|] do { for c2 in [|true,false|] do { for c3 in [|true,false|] do {
-      count = count + 1;
-      if a1 then print("a" @ count @ " = exp(x) + " @ count @ ";") >> filename;
-      if b1 then print("b" @ count @ " = cos(x);") >> filename;
-      if c1 then print("c" @ count @ " = cos(x);") >> filename;
-      print("procedure test() {") >> filename;
-      if a2 then print("  var a" @ count @ ";") >> filename;
-      if b2 then print("  var b" @ count @ ";") >> filename;
-      if c2 then print("  var c" @ count @ ";") >> filename;
-      if a2 then print("  a" @ count @ " = cos(x);") >> filename;
-      if b2 then print("  b" @ count @ " = exp(x) + " @ count @ ";") >> filename;
-      if c2 then print("  c" @ count @ " = cos(x);") >> filename;
-      print("  procedure test_inner() {") >> filename;
-      print("    var s, expected;") >> filename;
-      if a3 then print("    var a" @ count @ ";") >> filename;
-      if b3 then print("    var b" @ count @ ";") >> filename;
-      if c3 then print("    var c" @ count @ ";") >> filename;
-      if a3 then print("    a" @ count @ " = cos(x);") >> filename;
-      if b3 then print("    b" @ count @ " = cos(x);") >> filename;
-      if c3 then print("    c" @ count @ " = exp(x) + " @ count @ ";") >> filename;
+FILENAME = "tmpFile-check029" @ __unique_id @ ".sollya";
+COUNT = 0;
+print("procedure contains(elem, L) {") > FILENAME;
+print("  var t, res;") >> FILENAME;
+print("  res = false;") >> FILENAME;
+print("  for t in L do {") >> FILENAME;
+print("    if elem == t then res = true;") >> FILENAME;
+print("  };") >> FILENAME;
+print("  return res;") >> FILENAME;
+print("};\n") >> FILENAME;
+for A1 in [|true,false|] do { for A2 in [|true,false|] do { for A3 in [|true,false|] do {
+  for B1 in [|true,false|] do { for B2 in [|true,false|] do { for B3 in [|true,false|] do {
+    for C1 in [|true,false|] do { for C2 in [|true,false|] do { for C3 in [|true,false|] do {
+      COUNT = COUNT + 1;
+      if A1 then print("a" @ COUNT @ " = exp(x) + " @ COUNT @ ";") >> FILENAME;
+      if B1 then print("b" @ COUNT @ " = cos(x);") >> FILENAME;
+      if C1 then print("c" @ COUNT @ " = cos(x);") >> FILENAME;
+      print("procedure test() {") >> FILENAME;
+      if A2 then print("  var a" @ COUNT @ ";") >> FILENAME;
+      if B2 then print("  var b" @ COUNT @ ";") >> FILENAME;
+      if C2 then print("  var c" @ COUNT @ ";") >> FILENAME;
+      if A2 then print("  a" @ COUNT @ " = cos(x);") >> FILENAME;
+      if B2 then print("  b" @ COUNT @ " = exp(x) + " @ COUNT @ ";") >> FILENAME;
+      if C2 then print("  c" @ COUNT @ " = cos(x);") >> FILENAME;
+      print("  procedure test_inner() {") >> FILENAME;
+      print("    var s, expected;") >> FILENAME;
+      if A3 then print("    var a" @ COUNT @ ";") >> FILENAME;
+      if B3 then print("    var b" @ COUNT @ ";") >> FILENAME;
+      if C3 then print("    var c" @ COUNT @ ";") >> FILENAME;
+      if A3 then print("    a" @ COUNT @ " = cos(x);") >> FILENAME;
+      if B3 then print("    b" @ COUNT @ " = cos(x);") >> FILENAME;
+      if C3 then print("    c" @ COUNT @ " = exp(x) + " @ COUNT @ ";") >> FILENAME;
 
-      expected = [||];
-      if c3 then expected = expected :. ("c" @ count);
-      if (b2 && (!b3)) then expected = expected :. ("b" @ count);
-      if (a1 && (!a2) && (!a3)) then expected = expected :. ("a" @ count);
+      EXPECTED = [||];
+      if C3 then EXPECTED = EXPECTED :. ("c" @ COUNT);
+      if (B2 && (!B3)) then EXPECTED = EXPECTED :. ("b" @ COUNT);
+      if (A1 && (!A2) && (!A3)) then EXPECTED = EXPECTED :. ("a" @ COUNT);
       display = hexadecimal!;
-      if expected == [||] then expected = [|"(exp(x)) + (" @ count @ ")"|];
-      print("    s = objectname(exp(x) + " @ count @ ");") >> filename;
+      if EXPECTED == [||] then EXPECTED = [|"(exp(x)) + (" @ COUNT @ ")"|];
+      print("    s = objectname(exp(x) + " @ COUNT @ ");") >> FILENAME;
       display = decimal!;
 
-      print("    expected = " @ expected @ ";") >> filename;
-      print("    if (exp(x) + " @ count @ " != parse(s)) then print(\"Error detected [|a1,a2,a3,b1,b2,b3,c1,c2,c3|] = \", " @ [|a1,a2,a3,b1,b2,b3,c1,c2,c3|] @ ");") >> filename;
-      print("    if !contains(s, expected) then print(\"Unexpected \",s,\"(should belong to \", expected, \"). [|a1,a2,a3,b1,b2,b3,c1,c2,c3|] = \", " @ [|a1,a2,a3,b1,b2,b3,c1,c2,c3|] @ ");") >> filename;
-      print("    return void;") >> filename;
-      print("  };") >> filename;
-      print("  test_inner();") >> filename;
-      print("  return void;") >> filename;
-      print("};") >> filename;
-      print("test();\n") >> filename;
+      print("    expected = " @ EXPECTED @ ";") >> FILENAME;
+      print("    if (exp(x) + " @ COUNT @ " != parse(s)) then print(\"Error detected [|A1,A2,A3,B1,B2,B3,C1,C2,C3|] = \", " @ [|A1,A2,A3,B1,B2,B3,C1,C2,C3|] @ ");") >> FILENAME;
+      print("    if !contains(s, expected) then print(\"Unexpected \",s,\"(should belong to \", expected, \"). [|A1,A2,A3,B1,B2,B3,C1,C2,C3|] = \", " @ [|A1,A2,A3,B1,B2,B3,C1,C2,C3|] @ ");") >> FILENAME;
+      print("    return void;") >> FILENAME;
+      print("  };") >> FILENAME;
+      print("  test_inner();") >> FILENAME;
+      print("  return void;") >> FILENAME;
+      print("};") >> FILENAME;
+      print("test();\n") >> FILENAME;
     };};};
   };};};
 };};};
 
 print("Running systematic tests for objectname...");
-execute(filename);
+execute(FILENAME);
 print("Test run. Removing temporary file.");
-bashexecute("rm -rf " @ filename);
+bashexecute("rm -rf " @ FILENAME);
 print("End of tests for objectname.");
 
 restart;
