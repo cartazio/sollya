@@ -376,6 +376,7 @@ for a1 in [|true,false|] do { for a2 in [|true,false|] do { for a3 in [|true,fal
 
 print("Running systematic tests for objectname...");
 execute(filename);
+print("Test run. Removing temporary file.");
 bashexecute("rm -rf " @ filename);
 print("End of tests for objectname.");
 
