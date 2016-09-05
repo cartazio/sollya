@@ -319,7 +319,7 @@ match [||] with @NaN@: ("Is a NaN") default: ("Is not a NaN");
 
 restart;
 print("=============== Test number 13 ================");
-filename = "tmpFile-check029.sollya";
+filename = "tmpFile-check029" @ __unique_id @ ".sollya";
 count = 0;
 print("procedure contains(elem, L) {") > filename;
 print("  var t, res;") >> filename;
@@ -374,10 +374,9 @@ for a1 in [|true,false|] do { for a2 in [|true,false|] do { for a3 in [|true,fal
   };};};
 };};};
 
-restart;
 print("Running systematic tests for objectname...");
-execute("tmpFile-check029.sollya");
-bashexecute("rm -rf tmpFile-check029.sollya");
+execute(filename);
+bashexecute("rm -rf " @ filename);
 print("End of tests for objectname.");
 
 restart;
@@ -415,3 +414,4 @@ L = [|(x * 6215193255146273b-52 * sqrt(1 - x^2)) / x, (x^3 * 2400843832216393628
 f = cos(x * 6215193255146273b-52) - sin(x * 6215193255146273b-52) * sqrt(1 - x^2)/x;
 p = remez(f,L,[1b-100;9007199254740991b-53]);
 print("Loop was not infinite");
+
