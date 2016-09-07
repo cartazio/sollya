@@ -3690,7 +3690,7 @@ void uncertifiedInfnorm(mpfr_t result, mpfr_t *x_result, node *f, mpfr_t a, mpfr
     }
 
     /* Call to Newton's algorithm if necessary */
-    if (( (mpfr_cmpabs(y2,y1)>=0) && (mpfr_cmpabs(y2,y3)>=0) && (mpfr_cmp_d(y2,0.)!=0) ) || (r == 2)) {
+    if ( (mpfr_cmpabs(y2,y1)>=0) && (mpfr_cmpabs(y2,y3)>=0) && (mpfr_cmp_d(y2,0.)!=0) ) {
 
       if (f_diff2 == NULL) f_diff2 = differentiate(f_diff);
 
