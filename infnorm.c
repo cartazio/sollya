@@ -926,6 +926,7 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
   sollya_mpfi_t *reusedVars;
   node *tC1, *tC2, *temp;
   int workForThin;
+  mp_prec_t pxppp, ppppp;
 
   workForThin = workForThinArg;
 
@@ -1901,8 +1902,11 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
     } else {
       if (sollya_mpfi_has_zero(stack2) &&
 	  (simplifiesB > 0)) {
-	mpfr_init2(xl,prec);
-	mpfr_init2(xr,prec);
+	ppppp = prec;
+	pxppp = sollya_mpfi_get_prec(x);
+	if (pxppp > ppppp) ppppp = pxppp;
+	mpfr_init2(xl,ppppp);
+	mpfr_init2(xr,ppppp);
 
 	sollya_mpfi_get_left(xl,x);
 	sollya_mpfi_get_right(xr,x);
