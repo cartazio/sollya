@@ -116,9 +116,6 @@ sollya_SOURCES = main.c
 
 sollya_LDADD = $(lib_LTLIBRARIES)
 
-sollya_CFLAGS = $(AM_CFLAGS)
-sollya_CXXFLAGS = $(AM_CXXFLAGS)
-
 libsollya_la_LDFLAGS = \
 	$(libsollya_la_LT_INFO) \
 	$(libsollya_la_LD_VERSION_SCRIPT) \
