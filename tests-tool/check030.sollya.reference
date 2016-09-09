@@ -253,3 +253,12 @@ Warning: rounding has happened. The value displayed is a faithful rounding to 15
 Warning: rounding has happened. The value displayed is a faithful rounding to 15 bits of the true result.
 1.0645
 true
+=============== Check #15 ================
+The tool has been restarted.
+true
+The tool has been restarted.
+true
+The tool has been restarted.
+true
+The tool has been restarted.
+true
