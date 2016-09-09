@@ -1558,7 +1558,7 @@ int qualityOfError(mpfr_t computedQuality, mpfr_t infinityNorm, mpfr_t *x,
 */
 node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t prec, mpfr_t quality, mpfr_t satisfying_error, mpfr_t target_error) {
   int freeDegrees = lengthChain(monomials);
-  int i, j, r, count, test, crash, HaarCompliant;
+  int i, j, r, count, test, crash, HaarCompliant, forEverNotHaarCompliant;
   mpfr_t zero_mpfr, var1, var2, var3, computedQuality, infinityNorm;
   node *temp_tree;
   node *temp_tree2;
@@ -1575,6 +1575,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
   mpfr_t *ai_vect;
   mpfr_t *lambdai_vect;
   mpfr_t *previous_lambdai_vect;
+  mpfr_t previous_epsilon;
   mpfr_t perturb;
   gmp_randstate_t random_state;
   int quality_prec;
@@ -1582,6 +1583,8 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
   /* Make compiler happy */
   res = NULL;
   /* End of compiler happiness */
+
+  forEverNotHaarCompliant = 0;
 
   quality_prec = (mpfr_regular_p(quality)?(10 - mpfr_get_exp(quality)):prec);
 
@@ -1599,6 +1602,9 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 
   mpfr_init2(zero_mpfr, 53);
   mpfr_set_d(zero_mpfr, 0., GMP_RNDN);
+
+  mpfr_init2(previous_epsilon, prec);
+  mpfr_set(previous_epsilon, zero_mpfr, GMP_RNDN);
 
   if (mpfr_get_prec(quality)>prec) mpfr_init2(computedQuality, mpfr_get_prec(quality));
   else mpfr_init2(computedQuality, prec);
@@ -1817,6 +1823,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 	}
 	if(count==0) HaarCompliant=1;
       }
+      if (forEverNotHaarCompliant) HaarCompliant = 0;
 
       for (i=1 ; i <= freeDegrees+1 ; i++) {
 	if (mpfr_sgn(lambdai_vect[i-1])>0)
@@ -1965,6 +1972,11 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 	mpfr_set(previous_lambdai_vect[i-1], lambdai_vect[i-1], GMP_RNDN);
       }
 
+      if (mpfr_cmpabs(previous_epsilon, ai_vect[freeDegrees]) > 0) {
+        forEverNotHaarCompliant = 1;
+        printMessage(2, SOLLYA_MSG_REMEZ_SWITCHING_DEFINITIVELY_TO_SLOW_ALGORITHM, "Remez: multipoint algorithm failed due to lack of Haar condition. Switching back to single point algorithm.\n");
+      }
+      mpfr_set(previous_epsilon, ai_vect[freeDegrees], GMP_RNDN);
     }
 
     res = NULL;

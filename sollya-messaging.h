@@ -571,6 +571,7 @@ static const messageEntry messageTextsTable[] = {
   { SOLLYA_MSG_SAFE_ROUNDING_FOR_EXPR_THAT_SHOULD_BE_CONST            , "At least one of the given expressions is not a constant but requires evaluation. Evaluation is guaranteed to ensure the inclusion property." },
   { SOLLYA_MSG_DEGREE_OF_POLYNOMIAL_LARGER_THAN_MULTIPRECISION_INT    , "The degree of the given polynomial is larger than the largest multiprecision integer that can be held in memory. The polynomial's degree will be returned as -1." },
   { SOLLYA_MSG_ANNOTATION_INCOHERENT                                  , "An inconsistency has been detected between the results obtained with the evaluation of two distinct annotations of the same function." },
+  { SOLLYA_MSG_REMEZ_SWITCHING_DEFINITIVELY_TO_SLOW_ALGORITHM         , "Remez: multipoint algorithm failed due to lack of Haar condition. Switching back to single point algorithm." },
   /* Add your new warning message texts above here. */
 
   { -1, "Unknown message number -1" }   /* Do not ever change the text in this default entry, which must be the last entry in the list */
