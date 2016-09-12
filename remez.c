@@ -1923,7 +1923,8 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 	safeFree(x);
 
 	mpfr_clear(zero_mpfr);
-	mpfr_clear(var1);
+        mpfr_clear(previous_epsilon);
+        mpfr_clear(var1);
 	mpfr_clear(var2);
 	mpfr_clear(var3);
 	mpfr_clear(computedQuality);
@@ -2044,6 +2045,7 @@ node *remezAux(node *f, node *w, chain *monomials, mpfr_t u, mpfr_t v, mp_prec_t
 
 
   mpfr_clear(zero_mpfr);
+  mpfr_clear(previous_epsilon);
   mpfr_clear(var1);
   mpfr_clear(var2);
   mpfr_clear(var3);
