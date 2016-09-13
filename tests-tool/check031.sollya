@@ -2,14 +2,7 @@
 
 print("=============== Check #1 ================");
 restart;
-lock = "locked";
-while (lock == "locked") do {
-  lock = bashevaluate("if test -e tempFile_check031.lock;then echo \"locked\";fi");
-  if (lock == "locked")
-    then bashexecute("sleep 1")
-    else bashexecute("touch tempFile_check031.lock");
-};
-
+bashexecute("while ! ( set -o noclobber; echo \"locked by $$\" > \"tempFile_check031.lock\" ) 2> /dev/null; do sleep 3; done");
 
 print("prec = 350!;") > "tempFile_check031.sollya";
 print("verbosity=0!;") >> "tempFile_check031.sollya";
@@ -28,7 +21,7 @@ print("r = x * h - t * sqrt(1 - x^2);") >> "tempFile_check031.sollya";
 print("p = x * (1 + x^2 * (6004799503156347b-55 + x^2 * (5404319581047423b-56 + x^2 * (3216828076239507b-56 + x^2 * 8803447692148775b-58))));") >> "tempFile_check031.sollya";
 print("F = q + p(r);") >> "tempFile_check031.sollya";
 print("eps = 1;") >> "tempFile_check031.sollya";
-print("plot(F/f-1,0,eps,-eps,[-sup(dom),sup(dom)]);") >> "tempFile_check031.sollya";
+print("plot(F/f-1,0,eps,-eps,[-sup(dom),sup(dom)],postscript,\"tempFile_check031.sollya.plot\");") >> "tempFile_check031.sollya";
 print("") >> "tempFile_check031.sollya";
 print("\"Relative error sine:         2^(\", ~log2(dirtyinfnorm(s/sin(x)-1,qDom)), \")\";") >> "tempFile_check031.sollya";
 print("\"Relative error cosine:       2^(\", ~log2(dirtyinfnorm(c/cos(x)-1,qDom)), \")\";") >> "tempFile_check031.sollya";
@@ -48,4 +41,4 @@ print("print(\"Hello\");") >> "tempFile_check031.sollya";
 print("rr = fpminimax(r_exact/f, monomials1, [|D...|], dom, absolute, default, default);") >> "tempFile_check031.sollya";
 
 read "tempFile_check031.sollya";
-bashexecute("rm -rf tempFile_check031.sollya tempFile_check031.lock");
+bashexecute("sleep 1; rm -rf tempFile_check031.sollya tempFile_check031.sollya.plot.eps tempFile_check031.lock");
