@@ -24831,7 +24831,7 @@ node *evaluateThingInnerst(node *tree) {
 		  }
 		}
                 resC = ((mpfr_cmp(a,b) < 0) && (!mpfr_unordered_p(a,b)));
-		resG = mpfr_number_p(b);
+		resG = mpfr_number_p(b) || ((resB == 2) && mpfr_inf_p(b));
 		resH = (mpfr_number_p(a) && mpfr_number_p(b));
                 if ((resA == 1) || (resB == 1)) {
                   if (resC) {
@@ -24937,7 +24937,7 @@ node *evaluateThingInnerst(node *tree) {
 		  }
 		}
                 resC = ((mpfr_cmp(a,b) < 0) && (!mpfr_unordered_p(a,b)));
-		resG = mpfr_number_p(b);
+		resG = mpfr_number_p(b) || ((resB == 2) && mpfr_inf_p(b));
 		resH = (mpfr_number_p(a) && mpfr_number_p(b));
                 if ((resA == 1) || (resB == 1)) {
                   if (resC) {
@@ -25050,7 +25050,7 @@ node *evaluateThingInnerst(node *tree) {
 		  }
 		}
                 resC = ((mpfr_cmp(a,b) < 0) || (mpfr_unordered_p(a,b)));
-		resG = mpfr_number_p(b);
+		resG = mpfr_number_p(b) || ((resB == 2) && mpfr_inf_p(b));
 		resH = (mpfr_number_p(a) && mpfr_number_p(b));
                 if ((resA == 1) || (resB == 1)) {
                   if (resC) {
@@ -25156,7 +25156,7 @@ node *evaluateThingInnerst(node *tree) {
 		  }
 		}
                 resC = ((mpfr_cmp(a,b) < 0) || (mpfr_unordered_p(a,b)));
-		resG = mpfr_number_p(b);
+		resG = mpfr_number_p(b) || ((resB == 2) && mpfr_inf_p(b));
 		resH = (mpfr_number_p(a) && mpfr_number_p(b));
                 if ((resA == 1) || (resB == 1)) {
                   if (resC) {
