@@ -6456,7 +6456,7 @@ static inline void sparsePolynomialEvalMpfr(mpfr_t y, sparse_polynomial_t p, mpf
   /* Here the global scratch space variable still is free; so start
      using it. 
   */
-  __sparsePolynomialEvalMpfr_var_used = 1;
+  __sparsePolynomialEvalMpfi_var_used = 1;
 
   /* Initialize the global scratch variable */
   if (__sparsePolynomialEvalMpfr_scratch_initialized) {
@@ -6470,7 +6470,7 @@ static inline void sparsePolynomialEvalMpfr(mpfr_t y, sparse_polynomial_t p, mpf
   __sparsePolynomialEvalMpfr(y, p, x, __sparsePolynomialEvalMpfr_scratch);
 
   /* Free the access to the global scratch space variable again */
-  __sparsePolynomialEvalMpfr_var_used = 0;
+  __sparsePolynomialEvalMpfi_var_used = 0;
 }
 
 static inline void __sparsePolynomialEvalMpfi(sollya_mpfi_t y, sparse_polynomial_t p, sollya_mpfi_t x, sollya_mpfi_t scratch) {
