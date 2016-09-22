@@ -903,7 +903,7 @@ static inline void clearChosenMpfiPtr(sollya_mpfi_t *ptr, sollya_mpfi_t *localPt
   returnReusedGlobalMPIVars(1);
 }
 
-static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t prec, int simplifiesA, int simplifiesB, mpfr_t *hopitalPoint, exprBoundTheo *theo, int noExcludes, int fastAddSub, int workForThinArg, int noLazyHooks, mp_exp_t *cutoff, int *lazyHookUsed) {
+static inline chain* evaluateIRec(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t prec, int simplifiesA, int simplifiesB, mpfr_t *hopitalPoint, exprBoundTheo *theo, int noExcludes, int fastAddSub, int workForThinArg, int noLazyHooks, mp_exp_t *cutoff, int *lazyHookUsed) {
   sollya_mpfi_t stack1, stack2, tempI, tempI2;
   sollya_mpfi_t stack3, zI, numeratorInZI, denominatorInZI, newExcludeTemp, xMXZ, temp1, temp2, tempA, tempB;
   sollya_mpfi_t *newExclude;
@@ -927,11 +927,16 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
   node *tC1, *tC2, *temp;
   int workForThin;
   mp_prec_t pxppp, ppppp;
+  int leftRecursionDone, rightRecursionDone;
+  sollya_mpfi_t leftRecursionResult, rightRecursionResult;
 
+  leftRecursionDone = 0;
+  rightRecursionDone = 0;
+  
   workForThin = workForThinArg;
 
   if (tree->nodeType == MEMREF) {
-    if ((theo != NULL) || (!noExcludes)) return evaluateI(result, getMemRefChild(tree), x, prec, simplifiesA, simplifiesB, hopitalPoint, theo, noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if ((theo != NULL) || (!noExcludes)) return evaluateIRec(result, getMemRefChild(tree), x, prec, simplifiesA, simplifiesB, hopitalPoint, theo, noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
 
     if ((tree->arguments != NULL) &&
 	(*((mp_prec_t *) tree->arguments->value) >= prec)) {
@@ -962,7 +967,7 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
 	  polynomialEvalMpfi(result, tree->polynomialRepresentation, x);
 	  excludes = NULL;
 	} else {
-	  excludes = evaluateI(result, getMemRefChild(tree), x, prec, simplifiesA, simplifiesB, hopitalPoint, theo, noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+	  excludes = evaluateIRec(result, getMemRefChild(tree), x, prec, simplifiesA, simplifiesB, hopitalPoint, theo, noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
 	}
       }
     }
@@ -1149,7 +1154,7 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
     case CEIL:
     case FLOOR:
     case NEARESTINT:
-      evaluateI(result, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, NULL, 1, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);      
+      evaluateIRec(result, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, NULL, 1, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);      
       switch (tree->nodeType) {
       case SQRT:
 	sollya_mpfi_sqrt(result, result);
@@ -1307,9 +1312,12 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
     case NEARESTINT:
       reusedVars = getReusedGlobalMPFIVars(1, prec);
       if (reusedVars == NULL) break;
-      evaluateI(reusedVars[0], tree->child1, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+      evaluateIRec(reusedVars[0], tree->child1, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
       if (sollya_mpfi_has_nan(reusedVars[0]) ||
 	  sollya_mpfi_has_infinity(reusedVars[0])) {
+	leftRecursionDone = 1;
+	sollya_mpfi_init2(leftRecursionResult, sollya_mpfi_get_prec(reusedVars[0]));
+	sollya_mpfi_set(leftRecursionResult, reusedVars[0]);
 	returnReusedGlobalMPIVars(1);
 	break;
       }
@@ -1426,12 +1434,18 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
     case POW:
       reusedVars = getReusedGlobalMPFIVars(2, prec);
       if (reusedVars != NULL) {
-	evaluateI(reusedVars[0], tree->child1, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
-	evaluateI(reusedVars[1], tree->child2, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+	evaluateIRec(reusedVars[0], tree->child1, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+	evaluateIRec(reusedVars[1], tree->child2, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
 	if (sollya_mpfi_has_nan(reusedVars[0]) ||
 	    sollya_mpfi_has_infinity(reusedVars[0]) ||
 	    sollya_mpfi_has_nan(reusedVars[1]) ||
 	    sollya_mpfi_has_infinity(reusedVars[1])) {
+	  leftRecursionDone = 1;
+	  sollya_mpfi_init2(leftRecursionResult, sollya_mpfi_get_prec(reusedVars[0]));
+	  sollya_mpfi_set(leftRecursionResult, reusedVars[0]);
+	  rightRecursionDone = 1;
+	  sollya_mpfi_init2(rightRecursionResult, sollya_mpfi_get_prec(reusedVars[1]));
+	  sollya_mpfi_set(rightRecursionResult, reusedVars[1]);	  
 	  returnReusedGlobalMPIVars(2);
 	} else {
 	  switch (tree->nodeType) {
@@ -1454,12 +1468,18 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
       } else {
 	sollya_mpfi_init2(stack1, prec);
 	sollya_mpfi_init2(stack2, prec);
-	evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
-	evaluateI(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+	evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+	evaluateIRec(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, NULL,1, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
 	if (sollya_mpfi_has_nan(stack1) ||
 	    sollya_mpfi_has_infinity(stack1) ||
 	    sollya_mpfi_has_nan(stack2) ||
 	    sollya_mpfi_has_infinity(stack2)) {
+	  leftRecursionDone = 1;
+	  sollya_mpfi_init2(leftRecursionResult, sollya_mpfi_get_prec(stack1));
+	  sollya_mpfi_set(leftRecursionResult, stack1);
+	  rightRecursionDone = 1;
+	  sollya_mpfi_init2(rightRecursionResult, sollya_mpfi_get_prec(stack2));
+	  sollya_mpfi_set(rightRecursionResult, stack2);	  
 	  sollya_mpfi_clear(stack2);
 	  sollya_mpfi_clear(stack1);
 	} else {
@@ -1510,8 +1530,18 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
     excludes = NULL;
     break;
   case ADD:
-    leftExcludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
-    rightExcludes = evaluateI(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, rightTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      leftExcludes = NULL;
+    } else {
+      leftExcludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
+    if (noExcludes && rightRecursionDone) {
+      sollya_mpfi_set(stack2, rightRecursionResult);
+      rightExcludes = NULL;
+    } else {
+      rightExcludes = evaluateIRec(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, rightTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_add(stack3, stack1, stack2);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
@@ -1555,16 +1585,16 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
       sollya_mpfi_mid(z,x);
       sollya_mpfi_set_fr(zI,z);
 
-      leftExcludesConstant = evaluateI(leftConstantTerm, tree->child1, zI, prec, simplifiesA-1, simplifiesB, NULL, leftTheoConstant,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
-      rightExcludesConstant = evaluateI(rightConstantTerm, tree->child2, zI, prec, simplifiesA-1, simplifiesB, NULL, rightTheoConstant,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+      leftExcludesConstant = evaluateIRec(leftConstantTerm, tree->child1, zI, prec, simplifiesA-1, simplifiesB, NULL, leftTheoConstant,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+      rightExcludesConstant = evaluateIRec(rightConstantTerm, tree->child2, zI, prec, simplifiesA-1, simplifiesB, NULL, rightTheoConstant,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
 
       printMessage(12,SOLLYA_MSG_DIFFERENTIATING_FOR_DECORRELATION,"Information: Differentiating while evaluating for decorrelation.\n");
 
       derivLeft = differentiate(tree->child1);
       derivRight = differentiate(tree->child2);
 
-      leftExcludesLinear = evaluateI(leftLinearTerm, derivLeft, x, prec, simplifiesA-1, simplifiesB, NULL, leftTheoLinear,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
-      rightExcludesLinear = evaluateI(rightLinearTerm, derivRight, x, prec, simplifiesA-1, simplifiesB, NULL, rightTheoLinear,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+      leftExcludesLinear = evaluateIRec(leftLinearTerm, derivLeft, x, prec, simplifiesA-1, simplifiesB, NULL, leftTheoLinear,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+      rightExcludesLinear = evaluateIRec(rightLinearTerm, derivRight, x, prec, simplifiesA-1, simplifiesB, NULL, rightTheoLinear,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
 
       sollya_mpfi_add(tempA,leftConstantTerm,rightConstantTerm);
       sollya_mpfi_add(tempB,leftLinearTerm,rightLinearTerm);
@@ -1649,8 +1679,18 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
     }
     break;
   case SUB:
-    leftExcludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
-    rightExcludes = evaluateI(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, rightTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      leftExcludes = NULL;
+    } else {
+      leftExcludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
+    if (noExcludes && rightRecursionDone) {
+      sollya_mpfi_set(stack2, rightRecursionResult);
+      rightExcludes = NULL;
+    } else {
+      rightExcludes = evaluateIRec(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, rightTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_sub(stack3, stack1, stack2);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
@@ -1695,16 +1735,16 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
       sollya_mpfi_mid(z,x);
       sollya_mpfi_set_fr(zI,z);
 
-      leftExcludesConstant = evaluateI(leftConstantTerm, tree->child1, zI, prec, simplifiesA-1, simplifiesB, NULL, leftTheoConstant,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
-      rightExcludesConstant = evaluateI(rightConstantTerm, tree->child2, zI, prec, simplifiesA-1, simplifiesB, NULL, rightTheoConstant,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+      leftExcludesConstant = evaluateIRec(leftConstantTerm, tree->child1, zI, prec, simplifiesA-1, simplifiesB, NULL, leftTheoConstant,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+      rightExcludesConstant = evaluateIRec(rightConstantTerm, tree->child2, zI, prec, simplifiesA-1, simplifiesB, NULL, rightTheoConstant,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
 
       printMessage(12,SOLLYA_MSG_DIFFERENTIATING_FOR_DECORRELATION,"Information: Differentiating while evaluating for decorrelation.\n");
 
       derivLeft = differentiate(tree->child1);
       derivRight = differentiate(tree->child2);
 
-      leftExcludesLinear = evaluateI(leftLinearTerm, derivLeft, x, prec, simplifiesA-1, simplifiesB, NULL, leftTheoLinear,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
-      rightExcludesLinear = evaluateI(rightLinearTerm, derivRight, x, prec, simplifiesA-1, simplifiesB, NULL, rightTheoLinear,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+      leftExcludesLinear = evaluateIRec(leftLinearTerm, derivLeft, x, prec, simplifiesA-1, simplifiesB, NULL, leftTheoLinear,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+      rightExcludesLinear = evaluateIRec(rightLinearTerm, derivRight, x, prec, simplifiesA-1, simplifiesB, NULL, rightTheoLinear,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
 
       sollya_mpfi_sub(tempA,leftConstantTerm,rightConstantTerm);
       sollya_mpfi_sub(tempB,leftLinearTerm,rightLinearTerm);
@@ -1789,8 +1829,18 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
     }
     break;
   case MUL:
-    leftExcludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
-    rightExcludes = evaluateI(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, rightTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      leftExcludes = NULL;
+    } else {
+      leftExcludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
+    if (noExcludes && rightRecursionDone) {
+      sollya_mpfi_set(stack2, rightRecursionResult);
+      rightExcludes = NULL;
+    } else {
+      rightExcludes = evaluateIRec(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, rightTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     if (xIsPoint &&
 	(theo == NULL) && 
 	((sollya_mpfi_has_infinity(stack1) && sollya_mpfi_is_zero(stack2)) ||
@@ -1809,7 +1859,7 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
 				 copyTree(accessThruMemRef(tC1)->child2)));
 	freeChain(leftExcludes,freeMpfiPtr);
 	freeChain(rightExcludes,freeMpfiPtr);
-	excludes = evaluateI(stack3, temp, x, prec, simplifiesA, simplifiesB, NULL, theo, noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+	excludes = evaluateIRec(stack3, temp, x, prec, simplifiesA, simplifiesB, NULL, theo, noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
 	free_memory(temp);
       } else {
 	/* There's nothing we can do */
@@ -1830,8 +1880,18 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
     }
     break;
   case DIV:
-    leftExcludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
-    rightExcludes = evaluateI(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, rightTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      leftExcludes = NULL;
+    } else {
+      leftExcludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
+    if (noExcludes && rightRecursionDone) {
+      sollya_mpfi_set(stack2, rightRecursionResult);
+      rightExcludes = NULL;
+    } else {
+      rightExcludes = evaluateIRec(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, rightTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
 
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
@@ -1871,8 +1931,8 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
 	  rightTheoLinear = NULL;
 	}
 
-	leftExcludes = evaluateI(stack1, derivNumerator, x, prec, simplifiesA, simplifiesB-1, NULL, leftTheoLinear,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
-	rightExcludes = evaluateI(stack2, derivDenominator, x, prec, simplifiesA, simplifiesB-1, NULL, rightTheoLinear,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+	leftExcludes = evaluateIRec(stack1, derivNumerator, x, prec, simplifiesA, simplifiesB-1, NULL, leftTheoLinear,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+	rightExcludes = evaluateIRec(stack2, derivDenominator, x, prec, simplifiesA, simplifiesB-1, NULL, rightTheoLinear,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
 
 	free_memory(derivNumerator);
 	free_memory(derivDenominator);
@@ -1940,8 +2000,8 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
 	      rightTheoConstant = NULL;
 	    }
 
-	    t1 = evaluateI(numeratorInZI, tree->child1, zI, prec, simplifiesA, simplifiesB-1, newHopitalPoint, leftTheoConstant,1, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
-	    t2 = evaluateI(denominatorInZI, tree->child2, zI, prec, simplifiesA, simplifiesB-1, newHopitalPoint, rightTheoConstant,1, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+	    t1 = evaluateIRec(numeratorInZI, tree->child1, zI, prec, simplifiesA, simplifiesB-1, newHopitalPoint, leftTheoConstant,1, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+	    t2 = evaluateIRec(denominatorInZI, tree->child2, zI, prec, simplifiesA, simplifiesB-1, newHopitalPoint, rightTheoConstant,1, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
 
 	    freeChain(t1,freeMpfiPtr);
 	    freeChain(t2,freeMpfiPtr);
@@ -1997,7 +2057,7 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
 		printMessage(8,SOLLYA_MSG_RECURSION_ON_USE_OF_HOPITALS_RULE,"Information: recursion on use of Hopital's rule\n");
 	      }
 
-	      excludes = evaluateI(stack3, tempNode, x, prec, simplifiesA, simplifiesB-1, newHopitalPoint, leftTheoLinear,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+	      excludes = evaluateIRec(stack3, tempNode, x, prec, simplifiesA, simplifiesB-1, newHopitalPoint, leftTheoLinear,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
 
 	      if (internalTheo != NULL) sollya_mpfi_set(*(internalTheo->boundLeftLinear),stack3);
 
@@ -2032,8 +2092,8 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
 		  rightTheoConstant = NULL;
 		}
 
-		t1 = evaluateI(numeratorInZI, tree->child1, zI, prec, simplifiesA, simplifiesB-1, newHopitalPoint, leftTheoConstant,1, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
-		t2 = evaluateI(denominatorInZI, tree->child2, zI, prec, simplifiesA, simplifiesB-1, newHopitalPoint, rightTheoConstant,1, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+		t1 = evaluateIRec(numeratorInZI, tree->child1, zI, prec, simplifiesA, simplifiesB-1, newHopitalPoint, leftTheoConstant,1, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+		t2 = evaluateIRec(denominatorInZI, tree->child2, zI, prec, simplifiesA, simplifiesB-1, newHopitalPoint, rightTheoConstant,1, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
 
 		freeChain(t1,freeMpfiPtr);
 		freeChain(t2,freeMpfiPtr);
@@ -2085,7 +2145,7 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
 		    printMessage(8,SOLLYA_MSG_RECURSION_ON_USE_OF_HOPITALS_RULE,"Information: recursion on use of Hopital's rule\n");
 		  }
 
-		  excludes = evaluateI(stack3, tempNode, x, prec, simplifiesA, simplifiesB-1, newHopitalPoint, leftTheoLinear,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+		  excludes = evaluateIRec(stack3, tempNode, x, prec, simplifiesA, simplifiesB-1, newHopitalPoint, leftTheoLinear,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
 
 		  if (internalTheo != NULL) sollya_mpfi_set(*(internalTheo->boundLeftLinear),stack3);
 
@@ -2153,127 +2213,222 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
     }
     break;
   case SQRT:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_sqrt(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case EXP:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_exp(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case LOG:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_log(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case LOG_2:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_log2(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case LOG_10:
-    evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_log10(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case SIN:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_sin(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case COS:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_cos(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case TAN:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_tan(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case ASIN:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_asin(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case ACOS:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_acos(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case ATAN:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_atan(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case SINH:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_sinh(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case COSH:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_cosh(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case TANH:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_tanh(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case ASINH:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_asinh(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case ACOSH:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_acosh(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case ATANH:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_atanh(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case POW:
-    leftExcludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
-    rightExcludes = evaluateI(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, rightTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      leftExcludes = NULL;
+    } else {
+      leftExcludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
+    if (noExcludes && rightRecursionDone) {
+      sollya_mpfi_set(stack2, rightRecursionResult);
+      rightExcludes = NULL;
+    } else {
+      rightExcludes = evaluateIRec(stack2, tree->child2, x, prec, simplifiesA, simplifiesB, NULL, rightTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_pow(stack3, stack1, stack2);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
@@ -2282,98 +2437,168 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
     excludes = concatChains(leftExcludes,rightExcludes);
     break;
   case NEG:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_neg(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case ABS:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_abs(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case DOUBLE:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_round_to_double(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case SINGLE:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_round_to_single(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case HALFPRECISION:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_round_to_halfprecision(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case QUAD:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_round_to_quad(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case DOUBLEDOUBLE:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_round_to_doubledouble(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case TRIPLEDOUBLE:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_round_to_tripledouble(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case ERF:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_erf(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case ERFC:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_erfc(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case LOG_1P:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_log1p(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case EXP_M1:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_expm1(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case DOUBLEEXTENDED:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_round_to_doubleextended(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case LIBRARYFUNCTION:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     mpfi_init2(tempI, sollya_mpfi_get_prec(stack3));
     if (tree->libFun->hasData) {
       ((int (*)(mpfi_t, mpfi_t, int, void *)) (tree->libFun->code))(tempI, stack1, tree->libFunDeriv, tree->libFun->data);
@@ -2389,28 +2614,48 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
     }
     break;
   case PROCEDUREFUNCTION:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     computeFunctionWithProcedure(stack3, tree->child2, stack1, (unsigned int) tree->libFunDeriv, tree);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case CEIL:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_ceil(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case FLOOR:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_floor(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
     }
     break;
   case NEARESTINT:
-    excludes = evaluateI(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    if (noExcludes && leftRecursionDone) {
+      sollya_mpfi_set(stack1, leftRecursionResult);
+      excludes = NULL;
+    } else {
+      excludes = evaluateIRec(stack1, tree->child1, x, prec, simplifiesA, simplifiesB, NULL, leftTheo,noExcludes, fastAddSub, workForThin, noLazyHooks, cutoff, lazyHookUsed);
+    }
     sollya_mpfi_nearestint(stack3, stack1);
     if (internalTheo != NULL) {
       sollya_mpfi_set(*(internalTheo->boundLeft),stack1);
@@ -2425,7 +2670,7 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
     excludes = NULL;
     break;
   default:
-    sollyaFprintf(stderr,"Error: evaluateI: unknown identifier in the tree\n");
+    sollyaFprintf(stderr,"Error: evaluateIRec: unknown identifier in the tree\n");
     exit(1);
   }
 
@@ -2443,7 +2688,22 @@ static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x
   mpfr_clear(ar);
   mpfr_clear(bl);
   mpfr_clear(br);
+  if (leftRecursionDone) {
+    sollya_mpfi_clear(leftRecursionResult);
+  }
+  if (rightRecursionDone) {
+    sollya_mpfi_clear(rightRecursionResult);
+  }
+    
   return excludes;
+}
+
+static inline chain* evaluateI(sollya_mpfi_t result, node *tree, sollya_mpfi_t x, mp_prec_t prec, int simplifiesA, int simplifiesB, mpfr_t *hopitalPoint, exprBoundTheo *theo, int noExcludes, int fastAddSub, int workForThinArg, int noLazyHooks, mp_exp_t *cutoff, int *lazyHookUsed) {
+  chain *res;
+
+  res = evaluateIRec(result, tree, x, prec, simplifiesA, simplifiesB, hopitalPoint, theo, noExcludes, fastAddSub, workForThinArg, noLazyHooks, cutoff, lazyHookUsed);
+  
+  return res;
 }
 
 static inline chain* evaluateITaylor(sollya_mpfi_t result, node *func, node *deriv, sollya_mpfi_t x, mp_prec_t prec, int recurse, exprBoundTheo *theo, int noExcludes, int fastAddSub, int workForThin, int noLazyHooks, mp_exp_t *cutoff, int *lazyHookUsed);
