@@ -1,3 +1,554 @@
+2016-09-19  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* tests-tool/Makefile.am, tests-tool/check031.sollya,
+	tests-tool/check031.sollya.reference: Removed non-regression test
+	for the bug fixed at commit 9b578b8.  It seems really not easy to do a robust test that would also work on
+	platforms without an X server.
+
+2016-09-13  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* tests-tool/check029.sollya, tests-tool/check029.sollya.reference: 
+	Added additional checks for min and max.
+
+2016-09-13  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* execute.c: Patching a bug with infinities in min and max.
+
+2016-09-13  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* tests-tool/check031.sollya: Some improvements to check031, making
+	it run when no X is available and improving locking behavior.
+
+2016-09-12  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* tests-tool/Makefile.am, tests-tool/check031.sollya,
+	tests-tool/check031.sollya.reference: Kind of non regression test
+	for the bug patched with commit f175f2b.
+
+2016-09-12  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* tests-tool/timecheck.sollya,
+	tests-tool/timecheck.sollya.reference: Non-regression test for a
+	performance bug addressed at commit e0b3184.  The test currently does not pass as the performance issue seems to
+	still exist, although it has been already much improved by commit
+	e0b3184.
+
+2016-09-12  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* remez.c: Patched a memory leak in remez
+
+2016-09-09  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* tests-tool/check030.sollya, tests-tool/check030.sollya.reference: 
+	Added non-regression tests for bugs #12892 and (parts of) #17200.
+
+2016-09-09  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* remez.c, sollya-messages.h, sollya-messaging.h: Kind of patched
+	bug #12892.  The patch is not perfect, but works and will work in most
+	situations, although this is not the smartest thing we could do. The
+	problem was that multi-point exchange algorithm sometimes behaves
+	badly when Haar condition is not fulfilled, leading to a situation
+	where epsilon could suddenly decrease (instead of constantly
+	increase), therefore leading to possible pseudo-cycles in the
+	algorithm.  When we detect that epsilon has decreased, we now simply switch to
+	the single point exchange algorithm and keep this choice active
+	until the end of the algorithm. This ensures that no cycle can
+	happen.  We could do better by starting over from the previous set of points
+	(instead of simply continuing with the set of points that led to
+	epsilon decreasing) but the patch to do it would be more involved,
+	and in practice it does not seem to be very harmful to simply
+	continue the algorithm with the points obtained after epsilon has
+	decreased. Indeed, this patch also fixes bug #17200 except for one
+	case where, precisely, it is not a good idea to continue the
+	algorithm after epsilon has decreased.
+
+2016-09-07  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* Makefile.am: Removed definitions of sollya_C*FLAGS in Makefile.am
+	(they seem useless).  Christoph introduced them when we started compiling the interactive
+	tool from the library. He could not come with any precise argument
+	why he put these definitions, except that he remembers having copied
+	it from some more or less official example found on the web.  As far as I understand the logic of automake, this is useless
+	because AM_C*FLAGS are automatically added to any target. I tried
+	removing it and compiling sollya on a computer where the usual libs
+	are installed in some prefix, providing them through the --with-
+	mechanism and it worked perfectly.
+
+2016-09-07  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* infnorm.c: Removed code that seems useless.  While investigating the bug addressed by Christoph at commit
+	e0b3184, I found a piece of code I could not understand the logic of
+	in infnorm.c.  This code adds a complementary test to an existing
+	test deciding whether we should run Newton's algorithm within
+	dirtyinfnorm algorithm. The addition has been made by Christoph at
+	commit 9b1d5e6. This commit performs many non trivial modifications
+	on many files, including infnorm.c, but this precise modification is
+	completely isolated (in particular, it is the only modification to
+	the dirtyinfnorm algorithm). There is no comment that would provide
+	us with an idea of the intent behing this modification, and the
+	commit log is not more helpful.  I cannot see any logic in this modification, although it is rather
+	harmless in the sense that it would simply conclude that it is
+	necessary to run Newton's algorithm in situations where it does not
+	seem quite useful.  The present commit reverts this modification. All the tests keep
+	passing.
+
+2016-09-07  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* infnorm.c: Trying to patch a strange performance bug in interval
+	evaluation with low precision.
+
+2016-09-05  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* tests-tool/check029.sollya: Changed variable names to uppercase in
+	the systematic tests for objectname.  This is to clearly separate variable names in the generated script
+	from variable names in the generating script. This is made necessary
+	by Christoph's change of commit 10f890b that removed a 'restart'
+	that would be otherwise required.
+
+2016-09-05  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* tests-tool/check029.sollya, tests-tool/check029.sollya.reference: 
+	Still improving debuggability of a test.
+
+2016-09-05  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* : commit 10f890bf3389fa9023743ce4b21271fd89bf5df5 Author:
+	Christoph Lauter <christoph.lauter@lip6.fr> Date:   Mon Sep 5
+	11:54:46 2016 +0200
+
+2016-08-31  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* external.c, infnorm.h: Updated copyrights.
+
+2016-08-30  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* doc/shlp2tex.sh: shlp2tex.sh now automatically adds new .tex files
+	to Makefile.am
+
+2016-08-30  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* tests-lib/tget_element_in_list_timecomplexity.c: Made
+	tget_element_in_list_timecomplexity test be skipped instead of
+	failure Whenever this complexity check does not pass, it returns a code
+	meaning SKIP instead of FAIL, so as not to disturb users or Debian
+	robots.  This is similar to what is performed in tests-tool with the
+	MAYFAIL_TESTS
+
+2016-08-30  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* configure.ac: Attempt to patch configure issue with fplll on
+	Cygwin.  The changes introduced at commit ea4ede2 break configure with some
+	versions of fplll on Cygwin. Indeed, the option -std=g++11 was now
+	systematically added when supported by the compiler, but it turns
+	out that the compilation of some older versions of fplll under
+	Cygwin raise an error when compiled with this option, although they
+	compile fine without the option...  This commit attempts to fix this issue by adding the -std=g++11
+	option only when the new API is detected, indicating that fplll is
+	recent enough.
+
+2016-08-30  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* fpminimax.c, general.c, plot.c: Worked around some compiler
+	warnings.
+
+2016-08-30  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* external.c, general.c, general.h, lexer.l, plot.c: Still trying to
+	fix a strange issue with fork() and the input streams used for read.
+
+2016-08-29  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* fplll_wrapper.cpp: Support both old and new API for fplll.
+
+2016-08-29  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* Makefile.am, fplll_wrapper.cpp, fplll_wrapper.h, fpminimax.c,
+	fpminimax.cpp: Separated C++ from C in fpminimax.
+
+2016-08-29  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* configure.ac: Prepared configure, so as to detect rather FPLLL
+	should be used with the old API
+
+2016-08-29  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* configure.ac: Option -fPIC was given twice.
+
+2016-08-26  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* Makefile.am, general.c, sollya.h2m, version.h: Minor modifications
+	to restore proper behavior of help2man It turns out that an innocent and small modification to Jerome
+	Benoit's proposition when merging it back to the trunk at commit
+	972f2d6 was completely messing up the work of help2man. This commit
+	restores a nice behavior.
+
+2016-08-25  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* tests-tool/check029.sollya, tests-tool/check029.sollya.reference: 
+	Added non-regression test for bug #8867
+
+2016-08-02  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* execute.c, implement.c, infnorm.c, infnorm.h, remez.c: (Kind of)
+	fixing bug [#8867] Possible infinite loop in Remez This led me to introduce a new argument to uncertifiedInfnorm that
+	allows one to store an argmax.  The patch is a patch over a patched algorithm, and all this does not
+	really make sense any more. At least, this patch makes both examples
+	reported in the bug report terminate. I have no proof of any kind
+	that it completely patches the problem.
+
+2016-08-02  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* remez.c: Reworked verbosity levels for some messages of remez
+	algorithm.
+
+2016-08-14  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* execute.c: Patched a minor issue with displaying of code elements
+	in match - with constructs.
+
+2016-08-05  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* external.c, general.c, general.h, lexer.l, plot.c: Making the
+	interworking between read and forking commands like plot extra-safe.
+
+2016-07-27  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* remez.c: Message "function oscillates too much" is displayed at
+	most once per remez step.
+
+2016-07-27  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* remez.c, tests-tool/check029.sollya,
+	tests-tool/check029.sollya.reference: Fixed a subtle bug in remez When the function was not defined close after the right end-point of
+	the domain, the algorithm could fall into a more or less infinite
+	loop, trying to evaluate it again and again at points not in the
+	domain.  A non regression test was added.
+
+2016-07-13  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* general.c, main.c, sollya-library-wrappers.c: Updated copyrights
+	and checked that PDF and PHP are synchonized.
+
+2016-07-13  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* doc/Makefile.am: Makes it possible to recompile the doc within a
+	VPATH build
+
+2016-07-13  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* doc/Makefile.am: Make automake happy (it gives a special meaning
+	to underscores)
+
+2016-07-13  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* doc/Makefile.am: Added source tex files into the distributed
+	packages
+
+2016-07-12  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* library.c: Removed a warning.
+
+2016-07-12  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* .gitignore: Yet another update of .gitignore For files in tests-lib this time...
+
+2016-07-12  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* general.c, sollya.map, tests-lib/Makefile.am,
+	tests-lib/tget_element_in_list.c,
+	tests-lib/tget_element_in_list.reference,
+	tests-lib/tget_element_in_list_timecomplexity.c,
+	tests-lib/tget_element_in_list_timecomplexity.reference: 
+	Time-complexity checks in tests-lib independent from Sollya library In order to avoid declaring symbols in sollya.map that are useless
+	  except for the checks of the lib, I propose the following patch: - separate tests of tget_element_in_list into two separate files:
+	  one file is specifically for checking the time complexity.  - this time check is performed only on systems where gettimeofday is
+	available Right now, if gettimeofday is available the test is performed and
+	may fail (as opposed to tests-tool/timecheck.sollya that is marked
+	as 'SKIP' instead of 'FAIL' when it does not pass).  Normally, the
+	check for tget_element_in_list_timecomplexity is designed to be
+	really robust and measure a theoretical complexity, so I am in favor
+	of really marking it as 'FAIL' in case it does not pass. But notice
+	that this behavior is easy to change if we wish.  Normally, I should have removed everything that had been added to
+	the source code specifically to make sollya_gettime available and
+	usable in the tests of the lib.
+
+2016-07-12  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* Makefile.am, libsollyaexample.c: Removed libsollyaexample.c This file had been created initially to offer a panorama of how to
+	used the library but it has never been really filled with something
+	non-trivial.  The idea remains good in itself but would require some work.
+	Currently, the official documentation does the job and the
+	test-lib/*.c files offer a lot of practical examples, more valuable
+	than the current libsollyaexample.c
+
+2016-07-12  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* tests-tool/Makefile.am, tests-tool/check.proto: Less fragile
+	support for timecheck timecheck is designed to be quite robust, but, by its nature may
+	fail on some unusual architectures. This could be misleading to
+	people that might think that they have a problem with their
+	compilation of Sollya.  An idea proposed by Jerome Benoit was to list it as XFAIL, but
+	timecheck *is not* expected to fail: it is expected to pass,
+	although, sometimes, it might not pass (notice that these situations
+	are worth being reported). As a compromise, I propose in this patch
+	simply to mark it as skipped when it does not pass.
+
+2016-07-12  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* .gitignore: Updated .gitignore with files produced my modern
+	versions of automake
+
+2016-07-11  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* doc/bashevaluate.tex, doc/bashexecute.tex,
+	doc/introExample51.tex, doc/remez.tex, doc/time.tex,
+	doc/timing.tex, doc/www/bashevaluate.php, doc/www/bashexecute.php,
+	doc/www/introExample51.php, doc/www/remez.php, doc/www/time.php,
+	doc/www/timing.php, help.h: Recompiled the documentation.
+
+2016-07-10  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* Makefile.am: Forgotten file in the EXTRA_DIST variable.
+
+2016-07-10  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* sollya.map: Modified sollya.map in order to allow the tool to
+	compile again.
+
+2016-07-10  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* : Merge the one-commit branch devoted to directly linking the tool
+	against the library
+
+2016-06-08  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* TODO_sollya5.0: Updated TODO file
+
+2016-07-08  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* : Merge sixth (and last) part of the patches proposed by Jerome
+	Benoit
+
+2016-07-06  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* : Merge fifth part of the patches proposed by Jerome Benoit
+
+2016-07-06  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* :  Merge fourth part of the patches proposed by Jerome Benoit
+
+2016-07-05  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* : Merge second part of the patches proposed by Jerome Benoit
+
+2016-07-05  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* Makefile.am: Made the Sollya tool be built out of the Sollya
+	library.
+
+2016-07-05  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* plot.c: Patching a funny bug found on non-standard VT100 terminals
+	(not enough memory).
+
+2016-07-05  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* Makefile.am, general.c, general.h, main.c, main.h: Started working
+	on making the Sollya tool be just a wrapper of the Sollya library.
+
+2016-07-05  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* general.c: Reintegrating Jerome's patches for Debian into Sollya
+	Master.  There were serveral regressions induced by Jerome's patch, so we
+	should run this commit by Jerome to see if he can integrate this
+	commit into Debian, too.
+
+2016-07-04  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* xml.c: Minor modif to xml.c so as not to perturb our copyright
+	helper script.
+
+2016-07-04  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* libsollyaexample.c: Updated libsollyaexample.c so as to compile.  We should definitely think of the status of this file before next
+	release.
+
+2016-07-04  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* Makefile.am: Removed lines that have been commented by Jerome
+	Benoit.  If they are useless, there is no need to keep them as a comment.  If
+	they turn out to be useful for some reason, we can always revert the
+	change.  Also, I did not remove the carriage return introduce by Jerome
+	Benoit in Makefile.am before the -version-info flag. I assume he
+	introduced it for some reason (maybe to prepare the use of version
+	script?). I wonder why he removed $(AM_LDFLAGS) however. I would
+	think we introduced it for some reason in the first place. The proof
+	of the pudding is in the eating: let us see if we manage to compile
+	everywhere without this parameter.
+
+2016-07-04  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* general.c, parser.y, version.h: Corrected an error introduced in
+	previous commit.  Contrary to what one could think at first sight, both version
+	messages were not perfectly identical. This led to some globbish in
+	the displayed message.  Now, both version messages are the same. Also, some indentation
+	problem was introduced in previous commit and is now fixed.
+
+2016-07-04  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* ChangeLog, doc/annotatefunction.shlp, doc/annotatefunction.tex,
+	doc/autodiff.shlp, doc/autodiff.tex, doc/chebyshevform.shlp,
+	doc/chebyshevform.tex, doc/evaluate.shlp, doc/evaluate.tex,
+	doc/implementconstant.shlp, doc/implementconstant.tex,
+	doc/rationalapprox.shlp, doc/rationalapprox.tex, doc/remez.shlp,
+	doc/remez.tex, doc/return.shlp, doc/return.tex, doc/sollya.tex,
+	doc/taylor.shlp, doc/taylor.tex, doc/taylorform.shlp,
+	doc/taylorform.tex, doc/www/annotatefunction.php,
+	doc/www/autodiff.php, doc/www/chebyshevform.php,
+	doc/www/evaluate.php, doc/www/implementconstant.php,
+	doc/www/rationalapprox.php, doc/www/remez.php, doc/www/return.php,
+	doc/www/sollya.php, doc/www/taylor.php, doc/www/taylorform.php,
+	help.h: Reported spelling corrections into doc source files.  Based on the suggestions made by Jerome Benoit for the Debian team
+	on previous commits.  We accept all proposed corrections except for ChangeLog which is an
+	automatically generated file from the commit messages: if there are
+	spelling errors in the commit messages, that is too bad, but it is
+	the way it is and there is no reason to change it in the generated
+	ChangeLog.
+
+2016-07-04  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* sollya.h: Removed a superfluous function declaration from the
+	Sollya library.
+
+2016-07-02  Jerome Benoit <calculus@rezozer.net>
+
+	* sollya.map: upstream-07-autotools-ld_version_script (forgotten
+	piece) Forgotten piece (but essential one) for the previous commit.
+
+2016-07-02  Jerome Benoit <calculus@rezozer.net>
+
+	* Makefile.am, configure.ac, sollya-library-wrappers.c: 
+	upstream-07-autotools-ld_version_script Description: autotools machinery: libtoolization: version script
+	 support Provides version scripts [1] for the sollya library.
+	 Originally the map (or version script) was basically generated from
+	 the package header sollya.h with the help of cproto(1). Afterwards
+	 some functions were renamed in view to used a wildcard in the
+	 version scrit in view to ease maintenance.  The version script was
+	 modified by hand to add some timing related functions used in one of
+	 the tests; it is assumed that these functions are of usage interest.
+	Meant to be submitted to the upstream maintainer team.   [1]
+
+	https://www.gnu.org/software/gnulib/manual/html_node/LD-Version-Scripts.htmlOrigin: debian Author: Jerome Benoit <calculus@rezozer.net>
+	Last-Update: 2016-06-24
+
+2016-07-02  Jerome Benoit <calculus@rezozer.net>
+
+	* Makefile.am, configure.ac, sollya.h2m: 
+	upstream-06-autotools-help2man Description: autotools machinery: help2man  Introduce autotools material to generate on the fly the manpage  for the interactive tool sallya; meant to be submitted to the  upstream maintainer team.  Origin: debian Author: Jerome Benoit
+	<calculus@rezozer.net> Last-Update: 2016-06-24
+
+2016-07-02  Jerome Benoit <calculus@rezozer.net>
+
+	* Makefile.am, tests-lib/Makefile.am: 
+	upstream-05-autotools-revisit.patch Description: autotools machinery: revisit  Attempt to rationalize the autotools machinery to ease maintenance  and further modifications; meant to be submitted to the upstream  maintainer team.  Origin: debian Author: Jerome Benoit
+	<calculus@rezozer.net> Last-Update: 2016-06-24
+
+2016-07-02  Jerome Benoit <calculus@rezozer.net>
+
+	* general.c: upstream-04-source-C2help2man Description: format usages, helps and version material.   Attempt to format and harmonize the help message and to introduce a  version message for the sollya interactive tool wrt UN*X customs in  view to employ help2man to generate a manpage. The `make' and `man'  GNU utilities were taken as example. Meant to be submitted to the  upstream maintainer team.  Origin: debian Author: Jerome Benoit
+	<calculus@rezozer.net> Last-Update: 2016-06-24
+
+2016-07-02  Jerome Benoit <calculus@rezozer.net>
+
+	* Makefile.am, general.c, parser.y, version.h: 
+	upstream-03-source-version_h Description: source: version.h header: introduce  Gather version information (as displayed through --version) in  a unique header file to ease maintenance as help materail is  gathered in the dedicated header file help.h ; minor spelling  and layout corrections have been performed. Meant to be submitted  to the upstream maintainer team.  Origin: debian Author: Jerome
+	Benoit <calculus@rezozer.net> Last-Update: 2016-06-24
+
+2016-07-02  Jerome Benoit <calculus@rezozer.net>
+
+	* README, assignment.c, assignment.h, autodiff.c, autodiff.h,
+	bitfields.c, bitfields.h, chain.c, chain.h, chebyshevform.c,
+	chebyshevform.h, chebyshevformaux.c, chebyshevformaux.h, double.c,
+	double.h, execute.c, execute.h, expression.c, expression.h,
+	external.c, external.h, externalfun.c, externalproc.c,
+	fpminimax.cpp, fpminimax.h, general.c, general.h, hash.c, hash.h,
+	help.h, hooks.c, hooks.h, implement.c, implement.h,
+	implementconst.c, implementconst.h, infnorm.c, infnorm.h,
+	integral.c, integral.h, internlexer.l, internparser.y, lexer.l,
+	library.c, library.h, libsollyaexample.c, main.c, main.h, match.c,
+	match.h, minilexer.l, miniparser.y, mpfi-compat.c, mpfi-compat.h,
+	parser.y, plot.c, plot.h, polynomials.c, polynomials.h, printf.c,
+	printf.h, proof.c, proof.h, remez.c, remez.h, signalhandling.c,
+	signalhandling.h, sollya-library-wrappers.c,
+	sollya-library-wrappers.h, sollya-messages.h, sollya-messaging.c,
+	sollya-messaging.h, sollya.h, sturm.c, sturm.h, supnorm.c,
+	supnorm.h, taylor.c, taylor.h, taylorform.c, taylorform.h,
+	tests-lib/timplementpoly.reference,
+	tests-lib/tv_implementpoly.reference, worstcase.c, worstcase.h,
+	xml.c, xml.h: upstream-02-lintian-spelling-error-silence--massive Description: source typo  Correct massively the spelling error `automatized' --> `automated'  as reported by lintian in some binraries; meant to silence lintian  and eventually to be submitted to the upstream maintainer team.
+	Origin: debian Comment: spelling-error-in-binary Author: Jerome
+	Benoit <calculus@rezozer.net> Last-Update: 2016-06-18
+
+2016-07-02  Jerome Benoit <calculus@rezozer.net>
+
+	* README, assignment.c, assignment.h, autodiff.c, autodiff.h,
+	bitfields.c, bitfields.h, chain.c, chain.h, chebyshevform.c,
+	chebyshevform.h, chebyshevformaux.c, chebyshevformaux.h, double.c,
+	double.h, execute.c, execute.h, expression.c, expression.h,
+	external.c, external.h, externalfun.c, externalproc.c,
+	fpminimax.cpp, fpminimax.h, general.c, general.h, hash.c, hash.h,
+	help.h, hooks.c, hooks.h, implement.c, implement.h,
+	implementconst.c, implementconst.h, infnorm.c, infnorm.h,
+	integral.c, integral.h, internlexer.l, internparser.y, lexer.l,
+	library.c, library.h, libsollyaexample.c, main.c, main.h, match.c,
+	match.h, minilexer.l, miniparser.y, mpfi-compat.c, mpfi-compat.h,
+	parser.y, plot.c, plot.h, polynomials.c, polynomials.h, printf.c,
+	printf.h, proof.c, proof.h, remez.c, remez.h, signalhandling.c,
+	signalhandling.h, sollya-library-wrappers.c,
+	sollya-library-wrappers.h, sollya-messages.h, sollya-messaging.c,
+	sollya-messaging.h, sollya.h, sturm.c, sturm.h, supnorm.c,
+	supnorm.h, taylor.c, taylor.h, taylorform.c, taylorform.h,
+	tests-lib/timplementpoly.reference,
+	tests-lib/tv_implementpoly.reference, worstcase.c, worstcase.h,
+	xml.c, xml.h: upstream-01-lintian-spelling-error-silence--massive Description: source typo  Correct massively the spelling error `particularily' -->
+	 `particularly' as reported by lintian in some binraries; meant to
+	 silence lintian and eventually to be submitted to the upstream
+	maintainer team.  Origin: debian Comment: spelling-error-in-binary
+	Author: Jerome Benoit <calculus@rezozer.net> Last-Update: 2016-06-18
+
+2016-07-02  Jerome Benoit <calculus@rezozer.net>
+
+	* ChangeLog, chebyshevform.c, double.c, externalfun.c,
+	fpminimax.cpp, general.c, help.h, implement.c, infnorm.c,
+	library.c, remez.c, sollya-messaging.h, supnorm.c, taylorform.c,
+	tests-lib/timplementpoly.c, tests-lib/timplementpoly.reference,
+	tests-lib/tv_implementpoly.c, tests-lib/tv_implementpoly.reference,
+	worstcase.c: upstream-00-lintian-spelling-error-silence Description: source typo  Correct spelling errors as reported by lintian in some binraries;  meant to silence lintian and eventually to be submitted to the  upstream maintainer team.  Origin: debian Comment:
+	spelling-error-in-binary Author: Jerome Benoit
+	<calculus@rezozer.net> Last-Update: 2016-06-18
+
+2016-06-15  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* doc/www/sollya.php: Forgot an update of copyright...  PDF and PHP are synchronized.
+
+2016-06-14  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* tests-lib/tget_element_in_list.c: Made the timing tests for
+	tget_element_in_list more robust.
+
+2016-06-14  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* configure.ac: Trying to live without the -f option of readlink.
+
+2016-06-14  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* general.c: Working on __unique_id
+
+2016-06-13  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* ChangeLog: New ChangeLog.
+
 2016-06-13  Christoph Lauter <christoph.lauter@lip6.fr>
 
 	* doc/bashevaluate.tex, doc/bashexecute.tex, doc/remez.tex,

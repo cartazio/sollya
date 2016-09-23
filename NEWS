@@ -1,3 +1,20 @@
+Changes from version 5.0 to 6.0:
+================================
+
+* Slight improvement in numberroots
+* Fixed performance bug in interval evaluation with low precision (two? one with L'Hospital rule and the mysterious one)
+* Fixed a strange issue with fork() and the input streams used for read.
+* Patched a minor issue with displaying of code elements in match - with constructs.
+* Fixed a bug with min and max involving infinities
+* We can now compile against newest version of fplll
+* Several bug fixes in infinite-loop type behavior of remez: infinite loop avoided, [#8867] [#12892], part of [#17200]
+* Changes in the way remez and fpminimax talk (function oscillates too much, verbosity level).
+* Tex sources of the documentation are now distributed.
+* Time tests are now skipped when they do not pass
+* Sollya interactive tool is now linked against the library
+* Sollya is now distributed with a man page
+* Spelling typos corrected
+
 Changes from version 4.1 to 5.0:
 ================================
 Critical bug fixes:
