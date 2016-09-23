@@ -73,10 +73,10 @@
 /*these are the functions that work on mpq_t*/
 
 
-int sturm_mpq(int *n, mpq_t *p, int p_degree, sollya_mpfi_t x);
+int sturm_mpq(int *n, mpq_t *p, int p_degree, sollya_mpfi_t x, mp_prec_t precision);
 int polynomialDivide_mpq(mpq_t *quotient, int *quotient_degree, mpq_t *rest, int *rest_degree, mpq_t *p, int p_degree, mpq_t *q, int q_degree) ;
 int polynomialDeriv_mpq(mpq_t **derivCoeff, int *deriv_degree, mpq_t *p, int p_degree);
-int polynomialEval_mpq( mpq_t *res, mpq_t x, mpq_t *p, int p_degree);
+int polynomialEval_mpq( mpq_t *res, mpq_t x, mpq_t *p, int p_degree, mp_prec_t precision);
 int sturm_mpfi(int *n, mpq_t *p, int p_degree, sollya_mpfi_t x, mp_prec_t precision);
 int polynomialDivide_mpfi(sollya_mpfi_t *quotient, int *quotient_degree, sollya_mpfi_t *rest, int *rest_degree, sollya_mpfi_t *p, int p_degree, sollya_mpfi_t *q, int q_degree, mp_prec_t prec) ;
 int polynomialDeriv_mpfi(sollya_mpfi_t **derivCoeff, int *deriv_degree, sollya_mpfi_t *p, int p_degree, mp_prec_t prec);
@@ -194,10 +194,63 @@ int polynomialDeriv_mpq(mpq_t **derivCoeff, int *deriv_degree, mpq_t *p, int p_d
   return 1;
 }
 
+int __polynomialEval_mpq_sign_lazy(mpq_t res, mpq_t x, mpq_t *p, int n, mp_prec_t prec) {
+  sollya_mpfi_t X, Y, C;
+  int i, okay;
 
-int polynomialEval_mpq( mpq_t *res, mpq_t x, mpq_t *p, int p_degree){
+  okay = 0;
+  
+  sollya_mpfi_init2(X, prec);
+  sollya_mpfi_init2(Y, prec);
+  sollya_mpfi_init2(C, prec);
+
+  sollya_mpfi_set_q(X, x);
+
+  sollya_mpfi_set_ui(Y, 0u);
+  for (i=n;i>=0;i--) {
+    sollya_mpfi_set_q(C, p[i]);
+    sollya_mpfi_mul(Y, X, Y);
+    sollya_mpfi_add(Y, C, Y);
+  }
+
+  if (!(sollya_mpfi_has_nan(Y) ||
+	sollya_mpfi_has_infinity(Y))) {
+    if (sollya_mpfi_is_zero(Y)) {
+      mpq_set_ui(res,0u,1u);
+      okay = 1;
+    } else {
+      if (!sollya_mpfi_has_zero(Y)) {
+	if (sollya_mpfi_has_positive_numbers(Y)) {
+	  mpq_set_ui(res,1u,1u);
+	} else {
+	  mpq_set_si(res,-1,1u);
+	}
+	okay = 1;
+      }
+    }
+  }
+
+  sollya_mpfi_clear(C);
+  sollya_mpfi_clear(Y);
+  sollya_mpfi_clear(X);
+
+  return okay;
+}
+
+int polynomialEval_mpq( mpq_t *res, mpq_t x, mpq_t *p, int p_degree, mp_prec_t precision){
   int i;
   mpq_t pow, aux;
+
+  if (__polynomialEval_mpq_sign_lazy(*res, x, p, p_degree, 2 * tools_precision)) {
+    return 1;
+  }
+
+  if (precision > 2 * tools_precision) {
+    if (__polynomialEval_mpq_sign_lazy(*res, x, p, p_degree, precision)) {
+      return 1;
+    }
+  }
+  
   mpq_init(pow);
   mpq_set_ui(pow,1,1);
   mpq_init(aux);
@@ -257,7 +310,7 @@ int polynomialDivide_mpq(mpq_t *quotient, int *quotient_degree, mpq_t *rest, int
 }
 
 
-int sturm_mpq(int *n, mpq_t *p, int p_degree, sollya_mpfi_t x){
+int sturm_mpq(int *n, mpq_t *p, int p_degree, sollya_mpfi_t x, mp_prec_t precision){
   mpq_t *quotient, *rest, *dp;
   int quotient_degree, rest_degree, dp_degree;
   mpq_t *evalResA;
@@ -310,7 +363,7 @@ int sturm_mpq(int *n, mpq_t *p, int p_degree, sollya_mpfi_t x){
   polynomialDeriv_mpq(&dp, &dp_degree, p, p_degree);
   mpq_init(evalRes);
 
-  polynomialEval_mpq( &evalRes, aq, s0, s0_degree);
+  polynomialEval_mpq( &evalRes, aq, s0, s0_degree, precision);
   if (mpq_cmp_ui(evalRes,0,1)!=0){
     mpq_set(evalResA[na],evalRes);
     na++;
@@ -318,7 +371,7 @@ int sturm_mpq(int *n, mpq_t *p, int p_degree, sollya_mpfi_t x){
   else nrRoots++; /*if the left extremity is a root we count it here
                     since the number of sign changes gives the nr of distinct
                     roots between a and b, a<b*/
-  polynomialEval_mpq( &evalRes, bq, s0, s0_degree);
+  polynomialEval_mpq( &evalRes, bq, s0, s0_degree, precision);
   if (mpq_cmp_ui(evalRes,0,1)!=0){
     mpq_set(evalResB[nb],evalRes);
     nb++;
@@ -327,13 +380,13 @@ int sturm_mpq(int *n, mpq_t *p, int p_degree, sollya_mpfi_t x){
   s1_degree=dp_degree;
   if (s0_degree>0){
 
-    polynomialEval_mpq( &evalRes, aq, dp, dp_degree);
+    polynomialEval_mpq( &evalRes, aq, dp, dp_degree, precision);
     if (mpq_cmp_ui(evalRes,0,1)!=0){
       mpq_set(evalResA[na],evalRes);
       na++;
     }
 
-    polynomialEval_mpq( &evalRes, bq, dp, dp_degree);
+    polynomialEval_mpq( &evalRes, bq, dp, dp_degree, precision);
     if (mpq_cmp_ui(evalRes,0,1)!=0){
       mpq_set(evalResB[nb],evalRes);
       nb++;
@@ -358,14 +411,14 @@ int sturm_mpq(int *n, mpq_t *p, int p_degree, sollya_mpfi_t x){
     for (i=0; i<=s1_degree; i++)
       mpq_neg(s1[i],s1[i]);
 
-    polynomialEval_mpq( &evalRes, aq, s1, s1_degree);
+    polynomialEval_mpq( &evalRes, aq, s1, s1_degree, precision);
     if (mpq_cmp_ui(evalRes,0,1)!=0){
       mpq_set(evalResA[na],evalRes);
       na++;
     }
 
 
-    polynomialEval_mpq( &evalRes, bq, s1, s1_degree);
+    polynomialEval_mpq( &evalRes, bq, s1, s1_degree, precision);
     if (mpq_cmp_ui(evalRes,0,1)!=0){
       mpq_set(evalResB[nb],evalRes);
       nb++;
@@ -790,7 +843,7 @@ int getNrRoots(mpfr_t res, node *f, sollya_mpfi_t range, mp_prec_t precision, in
       if (!silent) {
 	printMessage(2,SOLLYA_MSG_STURM_USING_SLOWER_ALGORITHM_ON_RATIONALS,"Information: using slower GMP MPQ version\n");
       }
-      sturm_mpq(&nr, qCoefficients, deg,x);
+      sturm_mpq(&nr, qCoefficients, deg,x,precision);
     }
     mpfr_set_si(res,nr,GMP_RNDN);
   } else {
