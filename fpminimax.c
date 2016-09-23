@@ -577,13 +577,13 @@ node *FPminimax(node *f,
 
 
   curr = pointslist;
-  printMessage(4,SOLLYA_MSG_FPMINIMAX_THE_POINTS_ARE_CERTAIN_VALUES,(const char *) "points list: [");
+  printMessage(4,SOLLYA_MSG_FPMINIMAX_THE_POINTS_ARE_CERTAIN_VALUES,(const char *) "points list: [|");
   while(curr != NULL) {
     printMessage(4, SOLLYA_MSG_CONTINUATION, (const char *) "%v", *(mpfr_t *)(curr->value));
     if(curr->next != NULL) printMessage(4, SOLLYA_MSG_CONTINUATION, (const char *) ", ");
     curr = curr->next;
   }
-
+  printMessage(4, SOLLYA_MSG_CONTINUATION,(const char *) "|]\n");
 
   if (fp == FIXED)   res = FPminimaxMain(g, monomials, formats, pointslist, w);
 
