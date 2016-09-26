@@ -174,7 +174,27 @@ if (13/10 <= t2/t1) && (t2/t1 <= 26/10)
 i:=i+1;
 
 /* Test #16 */
-/* Non-regression tests for a bug discovered because valgrind exhausted all the available memory */
+
+/* This non-regression test addresses two bugs discovered because
+   valgrind exhausted all the available memory on one of the tests.
+   The effect of these bugs on the following example was that t1 was
+   the order of 40 times bigger that t3~=t4. Also, t2 was 2.5 bigger
+   than t3~=t4.
+
+   A first bug has been fixed at commit
+   e0b3184427c1aeedd4f5e191a32477af825b8c63 reducing t1 to within a
+   factor 6 to t3~=t4 and t2 only slightly bigger than t3~=t4. The
+   non-regression of this fix is checked by comparing t2 to t3.
+
+   A second bug has fixed at commit
+   50ed66ada2402807f9ebb3a7c76555ce2025927a and practically equates
+   all timings. The non-regression of this fix is checked by comparing
+   all four values and checking that their value is not far from 0.5
+   (experiments on three different machines with different
+   characteristics -- namely whisky, yber and kosmos -- showed that
+   their common value ranges from 0.2 to 1.3).
+*/
+
 i;
 prec=30!;
 f=(((x^8) * 1220122329078112111507291147589605846332159835986645150749590969395708999908386786025293768305545765720163562133849625224226209220255396299539055092859079474439673891084004631503687145554767395662893595b-680) + (((x^6) * (-71715508548145200950077025200366683480894254284916505717100740809457045677362204851527036286540250794733933233091959390527962504452336314934415451111911137886934451972269b-571)) + (((x^4) * 896768353735365200783941380399679560892057280074710285596808721039428827249497766919069037376996976310396508163802115252299488288154514645b-461) + (((x^2) * (-34929642931383029455818526560499975039909420968120331377299772636097910811575206208826204942817211250711507b-354)) + (1809040241216242111378895524443847148140641271195740093242624529845306570743b-250 + ((-568608045753120929621015727561082350296964753953361285006172985034690325553b-268 * ((((x^9) * 13838586548080362858940014402840360268995306239673696598277155473497177385003491303000131757744686625519952014193459235397229970270226467527713b-468) * sqrt(1 - (x^2))) / x)) + ((1340063586453992785020690538673363742466390948910331662017999028288639932469b-262 * ((((x^7) * 358246915606274140191920304152769949749350577336553141294816968955983915567186730677646875115691472828069001697b-364) * sqrt(1 - (x^2))) / x)) + ((-956406481930174940521834341712205002043941496528760169508857423454450639491b-256 * ((((x^5) * 9274130135726315977204924027295787401259172547694862836311277722826903837042593b-260) * sqrt(1 - (x^2))) / x)) + ((1205217331155988957618263779803029703830148102503084541761207288507603220315b-252 * ((((x^3) * 240084383221639362889634237063322305672153048417b-156) * sqrt(1 - (x^2))) / x)) + (-1809098390388435196046577181545352749842462507070771847780099649403523024427b-250 * (((x * 6215193255146273b-52) * sqrt(1 - (x^2))) / x))))))))))) - (cos(x * 6215193255146273b-52) - ((sin(x * 6215193255146273b-52) * sqrt(1 - (x^2))) / x));
@@ -183,21 +203,23 @@ u = 1b-100; v=9007199254740991b-53;
 prec=27!;
 t1 = time(res1 = dirtyinfnorm(f,[u,v]));
 t2 = time(res2 = dirtyinfnorm(g,[u,v]));
-prec=27!;
-t1 = time(res1 = dirtyinfnorm(f,[u,v]));
-t2 = time(res2 = dirtyinfnorm(g,[u,v]));
-prec=28!;
-t3 = time(res1 = dirtyinfnorm(f,[u,v]));
-t4 = time(res2 = dirtyinfnorm(g,[u,v]));
 prec=28!;
 t3 = time(res1 = dirtyinfnorm(f,[u,v]));
 t4 = time(res2 = dirtyinfnorm(g,[u,v]));
 
-/* Non-regression of timings */
+/* Non-regression of commit e0b3184427c1aeedd4f5e191a32477af825b8c63 */
+if t2 <= 1.5*t3 then "Okay" else print("t2 = ", round(t2,12,RN), " and t3 = ", round(t3, 12, RN));
+if t3 <= 1.5*t2 then  "Okay" else print("t2 = ", round(t2,12,RN), " and t3 = ", round(t3, 12, RN));
+
+/* Non-regression of commit 50ed66ada2402807f9ebb3a7c76555ce2025927a */
 if t1 <= 1.5*t2 then "Okay" else print("t1 = ", round(t1,12,RN), " and t2 = ", round(t2, 12, RN));
-if t2 <= 1.5*t1 then  "Okay" else print("t1 = ", round(t1,12,RN), " and t2 = ", round(t2, 12, RN));
-if t3 <= 1.5*t4 then "Okay" else print("t3 = ", round(t3,12,RN), " and t4 = ", round(t4, 12, RN));
-if t4 <= 1.5*t3 then  "Okay" else print("t3 = ", round(t3,12,RN), " and t4 = ", round(t4, 12, RN));
+if t2 <= 1.5*t1 then "Okay" else print("t1 = ", round(t1,12,RN), " and t2 = ", round(t2, 12, RN));
+
+if t4 <= 1.5*t2 then "Okay" else print("t2 = ", round(t2,12,RN), " and t4 = ", round(t4, 12, RN));
+if t2 <= 1.5*t4 then "Okay" else print("t2 = ", round(t2,12,RN), " and t4 = ", round(t4, 12, RN));
+
+if (t1 in 0.5 * variance) then "Okay" else print("t1 = ", round(t1,12,RN), " and t2 = ", round(t2,12,RN), " and t3 = ", round(t3,12,RN), " and t4 = ", round(t4,12,RN));
+
 
 prec=default!;
 i := i+1;
