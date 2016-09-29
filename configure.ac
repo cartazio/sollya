@@ -374,9 +374,15 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
 				       ])
 		  ])
 
-FPLLLSPECIALINCLUDE="no"
-FPLLLISREALLIB="no"
-FPLLLMODERNAPI="no"
+# We currently have 4 parameters that can take two values and depending on the version of fplll and g++, a given combination of them might work or not:
+#  - include <fplll.h> or <fplll/fplll.h>
+#  - link with -lfplll flag or not
+#  - use -std=c+11 or not
+#  - use the old or new API of fplll
+# It seems reasonable to filter the 16 possible cases by noticing that the the necessity of including the -std option is quite recent, whereas the include <fplll/fplll.h> actually corresponds to fairly old versions of fplll. Also, the compilation with -lfplll is required for quite a while now.
+# We first assume a relatively recent vers of fplll: trying include <fplll.h> and linking with -lfplll, we explore the 4 remaining possibilities.
+# If none of these possibilities worked, we assume a fairly old version of fplll: trying the old API and without the -std option, we explore the 3 remaining possibilitie.
+# If nothing worked of these 7 possibilities, we give up.
 
 FPLLL_PROGV3=`printf "\
   ZZ_mat<mpz_t> *M; Z_NR<mpz_t>  zval; mpz_t mpzval; wrapper *LLLwrapper; int i,j;\n\
@@ -418,82 +424,122 @@ FPLLL_SPECIAL_HEADER=`printf "\
   #include <gmp.h>\
 "`
 
-AC_MSG_CHECKING([if fplll is a real library to be linked in])
-OLD_LIBS="$LIBS"; LIBS="-lfplll $LIBS";
-CXXFLAGS="$AM_CXXFLAGS $STDCXX11 $USER_CXXFLAGS"
+FPLLLSPECIALINCLUDE="no"
+FPLLLISREALLIB="no"
+FPLLLCXX11="no"
+FPLLLMODERNAPI="no"
 
+AC_MSG_CHECKING([for a suitable installation of fplll])
+OLD_LIBS="$LIBS";
+
+LIBS="-lfplll $LIBS";
+CXXFLAGS="$AM_CXXFLAGS $STDCXX11 $USER_CXXFLAGS"
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[$FPLLL_NORMAL_HEADER]], [[$FPLLL_PROG]])],
                [
+                  FPLLLSPECIALINCLUDE="no"
                   FPLLLISREALLIB="yes"
-		  FPLLLMODERNAPI="yes"
-		  AM_CXXFLAGS="$AM_CXXFLAGS $STDCXX11"
+                  FPLLLCXX11="yes"
+                  FPLLLMODERNAPI="yes"
 		  AC_MSG_RESULT(yes)
                ],
-               [CXXFLAGS="$AM_CXXFLAGS $USER_CXXFLAGS"
-	        AC_LINK_IFELSE([AC_LANG_PROGRAM([[$FPLLL_NORMAL_HEADER]], [[$FPLLL_PROGV3]])],
-                               [
-                                  FPLLLISREALLIB="yes"
-		                  AC_MSG_RESULT(yes)
-                               ],
-                               [AC_LINK_IFELSE([AC_LANG_PROGRAM([[$FPLLL_SPECIAL_HEADER]], [[$FPLLL_PROGV3]])],
-                                               [
-                                                 FPLLLISREALLIB="yes"
-                                                 FPLLLSPECIALINCLUDE="yes"
-             		                         AC_MSG_RESULT(yes)
-                                               ],
-              	                               [
-                                                 LIBS="$OLD_LIBS"
-                                                 AC_MSG_RESULT(no)
-              	                               ])
-                               ])
-               ])
-
-if test "x${FPLLLISREALLIB}y" = "xnoy"
-then
-  AC_MSG_CHECKING([for fplll support, fplll being just a header file])
-  AC_LINK_IFELSE([AC_LANG_PROGRAM([[$FPLLL_NORMAL_HEADER]], [[$FPLLL_PROGV3]])],
-                 [AC_MSG_RESULT(yes)],
-                 [
-                   AC_LINK_IFELSE([AC_LANG_PROGRAM([[$FPLLL_SPECIAL_HEADER]], [[$FPLLL_PROGV3]])],
-                                  [
-                                    FPLLLSPECIALINCLUDE="yes"
-                                    AC_MSG_RESULT(yes)
-                                  ],
-                                  [AC_MSG_ERROR([fplll unusable])])
-                 ])
-fi
-
-if test "x${FPLLLISREALLIB}y" = "xyesy"
-then
-  FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING""linkage with -lfplll is compatible. "
-  if test "x${FPLLLMODERNAPI}y" = "xyesy"
-  then
-    FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING""New API is supported. Header file "
-  else
-    FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING""Header file "
-  fi
-else
-  FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING""linkage with -lfplll is not compatible. Header file "
-fi
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM([[$FPLLL_NORMAL_HEADER]], [[$FPLLL_PROGV3]])],
+                  [
+                     FPLLLSPECIALINCLUDE="no"
+                     FPLLLISREALLIB="yes"
+                     FPLLLCXX11="yes"
+                     FPLLLMODERNAPI="no"
+		     AC_MSG_RESULT(yes)
+		  ],
+    [CXXFLAGS="$AM_CXXFLAGS $USER_CXXFLAGS"
+     AC_LINK_IFELSE([AC_LANG_PROGRAM([[$FPLLL_NORMAL_HEADER]], [[$FPLLL_PROGV3]])],
+                                     [
+                                        FPLLLSPECIALINCLUDE="no"
+                                        FPLLLISREALLIB="yes"
+                                        FPLLLCXX11="no"
+                                        FPLLLMODERNAPI="no"
+                                        AC_MSG_RESULT(yes)
+                                     ],
+      [AC_LINK_IFELSE([AC_LANG_PROGRAM([[$FPLLL_NORMAL_HEADER]], [[$FPLLL_PROG]])],
+                                       [
+                                          FPLLLSPECIALINCLUDE="no"
+                                          FPLLLISREALLIB="yes"
+                                          FPLLLCXX11="no"
+                                          FPLLLMODERNAPI="yes"
+                                          AC_MSG_RESULT(yes)
+                                       ],
+        [AC_LINK_IFELSE([AC_LANG_PROGRAM([[$FPLLL_SPECIAL_HEADER]], [[$FPLLL_PROGV3]])],
+                                         [
+                                            FPLLLSPECIALINCLUDE="yes"
+                                            FPLLLISREALLIB="yes"
+                                            FPLLLCXX11="no"
+                                            FPLLLMODERNAPI="no"
+                                            AC_MSG_RESULT(yes)
+                                         ],
+          [LIBS="$OLD_LIBS"
+	   AC_LINK_IFELSE([AC_LANG_PROGRAM([[$FPLLL_SPECIAL_HEADER]], [[$FPLLL_PROGV3]])],
+                                           [
+                                              FPLLLSPECIALINCLUDE="yes"
+                                              FPLLLISREALLIB="no"
+                                              FPLLLCXX11="no"
+                                              FPLLLMODERNAPI="no"
+                                              AC_MSG_RESULT(yes)
+                                           ],
+            [AC_LINK_IFELSE([AC_LANG_PROGRAM([[$FPLLL_NORMAL_HEADER]], [[$FPLLL_PROGV3]])],
+                                             [
+                                                FPLLLSPECIALINCLUDE="no"
+                                                FPLLLISREALLIB="no"
+                                                FPLLLCXX11="no"
+                                                FPLLLMODERNAPI="no"
+                                                AC_MSG_RESULT(yes)
+                                             ],
+                                             [AC_MSG_RESULT(no)]
+            )]
+          )]
+        )]
+      )]
+    )]
+  )]
+)
 
 if test "x${FPLLLSPECIALINCLUDE}y" = "xyesy"
 then
   FPLLL_GOOD_HEADER="$FPLLL_SPECIAL_HEADER"
   AC_DEFINE([HAVE_SPECIAL_FPLLL_INCLUDE],[1],[Define for determining a special version of FPLLL])
-  FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING""in a subdirectory of the include directory (Debian-like)."
+  FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING""fplll.h lies inside a subdirectory of the include directory (Debian-like), "
 else
   FPLLL_GOOD_HEADER="$FPLLL_NORMAL_HEADER"
   AC_DEFINE([HAVE_SPECIAL_FPLLL_INCLUDE],[0],[Define for determining a special version of FPLLL])
-  FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING""directly in include directory."
+  FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING""fpllll.h lies directly in the include directory, "
 fi
+
+
+if test "x${FPLLLISREALLIB}y" = "xyesy"
+then
+  LIBS="-lfplll $OLD_LIBS"
+  FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING""linkage with -lfplll is compatible, "
+else
+  LIBS="$OLD_LIBS"
+  FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING""linkage with -lfplll is not compatible, "
+fi
+
+if test "x${FPLLLCXX11}y" = "xyesy"
+then
+  AM_CXXFLAGS="$AM_CXXFLAGS $STDCXX11"
+  FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING""-std option is passed (""$STDCXX11""), "
+else
+  FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING""no -std option is passed, "
+fi
+CXXFLAGS="$AM_CXXFLAGS $USER_CXXFLAGS"
 
 if test "x${FPLLLMODERNAPI}y" = "xyesy"
 then
   FPLLL_GOOD_PROG="$FPLLL_PROG"
   AC_DEFINE([HAVE_FPLLL_OLD_API],[0],[Define for determining what API to use with FPLLL])
+  FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING""using standard API."
 else
   FPLLL_GOOD_PROG="$FPLLL_PROGV3"
   AC_DEFINE([HAVE_FPLLL_OLD_API],[1],[Define for determining what API to use with FPLLL])
+  FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING""using the FPLLL_V3_COMPAT API."
 fi
 
 AC_DEFINE_UNQUOTED([HAVE_FPLLL_VERSION_STRING],["$FPLLLVERSIONSTRING"],[Define a kind of a version string for FPLLL])
