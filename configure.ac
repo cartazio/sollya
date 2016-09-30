@@ -509,7 +509,7 @@ then
 else
   FPLLL_GOOD_HEADER="$FPLLL_NORMAL_HEADER"
   AC_DEFINE([HAVE_SPECIAL_FPLLL_INCLUDE],[0],[Define for determining a special version of FPLLL])
-  FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING""fpllll.h lies directly in the include directory, "
+  FPLLLVERSIONSTRING="$FPLLLVERSIONSTRING""fplll.h lies directly in the include directory, "
 fi
 
 
