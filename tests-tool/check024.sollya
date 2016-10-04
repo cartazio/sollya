@@ -26,3 +26,26 @@ bashexecute("diff tmp_check024 tmp_check024b > /dev/null && echo \"__unique_id d
 print("Done.");
 
 bashexecute("rm -rf tmp_check024 tmp_check024b");
+
+
+restart;
+print("=============== Test number 3 ================");
+/* Non-regression test for bug [#20818] */
+f = asin(x);
+dom = [1b-100; 0x3fefffffffffffff];
+q = x * (6180970211295773 * 2^(-53) + x^2 * 7192083860379593*2^(-53));
+r_exact = x*cos(q(x))-sin(q(x))*sqrt(1-x^2);
+monomials1 = [| q(x) * sqrt(1-x^2) / x|];
+monomials2 = [|1, q(x)^2|];
+display = dyadic!;
+fullparentheses = on!;
+autosimplify = off!;
+verbosity = 0!;
+rrstar = remez(r_exact/x, monomials1 @ monomials2, dom);
+verbosity = 1!;
+filename = "tempfile"@__unique_id;
+print("rrstar2 = ", rrstar, ";") > filename;
+execute(filename);
+bashexecute("rm -rf " @ filename);
+rrstar2 == rrstar;
+

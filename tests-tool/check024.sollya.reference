@@ -14,3 +14,6 @@ Checking that __unique_id is made of [0-9a-zA-Z_-]...
 Done.
 Checking that __unique_id changes after restart... 
 Done.
+The tool has been restarted.
+=============== Test number 3 ================
+true
