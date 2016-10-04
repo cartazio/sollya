@@ -19308,6 +19308,8 @@ int isEqualThingNoPoly(node *tree, node *tree2) {
 }
 
 int isEqualThingEnhanced(node *tree, node *tree2, int simplify) {
+  int equal;
+  
   if (tree == NULL) return 0;
   if (tree2 == NULL) return 0;
   if (tree == tree2) {
@@ -19326,8 +19328,13 @@ int isEqualThingEnhanced(node *tree, node *tree2, int simplify) {
       break;
     }
   }
-  if (simplify) return isEqualThing(tree, tree2);
-  return isEqualThingNoPoly(tree, tree2);
+  if (simplify) {
+    equal = isEqualThing(tree, tree2);
+  } else {
+    equal = isEqualThingNoPoly(tree, tree2);
+  }
+
+  return equal;
 }
 
 int isCorrectlyTypedBaseSymbol(node *tree) {
@@ -23901,7 +23908,7 @@ node *evaluateThingInnerst(node *tree) {
     }
     break;
   case NEG:
-    copy->child1 = evaluateThingInner(tree->child1);
+    copy->child1 = evaluateThing(tree->child1);
     if (isRangeNonEmpty(copy->child1)) {
       pTemp = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child1)->value));
       pTemp2 = mpfr_get_prec(*(accessThruMemRef(accessThruMemRef(copy->child1)->child2)->value));
@@ -23920,6 +23927,17 @@ node *evaluateThingInnerst(node *tree) {
       mpfr_clear(b);
       sollya_mpfi_clear(tempIA);
       sollya_mpfi_clear(tempIC);
+    } else {
+      if (accessThruMemRef(copy->child1)->nodeType == CONSTANT) {
+	if (!mpfr_nan_p(*((accessThruMemRef(copy->child1))->value))) {
+	  mpfr_init2(a, mpfr_get_prec(*((accessThruMemRef(copy->child1))->value)));
+	  mpfr_neg(a, *((accessThruMemRef(copy->child1))->value), GMP_RNDN); /* exact */
+	  tempNode = makeConstant(a);
+	  mpfr_clear(a);
+	  freeThing(copy);
+	  copy = tempNode;
+	}
+      }
     }
     break;
   case ABS:
