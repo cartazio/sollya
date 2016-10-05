@@ -1,6 +1,7 @@
 Changes from version 5.0 to 6.0:
 ================================
 
+* Change of input/output with negative constants
 * Slight improvement in numberroots
 * Fixed performance bug in interval evaluation with low precision (two? one with L'Hospital rule and the mysterious one)
 * Fixed a strange issue with fork() and the input streams used for read.
