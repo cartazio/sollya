@@ -801,6 +801,9 @@ NOP             "nop"
 [ \t]		{ /* Eat up spaces and tabulators */
 		}
 
+[\r]            { /* Eat up carriage return for compatibility with DOS-like systems */
+                }
+
 [\n]		{
 
 		}

@@ -812,6 +812,10 @@ NOP             "nop"
                   miniparserCharactersRead += yyleng;
 		}
 
+[\r]            { /* Eat up carriage return for compatibility with DOS-like systems */
+                  miniparserCharactersRead += yyleng;
+                }
+
 [\n]		{
                   miniparserCharactersRead += yyleng;
 		}

@@ -534,6 +534,10 @@ NOP             "nop"
 <readstate>[ \t]     { /* Eat up spaces and tabulators */
 		}
 
+<readstate>[\r]     { /* Eat up carriage return for compatibility with DOS-like systems */
+		}
+
+
 <readstate>.         { /* otherwise */
 			printMessage(1,SOLLYA_MSG_A_CHARACTER_COULD_NOT_BE_RECOGNIZED,"The character \"%s\" cannot be recognized. Will ignore it.\n",
 				yytext);
@@ -568,6 +572,9 @@ NOP             "nop"
                 }
 
 <readstate2>[ \t]     { /* Eat up spaces and tabulators */
+		}
+
+<readstate2>[\r]     { /* Eat up carriage return for compatibility with DOS-like systems */
 		}
 
 <readstate2>.         { /* otherwise */
@@ -889,6 +896,9 @@ NOP             "nop"
 
 [ \t]		{ /* Eat up spaces and tabulators */
 		}
+
+[\r]            { /* Eat up carriage return for compatibility with DOS-like systems */
+                }
 
 [\n]		{
                      carriageReturnLexed();
