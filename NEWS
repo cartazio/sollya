@@ -1,20 +1,58 @@
 Changes from version 5.0 to 6.0:
 ================================
+Critical bug fixes:
+  * Fixed a bug leading min and max commands to return wrong results
+    when infinities were involved.
 
-* Change of input/output with negative constants
-* Slight improvement in numberroots
-* Fixed performance bug in interval evaluation with low precision (two? one with L'Hospital rule and the mysterious one)
-* Fixed a strange issue with fork() and the input streams used for read.
-* Patched a minor issue with displaying of code elements in match - with constructs.
-* Fixed a bug with min and max involving infinities
-* We can now compile against newest version of fplll
-* Several bug fixes in infinite-loop type behavior of remez: infinite loop avoided, [#8867] [#12892], part of [#17200]
-* Changes in the way remez and fpminimax talk (function oscillates too much, verbosity level).
-* Tex sources of the documentation are now distributed.
-* Time tests are now skipped when they do not pass
-* Sollya interactive tool is now linked against the library
+Major bug fixes:
+  * Many cases that used to make remez command enter into an infinite
+    loop are now correctly handled. This fixes bugs [#8867] and
+    [#12892], and also partly [#17200].
+
+Changes of syntax and output:
+  * Changed the way negative constants are displayed, so as to grant
+    the property that an expression displayed by the tool and then
+    parsed by the tool leads to the reconstruction of the exact same
+    expression tree when autosimplify is set to off and
+    fullparentheses is set to on (see bug [#20818]).
+  * Patched a minor issue with displaying of code elements in
+    match-with constructs.
+
+Major new functionnalities:
+
+Minor new functionnalities:
+
+Improvements in internal handling:
+  * Slight improvement in numberroots command.
+  * Slight changes in what remez and fpminimax commands display at
+    verbosity levels higher or equal than 2.
+  * The interactive tool is now built upon the the library.
+  * The tool now accepts without an error files containing DOS-style
+    new line characters, i.e., "\r\n".
+
+Others:
+  * Made Sollya compatible with the new API and requirements of
+    recent versions of FPLLL.
+  * LaTex sources of the documentation are now distributed with the
+    released tarballs (notice that they always have been available
+    under the same licence as the rest of Sollya sources in the public
+    cvs/svn/git repositories. The only change is that they are now
+    also distributed with the tarballs).
+  * Tests that check execution timings are now skipped when they do
+    not pass instead of being marked as 'FAIL', because running them
+    on a busy machine could prevent them from passing (notice however
+    that systematic failure of these tests on a non-busy machine
+    should not be regarded as completely normal and is worth being
+    reported).
+
+Not necessarily worth mentionning:
 * Sollya is now distributed with a man page
 * Spelling typos corrected
+* Fixed performance bug in interval evaluation involving L'Hospital rule in low precision.
+* Fixed a bug leading to a huge number of recursive calls to the interval evaluator when evaluation of sub-expressions concluded with NaN.
+* Fixed a flushing issue of input buffers that could be visible when using plot or externalplot on machines with some particular versions of glibc.
+
+----------------------------------------------------------------------
 
 Changes from version 4.1 to 5.0:
 ================================
@@ -59,8 +97,8 @@ Minor new functionnalities:
   * New --oldexternalprocprint command line option. See documentation
     for details.
   * New function sollya_lib_hash.
-  * New library functions for external procedures, library constants and
-    library functions:
+  * New library functions for external procedures, library constants
+    and library functions:
       - sollya_lib_externalprocedure
       - sollya_lib_externalprocedure_with_data
       - sollya_lib_decompose_externalprocedure_with_data
@@ -364,7 +402,6 @@ And some bugs fixed.
 Changes from version 1.1 to version 2.0:
 ========================================
 Changes of syntax and output:
-
   * When the evaluation of an expression seems to be zero but cannot
     be proven to be exactly zero, the value zero is now returned
     (instead of a very small value as before)
