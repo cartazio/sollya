@@ -256,7 +256,8 @@ xfreevariable.tex \
 implementconstant.tex \
 nearestint.tex \
 implementpoly.tex \
-neq.tex
+neq.tex \
+absolute.tex
 
 EXTRA_DIST = sollya.pdf $(TEXSOURCES)
 
