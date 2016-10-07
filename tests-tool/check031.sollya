@@ -1,0 +1,90 @@
+/*        IMPORTANT WARNING          */
+/* This file has DOS-style new lines */
+/*************************************/
+restart;
+print("Test #1");
+a=1;
+b=2;
+a+b;
+
+/* Trying what happens when executing a file */
+restart;
+print("Test #2");
+filename = "temp" @ __unique_id;
+print("a=1;\r\nb=2;\r\na+b;\r\n") > filename;
+execute(filename);
+bashexecute("rm -rf " @ filename);
+
+/* Trying what happens when executing a file with standard '\n' new lines */
+restart;
+print("Test #3");
+filename = "temp" @ __unique_id;
+print("a=1;\nb=2;\na+b;\n") > filename;
+execute(filename);
+bashexecute("rm -rf " @ filename);
+
+/* Trying what happens when using parse */
+restart;
+print("Test #4");
+filename = "temp" @ __unique_id;
+a=1;
+b=2;
+print("a\r\n+\r\nb;\r\n") > filename;
+s=readfile(filename);
+bashexecute("rm -rf " @ filename);
+parse(s);
+
+/* Trying what happens when using parse on a string with normal '\n' */
+restart;
+print("Test #5");
+filename = "temp" @ __unique_id;
+a=1;
+b=2;
+print("a\n+\nb;\n") > filename;
+s=readfile(filename);
+bashexecute("rm -rf " @ filename);
+parse(s);
+
+/* Trying parse inside a file that is executed */
+restart;
+print("Test #6");
+filename = "temp" @ __unique_id;
+print("a\r\n+\r\nb;\r\n") > filename;
+s=readfile(filename);
+bashexecute("rm -rf " @ filename);
+print("a=1;\r\nb=2;\r\nparse(s);\r\n") > filename;
+execute(filename);
+bashexecute("rm -rf " @ filename);
+
+/* Trying parse inside a file that is executed, with different new lines */
+restart;
+print("Test #7");
+filename = "temp" @ __unique_id;
+print("a\r\n+\r\nb;\r\n") > filename;
+s=readfile(filename);
+bashexecute("rm -rf " @ filename);
+print("a=1;\nb=2;\nparse(s);\n") > filename;
+execute(filename);
+bashexecute("rm -rf " @ filename);
+
+/* Trying parse inside a file that is executed, with different new lines, the other way */
+restart;
+print("Test #8");
+filename = "temp" @ __unique_id;
+print("a\n+\nb;\n") > filename;
+s=readfile(filename);
+bashexecute("rm -rf " @ filename);
+print("a=1;\r\nb=2;\r\nparse(s);\r\n") > filename;
+execute(filename);
+bashexecute("rm -rf " @ filename);
+
+/* Trying parse inside a file that is executed, having both standard '\n' */
+restart;
+print("Test #9");
+filename = "temp" @ __unique_id;
+print("a\n+\nb;\n") > filename;
+s=readfile(filename);
+bashexecute("rm -rf " @ filename);
+print("a=1;\nb=2;\nparse(s);\n") > filename;
+execute(filename);
+bashexecute("rm -rf " @ filename);
