@@ -5926,6 +5926,48 @@ static inline sparse_polynomial_t sparsePolynomialDeriv(sparse_polynomial_t p) {
   return res;
 }
 
+static inline sparse_polynomial_t sparsePolynomialGcd(sparse_polynomial_t p, sparse_polynomial_t q) {
+  sparse_polynomial_t u, v, t, z;
+  constant_t c, d;
+  
+  /* Handle stupid inputs */
+  if (p == NULL) return NULL;
+  if (q == NULL) return NULL;
+
+  /* General case: Euclidian algorithm */
+  u = sparsePolynomialFromCopy(p);
+  v = sparsePolynomialFromCopy(q);
+  while (!sparsePolynomialIsConstantZero(v, 1)) {
+    sparsePolynomialDiv(&z, &t, u, v);
+    sparsePolynomialFree(z);
+    sparsePolynomialFree(u);
+    u = v;
+    v = t;
+  }
+  if (!sparsePolynomialIsConstantZero(v, 0)) {
+    sparsePolynomialFree(u);
+    u = sparsePolynomialFromIntConstant(1);
+  }
+  sparsePolynomialFree(v);
+
+  /* Normalize u = gcd(p, q), i.e. make it unitary */
+  if (!sparsePolynomialIsConstantZero(u, 1)) {
+    __sparsePolynomialGetLeadingCoefficient(&c, &d, &z, u);
+    sparsePolynomialFree(z);
+    constantFree(d);
+    v = sparsePolynomialFromConstant(c);
+    constantFree(c);
+    sparsePolynomialDiv(&z, &t, u, v);
+    sparsePolynomialFree(t);
+    sparsePolynomialFree(v);
+    sparsePolynomialFree(u);
+    u = z;
+  }
+
+  /* Return the normalized u = gcd(p,q) */
+  return u;
+}
+
 int sparsePolynomialFromExpression(sparse_polynomial_t *r, node *p) {
   sparse_polynomial_t a, b, quot, rest;
   int res;
@@ -9543,6 +9585,20 @@ polynomial_t polynomialDeriv(polynomial_t p) {
   */
   __polynomialSparsify(p);  
   return __polynomialBuildFromSparse(sparsePolynomialDeriv(p->value.sparse));
+}
+
+polynomial_t polynomialGcd(polynomial_t p, polynomial_t q) {
+  
+  /* Handle stupid inputs */
+  if (p == NULL) return NULL;
+  if (q == NULL) return NULL;
+
+  /* General case: sparsify the polynomials and return the gcd 
+     of the sparse polynomials.
+  */
+  __polynomialSparsify(p);
+  __polynomialSparsify(q);
+  return __polynomialBuildFromSparse(sparsePolynomialGcd(p->value.sparse, q->value.sparse));
 }
 
 static inline int __polynomialFromExpressionInner(polynomial_t *r, node *p, node *t) {

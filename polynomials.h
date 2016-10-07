@@ -107,6 +107,7 @@ void polynomialDiv(polynomial_t *, polynomial_t *, polynomial_t, polynomial_t);
 int polynomialPow(polynomial_t *, polynomial_t, polynomial_t);
 polynomial_t polynomialPowUnsignedInt(polynomial_t, unsigned int);
 polynomial_t polynomialDeriv(polynomial_t);
+polynomial_t polynomialGcd(polynomial_t, polynomial_t);
 
 /* Rewrite operations */
 polynomial_t polynomialHornerize(polynomial_t);
