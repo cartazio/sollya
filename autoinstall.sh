@@ -12,11 +12,11 @@
 # names 'libfplll-git' and 'libfplll-git-somehash' are also available to use
 # respectively the git master or some particular git commit (identified by its
 # hash 'somehash') of fplll's Github
-GMP_PKG_NAME=gmp-5.1.3
-MPFR_PKG_NAME=mpfr-3.1.2
+GMP_PKG_NAME=gmp-6.1.1
+MPFR_PKG_NAME=mpfr-3.1.4
 MPFI_PKG_NAME=mpfi-1.5.1
-FPLLL_PKG_NAME=libfplll-4.0.4
-SOLLYA_PKG_NAME=sollya-4.1
+FPLLL_PKG_NAME=libfplll-git
+SOLLYA_PKG_NAME=sollya-6.0RC1
 
 # If $LOG_DIR is empty, the current directory will be used.  If
 # $PREFIX_PATH is empty, everything will be installed in the standard
