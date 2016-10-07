@@ -153,7 +153,7 @@ if TEST_HELP2MAN
 man_MANS = sollya.1
 
 AM_H2MFLAGS = \
-	--locale=C.utf8 \
+	--locale=C.UTF-8 \
 	--libtool \
 	--no-info
 
