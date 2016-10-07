@@ -18,10 +18,6 @@ Changes of syntax and output:
   * Patched a minor issue with displaying of code elements in
     match-with constructs.
 
-Major new functionnalities:
-
-Minor new functionnalities:
-
 Improvements in internal handling:
   * Slight improvement in numberroots command.
   * Slight changes in what remez and fpminimax commands display at
@@ -44,13 +40,9 @@ Others:
     that systematic failure of these tests on a non-busy machine
     should not be regarded as completely normal and is worth being
     reported).
-
-Not necessarily worth mentionning:
-* Sollya is now distributed with a man page
-* Spelling typos corrected
-* Fixed performance bug in interval evaluation involving L'Hospital rule in low precision.
-* Fixed a bug leading to a huge number of recursive calls to the interval evaluator when evaluation of sub-expressions concluded with NaN.
-* Fixed a flushing issue of input buffers that could be visible when using plot or externalplot on machines with some particular versions of glibc.
+  * A certain number of performance bugs fixed, in particular with
+    respect to low precision evaluations and evaluations involving
+    NaNs.
 
 ----------------------------------------------------------------------
 
