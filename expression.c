@@ -7673,6 +7673,41 @@ node* differentiateInner(node *tree) {
   return temp;
 }
 
+node *gcd(node *a, node *b) {
+  node *aSimpl, *bSimpl, *res;
+  polynomial_t p, q;
+  
+  if ((a->nodeType == MEMREF) &&
+      (b->nodeType == MEMREF) &&
+      (a->polynomialRepresentation != NULL) &&
+      (b->polynomialRepresentation != NULL)) {
+    return polynomialGetExpression(polynomialGcd(a->polynomialRepresentation,
+						 b->polynomialRepresentation));
+  }
+
+  aSimpl = simplifyRationalErrorfree(a);
+  bSimpl = simplifyRationalErrorfree(b);
+
+  tryRepresentAsPolynomial(aSimpl);
+  tryRepresentAsPolynomial(bSimpl);
+
+  if (polynomialFromExpressionOnlyRealCoeffs(&p, aSimpl)) {
+    if (polynomialFromExpressionOnlyRealCoeffs(&q, bSimpl)) {
+      res = polynomialGetExpression(polynomialGcd(p, q));
+      polynomialFree(q);
+    } else {
+      res = addMemRef(makeConstantInt(1));
+    }
+    polynomialFree(p);
+  } else {
+    res = addMemRef(makeConstantInt(1));
+  }
+
+  free_memory(bSimpl);
+  free_memory(aSimpl);
+
+  return res;
+}
 
 int evaluateConstantExpression(mpfr_t result, node *tree, mp_prec_t prec) {
   mpfr_t cutoff;

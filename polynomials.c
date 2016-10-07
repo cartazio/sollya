@@ -343,6 +343,20 @@ static inline int tryScaledMpqDiv(mp_exp_t *EC, mpq_t c,
   return 1;
 }
 
+static inline void sollya_mpq_gcd(mpq_t c, mpq_t a, mpq_t b) {
+  mpz_t u, v;
+
+  mpz_init(u);
+  mpz_init(v);
+  mpz_mul(mpq_denref(c), mpq_denref(a), mpq_denref(b));
+  mpz_mul(u, mpq_numref(a), mpq_denref(b));
+  mpz_mul(v, mpq_denref(a), mpq_numref(b));
+  mpz_gcd(mpq_numref(c), u, v);
+  mpz_clear(v);
+  mpz_clear(u);
+  mpq_canonicalize(c);
+}
+
 static inline int scaledMpqIsInteger(mp_exp_t E, mpq_t a) {
   mpq_t aa;
   mp_exp_t EE;
@@ -2910,6 +2924,25 @@ static inline int tryConstantToScaledMpq(mp_exp_t *E, mpq_t rop, constant_t a) {
   return 0;
 }
 
+static inline int tryConstantToMpq(mpq_t rop, constant_t a) {
+  mpq_t q;
+  mp_exp_t E;
+
+  mpq_init(q);
+  if (!tryConstantToScaledMpq(&E, q, a)) {
+    mpq_clear(q);
+    return 0;
+  }
+
+  if (E >= ((mp_exp_t) 0)) {
+    mpq_mul_2exp(rop, q, ((mp_bitcnt_t) E));
+  } else {
+    mpq_div_2exp(rop, q, ((mp_bitcnt_t) (-E)));
+  }
+  
+  return 1;
+}
+
 static inline int tryConstantToMpz(mpz_t r, constant_t a) {
   mpz_t num, den;
   mpq_t q;
@@ -4120,6 +4153,40 @@ static inline void constantCutTwo14(constant_t *q, constant_t *r, constant_t a) 
   }
 }
 
+static inline constant_t constantGcd(constant_t a, constant_t b) {
+  constant_t c;
+  mpq_t aq, bq, cq;
+
+  /* Handle stupid input */
+  if (a == NULL) return NULL;
+  if (b == NULL) return NULL;
+
+  /* General case: we define the gcd of constants to be 1, unless
+     both constants are rationals, in which case we define
+
+     gcd(a/b, c/d) = gcd(a*d, c*b)/(b*d).
+
+  */
+  mpq_init(aq);
+  if (tryConstantToMpq(aq, a)) {
+    mpq_init(bq);
+    if (tryConstantToMpq(bq, b)) {
+      mpq_init(cq);
+      sollya_mpq_gcd(cq, aq, bq);
+      c = constantFromMpq(cq);
+      mpq_clear(cq);
+    } else {
+      c = constantFromInt(1);
+    }
+    mpq_clear(bq);
+  } else {
+    c = constantFromInt(1);
+  }
+  mpq_clear(aq);
+
+  return c;
+}
+
 static inline void constantEvalMpfr(mpfr_t rop, constant_t c) {
   mp_prec_t p;
   mpfr_t cutoff;
@@ -4339,6 +4406,7 @@ static inline int sparsePolynomialPowConstant(sparse_polynomial_t *, sparse_poly
 static inline int sparsePolynomialGetDegreeAsInt(sparse_polynomial_t);
 static inline int sparsePolynomialCoefficientsAreRational(sparse_polynomial_t, int);
 static inline sparse_polynomial_t sparsePolynomialPowUnsignedInt(sparse_polynomial_t, unsigned int);
+static inline constant_t sparsePolynomialGetIthCoefficientAsConstantIntIndex(sparse_polynomial_t, int);
 
 static inline sparse_polynomial_t __sparsePolynomialAllocate() {
   return (sparse_polynomial_t) safeMalloc(sizeof(struct __sparse_polynomial_struct_t));
@@ -5928,12 +5996,30 @@ static inline sparse_polynomial_t sparsePolynomialDeriv(sparse_polynomial_t p) {
 
 static inline sparse_polynomial_t sparsePolynomialGcd(sparse_polynomial_t p, sparse_polynomial_t q) {
   sparse_polynomial_t u, v, t, z;
-  constant_t c, d;
+  constant_t a, b, c, d;
   
   /* Handle stupid inputs */
   if (p == NULL) return NULL;
   if (q == NULL) return NULL;
 
+  /* Handle the case when both polynomials are constants.  
+
+     In this case return the constant polynomial built from the gcd of
+     these two constants. See the definition for gcd of two constants
+     above.
+  */
+  if (sparsePolynomialIsConstant(p, 0) &&
+      sparsePolynomialIsConstant(q, 0)) {
+    a = sparsePolynomialGetIthCoefficientAsConstantIntIndex(p, 0);
+    b = sparsePolynomialGetIthCoefficientAsConstantIntIndex(q, 0);
+    c = constantGcd(a, b);
+    u = sparsePolynomialFromConstant(c);
+    constantFree(c);
+    constantFree(b);
+    constantFree(a);
+    return u;
+  }
+  
   /* General case: Euclidian algorithm */
   u = sparsePolynomialFromCopy(p);
   v = sparsePolynomialFromCopy(q);
