@@ -269,6 +269,7 @@ int parseStringCheckExcessCharacters(char *str) {
   for (curr=str; *curr != '\0'; curr++) {
     if (!((*curr == ' ') ||
 	  (*curr == '\n') ||
+	  (*curr == '\r') ||
 	  (*curr == '\t'))) return 0;
   }
 
