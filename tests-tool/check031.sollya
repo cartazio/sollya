@@ -1,4 +1,6 @@
+/*        IMPORTANT WARNING          */
 /* This file has DOS-style new lines */
+/*************************************/
 restart;
 print("Test #1");
 a=1;
