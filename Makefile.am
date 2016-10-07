@@ -164,8 +164,8 @@ sollya.1: sollya
 	 SOLLYA_BANNER_OFF=YES $(HELP2MAN) \
 			-s 1 \
 			$(AM_H2MFLAGS) \
-			-I $(top_srcdir)/$*.h2m \
-			-n $(if $($(subst -,_,$*)_DESCRIPTION), $($(subst -,_,$*)_DESCRIPTION), "manual page for $*") \
+			-I $(top_srcdir)/sollya.h2m \
+			-n $(sollya_DESCRIPTION) \
 			-o $@ \
 		$(top_builddir)/$<
 endif
