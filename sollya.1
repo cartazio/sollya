@@ -1,0 +1,119 @@
+.TH SOLLYA "1" "October 2016" "sollya git-devel" "User Commands"
+.SH NAME
+sollya \- tool environment for safe floating-point code development -- command-line interface
+.SH SYNOPSIS
+.B sollya
+[\fI\,options\/\fR]
+.SH DESCRIPTION
+.B sollya
+is both a tool environment and a library for safe floating-point code development. It is particularily targeted to the automatized implementation of mathematical floating-point libraries (libm). Amongst other features, it offers a certified infinity (supremum) norm and a fast Remez algorithm.
+.SH OPTIONS
+.TP
+\fB\-\-args\fR
+transmit the following arguments verbatim to the interpreter
+.TP
+\fB\-\-donotmodifystacksize\fR
+do not attempt to set the maximal stack size to the maximum size allowed on the system
+.TP
+\fB\-\-flush\fR
+flush standard output and standard error after each command
+.TP
+\fB\-\-help\fR
+print this help text
+.TP
+\fB\-\-nocolor\fR
+do not color the output using ANSI escape sequences
+.TP
+\fB\-\-noprompt\fR
+do not print a prompt symbol
+.TP
+\fB\-\-oldautoprint\fR
+print commas between autoprinted elements separated by commas
+.TP
+\fB\-\-oldexternalprocprint\fR
+print the signature of an external procedure when autoprinting
+.TP
+\fB\-\-oldrlwrapcompatible\fR
+acheive some compatibility with old rlwrap versions by emitting wrong ANSI sequences (deprecated)
+.TP
+\fB\-\-version\fR
+print the version of Sollya, plus the copyright, the list of authors and the no warranty notice
+.TP
+\fB\-\-warninfile[append]\fR <file>
+print warning messages into a file instead on the standard output
+.TP
+\fB\-\-warnonstderr\fR
+print warning messages on error output instead on the standard output
+.PP
+For help on sollya commands type "help;" on the sollya prompt.
+A complete documentation on sollya is available on the sollya website <http://sollya.gforge.inria.fr/>.
+.SH "REPORTING BUGS"
+Report bugs to <sollya\-devl@lists.gforge.inria.fr>
+.SH COPYRIGHT
+Copyright 2006\-2016 by
+.IP
+Laboratoire de l'Informatique du Parallelisme,
+UMR CNRS \- ENS Lyon \- UCB Lyon 1 \- INRIA 5668,
+.IP
+LORIA (CNRS, INPL, INRIA, UHP, U\-Nancy 2),
+.IP
+Laboratoire d'Informatique de Paris 6 \- ??quipe PEQUAN
+Sorbonne Universit??s
+UPMC Univ Paris 06
+UMR 7606, LIP6
+Bo??te Courrier 169
+4, place Jussieu
+F\-75252 Paris Cedex 05
+France,
+.IP
+CNRS, LIP6, UPMC
+Sorbonne Universit??s, UPMC Univ Paris 06,
+CNRS, LIP6 UMR 7606, 4 place Jussieu 75005 Paris,
+.PP
+and by
+.IP
+INRIA Sophia\-Antipolis Mediterranee, APICS Team,
+Sophia\-Antipolis, France.
+.PP
+All rights reserved.
+.SS "Contributors:"
+.IP
+Ch. Lauter,
+S. Chevillard,
+M. Joldes,
+N. Jourdan,
+M. Mezzarobba,
+J. Benoit.
+.PP
+Send bug reports to sollya\-devl@lists.gforge.inria.fr.
+.PP
+This software is governed by the CeCILL\-C license under French law and
+abiding by the rules of distribution of free software.  You can  use,
+modify and/or redistribute the software under the terms of the CeCILL\-C
+license as circulated by CEA, CNRS and INRIA at the following URL
+"http://www.cecill.info".
+.PP
+As a counterpart to the access to the source code and  rights to copy,
+modify and redistribute granted by the license, users are provided only
+with a limited warranty  and the software's author,  the holder of the
+economic rights,  and the successive licensors  have only  limited
+liability.
+.PP
+In this respect, the user's attention is drawn to the risks associated
+with loading,  using,  modifying and/or developing or reproducing the
+software by the user in light of its specific status of free software,
+that may mean  that it is complicated to manipulate,  and  that  also
+therefore means  that it is reserved for developers  and  experienced
+professionals having in\-depth computer knowledge. Users are therefore
+encouraged to load and test the software's suitability as regards their
+requirements in conditions enabling the security of their systems and/or
+data to be ensured and,  more generally, to use and operate it in the
+same conditions as regards security.
+.PP
+The fact that you are presently reading this means that you have had
+knowledge of the CeCILL\-C license and that you accept its terms.
+.PP
+This program is distributed WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.SH "SEE ALSO"
+.BR rlwrap (1)
