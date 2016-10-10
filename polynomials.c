@@ -6015,7 +6015,7 @@ static inline sparse_polynomial_t sparsePolynomialGcd(sparse_polynomial_t p, spa
   /* Handle stupid inputs */
   if (p == NULL) return NULL;
   if (q == NULL) return NULL;
-
+  
   /* Handle the case when both polynomials are constants.  
 
      In this case return the constant polynomial built from the gcd of
@@ -6032,6 +6032,11 @@ static inline sparse_polynomial_t sparsePolynomialGcd(sparse_polynomial_t p, spa
     constantFree(b);
     constantFree(a);
     return u;
+  }
+
+  /* Handle the case when the input polynomials are equal. */
+  if (sparsePolynomialEqual(p, q, 0)) {
+    return sparsePolynomialFromCopy(p);
   }
   
   /* General case: Euclidian algorithm */
@@ -6050,14 +6055,7 @@ static inline sparse_polynomial_t sparsePolynomialGcd(sparse_polynomial_t p, spa
   }
   sparsePolynomialFree(v);
 
-  /* Normalize u = gcd(p, q), i.e. make it unitary 
-
-     This definition of the gcd of polynomials makes us handle
-     constants and constant polynomials in a different way but
-     corresponds to the definition of the gcd used by other CAS,
-     e.g. Maple.
-
-  */
+  /* Make the polynomial u = gcd(a,b) unitary */
   if (!sparsePolynomialIsConstantZero(u, 1)) {
     __sparsePolynomialGetLeadingCoefficient(&c, &d, &z, u);
     sparsePolynomialFree(z);
@@ -6070,6 +6068,26 @@ static inline sparse_polynomial_t sparsePolynomialGcd(sparse_polynomial_t p, spa
     sparsePolynomialFree(u);
     u = z;
   }
+
+  /* Normalize the polynomial u = gcd(p,q) in such a way that its
+     leading coefficient is the gcd of the leading coefficients of the
+     input polynomials p and q.
+  */
+  __sparsePolynomialGetLeadingCoefficient(&a, &d, &z, p);
+  constantFree(d);
+  sparsePolynomialFree(z);
+  __sparsePolynomialGetLeadingCoefficient(&b, &d, &z, q);
+  constantFree(d);
+  sparsePolynomialFree(z);
+  c = constantGcd(a, b);
+  v = sparsePolynomialFromConstant(c);
+  constantFree(a);
+  constantFree(b);
+  constantFree(c);
+  z = sparsePolynomialMul(u, v);
+  sparsePolynomialFree(v);
+  sparsePolynomialFree(u);
+  u = z;
   
   /* Return the normalized u = gcd(p,q) */
   return u;
