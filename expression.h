@@ -168,6 +168,8 @@ struct nodeStruct
   point_eval_t pointEvalCacheResultType;
   uint64_t hash;
   int hashComputed;
+  int treeSizeCache;
+  int treeSizeCacheFilled;
 };
 
 /* HELPER TYPE FOR THE PARSER */
@@ -225,6 +227,8 @@ static inline node* addMemRefEvenOnNull(node *tree) {
   res->pointEvalCacheX = NULL;
   res->pointEvalCacheY = NULL;
   res->hashComputed = 0;
+  res->treeSizeCache = -1;
+  res->treeSizeCacheFilled = 0;
 
   return res;
 }
