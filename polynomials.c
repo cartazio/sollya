@@ -226,6 +226,11 @@ static inline int mpfr_is_machine_unsigned_integer(unsigned int *intval, mpfr_t 
   return 1;
 }
 
+/* This function supposes that op is canonicalized, i.e. zero is
+   represented as 0/1, that the numerator and the denominator have no
+   common factors and that the denominator is positive. The function
+   guarantees that op is canonicalized in output as well.
+*/
 static inline mp_exp_t mpq_remove_powers_of_two(mpq_t op) {
   mp_bitcnt_t dyadNum, dyadDen;
   mp_exp_t expo;
@@ -236,7 +241,6 @@ static inline mp_exp_t mpq_remove_powers_of_two(mpq_t op) {
   dyadDen = mpz_scan1(mpq_denref(op), 0);
   mpz_tdiv_q_2exp(mpq_numref(op), mpq_numref(op), dyadNum);
   mpz_tdiv_q_2exp(mpq_denref(op), mpq_denref(op), dyadDen);
-  mpq_canonicalize(op);
   expo = dyadNum - dyadDen;
 
   return expo;
@@ -316,7 +320,6 @@ static inline void scaledMpqMul(mp_exp_t *EC, mpq_t c,
 				mp_exp_t EB, mpq_t b) {
   *EC = EA + EB; /* Exponent overflow possible */
   mpq_mul(c, a, b);
-  mpq_canonicalize(c);
   *EC += mpq_remove_powers_of_two(c); /* Exponent overflow possible */
 }
 
@@ -397,6 +400,7 @@ static inline int scaledMpqIsInteger(mp_exp_t E, mpq_t a) {
   mpq_set(aa, a);
   EE = E;
 
+  mpq_canonicalize(aa);
   EE += mpq_remove_powers_of_two(aa); /* Exponent overflow possible */
 
   /* Now we have 2^EE * aa = 2^E * a, aa in least factors and all
@@ -441,6 +445,7 @@ static inline int scaledMpqIsDyadic(mp_exp_t E, mpq_t a) {
   */
   mpq_init(aa);
   mpq_set(aa, a);
+  mpq_canonicalize(aa);
   mpq_remove_powers_of_two(aa);
 
   /* Now we have 2^EE * aa = 2^E * a, aa in least factors and all
@@ -1014,6 +1019,7 @@ static inline int tryScaledMpqPowInt(mp_exp_t *EC, mpq_t c,
   if (n == 1u) {
     *EC = EA;
     mpq_set(c, a);
+    mpq_canonicalize(c);
     *EC += mpq_remove_powers_of_two(c); /* Exponent overflow possible */
     return 1;
   }
