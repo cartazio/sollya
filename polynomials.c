@@ -5551,20 +5551,34 @@ static inline void sparsePolynomialDiv(sparse_polynomial_t *quot, sparse_polynom
     return;
   }
 
+  /* If both polynomials are equal, the quotient is one, the rest is
+     zero.
+  */
+  if (sparsePolynomialEqual(a, b, 0)) {
+    *quot = sparsePolynomialFromIntConstant(1);
+    *rest = sparsePolynomialFromIntConstant(0);
+    return;
+  }
+  
   /* If b is constant, do some special handling */
   if (sparsePolynomialConstantGetConstant(&bc, b)) {
-    if (!constantIsZero(bc, 1)) {
-      one = constantFromInt(1);
-      recprB = constantDiv(one, bc);
-      constantFree(one);
-      recprPB = sparsePolynomialFromConstant(recprB);
-      constantFree(recprB);
-      *quot = sparsePolynomialMul(a, recprPB);
+    if (constantIsOne(bc, 0)) {
+      *quot = sparsePolynomialFromCopy(a);
       *rest = sparsePolynomialFromIntConstant(0);
-      sparsePolynomialFree(recprPB);
     } else {
-      *quot = sparsePolynomialFromIntConstant(0);
-      *rest = sparsePolynomialFromCopy(a);
+      if (!constantIsZero(bc, 1)) {
+	one = constantFromInt(1);
+	recprB = constantDiv(one, bc);
+	constantFree(one);
+	recprPB = sparsePolynomialFromConstant(recprB);
+	constantFree(recprB);
+	*quot = sparsePolynomialMul(a, recprPB);
+	*rest = sparsePolynomialFromIntConstant(0);
+	sparsePolynomialFree(recprPB);
+      } else {
+	*quot = sparsePolynomialFromIntConstant(0);
+	*rest = sparsePolynomialFromCopy(a);
+      }
     }
     constantFree(bc);
     return;
@@ -6036,7 +6050,14 @@ static inline sparse_polynomial_t sparsePolynomialGcd(sparse_polynomial_t p, spa
   }
   sparsePolynomialFree(v);
 
-  /* Normalize u = gcd(p, q), i.e. make it unitary */
+  /* Normalize u = gcd(p, q), i.e. make it unitary 
+
+     This definition of the gcd of polynomials makes us handle
+     constants and constant polynomials in a different way but
+     corresponds to the definition of the gcd used by other CAS,
+     e.g. Maple.
+
+  */
   if (!sparsePolynomialIsConstantZero(u, 1)) {
     __sparsePolynomialGetLeadingCoefficient(&c, &d, &z, u);
     sparsePolynomialFree(z);
@@ -6049,7 +6070,7 @@ static inline sparse_polynomial_t sparsePolynomialGcd(sparse_polynomial_t p, spa
     sparsePolynomialFree(u);
     u = z;
   }
-
+  
   /* Return the normalized u = gcd(p,q) */
   return u;
 }

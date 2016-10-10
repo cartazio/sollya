@@ -304,6 +304,7 @@ extern void endBuffer(void);
 #define ANNOTATEFUNCTION 279
 #define OBJECTNAME 280
 #define GETBACKTRACE 281
+#define GCD 282
 
 int executeCommand(node *);
 
@@ -491,6 +492,7 @@ node *makeSupnorm(chain *thinglist);
 node *makeFindZeros(node *thing1, node *thing2);
 node *makeFPFindZeros(node *thing1, node *thing2);
 node *makeDirtyInfnorm(node *thing1, node *thing2);
+node *makeGcd(node *thing1, node *thing2);
 node *makeNumberRoots(node *thing1, node *thing2);
 node *makeIntegral(node *thing1, node *thing2);
 node *makeDirtyIntegral(node *thing1, node *thing2);

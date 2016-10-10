@@ -672,6 +672,7 @@ uint64_t hashThingInnerst(node *tree) {
   case FINDZEROS:
   case FPFINDZEROS:
   case DIRTYINFNORM:
+  case GCD:
   case NUMBERROOTS:
   case INTEGRAL:
   case DIRTYINTEGRAL:
@@ -1133,6 +1134,7 @@ uint64_t hashThingNoPolynomialHandling(node *tree) {
   case FINDZEROS:
   case FPFINDZEROS:
   case DIRTYINFNORM:
+  case GCD:
   case NUMBERROOTS:
   case INTEGRAL:
   case DIRTYINTEGRAL:
@@ -2054,6 +2056,10 @@ node *copyThingInner(node *tree) {
     copy->child1 = copyThingInner(tree->child1);
     copy->child2 = copyThingInner(tree->child2);
     break;
+  case GCD:
+    copy->child1 = copyThingInner(tree->child1);
+    copy->child2 = copyThingInner(tree->child2);
+    break;
   case NUMBERROOTS:
     copy->child1 = copyThingInner(tree->child1);
     copy->child2 = copyThingInner(tree->child2);
@@ -2946,6 +2952,10 @@ node *deepCopyThing(node *tree) {
     copy->child1 = deepCopyThing(tree->child1);
     copy->child2 = deepCopyThing(tree->child2);
     break;
+  case GCD:
+    copy->child1 = deepCopyThing(tree->child1);
+    copy->child2 = deepCopyThing(tree->child2);
+    break;
   case NUMBERROOTS:
     copy->child1 = deepCopyThing(tree->child1);
     copy->child2 = deepCopyThing(tree->child2);
@@ -3292,6 +3302,7 @@ node *tryFindMemRefOccurrence(node *subtree, node *tree) {
   case FINDZEROS:
   case FPFINDZEROS:
   case DIRTYINFNORM:
+  case GCD:
   case NUMBERROOTS:
   case INTEGRAL:
   case DIRTYINTEGRAL:
@@ -4263,6 +4274,10 @@ node *copyThingWithMemRefReuseInner(node *tree, node *reuse, int *didReuse) {
     copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
     break;
+  case GCD:
+    copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
+    copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
+    break;
   case NUMBERROOTS:
     copy->child1 = copyThingWithMemRefReuseInner(tree->child1,reuse, didReuse);
     copy->child2 = copyThingWithMemRefReuseInner(tree->child2,reuse, didReuse);
@@ -5128,6 +5143,9 @@ char *getTimingStringForThing(node *tree) {
     break;
   case DIRTYINFNORM:
     constString = "computing an infinity norm dirtily";
+    break;
+  case GCD:
+    constString = "computing the greatest common divisor";
     break;
   case NUMBERROOTS:
     constString = "computing the number of real roots of a polynomial";
@@ -8493,6 +8511,13 @@ char *sRawPrintThingInner(node *tree, int forceDyadic) {
     break;
   case DIRTYINFNORM:
     res = newString("dirtyinfnorm(");
+    res = concatAndFree(res, sRawPrintThingInner(tree->child1, forceDyadic));
+    res = concatAndFree(res, newString(", "));
+    res = concatAndFree(res, sRawPrintThingInner(tree->child2, forceDyadic));
+    res = concatAndFree(res, newString(")"));
+    break;
+  case GCD:
+    res = newString("gcd(");
     res = concatAndFree(res, sRawPrintThingInner(tree->child1, forceDyadic));
     res = concatAndFree(res, newString(", "));
     res = concatAndFree(res, sRawPrintThingInner(tree->child2, forceDyadic));
@@ -14749,6 +14774,18 @@ node *makeDirtyInfnorm(node *thing1, node *thing2) {
 
 }
 
+node *makeGcd(node *thing1, node *thing2) {
+  node *res;
+
+  res = (node *) safeMalloc(sizeof(node));
+  res->nodeType = GCD;
+  res->child1 = thing1;
+  res->child2 = thing2;
+
+  return res;
+
+}
+
 node *makeNumberRoots(node *thing1, node *thing2) {
   node *res;
 
@@ -16299,6 +16336,11 @@ void freeThing(node *tree) {
     freeThing(tree->child2);
     safeFree(tree);
     break;
+  case GCD:
+    freeThing(tree->child1);
+    freeThing(tree->child2);
+    safeFree(tree);
+    break;
   case NUMBERROOTS:
     freeThing(tree->child1);
     freeThing(tree->child2);
@@ -17374,6 +17416,10 @@ static inline int isEqualThingLibraryInner(node *tree, node *tree2) {
     if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
     if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
     break;
+  case GCD:
+    if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
+    break;
   case NUMBERROOTS:
     if (!isEqualThingLibraryInner(tree->child1,tree2->child1)) return 0;
     if (!isEqualThingLibraryInner(tree->child2,tree2->child2)) return 0;
@@ -18275,6 +18321,10 @@ int isEqualThing(node *tree, node *tree2) {
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     if (!isEqualThing(tree->child2,tree2->child2)) return 0;
     break;
+  case GCD:
+    if (!isEqualThing(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThing(tree->child2,tree2->child2)) return 0;
+    break;
   case NUMBERROOTS:
     if (!isEqualThing(tree->child1,tree2->child1)) return 0;
     if (!isEqualThing(tree->child2,tree2->child2)) return 0;
@@ -19153,6 +19203,10 @@ int isEqualThingNoPoly(node *tree, node *tree2) {
     if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
     break;
   case DIRTYINFNORM:
+    if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
+    if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
+    break;
+  case GCD:
     if (!isEqualThingNoPoly(tree->child1,tree2->child1)) return 0;
     if (!isEqualThingNoPoly(tree->child2,tree2->child2)) return 0;
     break;
@@ -21017,6 +21071,7 @@ int variableUsePreventsPreevaluation(node *tree) {
   case FINDZEROS:
   case FPFINDZEROS:
   case DIRTYINFNORM:
+  case GCD:
   case NUMBERROOTS:
   case INTEGRAL:
   case DIRTYINTEGRAL:
@@ -22072,6 +22127,10 @@ node *preevaluateMatcher(node *tree) {
     copy->child2 = preevaluateMatcher(tree->child2);
     break;
   case DIRTYINFNORM:
+    copy->child1 = preevaluateMatcher(tree->child1);
+    copy->child2 = preevaluateMatcher(tree->child2);
+    break;
+  case GCD:
     copy->child1 = preevaluateMatcher(tree->child1);
     copy->child2 = preevaluateMatcher(tree->child2);
     break;
@@ -28412,6 +28471,18 @@ node *evaluateThingInnerst(node *tree) {
       }
       mpfr_clear(a);
       mpfr_clear(b);
+    }
+    break;
+  case GCD:
+    copy->child1 = evaluateThingInner(tree->child1);
+    copy->child2 = evaluateThingInner(tree->child2);
+    if (isPureTree(copy->child1) &&
+	isPureTree(copy->child2)) {
+      if (timingString != NULL) pushTimeCounter();
+      tempNode = addMemRef(gcd(copy->child1, copy->child2));
+      if (timingString != NULL) popTimeCounter(timingString);
+      freeThing(copy);
+      copy = tempNode;
     }
     break;
   case INTEGRAL:

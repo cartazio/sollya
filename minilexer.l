@@ -253,6 +253,7 @@ AUTODIFF        "autodiff"
 FINDZEROS       "findzeros"
 FPFINDZEROS     "fpfindzeros"
 DIRTYINFNORM    "dirtyinfnorm"
+GCD             "gcd"
 NUMBERROOTS     "numberroots"
 
 EVALUATE        "evaluate"
@@ -766,6 +767,7 @@ NOP             "nop"
 {FINDZEROS}       			    {  miniparserCharactersRead += yyleng; return FINDZEROSTOKEN; }
 {FPFINDZEROS}     			    {  miniparserCharactersRead += yyleng; return FPFINDZEROSTOKEN; }
 {DIRTYINFNORM}    			    {  miniparserCharactersRead += yyleng; return DIRTYINFNORMTOKEN; }
+{GCD}       			            {  miniparserCharactersRead += yyleng; return GCDTOKEN; }
 {NUMBERROOTS}    			    {  miniparserCharactersRead += yyleng; return NUMBERROOTSTOKEN; }
 {INTEGRAL}        			    {  miniparserCharactersRead += yyleng; return INTEGRALTOKEN; }
 {DIRTYINTEGRAL}				    {  miniparserCharactersRead += yyleng; return DIRTYINTEGRALTOKEN; }

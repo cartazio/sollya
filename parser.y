@@ -353,6 +353,7 @@ int parserCheckEof() {
 %token  FINDZEROSTOKEN "findzeros"
 %token  FPFINDZEROSTOKEN "fpfindzeros"
 %token  DIRTYINFNORMTOKEN "dirtyinfnorm"
+%token  GCDTOKEN "gcd"
 %token  NUMBERROOTSTOKEN "numberroots"
 %token  INTEGRALTOKEN "integral"
 %token  DIRTYINTEGRALTOKEN "dirtyintegral"
@@ -1849,6 +1850,10 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | DIRTYINFNORMTOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
                           {
 			    $$ = makeDirtyInfnorm($3, $5);
+			  }
+                      | GCDTOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
+                          {
+			    $$ = makeGcd($3, $5);
 			  }
                       | NUMBERROOTSTOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
                           {
@@ -4143,7 +4148,18 @@ help:                   CONSTANTTOKEN
 #warning "No help text for DIRTYINFNORM"
 #endif
 #endif
-                          }
+			  }
+                      | GCDTOKEN
+                          {
+#ifdef HELP_GCD_TEXT
+			    outputMode(); sollyaPrintf(HELP_GCD_TEXT);
+#else
+			    outputMode(); sollyaPrintf("Greatest common divisor: gcd(a, b).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for GCD"
+#endif
+#endif
+			  }
                       | NUMBERROOTSTOKEN
                           {
 #ifdef HELP_NUMBERROOTS_TEXT
@@ -4701,6 +4717,7 @@ help:                   CONSTANTTOKEN
 			    sollyaPrintf("- from\n");
 			    sollyaPrintf("- fullparentheses\n");
 			    sollyaPrintf("- function\n");
+			    sollyaPrintf("- gcd\n");
 			    sollyaPrintf("- getsuppressedmessages\n");
 			    sollyaPrintf("- getbacktrace\n");
 			    sollyaPrintf("- guessdegree\n");

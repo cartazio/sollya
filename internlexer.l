@@ -255,6 +255,7 @@ AUTODIFF        "autodiff"
 FINDZEROS       "findzeros"
 FPFINDZEROS     "fpfindzeros"
 DIRTYINFNORM    "dirtyinfnorm"
+GCD             "gcd"
 NUMBERROOTS     "numberroots"
 
 EVALUATE        "evaluate"
@@ -756,6 +757,7 @@ NOP             "nop"
 {FINDZEROS}       			    {  return FINDZEROSTOKEN; }
 {FPFINDZEROS}     			    {  return FPFINDZEROSTOKEN; }
 {DIRTYINFNORM}    			    {  return DIRTYINFNORMTOKEN; }
+{GCD}                  			    {  return GCDTOKEN; }
 {NUMBERROOTS}    			    {  return NUMBERROOTSTOKEN; }
 {INTEGRAL}        			    {  return INTEGRALTOKEN; }
 {DIRTYINTEGRAL}				    {  return DIRTYINTEGRALTOKEN; }
