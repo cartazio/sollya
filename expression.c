@@ -14444,10 +14444,21 @@ node *makePolynomial(mpfr_t *coefficients, int degree) {
 
 
 int treeSize(node *tree) {
+  int size;
+  
   if (tree == NULL) return 0;
   switch (tree->nodeType) {
   case MEMREF:
-    return treeSize(getMemRefChild(tree));
+    if (tree->treeSizeCacheFilled) {
+      return tree->treeSizeCache;
+    }
+    
+    size = treeSize(getMemRefChild(tree));
+
+    tree->treeSizeCache = size;
+    tree->treeSizeCacheFilled = 1;
+    
+    return size;
     break;
 
   case VARIABLE:

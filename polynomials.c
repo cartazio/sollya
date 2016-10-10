@@ -2019,7 +2019,11 @@ static inline constant_t constantFromUnsignedInt(unsigned int c) {
   return constantFromInt(cI);
 }
 
-
+/* The argument c must be a canonicalized mpq_t number, i.e. zero 
+   needs to be represented as 0/1, the numerator and the denominator 
+   of c must not have any common factor and the denominator must be 
+   positive.
+*/
 static inline constant_t constantFromScaledMpq(mp_exp_t e, mpq_t c) {
   mpz_t num, den;
   constant_t res;
@@ -2092,6 +2096,7 @@ static inline constant_t constantFromMpz(mpz_t c) {
   
   mpq_init(q);
   mpq_set_z(q, c);
+  mpq_canonicalize(q);
   res = constantFromMpq(q);
   mpq_clear(q);
   
@@ -2225,6 +2230,7 @@ static inline constant_t constantFromExpression(node *c) {
   }
   mpq_init(rational);
   if (tryEvaluateConstantTermToMpq(rational, c)) {
+    mpq_canonicalize(rational);
     res = constantFromMpq(rational);
     mpq_clear(rational);
     return res;
@@ -2380,7 +2386,6 @@ static inline int constantIsOne(constant_t a, int defVal) {
       return a->isOne.res;
     }
     /* Here E != 0 */
-    mpq_canonicalize(a->value.scaledMpq.significand);
     a->value.scaledMpq.expo += mpq_remove_powers_of_two(a->value.scaledMpq.significand); /* Exponent overflow possible */
     if (a->value.scaledMpq.expo != ((mp_exp_t) 0)) {
       a->isOne.cached = 1;
@@ -4655,6 +4660,7 @@ static inline sparse_polynomial_t sparsePolynomialFromMpqConstant(mpq_t c) {
   res->refCount = 1;
   res->monomialCount = 1;
   res->coeffs = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
+  mpq_canonicalize(c);
   res->coeffs[0] = constantFromMpq(c);
   res->monomialDegrees = (constant_t *) safeCalloc(res->monomialCount, sizeof(constant_t));
   res->monomialDegrees[0] = constantFromInt(0);
