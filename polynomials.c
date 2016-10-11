@@ -136,6 +136,11 @@ struct __sparse_polynomial_struct_t {
   constant_t *monomialDegrees;
 };
 
+#define SPARSE_POLYNOMIAL_GCD_HEURISTIC_MAX_MONOMIAL_COUNT  ((unsigned int) ((((uint64_t) 1u) << 16) - ((uint64_t) 1u)))
+#define SPARSE_POLYNOMIAL_GCD_HEURISTIC_MAX_DEGREE          ((int) ((((int64_t) 1) << 18) - ((int64_t) 1)))
+#define SPARSE_POLYNOMIAL_GCD_HEURISTIC_MAX_INTEGER_BOUND   ((mp_bitcnt_t) ((((uint64_t) 1u) << 15) - ((uint64_t) 1u)))
+#define SPARSE_POLYNOMIAL_GCD_HEURISTIC_TRIALS              (4)
+
 typedef enum __polynomial_type_enum_t polynomial_type_t;
 enum __polynomial_type_enum_t {
   SPARSE = 0,
@@ -334,6 +339,62 @@ static inline void scaledMpqMulInt(mp_exp_t *EC, mpq_t c,
   mpq_canonicalize(t);
   scaledMpqMul(EC, c, EA, a, 0, t);
   mpq_clear(t);
+}
+
+static inline int sollya_mpz_pow(mpz_t z, mpz_t x, mpz_t y) {
+  unsigned long int k;
+  int sgn, res;
+  mpz_t yhi, ylo, xyhi, xylo, xt14;
+
+  /* Get sign of y */
+  sgn = mpz_sgn(y);
+
+  /* Refuse work for negative y */
+  if (sgn < 0) return 0;
+
+  /* If y is zero, set z to 1 */
+  if (sgn == 0) {
+    mpz_set_ui(z, 1u);
+    return 1;
+  }
+  
+  /* Try to see if y fits into a ulong */
+  if (mpz_fits_ulong_p(y)) {
+    k = mpz_get_ui(y);
+    mpz_pow_ui(z, x, k);
+    return 1;
+  }
+
+  /* Decompose y into y = yhi * 2^14 + ylo */
+  mpz_init(yhi);
+  mpz_init(ylo);
+  mpz_fdiv_qr_ui(yhi, ylo, y, (1u << 14));
+
+  /* Compute x^y as 
+
+     x^y = x^(2^14 * yhi + ylo) = (x^(2^14))^yhi * x^ylo.
+
+  */
+  mpz_init(xylo);
+  mpz_init(xyhi);
+  mpz_init(xt14);
+  if (sollya_mpz_pow(xylo, x, ylo)) {
+    mpz_pow_ui(xt14, x, (1u << 14));
+    res = sollya_mpz_pow(xyhi, xt14, yhi); 
+    mpz_mul(z, xyhi, xylo);
+  } else {
+    res = 0;
+  }
+
+  /* Clear temporaries */
+  mpz_clear(xt14);
+  mpz_clear(xyhi);
+  mpz_clear(xylo);
+  mpz_clear(ylo);
+  mpz_clear(yhi);
+
+  /* Return success indicator */
+  return res;
 }
 
 static inline int tryScaledMpqDiv(mp_exp_t *EC, mpq_t c, 
@@ -2924,6 +2985,7 @@ static inline int tryConstantToScaledMpq(mp_exp_t *E, mpq_t rop, constant_t a) {
     mpq_canonicalize(rop);
     *E = expo + mpq_remove_powers_of_two(rop);  /* Exponent overflow possible */
     mpz_clear(mant);
+    return 1;
     break;
   case SCALEDMPQ:
     *E = a->value.scaledMpq.expo;
@@ -3021,6 +3083,44 @@ static inline int tryConstantToMpz(mpz_t r, constant_t a) {
   mpz_clear(num);
   return 1;
 }
+
+static inline int tryConstantIntegerBound(mp_bitcnt_t *b, constant_t a) {
+  mpz_t z;
+
+  mpz_init(z);
+  if (!tryConstantToMpz(z, a)) {
+    mpz_clear(z);
+    return 0;
+  }
+
+  *b = (mp_bitcnt_t) mpz_sizeinbase(z, 2) + 1;
+  mpz_clear(z);
+  return 1;
+}
+
+static inline int tryConstantDenominatorLcm(mpz_t lcm, constant_t a) {
+  mpq_t q;
+  mp_exp_t E;
+  mpz_t n;
+  
+  mpq_init(q);
+  if (!tryConstantToScaledMpq(&E, q, a)) {
+    mpq_clear(q);
+    return 0;
+  }
+
+  mpz_init(n);
+  mpq_get_den(n, q);
+  if (E < ((mp_exp_t) 0)) {
+    mpz_mul_2exp(n, n, ((mp_bitcnt_t) (-E)));
+  }
+  mpz_lcm(lcm, lcm, n);
+  mpz_clear(n);
+  mpq_clear(q);
+  
+  return 1;
+}
+
 
 static inline int tryConstantToInt(int *r, constant_t a) {
   mpq_t q;
@@ -4418,6 +4518,7 @@ static inline int sparsePolynomialGetDegreeAsInt(sparse_polynomial_t);
 static inline int sparsePolynomialCoefficientsAreRational(sparse_polynomial_t, int);
 static inline sparse_polynomial_t sparsePolynomialPowUnsignedInt(sparse_polynomial_t, unsigned int);
 static inline constant_t sparsePolynomialGetIthCoefficientAsConstantIntIndex(sparse_polynomial_t, int);
+static inline int sparsePolynomialEvalMpz(mpz_t, sparse_polynomial_t, mpz_t);
 
 static inline sparse_polynomial_t __sparsePolynomialAllocate() {
   return (sparse_polynomial_t) safeMalloc(sizeof(struct __sparse_polynomial_struct_t));
@@ -6020,6 +6121,311 @@ static inline sparse_polynomial_t sparsePolynomialDeriv(sparse_polynomial_t p) {
   return res;
 }
 
+static inline sparse_polynomial_t __sparsePolynomialGcdBaseCase(sparse_polynomial_t p, sparse_polynomial_t q) {
+  sparse_polynomial_t u, v, t, z;
+
+  /* Handle stupid inputs */
+  if (p == NULL) return NULL;
+  if (q == NULL) return NULL;
+
+  /* Euclidian algorithm */
+  u = sparsePolynomialFromCopy(p);
+  v = sparsePolynomialFromCopy(q);
+  while (!sparsePolynomialIsConstantZero(v, 1)) {
+    sparsePolynomialDiv(&z, &t, u, v);
+    sparsePolynomialFree(z);
+    sparsePolynomialFree(u);
+    u = v;
+    v = t;
+  }
+  if (!sparsePolynomialIsConstantZero(v, 0)) {
+    sparsePolynomialFree(u);
+    u = sparsePolynomialFromIntConstant(1);
+  }
+  sparsePolynomialFree(v);
+
+  /* Return a gcd */
+  return u;
+}
+
+static inline int __sparsePolynomialCoefficientDenominatorLcm(mpz_t lcm, sparse_polynomial_t p) {
+  unsigned int i;
+  mpz_t t;
+
+  /* Handle stupid input */
+  if (p == NULL) return 0;
+
+  /* Handle the case when the polynomial has no monomials */
+  if (p->monomialCount == 0u) return 1;
+
+  /* Go over the coefficients and compute the denominator lcm */
+  mpz_init(t);
+  mpz_set(t, lcm);
+  for (i=0u;i<p->monomialCount;i++) {
+    if (!tryConstantDenominatorLcm(t, p->coeffs[i])) {
+      mpz_clear(t);
+      return 0;
+    }
+  }
+  mpz_set(lcm, t);
+  mpz_clear(t);
+  return 1;
+}
+
+static inline int __sparsePolynomialCoefficientIntegerBounds(mp_bitcnt_t *b, sparse_polynomial_t p) {
+  unsigned int i;
+  mp_bitcnt_t bound, bc;
+
+  /* Handle stupid input */
+  if (p == NULL) return 0;
+
+  /* Handle the case when the polynomial has no monomials */
+  if (p->monomialCount == 0u) {
+    *b = (mp_bitcnt_t) 1u;
+    return 1;
+  }
+
+  /* Go over the coefficients and get their integer size */
+  bound = (mp_bitcnt_t) 1u;
+  for (i=0u;i<p->monomialCount;i++) {
+    if (!tryConstantIntegerBound(&bc, p->coeffs[i])) return 0;
+    if (bc > bound) bound = bc;
+  }
+  *b = bound;
+  return 1;
+}
+
+static inline void __sparsePolynomialGcdHeuristicGenPolyModsDiv(mpz_t c, mpz_t g, mpz_t zeta, mpz_t scratch, mpz_t scratch2) {
+  mpz_fdiv_qr(scratch, c, g, zeta);
+  mpz_mul_ui(scratch2, c, 2u);
+  if (mpz_cmpabs(scratch2, zeta) >= 0) {
+    mpz_sub(c, c, zeta);
+    mpz_add_ui(scratch, scratch, 1u);
+  }
+  mpz_set(g, scratch);
+}
+
+static inline sparse_polynomial_t __sparsePolynomialGcdHeuristicGenPoly(mpz_t gamma, mpz_t zeta) {
+  sparse_polynomial_t p, t, q;
+  int i;
+  mpz_t g, c, scratch, scratch2;
+  constant_t cc, ci;
+
+  p = sparsePolynomialFromIntConstant(0);
+  i = 0;
+  mpz_init(g);
+  mpz_set(g, gamma);
+  mpz_init(c);
+  mpz_init(scratch);
+  mpz_init(scratch2);
+  while (mpz_sgn(g) != 0) {
+    __sparsePolynomialGcdHeuristicGenPolyModsDiv(c, g, zeta, scratch, scratch2);
+    cc = constantFromMpz(c);
+    ci = constantFromInt(i);
+    t = __sparsePolynomialFromMonomial(cc, ci);
+    constantFree(cc);
+    constantFree(ci);
+    q = sparsePolynomialAdd(p, t);
+    sparsePolynomialFree(p);
+    sparsePolynomialFree(t);
+    p = q;
+    i++;
+  }
+  mpz_clear(g);
+  mpz_clear(c);
+  mpz_clear(scratch);
+  mpz_clear(scratch2);
+    
+  return p;
+}
+
+static inline int __sparsePolynomialGcdHeuristicDivides(sparse_polynomial_t a, sparse_polynomial_t b) {
+  sparse_polynomial_t q, r;
+  int res;
+
+  sparsePolynomialDiv(&q, &r, b, a);
+  res = sparsePolynomialIsConstantZero(r, 0);
+  sparsePolynomialFree(q);
+  sparsePolynomialFree(r);
+  return res;
+}
+
+static inline int __sparsePolynomialGcdHeuristic(sparse_polynomial_t *u, sparse_polynomial_t p, sparse_polynomial_t q) {
+  int n;
+  mpz_t lcm;
+  sparse_polynomial_t g, h, lcmp, G;
+  mp_bitcnt_t b, b1, b2;
+  int i;
+  mpz_t zeta, alpha, beta, gamma;
+  
+  /* Handle stupid inputs */
+  if (p == NULL) return 0;
+  if (q == NULL) return 0;
+
+  /* Both polynomials must not have too many coefficients */
+  if (p->monomialCount > SPARSE_POLYNOMIAL_GCD_HEURISTIC_MAX_MONOMIAL_COUNT) return 0;
+  if (q->monomialCount > SPARSE_POLYNOMIAL_GCD_HEURISTIC_MAX_MONOMIAL_COUNT) return 0;
+
+  /* The degrees of both polynomials must not be greater than some bound */
+  n = sparsePolynomialGetDegreeAsInt(p);
+  if (n < 0) return 0;
+  if (n > SPARSE_POLYNOMIAL_GCD_HEURISTIC_MAX_DEGREE) return 0;
+  n = sparsePolynomialGetDegreeAsInt(q);
+  if (n < 0) return 0;
+  if (n > SPARSE_POLYNOMIAL_GCD_HEURISTIC_MAX_DEGREE) return 0;
+  
+  /* Both polynomials must have rational coefficients */
+  if (!sparsePolynomialCoefficientsAreRational(p, 0)) return 0;
+  if (!sparsePolynomialCoefficientsAreRational(q, 0)) return 0;
+
+  /* Compute the lcm of the denominators of all coefficients of both polynomials */
+  mpz_init(lcm);
+  mpz_set_ui(lcm, 1u);
+  if (!__sparsePolynomialCoefficientDenominatorLcm(lcm, p)) {
+    /* Could not compute lcm */
+    mpz_clear(lcm);
+    return 0;
+  }
+  if (!__sparsePolynomialCoefficientDenominatorLcm(lcm, q)) {
+    /* Could not compute lcm */
+    mpz_clear(lcm);
+    return 0;
+  }
+
+  /* Multiply both polynomials by the lcm, to make them polynomials
+     with integer coefficients 
+  */
+  lcmp = sparsePolynomialFromMpzConstant(lcm);
+  mpz_clear(lcm);
+  g = sparsePolynomialMul(p, lcmp);
+  h = sparsePolynomialMul(q, lcmp);  
+  sparsePolynomialFree(lcmp);
+
+  /* Now get the maximum number of bits needed to store the
+     coefficients of both polynomials 
+  */
+  if (!__sparsePolynomialCoefficientIntegerBounds(&b1, g)) {
+    /* Could not compute the bound */
+    sparsePolynomialFree(g);
+    sparsePolynomialFree(h);
+    return 0;
+  }
+  if (!__sparsePolynomialCoefficientIntegerBounds(&b2, h)) {
+    /* Could not compute the bound */
+    sparsePolynomialFree(g);
+    sparsePolynomialFree(h);
+    return 0;
+  }
+  b = b1;
+  if (b2 > b1) b = b2;
+
+  /* The bound on the integer coefficients must not be too large */
+  if (b > SPARSE_POLYNOMIAL_GCD_HEURISTIC_MAX_INTEGER_BOUND) {
+    sparsePolynomialFree(g);
+    sparsePolynomialFree(h);
+    return 0;
+  }
+
+  /* Now take zeta = 2^(b + 5) + 1. Clearly zeta > 2 * abs(c_i) for
+     all coefficients c_i of both polynomials. 
+     
+     See Theorem 1 of 
+
+     Bruce W. Char, Keith O. Geddes, Gaston H. Gonnet, GCDHEU:
+     Heuristic polynomial GCD algorithm based on integer GCD
+     computation, Journal of Symbolic Computation, Volume 7, Issue 1,
+     1989, Pages 31-48.
+
+     to understand why this is important.
+
+  */
+  mpz_init(zeta);
+  mpz_ui_pow_ui(zeta, 2u, (unsigned int) (b + 5u));
+  mpz_add_ui(zeta, zeta, 1u);
+
+  /* Initialize alpha, beta and gamma */
+  mpz_init(alpha);
+  mpz_init(beta);
+  mpz_init(gamma);
+  
+  /* Loop for the heuristic */
+  for (i=0;i<SPARSE_POLYNOMIAL_GCD_HEURISTIC_TRIALS;i++) {
+    /* Evaluate both polynomials at zeta, yielding alpha and beta 
+       
+       alpha = g(zeta)
+       beta  = h(zeta)
+
+    */
+    if (!sparsePolynomialEvalMpz(alpha, g, zeta)) {
+      /* Evaluation did not work */
+      mpz_clear(zeta);
+      mpz_clear(alpha);
+      mpz_clear(beta);
+      mpz_clear(gamma);
+      sparsePolynomialFree(g);
+      sparsePolynomialFree(h);
+      return 0;
+    }
+    if (!sparsePolynomialEvalMpz(beta, h, zeta)) {
+      /* Evaluation did not work */
+      mpz_clear(zeta);
+      mpz_clear(alpha);
+      mpz_clear(beta);
+      mpz_clear(gamma);
+      sparsePolynomialFree(g);
+      sparsePolynomialFree(h);
+      return 0;
+    }
+    
+    /* Compute integer gcd: gamma = gcd(alpha, beta) */
+    mpz_gcd(gamma, alpha, beta);
+
+    /* If gamma is zero, continue directly with the next zeta */
+    if (mpz_sgn(gamma) != 0) {
+      /* Lift the integer gcd onto the polynomials */
+      G = __sparsePolynomialGcdHeuristicGenPoly(gamma, zeta);
+
+      /* Check if G divides g and h */
+      if (__sparsePolynomialGcdHeuristicDivides(G, g) &&
+	  __sparsePolynomialGcdHeuristicDivides(G, h)) {
+	/* G divides both g and h and hence is the gcd of g and h 
+
+	   Set the result.
+	*/
+	*u = G;
+
+	/* Clear the variables */
+	mpz_clear(zeta);
+	mpz_clear(alpha);
+	mpz_clear(beta);
+	mpz_clear(gamma);
+	sparsePolynomialFree(g);
+	sparsePolynomialFree(h);
+	
+	/* Return success */
+	return 1;
+      }
+      /* The heuristic did not work, clear G */
+      sparsePolynomialFree(G);
+    }
+
+    /* Prepare the next step */
+    mpz_mul_ui(zeta, zeta, 4u);
+    mpz_add_ui(zeta, zeta, 1u);
+  }
+
+  /* Clear variables */
+  mpz_clear(zeta);
+  mpz_clear(alpha);
+  mpz_clear(beta);
+  mpz_clear(gamma);
+  sparsePolynomialFree(g);
+  sparsePolynomialFree(h);
+
+  /* The heuristic did not work */
+  return 0;
+}
+
 static inline sparse_polynomial_t sparsePolynomialGcd(sparse_polynomial_t p, sparse_polynomial_t q) {
   sparse_polynomial_t u, v, t, z;
   constant_t a, b, c, d;
@@ -6050,22 +6456,14 @@ static inline sparse_polynomial_t sparsePolynomialGcd(sparse_polynomial_t p, spa
   if (sparsePolynomialEqual(p, q, 0)) {
     return sparsePolynomialFromCopy(p);
   }
-  
-  /* General case: Euclidian algorithm */
-  u = sparsePolynomialFromCopy(p);
-  v = sparsePolynomialFromCopy(q);
-  while (!sparsePolynomialIsConstantZero(v, 1)) {
-    sparsePolynomialDiv(&z, &t, u, v);
-    sparsePolynomialFree(z);
-    sparsePolynomialFree(u);
-    u = v;
-    v = t;
+
+  /* Try a heuristic algorithm. If it does not work, use the general
+     Euclidian algorithm.
+  */
+  if (!__sparsePolynomialGcdHeuristic(&u, p, q)) {
+    /* General case: Euclidian algorithm */
+    u = __sparsePolynomialGcdBaseCase(p, q);
   }
-  if (!sparsePolynomialIsConstantZero(v, 0)) {
-    sparsePolynomialFree(u);
-    u = sparsePolynomialFromIntConstant(1);
-  }
-  sparsePolynomialFree(v);
 
   /* Make the polynomial u = gcd(a,b) unitary */
   if (!sparsePolynomialIsConstantZero(u, 1)) {
@@ -6786,6 +7184,111 @@ static inline void sparsePolynomialEvalMpfi(sollya_mpfi_t y, sparse_polynomial_t
 
   /* Free the access to the global scratch space variable again */
   __sparsePolynomialEvalMpfi_var_used = 0;
+}
+
+static inline int __sparsePolynomialEvalMpz(mpz_t y, sparse_polynomial_t p, mpz_t x, mpz_t scratch) {
+  unsigned int i, a, b, d;
+  constant_t dc;
+
+  /* Handle stupid inputs */
+  if (p == NULL) {
+    return 0;
+  }
+
+  /* Handle the strange case when p has no monomials */
+  if (p->monomialCount == 0u) {
+    mpz_set_si(y, 0);
+    return 1;
+  }
+  
+  /* Perform Horner evaluation of p in x */
+  if (!tryConstantToMpz(y, p->coeffs[p->monomialCount-1u])) return 0;
+  for (i=p->monomialCount-1u;i>=1u;i--) {
+    /* y <- x^(p->monomialDegrees[i] - p->monomialDegrees[i-1u]) * y */
+    if (tryConstantToUnsignedInt(&a, p->monomialDegrees[i]) &&
+	tryConstantToUnsignedInt(&b, p->monomialDegrees[i-1u])) {
+      if (a < b) {
+	sollyaFprintf(stderr,"Error: __sparsePolynomialEvalMpz: monomial degrees not appropriately ordered\n");
+	exit(1);
+      }
+      d = a - b;
+      if (d != 0u) {
+	if (d == 1u) {
+	  mpz_mul(y, x, y);
+	} else {
+	  mpz_pow_ui(scratch, x, d);
+	  mpz_mul(y, scratch, y);
+	}
+      }
+    } else {
+      dc = constantSub(p->monomialDegrees[i], p->monomialDegrees[i-1u]);
+      if (!tryConstantToMpz(scratch, dc)) {
+	constantFree(dc);
+	return 0;
+      }
+      constantFree(dc);
+      if (!sollya_mpz_pow(scratch, x, scratch)) return 0;
+      mpz_mul(y, scratch, y);
+    }
+    /* y <- p->coeffs[i-1u] + y */
+    if (!tryConstantToMpz(scratch, p->coeffs[i-1u])) return 0;
+    mpz_add(y, y, scratch);
+  }
+  /* y <- x^(p->monomialDegrees[0u]) * y */
+  if (tryConstantToUnsignedInt(&a, p->monomialDegrees[0u])) {
+    if (a != 0u) {
+      if (a == 1u) {
+	mpz_mul(y, x, y);
+      } else {
+	mpz_pow_ui(scratch, x, a);
+	mpz_mul(y, scratch, y);
+      }
+    }
+  } else {
+    if (!tryConstantToMpz(scratch, p->monomialDegrees[0u])) return 0;
+    if (!sollya_mpz_pow(scratch, x, scratch)) return 0;
+    mpz_mul(y, scratch, y);
+  }
+
+  /* Indicate success */
+  return 1;
+}
+
+static inline int sparsePolynomialEvalMpz(mpz_t y, sparse_polynomial_t p, mpz_t x) {
+  mpz_t scratch, Y;
+  int res;
+
+  /* Handle stupid inputs */
+  if (p == NULL) {
+    return 0;
+  }
+
+  /* Handle the strange case when p has no monomials */
+  if (p->monomialCount == 0u) {
+    mpz_set_si(y, 0);
+    return 1;
+  }
+
+  /* Cover the case when x and y are the same MPFI variable */
+  if (x == y) {
+    mpz_init(Y);
+    res = sparsePolynomialEvalMpz(Y, p, x);
+    mpz_set(y, Y);
+    mpz_clear(Y);
+    return res;
+  }
+
+  /* Initialize a scratch variable */
+  mpz_init(scratch);
+
+  /* Use inner evaluation function */
+  res = __sparsePolynomialEvalMpz(y, p, x, scratch);
+    
+  /* Clear the scratch variable */
+  mpz_clear(scratch);
+
+  /* Return success flag */
+  return res;
 }
 
 static inline node *__sparsePolynomialGetExpressionCanonical(sparse_polynomial_t p) {
