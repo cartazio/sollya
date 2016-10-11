@@ -159,6 +159,7 @@ struct __polynomial_struct_t {
   polynomial_type_t type;
   polynomial_output_type_t outputType;
   hash_result_t hash;
+  boolean_result_cache_t usesExpressionConstant;
   union { 
     sparse_polynomial_t sparse;
     polynomial_t g;
@@ -4303,6 +4304,15 @@ static inline int constantReferencesExpression(constant_t c, node *expr) {
   return 0;
 }
 
+static inline int constantUsesExpressionConstant(constant_t c) {
+  /* Handle stupid input */
+  if (c == NULL) return 0;
+
+  /* Evaluation depending on the representation type */
+  return (c->type == EXPRESSION);
+}
+
+
 static inline uint64_t constantHash(constant_t c) {
   uint64_t hash;
   
@@ -7159,11 +7169,38 @@ static inline unsigned int sparsePolynomialGetReferenceCount(sparse_polynomial_t
   return p->refCount;
 }
 
+static inline int sparsePolynomialUsesExpressionConstant(sparse_polynomial_t p) {
+  unsigned int i;
+  
+  /* Handle stupid input */
+  if (p == NULL) return 0;
+
+  /* Handle the case when the polynomial has no monomials */
+  if (p->monomialCount == 0u) return 0;
+
+  /* Go over all monomials and check the constants */
+  for (i=0u;i<p->monomialCount;i++) {
+    if (constantUsesExpressionConstant(p->coeffs[i])) return 1;
+    if (constantUsesExpressionConstant(p->monomialDegrees[i])) return 1;
+  }
+  if (constantUsesExpressionConstant(p->deg)) return 1;
+
+  /* The expression has nowhere been found */
+  return 0;
+}
+
 static inline int sparsePolynomialReferencesExpression(sparse_polynomial_t p, node *expr) {
   unsigned int i;
   
   /* Handle stupid input */
   if (p == NULL) return 0;
+
+  /* If the polynomial does not use any expression, it cannot
+     reference the given expression 
+  */
+  if (!sparsePolynomialUsesExpressionConstant(p)) {
+    return 0;
+  }
 
   /* Handle the case when the polynomial has no monomials */
   if (p->monomialCount == 0u) return 0;
@@ -7212,6 +7249,7 @@ static inline uint64_t sparsePolynomialHash(sparse_polynomial_t p) {
 /* Start of part for general (composed) polynomials */
 
 static inline void __polynomialSparsify(polynomial_t);
+int polynomialUsesExpressionConstant(polynomial_t p);
 
 static inline polynomial_t __polynomialAllocate() {
   return (polynomial_t) safeMalloc(sizeof(struct __polynomial_struct_t));
@@ -7242,6 +7280,7 @@ static inline polynomial_t __polynomialBuildFromSparse(sparse_polynomial_t p) {
   res->outputType = ANY_FORM;
   res->value.sparse = p;
   res->hash.hasHash = 0;
+  res->usesExpressionConstant.cached = 0;
 
   /* Return the newly built polynomial */
   return res;
@@ -7400,6 +7439,7 @@ static inline polynomial_t __polynomialExecuteCompositionCompose(polynomial_t p,
     res = __polynomialAllocate();
     res->refCount = 1u;
     res->hash.hasHash = 0;
+    res->usesExpressionConstant.cached = 0;
     res->outputType = ANY_FORM;
     res->value.sparse = sparsePolynomialCompose(p->value.sparse,  
 						q->value.sparse);
@@ -7411,6 +7451,7 @@ static inline polynomial_t __polynomialExecuteCompositionCompose(polynomial_t p,
     res = __polynomialAllocate();
     res->refCount = 1u;
     res->hash.hasHash = 0;
+    res->usesExpressionConstant.cached = 0;
     res->outputType = ANY_FORM;
     res->type = p->type;
     res->value.pair.g = __polynomialExecuteCompositionCompose(p->value.pair.g, q);
@@ -7425,6 +7466,7 @@ static inline polynomial_t __polynomialExecuteCompositionCompose(polynomial_t p,
     res = __polynomialAllocate();
     res->refCount = 1u;
     res->hash.hasHash = 0;
+    res->usesExpressionConstant.cached = 0;
     res->outputType = ANY_FORM;
     res->type = NEGATE;
     res->value.g = __polynomialExecuteCompositionCompose(p->value.g, q);
@@ -7433,6 +7475,7 @@ static inline polynomial_t __polynomialExecuteCompositionCompose(polynomial_t p,
     res = __polynomialAllocate();
     res->refCount = 1u;
     res->hash.hasHash = 0;
+    res->usesExpressionConstant.cached = 0;
     res->outputType = ANY_FORM;
     res->type = POWER;
     res->value.powering.g = __polynomialExecuteCompositionCompose(p->value.powering.g, q);
@@ -8268,6 +8311,7 @@ polynomial_t polynomialHornerize(polynomial_t p) {
   res = __polynomialAllocate();
   res->refCount = 1u;
   res->hash.hasHash = 0;
+  res->usesExpressionConstant.cached = 0;
   res->type = p->type;
   res->outputType = HORNER_FORM;
   switch (p->type) {
@@ -8309,6 +8353,7 @@ polynomial_t polynomialCanonicalize(polynomial_t p) {
   res = __polynomialAllocate();
   res->refCount = 1u;
   res->hash.hasHash = 0;
+  res->usesExpressionConstant.cached = 0;
   res->type = p->type;
   res->outputType = CANONICAL_FORM;
   switch (p->type) {
@@ -9232,6 +9277,7 @@ polynomial_t polynomialAdd(polynomial_t p, polynomial_t q) {
   res = __polynomialAllocate();
   res->refCount = 1u;
   res->hash.hasHash = 0;
+  res->usesExpressionConstant.cached = 0;
   res->type = ADDITION;
   res->outputType = ANY_FORM;
   res->value.pair.g = polynomialFromCopy(p);
@@ -9268,6 +9314,7 @@ polynomial_t polynomialSub(polynomial_t p, polynomial_t q) {
   res = __polynomialAllocate();
   res->refCount = 1u;
   res->hash.hasHash = 0;
+  res->usesExpressionConstant.cached = 0;
   res->type = SUBTRACTION;
   res->outputType = ANY_FORM;
   res->value.pair.g = polynomialFromCopy(p);
@@ -9316,6 +9363,7 @@ polynomial_t polynomialMul(polynomial_t p, polynomial_t q) {
   res = __polynomialAllocate();
   res->refCount = 1u;
   res->hash.hasHash = 0;
+  res->usesExpressionConstant.cached = 0;
   res->type = MULTIPLICATION;
   res->outputType = ANY_FORM;
   res->value.pair.g = polynomialFromCopy(p);
@@ -9340,6 +9388,7 @@ polynomial_t polynomialNeg(polynomial_t p) {
     res = __polynomialAllocate();
     res->refCount = 1u;
     res->hash.hasHash = 0;
+    res->usesExpressionConstant.cached = 0;
     res->type = SUBTRACTION;
     res->outputType = ANY_FORM;
     res->value.pair.g = polynomialFromCopy(p->value.pair.h);
@@ -9357,6 +9406,7 @@ polynomial_t polynomialNeg(polynomial_t p) {
   res = __polynomialAllocate();
   res->refCount = 1u;
   res->hash.hasHash = 0;
+  res->usesExpressionConstant.cached = 0;
   res->type = NEGATE;
   res->outputType = ANY_FORM;
   res->value.g = polynomialFromCopy(p);
@@ -9380,6 +9430,7 @@ polynomial_t polynomialCompose(polynomial_t p, polynomial_t q) {
     res = __polynomialAllocate();
     res->refCount = 1u;
     res->hash.hasHash = 0;
+    res->usesExpressionConstant.cached = 0;
     res->type = COMPOSITION;
     res->outputType = ANY_FORM;
     res->value.pair.g = polynomialFromCopy(p);
@@ -9410,6 +9461,7 @@ polynomial_t polynomialCompose(polynomial_t p, polynomial_t q) {
     res = __polynomialAllocate();
     res->refCount = 1u;
     res->hash.hasHash = 0;
+    res->usesExpressionConstant.cached = 0;
     res->type = POWER;
     res->outputType = ANY_FORM;
     res->value.powering.g = polynomialCompose(p->value.powering.g, q);
@@ -9464,6 +9516,7 @@ polynomial_t polynomialCompose(polynomial_t p, polynomial_t q) {
       res = __polynomialAllocate();
       res->refCount = 1u;
       res->hash.hasHash = 0;
+      res->usesExpressionConstant.cached = 0;
       res->type = POWER;
       res->outputType = ANY_FORM;
       res->value.powering.g = polynomialCompose(p->value.powering.g, q);
@@ -9479,6 +9532,7 @@ polynomial_t polynomialCompose(polynomial_t p, polynomial_t q) {
   res = __polynomialAllocate();
   res->refCount = 1u;
   res->hash.hasHash = 0;
+  res->usesExpressionConstant.cached = 0;
   res->type = COMPOSITION;
   res->outputType = ANY_FORM;
   res->value.pair.g = polynomialFromCopy(p);
@@ -9510,6 +9564,7 @@ polynomial_t polynomialDeriv(polynomial_t p) {
     res = __polynomialAllocate();
     res->refCount = 1u;
     res->hash.hasHash = 0;
+    res->usesExpressionConstant.cached = 0;
     res->type = p->type;
     res->outputType = ANY_FORM;
     res->value.pair.g = polynomialDeriv(p->value.pair.h);
@@ -9520,6 +9575,7 @@ polynomial_t polynomialDeriv(polynomial_t p) {
     res = __polynomialAllocate();
     res->refCount = 1u;
     res->hash.hasHash = 0;
+    res->usesExpressionConstant.cached = 0;
     res->type = NEGATE;
     res->outputType = ANY_FORM;
     res->value.g = polynomialDeriv(p->value.g);
@@ -9532,12 +9588,14 @@ polynomial_t polynomialDeriv(polynomial_t p) {
       res = __polynomialAllocate();
       res->refCount = 1u;
       res->hash.hasHash = 0;
+      res->usesExpressionConstant.cached = 0;
       res->type = MULTIPLICATION;
       res->outputType = ANY_FORM;
       res->value.pair.g = __polynomialFromConstant(p->value.powering.c);
       res->value.pair.h = __polynomialAllocate();
       res->value.pair.h->refCount = 1u;
       res->value.pair.h->hash.hasHash = 0;
+      res->value.pair.h->usesExpressionConstant.cached = 0;
       res->value.pair.h->type = POWER;
       res->value.pair.h->outputType = ANY_FORM;
       res->value.pair.h->value.powering.g = polynomialFromCopy(p->value.powering.g);
@@ -9828,6 +9886,7 @@ polynomial_t polynomialPowUnsignedInt(polynomial_t p, unsigned int n) {
   res = __polynomialAllocate();
   res->refCount = 1u;
   res->hash.hasHash = 0;
+  res->usesExpressionConstant.cached = 0;
   res->type = POWER;
   res->outputType = ANY_FORM;
   res->value.powering.g = polynomialFromCopy(p);
@@ -9909,6 +9968,7 @@ int polynomialPow(polynomial_t *r, polynomial_t p, polynomial_t q) {
   res = __polynomialAllocate();
   res->refCount = 1u;
   res->hash.hasHash = 0;
+  res->usesExpressionConstant.cached = 0;
   res->type = POWER;
   res->outputType = ANY_FORM;
   res->value.powering.g = polynomialFromCopy(p);
@@ -10037,6 +10097,7 @@ static inline polynomial_t __polynomialRoundDyadicAnyForm(polynomial_t p, mp_pre
   res = __polynomialAllocate();
   res->refCount = 1u;
   res->hash.hasHash = 0;
+  res->usesExpressionConstant.cached = 0;
   res->type = p->type;
   res->outputType = ANY_FORM;
   switch (p->type) {
@@ -10109,6 +10170,7 @@ static inline polynomial_t __polynomialRoundRationalAnyForm(polynomial_t p, mp_p
   res = __polynomialAllocate();
   res->refCount = 1u;
   res->hash.hasHash = 0;
+  res->usesExpressionConstant.cached = 0;
   res->type = p->type;
   res->outputType = ANY_FORM;
   switch (p->type) {
@@ -10181,6 +10243,7 @@ static inline polynomial_t __polynomialRoundAnyForm(polynomial_t p, mp_prec_t pr
   res = __polynomialAllocate();
   res->refCount = 1u;
   res->hash.hasHash = 0;
+  res->usesExpressionConstant.cached = 0;
   res->type = p->type;
   res->outputType = ANY_FORM;
   switch (p->type) {
@@ -10249,10 +10312,69 @@ static inline sparse_polynomial_t __polynomialGetSparsePolynomial(polynomial_t p
   return sparsePolynomialFromCopy(p->value.sparse);
 }
 
+static inline int __polynomialUsesExpressionConstantInner(polynomial_t p) {
+
+  /* Handle stupid input */
+  if (p == NULL) return 0;
+  
+  /* Handle the problem recursively */
+  switch (p->type) {
+  case SPARSE:
+    return sparsePolynomialUsesExpressionConstant(p->value.sparse);
+    break;
+  case ADDITION:
+  case SUBTRACTION:
+  case MULTIPLICATION:
+  case COMPOSITION:
+    if (polynomialUsesExpressionConstant(p->value.pair.g)) return 1;
+    if (polynomialUsesExpressionConstant(p->value.pair.h)) return 1;
+    return 0;
+    break;
+  case NEGATE:
+    return polynomialUsesExpressionConstant(p->value.g);
+    break;
+  case POWER:
+    if (constantUsesExpressionConstant(p->value.powering.c)) return 1;
+    if (polynomialUsesExpressionConstant(p->value.powering.g)) return 1;
+    return 0;
+    break;
+  }
+  return 0;
+}
+
+int polynomialUsesExpressionConstant(polynomial_t p) {
+  int res;
+  
+  /* Handle stupid input */
+  if (p == NULL) return 0;
+
+  /* Check if the result is in the cache */
+  if (p->usesExpressionConstant.cached) {
+    return p->usesExpressionConstant.res;
+  }
+
+  /* Call inner function */
+  res = __polynomialUsesExpressionConstantInner(p);
+
+  /* Put the result into the cache */
+  p->usesExpressionConstant.res = res;
+  p->usesExpressionConstant.cached = 1;
+  
+  /* Return the result */
+  return res;
+}
+
 int polynomialReferencesExpression(polynomial_t p, node *expr) {
 
   /* Handle stupid input */
   if (p == NULL) return 0;
+
+  /* If the polynomial does not use any expression, it cannot
+     reference the given expression 
+  */
+  if (!polynomialUsesExpressionConstant(p)) {
+    return 0;
+  }
 
   /* Handle the problem recursively */
   switch (p->type) {
