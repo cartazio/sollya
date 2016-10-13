@@ -309,6 +309,13 @@ int inside_sollya_ferror = 0;
 int inside_sollya_fwrite = 0;
 /* End of global variables for sollya_getc */
 
+/* Global variable for the lexer/parser when the input stream needs to
+   be rewound before/during/after a fork 
+*/
+int parserAlreadyRunning = 0;
+/* End of global variable */
+
+
 extern int yyparse(void *); 
 extern void yylex_destroy(void *);
 extern int yylex_init(void **);
@@ -323,6 +330,7 @@ void freeGlobalReusedMPFRVars();
 void freeTool();
 
 void parserFlushInput() {
+  if (!parserAlreadyRunning) return;
   fflush(getCurrentLexerStream());
 }
 
@@ -1428,6 +1436,7 @@ void freeTool() {
     safeFree(readStack);
     readStack = readStackTemp;
   }
+  parserAlreadyRunning = 0;
   yylex_destroy(scanner);
   freeFunctionLibraries();
   freeConstantLibraries();
@@ -2546,7 +2555,8 @@ static int general(int argc, char *argv[]) {
   if (inputFileOpened) {
     yyset_in(inputFile, scanner);
   }
-
+  parserAlreadyRunning = 1;
+  
   if (!doNotModifyStackSize) {
 #if defined(RLIMIT_STACK)
     if (getrlimit(RLIMIT_STACK,&rlim) == 0) {
