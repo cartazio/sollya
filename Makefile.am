@@ -1,5 +1,5 @@
 SUBDIRS = doc tests-tool tests-lib
-EXTRA_DIST = externalfun.c externalproc.c sollya.h2m sollya.map
+EXTRA_DIST = externalfun.c externalproc.c sollya.h2m sollya.1 sollya.map
 
 AM_YFLAGS = -d
 AM_LFLAGS = -o$(LEX_OUTPUT_ROOT).c
@@ -153,7 +153,7 @@ if TEST_HELP2MAN
 man_MANS = sollya.1
 
 AM_H2MFLAGS = \
-	--locale=C.utf8 \
+	--locale=C.UTF-8 \
 	--libtool \
 	--no-info
 
@@ -164,8 +164,8 @@ sollya.1: sollya
 	 SOLLYA_BANNER_OFF=YES $(HELP2MAN) \
 			-s 1 \
 			$(AM_H2MFLAGS) \
-			-I $(top_srcdir)/$*.h2m \
-			-n $(if $($(subst -,_,$*)_DESCRIPTION), $($(subst -,_,$*)_DESCRIPTION), "manual page for $*") \
+			-I $(top_srcdir)/sollya.h2m \
+			-n $(sollya_DESCRIPTION) \
 			-o $@ \
 		$(top_builddir)/$<
 endif
