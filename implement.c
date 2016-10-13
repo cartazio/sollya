@@ -416,7 +416,7 @@ int determinePrecisions(mpfr_t *coefficients, int *coeffsAutoRound, int degree,
 
       if (coeffPrec > currentPrec) {
 	currentPrec = coeffPrec;
-	printMessage(1,SOLLYA_MSG_INFERED_COEFF_PREC_HIGHER_THAN_REQUIRED,"Warning: the infered precision of the %dth coefficient of the polynomial is greater than\n",i);
+	printMessage(1,SOLLYA_MSG_INFERED_COEFF_PREC_HIGHER_THAN_REQUIRED,"Warning: the inferred precision of the %dth coefficient of the polynomial is greater than\n",i);
 	printMessage(1,SOLLYA_MSG_CONTINUATION,"the necessary precision computed for this step. This may make the automatic determination\n");
 	printMessage(1,SOLLYA_MSG_CONTINUATION,"of precisions useless.\n");
       }
@@ -6039,7 +6039,7 @@ node *implementpoly(node *func, rangetype range, mpfr_t *accur, int variablePrec
   mpfr_div_2ui(*accur,*accur,1,GMP_RNDN);
 
   if (accurToVarType(*accur) < variablePrecision) {
-    printMessage(1,SOLLYA_MSG_INFERED_OUTPUT_PREC_LESS_THAN_VARIABLE_PREC,"Warning: the infered output expansion type is less from the given variable type.\n");
+    printMessage(1,SOLLYA_MSG_INFERED_OUTPUT_PREC_LESS_THAN_VARIABLE_PREC,"Warning: the inferred output expansion type is less from the given variable type.\n");
     printMessage(1,SOLLYA_MSG_CONTINUATION,"Implementation cannot handle this case.\n");
     mpfr_clear(temp);
     return NULL;

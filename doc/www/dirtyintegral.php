@@ -32,7 +32,7 @@ points in the interval, where n is the value of global variable <?php linkTo("co
 integral. It should not be used if safety is critical. In this case, use 
 command <?php linkTo("command","integral","integral");?> instead. 
 </li><li>Warning: this command is currently known to be unsatisfactory. If you really 
-need to compute integrals, think of using an other tool or report a feature 
+need to compute integrals, think of using another tool or report a feature 
 request to sylvain.chevillard@ens-lyon.org. 
 </ul> 
 </div> 

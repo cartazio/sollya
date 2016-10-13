@@ -2428,7 +2428,7 @@ static int general(int argc, char *argv[]) {
 	  sollyaPrintf("  --noprompt                   do not print a prompt symbol\n");
 	  sollyaPrintf("  --oldautoprint               print commas between autoprinted elements separated by commas\n");
 	  sollyaPrintf("  --oldexternalprocprint       print the signature of an external procedure when autoprinting\n");
-	  sollyaPrintf("  --oldrlwrapcompatible        acheive some compatibility with old rlwrap versions by emitting wrong ANSI sequences (deprecated)\n");
+	  sollyaPrintf("  --oldrlwrapcompatible        achieve some compatibility with old rlwrap versions by emitting wrong ANSI sequences (deprecated)\n");
 	  sollyaPrintf("  --version                    print the version of Sollya, plus the copyright, the list of authors and the no warranty notice\n");
 	  sollyaPrintf("  --warninfile[append] <file>  print warning messages into a file instead on the standard output\n");
 	  sollyaPrintf("  --warnonstderr               print warning messages on error output instead on the standard output\n");

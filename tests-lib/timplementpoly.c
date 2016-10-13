@@ -19,7 +19,7 @@ int callback(sollya_msg_t msg, void *data) {
     sollya_lib_printf("Caught the message: the implemented polynomial is different from the original one.\n");
     break;
   case SOLLYA_MSG_INFERED_COEFF_PREC_HIGHER_THAN_REQUIRED:
-    sollya_lib_printf("Caught the message: the infered precision of a coefficient is higher than what seems to be needed to meet the accuracy target.\n");
+    sollya_lib_printf("Caught the message: the inferred precision of a coefficient is higher than what seems to be needed to meet the accuracy target.\n");
     break;    
   case SOLLYA_MSG_COEFF_NOT_TWICE_GREATER_THAN_SUBPOLY:
     sollya_lib_printf("Caught the message: a coefficient in a Horner scheme is not guaranteed to also be twice as large as the subpolynomial.\n");

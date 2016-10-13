@@ -13,7 +13,7 @@ The number of points has been set to 4.
 [|1.99999999999999999999999999999999999999999999999996, 2|]
 The tool has been restarted.
 =============== Test number 4 ================
-Warning: the infered precision of the 7th coefficient of the polynomial is greater than
+Warning: the inferred precision of the 7th coefficient of the polynomial is greater than
 the necessary precision computed for this step. This may make the automatic determination
 of precisions useless.
 
