@@ -1531,8 +1531,9 @@ void initToolDefaults() {
   pidStr = getUniqueId();
   uniqueStr = (char *) safeCalloc(4 + strlen(PACKAGE_STRING) + 1 + strlen(pidStr) + 1 + 8 * sizeof(int) + 1, sizeof(char));
   mySeed = (unsigned int) ((unsigned int) time(NULL)) + ((unsigned int) globalSeed);
-  globalSeed = rand_r(&mySeed);
-  sollya_snprintf(uniqueStr, 4 + strlen(PACKAGE_STRING) + 1 + strlen(pidStr) + 1 + 8 * sizeof(int) + 1, "_id_%s_%s_%08d", PACKAGE_STRING, pidStr, rand_r(&mySeed));
+  srand(mySeed);
+  globalSeed = rand();
+  sollya_snprintf(uniqueStr, 4 + strlen(PACKAGE_STRING) + 1 + strlen(pidStr) + 1 + 8 * sizeof(int) + 1, "_id_%s_%s_%08d", PACKAGE_STRING, pidStr, rand());
   for (c=uniqueStr;*c!='\0';c++) {
     if ((*c == ' ') || 
 	(*c == '\t') || 
