@@ -46,6 +46,8 @@ AC_LIBTOOL_DLOPEN
 LT_INIT([dlopen shared])   # AC_PROG_RANLIB is superseeded by LT_INIT
 AC_SUBST(LIBTOOL_DEPS)
 AC_SUBST(AR_FLAGS, "cr")   # To prevent a warning on some Ubuntu. See fbb8016beff7b45734e53ef8b80d2c306334c248
+AC_PATH_PROG([PDFLATEX],[pdflatex],[no])
+AM_CONDITIONAL([HAVE_PDFLATEX], [test "x$PDFLATEX" != "xno"])
 AC_PATH_PROG([HELP2MAN],[help2man],[no])
 AM_CONDITIONAL([HAVE_HELP2MAN], [test "x$HELP2MAN" != "xno"])
 
