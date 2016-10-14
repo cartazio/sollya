@@ -640,6 +640,7 @@ NOP             "nop"
 {DIAM}            			    {  return DIAMTOKEN; }
 {DISPLAY}          			    {  return DISPLAYTOKEN; }
 {VERBOSITY}       			    {  return VERBOSITYTOKEN; }
+{SHOWMESSAGENUMBERS}       		    {  return SHOWMESSAGENUMBERSTOKEN; }
 {CANONICAL}       			    {  return CANONICALTOKEN; }
 {AUTOSIMPLIFY}    			    {  return AUTOSIMPLIFYTOKEN; }
 {TAYLORRECURSIONS}			    {  return TAYLORRECURSIONSTOKEN; }
