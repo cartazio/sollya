@@ -97,49 +97,48 @@
   "\n"                                                                  \
   "and by\n"                                                            \
   "\n"                                                                  \
-  "    INRIA Sophia-Antipolis Mediterranee, APICS Team,\n"              \
-  "    Sophia-Antipolis, France.\n"                                     \
+  "   INRIA Sophia-Antipolis Mediterranee, APICS Team,\n"               \
+  "   Sophia-Antipolis, France.\n"                                      \
   "\n"                                                                  \
   "All rights reserved.\n"                                              \
   "\n"                                                                  \
   "Contributors:\n"                                                     \
-  "       Ch. Lauter, \n"                                               \
-  "       S. Chevillard, \n"                                            \
-  "       M. Joldes, \n"                                                \
-  "       N. Jourdan, \n"                                               \
-  "       M. Mezzarobba, \n"                                            \
-  "       J. Benoit.\n"                                                 \
+  "   Ch. Lauter, \n"                                                   \
+  "   S. Chevillard, \n"                                                \
+  "   M. Joldes, \n"                                                    \
+  "   N. Jourdan, \n"                                                   \
+  "   M. Mezzarobba, \n"                                                \
+  "   J. Benoit.\n"                                                     \
   " \n"                                                                 \
-  "Send bug reports to " PACKAGE_BUGREPORT ".\n"                        \
-  "\n"                                                                  \
-  "This software is governed by the CeCILL-C license under French law and\n" \
-  "abiding by the rules of distribution of free software.  You can  use,\n" \
-  "modify and/or redistribute the software under the terms of the CeCILL-C\n" \
-  "license as circulated by CEA, CNRS and INRIA at the following URL\n" \
-  "\"http://www.cecill.info\".\n"                                       \
-  "\n"                                                                  \
-  "As a counterpart to the access to the source code and  rights to copy,\n" \
-  "modify and redistribute granted by the license, users are provided only\n" \
-  "with a limited warranty  and the software's author,  the holder of the\n" \
-  "economic rights,  and the successive licensors  have only  limited\n" \
-  "liability.\n"                                                        \
-  "\n"                                                                  \
-  "In this respect, the user's attention is drawn to the risks associated\n" \
-  "with loading,  using,  modifying and/or developing or reproducing the\n" \
-  "software by the user in light of its specific status of free software,\n" \
-  "that may mean  that it is complicated to manipulate,  and  that  also\n" \
-  "therefore means  that it is reserved for developers  and  experienced\n" \
-  "professionals having in-depth computer knowledge. Users are therefore\n" \
-  "encouraged to load and test the software's suitability as regards their\n" \
-  "requirements in conditions enabling the security of their systems and/or\n" \
-  "data to be ensured and,  more generally, to use and operate it in the\n" \
-  "same conditions as regards security.\n"                              \
-  "\n"                                                                  \
-  "The fact that you are presently reading this means that you have had\n" \
-  "knowledge of the CeCILL-C license and that you accept its terms.\n"  \
-  "\n"                                                                  \
-  "This program is distributed WITHOUT ANY WARRANTY; without even the\n" \
-  "implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n" \
+  "License:\n"                                                          \
+  "   This software is governed by the CeCILL-C license under French law and\n"   \
+  "   abiding by the rules of distribution of free software. You can use,\n"      \
+  "   modify and/or redistribute the software under the terms of the CeCILL-C\n"  \
+  "   license as circulated by CEA, CNRS and INRIA at the following URL\n"        \
+  "   \"http://www.cecill.info\".\n"                                              \
+  "\n"                                                                            \
+  "   As a counterpart to the access to the source code and rights to copy,\n"    \
+  "   modify and redistribute granted by the license, users are provided only\n"  \
+  "   with a limited warranty and the software's author, the holder of the\n"     \
+  "   economic rights, and the successive licensors have only limited\n"          \
+  "   liability.\n"                                                               \
+  "\n"                                                                            \
+  "   In this respect, the user's attention is drawn to the risks associated\n"   \
+  "   with loading, using, modifying and/or developing or reproducing the\n"      \
+  "   software by the user in light of its specific status of free software,\n"   \
+  "   that may mean that it is complicated to manipulate, and that also\n"        \
+  "   therefore means that it is reserved for developers and experienced\n"       \
+  "   professionals having in-depth computer knowledge. Users are therefore\n"    \
+  "   encouraged to load and test the software's suitability as regards their\n"  \
+  "   requirements in conditions enabling the security of their systems and/or\n" \
+  "   data to be ensured and, more generally, to use and operate it in the\n"    \
+  "   same conditions as regards security.\n"                                     \
+  "\n"                                                                            \
+  "   The fact that you are presently reading this means that you have had\n"     \
+  "   knowledge of the CeCILL-C license and that you accept its terms.\n"         \
+  "\n"                                                                            \
+  "   This program is distributed WITHOUT ANY WARRANTY; without even the\n"       \
+  "   implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n" \
   "\n"
 
 #endif /* ifdef VERSION_H*/
