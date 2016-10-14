@@ -750,8 +750,7 @@ LDFLAGS="$USER_LDFLAGS"
 
 
 # The following two lines are supposed to fix bug #17197.
-SRC_DIR=$(if readlink -f "${srcdir}" > /dev/null 2>&1; then readlink -f "${srcdir}"; else echo "${srcdir}"; fi)
-AM_CPPFLAGS="-I$SRC_DIR $AM_CPPFLAGS"
+AM_CPPFLAGS="-I\${abs_srcdir} $AM_CPPFLAGS"
 
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(AM_CFLAGS)
