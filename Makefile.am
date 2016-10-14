@@ -149,7 +149,7 @@ check-tool: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) check-am || exit 1; \
 	test -z "$$fail"
 
-if TEST_HELP2MAN
+if HAVE_HELP2MAN
 man_MANS = sollya.1
 
 AM_H2MFLAGS = \
