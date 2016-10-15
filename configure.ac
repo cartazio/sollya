@@ -750,7 +750,7 @@ LDFLAGS="$USER_LDFLAGS"
 
 
 # The following two lines are supposed to fix bug #17197.
-AM_CPPFLAGS="-I\${abs_srcdir} $AM_CPPFLAGS"
+AM_CPPFLAGS="-I\${abs_top_srcdir} $AM_CPPFLAGS"
 
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(AM_CFLAGS)
