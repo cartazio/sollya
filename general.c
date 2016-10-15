@@ -1533,7 +1533,7 @@ void initToolDefaults() {
   mySeed = (unsigned int) ((unsigned int) time(NULL)) + ((unsigned int) globalSeed);
   srand(mySeed);
   globalSeed = rand();
-  sollya_snprintf(uniqueStr, 4 + strlen(PACKAGE_STRING) + 1 + strlen(pidStr) + 1 + 8 * sizeof(int) + 1, "_id_%s_%s_%08d", PACKAGE_STRING, pidStr, rand());
+  sollya_snprintf(uniqueStr, 4 + strlen(PACKAGE_STRING) + 1 + strlen(pidStr) + 1 + 8 * sizeof(int) + 1, "_id_%s_%s_%08d", PACKAGE_STRING, pidStr, (mySeed = rand()));
   for (c=uniqueStr;*c!='\0';c++) {
     if ((*c == ' ') || 
 	(*c == '\t') || 
