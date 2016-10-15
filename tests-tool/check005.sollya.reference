@@ -2,7 +2,7 @@ The tool has been restarted.
 =============== Test number 81 ================
 Warning: a coefficient is not at least 2 times greater than a already evaluated sub-polynomial.
 This procedure is not able to implement the polynomial correctly in this case.
-Warning: the infered precision of the 13th coefficient of the polynomial is greater than
+Warning: the inferred precision of the 13th coefficient of the polynomial is greater than
 the necessary precision computed for this step. This may make the automatic determination
 of precisions useless.
 Warning: a problem has been encountered during the determination of the precisions needed.

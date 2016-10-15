@@ -3,10 +3,16 @@
 # Skeleton initially generated with autoscan
 AC_PREREQ(2.59)
 AC_INIT([sollya], [git-devel], [sollya-devl@lists.gforge.inria.fr])
+AC_CONFIG_MACRO_DIR([m4])  # To please autoconf. See c8fd07aa1d2bd54f8c1b519052849aed1ec39663
+AC_CONFIG_AUX_DIR([build-aux]) # Put auxiliary files of autoconf into a specific directory
 AC_CONFIG_SRCDIR([sollya-library-wrappers.h]) # Checks that we are really trying to configure Sollya and not something else...
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE([1.6 no-define dist-zip dist-bzip2])
+AM_MAINTAINER_MODE([]) # Disables automatic call to ./configure after a modification has been made to configure.ac, Makefile.am, etc.
+                       # This simplifies the life of Debian maintainers when they apply patches.
+                       # The default behavior (automatic call to ./configure when necessary), that is probably desired for every-day developers is achieved by passing the option --enable-maintainer-mode to configure.
 
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])]) # On systems with a recent version of automake, produces a more synthetic output when compiling
 
 # Checks for programs.
 AC_PROG_YACC
@@ -39,10 +45,11 @@ AC_PROG_MKDIR_P
 AC_LIBTOOL_DLOPEN
 LT_INIT([dlopen shared])   # AC_PROG_RANLIB is superseeded by LT_INIT
 AC_SUBST(LIBTOOL_DEPS)
-AC_CONFIG_MACRO_DIR([m4])  # To please autoconf. See c8fd07aa1d2bd54f8c1b519052849aed1ec39663
 AC_SUBST(AR_FLAGS, "cr")   # To prevent a warning on some Ubuntu. See fbb8016beff7b45734e53ef8b80d2c306334c248
+AC_PATH_PROG([PDFLATEX],[pdflatex],[no])
+AM_CONDITIONAL([HAVE_PDFLATEX], [test "x$PDFLATEX" != "xno"])
 AC_PATH_PROG([HELP2MAN],[help2man],[no])
-AM_CONDITIONAL([TEST_HELP2MAN], [test "x$HELP2MAN" != "xno"])
+AM_CONDITIONAL([HAVE_HELP2MAN], [test "x$HELP2MAN" != "xno"])
 
 
 
@@ -743,8 +750,7 @@ LDFLAGS="$USER_LDFLAGS"
 
 
 # The following two lines are supposed to fix bug #17197.
-SRC_DIR=$(if readlink -f "${srcdir}" > /dev/null 2>&1; then readlink -f "${srcdir}"; else echo "${srcdir}"; fi)
-AM_CPPFLAGS="-I$SRC_DIR $AM_CPPFLAGS"
+AM_CPPFLAGS="-I\${abs_srcdir} $AM_CPPFLAGS"
 
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(AM_CFLAGS)

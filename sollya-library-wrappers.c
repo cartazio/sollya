@@ -5205,7 +5205,7 @@ sollya_fp_result_t sollya_lib_evaluate_function_at_point(mpfr_t y, sollya_obj_t 
     break;
   }
 
-  /* If we are here, we could not acheive faithful rounding nor get
+  /* If we are here, we could not achieve faithful rounding nor get
      below the cutoff.
 
      We have to perform an additional interval evaluation and see
@@ -5402,7 +5402,7 @@ sollya_fp_result_t sollya_lib_evaluate_function_at_constant_expression(mpfr_t y,
     break;
   }
 
-  /* If we are here, we could not acheive faithful rounding nor get
+  /* If we are here, we could not achieve faithful rounding nor get
      below the cutoff.
 
      We have to perform an additional interval evaluation and see

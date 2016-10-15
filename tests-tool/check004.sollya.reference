@@ -63,7 +63,7 @@ The tool has been restarted.
 The tool has been restarted.
 =============== Test number 76 ================
 0x3ff0000000000000 + x^2 * 0xbfc5555555555555
-Warning: the infered precision of the 2th coefficient of the polynomial is greater than
+Warning: the inferred precision of the 2th coefficient of the polynomial is greater than
 the necessary precision computed for this step. This may make the automatic determination
 of precisions useless.
 0x3ff0000000000000 + x^2 * (0xbfc5555555555555 + 0xbc65555555555555 + 0xb905555555555555)
@@ -83,7 +83,7 @@ exp(1 + x * (5 + x * (10 + x * (10 + x * (5 + x))))) - log(asin(x * (1 + x^2)) +
 The tool has been restarted.
 =============== Test number 80 ================
 0x3ff0000000000000 + x^2 * 0xbfc5555555555555
-Warning: the infered precision of the 2th coefficient of the polynomial is greater than
+Warning: the inferred precision of the 2th coefficient of the polynomial is greater than
 the necessary precision computed for this step. This may make the automatic determination
 of precisions useless.
 0x3ff0000000000000 + x^2 * (0xbfc5555555555555 + 0xbc65555555555555 + 0xb905555555555555)

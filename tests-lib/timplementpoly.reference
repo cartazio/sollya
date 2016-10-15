@@ -126,7 +126,7 @@ p_t_3_0h = p_coeff_0h + p_t_2_0h;
 
 }
 
-Caught the message: the infered precision of a coefficient is higher than what seems to be needed to meet the accuracy target.
+Caught the message: the inferred precision of a coefficient is higher than what seems to be needed to meet the accuracy target.
 implementpoly(649037107316853453566312041152512 - 108172851219475575594385340192085 * x^2,[-1b-10;1b-10],1b-44,double,p,"timplementpoly.implementation.c",honorcoeffprec) returns 649037107316853453566312041152512 + x^2 * (-108172851219475575594385340192085) and produces the following code:
 
 /*

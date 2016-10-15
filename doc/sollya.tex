@@ -11,6 +11,9 @@
 \usepackage{cmap}
 \usepackage{lmodern}
 \usepackage{color}
+\usepackage{tocloft}
+
+\setlength{\cftsubsecnumwidth}{2.7em}
 
 \newcommand{\com}[1]{\texttt{#1}}
 \newcommand{\key}[1]{\texttt{#1}}
@@ -42,7 +45,17 @@
 
 \begin{document}
 
+\pagenumbering{gobble}
+
+\null  % Empty line
+\nointerlineskip  % No skip for prev line
+\vfill
+\let\snewpage \newpage
+\let\newpage \relax
 \maketitle
+\let \newpage \snewpage
+\vfill
+\break % page break
 
 \section*{License}
 
@@ -94,7 +107,13 @@ knowledge of the CeCILL-C license and that you accept its terms.
 \noindent This program is distributed WITHOUT ANY WARRANTY; without even the
 implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
+\clearpage
+\pagenumbering{roman}
+
 \tableofcontents
+\newpage
+
+\pagenumbering{arabic}
 
 \section{Compilation and installation of \sollya}
 

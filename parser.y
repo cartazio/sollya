@@ -490,7 +490,7 @@ startsymbol:            command SEMICOLONTOKEN
                       | VERSIONTOKEN SEMICOLONTOKEN
                           {
 			    outputMode();
-			    sollyaPrintf("This is\n\n\t%s.\n\n"	VERSION_COPYRIGHT_TEXT "\nThis build of %s is based on GMP %s, MPFR %s and MPFI %s.\n",PACKAGE_STRING,PACKAGE_STRING,gmp_version,mpfr_get_version(),sollya_mpfi_get_version());
+			    sollyaPrintf("This is\n\n\t%s.\n\n"	VERSION_COPYRIGHT_TEXT "\nSend bug reports to <%s>\n\nThis build of %s is based on GMP %s, MPFR %s and MPFI %s.\n",PACKAGE_STRING,PACKAGE_BUGREPORT,PACKAGE_STRING,gmp_version,mpfr_get_version(),sollya_mpfi_get_version());
 #if defined(HAVE_FPLLL_VERSION_STRING)
 			    sollyaPrintf("It uses FPLLL as: \"%s\"\n",HAVE_FPLLL_VERSION_STRING);
 #endif

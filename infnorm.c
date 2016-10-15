@@ -8047,13 +8047,13 @@ static inline int evaluateFaithfulWithCutOffFastInternalImplementation(mpfr_t re
 	   result. This makes sense only if there is still hope that the
 	   final result may fall below the cutoff.
 
-	   There is still hope if the cutoff interval and the 
+	   There is still hope if the cutoff interval and the
 	   current evaluation interval have a point in common.
 
 	   When we loose faith that we still could do the cutoff with
 	   low precision, we can directly jump to the current working
 	   precision + precision of the result. The fact that we are
-	   here means that we could not acheive enough precision for the
+	   here means that we could not achieve enough precision for the
 	   cutoff, hence that the expression cancelled on all bits (the
 	   current precision).
 

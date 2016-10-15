@@ -349,7 +349,7 @@ LDADD = $(top_builddir)/libsollya.la -lstdc++
 MOSTLYCLEANFILES = $(TESTS) libraryexample.a
 
 libraryexample.$(OBJEXT): libraryexample.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) $(AM_CPPFLAGS) -fPIC -Wall -c '$(srcdir)/libraryexample.c'
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(AM_CPPFLAGS) -I$(srcdir)/../ -fPIC -Wall -c '$(srcdir)/libraryexample.c'
 
 libraryexample.a: libraryexample.$(OBJEXT)
 	$(CC) $(LDFLAGS) $(AM_LDFLAGS) -shared -o libraryexample.a libraryexample.$(OBJEXT) -lmpfi -lmpfr -lgmp

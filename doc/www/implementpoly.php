@@ -142,7 +142,7 @@ in Gappa.
 &nbsp;&nbsp;&nbsp;&gt; printexpansion(q);<br> 
 &nbsp;&nbsp;&nbsp;0x3ff0000000000000 + x^2 * 0xbfc5555555555555<br> 
 &nbsp;&nbsp;&nbsp;&gt; r = implementpoly(1 - dirtysimplify(TD(1/6)) * x^2,[-1b-10;1b-10],1b-60,DD,"p","implementation.c",honorcoeffprec);<br> 
-&nbsp;&nbsp;&nbsp;Warning: the infered precision of the 2th coefficient of the polynomial is greater than<br> 
+&nbsp;&nbsp;&nbsp;Warning: the inferred precision of the 2th coefficient of the polynomial is greater than<br> 
 &nbsp;&nbsp;&nbsp;the necessary precision computed for this step. This may make the automatic determination<br> 
 &nbsp;&nbsp;&nbsp;of precisions useless.<br> 
 &nbsp;&nbsp;&nbsp;&gt; printexpansion(r);<br> 

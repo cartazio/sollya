@@ -1531,8 +1531,9 @@ void initToolDefaults() {
   pidStr = getUniqueId();
   uniqueStr = (char *) safeCalloc(4 + strlen(PACKAGE_STRING) + 1 + strlen(pidStr) + 1 + 8 * sizeof(int) + 1, sizeof(char));
   mySeed = (unsigned int) ((unsigned int) time(NULL)) + ((unsigned int) globalSeed);
-  globalSeed = rand_r(&mySeed);
-  sollya_snprintf(uniqueStr, 4 + strlen(PACKAGE_STRING) + 1 + strlen(pidStr) + 1 + 8 * sizeof(int) + 1, "_id_%s_%s_%08d", PACKAGE_STRING, pidStr, rand_r(&mySeed));
+  srand(mySeed);
+  globalSeed = rand();
+  sollya_snprintf(uniqueStr, 4 + strlen(PACKAGE_STRING) + 1 + strlen(pidStr) + 1 + 8 * sizeof(int) + 1, "_id_%s_%s_%08d", PACKAGE_STRING, pidStr, rand());
   for (c=uniqueStr;*c!='\0';c++) {
     if ((*c == ' ') || 
 	(*c == '\t') || 
@@ -2354,6 +2355,7 @@ static int general(int argc, char *argv[]) {
   int frameCorruptionPrinted;
   const char *sollya_banner_off;
   int printBanner;
+  int printBuiltInfo;
 
   oldGMPMalloc = NULL;
   oldGMPRealloc = NULL;
@@ -2398,6 +2400,7 @@ static int general(int argc, char *argv[]) {
       if ((strcmp(argv[i],"--help") == 0) || (strcmp(argv[i],"--version") == 0)) {
 	sollya_banner_off = getenv("SOLLYA_BANNER_OFF");
 	printBanner = 1;
+	printBuiltInfo = 1;
 	if ((!inputFileOpened) && (!eliminatePromptBackup)) {
 	  if (tcgetattr(0,&termAttr) == -1) {
 	    eliminatePromptBackup = 1;
@@ -2409,6 +2412,7 @@ static int general(int argc, char *argv[]) {
 	}
 	if ((sollya_banner_off != NULL) && (strcmp(sollya_banner_off,"YES") == 0)) {
 	  printBanner = 0;
+          printBuiltInfo = 0;
 	}
 	if (printBanner) {
 	  sollyaPrintf("This is %s connected to ",PACKAGE_STRING);
@@ -2428,7 +2432,7 @@ static int general(int argc, char *argv[]) {
 	  sollyaPrintf("  --noprompt                   do not print a prompt symbol\n");
 	  sollyaPrintf("  --oldautoprint               print commas between autoprinted elements separated by commas\n");
 	  sollyaPrintf("  --oldexternalprocprint       print the signature of an external procedure when autoprinting\n");
-	  sollyaPrintf("  --oldrlwrapcompatible        acheive some compatibility with old rlwrap versions by emitting wrong ANSI sequences (deprecated)\n");
+	  sollyaPrintf("  --oldrlwrapcompatible        achieve some compatibility with old rlwrap versions by emitting wrong ANSI sequences (deprecated)\n");
 	  sollyaPrintf("  --version                    print the version of Sollya, plus the copyright, the list of authors and the no warranty notice\n");
 	  sollyaPrintf("  --warninfile[append] <file>  print warning messages into a file instead on the standard output\n");
 	  sollyaPrintf("  --warnonstderr               print warning messages on error output instead on the standard output\n");
@@ -2437,10 +2441,14 @@ static int general(int argc, char *argv[]) {
           sollyaPrintf("\nReport bugs to <%s>\n",PACKAGE_BUGREPORT);
 	} else { /* argv[i] is "--version" */
           if (!printBanner) sollyaPrintf("%s\n\n",PACKAGE_STRING); /* For help2man to recognize the name of the tool */
-  	  sollyaPrintf(VERSION_COPYRIGHT_TEXT "\nThis build of %s is based on GMP %s, MPFR %s and MPFI %s.\n",PACKAGE_STRING,gmp_version,mpfr_get_version(),sollya_mpfi_get_version());
+  	  sollyaPrintf(VERSION_COPYRIGHT_TEXT);
+          if (printBuiltInfo) {
+            sollyaPrintf("\nSend bug reports to <%s>\n\n", PACKAGE_BUGREPORT);
+            sollyaPrintf("This build of %s is based on GMP %s, MPFR %s and MPFI %s.\n",PACKAGE_STRING,gmp_version,mpfr_get_version(),sollya_mpfi_get_version());
 #if defined(HAVE_FPLLL_VERSION_STRING)
-	sollyaPrintf("It uses FPLLL as: \"%s\"\n",HAVE_FPLLL_VERSION_STRING);
+            sollyaPrintf("It uses FPLLL as: \"%s\"\n",HAVE_FPLLL_VERSION_STRING);
 #endif
+          }
 	  sollyaPrintf("\n");
 	}
  	return 1;
