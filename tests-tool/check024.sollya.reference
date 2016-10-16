@@ -17,3 +17,7 @@ Done.
 The tool has been restarted.
 =============== Test number 3 ================
 true
+The tool has been restarted.
+=============== Test number 4 ================
+Warning (174): Rounding occurred when converting the constant "0.1" to floating-point with 165 bits.
+If safe computation is needed, try to increase the precision.

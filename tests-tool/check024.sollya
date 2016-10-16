@@ -49,3 +49,9 @@ execute(filename);
 bashexecute("rm -rf " @ filename);
 rrstar2 == rrstar;
 
+restart;
+print("=============== Test number 4 ================");
+filename = "tempfile"@__unique_id;
+print("showmessagenumbers=on!; roundingwarnings=on!; verbosity=1!; a=0.1;") > filename;
+execute(filename);
+bashexecute("rm -rf " @ filename);
