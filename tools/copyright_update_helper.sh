@@ -21,7 +21,7 @@
 # copyrighted. But it might be good to check that it is still the
 # case every time this script is run.
 
-start_rev=sollya-5.0~1
+start_rev=00b4124
 end_rev=master
 
 # A space separated list of hashes can be provided below. They will
