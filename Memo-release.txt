@@ -32,7 +32,7 @@ When the release seems ready:
   * Recompile the doc.
   * Generate the Changelog file, and the human-readable NEWS file.
   * Tag the new release.
-  * Put correct version number of Sollya in configure.ac, sollya.tex and sollya.php in the tag repository.
+  * Put correct version number of Sollya in configure.ac, sollya.map, sollya.tex and sollya.php in the tag repository.
   * Build the release (make dist). Try to install it and test it on several architectures (the same as before).
   * Publish it on the server of gforge.
   * Create an entry for the previous release in history.php. Update current-release.php with the new release. Create a new directory "sollya-n" on the web server and put it the HTML documentation of the new release.
