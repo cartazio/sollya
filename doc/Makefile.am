@@ -273,14 +273,22 @@ PDFLATEX_TEXINPUTS="$(abs_srcdir):"
 
 COMPOSE_PDFLATEX = TEXINPUTS=$(PDFLATEX_TEXINPUTS) $(PDFLATEX) $(LATEXFLAGS)
 
+sollyapdf_verbose = $(sollyapdf_verbose_@AM_V@)
+sollyapdf_verbose_ = $(sollyapdf_verbose_@AM_DEFAULT_V@)
+sollyapdf_verbose_0 = @echo "  LATEX    "$@;
+
 sollya.pdf: $(TEXSOURCES)
-	$(COMPOSE_PDFLATEX) $<
-	@echo -n "pdflatex is now silently run so as to ensure proper labels and references."
+	@if $(AM_V_P); \
+          then $(COMPOSE_PDFLATEX) $< ; \
+          else echo "  LATEX    "$@ ; \
+               $(COMPOSE_PDFLATEX) $< > /dev/null; \
+        fi
+	@if $(AM_V_P); then echo -n "pdflatex is now silently run so as to ensure proper labels and references."; fi
 	@$(COMPOSE_PDFLATEX) $< > /dev/null
-	@echo -n "."
+	@if $(AM_V_P); then echo -n "."; fi
 	@$(COMPOSE_PDFLATEX) $< > /dev/null
-	@echo -n "."
+	@if $(AM_V_P); then echo -n "."; fi
 	@$(COMPOSE_PDFLATEX) $< > /dev/null
-	@echo " Done."
+	@if $(AM_V_P); then echo " Done.";fi
 
 endif
