@@ -29,6 +29,7 @@ Improvements in internal handling:
 Others:
   * Made Sollya compatible with the new API and requirements of
     recent versions of FPLLL.
+  * configure now uses silent-mode, providing a more readable output.
   * LaTex sources of the documentation are now distributed with the
     released tarballs (notice that they always have been available
     under the same licence as the rest of Sollya sources in the public
@@ -43,6 +44,9 @@ Others:
   * A certain number of performance bugs fixed, in particular with
     respect to low precision evaluations and evaluations involving
     NaNs.
+  * Fixed a problem with the environment variable 'showmessagenumbers'
+    that was not recognized when used in a file read by the execute
+    command.
 
 ----------------------------------------------------------------------
 
