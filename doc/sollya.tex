@@ -1352,7 +1352,7 @@ Alternatively, one may create functional expressions with the functions\\
 The advantage of these functions with respect to the others presented above lies in the fact that they offer a way to create any functional expression, the basic function that one wants to construct being provided with the argument \verb|type|. Since these functions are indeed doing  the exact contrary of \verb|sollya_lib_decompose_function|, they are described in details in the corresponding Section~\ref{decomposing_a_functional_expression}.
 
 \subsubsection{Other simple objects}
-Other simple objects are created with functions listed in Table~\ref{creating_sollya_obj_t}. The functions with a name of the form \texttt{sollya\_lib\_range\_something} follow the same convention as \texttt{sollya\_lib\_constant}: they build a new object from a copy of their argument, and the conversion is always exact, whatever the value of \texttt{prec} is.
+Other simple objects are created with functions listed in Table~\ref{creating_sollya_obj_t}. The functions with a name of the form \texttt{sollya\_lib\_something} follow the same convention as \texttt{sollya\_lib\_constant}: they build a new object from a copy of their argument, and the conversion is always exact, whatever the value of \texttt{prec} is.
 
 Please note that in the interactive tool, \texttt{D} either denotes the discrete mathematical function that maps a real number to its closest \texttt{double} number, or is used as a symbolic constant to indicate that the \texttt{double} format must be used (as an argument of \texttt{round} for instance). In the library, they are completely distinct objects, the mathematical function being obtained with \texttt{sollya\_lib\_build\_function\_double} and the symbolic constant with \texttt{sollya\_lib\_double\_obj}. The same holds for other formats (\texttt{DD}, \texttt{SG}, etc.)
 \begin{table}[htp]
@@ -1399,7 +1399,8 @@ Please note that in the interactive tool, \texttt{D} either denotes the discrete
 \verb|TD, tripledouble| & \verb|sollya_lib_triple_double_obj();| \\
 \verb|"Hello"| &  \verb|sollya_lib_string("Hello")| \\
 \verb|[1, 3.5]| &  \verb|sollya_lib_range_from_interval(a);|\footnote{\texttt{a} is a \texttt{mpfi\_t} containing the interval $[1, 3.5]$. Conversion is always exact.} \\
-\verb|[1, 3.5]| &  \verb|sollya_lib_range_from_bounds(b, c);|\footnote[2]{\texttt{b} and \texttt{c} are \texttt{mpfr\_t} respectively containing the numbers $1$ and $3.5$.  Conversion is always exact.} \\ \hline
+\verb|[1, 3.5]| &  \verb|sollya_lib_range_from_bounds(b, c);|\footnote[2]{\texttt{b} and \texttt{c} are \texttt{mpfr\_t} respectively containing the numbers $1$ and $3.5$.  Conversion is always exact.} \\
+\verb|[1, 3.5]| &  \verb|sollya_lib_range(d, e);|\footnote[3]{\texttt{d} and \texttt{e} are \texttt{sollya\_obj\_t} respectively containing the numbers $1$ and $3.5$.  Conversion is always exact.} \\ \hline
   \end{tabular}
 \end{center}
 \end{minipage}

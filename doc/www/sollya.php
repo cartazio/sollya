@@ -1364,7 +1364,7 @@ The advantage of these functions with respect to the others presented above lies
 
 <h3>10.5.3 - Other simple objects</h3>
 <p>
-Other simple objects are created with functions listed in Table&nbsp;<a href="#creating_sollya_obj_t">Creating <span class="sollya">Sollya</span> objects from scratch</a>. The functions with a name of the form <code>sollya_lib_range_something</code> follow the same convention as <code>sollya_lib_constant</code>: they build a new object from a copy of their argument, and the conversion is always exact, whatever the value of <code>prec</code> is.
+Other simple objects are created with functions listed in Table&nbsp;<a href="#creating_sollya_obj_t">Creating <span class="sollya">Sollya</span> objects from scratch</a>. The functions with a name of the form <code>sollya_lib_something</code> follow the same convention as <code>sollya_lib_constant</code>: they build a new object from a copy of their argument, and the conversion is always exact, whatever the value of <code>prec</code> is.
 <p>
 Please note that in the interactive tool, <code>D</code> either denotes the discrete mathematical function that maps a real number to its closest <code>double</code> number, or is used as a symbolic constant to indicate that the <code>double</code> format must be used (as an argument of <code>round</code> for instance). In the library, they are completely distinct objects, the mathematical function being obtained with <code>sollya_lib_build_function_double</code> and the symbolic constant with <code>sollya_lib_double_obj</code>. The same holds for other formats (<code>DD</code>, <code>SG</code>, etc.)
     <a name="creating_sollya_obj_t"></a>
@@ -1406,8 +1406,9 @@ Please note that in the interactive tool, <code>D</code> either denotes the disc
 <tr> <td align="center"><code>"Hello"</code> </td> <td align="left">  <code>sollya_lib_string("Hello")</code> </td> </tr>
 <tr> <td align="center"><code>[1, 3.5]</code> </td> <td align="left">  <code>sollya_lib_range_from_interval(a);</code> </td> </tr>
     <tr> <td align="center"><code>[1, 3.5]</code> </td> <td align="left">  <code>sollya_lib_range_from_bounds(b, c);</code></td> </tr>
+    <tr> <td align="center"><code>[1, 3.5]</code> </td> <td align="left">  <code>sollya_lib_range(d, e);</code></td> </tr>
   </table>
-<p>In the last lines of the table, <code>a</code> is a <code>mpfi_t</code> containing the interval [1, 3.5], <code>b</code> and <code>c</code> are <code>mpfr_t</code> respectively containing the numbers 1 and 3.5. Conversion from a <code>mpfi_t</code> or a <code>mpfr_t</code> to a <code>sollya_obj_t</code> is always exact.
+<p>In the last lines of the table, <code>a</code> is a <code>mpfi_t</code> containing the interval [1, 3.5], <code>b</code> and <code>c</code> are <code>mpfr_t</code> respectively containing the numbers 1 and 3.5, and <code>d</code> and <code>e</code> are <code>sollya_obj_t</code> respectively containing the numbers 1 and 3.5. Conversion from a <code>mpfi_t</code> or a <code>mpfr_t</code> to a <code>sollya_obj_t</code> is always exact.
 
 <a name="creating_lists"></a>
 <h3>10.5.4 - Lists</h3>

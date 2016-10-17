@@ -149,8 +149,9 @@ check-tool: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) check-am || exit 1; \
 	test -z "$$fail"
 
-if HAVE_HELP2MAN
 man_MANS = sollya.1
+
+if HAVE_HELP2MAN
 
 AM_H2MFLAGS = \
 	--locale=C.UTF-8 \
