@@ -160,8 +160,12 @@ AM_H2MFLAGS = \
 # Short descriptions for manpages
 sollya_DESCRIPTION =  "tool environment for safe floating-point code development -- command-line interface"
 
-sollya.1: sollya
-	 SOLLYA_BANNER_OFF=YES $(HELP2MAN) \
+sollyaman_verbose = $(sollyaman_verbose_@AM_V@)
+sollyaman_verbose_ = $(sollyaman_verbose_@AM_DEFAULT_V@)
+sollyaman_verbose_0 = @echo "  H2M      "$@;
+
+sollya.1: sollya sollya.h2m
+	 $(sollyaman_verbose) SOLLYA_BANNER_OFF=YES $(HELP2MAN) \
 			-s 1 \
 			$(AM_H2MFLAGS) \
 			-I $(top_srcdir)/sollya.h2m \

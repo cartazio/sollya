@@ -46,10 +46,46 @@ AC_LIBTOOL_DLOPEN
 LT_INIT([dlopen shared])   # AC_PROG_RANLIB is superseeded by LT_INIT
 AC_SUBST(LIBTOOL_DEPS)
 AC_SUBST(AR_FLAGS, "cr")   # To prevent a warning on some Ubuntu. See fbb8016beff7b45734e53ef8b80d2c306334c248
-AC_PATH_PROG([PDFLATEX],[pdflatex],[no])
-AM_CONDITIONAL([HAVE_PDFLATEX], [test "x$PDFLATEX" != "xno"])
 AC_PATH_PROG([HELP2MAN],[help2man],[no])
 AM_CONDITIONAL([HAVE_HELP2MAN], [test "x$HELP2MAN" != "xno"])
+
+#Checking for pdflatex with the required packages
+AC_PATH_PROG([PDFLATEX],[pdflatex],[no])
+if test "x$PDFLATEX" != "xno"
+then
+  AC_MSG_CHECKING([that pdflatex comes with the necessary packages])
+  rm -rf .tmp_sollya_ac_pdflatex
+  mkdir .tmp_sollya_ac_pdflatex
+  cd .tmp_sollya_ac_pdflatex
+  echo "\documentclass@<:@a4paper@:>@{article}" > conftest.tex
+  echo "\usepackage@<:@T1@:>@{fontenc}" >> conftest.tex
+  echo "\usepackage@<:@utf8@:>@{inputenc}" >> conftest.tex
+  echo "\usepackage@<:@english@:>@{babel}" >> conftest.tex
+  echo "\usepackage@<:@naturalnames@:>@{hyperref}" >> conftest.tex
+  echo "\usepackage{fullpage}" >> conftest.tex
+  echo "\usepackage{xspace}" >> conftest.tex
+  echo "\usepackage{amssymb}" >> conftest.tex
+  echo "\usepackage{fancyvrb}" >> conftest.tex
+  echo "\usepackage{cmap}" >> conftest.tex
+  echo "\usepackage{lmodern}" >> conftest.tex
+  echo "\usepackage{color}" >> conftest.tex
+  echo "\usepackage{tocloft}" >> conftest.tex
+  echo "\begin{document}" >> conftest.tex
+  echo "Test" >> conftest.tex
+  echo "\end{document}" >> conftest.tex
+  PDFLATEX_WITH_PACKAGES="no"
+  $PDFLATEX -interaction=batchmode conftest.tex 2>&1 1>/dev/null && PDFLATEX_WITH_PACKAGES="$PDFLATEX"
+  PDFLATEX="$PDFLATEX_WITH_PACKAGES"
+  cd ..
+  rm -rf .tmp_sollya_ac_pdflatex
+fi
+if test "x$PDFLATEX" != "xno"
+then
+  AC_MSG_RESULT(yes)
+else
+  AC_MSG_RESULT(no)
+fi
+AM_CONDITIONAL([HAVE_PDFLATEX], [test "x$PDFLATEX" != "xno"])
 
 
 
