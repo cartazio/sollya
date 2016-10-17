@@ -2911,6 +2911,7 @@ static inline int tryConstantToScaledMpq(mp_exp_t *E, mpq_t rop, constant_t a) {
     mpq_canonicalize(rop);
     *E = expo + mpq_remove_powers_of_two(rop);  /* Exponent overflow possible */
     mpz_clear(mant);
+    return 1;
     break;
   case SCALEDMPQ:
     *E = a->value.scaledMpq.expo;
