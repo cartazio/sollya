@@ -7418,6 +7418,11 @@ static inline void __polynomialSparsify(polynomial_t p) {
     p->value.sparse = sp;
     break;
   }
+  if (p->usesExpressionConstant.cached) {
+    if (p->usesExpressionConstant.res) {
+      p->usesExpressionConstant.cached = 0;
+    }
+  }
   p->type = SPARSE;
 }
 
