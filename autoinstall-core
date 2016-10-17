@@ -292,8 +292,8 @@ then
       rm -rf "$SOLLYA_PKG_NAME"
       git clone https://gforge.inria.fr/git/sollya/sollya.git $SOLLYA_PKG_NAME 1> $TMPBUFFER 2>&1 ; failure_check
       ;;
-    sollya-6.0RC1 )
-      SOLLYA_URL=http://www-sop.inria.fr/members/Sylvain.Chevillard/sollya-6.0RC1.tar.bz2
+    sollya-6.0RC2 )
+      SOLLYA_URL=http://www-sop.inria.fr/members/Sylvain.Chevillard/sollya-6.0RC2.tar.bz2
       ;;
     sollya-5.0 )
       SOLLYA_URL=https://gforge.inria.fr/frs/download.php/35959/sollya-5.0.tar.bz2

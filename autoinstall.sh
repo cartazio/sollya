@@ -16,7 +16,7 @@ GMP_PKG_NAME=gmp-6.1.1
 MPFR_PKG_NAME=mpfr-3.1.4
 MPFI_PKG_NAME=mpfi-1.5.1
 FPLLL_PKG_NAME=libfplll-git
-SOLLYA_PKG_NAME=sollya-6.0RC1
+SOLLYA_PKG_NAME=sollya-6.0RC2
 
 # If $LOG_DIR is empty, the current directory will be used.  If
 # $PREFIX_PATH is empty, everything will be installed in the standard
