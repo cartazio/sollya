@@ -1,9 +1,329 @@
+2016-10-17  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* Makefile.am: The man page was not distributed when help2man was
+	not present...
+
+2016-10-17  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* doc/sollya.tex, doc/www/sollya.php: Added missing documentation
+	for the sollya_lib_range function
+
+2016-10-17  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* polynomials.c: Patched a small bug in an evaluation function.
+
+2016-10-17  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* polynomials.c: A certain cache in the polynomial code needs to be
+	invalidated in certain situations.
+
+2016-10-11  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* polynomials.c: Performance optimizations in polynomial code.
+
+2016-10-10  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* expression.c, expression.h, polynomials.c: Performance
+	optimizations with a code that uses rational arithmetic on
+	polynomials a lot.
+
+2016-10-10  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* polynomials.c: Slight performance improvement to functions
+	handling polynomials with rational constants.
+
+2016-10-17  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* doc/bashevaluate.tex, doc/bashexecute.tex,
+	doc/introExample51.tex, doc/remez.tex, doc/time.tex,
+	doc/timing.tex, doc/www/bashevaluate.php, doc/www/bashexecute.php,
+	doc/www/introExample51.php, doc/www/remez.php, doc/www/time.php,
+	doc/www/timing.php, help.h: Recompiled the documentation.
+
+2016-10-16  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* NEWS: Updated NEWS file with the modification we did since last
+	time.
+
+2016-10-16  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* : Reintroduced sollya.pdf that has mysteriously be removed in a
+	previous commit
+
+2016-10-16  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* configure.ac: Configure checks that pdflatex comes with the
+	required packages.  Otherwise, when pdflatex was detected, make tried to compile the doc
+	when doing make all, and this could fail, leading `make all` to fail
+	without even trying to compile sollya.
+
+2016-10-16  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* tests-tool/check024.sollya, tests-tool/check024.sollya.reference: 
+	Introducing a non-regression test for the bug patched at commit
+	e34e380
+
+2016-10-16  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* Makefile.am, doc/Makefile.am: In silent-mode, pdflatex and
+	help2man now display nice messages.
+
+2016-10-15  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* configure.ac, tests-lib/Makefile.am: Patched a bug preventing make
+	check-lib to build.  Of course, I reverted the temporary patch committed by Christoph
+	with commit d632607.
+
+2016-10-15  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* general.c: Slightly changed the logic with srand/rand in
+	__unique_id generation.
+
+2016-10-15  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* tests-lib/Makefile.am: F**ing temporary solution to make the tests
+	compile again.
+
+2016-10-14  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* general.c: Replaced calls to rand_r by calls to rand (rand_r is
+	marked as obsolete from POSIX.1-2008).  I am not sure that this is related to the fact that it is obsolete,
+	but we had a warning 'implicitely declared function' under Debian
+	about rand_r which was mysterious. It did not appear clearly to me
+	that rand_r was really necessary in our context, so I switched to
+	the couple srand/rand.
+
+2016-10-14  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* configure.ac: Replaced a trick that we used to do before we knew
+	about abs_srcdir variable
+
+2016-10-14  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* general.c, parser.y, sollya.1: Integrated last patch proposed by
+	J. Benoit.  Do not include the built information in the version and help texts
+	used by help2man to generate the man page.
+
+2016-10-14  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* sollya.1, version.h: Integrated 7th patch proposed by J. Benoit Enhanced formatting of the version text, so as to generate a nicer
+	looking man page.
+
+2016-10-14  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* tests-tool/Makefile.am: Integrated 6th patch proposed by J.
+	Benoit.  Simple reformatting of a long line in tests-tool/Makefile.am in
+	order to break it into several shorter ones.
+
+2016-10-14  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* configure.ac, doc/Makefile.am: Integrated 5th patch proposed by J.
+	Benoit Nicer way of compiling the documentation through make sollya.pdf I
+	understood that `make install` should now install sollya.pdf but did
+	not test this feature yet.
+
+2016-10-14  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* Makefile.am, configure.ac: Integrated 4th patch suggested by J.
+	Benoit.  Enhanced configure.ac with modern practices
+
+2016-10-14  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* doc/sollya.tex: Integrated 3rd patch suggested by J. Benoit.  Nicer formatting of the pdf title page, licence page, and table of
+	contents.
+
+2016-10-14  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* doc/sollya.tex: Integrated 2nd patch proposed by J. Benoit.  Enhanced table of contents in sollya.pdf
+
+2016-10-14  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* doc/dirtyintegral.shlp, doc/dirtyintegral.tex,
+	doc/honorcoeffprec.tex, doc/implementpoly.tex,
+	doc/www/dirtyintegral.php, doc/www/honorcoeffprec.php,
+	doc/www/implementpoly.php, general.c, help.h, implement.c,
+	infnorm.c, sollya-library-wrappers.c, sollya-messaging.h, sollya.1,
+	sollya.h2m, tests-lib/timplementpoly.c,
+	tests-lib/timplementpoly.reference, tests-lib/tv_implementpoly.c,
+	tests-lib/tv_implementpoly.reference,
+	tests-tool/check004.sollya.reference,
+	tests-tool/check005.sollya.reference,
+	tests-tool/check029.sollya.reference: Integrated 1st patch suggested
+	by J. Benoit.  Spelling mistakes.
+
+2016-10-14  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* internlexer.l: Patching a strange bug that made
+	"showmessagenumbers = on/off" constructions to be ignored in Sollya
+	files when these files were read not with read nor parse but with
+	execute.
+
+2016-10-13  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* general.c: Trying to patch a regression in the Sollya library
+	introduced with commit f175f2b938036f38a027adf2f0f381db87bd1e21
+
+2016-10-07  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* Makefile.am: Added the man page to the distributed tarballs
+
+2016-10-07  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* sollya.1: and the corresponding generated sollya.1...
+
+2016-10-07  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* Makefile.am: Yet another small fix for help2man
+
+2016-10-07  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* sollya.1: Added the manual page to the git repository.
+
+2016-10-07  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* Makefile.am, version.h: Fixed minor issues with the generation of
+	the man page
+
+2016-10-07  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* doc/Makefile.am, doc/bashevaluate.tex, doc/bashexecute.tex,
+	doc/introExample51.tex, doc/remez.tex, doc/time.tex,
+	doc/timing.tex, doc/www/bashevaluate.php, doc/www/bashexecute.php,
+	doc/www/introExample51.php, doc/www/remez.php, doc/www/time.php,
+	doc/www/timing.php, help.h: Recompiled the documentation.
+
+2016-10-07  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* execute.c: Patching a small issue with parse(), used in
+	combination with DOS-like CR/LF sequences at the end of the parsed
+	string.
+
+2016-10-07  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* tests-tool/Makefile.am, tests-tool/check031.sollya,
+	tests-tool/check031.sollya.reference: Attempt for non-regression
+	tests regarding correct handling of "\r\n"
+
+2016-10-06  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* tests-tool/check031.sollya: Proposition of tests for the '\r\n'
+	compatibility.
+
+2016-10-07  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* NEWS: Slightly changed the NEWS file.
+
+2016-10-06  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* NEWS: Concrete proposition of a NEWS file.
+
+2016-10-05  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* : commit 8a4aecd3585080e55ea2f69b30666c98d55ecc7d Author:
+	Christoph Lauter <christoph.lauter@lip6.fr> Date:   Wed Oct 5
+	16:45:27 2016 +0200
+
+2016-10-05  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* NEWS: Updated the proposition of NEWS file with the bug fixed a
+	few days ago
+
+2016-10-04  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* tests-tool/check024.sollya, tests-tool/check024.sollya.reference: 
+	Added non-regression test for bug [#20818]
+
+2016-10-04  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* execute.c, tests-tool/check013.sollya.reference,
+	tests-tool/timecheck.sollya.reference: Trying to patch "[#20818]
+	Expression tree changes when it is written in a file and read back".
+
+2016-09-30  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* configure.ac: Corrected a typo.
+
+2016-09-29  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* configure.ac: Completely reworked the configure tests for FPLLL.  The recent change of API in fplll introduce new combinatoric
+	possibilities: one might or now want to add the -std=c++11 option,
+	and one might or not use the new API. This is to add to the old
+	possibilities regarding the position of fplll.h in the include
+	directory tree and the question of whether -lfplll flag should be
+	passed or not the linker.  At first, I thought that things were not much more difficult: the
+	new -std requirement comes with the new API and that's it. It turns
+	out that fplll API is currently not stable and the new API for
+	instance was the one to use with fpllll 5.0 but not with the current
+	git repository of fpllll. Nevertheless, the requirement of
+	-std=c++11 is stays present with the current repository, although
+	the old API is used.  To make things more complicated, we have examples of versions of
+	fplll (observed when trying to compile under Christoph's Cygwin
+	system) where passing -std=c+11 breaks the compilation while not
+	passing it works fine. Also, recently Victor Magron signaled that
+	versions of g++ around 4.8 and 4.9 works fine with modern versions
+	of fplll *only* is the option -std=c++11 is explicitely passed
+	(although with more recent versions of g++, it compiles fine with or
+	without the option).  So, I decided to more or less systematically test the possible
+	combinations of these four parameters. Some combinations really seem
+	to be unlikely because they refer to behaviors of fplll at very
+	different time of its history. So we indeed try only 7 possibilities
+	over the 16 possibilities. Hopefully, this should allow us to
+	compile sollya with more or less any version of fplll.
+
+2016-09-26  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* tests-tool/timecheck.sollya: Non-regression tests for the couple
+	of bugs hidden behind the same example.  These two bugs have been addressed (without a bug report) during the
+	past three weeks.  Contrary to what we once thought, there is absolutely no cache issue
+	involved, so I reverted commit 1b7a727 on my way.
+
+2016-09-26  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* sturm.c: Updated copyrights
+
+2016-09-23  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* ChangeLog, NEWS: Selection of items to put in the NEWS of 6.0
+
 2016-09-19  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
 
 	* tests-tool/Makefile.am, tests-tool/check031.sollya,
 	tests-tool/check031.sollya.reference: Removed non-regression test
 	for the bug fixed at commit 9b578b8.  It seems really not easy to do a robust test that would also work on
 	platforms without an X server.
+
+2016-09-23  Sylvain Chevillard <sylvain.chevillard@ens-lyon.org>
+
+	* fpminimax.c: Better formatting of fpminimax messages at verbosity
+	level >= 4
+
+2016-09-23  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* sturm.c: Slight performance improvement to numberroots.
+
+2016-09-22  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* infnorm.c, tests-tool/timecheck.sollya: Patching the most
+	difficult bug ever to be patched inside Sollya.
+
+2016-09-21  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* polynomials.c: Revert "Patched a small bug with the reuse of a
+	global variable." This reverts commit b5cbc68511a8a5178a8044cdf43c9e04bdbe0608.
+
+2016-09-20  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* polynomials.c: Patched a small bug with the reuse of a global
+	variable.
+
+2016-09-19  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* tests-tool/timecheck.sollya: Get rid of certain caching effects.
+
+2016-09-19  Christoph Lauter <christoph.lauter@lip6.fr>
+
+	* tests-tool/check029.sollya, tests-tool/check029.sollya.reference: 
+	Updated tests for min and max.
 
 2016-09-13  Christoph Lauter <christoph.lauter@lip6.fr>
 

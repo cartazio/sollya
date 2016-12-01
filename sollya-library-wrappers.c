@@ -3154,6 +3154,7 @@ int sollya_lib_get_constant_as_double(double *value, sollya_obj_t obj1) {
   double val;
 
   if (obj1 == NULL) return 0;
+  if (value == NULL) warning = 0;
   roundOp = makeDouble(makeVariable());
   mpfr_init2(temp,53); /* sollya_lib_get_constant_inner may change the precision afterwards */
   if (__sollya_lib_get_constant_inner(temp, obj1, roundOp, &warning)) {
@@ -3219,138 +3220,6 @@ int sollya_lib_get_constant_as_mpz(mpz_t value, sollya_obj_t obj1) {
     }
     mpfr_clear(temp);
     freeThing(roundOp);
-    return 1;
-  }
-
-  mpfr_clear(temp);
-  freeThing(roundOp);
-  return 0;
-}
-
-int sollya_lib_get_constant_as_mpq(mpq_t value, sollya_obj_t obj1) {
-  sollya_obj_t evaluatedObj, simplifiedObj, rationalSimplifiedObj;
-  mpq_t numerator, denominator;
-
-  if (obj1 == NULL) return 0;
-  evaluatedObj = evaluateThing(obj1);
-  if (!isPureTree(evaluatedObj)) {
-    freeThing(evaluatedObj);
-    return 0;
-  }
-
-  simplifiedObj = simplifyTreeErrorfree(evaluatedObj);
-  if (!isConstant(simplifiedObj)) {
-    freeThing(evaluatedObj);
-    freeThing(simplifiedObj);
-    return 0;
-  }
-
-  rationalSimplifiedObj = simplifyRationalErrorfree(simplifiedObj);
-  freeThing(evaluatedObj);
-  freeThing(simplifiedObj);
-
-  if (accessThruMemRef(rationalSimplifiedObj)->nodeType == CONSTANT) {
-    if (mpfr_to_mpq(value, *(accessThruMemRef(rationalSimplifiedObj)->value))) {
-      freeThing(rationalSimplifiedObj);
-      return 1;
-    }
-  }
-
-  if ((accessThruMemRef(rationalSimplifiedObj)->nodeType == DIV) &&
-      (accessThruMemRef(accessThruMemRef(rationalSimplifiedObj)->child1)->nodeType == CONSTANT) && 
-      (accessThruMemRef(accessThruMemRef(rationalSimplifiedObj)->child2)->nodeType == CONSTANT)) {
-    mpq_init(numerator);
-    mpq_init(denominator);
-    if (mpfr_to_mpq(numerator, *(accessThruMemRef(accessThruMemRef(rationalSimplifiedObj)->child1)->value)) && 
-	mpfr_to_mpq(denominator, *(accessThruMemRef(accessThruMemRef(rationalSimplifiedObj)->child2)->value))) {
-      mpq_div(value, numerator, denominator);
-      mpq_clear(numerator);
-      mpq_clear(denominator);
-      freeThing(rationalSimplifiedObj);
-      return 1;
-    }
-    mpq_clear(numerator);
-    mpq_clear(denominator);
-  }
-
-  freeThing(rationalSimplifiedObj);
-  return 0;
-}
-
-
-
-/* In some versions of MPFR, mpfr_get_si seems to contain a couple of
-   bugs.
-*/
-static inline int __mpfr_get_si_wrapper(mpfr_t op, mp_rnd_t rnd) {
-  mpfr_t opAsInteger, intMaxAsMpfr, intMinAsMpfr;
-  int res;
-
-  if (mpfr_number_p(op)) {
-    mpfr_init2(opAsInteger, mpfr_get_prec(op));
-    mpfr_init2(intMaxAsMpfr, 8 * sizeof(int) + 10);
-    mpfr_init2(intMinAsMpfr, 8 * sizeof(int) + 10);
-    mpfr_set_si(intMaxAsMpfr, INT_MAX, GMP_RNDN); /* exact, enough precision */
-    mpfr_set_si(intMinAsMpfr, INT_MIN, GMP_RNDN); /* exact, enough precision */
-    mpfr_rint(opAsInteger, op, rnd); /* no double rounding, same precision */
-    if (mpfr_cmp(opAsInteger, intMaxAsMpfr) > 0) {
-      res = INT_MAX;
-    } else {
-      if (mpfr_cmp(opAsInteger, intMinAsMpfr) < 0) {
-	res = INT_MIN;
-      } else {
-	res = mpfr_get_si(opAsInteger, rnd);
-      }
-    }
-    mpfr_clear(opAsInteger);
-    mpfr_clear(intMaxAsMpfr);
-    mpfr_clear(intMinAsMpfr);
-    return res;
-  } else {
-    /* op is NaN or Inf */
-    if (mpfr_nan_p(op)) {
-      return 0;
-    }
-    /* op is +/- Inf */
-    if (mpfr_sgn(op) < 0) {
-      /* op is -Inf */
-      return INT_MIN;
-    }
-    /* op is + Inf */
-    return INT_MAX;
-  }
-
-  return -1; /* Unreachable */
-}
-
-int sollya_lib_get_constant_as_int(int *value, sollya_obj_t obj1) {
-  mpfr_t temp, reconvert;
-  sollya_obj_t roundOp;
-  int warning = 1;
-  int val;
-
-  if (obj1 == NULL) return 0;
-  roundOp = makeNearestInt(makeVariable());
-  mpfr_init2(temp,8 * sizeof(int)); /* sollya_lib_get_constant_inner may change the precision afterwards */
-  if (__sollya_lib_get_constant_inner(temp, obj1, roundOp, &warning)) {
-    val = __mpfr_get_si_wrapper(temp, GMP_RNDN);
-    mpfr_init2(reconvert,8 * sizeof(int) + 10);
-    mpfr_set_si(reconvert, val, GMP_RNDN); /* Exact as precision enough for an int */
-    if ((mpfr_cmp(temp, reconvert) != 0) || mpfr_nan_p(temp) || mpfr_nan_p(reconvert)) {
-      if (mpfr_number_p(temp) || mpfr_inf_p(temp)) {
-	if ((!noRoundingWarnings) && warning) {
-	  printMessage(1,SOLLYA_MSG_ROUNDING_ON_CONSTANT_RETRIEVAL,"Warning: rounding occurred on retrieval of a constant.\n");
-	}
-      } else {
-	printMessage(1,	SOLLYA_MSG_NAN_CONVERTED_TO_NUMBER_ON_CONSTANT_RETRIEVAL,"Warning: a Not-A-Number value has been converted to a number upon retrieval of a constant.\n");
-      }
-    }
-    mpfr_clear(reconvert);
-    mpfr_clear(temp);
-    freeThing(roundOp);
-    if (value != NULL) {
-      *value = val;
-    }
     return 1;
   }
 
@@ -3463,6 +3332,202 @@ static inline int64_t __sollya_lib_helper_mpfr_to_int64(mpfr_t op) {
   return res;
 }
 
+int sollya_lib_get_constant_as_uint64_array(int *sign, uint64_t **value, size_t *length, sollya_obj_t obj1) {
+  int mySign;
+  uint64_t *myValue;
+  int res;
+  mpz_t temp, r;
+  size_t i, myLength;
+  uint64_t t, tt;
+  mpfr_t tempMpfr;
+
+  mpz_init(temp);
+  res = sollya_lib_get_constant_as_mpz(temp, obj1);
+  if (!res) {
+    mpz_clear(temp);
+    return res;
+  }
+  if (mpz_sgn(temp) == 0) {
+    mySign = 0;
+    myLength = (size_t) 1;
+  } else {
+    if (mpz_sgn(temp) < 0) {
+      mySign = -1;
+      mpz_neg(temp, temp);
+    } else {
+      mySign = 1;
+    }
+    t = (uint64_t) mpz_sizeinbase(temp, 2);
+    tt = t >> 6;
+    if ((tt << 6) != t) {
+      tt++;
+    }
+    myLength = (size_t) tt;
+    if (myLength < ((size_t) 1)) {
+      myLength = 1;
+    }
+  }
+
+  myValue = (uint64_t *) safeCalloc(myLength, sizeof(uint64_t));
+  mpz_init(r);
+  mpfr_init2(tempMpfr, 70);
+  for (i=0;i<myLength;i++) {
+    mpz_fdiv_r_2exp(r, temp, 64);
+    mpz_fdiv_q_2exp(temp, temp, 64);
+    mpfr_set_z(tempMpfr, r, GMP_RNDN); /* exact */
+    myValue[i] = __sollya_lib_helper_mpfr_to_uint64(tempMpfr);
+  }
+  mpfr_clear(tempMpfr);
+  mpz_clear(r);
+  mpz_clear(temp);
+  
+  if (sign != NULL) {
+    *sign = mySign;
+  }
+  if (value != NULL) {
+    *value = myValue;
+  } else {
+    safeFree(myValue);
+  }
+  if (length != NULL) {
+    *length = myLength;
+  }
+  return res;
+}
+
+int sollya_lib_get_constant_as_mpq(mpq_t value, sollya_obj_t obj1) {
+  sollya_obj_t evaluatedObj, simplifiedObj, rationalSimplifiedObj;
+  mpq_t numerator, denominator;
+
+  if (obj1 == NULL) return 0;
+  evaluatedObj = evaluateThing(obj1);
+  if (!isPureTree(evaluatedObj)) {
+    freeThing(evaluatedObj);
+    return 0;
+  }
+
+  simplifiedObj = simplifyTreeErrorfree(evaluatedObj);
+  if (!isConstant(simplifiedObj)) {
+    freeThing(evaluatedObj);
+    freeThing(simplifiedObj);
+    return 0;
+  }
+
+  rationalSimplifiedObj = simplifyRationalErrorfree(simplifiedObj);
+  freeThing(evaluatedObj);
+  freeThing(simplifiedObj);
+
+  if (accessThruMemRef(rationalSimplifiedObj)->nodeType == CONSTANT) {
+    if (mpfr_to_mpq(value, *(accessThruMemRef(rationalSimplifiedObj)->value))) {
+      freeThing(rationalSimplifiedObj);
+      return 1;
+    }
+  }
+
+  if ((accessThruMemRef(rationalSimplifiedObj)->nodeType == DIV) &&
+      (accessThruMemRef(accessThruMemRef(rationalSimplifiedObj)->child1)->nodeType == CONSTANT) && 
+      (accessThruMemRef(accessThruMemRef(rationalSimplifiedObj)->child2)->nodeType == CONSTANT)) {
+    mpq_init(numerator);
+    mpq_init(denominator);
+    if (mpfr_to_mpq(numerator, *(accessThruMemRef(accessThruMemRef(rationalSimplifiedObj)->child1)->value)) && 
+	mpfr_to_mpq(denominator, *(accessThruMemRef(accessThruMemRef(rationalSimplifiedObj)->child2)->value))) {
+      mpq_div(value, numerator, denominator);
+      mpq_clear(numerator);
+      mpq_clear(denominator);
+      freeThing(rationalSimplifiedObj);
+      return 1;
+    }
+    mpq_clear(numerator);
+    mpq_clear(denominator);
+  }
+
+  freeThing(rationalSimplifiedObj);
+  return 0;
+}
+
+
+
+/* In some versions of MPFR, mpfr_get_si seems to contain a couple of
+   bugs.
+*/
+static inline int __mpfr_get_si_wrapper(mpfr_t op, mp_rnd_t rnd) {
+  mpfr_t opAsInteger, intMaxAsMpfr, intMinAsMpfr;
+  int res;
+
+  if (mpfr_number_p(op)) {
+    mpfr_init2(opAsInteger, mpfr_get_prec(op));
+    mpfr_init2(intMaxAsMpfr, 8 * sizeof(int) + 10);
+    mpfr_init2(intMinAsMpfr, 8 * sizeof(int) + 10);
+    mpfr_set_si(intMaxAsMpfr, INT_MAX, GMP_RNDN); /* exact, enough precision */
+    mpfr_set_si(intMinAsMpfr, INT_MIN, GMP_RNDN); /* exact, enough precision */
+    mpfr_rint(opAsInteger, op, rnd); /* no double rounding, same precision */
+    if (mpfr_cmp(opAsInteger, intMaxAsMpfr) > 0) {
+      res = INT_MAX;
+    } else {
+      if (mpfr_cmp(opAsInteger, intMinAsMpfr) < 0) {
+	res = INT_MIN;
+      } else {
+	res = mpfr_get_si(opAsInteger, rnd);
+      }
+    }
+    mpfr_clear(opAsInteger);
+    mpfr_clear(intMaxAsMpfr);
+    mpfr_clear(intMinAsMpfr);
+    return res;
+  } else {
+    /* op is NaN or Inf */
+    if (mpfr_nan_p(op)) {
+      return 0;
+    }
+    /* op is +/- Inf */
+    if (mpfr_sgn(op) < 0) {
+      /* op is -Inf */
+      return INT_MIN;
+    }
+    /* op is + Inf */
+    return INT_MAX;
+  }
+
+  return -1; /* Unreachable */
+}
+
+int sollya_lib_get_constant_as_int(int *value, sollya_obj_t obj1) {
+  mpfr_t temp, reconvert;
+  sollya_obj_t roundOp;
+  int warning = 1;
+  int val;
+
+  if (obj1 == NULL) return 0;
+  if (value == NULL) warning = 0;
+  roundOp = makeNearestInt(makeVariable());
+  mpfr_init2(temp,8 * sizeof(int)); /* sollya_lib_get_constant_inner may change the precision afterwards */
+  if (__sollya_lib_get_constant_inner(temp, obj1, roundOp, &warning)) {
+    val = __mpfr_get_si_wrapper(temp, GMP_RNDN);
+    mpfr_init2(reconvert,8 * sizeof(int) + 10);
+    mpfr_set_si(reconvert, val, GMP_RNDN); /* Exact as precision enough for an int */
+    if ((mpfr_cmp(temp, reconvert) != 0) || mpfr_nan_p(temp) || mpfr_nan_p(reconvert)) {
+      if (mpfr_number_p(temp) || mpfr_inf_p(temp)) {
+	if ((!noRoundingWarnings) && warning) {
+	  printMessage(1,SOLLYA_MSG_ROUNDING_ON_CONSTANT_RETRIEVAL,"Warning: rounding occurred on retrieval of a constant.\n");
+	}
+      } else {
+	printMessage(1,	SOLLYA_MSG_NAN_CONVERTED_TO_NUMBER_ON_CONSTANT_RETRIEVAL,"Warning: a Not-A-Number value has been converted to a number upon retrieval of a constant.\n");
+      }
+    }
+    mpfr_clear(reconvert);
+    mpfr_clear(temp);
+    freeThing(roundOp);
+    if (value != NULL) {
+      *value = val;
+    }
+    return 1;
+  }
+
+  mpfr_clear(temp);
+  freeThing(roundOp);
+  return 0;
+}
+
 int sollya_lib_get_constant_as_int64(int64_t *value, sollya_obj_t obj1) {
   mpfr_t temp, reconvert;
   sollya_obj_t roundOp;
@@ -3470,6 +3535,7 @@ int sollya_lib_get_constant_as_int64(int64_t *value, sollya_obj_t obj1) {
   int64_t val;
 
   if (obj1 == NULL) return 0;
+  if (value == NULL) warning = 0;
   roundOp = addMemRef(makeNearestInt(makeVariable()));
   mpfr_init2(temp,8 * sizeof(int64_t) + 10); /* sollya_lib_get_constant_inner may change the precision afterwards */
   if (__sollya_lib_get_constant_inner(temp, obj1, roundOp, &warning)) {
@@ -3506,6 +3572,7 @@ int sollya_lib_get_constant_as_uint64(uint64_t *value, sollya_obj_t obj1) {
   uint64_t val;
 
   if (obj1 == NULL) return 0;
+  if (value == NULL) warning = 0;
   roundOp = addMemRef(makeNearestInt(makeVariable()));
   mpfr_init2(temp,8 * sizeof(uint64_t) + 10); /* sollya_lib_get_constant_inner may change the precision afterwards */
   if (__sollya_lib_get_constant_inner(temp, obj1, roundOp, &warning)) {
