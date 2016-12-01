@@ -20382,24 +20382,28 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       safeFree(resultSpace);
       break;
     case FUNCTION_TYPE:
+      resultSpace = safeMalloc(sizeof(node *));
       if (proc->hasData) {
-	externalResult = ((int (*)(node **, void **, void *))(proc->code))((node **) (&resultSpace),arguments, proc->data);
+	externalResult = ((int (*)(node **, void **, void *))(proc->code))((node **) resultSpace,arguments, proc->data);
       } else {
-	externalResult = ((int (*)(node **, void **))(proc->code))((node **) (&resultSpace),arguments);
+	externalResult = ((int (*)(node **, void **))(proc->code))((node **) resultSpace,arguments);
       }
       if (externalResult) {
-	*resultThing = (node *) resultSpace;
+	*resultThing = (node *) *((node **) resultSpace);
       }
+      safeFree(resultSpace);
       break;
     case OBJECT_TYPE:
+      resultSpace = safeMalloc(sizeof(node *));
       if (proc->hasData) {
-	externalResult = ((int (*)(node **, void **, void *))(proc->code))((node **) (&resultSpace),arguments, proc->data);
+	externalResult = ((int (*)(node **, void **, void *))(proc->code))((node **) resultSpace,arguments, proc->data);
       } else {
-	externalResult = ((int (*)(node **, void **))(proc->code))((node **) (&resultSpace),arguments);
+	externalResult = ((int (*)(node **, void **))(proc->code))((node **) resultSpace,arguments);
       }
       if (externalResult) {
-	*resultThing = (node *) resultSpace;
+	*resultThing = (node *) *((node **) resultSpace);
       }
+      safeFree(resultSpace);
       break;
     case RANGE_TYPE:
       resultSpace = safeMalloc(sizeof(sollya_mpfi_t));
@@ -20437,15 +20441,17 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       safeFree(resultSpace);
       break;
     case STRING_TYPE:
+      resultSpace = safeMalloc(sizeof(char *));      
       if (proc->hasData) {
-	externalResult = ((int (*)(char **, void **, void *))(proc->code))((char **) (&resultSpace),arguments, proc->data);
+	externalResult = ((int (*)(char **, void **, void *))(proc->code))((char **) resultSpace,arguments, proc->data);
       } else {
-	externalResult = ((int (*)(char **, void **))(proc->code))((char **) (&resultSpace),arguments);
+	externalResult = ((int (*)(char **, void **))(proc->code))((char **) resultSpace,arguments);
       }
       if (externalResult) {
-	*resultThing = makeString((char *) resultSpace);
-	safeFree(resultSpace);
+	*resultThing = makeString((char *) *((char **) resultSpace));
+	safeFree((char *) *((char **) resultSpace));
       }
+      safeFree(resultSpace);
       break;
     case BOOLEAN_TYPE:
       resultSpace = safeMalloc(sizeof(int));
@@ -20464,13 +20470,14 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       safeFree(resultSpace);
       break;
     case CONSTANT_LIST_TYPE:
+      resultSpace = safeMalloc(sizeof(chain *));
       if (proc->hasData) {
-	externalResult = ((int (*)(chain **, void **, void *))(proc->code))((chain **) (&resultSpace),arguments, proc->data);
+	externalResult = ((int (*)(chain **, void **, void *))(proc->code))((chain **) resultSpace,arguments, proc->data);
       } else {
-	externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) (&resultSpace),arguments);
+	externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) resultSpace,arguments);
       }
       if (externalResult) {
-	curr = (chain *) resultSpace;
+	curr = (chain *) *((chain **) resultSpace);
 	if (curr == NULL) {
 	  *resultThing = makeEmptyList();
 	} else {
@@ -20481,46 +20488,52 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	  }
 	  *resultThing = makeList(copyChain(curr2, copyThingOnVoid));
 	  freeChain(curr2, freeThingOnVoid);
-	  freeChain((chain *) resultSpace, freeMpfrPtr);
+	  freeChain((chain *) *((chain **) resultSpace), freeMpfrPtr);
 	}
       }
+      safeFree(resultSpace);
       break;
     case FUNCTION_LIST_TYPE:
+      resultSpace = safeMalloc(sizeof(chain *));
       if (proc->hasData) {
-	externalResult = ((int (*)(chain **, void **, void *))(proc->code))((chain **) (&resultSpace),arguments, proc->data);
+	externalResult = ((int (*)(chain **, void **, void *))(proc->code))((chain **) resultSpace,arguments, proc->data);
       } else {
-	externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) (&resultSpace),arguments);
+	externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) resultSpace,arguments);
       }
       if (externalResult) {
-	if (((chain *) resultSpace) == NULL) {
+	if (((chain *) *((chain **) resultSpace)) == NULL) {
 	  *resultThing = makeEmptyList();
 	} else {
-	  *resultThing = makeList((chain *) resultSpace);
+	  *resultThing = makeList((chain *) *((chain **) resultSpace));
 	}
       }
+      safeFree(resultSpace);
       break;
     case OBJECT_LIST_TYPE:
+      resultSpace = safeMalloc(sizeof(chain *));
       if (proc->hasData) {
-	externalResult = ((int (*)(chain **, void **, void *))(proc->code))((chain **) (&resultSpace),arguments, proc->data);
+	externalResult = ((int (*)(chain **, void **, void *))(proc->code))((chain **) resultSpace,arguments, proc->data);
       } else {
-	externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) (&resultSpace),arguments);
+	externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) resultSpace,arguments);
       }
       if (externalResult) {
-	if (((chain *) resultSpace) == NULL) {
+	if (((chain *) *((chain **) resultSpace)) == NULL) {
 	  *resultThing = makeEmptyList();
 	} else {
-	  *resultThing = makeList((chain *) resultSpace);
+	  *resultThing = makeList((chain *) *((chain **) resultSpace));
 	}
       }
+      safeFree(resultSpace);
       break;
     case RANGE_LIST_TYPE:
+      resultSpace = safeMalloc(sizeof(chain *));
       if (proc->hasData) {
-	externalResult = ((int (*)(chain **, void **, void *))(proc->code))((chain **) (&resultSpace),arguments, proc->data);
+	externalResult = ((int (*)(chain **, void **, void *))(proc->code))((chain **) resultSpace,arguments, proc->data);
       } else {
-	externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) (&resultSpace),arguments);
+	externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) resultSpace,arguments);
       }
       if (externalResult) {
-	curr = (chain *) resultSpace;
+	curr = (chain *) *((chain **) resultSpace);
 	if (curr == NULL) {
 	  *resultThing = makeEmptyList();
 	} else {
@@ -20538,18 +20551,20 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	  }
 	  *resultThing = makeList(copyChain(curr2, copyThingOnVoid));
 	  freeChain(curr2, freeThingOnVoid);
-	  freeChain((chain *) resultSpace, freeMpfiPtr);
+	  freeChain((chain *) *((chain **) resultSpace), freeMpfiPtr);
 	}
       }
+      safeFree(resultSpace);
       break;
     case INTEGER_LIST_TYPE:
+      resultSpace = safeMalloc(sizeof(chain *));
       if (proc->hasData) {
-	externalResult = ((int (*)(chain **, void **, void *))(proc->code))((chain **) (&resultSpace),arguments, proc->data);
+	externalResult = ((int (*)(chain **, void **, void *))(proc->code))((chain **) resultSpace,arguments, proc->data);
       } else {
-	externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) (&resultSpace),arguments);
+	externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) resultSpace,arguments);
       }
       if (externalResult) {
-	curr = (chain *) resultSpace;
+	curr = (chain *) *((chain **) resultSpace);
 	if (curr == NULL) {
 	  *resultThing = makeEmptyList();
 	} else {
@@ -20563,18 +20578,20 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	  mpfr_clear(a);
 	  *resultThing = makeList(copyChain(curr2, copyThingOnVoid));
 	  freeChain(curr2, freeThingOnVoid);
-	  freeChain((chain *) resultSpace, freeIntPtr);
+	  freeChain((chain *) *((chain **) resultSpace), freeIntPtr);
 	}
       }
+      safeFree(resultSpace);
       break;
     case STRING_LIST_TYPE:
+      resultSpace = safeMalloc(sizeof(chain *));
       if (proc->hasData) {
-	externalResult = ((int (*)(chain **, void **, void *))(proc->code))((chain **) (&resultSpace),arguments, proc->data);
+	externalResult = ((int (*)(chain **, void **, void *))(proc->code))((chain **) resultSpace,arguments, proc->data);
       } else {
-	externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) (&resultSpace),arguments);
+	externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) resultSpace,arguments);
       }
       if (externalResult) {
-	curr = (chain *) resultSpace;
+	curr = (chain *) *((chain **) resultSpace);
 	if (curr == NULL) {
 	  *resultThing = makeEmptyList();
 	} else {
@@ -20585,18 +20602,20 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	  }
 	  *resultThing = makeList(copyChain(curr2, copyThingOnVoid));
 	  freeChain(curr2, freeThingOnVoid);
-	  freeChain((chain *) resultSpace, safeFree);
+	  freeChain((chain *) *((chain **) resultSpace), safeFree);
 	}
       }
+      safeFree(resultSpace);
       break;
     case BOOLEAN_LIST_TYPE:
+      resultSpace = safeMalloc(sizeof(chain *));
       if (proc->hasData) {
-	externalResult = ((int (*)(chain **, void **, void *))(proc->code))((chain **) (&resultSpace),arguments, proc->data);
+	externalResult = ((int (*)(chain **, void **, void *))(proc->code))((chain **) resultSpace,arguments, proc->data);
       } else {
-	externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) (&resultSpace),arguments);
+	externalResult = ((int (*)(chain **, void **))(proc->code))((chain **) resultSpace,arguments);
       }
       if (externalResult) {
-	curr = (chain *) resultSpace;
+	curr = (chain *) *((chain **) resultSpace);
 	if (curr == NULL) {
 	  *resultThing = makeEmptyList();
 	} else {
@@ -20612,9 +20631,10 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	  }
 	  *resultThing = makeList(copyChain(curr2, copyThingOnVoid));
 	  freeChain(curr2, freeThingOnVoid);
-	  freeChain((chain *) resultSpace, freeIntPtr);
+	  freeChain((chain *) *((chain **) resultSpace), freeIntPtr);
 	}
       }
+      safeFree(resultSpace);
       break;
     default:
       sollyaFprintf(stderr, "Error in executeExternalProcedure: unknown type.\n");
@@ -20647,24 +20667,28 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       safeFree(resultSpace);
       break;
     case FUNCTION_TYPE:
+      resultSpace = safeMalloc(sizeof(node *));
       if (proc->hasData) {
-	externalResult = ((int (*)(node **, void *))(proc->code))((node **) (&resultSpace), proc->data);
+	externalResult = ((int (*)(node **, void *))(proc->code))((node **) resultSpace, proc->data);
       } else {
-	externalResult = ((int (*)(node **))(proc->code))((node **) (&resultSpace));
+	externalResult = ((int (*)(node **))(proc->code))((node **) resultSpace);
       }
       if (externalResult) {
-	*resultThing = (node *) resultSpace;
+	*resultThing = (node *) *((node **) resultSpace);
       }
+      safeFree(resultSpace);
       break;
     case OBJECT_TYPE:
+      resultSpace = safeMalloc(sizeof(node *));
       if (proc->hasData) {
-	externalResult = ((int (*)(node **, void *))(proc->code))((node **) (&resultSpace), proc->data);
+	externalResult = ((int (*)(node **, void *))(proc->code))((node **) resultSpace, proc->data);
       } else {
-	externalResult = ((int (*)(node **))(proc->code))((node **) (&resultSpace));
+	externalResult = ((int (*)(node **))(proc->code))((node **) resultSpace);
       }
       if (externalResult) {
-	*resultThing = (node *) resultSpace;
+	*resultThing = (node *) *((node **) resultSpace);
       }
+      safeFree(resultSpace);
       break;
     case RANGE_TYPE:
       resultSpace = safeMalloc(sizeof(sollya_mpfi_t));
@@ -20702,15 +20726,17 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       safeFree(resultSpace);
       break;
     case STRING_TYPE:
+      resultSpace = safeMalloc(sizeof(char *));
       if (proc->hasData) {
-	externalResult = ((int (*)(char **, void *))(proc->code))((char **) (&resultSpace), proc->data);
+	externalResult = ((int (*)(char **, void *))(proc->code))((char **) resultSpace, proc->data);
       } else {
-	externalResult = ((int (*)(char **))(proc->code))((char **) (&resultSpace));
+	externalResult = ((int (*)(char **))(proc->code))((char **) resultSpace);
       }
       if (externalResult) {
-	*resultThing = makeString((char *) resultSpace);
-	safeFree(resultSpace);
+	*resultThing = makeString((char *) *((char **) resultSpace));
+	safeFree((char *) *((char **) resultSpace));
       }
+      safeFree(resultSpace);
       break;
     case BOOLEAN_TYPE:
       resultSpace = safeMalloc(sizeof(int));
@@ -20729,13 +20755,14 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
       safeFree(resultSpace);
       break;
     case CONSTANT_LIST_TYPE:
+      resultSpace = safeMalloc(sizeof(chain *));
       if (proc->hasData) {
-	externalResult = ((int (*)(chain **, void *))(proc->code))((chain **) (&resultSpace), proc->data);
+	externalResult = ((int (*)(chain **, void *))(proc->code))((chain **) resultSpace, proc->data);
       } else {
-	externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
+	externalResult = ((int (*)(chain **))(proc->code))((chain **) resultSpace);
       }
       if (externalResult) {
-	curr = (chain *) resultSpace;
+	curr = (chain *) *((chain **) resultSpace);
 	if (curr == NULL) {
 	  *resultThing = makeEmptyList();
 	} else {
@@ -20746,46 +20773,52 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	  }
 	  *resultThing = makeList(copyChain(curr2, copyThingOnVoid));
 	  freeChain(curr2, freeThingOnVoid);
-	  freeChain((chain *) resultSpace, freeMpfrPtr);
+	  freeChain((chain *) *((chain **) resultSpace), freeMpfrPtr);
 	}
       }
+      safeFree(resultSpace);
       break;
     case FUNCTION_LIST_TYPE:
+      resultSpace = safeMalloc(sizeof(chain *));
       if (proc->hasData) {
-	externalResult = ((int (*)(chain **, void *))(proc->code))((chain **) (&resultSpace), proc->data);
+	externalResult = ((int (*)(chain **, void *))(proc->code))((chain **) resultSpace, proc->data);
       } else {
-	externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
+	externalResult = ((int (*)(chain **))(proc->code))((chain **) resultSpace);
       }
       if (externalResult) {
-	if (((chain *) resultSpace) == NULL) {
+	if (((chain *) *((chain **) resultSpace)) == NULL) {
 	  *resultThing = makeEmptyList();
 	} else {
-	  *resultThing = makeList((chain *) resultSpace);
+	  *resultThing = makeList((chain *) *((chain **) resultSpace));
 	}
       }
+      safeFree(resultSpace);
       break;
     case OBJECT_LIST_TYPE:
+      resultSpace = safeMalloc(sizeof(chain *));
       if (proc->hasData) {
-	externalResult = ((int (*)(chain **, void *))(proc->code))((chain **) (&resultSpace), proc->data);
+	externalResult = ((int (*)(chain **, void *))(proc->code))((chain **) resultSpace, proc->data);
       } else {
-	externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
+	externalResult = ((int (*)(chain **))(proc->code))((chain **) resultSpace);
       }
       if (externalResult) {
-	if (((chain *) resultSpace) == NULL) {
+	if (((chain *) *((chain **) resultSpace)) == NULL) {
 	  *resultThing = makeEmptyList();
 	} else {
-	  *resultThing = makeList((chain *) resultSpace);
+	  *resultThing = makeList((chain *) *((chain **) resultSpace));
 	}
       }
+      safeFree(resultSpace);
       break;
     case RANGE_LIST_TYPE:
+      resultSpace = safeMalloc(sizeof(chain *));
       if (proc->hasData) {
-	externalResult = ((int (*)(chain **, void *))(proc->code))((chain **) (&resultSpace), proc->data);
+	externalResult = ((int (*)(chain **, void *))(proc->code))((chain **) resultSpace, proc->data);
       } else {
-	externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
+	externalResult = ((int (*)(chain **))(proc->code))((chain **) resultSpace);
       }
       if (externalResult) {
-	curr = (chain *) resultSpace;
+	curr = (chain *) *((chain **) resultSpace);
 	if (curr == NULL) {
 	  *resultThing = makeEmptyList();
 	} else {
@@ -20803,18 +20836,20 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	  }
 	  *resultThing = makeList(copyChain(curr2, copyThingOnVoid));
 	  freeChain(curr2, freeThingOnVoid);
-	  freeChain((chain *) resultSpace, freeMpfiPtr);
+	  freeChain((chain *) *((chain **) resultSpace), freeMpfiPtr);
 	}
       }
+      safeFree(resultSpace);
       break;
     case INTEGER_LIST_TYPE:
+      resultSpace = safeMalloc(sizeof(chain *));
       if (proc->hasData) {
-	externalResult = ((int (*)(chain **, void *))(proc->code))((chain **) (&resultSpace), proc->data);
+	externalResult = ((int (*)(chain **, void *))(proc->code))((chain **) resultSpace, proc->data);
       } else {
-	externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
+	externalResult = ((int (*)(chain **))(proc->code))((chain **) resultSpace);
       }
       if (externalResult) {
-	curr = (chain *) resultSpace;
+	curr = (chain *) *((chain **) resultSpace);
 	if (curr == NULL) {
 	  *resultThing = makeEmptyList();
 	} else {
@@ -20828,18 +20863,20 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	  mpfr_clear(a);
 	  *resultThing = makeList(copyChain(curr2, copyThingOnVoid));
 	  freeChain(curr2, freeThingOnVoid);
-	  freeChain((chain *) resultSpace, freeIntPtr);
+	  freeChain((chain *) *((chain **) resultSpace), freeIntPtr);
 	}
       }
+      safeFree(resultSpace);
       break;
     case STRING_LIST_TYPE:
+      resultSpace = safeMalloc(sizeof(chain *));
       if (proc->hasData) {
-	externalResult = ((int (*)(chain **, void *))(proc->code))((chain **) (&resultSpace), proc->data);
+	externalResult = ((int (*)(chain **, void *))(proc->code))((chain **) resultSpace, proc->data);
       } else {
-	externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
+	externalResult = ((int (*)(chain **))(proc->code))((chain **) resultSpace);
       }
       if (externalResult) {
-	curr = (chain *) resultSpace;
+	curr = (chain *) *((chain **) resultSpace);
 	if (curr == NULL) {
 	  *resultThing = makeEmptyList();
 	} else {
@@ -20850,18 +20887,20 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	  }
 	  *resultThing = makeList(copyChain(curr2, copyThingOnVoid));
 	  freeChain(curr2, freeThingOnVoid);
-	  freeChain((chain *) resultSpace, safeFree);
+	  freeChain((chain *) *((chain **) resultSpace), safeFree);
 	}
       }
+      safeFree(resultSpace);
       break;
     case BOOLEAN_LIST_TYPE:
+      resultSpace = safeMalloc(sizeof(chain *));
       if (proc->hasData) {
-	externalResult = ((int (*)(chain **, void *))(proc->code))((chain **) (&resultSpace), proc->data);
+	externalResult = ((int (*)(chain **, void *))(proc->code))((chain **) resultSpace, proc->data);
       } else {
-	externalResult = ((int (*)(chain **))(proc->code))((chain **) (&resultSpace));
+	externalResult = ((int (*)(chain **))(proc->code))((chain **) resultSpace);
       }
       if (externalResult) {
-	curr = (chain *) resultSpace;
+	curr = (chain *) *((chain **) resultSpace);
 	if (curr == NULL) {
 	  *resultThing = makeEmptyList();
 	} else {
@@ -20877,9 +20916,10 @@ int executeExternalProcedureInner(node **resultThing, libraryProcedure *proc, ch
 	  }
 	  *resultThing = makeList(copyChain(curr2, copyThingOnVoid));
 	  freeChain(curr2, freeThingOnVoid);
-	  freeChain((chain *) resultSpace, freeIntPtr);
+	  freeChain((chain *) *((chain **) resultSpace), freeIntPtr);
 	}
       }
+      safeFree(resultSpace);
       break;
     default:
       sollyaFprintf(stderr, "Error in executeExternalProcedure: unknown type.\n");
