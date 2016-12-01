@@ -1,4 +1,4 @@
-LIBSOLLYA_5.0.0 {
+LIBSOLLYA_6.0.0 {
 global:
 sollya_lib_*;
 ##

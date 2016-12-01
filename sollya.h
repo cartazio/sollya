@@ -633,6 +633,7 @@ extern "C" {
   int sollya_lib_get_prec_of_constant(mp_prec_t *, sollya_obj_t);
   int sollya_lib_get_prec_of_range(mp_prec_t *, sollya_obj_t);
   int sollya_lib_get_constant_as_mpz(mpz_t, sollya_obj_t);
+  int sollya_lib_get_constant_as_uint64_array(int *, uint64_t **, size_t *, sollya_obj_t);
   int sollya_lib_get_constant_as_mpq(mpq_t, sollya_obj_t);
 
   /* Functions to build up Sollya lists from arrays of objects and
