@@ -586,6 +586,7 @@ int sturm_mpfi(int *n, mpq_t *pMpq, int p_degree, sollya_mpfi_t x, mp_prec_t pre
     if (tempprec > prec) prec = tempprec;
   }
   prec = 2 * prec;
+  if (prec > 32 * precision) prec = 32 * precision;
 
   printMessage(2,SOLLYA_MSG_STURM_INTERVAL_A_CERTAIN_PREC_HAS_BEEN_CHOSEN,"Information: in sturm_mpfi: chosen working precision is %d\n",(int) prec);
 
