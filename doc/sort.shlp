@@ -22,3 +22,5 @@ If <L> is an end-elliptic list, $COMMAND will fail with an error.
 #EXAMPLE
 sort([| |]);
 sort([|2,3,5,2,1,4|]);
+
+#SEEALSO $REVERT

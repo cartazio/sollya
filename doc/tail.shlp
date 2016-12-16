@@ -23,6 +23,6 @@ tail([|1,2,3|]);
 tail([|1,2...|]);
 
 #SEEALSO $HEAD
-
+#SEEALSO $REVERT
 
 

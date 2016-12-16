@@ -19,3 +19,7 @@ revert([| |]);
 
 #EXAMPLE
 revert([|2,3,5,2,1,4|]);
+
+#SEEALSO $SORT
+#SEEALSO $HEAD
+#SEEALSO $TAIL
