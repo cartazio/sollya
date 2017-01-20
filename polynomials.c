@@ -5051,6 +5051,24 @@ static inline int sparsePolynomialIsConstantOne(sparse_polynomial_t p, int defVa
   return defVal;
 }
 
+static inline int sparsePolynomialIsConstantInteger(sparse_polynomial_t p, int k, int defVal) {
+  int isConst, res;
+  constant_t c, d;
+
+  if (p == NULL) return defVal;
+  isConst = sparsePolynomialIsConstant(p, 42);
+  if (isConst == 42) return defVal;
+  if (!isConst) return 0;
+  if (sparsePolynomialConstantGetConstant(&c, p)) {
+    d = constantFromInt(k);
+    res = constantIsEqual(c, d, defVal);
+    constantFree(d);
+    constantFree(c);
+    return res;
+  }
+  return defVal;
+}
+
 static inline sparse_polynomial_t sparsePolynomialAdd(sparse_polynomial_t p, sparse_polynomial_t q) {
   sparse_polynomial_t res;
   unsigned int i,j,startSize;
@@ -9892,6 +9910,85 @@ void polynomialEvalMpfi(sollya_mpfi_t y, polynomial_t p, sollya_mpfi_t x) {
   }
 }
 
+static inline int __polynomialCheapCheckConstantInteger(polynomial_t p, int k) {
+  int deg;
+  sollya_mpfi_t X, Y;
+  mpfr_t temp;
+  constant_t c, d;
+  int res;
+  
+  /* Handle stupid inputs */
+  if (p == NULL) return 0;
+
+  /* General case 
+
+     If the polynomial is sparse, we can use the appropriate function
+     for sparse polynomials.
+
+  */
+  if (p->type == SPARSE) {
+    return sparsePolynomialIsConstantInteger(p->value.sparse, k, 0);
+  }
+
+  /* The polynomial is not sparse.
+
+     Try to determine its degree.
+
+     If we can't determine the degree, we just fail.
+
+     If we can and it is zero, we do the following:
+     
+     (i)  We evaluate the polynomial at [1;1] with interval
+          arithmetic. If k is not in the image interval,
+	  the polynomial can't be equal to that constant k.
+     (ii) We get the coefficient of degree zero and 
+          compare it to k.
+  */
+  deg = __polynomialGetDegreeAsIntCheap(p);
+
+  /* Fail if we couldn't get the degree. Any fall-back would seem to
+     be too expensive. 
+  */
+  if (deg < 0) return 0;
+
+  /* If the degree is not zero, the polynomial can't be constant */
+  if (deg != 0) return 0;
+
+  /* Here the degree is zero. 
+
+     Start by evaluating the polynomial at [1;1].
+
+  */
+  sollya_mpfi_init2(X, 12);
+  sollya_mpfi_init2(Y, 8 * sizeof(int) + 10);
+  sollya_mpfi_set_si(X, 1);
+  polynomialEvalMpfi(Y, p, X);
+  if (!sollya_mpfi_has_nan(Y)) {
+    mpfr_init2(temp, 8 * sizeof(int) + 10);
+    mpfr_set_si(temp, k, GMP_RNDN); /* exact, enough precision */
+    if (!sollya_mpfi_fr_in_interval(temp, Y)) {
+      /* k is not in the non-NaN image interval */
+      mpfr_clear(temp);
+      sollya_mpfi_clear(Y);
+      sollya_mpfi_clear(X);
+      return 0;
+    }
+    mpfr_clear(temp);
+  }
+  sollya_mpfi_clear(Y);
+  sollya_mpfi_clear(X);
+
+  /* Get the coefficient of degree zero and compare it to k */
+  c = __polynomialGetIthCoefficientAsConstantIntIndex(p, 0);
+  d = constantFromInt(k);
+  res = constantIsEqual(c, d, 0);
+  constantFree(d);
+  constantFree(c);
+  
+  /* Return result */
+  return res;
+}
+
 static inline int __polynomialCheapCheckConstantZero(polynomial_t p) {
   
   /* Handle stupid inputs */
@@ -9904,22 +10001,53 @@ static inline int __polynomialCheapCheckConstantZero(polynomial_t p) {
     break;
   case ADDITION:
   case SUBTRACTION:
-    /* We don't know easily */
-    return 0;
+    return __polynomialCheapCheckConstantInteger(p, 0);
     break;
   case MULTIPLICATION:
     return (__polynomialCheapCheckConstantZero(p->value.pair.g) ||
 	    __polynomialCheapCheckConstantZero(p->value.pair.h));
     break;
   case COMPOSITION:
-    /* We don't know easily */
-    return 0;    
+    return __polynomialCheapCheckConstantInteger(p, 0);
     break;
   case NEGATE:
     return __polynomialCheapCheckConstantZero(p->value.g);
     break;
   case POWER:
     return __polynomialCheapCheckConstantZero(p->value.powering.g);
+    break;
+  }
+  return 0;
+}
+
+static inline int __polynomialCheapCheckConstantOne(polynomial_t p) {
+  
+  /* Handle stupid inputs */
+  if (p == NULL) return 0;
+
+  /* General case */
+  switch (p->type) {
+  case SPARSE:
+    return sparsePolynomialIsConstantOne(p->value.sparse, 0);
+    break;
+  case ADDITION:
+  case SUBTRACTION:
+    return __polynomialCheapCheckConstantInteger(p, 1);
+    break;
+  case MULTIPLICATION:
+    if (__polynomialCheapCheckConstantOne(p->value.pair.g) &&
+	__polynomialCheapCheckConstantOne(p->value.pair.h))
+      return 1;
+    return __polynomialCheapCheckConstantInteger(p, 1);
+    break;
+  case COMPOSITION:
+    return __polynomialCheapCheckConstantInteger(p, 1);
+    break;
+  case NEGATE:
+    return __polynomialCheapCheckConstantInteger(p, 1);
+    break;
+  case POWER:
+    return __polynomialCheapCheckConstantOne(p->value.powering.g);
     break;
   }
   return 0;
@@ -10017,9 +10145,9 @@ polynomial_t polynomialMul(polynomial_t p, polynomial_t q) {
   /* If an easy check shows that p or q are constant one, return a
      copy of the other one.
   */
-  if (__polynomialCheapCheckConstantZero(p)) 
+  if (__polynomialCheapCheckConstantOne(p)) 
     return polynomialFromCopy(q);
-  if (__polynomialCheapCheckConstantZero(q)) 
+  if (__polynomialCheapCheckConstantOne(q)) 
     return polynomialFromCopy(p);
   
   /* If both polynomials are sparse, and at least one of them has only
