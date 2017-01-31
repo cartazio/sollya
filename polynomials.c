@@ -4299,6 +4299,66 @@ static inline constant_t constantGcd(constant_t a, constant_t b) {
   return c;
 }
 
+static inline constant_t constantFloor(constant_t a) {
+  constant_t res;
+  node *cExpr;
+  mpfr_t cM;
+  mpq_t cQ;
+  mp_exp_t cE;
+  
+  if (a == NULL) return NULL;
+  switch (a->type) {
+  case INTEGER:
+    res = constantFromCopy(a);
+    return res;
+    break;
+  case EXPRESSION:
+    cExpr = addMemRef(makeFloor(copyThing(a->value.expr)));
+    res = constantFromExpression(cExpr);
+    freeThing(cExpr);
+    return res;
+    break;
+  case MPFR:
+    mpfr_init2(cM, mpfr_get_prec(a->value.mpfr));
+    mpfr_rint_floor(cM, a->value.mpfr, GMP_RNDN); /* no double rounding as precision enough */
+    res = constantFromMpfr(cM);
+    mpfr_clear(cM);
+    return res;
+    break;
+  case SCALEDMPQ:
+    mpq_init(cQ);
+    scaledMpqFloor(&cE, cQ, a->value.scaledMpq.expo, a->value.scaledMpq.significand);
+    res = constantFromScaledMpq(cE, cQ);
+    mpq_clear(cQ);
+    return res;
+    break;
+  }
+
+  return NULL;
+}
+
+static inline void constantDivMod(constant_t *quot, constant_t *rest, constant_t a, constant_t b) {
+  constant_t t;
+
+  /* Handle stupid input */
+  if ((a == NULL) ||
+      (b == NULL)) {
+    *quot = NULL;
+    *rest = NULL;
+    return;
+  }
+
+  /* Compute quot = floor(a/b) */
+  t = constantDiv(a, b);
+  *quot = constantFloor(t);
+  constantFree(t);
+  
+  /* Compute rest = a - quot * b */
+  t = constantMul(*quot, b);
+  *rest = constantSub(a, t);
+  constantFree(t);
+}
+
 static inline void constantEvalMpfr(mpfr_t rop, constant_t c) {
   mp_prec_t p;
   mpfr_t cutoff;
@@ -8985,6 +9045,42 @@ void polynomialDiv(polynomial_t *quot, polynomial_t *rest, polynomial_t a, polyn
 
   *quot = __polynomialBuildFromSparse(sq);
   *rest = __polynomialBuildFromSparse(sr);
+}
+
+void polynomialDivExtended(polynomial_t *quot, polynomial_t *rest, polynomial_t a, polynomial_t b) {
+  constant_t ca, cb, cq, cr;
+
+  /* Handle stupid inputs */
+  if ((a == NULL) || (b == NULL)) {
+    *quot = NULL;
+    *rest = NULL;
+    return;
+  }
+
+  /* If both a and b are constants, let
+
+     quot = floor(a/b)
+     rest = a - quot * b
+
+  */
+  if ((polynomialGetDegreeAsInt(a) == 0) && 
+      (polynomialGetDegreeAsInt(b) == 0)) {
+    ca = __polynomialGetIthCoefficientAsConstantIntIndex(a, 0);
+    cb = __polynomialGetIthCoefficientAsConstantIntIndex(b, 0);
+    constantDivMod(&cq, &cr, ca, cb);
+    *quot = __polynomialFromConstant(cq);
+    *rest = __polynomialFromConstant(cr);
+    constantFree(cr);
+    constantFree(cq);
+    constantFree(cb);
+    constantFree(ca);
+    return;
+  }
+
+  /* Here, at least one of a and b is a non-constant
+     polynomial. Return the classical polynomial division result.
+  */
+  polynomialDiv(quot, rest, a, b);
 }
 
 polynomial_t polynomialHornerize(polynomial_t p) {
