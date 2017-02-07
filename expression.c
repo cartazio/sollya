@@ -7675,14 +7675,17 @@ node* differentiateInner(node *tree) {
 
 node *gcd(node *a, node *b) {
   node *aSimpl, *bSimpl, *res;
-  polynomial_t p, q;
+  polynomial_t p, q, r;
   
   if ((a->nodeType == MEMREF) &&
       (b->nodeType == MEMREF) &&
       (a->polynomialRepresentation != NULL) &&
       (b->polynomialRepresentation != NULL)) {
-    return polynomialGetExpression(polynomialGcd(a->polynomialRepresentation,
-						 b->polynomialRepresentation));
+    r = polynomialGcd(a->polynomialRepresentation,
+		      b->polynomialRepresentation);
+    res = polynomialGetExpression(r);
+    polynomialFree(r);
+    return res;
   }
 
   aSimpl = simplifyRationalErrorfree(a);
@@ -7693,7 +7696,9 @@ node *gcd(node *a, node *b) {
 
   if (polynomialFromExpressionOnlyRealCoeffs(&p, aSimpl)) {
     if (polynomialFromExpressionOnlyRealCoeffs(&q, bSimpl)) {
-      res = polynomialGetExpression(polynomialGcd(p, q));
+      r = polynomialGcd(p, q);
+      res = polynomialGetExpression(r);
+      polynomialFree(r);
       polynomialFree(q);
     } else {
       res = addMemRef(makeConstantInt(1));
