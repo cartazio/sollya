@@ -1,7 +1,7 @@
 \subsection{gcd}
 \label{labgcd}
 \noindent Name: \textbf{gcd}\\
-\phantom{aaa}Computes the greatest common divider of polynomials or numbers.\\[0.2cm]
+\phantom{aaa}Computes the greatest common divisor of polynomials or numbers.\\[0.2cm]
 \noindent Library name:\\
 \verb|   sollya_obj_t sollya_lib_gcd(sollya_obj_t, sollya_obj_t)|\\[0.2cm]
 \noindent Usage: 
@@ -15,12 +15,64 @@ Parameters:
 \end{itemize}
 \noindent Description: \begin{itemize}
 
-\item TODO
+\item When both \emph{p} and \emph{q} are integers, \textbf{gcd}(\emph{p},\emph{q}) computes the
+   greatest common divisor of these two integers, i.e. the greatest
+   integer dividing both \emph{p} and \emph{q}.
+
+\item When both \emph{p} and \emph{q} are rational numbers, say $a/b$ and
+   $c/d$, \textbf{gcd}(\emph{p},\emph{q}) computes the greatest common divisor
+   of $a \cdot d$ and $b \cdot c$, divided by the
+   product of the denominators, $b \cdot d$.
+
+\item When both \emph{p} and \emph{q} are constants but at least one of them is
+   no rational number, \textbf{gcd}(\emph{p},\emph{q}) returns $1$.
+
+\item When at least one of \emph{p} or \emph{q} is a polynomial of degree at least
+   $1$, \textbf{gcd}(\emph{p},\emph{q}) returns the polynomial of greatest degree
+   dividing both \emph{p} and \emph{q}. The coefficient of the monomial of greatest
+   degree of the returned polynomial is set to the greatest common
+   divisor of the coefficients of the monomials of greatest degree of \emph{p}
+   and \emph{q}.
+
+\item When at least one of \emph{p} or \emph{q} is a function that is no polynomial,
+   \textbf{gcd}(\emph{p},\emph{q}) returns $1$.
 \end{itemize}
 \noindent Example 1: 
 \begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
-> gcd(x^2 + 2 * x + 1, x + 1);
-1 + x
+> gcd(1001, 231);
+77
+> gcd(13, 17);
+1
+> gcd(-210, 462);
+42
+\end{Verbatim}
+\end{minipage}\end{center}
+\noindent Example 2: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> rationalmode = on!;
+> gcd(6/7, 33/13);
+3 / 91
+\end{Verbatim}
+\end{minipage}\end{center}
+\noindent Example 3: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> gcd(exp(13),sin(17));
+1
+\end{Verbatim}
+\end{minipage}\end{center}
+\noindent Example 4: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> gcd(24 + 68 * x + 74 * x^2 + 39 * x^3 + 10 * x^4 + x^5, 480 + 776 * x + 476 * 
+x^2 + 138 * x^3 + 19 * x^4 + x^5);
+4 + x * (4 + x)
+> gcd(1001 * x^2, 231 * x);
+x * 77
+\end{Verbatim}
+\end{minipage}\end{center}
+\noindent Example 5: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> gcd(exp(x), x^2);
+1
 \end{Verbatim}
 \end{minipage}\end{center}
 See also: \textbf{div} (\ref{labeucldiv}), \textbf{mod} (\ref{labeuclmod}), \textbf{numberroots} (\ref{labnumberroots})

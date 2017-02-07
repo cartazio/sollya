@@ -15,12 +15,52 @@ Parameters:
 \end{itemize}
 \noindent Description: \begin{itemize}
 
-\item TODO
+\item When both \emph{a} and \emph{b} are constants, \textbf{mod}(\emph{a},\emph{b}) computes \emph{a}
+   less the product of \emph{b} and the largest integer less than or equal to
+   \emph{a} divided by \emph{b}. In other words, it returns the rest of the
+   Euclidian division of \emph{a} by \emph{b}.
+
+\item When at least one of \emph{a} or \emph{b} is a polynomial of degree at least
+   $1$, \textbf{mod}(\emph{a},\emph{b}) computes two polynomials \emph{q} and \emph{r} such
+   that \emph{a} is equal to the product of \emph{q} and \emph{b} plus \emph{r}. The
+   polynomial \emph{r} is of least degree possible. The \textbf{mod} command
+   returns \emph{r}. In order to recover \emph{q}, use the \textbf{div} command.
+
+\item When at least one of \emph{a} or \emph{b} is a function that is no polynomial,
+   \textbf{mod}(\emph{a},\emph{b}) returns \emph{a}.
 \end{itemize}
 \noindent Example 1: 
 \begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
-> mod(x^2 + 2 * x + 1, x + 2);
+> mod(1001, 231);
+77
+> mod(13, 17);
+13
+> mod(-14, 15);
 1
+> mod(-213, -5);
+-3
+> print(mod(23/13, 11/17));
+105 / 221
+> print(mod(exp(13),-sin(17)));
+exp(13) + 460177 * sin(17)
+\end{Verbatim}
+\end{minipage}\end{center}
+\noindent Example 2: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> mod(24 + 68 * x + 74 * x^2 + 39 * x^3 + 10 * x^4 + x^5, 4 + 4 * x + x^2);
+0
+> mod(24 + 68 * x + 74 * x^2 + 39 * x^3 + 10 * x^4 + x^5, 2 * x^3);
+24 + x * (68 + x * 74)
+> mod(x^2, x^3);
+x^2
+\end{Verbatim}
+\end{minipage}\end{center}
+\noindent Example 3: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> mod(exp(x), x^2);
+exp(x)
+> mod(x^3, sin(x));
+x^3
 \end{Verbatim}
 \end{minipage}\end{center}
 See also: \textbf{gcd} (\ref{labgcd}), \textbf{div} (\ref{labeucldiv}), \textbf{numberroots} (\ref{labnumberroots})

@@ -6,21 +6,59 @@
 \verb|   sollya_obj_t sollya_lib_euclidian_div(sollya_obj_t, sollya_obj_t)|\\[0.2cm]
 \noindent Usage: 
 \begin{center}
-\textbf{div}(\emph{p}, \emph{q}) : (\textsf{function}, \textsf{function}) $\rightarrow$ \textsf{function}\\
+\textbf{div}(\emph{a}, \emph{b}) : (\textsf{function}, \textsf{function}) $\rightarrow$ \textsf{function}\\
 \end{center}
 Parameters: 
 \begin{itemize}
-\item \emph{p} is a polynomial.
-\item \emph{q} is a polynomial.
+\item \emph{a} is a polynomial.
+\item \emph{b} is a polynomial.
 \end{itemize}
 \noindent Description: \begin{itemize}
 
-\item TODO
+\item When both \emph{a} and \emph{b} are constants, \textbf{div}(\emph{a},\emph{b}) computes the
+   largest integer less than or equal to \emph{a} divided by \emph{b}. In other
+   words, it returns the quotient of the Euclidian division of \emph{a} by
+   \emph{b}.
+
+\item When at least one of \emph{a} or \emph{b} is a polynomial of degree at least
+   $1$, \textbf{div}(\emph{a},\emph{b}) computes two polynomials \emph{q} and \emph{r} such
+   that \emph{a} is equal to the product of \emph{q} and \emph{b} plus \emph{r}. The
+   polynomial \emph{r} is of least degree possible. The \textbf{div} command
+   returns \emph{q}. In order to recover \emph{r}, use the \textbf{mod} command.
+
+\item When at least one of \emph{a} or \emph{b} is a function that is no polynomial,
+   \textbf{div}(\emph{a},\emph{b}) returns $0$.
 \end{itemize}
 \noindent Example 1: 
 \begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
-> div(x^2 + 2 * x + 1, x + 2);
-x
+> div(1001, 231);
+4
+> div(13, 17);
+0
+> div(-14, 15);
+-1
+> div(-213, -5);
+42
+> div(23/13, 11/17);
+2
+> div(exp(13),-sin(17));
+460177
+\end{Verbatim}
+\end{minipage}\end{center}
+\noindent Example 2: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> div(24 + 68 * x + 74 * x^2 + 39 * x^3 + 10 * x^4 + x^5, 4 + 4 * x + x^2);
+6 + x * (11 + x * (6 + x))
+> div(24 + 68 * x + 74 * x^2 + 39 * x^3 + 10 * x^4 + x^5, 2 * x^3);
+19.5 + x * (5 + x * 0.5)
+> div(x^2, x^3);
+0
+\end{Verbatim}
+\end{minipage}\end{center}
+\noindent Example 3: 
+\begin{center}\begin{minipage}{15cm}\begin{Verbatim}[frame=single]
+> div(exp(x), x^2);
+0
 \end{Verbatim}
 \end{minipage}\end{center}
 See also: \textbf{gcd} (\ref{labgcd}), \textbf{mod} (\ref{labeuclmod}), \textbf{numberroots} (\ref{labnumberroots})

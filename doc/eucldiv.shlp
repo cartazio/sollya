@@ -1,20 +1,46 @@
 #NAME $EUCLDIV
 #QUICK_DESCRIPTION Computes the euclidian division of polynomials or numbers and returns the quotient
 
-#CALLING $COMMAND(<p>, <q>)
+#CALLING $COMMAND(<a>, <b>)
 #TYPE ($FUNCTION_TYPE, $FUNCTION_TYPE) -> $FUNCTION_TYPE
 
 #LIBRARYNAME sollya_obj_t sollya_lib_euclidian_div(sollya_obj_t, sollya_obj_t)
 
-#PARAMETERS <p> is a polynomial.
-#PARAMETERS <q> is a polynomial.
+#PARAMETERS <a> is a polynomial.
+#PARAMETERS <b> is a polynomial.
 
 #DESCRIPTION
+When both <a> and <b> are constants, $COMMAND(<a>,<b>) computes the
+largest integer less than or equal to <a> divided by <b>. In other
+words, it returns the quotient of the Euclidian division of <a> by
+<b>.
 
-TODO
+#DESCRIPTION
+When at least one of <a> or <b> is a polynomial of degree at least
+§§1§$1$§§, $COMMAND(<a>,<b>) computes two polynomials <q> and <r> such
+that <a> is equal to the product of <q> and <b> plus <r>. The
+polynomial <r> is of least degree possible. The $COMMAND command
+returns <q>. In order to recover <r>, use the $EUCLMOD command.
+
+#DESCRIPTION
+When at least one of <a> or <b> is a function that is no polynomial,
+$COMMAND(<a>,<b>) returns §§0§$0$§§.
 
 #EXAMPLE
-div(x^2 + 2 * x + 1, x + 2);
+div(1001, 231);
+div(13, 17);
+div(-14, 15);
+div(-213, -5);
+div(23/13, 11/17);
+div(exp(13),-sin(17));
+
+#EXAMPLE
+div(24 + 68 * x + 74 * x^2 + 39 * x^3 + 10 * x^4 + x^5, 4 + 4 * x + x^2);
+div(24 + 68 * x + 74 * x^2 + 39 * x^3 + 10 * x^4 + x^5, 2 * x^3);
+div(x^2, x^3);
+
+#EXAMPLE
+div(exp(x), x^2);
 
 #SEEALSO $GCD
 #SEEALSO $EUCLMOD

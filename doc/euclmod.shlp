@@ -10,11 +10,38 @@
 #PARAMETERS <q> is a polynomial.
 
 #DESCRIPTION
+When both <a> and <b> are constants, $COMMAND(<a>,<b>) computes <a>
+less the product of <b> and the largest integer less than or equal to
+<a> divided by <b>. In other words, it returns the rest of the
+Euclidian division of <a> by <b>.
 
-TODO
+#DESCRIPTION
+When at least one of <a> or <b> is a polynomial of degree at least
+§§1§$1$§§, $COMMAND(<a>,<b>) computes two polynomials <q> and <r> such
+that <a> is equal to the product of <q> and <b> plus <r>. The
+polynomial <r> is of least degree possible. The $COMMAND command
+returns <r>. In order to recover <q>, use the $EUCLDIV command.
+
+#DESCRIPTION
+When at least one of <a> or <b> is a function that is no polynomial,
+$COMMAND(<a>,<b>) returns <a>.
 
 #EXAMPLE
-mod(x^2 + 2 * x + 1, x + 2);
+mod(1001, 231);
+mod(13, 17);
+mod(-14, 15);
+mod(-213, -5);
+print(mod(23/13, 11/17));
+print(mod(exp(13),-sin(17)));
+
+#EXAMPLE
+mod(24 + 68 * x + 74 * x^2 + 39 * x^3 + 10 * x^4 + x^5, 4 + 4 * x + x^2);
+mod(24 + 68 * x + 74 * x^2 + 39 * x^3 + 10 * x^4 + x^5, 2 * x^3);
+mod(x^2, x^3);
+
+#EXAMPLE
+mod(exp(x), x^2);
+mod(x^3, sin(x));
 
 #SEEALSO $GCD
 #SEEALSO $EUCLDIV
