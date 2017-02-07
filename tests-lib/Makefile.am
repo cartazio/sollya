@@ -131,6 +131,7 @@ tfloating.c \
 tfloor.c \
 tfpminimax.c \
 tfree_variable.c \
+tgcd.c \
 tget_autosimplify.c \
 tget_bounds_from_range.c \
 tget_canonical.c \
