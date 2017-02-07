@@ -7714,6 +7714,94 @@ node *gcd(node *a, node *b) {
   return res;
 }
 
+node *polydiv(node *a, node *b) {
+  node *aSimpl, *bSimpl, *res;
+  polynomial_t p, q, rq, rr;
+  
+  if ((a->nodeType == MEMREF) &&
+      (b->nodeType == MEMREF) &&
+      (a->polynomialRepresentation != NULL) &&
+      (b->polynomialRepresentation != NULL)) {
+    polynomialDivExtended(&rq, &rr,
+			  a->polynomialRepresentation,
+			  b->polynomialRepresentation);
+    res = polynomialGetExpression(rq);
+    polynomialFree(rq);
+    polynomialFree(rr);
+    return res;
+  }
+
+  aSimpl = simplifyRationalErrorfree(a);
+  bSimpl = simplifyRationalErrorfree(b);
+
+  tryRepresentAsPolynomial(aSimpl);
+  tryRepresentAsPolynomial(bSimpl);
+
+  if (polynomialFromExpressionOnlyRealCoeffs(&p, aSimpl)) {
+    if (polynomialFromExpressionOnlyRealCoeffs(&q, bSimpl)) {
+      polynomialDivExtended(&rq, &rr, p, q);
+      res = polynomialGetExpression(rq);
+      polynomialFree(rq);
+      polynomialFree(rr);
+      polynomialFree(q);
+    } else {
+      res = addMemRef(makeConstantInt(0));
+    }
+    polynomialFree(p);
+  } else {
+    res = addMemRef(makeConstantInt(0));
+  }
+
+  free_memory(bSimpl);
+  free_memory(aSimpl);
+
+  return res;
+}
+
+node *polymod(node *a, node *b) {
+  node *aSimpl, *bSimpl, *res;
+  polynomial_t p, q, rq, rr;
+  
+  if ((a->nodeType == MEMREF) &&
+      (b->nodeType == MEMREF) &&
+      (a->polynomialRepresentation != NULL) &&
+      (b->polynomialRepresentation != NULL)) {
+    polynomialDivExtended(&rq, &rr,
+			  a->polynomialRepresentation,
+			  b->polynomialRepresentation);
+    res = polynomialGetExpression(rr);
+    polynomialFree(rq);
+    polynomialFree(rr);
+    return res;
+  }
+
+  aSimpl = simplifyRationalErrorfree(a);
+  bSimpl = simplifyRationalErrorfree(b);
+
+  tryRepresentAsPolynomial(aSimpl);
+  tryRepresentAsPolynomial(bSimpl);
+
+  if (polynomialFromExpressionOnlyRealCoeffs(&p, aSimpl)) {
+    if (polynomialFromExpressionOnlyRealCoeffs(&q, bSimpl)) {
+      polynomialDivExtended(&rq, &rr, p, q);
+      res = polynomialGetExpression(rr);
+      polynomialFree(rq);
+      polynomialFree(rr);
+      polynomialFree(q);
+    } else {
+      res = addMemRef(copyThing(a));
+    }
+    polynomialFree(p);
+  } else {
+    res = addMemRef(copyThing(a));
+  }
+
+  free_memory(bSimpl);
+  free_memory(aSimpl);
+
+  return res;
+}
+
 int evaluateConstantExpression(mpfr_t result, node *tree, mp_prec_t prec) {
   mpfr_t cutoff;
   int res;
