@@ -1,0 +1,24 @@
+#NAME $EUCLMOD
+#QUICK_DESCRIPTION Computes the euclidian division of polynomials or numbers and returns the rest
+
+#CALLING $COMMAND(<p>, <q>)
+#TYPE ($FUNCTION_TYPE, $FUNCTION_TYPE) -> $FUNCTION_TYPE
+
+#LIBRARYNAME sollya_obj_t sollya_lib_euclidian_mod(sollya_obj_t, sollya_obj_t)
+
+#PARAMETERS <p> is a polynomial.
+#PARAMETERS <q> is a polynomial.
+
+#DESCRIPTION
+
+TODO
+
+#EXAMPLE
+mod(x^2 + 2 * x + 1, x + 2);
+
+#SEEALSO $GCD
+#SEEALSO $EUCLDIV
+#SEEALSO $NUMBERROOTS
+
+
+

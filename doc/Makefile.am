@@ -259,7 +259,10 @@ verbosity.tex \
 void.tex \
 worstcase.tex \
 write.tex \
-xfreevariable.tex
+xfreevariable.tex \
+gcd.tex \
+eucldiv.tex \
+euclmod.tex
 
 EXTRA_DIST = $(TEXSOURCES)
 

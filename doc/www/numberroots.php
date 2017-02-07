@@ -85,5 +85,5 @@ A warning is displayed to inform the user.
 </div> 
 </div> 
 <div class="divSeeAlso"> 
-<span class="category">See also: </span><?php linkTo("command","dirtyfindzeros","dirtyfindzeros");?>, <?php linkTo("command","findzeros","findzeros");?> 
+<span class="category">See also: </span><?php linkTo("command","dirtyfindzeros","dirtyfindzeros");?>, <?php linkTo("command","findzeros","findzeros");?>, <?php linkTo("command","gcd","gcd");?> 
 </div> 

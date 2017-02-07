@@ -59,4 +59,5 @@ numberroots(exp(x), [0, 1]);
 
 #SEEALSO $DIRTYFINDZEROS
 #SEEALSO $FINDZEROS
+#SEEALSO $GCD
 
