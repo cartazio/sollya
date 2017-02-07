@@ -354,6 +354,8 @@ int parserCheckEof() {
 %token  FPFINDZEROSTOKEN "fpfindzeros"
 %token  DIRTYINFNORMTOKEN "dirtyinfnorm"
 %token  GCDTOKEN "gcd"
+%token  EUCLDIVTOKEN "div"
+%token  EUCLMODTOKEN "mod"
 %token  NUMBERROOTSTOKEN "numberroots"
 %token  INTEGRALTOKEN "integral"
 %token  DIRTYINTEGRALTOKEN "dirtyintegral"
@@ -1854,6 +1856,14 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | GCDTOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
                           {
 			    $$ = makeGcd($3, $5);
+			  }
+                      | EUCLDIVTOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
+                          {
+			    $$ = makeEuclDiv($3, $5);
+			  }
+                      | EUCLMODTOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
+                          {
+			    $$ = makeEuclMod($3, $5);
 			  }
                       | NUMBERROOTSTOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
                           {
@@ -4160,6 +4170,28 @@ help:                   CONSTANTTOKEN
 #endif
 #endif
 			  }
+                      | EUCLDIVTOKEN
+                          {
+#ifdef HELP_EUCLDIV_TEXT
+			    outputMode(); sollyaPrintf(HELP_EUCLDIV_TEXT);
+#else
+			    outputMode(); sollyaPrintf("Euclidian division (quotient): div(a, b).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for EUCLDIV"
+#endif
+#endif
+			  }
+                      | EUCLMODTOKEN
+                          {
+#ifdef HELP_EUCLMOD_TEXT
+			    outputMode(); sollyaPrintf(HELP_EUCLMOD_TEXT);
+#else
+			    outputMode(); sollyaPrintf("Euclidian division (rest): mod(a, b).\n");
+#if defined(WARN_IF_NO_HELP_TEXT) && WARN_IF_NO_HELP_TEXT
+#warning "No help text for EUCLMOD"
+#endif
+#endif
+			  }
                       | NUMBERROOTSTOKEN
                           {
 #ifdef HELP_NUMBERROOTS_TEXT
@@ -4687,6 +4719,7 @@ help:                   CONSTANTTOKEN
 			    sollyaPrintf("- dirtyintegral\n");
 			    sollyaPrintf("- dirtysimplify\n");
 			    sollyaPrintf("- display\n");
+			    sollyaPrintf("- div\n");
 			    sollyaPrintf("- do\n");
 			    sollyaPrintf("- double\n");
 			    sollyaPrintf("- doubledouble\n");
@@ -4752,6 +4785,7 @@ help:                   CONSTANTTOKEN
 			    sollyaPrintf("- mid\n");
 			    sollyaPrintf("- midpointmode\n");
 			    sollyaPrintf("- min\n");
+			    sollyaPrintf("- mod\n");
 			    sollyaPrintf("- nearestint\n");
 			    sollyaPrintf("- numberroots\n");
 			    sollyaPrintf("- nop\n");

@@ -258,6 +258,8 @@ FINDZEROS       "findzeros"
 FPFINDZEROS     "fpfindzeros"
 DIRTYINFNORM    "dirtyinfnorm"
 GCD             "gcd"
+EUCLDIV         "div"
+EUCLMOD         "mod"
 NUMBERROOTS     "numberroots"
 
 EVALUATE        "evaluate"
@@ -853,6 +855,8 @@ NOP             "nop"
 {FPFINDZEROS}     			    { newTokenLexed(); return FPFINDZEROSTOKEN; }
 {DIRTYINFNORM}    			    { newTokenLexed(); return DIRTYINFNORMTOKEN; }
 {GCD}     			            { newTokenLexed(); return GCDTOKEN; }
+{EUCLDIV}     			            { newTokenLexed(); return EUCLDIVTOKEN; }
+{EUCLMOD}     			            { newTokenLexed(); return EUCLMODTOKEN; }
 {NUMBERROOTS}    			    { newTokenLexed(); return NUMBERROOTSTOKEN; }
 {INTEGRAL}        			    { newTokenLexed(); return INTEGRALTOKEN; }
 {DIRTYINTEGRAL}				    { newTokenLexed(); return DIRTYINTEGRALTOKEN; }

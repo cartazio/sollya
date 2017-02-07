@@ -319,6 +319,8 @@ void miniyyerror(void *myScanner, const char *message) {
 %token  FPFINDZEROSTOKEN "fpfindzeros"
 %token  DIRTYINFNORMTOKEN "dirtyinfnorm"
 %token  GCDTOKEN "gcd"
+%token  EUCLDIVTOKEN "div"
+%token  EUCLMODTOKEN "mod"
 %token  NUMBERROOTSTOKEN "numberroots"
 %token  INTEGRALTOKEN "integral"
 %token  DIRTYINTEGRALTOKEN "dirtyintegral"
@@ -1777,6 +1779,14 @@ headfunction:           DIFFTOKEN LPARTOKEN thing RPARTOKEN
                       | GCDTOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
                           {
 			    $$ = makeGcd($3, $5);
+			  }
+                      | EUCLDIVTOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
+                          {
+			    $$ = makeEuclDiv($3, $5);
+			  }
+                      | EUCLMODTOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
+                          {
+			    $$ = makeEuclMod($3, $5);
 			  }
                       | NUMBERROOTSTOKEN LPARTOKEN thing COMMATOKEN thing RPARTOKEN
                           {

@@ -305,6 +305,8 @@ extern void endBuffer(void);
 #define OBJECTNAME 280
 #define GETBACKTRACE 281
 #define GCD 282
+#define EUCLDIV 283
+#define EUCLMOD 284
 
 int executeCommand(node *);
 
@@ -493,6 +495,8 @@ node *makeFindZeros(node *thing1, node *thing2);
 node *makeFPFindZeros(node *thing1, node *thing2);
 node *makeDirtyInfnorm(node *thing1, node *thing2);
 node *makeGcd(node *thing1, node *thing2);
+node *makeEuclDiv(node *thing1, node *thing2);
+node *makeEuclMod(node *thing1, node *thing2);
 node *makeNumberRoots(node *thing1, node *thing2);
 node *makeIntegral(node *thing1, node *thing2);
 node *makeDirtyIntegral(node *thing1, node *thing2);

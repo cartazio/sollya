@@ -254,6 +254,8 @@ FINDZEROS       "findzeros"
 FPFINDZEROS     "fpfindzeros"
 DIRTYINFNORM    "dirtyinfnorm"
 GCD             "gcd"
+EUCLDIV         "div"
+EUCLMOD         "mod"
 NUMBERROOTS     "numberroots"
 
 EVALUATE        "evaluate"
@@ -768,6 +770,8 @@ NOP             "nop"
 {FPFINDZEROS}     			    {  miniparserCharactersRead += yyleng; return FPFINDZEROSTOKEN; }
 {DIRTYINFNORM}    			    {  miniparserCharactersRead += yyleng; return DIRTYINFNORMTOKEN; }
 {GCD}       			            {  miniparserCharactersRead += yyleng; return GCDTOKEN; }
+{EUCLDIV}       			    {  miniparserCharactersRead += yyleng; return EUCLDIVTOKEN; }
+{EUCLMOD}       			    {  miniparserCharactersRead += yyleng; return EUCLMODTOKEN; }
 {NUMBERROOTS}    			    {  miniparserCharactersRead += yyleng; return NUMBERROOTSTOKEN; }
 {INTEGRAL}        			    {  miniparserCharactersRead += yyleng; return INTEGRALTOKEN; }
 {DIRTYINTEGRAL}				    {  miniparserCharactersRead += yyleng; return DIRTYINTEGRALTOKEN; }

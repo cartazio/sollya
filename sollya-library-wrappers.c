@@ -1676,6 +1676,26 @@ sollya_obj_t sollya_lib_gcd(sollya_obj_t obj1, sollya_obj_t obj2) {
   return evaluatedThing;
 }
 
+sollya_obj_t sollya_lib_euclidian_div(sollya_obj_t obj1, sollya_obj_t obj2) {
+  node *thingToEvaluate, *evaluatedThing;
+  if (obj1 == NULL) return NULL;
+  if (obj2 == NULL) return NULL;
+  thingToEvaluate = addMemRef(makeEuclDiv(copyThing(obj1),copyThing(obj2)));
+  evaluatedThing = evaluateThing(thingToEvaluate);
+  freeThing(thingToEvaluate);
+  return evaluatedThing;
+}
+
+sollya_obj_t sollya_lib_euclidian_mod(sollya_obj_t obj1, sollya_obj_t obj2) {
+  node *thingToEvaluate, *evaluatedThing;
+  if (obj1 == NULL) return NULL;
+  if (obj2 == NULL) return NULL;
+  thingToEvaluate = addMemRef(makeEuclMod(copyThing(obj1),copyThing(obj2)));
+  evaluatedThing = evaluateThing(thingToEvaluate);
+  freeThing(thingToEvaluate);
+  return evaluatedThing;
+}
+
 sollya_obj_t sollya_lib_numberroots(sollya_obj_t obj1, sollya_obj_t obj2) {
   node *thingToEvaluate, *evaluatedThing;
   if (obj1 == NULL) return NULL;

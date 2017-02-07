@@ -327,6 +327,8 @@ int containsOnlyRealNumbers(node * tree);
 void tryCopyTreeAnnotations(node *newTree, node *oldTree);
 int containsNonDifferentiableSubfunctions(node *tree);
 node *gcd(node *a, node *b);
+node *eucldiv(node *a, node *b);
+node *euclmod(node *a, node *b);
 
 node *makeVariable();
 node *makeConstant(mpfr_t x);

@@ -487,6 +487,8 @@ extern "C" {
   sollya_obj_t sollya_lib_findzeros(sollya_obj_t, sollya_obj_t);
   sollya_obj_t sollya_lib_dirtyinfnorm(sollya_obj_t, sollya_obj_t);
   sollya_obj_t sollya_lib_gcd(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_euclidian_div(sollya_obj_t, sollya_obj_t);
+  sollya_obj_t sollya_lib_euclidian_mod(sollya_obj_t, sollya_obj_t);
   sollya_obj_t sollya_lib_numberroots(sollya_obj_t, sollya_obj_t);
   sollya_obj_t sollya_lib_integral(sollya_obj_t, sollya_obj_t);
   sollya_obj_t sollya_lib_dirtyintegral(sollya_obj_t, sollya_obj_t);
