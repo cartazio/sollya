@@ -44,8 +44,8 @@ int main(void) {
 
   for (i=0; i<nb; i++) {
     for (j=0; j<nb; j++) {
-      r = sollya_lib_gcd(a[i], a[j]);
-      sollya_lib_printf("gcd(%b, %b) = %b\n", a[i], a[j], r);
+      r = sollya_lib_euclidian_div(a[i], a[j]);
+      sollya_lib_printf("div(%b, %b) = %b\n", a[i], a[j], r);
       sollya_lib_clear_obj(r);
     }
   }

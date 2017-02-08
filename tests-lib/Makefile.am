@@ -115,6 +115,8 @@ tend_elliptic_list.c \
 terf.c \
 terfc.c \
 terror.c \
+teuclidian_div.c \
+teuclidian_mod.c \
 tevaluate_function_at_constant_expression.c \
 tevaluate_function_at_point.c \
 texecute.c \
