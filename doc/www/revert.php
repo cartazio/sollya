@@ -37,3 +37,6 @@
 &nbsp;&nbsp;&nbsp;[|4, 1, 2, 5, 3, 2|]<br> 
 </div> 
 </div> 
+<div class="divSeeAlso"> 
+<span class="category">See also: </span><?php linkTo("command","sort","sort");?>, <?php linkTo("command","head","head");?> 
+</div> 

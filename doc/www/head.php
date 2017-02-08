@@ -36,5 +36,5 @@ to L[0].
 </div> 
 </div> 
 <div class="divSeeAlso"> 
-<span class="category">See also: </span><?php linkTo("command","tail","tail");?> 
+<span class="category">See also: </span><?php linkTo("command","tail","tail");?>, <?php linkTo("command","revert","revert");?> 
 </div> 

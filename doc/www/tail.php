@@ -37,5 +37,5 @@
 </div> 
 </div> 
 <div class="divSeeAlso"> 
-<span class="category">See also: </span><?php linkTo("command","head","head");?> 
+<span class="category">See also: </span><?php linkTo("command","head","head");?>, <?php linkTo("command","revert","revert");?> 
 </div> 
